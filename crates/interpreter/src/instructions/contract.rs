@@ -156,7 +156,7 @@ pub fn txcreate<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn return_contract<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn return_contract<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
 }
 
@@ -204,6 +204,8 @@ pub fn extcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H)
         return;
     }
     gas!(interpreter, gas_limit);
+
+    let input = Bytes::new();
 
     // Call host to interact with target contract
     interpreter.next_action = InterpreterAction::Call {

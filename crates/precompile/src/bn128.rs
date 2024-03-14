@@ -1,5 +1,6 @@
 use crate::{
-    utilities::right_pad, Address, Error, Precompile, PrecompileResult, PrecompileWithAddress,
+    utilities::{bool_to_bytes32, right_pad},
+    Address, Error, Precompile, PrecompileResult, PrecompileWithAddress,
 };
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 use revm_primitives::Bytes;
@@ -222,10 +223,7 @@ fn run_pair(
 
         mul == Gt::one()
     };
-
-    let mut out = [0u8; 32];
-    out[31] = success as u8;
-    Ok((gas_used, out.into()))
+    Ok((gas_used, bool_to_bytes32(success)))
 }
 
 /*

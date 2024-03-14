@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v4.1.0...revm-precompile-v5.0.0) - 2024-03-08
+
+### Added
+- *(precompile)* add a bool to bytes32 helper function ([#1170](https://github.com/bluealloy/revm/pull/1170))
+- precompile with generic context ([#1155](https://github.com/bluealloy/revm/pull/1155))
+- Add boxed precompile trait ([#1131](https://github.com/bluealloy/revm/pull/1131))
+
 ## [4.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v4.0.1...revm-precompile-v4.1.0) - 2024-02-22
 
 ### Added

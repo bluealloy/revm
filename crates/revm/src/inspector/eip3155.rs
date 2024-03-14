@@ -12,15 +12,14 @@ pub struct TracerEip3155 {
     output: Box<dyn Write>,
     gas_inspector: GasInspector,
 
-    #[allow(dead_code)]
-    trace_mem: bool,
-    #[allow(dead_code)]
-    trace_return_data: bool,
+    /// Print summary of the execution.
+    print_summary: bool,
 
     stack: Vec<U256>,
     pc: usize,
     opcode: u8,
     gas: u64,
+    refunded: i64,
     mem_size: usize,
     skip: bool,
 }
@@ -99,16 +98,16 @@ impl TracerEip3155 {
 }
 
 impl TracerEip3155 {
-    pub fn new(output: Box<dyn Write>, trace_mem: bool, trace_return_data: bool) -> Self {
+    pub fn new(output: Box<dyn Write>, print_summary: bool) -> Self {
         Self {
             output,
             gas_inspector: GasInspector::default(),
-            trace_mem,
-            trace_return_data,
+            print_summary,
             stack: Default::default(),
             pc: 0,
             opcode: 0,
             gas: 0,
+            refunded: 0,
             mem_size: 0,
             skip: false,
         }
@@ -133,6 +132,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         self.opcode = interp.current_opcode();
         self.mem_size = interp.shared_memory.len();
         self.gas = interp.gas.remaining();
+        self.refunded = interp.gas.refunded();
     }
 
     fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
@@ -150,7 +150,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             stack: self.stack.iter().map(hex_number_u256).collect(),
             depth: context.journaled_state.depth(),
             return_data: "0x".to_string(),
-            refund: "0x0".to_string(),
+            refund: hex_number(self.refunded as u64),
             mem_size: self.mem_size.to_string(),
 
             op_name: opcode::OPCODE_JUMPMAP[self.opcode as usize],
@@ -173,7 +173,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         outcome: CallOutcome,
     ) -> CallOutcome {
         let outcome = self.gas_inspector.call_end(context, inputs, outcome);
-        if context.journaled_state.depth() == 0 {
+        if self.print_summary && context.journaled_state.depth() == 0 {
             let value = Summary {
                 state_root: B256::ZERO.to_string(),
                 output: outcome.result.output.to_string(),
