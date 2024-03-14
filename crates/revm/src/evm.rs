@@ -141,6 +141,18 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         &mut self.context.evm.env.tx
     }
 
+    /// Returns the reference of database
+    #[inline]
+    pub fn db(&self) -> &DB {
+        &self.context.evm.db
+    }
+
+    /// Returns the mutable reference of database
+    #[inline]
+    pub fn db_mut(&mut self) -> &mut DB {
+        &mut self.context.evm.db
+    }
+
     /// Returns the reference of block
     #[inline]
     pub fn block(&self) -> &BlockEnv {
@@ -186,9 +198,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     #[inline]
     pub fn into_db_and_env_with_handler_cfg(self) -> (DB, EnvWithHandlerCfg) {
         (
-            self.context.evm.db,
+            self.context.evm.inner.db,
             EnvWithHandlerCfg {
-                env: self.context.evm.env,
+                env: self.context.evm.inner.env,
                 handler_cfg: self.handler.cfg,
             },
         )
@@ -388,7 +400,7 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
     fn load_account(&mut self, address: Address) -> Option<(bool, bool)> {
         self.context
             .evm
-            .load_account(address)
+            .load_account_exist(address)
             .map_err(|e| self.context.evm.error = Err(e))
             .ok()
     }
@@ -448,8 +460,9 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
     fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult> {
         self.context
             .evm
+            .inner
             .journaled_state
-            .selfdestruct(address, target, &mut self.context.evm.db)
+            .selfdestruct(address, target, &mut self.context.evm.inner.db)
             .map_err(|e| self.context.evm.error = Err(e))
             .ok()
     }

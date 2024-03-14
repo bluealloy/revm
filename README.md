@@ -102,7 +102,7 @@ Generate block traces and write them to json files in a new `traces/` directory.
 Each file corresponds to a transaction in the block and is named as such: `<tx index>.json`.
 
 ```shell
-cargo run -p revm --features std,serde,ethersdb --example generate_block_traces
+cargo run -p revm --features std,serde-json,ethersdb --example generate_block_traces
 ```
 
 # Used by:
@@ -112,6 +112,8 @@ cargo run -p revm --features std,serde,ethersdb --example generate_block_traces
 * [Reth](https://github.com/paradigmxyz/reth) Modular, contributor-friendly and blazing-fast implementation of the Ethereum protocol
 * [Arbiter](https://github.com/primitivefinance/arbiter) is a framework for stateful Ethereum smart-contract simulation
 * [Zeth](https://github.com/risc0/zeth) is an open-source ZK block prover for Ethereum built on the RISC Zero zkVM.
+* [VERBS](https://github.com/simtopia/verbs) an open-source Ethereum agent-based modelling and simulation library with a Python API.
+* [Hardhat](https://github.com/NomicFoundation/hardhat) is a development environment to compile, deploy, test, and debug your Ethereum software.
 * ...
 
 (If you want to add project to the list, ping me or open the PR)

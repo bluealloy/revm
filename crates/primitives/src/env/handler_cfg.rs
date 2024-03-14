@@ -41,7 +41,7 @@ impl HandlerCfg {
         }
     }
 
-    /// Returns true if the optimism feature is enabled and flag is set to true.
+    /// Returns `true` if the optimism feature is enabled and flag is set to `true`.
     pub fn is_optimism(&self) -> bool {
         cfg_if::cfg_if! {
             if #[cfg(feature = "optimism")] {
@@ -124,6 +124,11 @@ impl EnvWithHandlerCfg {
     /// Takes `CfgEnvWithHandlerCfg` and returns new `EnvWithHandlerCfg` instance.
     pub fn new_with_cfg_env(cfg: CfgEnvWithHandlerCfg, block: BlockEnv, tx: TxEnv) -> Self {
         Self::new(Env::boxed(cfg.cfg_env, block, tx), cfg.handler_cfg)
+    }
+
+    /// Returns the specification id.
+    pub const fn spec_id(&self) -> SpecId {
+        self.handler_cfg.spec_id
     }
 
     /// Enables the optimism handle register.

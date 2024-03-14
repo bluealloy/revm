@@ -465,10 +465,11 @@ mod tests {
         ]));
 
         state.merge_transitions(BundleRetention::Reverts);
-        let bundle_state = state.take_bundle();
+        let mut bundle_state = state.take_bundle();
 
         // The new account revert should be `DeleteIt` since this was an account creation.
         // The existing account revert should be reverted to its previous state.
+        bundle_state.reverts.sort();
         assert_eq!(
             bundle_state.reverts.as_ref(),
             Vec::from([Vec::from([

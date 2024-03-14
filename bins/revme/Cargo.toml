@@ -6,14 +6,16 @@ keywords = ["ethereum", "evm"]
 license = "MIT"
 repository = "https://github.com/bluealloy/revm"
 description = "Rust Ethereum Virtual Machine Executable"
-version = "0.2.2"
+version = "0.3.0"
 
 [dependencies]
 hash-db = "0.15"
+hex = "0.4"
 hashbrown = "0.14"
 indicatif = "0.17"
+microbench = "0.5"
 plain_hasher = "0.2"
-revm = { path = "../../crates/revm", version = "6.1.0", default-features = false, features = [
+revm = { path = "../../crates/revm", version = "7.1.0", default-features = false, features = [
     "ethersdb",
     "std",
     "serde-json",
@@ -28,5 +30,5 @@ serde_json = { version = "1.0", features = ["preserve_order"] }
 structopt = "0.3"
 thiserror = "1.0"
 triehash = "0.8"
-walkdir = "2.4"
+walkdir = "2.5"
 k256 = { version = "0.13.3", features = ["ecdsa"] }

@@ -1,7 +1,9 @@
-use revme::cmd::{Error, MainCmd};
+use revme::cmd::MainCmd;
 use structopt::StructOpt;
 
-pub fn main() -> Result<(), Error> {
+pub fn main() {
     let cmd = MainCmd::from_args();
-    cmd.run()
+    if let Err(e) = cmd.run() {
+        println!("{}", e)
+    }
 }

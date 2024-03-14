@@ -115,7 +115,7 @@ fn check_evm_execution<EXT>(
     evm: &Evm<'_, EXT, &mut State<EmptyDB>>,
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
-    let logs_root = log_rlp_hash(&exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
+    let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
     let state_root = state_merkle_trie_root(evm.context.evm.db.cache.trie_account());
 
     let print_json_output = |error: Option<String>| {
@@ -358,7 +358,6 @@ pub fn execute_test_suite(
                         .reset_handler_with_external_context(TracerEip3155::new(
                             Box::new(stderr()),
                             false,
-                            true,
                         ))
                         .append_handler_register(inspector_handle_register)
                         .build();
@@ -422,7 +421,7 @@ pub fn execute_test_suite(
                 let mut evm = Evm::builder()
                     .with_spec_id(spec_id)
                     .with_db(state)
-                    .with_external_context(TracerEip3155::new(Box::new(stdout()), false, false))
+                    .with_external_context(TracerEip3155::new(Box::new(stdout()), false))
                     .append_handler_register(inspector_handle_register)
                     .build();
                 let _ = evm.transact_commit();

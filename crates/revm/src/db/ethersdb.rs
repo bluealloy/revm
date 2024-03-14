@@ -3,27 +3,20 @@ use crate::{Database, DatabaseRef};
 use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};
 use ethers_providers::Middleware;
 use std::sync::Arc;
-use tokio::runtime::{Handle, Runtime};
+use tokio::runtime::{Builder, Handle, RuntimeFlavor};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EthersDB<M: Middleware> {
     client: Arc<M>,
-    runtime: Option<Runtime>,
     block_number: Option<BlockId>,
 }
 
 impl<M: Middleware> EthersDB<M> {
     /// create ethers db connector inputs are url and block on what we are basing our database (None for latest)
     pub fn new(client: Arc<M>, block_number: Option<BlockId>) -> Option<Self> {
-        let runtime = Handle::try_current()
-            .is_err()
-            .then(|| Runtime::new().unwrap());
-
         let client = client;
-
         let mut out = Self {
             client,
-            runtime,
             block_number: None,
         };
 
@@ -39,10 +32,33 @@ impl<M: Middleware> EthersDB<M> {
     }
 
     /// internal utility function to call tokio feature and wait for output
-    fn block_on<F: core::future::Future>(&self, f: F) -> F::Output {
-        match &self.runtime {
-            Some(runtime) => runtime.block_on(f),
-            None => futures::executor::block_on(f),
+    fn block_on<F>(&self, f: F) -> F::Output
+    where
+        F: core::future::Future + Send,
+        F::Output: Send,
+    {
+        match Handle::try_current() {
+            Ok(handle) => match handle.runtime_flavor() {
+                // This essentially equals to tokio::task::spawn_blocking because tokio doesn't
+                // allow current_thread runtime to block_in_place
+                RuntimeFlavor::CurrentThread => std::thread::scope(move |s| {
+                    s.spawn(move || {
+                        Builder::new_current_thread()
+                            .enable_all()
+                            .build()
+                            .unwrap()
+                            .block_on(f)
+                    })
+                    .join()
+                    .unwrap()
+                }),
+                _ => tokio::task::block_in_place(move || handle.block_on(f)),
+            },
+            Err(_) => Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap()
+                .block_on(f),
         }
     }
 }

@@ -29,8 +29,11 @@ pub mod optimism;
 // Export items.
 
 pub use builder::EvmBuilder;
-pub use context::{Context, ContextWithHandlerCfg, EvmContext};
-#[cfg(feature = "std")]
+pub use context::{
+    Context, ContextPrecompile, ContextPrecompiles, ContextStatefulPrecompile,
+    ContextStatefulPrecompileArc, ContextStatefulPrecompileBox, ContextStatefulPrecompileMut,
+    ContextWithHandlerCfg, EvmContext, InnerEvmContext,
+};
 pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
 };

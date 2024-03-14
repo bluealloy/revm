@@ -91,7 +91,7 @@ The next example changes the spec id and environment of an already built evm.
   let evm = Evm::builder().build();
 
   // Modify evm spec.
-  let evm = evm.modify().spec_id(BERLIN).build();
+  let evm = evm.modify().with_spec_id(BERLIN).build();
 
   // Shortcut for above.
   let mut evm = evm.modify_spec_id(BERLIN);
@@ -104,6 +104,54 @@ The next example changes the spec id and environment of an already built evm.
 
   // Execute the evm with modified tx env.
   let output2 = evm.transact();
+```
+
+Example of adding custom precompiles to Evm.
+
+```rust,ignore
+use super::SpecId;
+use crate::{
+    db::EmptyDB,
+    inspector::inspector_handle_register,
+    inspectors::NoOpInspector,
+    primitives::{Address, Bytes, ContextStatefulPrecompile, ContextPrecompile, PrecompileResult},
+    Context, Evm, EvmContext,
+};
+use std::sync::Arc;
+
+struct CustomPrecompile;
+
+impl ContextStatefulPrecompile<EvmContext<EmptyDB>, ()> for CustomPrecompile {
+    fn call(
+        &self,
+        _input: &Bytes,
+        _gas_price: u64,
+        _context: &mut EvmContext<EmptyDB>,
+        _extctx: &mut (),
+    ) -> PrecompileResult {
+        Ok((10, Bytes::new()))
+    }
+}
+fn main() {
+    let mut evm = Evm::builder()
+        .with_empty_db()
+        .with_spec_id(SpecId::HOMESTEAD)
+        .append_handler_register(|handler| {
+            let precompiles = handler.pre_execution.load_precompiles();
+            handler.pre_execution.load_precompiles = Arc::new(move || {
+                let mut precompiles = precompiles.clone();
+                precompiles.extend([(
+                    Address::ZERO,
+                    ContextPrecompile::ContextStateful(Arc::new(CustomPrecompile)),
+                )]);
+                precompiles
+            });
+        })
+        .build();
+
+    evm.transact().unwrap();
+}
+
 ```
 
 ## Appending handler registers

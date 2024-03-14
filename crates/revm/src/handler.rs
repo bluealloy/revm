@@ -8,10 +8,7 @@ pub use handle_types::*;
 
 // Includes.
 use crate::{
-    interpreter::{
-        opcode::{make_instruction_table, InstructionTables},
-        Host,
-    },
+    interpreter::{opcode::InstructionTables, Host},
     primitives::{db::Database, spec_to_generic, HandlerCfg, Spec, SpecId},
     Evm,
 };
@@ -29,7 +26,7 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     /// Instruction table type.
     pub instruction_table: Option<InstructionTables<'a, H>>,
     /// Registers that will be called on initialization.
-    pub registers: Vec<HandleRegisters<'a, EXT, DB>>,
+    pub registers: Vec<HandleRegisters<EXT, DB>>,
     /// Validity handles.
     pub validation: ValidationHandler<'a, EXT, DB>,
     /// Pre execution handle
@@ -58,14 +55,12 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
             }
         }
     }
-    /// Handler for the mainnet
-    pub fn mainnet<SPEC: Spec + 'static>() -> Self {
+
+    /// Default handler for Ethereum mainnet.
+    pub fn mainnet<SPEC: Spec>() -> Self {
         Self {
             cfg: HandlerCfg::new(SPEC::SPEC_ID),
-            instruction_table: Some(InstructionTables::Plain(make_instruction_table::<
-                Evm<'a, EXT, DB>,
-                SPEC,
-            >())),
+            instruction_table: Some(InstructionTables::new_plain::<SPEC>()),
             registers: Vec::new(),
             validation: ValidationHandler::new::<SPEC>(),
             pre_execution: PreExecutionHandler::new::<SPEC>(),
@@ -74,14 +69,14 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
         }
     }
 
-    /// Is optimism enabled.
+    /// Returns `true` if the optimism feature is enabled and flag is set to `true`.
     pub fn is_optimism(&self) -> bool {
         self.cfg.is_optimism()
     }
 
     /// Handler for optimism
     #[cfg(feature = "optimism")]
-    pub fn optimism<SPEC: Spec + 'static>() -> Self {
+    pub fn optimism<SPEC: Spec>() -> Self {
         let mut handler = Self::mainnet::<SPEC>();
         handler.cfg.is_optimism = true;
         handler.append_handler_register(HandleRegisters::Plain(
@@ -138,25 +133,25 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Append handle register.
-    pub fn append_handler_register(&mut self, register: HandleRegisters<'a, EXT, DB>) {
+    pub fn append_handler_register(&mut self, register: HandleRegisters<EXT, DB>) {
         register.register(self);
         self.registers.push(register);
     }
 
     /// Append plain handle register.
-    pub fn append_handler_register_plain(&mut self, register: HandleRegister<'a, EXT, DB>) {
+    pub fn append_handler_register_plain(&mut self, register: HandleRegister<EXT, DB>) {
         register(self);
         self.registers.push(HandleRegisters::Plain(register));
     }
 
     /// Append boxed handle register.
-    pub fn append_handler_register_box(&mut self, register: HandleRegisterBox<'a, EXT, DB>) {
+    pub fn append_handler_register_box(&mut self, register: HandleRegisterBox<EXT, DB>) {
         register(self);
         self.registers.push(HandleRegisters::Box(register));
     }
 
     /// Pop last handle register and reapply all registers that are left.
-    pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<'a, EXT, DB>> {
+    pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<EXT, DB>> {
         let out = self.registers.pop();
         if out.is_some() {
             let registers = core::mem::take(&mut self.registers);
@@ -171,7 +166,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Creates the Handler with Generic Spec.
-    pub fn create_handle_generic<SPEC: Spec + 'static>(&mut self) -> EvmHandler<'a, EXT, DB> {
+    pub fn create_handle_generic<SPEC: Spec>(&mut self) -> EvmHandler<'a, EXT, DB> {
         let registers = core::mem::take(&mut self.registers);
         let mut base_handler = Handler::mainnet::<SPEC>();
         // apply all registers to default handeler and raw mainnet instruction table.
@@ -211,7 +206,7 @@ mod test {
 
     #[test]
     fn test_handler_register_pop() {
-        let register = |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<'_, (), EmptyDB> {
+        let register = |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<(), EmptyDB> {
             let inner = inner.clone();
             Box::new(move |h| {
                 *inner.borrow_mut() += 1;

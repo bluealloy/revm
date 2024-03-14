@@ -201,16 +201,18 @@ impl Env {
         }
 
         // Check that the transaction's nonce is correct
-        if let Some(tx) = self.tx.nonce {
-            let state = account.info.nonce;
-            match tx.cmp(&state) {
-                Ordering::Greater => {
-                    return Err(InvalidTransaction::NonceTooHigh { tx, state });
+        if !self.cfg.is_nonce_check_disabled() {
+            if let Some(tx) = self.tx.nonce {
+                let state = account.info.nonce;
+                match tx.cmp(&state) {
+                    Ordering::Greater => {
+                        return Err(InvalidTransaction::NonceTooHigh { tx, state });
+                    }
+                    Ordering::Less => {
+                        return Err(InvalidTransaction::NonceTooLow { tx, state });
+                    }
+                    _ => {}
                 }
-                Ordering::Less => {
-                    return Err(InvalidTransaction::NonceTooLow { tx, state });
-                }
-                _ => {}
             }
         }
 
@@ -299,6 +301,9 @@ pub struct CfgEnv {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_beneficiary_reward")]
     pub disable_beneficiary_reward: bool,
+    /// Skip nonce checks if true.
+    #[cfg(feature = "optional_nonce_check")]
+    pub disable_nonce_check: bool,
 }
 
 impl CfgEnv {
@@ -361,6 +366,16 @@ impl CfgEnv {
     pub fn is_beneficiary_reward_disabled(&self) -> bool {
         false
     }
+
+    #[cfg(feature = "optional_nonce_check")]
+    pub fn is_nonce_check_disabled(&self) -> bool {
+        self.disable_nonce_check
+    }
+
+    #[cfg(not(feature = "optional_nonce_check"))]
+    pub fn is_nonce_check_disabled(&self) -> bool {
+        false
+    }
 }
 
 impl Default for CfgEnv {
@@ -385,6 +400,8 @@ impl Default for CfgEnv {
             disable_base_fee: false,
             #[cfg(feature = "optional_beneficiary_reward")]
             disable_beneficiary_reward: false,
+            #[cfg(feature = "optional_nonce_check")]
+            disable_nonce_check: false,
         }
     }
 }

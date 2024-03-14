@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm"]
 license = "MIT"
 name = "revm"
 repository = "https://github.com/bluealloy/revm"
-version = "6.1.0"
+version = "7.1.0"
 readme = "../../README.md"
 
 [package.metadata.docs.rs]
@@ -15,12 +15,13 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 # revm
-revm-interpreter = { path = "../interpreter", version = "3.1.0", default-features = false }
-revm-precompile = { path = "../precompile", version = "4.1.0", default-features = false }
+revm-interpreter = { path = "../interpreter", version = "3.3.0", default-features = false }
+revm-precompile = { path = "../precompile", version = "5.0.0", default-features = false }
 
 # misc
-auto_impl = { version = "1.1", default-features = false }
+auto_impl = { version = "1.2", default-features = false }
 cfg-if = "1.0"
+dyn-clone = "1.0"
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -38,11 +39,10 @@ tokio = { version = "1.36", features = [
 ], optional = true }
 ethers-providers = { version = "2.0", optional = true }
 ethers-core = { version = "2.0", optional = true }
-futures = { version = "0.3.30", optional = true }
 
 [dev-dependencies]
-ethers-contract = { version = "2.0.13", default-features = false }
-anyhow = "1.0.80"
+ethers-contract = { version = "2.0.14", default-features = false }
+anyhow = "1.0.81"
 criterion = "0.5"
 indicatif = "0.17"
 
@@ -78,7 +78,6 @@ negate-optimism-default-handler = [
 ethersdb = [
     "std",
     "tokio",
-    "futures",
     "ethers-providers",
     "ethers-core",
 ] # Negate optimism default handler
@@ -91,6 +90,7 @@ dev = [
     "optional_gas_refund",
     "optional_no_base_fee",
     "optional_beneficiary_reward",
+    "optional_nonce_check",
 ]
 memory_limit = ["revm-interpreter/memory_limit"]
 optional_balance_check = ["revm-interpreter/optional_balance_check"]
@@ -99,6 +99,7 @@ optional_eip3607 = ["revm-interpreter/optional_eip3607"]
 optional_gas_refund = ["revm-interpreter/optional_gas_refund"]
 optional_no_base_fee = ["revm-interpreter/optional_no_base_fee"]
 optional_beneficiary_reward = ["revm-interpreter/optional_beneficiary_reward"]
+optional_nonce_check = ["revm-interpreter/optional_nonce_check"]
 
 # See comments in `revm-precompile`
 secp256k1 = ["revm-precompile/secp256k1"]
@@ -113,6 +114,11 @@ required-features = ["ethersdb"]
 name = "generate_block_traces"
 path = "../../examples/generate_block_traces.rs"
 required-features = ["std", "serde-json", "ethersdb"]
+
+[[example]]
+name = "db_by_ref"
+path = "../../examples/db_by_ref.rs"
+required-features = ["std", "serde-json"]
 
 [[bench]]
 name = "bench"

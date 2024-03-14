@@ -1,7 +1,8 @@
-pub use c_kzg::{BYTES_PER_G1_POINT, BYTES_PER_G2_POINT};
-use core::fmt::Display;
+use core::fmt;
 use derive_more::{AsMut, AsRef, Deref, DerefMut};
 use std::boxed::Box;
+
+pub use c_kzg::{BYTES_PER_G1_POINT, BYTES_PER_G2_POINT};
 
 /// Number of G1 Points.
 pub const NUM_G1_POINTS: usize = 4096;
@@ -113,19 +114,18 @@ pub enum KzgErrors {
     MismatchedNumberOfPoints,
 }
 
-impl Display for KzgErrors {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            KzgErrors::FailedCurrentDirectory => write!(f, "Failed to get current directory"),
-            KzgErrors::PathNotExists => write!(f, "The specified path does not exist"),
-            KzgErrors::IOError => write!(f, "Problems related to I/O"),
-            KzgErrors::NotValidFile => write!(f, "Not a valid file"),
-            KzgErrors::FileFormatError => write!(f, "File is not properly formatted"),
-            KzgErrors::ParseError => write!(f, "Not able to parse to usize"),
-            KzgErrors::MismatchedNumberOfPoints => {
-                write!(f, "Number of points does not match what is expected")
-            }
-        }
+impl fmt::Display for KzgErrors {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Self::FailedCurrentDirectory => "failed to get current directory",
+            Self::PathNotExists => "the specified path does not exist",
+            Self::IOError => "IO error",
+            Self::NotValidFile => "not a valid file",
+            Self::FileFormatError => "file is not properly formatted",
+            Self::ParseError => "could not parse as usize",
+            Self::MismatchedNumberOfPoints => "number of points does not match what is expected",
+        };
+        f.write_str(s)
     }
 }
 
