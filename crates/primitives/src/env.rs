@@ -662,7 +662,7 @@ pub enum TransactTo {
     /// Simple call to an address.
     Call(Address),
     /// Contract creation.
-    Create(CreateScheme),
+    Create,
 }
 
 impl TransactTo {
@@ -675,15 +675,8 @@ impl TransactTo {
     /// Creates a contract.
     #[inline]
     pub fn create() -> Self {
-        Self::Create(CreateScheme::Create)
+        Self::Create
     }
-
-    /// Creates a contract with the given salt using `CREATE2`.
-    #[inline]
-    pub fn create2(salt: U256) -> Self {
-        Self::Create(CreateScheme::Create2 { salt })
-    }
-
     /// Returns `true` if the transaction is `Call`.
     #[inline]
     pub fn is_call(&self) -> bool {
@@ -693,7 +686,7 @@ impl TransactTo {
     /// Returns `true` if the transaction is `Create` or `Create2`.
     #[inline]
     pub fn is_create(&self) -> bool {
-        matches!(self, Self::Create(_))
+        matches!(self, Self::Create)
     }
 }
 

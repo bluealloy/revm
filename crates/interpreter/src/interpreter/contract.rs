@@ -1,6 +1,8 @@
 use super::analysis::to_analysed;
-use crate::primitives::{Address, Bytecode, Bytes, Env, TransactTo, B256, U256};
-use crate::CallContext;
+use crate::{
+    primitives::{Address, Bytecode, Bytes, Env, TransactTo, B256, U256},
+    CallInputs,
+};
 
 /// EVM contract information.
 #[derive(Clone, Debug, Default)]
@@ -12,12 +14,12 @@ pub struct Contract {
     pub bytecode: Bytecode,
     /// Bytecode hash for legacy. For EOF this would be None.
     pub hash: Option<B256>,
-    /// Contract address
-    pub address: Address,
+    /// Target address of the account. Storage of this address is going to be modified.
+    pub target_address: Address,
     /// Caller of the EVM.
     pub caller: Address,
-    /// Value send to contract.
-    pub value: U256,
+    /// Value send to contract from transaction or from CALL opcodes.
+    pub call_value: U256,
 }
 
 impl Contract {
@@ -27,9 +29,9 @@ impl Contract {
         input: Bytes,
         bytecode: Bytecode,
         hash: Option<B256>,
-        address: Address,
+        target_address: Address,
         caller: Address,
-        value: U256,
+        call_value: U256,
     ) -> Self {
         let bytecode = to_analysed(bytecode).try_into().expect("it is analyzed");
 
@@ -37,9 +39,9 @@ impl Contract {
             input,
             bytecode,
             hash,
-            address,
+            target_address,
             caller,
-            value,
+            call_value,
         }
     }
 
@@ -48,7 +50,7 @@ impl Contract {
     pub fn new_env(env: &Env, bytecode: Bytecode, hash: Option<B256>) -> Self {
         let contract_address = match env.tx.transact_to {
             TransactTo::Call(caller) => caller,
-            TransactTo::Create(..) => Address::ZERO,
+            TransactTo::Create => Address::ZERO,
         };
         Self::new(
             env.tx.data.clone(),
@@ -66,15 +68,15 @@ impl Contract {
         input: Bytes,
         bytecode: Bytecode,
         hash: Option<B256>,
-        call_context: &CallContext,
+        call_context: &CallInputs,
     ) -> Self {
         Self::new(
             input,
             bytecode,
             hash,
-            call_context.address,
+            call_context.target_address,
             call_context.caller,
-            call_context.apparent_value,
+            call_context.call_value(),
         )
     }
 

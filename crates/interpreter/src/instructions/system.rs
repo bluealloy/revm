@@ -21,7 +21,7 @@ pub fn keccak256<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 
 pub fn address<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, interpreter.contract.address.into_word());
+    push_b256!(interpreter, interpreter.contract.target_address.into_word());
 }
 
 pub fn caller<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -79,7 +79,7 @@ pub fn calldatasize<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 
 pub fn callvalue<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, interpreter.contract.value);
+    push!(interpreter, interpreter.contract.call_value);
 }
 
 pub fn calldatacopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {

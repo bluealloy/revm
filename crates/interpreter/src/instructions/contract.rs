@@ -3,14 +3,14 @@ mod call_helpers;
 pub use call_helpers::{
     calc_call_gas, get_memory_input_and_out_ranges, resize_memory_and_return_range,
 };
-use revm_primitives::keccak256;
+use revm_primitives::{keccak256, BerlinSpec};
 
 use crate::{
     gas::{self, cost_per_word, BASE, EOF_CREATE_GAS, KECCAK256WORD},
     interpreter::{Interpreter, InterpreterAction},
     primitives::{Address, Bytes, Eof, Spec, SpecId::*, B256, U256},
-    CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, EOFCreateInput, Host,
-    InstructionResult, Transfer, MAX_INITCODE_SIZE,
+    CallInputs, CallScheme, CreateInputs, CreateScheme, EOFCreateInput, Host, InstructionResult,
+    TransferValue, MAX_INITCODE_SIZE,
 };
 use core::{cmp::max, ops::Range};
 use std::boxed::Box;
@@ -77,7 +77,7 @@ pub fn eofcreate<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     // Send container for execution container is preverified.
     interpreter.next_action = InterpreterAction::EOFCreate {
         inputs: Box::new(EOFCreateInput::new(
-            interpreter.contract.address,
+            interpreter.contract.target_address,
             created_address,
             value,
             eof,
@@ -145,7 +145,7 @@ pub fn txcreate<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 
     interpreter.next_action = InterpreterAction::EOFCreate {
         inputs: Box::new(EOFCreateInput::new(
-            interpreter.contract.address,
+            interpreter.contract.target_address,
             created_address,
             value,
             eof,
@@ -160,37 +160,37 @@ pub fn return_contract<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
 }
 
-pub fn extcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    error_on_disabled_eof!(interpreter);
-    panic_on_eof!(interpreter);
-    pop_address!(interpreter, to);
-    pop!(interpreter, input_offset, input_size, value);
-    if interpreter.is_static && value != U256::ZERO {
-        interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
-        return;
-    }
+pub fn extcall_input(interpreter: &mut Interpreter) -> Option<Bytes> {
+    pop_ret!(interpreter, input_offset, input_size, None);
 
-    let Some(return_memory_offset) =
-        resize_memory_and_return_range(interpreter, input_offset, input_size)
-    else {
-        return;
-    };
+    let return_memory_offset =
+        resize_memory_and_return_range(interpreter, input_offset, input_size)?;
 
-    // TODO(EOF) check if destination is EOF.
-    let Some(load_result) = host.load_account(to) else {
+    Some(Bytes::copy_from_slice(
+        interpreter
+            .shared_memory
+            .slice_range(return_memory_offset.clone()),
+    ))
+}
+
+pub fn extcall_gas_calc<H: Host>(
+    interpreter: &mut Interpreter,
+    host: &mut H,
+    target: Address,
+    transfers_value: bool,
+) -> Option<u64> {
+    let Some(load_result) = host.load_account(target) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
-        return;
+        return None;
     };
-    // TODO(EOF) is EOF!
+
     if load_result.is_cold {
-        //gas!(interpreter, gas::COLD_ACCOUNT_ACCESS);
-        return;
+        gas!(interpreter, gas::COLD_ACCOUNT_ACCESS_COST, None);
     }
 
     let is_new = !load_result.is_not_existing;
-    let call_cost =
-        gas::call_cost::<SPEC>(value != U256::ZERO, is_new, load_result.is_cold, true, true);
-    gas!(interpreter, call_cost);
+    let call_cost = gas::call_cost::<BerlinSpec>(transfers_value, is_new, load_result.is_cold);
+    gas!(interpreter, call_cost, None);
 
     // 7. Calculate the gas available to callee as caller’s
     // remaining gas reduced by max(ceil(gas/64), MIN_RETAINED_GAS) (MIN_RETAINED_GAS is 5000).
@@ -201,43 +201,115 @@ pub fn extcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H)
         interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
         // TODO(EOF) error;
         // interpreter.instruction_result = InstructionResult::CallGasTooLow;
-        return;
+        return None;
     }
-    gas!(interpreter, gas_limit);
 
-    let input = Bytes::new();
+    // TODO check remaining gas more then N
+
+    gas!(interpreter, gas_limit, None);
+    Some(gas_limit)
+}
+
+pub fn extcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    error_on_disabled_eof!(interpreter);
+    panic_on_eof!(interpreter);
+    pop_address!(interpreter, target_address);
+
+    // input call
+    let Some(input) = extcall_input(interpreter) else {
+        return;
+    };
+
+    pop!(interpreter, value);
+    let has_transfer = value != U256::ZERO;
+
+    let Some(gas_limit) = extcall_gas_calc(interpreter, host, target_address, has_transfer) else {
+        return;
+    };
+    // TODO Check if static and value 0
 
     // Call host to interact with target contract
     interpreter.next_action = InterpreterAction::Call {
         inputs: Box::new(CallInputs {
-            contract: to,
-            transfer: Transfer {
-                source: interpreter.contract.address,
-                target: to,
-                value,
-            },
             input,
             gas_limit,
-            context: CallContext {
-                address: to,
-                caller: interpreter.contract.address,
-                code_address: to,
-                apparent_value: value,
-                scheme: CallScheme::Call,
-            },
+            target_address: target_address,
+            caller: interpreter.contract.target_address,
+            bytecode_address: target_address,
+            value: TransferValue::Value(value),
+            scheme: CallScheme::Call,
             is_static: interpreter.is_static,
-            return_memory_offset,
+            is_eof: true,
+            return_memory_offset: 0..0,
         }),
     };
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn extdcall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extdcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     error_on_disabled_eof!(interpreter);
+    panic_on_eof!(interpreter);
+    pop_address!(interpreter, target_address);
+
+    // input call
+    let Some(input) = extcall_input(interpreter) else {
+        return;
+    };
+
+    let Some(gas_limit) = extcall_gas_calc(interpreter, host, target_address, false) else {
+        return;
+    };
+    // TODO Check if static and value 0
+
+    // Call host to interact with target contract
+    interpreter.next_action = InterpreterAction::Call {
+        inputs: Box::new(CallInputs {
+            input,
+            gas_limit,
+            target_address: target_address,
+            caller: interpreter.contract.target_address,
+            bytecode_address: target_address,
+            value: TransferValue::ApparentValue(interpreter.contract.call_value),
+            // TODO(EOF) should be EofDelegateCall?
+            scheme: CallScheme::DelegateCall,
+            is_static: interpreter.is_static,
+            is_eof: true,
+            return_memory_offset: 0..0,
+        }),
+    };
+    interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
 pub fn extscall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     error_on_disabled_eof!(interpreter);
+    panic_on_eof!(interpreter);
+    pop_address!(interpreter, target_address);
+
+    // input call
+    let Some(input) = extcall_input(interpreter) else {
+        return;
+    };
+
+    let Some(gas_limit) = extcall_gas_calc(interpreter, host, target_address, false) else {
+        return;
+    };
+
+    // Call host to interact with target contract
+    interpreter.next_action = InterpreterAction::Call {
+        inputs: Box::new(CallInputs {
+            input,
+            gas_limit,
+            target_address: target_address,
+            caller: interpreter.contract.target_address,
+            bytecode_address: target_address,
+            value: TransferValue::Value(U256::ZERO),
+            scheme: CallScheme::Call,
+            is_static: interpreter.is_static,
+            is_eof: true,
+            return_memory_offset: 0..0,
+        }),
+    };
+    interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
 pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
@@ -300,7 +372,7 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
     // Call host to interact with target contract
     interpreter.next_action = InterpreterAction::Create {
         inputs: Box::new(CreateInputs {
-            caller: interpreter.contract.address,
+            caller: interpreter.contract.target_address,
             scheme,
             value,
             init_code: code,
@@ -337,8 +409,6 @@ pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
         load_result,
         value != U256::ZERO,
         local_gas_limit,
-        true,
-        true,
     ) else {
         return;
     };
@@ -353,22 +423,15 @@ pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     // Call host to interact with target contract
     interpreter.next_action = InterpreterAction::Call {
         inputs: Box::new(CallInputs {
-            contract: to,
-            transfer: Transfer {
-                source: interpreter.contract.address,
-                target: to,
-                value,
-            },
             input,
             gas_limit,
-            context: CallContext {
-                address: to,
-                caller: interpreter.contract.address,
-                code_address: to,
-                apparent_value: value,
-                scheme: CallScheme::Call,
-            },
+            target_address: to,
+            caller: interpreter.contract.target_address,
+            bytecode_address: to,
+            value: TransferValue::Value(value),
+            scheme: CallScheme::Call,
             is_static: interpreter.is_static,
+            is_eof: false,
             return_memory_offset,
         }),
     };
@@ -397,8 +460,6 @@ pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut 
         load_result,
         value != U256::ZERO,
         local_gas_limit,
-        true,
-        false,
     ) else {
         return;
     };
@@ -413,22 +474,15 @@ pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut 
     // Call host to interact with target contract
     interpreter.next_action = InterpreterAction::Call {
         inputs: Box::new(CallInputs {
-            contract: to,
-            transfer: Transfer {
-                source: interpreter.contract.address,
-                target: interpreter.contract.address,
-                value,
-            },
             input,
             gas_limit,
-            context: CallContext {
-                address: interpreter.contract.address,
-                caller: interpreter.contract.address,
-                code_address: to,
-                apparent_value: value,
-                scheme: CallScheme::CallCode,
-            },
+            target_address: interpreter.contract.target_address,
+            caller: interpreter.contract.target_address,
+            bytecode_address: to,
+            value: TransferValue::ApparentValue(value),
+            scheme: CallScheme::CallCode,
             is_static: interpreter.is_static,
+            is_eof: false,
             return_memory_offset,
         }),
     };
@@ -452,14 +506,9 @@ pub fn delegate_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &
         return;
     };
 
-    let Some(gas_limit) = calc_call_gas::<H, SPEC>(
-        interpreter,
-        load_result,
-        false,
-        local_gas_limit,
-        false,
-        false,
-    ) else {
+    let Some(gas_limit) =
+        calc_call_gas::<H, SPEC>(interpreter, load_result, false, local_gas_limit)
+    else {
         return;
     };
 
@@ -468,24 +517,15 @@ pub fn delegate_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &
     // Call host to interact with target contract
     interpreter.next_action = InterpreterAction::Call {
         inputs: Box::new(CallInputs {
-            contract: to,
-            // This is dummy send for StaticCall and DelegateCall,
-            // it should do nothing and not touch anything.
-            transfer: Transfer {
-                source: interpreter.contract.address,
-                target: interpreter.contract.address,
-                value: U256::ZERO,
-            },
             input,
             gas_limit,
-            context: CallContext {
-                address: interpreter.contract.address,
-                caller: interpreter.contract.caller,
-                code_address: to,
-                apparent_value: interpreter.contract.value,
-                scheme: CallScheme::DelegateCall,
-            },
+            target_address: interpreter.contract.target_address,
+            caller: interpreter.contract.caller,
+            bytecode_address: to,
+            value: TransferValue::ApparentValue(interpreter.contract.call_value),
+            scheme: CallScheme::DelegateCall,
             is_static: interpreter.is_static,
+            is_eof: false,
             return_memory_offset,
         }),
     };
@@ -500,7 +540,6 @@ pub fn static_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
     // max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
-    let value = U256::ZERO;
     let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(interpreter) else {
         return;
     };
@@ -510,14 +549,9 @@ pub fn static_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
         return;
     };
 
-    let Some(gas_limit) = calc_call_gas::<H, SPEC>(
-        interpreter,
-        load_result,
-        false,
-        local_gas_limit,
-        false,
-        true,
-    ) else {
+    let Some(gas_limit) =
+        calc_call_gas::<H, SPEC>(interpreter, load_result, false, local_gas_limit)
+    else {
         return;
     };
     gas!(interpreter, gas_limit);
@@ -525,24 +559,15 @@ pub fn static_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
     // Call host to interact with target contract
     interpreter.next_action = InterpreterAction::Call {
         inputs: Box::new(CallInputs {
-            contract: to,
-            // This is dummy send for StaticCall and DelegateCall,
-            // it should do nothing and not touch anything.
-            transfer: Transfer {
-                source: interpreter.contract.address,
-                target: interpreter.contract.address,
-                value: U256::ZERO,
-            },
             input,
             gas_limit,
-            context: CallContext {
-                address: to,
-                caller: interpreter.contract.address,
-                code_address: to,
-                apparent_value: value,
-                scheme: CallScheme::StaticCall,
-            },
+            target_address: to,
+            caller: interpreter.contract.target_address,
+            bytecode_address: to,
+            value: TransferValue::Value(U256::ZERO),
+            scheme: CallScheme::StaticCall,
             is_static: true,
+            is_eof: false,
             return_memory_offset,
         }),
     };

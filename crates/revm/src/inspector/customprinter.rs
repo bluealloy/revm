@@ -79,11 +79,12 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         inputs: &mut CallInputs,
     ) -> Option<CallOutcome> {
         println!(
-            "SM CALL:   {:?}, context:{:?}, is_static:{:?}, transfer:{:?}, input_size:{:?}",
-            inputs.contract,
-            inputs.context,
+            "SM Address: {:?}, caller:{:?},target:{:?} is_static:{:?}, transfer:{:?}, input_size:{:?}",
+            inputs.bytecode_address,
+            inputs.caller,
+            inputs.target_address,
             inputs.is_static,
-            inputs.transfer,
+            inputs.value,
             inputs.input.len(),
         );
         None

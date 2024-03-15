@@ -8,7 +8,6 @@ use revm::{
     db::EmptyDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
-    interpreter::CreateScheme,
     primitives::{
         calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, ExecutionResult,
         SpecId, TransactTo, B256, U256,
@@ -332,7 +331,7 @@ pub fn execute_test_suite(
 
                 let to = match unit.transaction.to {
                     Some(add) => TransactTo::Call(add),
-                    None => TransactTo::Create(CreateScheme::Create),
+                    None => TransactTo::Create,
                 };
                 env.tx.transact_to = to;
 
@@ -401,7 +400,7 @@ pub fn execute_test_suite(
                 // print only once or
                 // if we are already in trace mode, just return error
                 static FAILED: AtomicBool = AtomicBool::new(false);
-                if FAILED.swap(true, Ordering::SeqCst) {
+                if trace || FAILED.swap(true, Ordering::SeqCst) {
                     return Err(e);
                 }
 
@@ -421,6 +420,7 @@ pub fn execute_test_suite(
                 let mut evm = Evm::builder()
                     .with_spec_id(spec_id)
                     .with_db(state)
+                    .with_env(env.clone())
                     .with_external_context(TracerEip3155::new(Box::new(stdout()), false))
                     .append_handler_register(inspector_handle_register)
                     .build();

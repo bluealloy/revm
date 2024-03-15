@@ -26,7 +26,7 @@ pub mod instructions;
 mod interpreter;
 
 // Reexport primary types.
-pub use call_inputs::{CallContext, CallInputs, CallScheme, Transfer};
+pub use call_inputs::{CallInputs, CallScheme, TransferValue};
 pub use call_outcome::CallOutcome;
 pub use create_inputs::{CreateInputs, CreateScheme};
 pub use create_outcome::CreateOutcome;

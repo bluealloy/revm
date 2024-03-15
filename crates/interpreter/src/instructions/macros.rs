@@ -94,17 +94,26 @@ macro_rules! shared_memory_resize {
 
 macro_rules! pop_address {
     ($interp:expr, $x1:ident) => {
+        pop_address_ret!($interp, $x1, ())
+    };
+    ($interp:expr, $x1:ident, $x2:ident) => {
+        pop_address_ret!($interp, $x1, $x2, ())
+    };
+}
+
+macro_rules! pop_address_ret {
+    ($interp:expr, $x1:ident, $ret:expr) => {
         if $interp.stack.len() < 1 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
-            return;
+            return $ret;
         }
         // SAFETY: Length is checked above.
         let $x1 = Address::from_word(B256::from(unsafe { $interp.stack.pop_unsafe() }));
     };
-    ($interp:expr, $x1:ident, $x2:ident) => {
+    ($interp:expr, $x1:ident, $x2:ident, $ret:expr) => {
         if $interp.stack.len() < 2 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
-            return;
+            return $ret;
         }
         // SAFETY: Length is checked above.
         let $x1 = Address::from_word(B256::from(unsafe { $interp.stack.pop_unsafe() }));

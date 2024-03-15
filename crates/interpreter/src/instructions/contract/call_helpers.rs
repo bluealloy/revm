@@ -50,17 +50,9 @@ pub fn calc_call_gas<H: Host, SPEC: Spec>(
     load_result: LoadAccountResult,
     has_transfer: bool,
     local_gas_limit: u64,
-    is_call_or_callcode: bool,
-    is_call_or_staticcall: bool,
 ) -> Option<u64> {
     let is_new = !load_result.is_not_existing;
-    let call_cost = gas::call_cost::<SPEC>(
-        has_transfer,
-        is_new,
-        load_result.is_cold,
-        is_call_or_callcode,
-        is_call_or_staticcall,
-    );
+    let call_cost = gas::call_cost::<SPEC>(has_transfer, is_new, load_result.is_cold);
 
     gas!(interpreter, call_cost, None);
 

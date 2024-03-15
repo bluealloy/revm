@@ -363,7 +363,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 ctx,
                 CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
             )?,
-            TransactTo::Create(_) => exec.create(
+            TransactTo::Create => exec.create(
                 ctx,
                 CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
             )?,

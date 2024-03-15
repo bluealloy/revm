@@ -21,13 +21,13 @@ pub struct CreateInputs {
 impl CreateInputs {
     /// Creates new create inputs.
     pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
-        let TransactTo::Create(scheme) = tx_env.transact_to else {
+        let TransactTo::Create = tx_env.transact_to else {
             return None;
         };
 
         Some(CreateInputs {
             caller: tx_env.caller,
-            scheme,
+            scheme: CreateScheme::Create,
             value: tx_env.value,
             init_code: tx_env.data.clone(),
             gas_limit,

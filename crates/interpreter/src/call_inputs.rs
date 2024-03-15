@@ -6,46 +6,52 @@ use std::boxed::Box;
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallInputs {
-    /// The target of the call.
-    pub contract: Address,
-    /// The transfer, if any, in this call.
-    pub transfer: Transfer,
     /// The call data of the call.
     pub input: Bytes,
+    /// The return memory offset where the output of the call is written.
+    /// For EOF this range is invalid as EOF does not return anything.
+    pub return_memory_offset: Range<usize>,
     /// The gas limit of the call.
     pub gas_limit: u64,
-    /// The context of the call.
-    pub context: CallContext,
+    /// This account bytecode is going to be executed.  
+    pub bytecode_address: Address,
+    /// Target address, this account storage is going to be modified.
+    pub target_address: Address,
+    /// This caller is invoking this call.
+    pub caller: Address,
+    /// Ether value that is transferred.
+    ///
+    /// If enum is `Value` ether transfer is executed
+    /// between `caller`` and the `target_address`.
+    ///
+    /// If enum is `ApparentValue` transfer is not done and apparent value is
+    /// used by CALLVALUE opcode. This is needed for delegate call.
+    pub value: TransferValue,
+    /// The scheme used for the call.
+    pub scheme: CallScheme,
     /// Whether this is a static call.
     pub is_static: bool,
-    /// The return memory offset where the output of the call is written.
-    pub return_memory_offset: Range<usize>,
+    /// Is called from EOF code.
+    pub is_eof: bool,
 }
 
 impl CallInputs {
     /// Creates new call inputs.
     pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
-        let TransactTo::Call(address) = tx_env.transact_to else {
+        let TransactTo::Call(target_address) = tx_env.transact_to else {
             return None;
         };
 
         Some(CallInputs {
-            contract: address,
-            transfer: Transfer {
-                source: tx_env.caller,
-                target: address,
-                value: tx_env.value,
-            },
             input: tx_env.data.clone(),
             gas_limit,
-            context: CallContext {
-                caller: tx_env.caller,
-                address,
-                code_address: address,
-                apparent_value: tx_env.value,
-                scheme: CallScheme::Call,
-            },
+            target_address,
+            bytecode_address: target_address,
+            caller: tx_env.caller,
+            value: TransferValue::Value(tx_env.value),
+            scheme: CallScheme::Call,
             is_static: false,
+            is_eof: false,
             return_memory_offset: 0..0,
         })
     }
@@ -53,6 +59,12 @@ impl CallInputs {
     /// Returns boxed call inputs.
     pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
         Self::new(tx_env, gas_limit).map(Box::new)
+    }
+
+    /// Return call value
+    pub fn call_value(&self) -> U256 {
+        let (TransferValue::Value(value) | TransferValue::ApparentValue(value)) = self.value;
+        value
     }
 }
 
@@ -70,42 +82,19 @@ pub enum CallScheme {
     StaticCall,
 }
 
-/// Context of a runtime call.
+/// Transfered value from caller to callee.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct CallContext {
-    /// Execution address.
-    pub address: Address,
-    /// Caller address of the EVM.
-    pub caller: Address,
-    /// The address the contract code was loaded from, if any.
-    pub code_address: Address,
-    /// Apparent value of the EVM.
-    pub apparent_value: U256,
-    /// The scheme used for the call.
-    pub scheme: CallScheme,
+pub enum TransferValue {
+    /// Transfer value from caller to callee.
+    Value(U256),
+    /// For delegate call, the value is not transferred but
+    /// apparent value is used for CALLVALUE opcode
+    ApparentValue(U256),
 }
 
-impl Default for CallContext {
+impl Default for TransferValue {
     fn default() -> Self {
-        CallContext {
-            address: Address::default(),
-            caller: Address::default(),
-            code_address: Address::default(),
-            apparent_value: U256::default(),
-            scheme: CallScheme::Call,
-        }
+        TransferValue::Value(U256::ZERO)
     }
-}
-
-/// Transfer from source to target, with given value.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Transfer {
-    /// The source address.
-    pub source: Address,
-    /// The target address.
-    pub target: Address,
-    /// The transfer value.
-    pub value: U256,
 }

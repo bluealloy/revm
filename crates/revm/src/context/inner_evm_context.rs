@@ -1,18 +1,18 @@
 use crate::{
     db::Database,
     interpreter::{
-        analysis::to_analysed, gas, return_ok, CallInputs, Contract, CreateInputs, EOFCreateInput,
-        Gas, InstructionResult, Interpreter, InterpreterResult, LoadAccountResult, SStoreResult,
+        analysis::to_analysed, gas, return_ok, Contract, CreateInputs, EOFCreateInput, Gas,
+        InstructionResult, Interpreter, InterpreterResult, LoadAccountResult, SStoreResult,
         SelfDestructResult, MAX_CODE_SIZE,
     },
     journaled_state::JournaledState,
     primitives::{
         keccak256, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env,
-        Eof, HandlerCfg, HashSet, Spec,
+        Eof, HashSet, Spec,
         SpecId::{self, *},
         B256, U256,
     },
-    ContextPrecompiles, FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
+    FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
 use std::boxed::Box;
 

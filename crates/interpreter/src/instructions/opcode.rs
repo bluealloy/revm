@@ -391,7 +391,7 @@ opcodes! {
     // 0xF6
     0xF7 => RETURNDATALOAD => system::returndataload::<H>,
     0xF8 => EXTCALL => contract::extcall::<H,SPEC>,
-    0xF9 => EXFCALL => contract::extdcall::<H>,
+    0xF9 => EXFCALL => contract::extdcall::<H, SPEC>,
     0xFA => STATICCALL   => contract::static_call::<H, SPEC>,
     0xFB => EXTSCALL => contract::extscall::<H>,
     // 0xFC

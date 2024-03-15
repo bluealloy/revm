@@ -32,7 +32,7 @@ pub fn balance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H)
 pub fn selfbalance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, ISTANBUL);
     gas!(interpreter, gas::LOW);
-    let Some((balance, _)) = host.balance(interpreter.contract.address) else {
+    let Some((balance, _)) = host.balance(interpreter.contract.target_address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
@@ -140,7 +140,7 @@ pub fn blockhash<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
 pub fn sload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     pop!(interpreter, index);
 
-    let Some((value, is_cold)) = host.sload(interpreter.contract.address, index) else {
+    let Some((value, is_cold)) = host.sload(interpreter.contract.target_address, index) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
@@ -157,7 +157,7 @@ pub fn sstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) 
         present_value: old,
         new_value: new,
         is_cold,
-    }) = host.sstore(interpreter.contract.address, index, value)
+    }) = host.sstore(interpreter.contract.target_address, index, value)
     else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
@@ -178,7 +178,7 @@ pub fn tstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) 
 
     pop!(interpreter, index, value);
 
-    host.tstore(interpreter.contract.address, index, value);
+    host.tstore(interpreter.contract.target_address, index, value);
 }
 
 /// EIP-1153: Transient storage opcodes
@@ -189,7 +189,7 @@ pub fn tload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
 
     pop_top!(interpreter, index);
 
-    *index = host.tload(interpreter.contract.address, *index);
+    *index = host.tload(interpreter.contract.target_address, *index);
 }
 
 pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter, host: &mut H) {
@@ -218,7 +218,7 @@ pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter, host: &mut H)
     }
 
     let log = Log {
-        address: interpreter.contract.address,
+        address: interpreter.contract.target_address,
         data: LogData::new(topics, data).expect("LogData should have <=4 topics"),
     };
 
@@ -230,7 +230,7 @@ pub fn selfdestruct<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &m
     error_on_static_call!(interpreter);
     pop_address!(interpreter, target);
 
-    let Some(res) = host.selfdestruct(interpreter.contract.address, target) else {
+    let Some(res) = host.selfdestruct(interpreter.contract.target_address, target) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
