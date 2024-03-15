@@ -55,7 +55,7 @@ mod secp256k1 {
         let sig = RecoverableSignature::from_compact(sig.as_slice(), recid)?;
 
         let secp = Secp256k1::new();
-        let msg = Message::from_digest_slice(msg.as_slice())?;
+        let msg = Message::from_digest(msg.0);
         let public = secp.recover_ecdsa(&msg, &sig)?;
 
         let mut hash = keccak256(&public.serialize_uncompressed()[1..]);
