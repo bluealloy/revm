@@ -44,7 +44,8 @@ impl<H: Host> InstructionTables<'_, H> {
 impl<'a, H: Host + 'a> InstructionTables<'a, H> {
     /// Inserts a boxed instruction into the table with the specified index.
     ///
-    /// Returns an error if the table is not boxed.
+    /// This will convert the table into the [BoxedInstructionTable] variant if it is currently a
+    /// plain instruction table, before inserting the instruction.
     #[inline]
     pub fn insert_boxed(&mut self, opcode: u8, instruction: BoxedInstruction<'a, H>) {
         // first convert the table to boxed variant
