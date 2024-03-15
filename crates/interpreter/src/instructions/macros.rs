@@ -1,3 +1,7 @@
+//! Utility macros to help implementementing opcode instruction functions.
+
+/// Fails the instruction if the current call is static.
+#[macro_export]
 macro_rules! check_staticcall {
     ($interp:expr) => {
         if $interp.is_static {
@@ -7,6 +11,8 @@ macro_rules! check_staticcall {
     };
 }
 
+/// Fails the instruction if the `min` is not enabled in `SPEC`.
+#[macro_export]
 macro_rules! check {
     ($interp:expr, $min:ident) => {
         // TODO: Force const-eval on the condition with a `const {}` block once they are stable
@@ -17,6 +23,8 @@ macro_rules! check {
     };
 }
 
+/// Records a `gas` cost and fails the instruction if it would exceed the available gas.
+#[macro_export]
 macro_rules! gas {
     ($interp:expr, $gas:expr) => {
         gas!($interp, $gas, ())
@@ -29,12 +37,16 @@ macro_rules! gas {
     };
 }
 
+/// Records a `gas` refund.
+#[macro_export]
 macro_rules! refund {
     ($interp:expr, $gas:expr) => {
         $interp.gas.record_refund($gas)
     };
 }
 
+/// Same as [`gas!`], but with `gas` as an option.
+#[macro_export]
 macro_rules! gas_or_fail {
     ($interp:expr, $gas:expr) => {
         match $gas {
@@ -47,6 +59,9 @@ macro_rules! gas_or_fail {
     };
 }
 
+/// Resizes the interpreter memory if necessary. Fails the instruction if the memory or gas limit
+/// is exceeded.
+#[macro_export]
 macro_rules! shared_memory_resize {
     ($interp:expr, $offset:expr, $len:expr) => {
         shared_memory_resize!($interp, $offset, $len, ())
@@ -74,6 +89,8 @@ macro_rules! shared_memory_resize {
     };
 }
 
+/// Pops `Address` values from the stack. Fails the instruction if the stack is too small.
+#[macro_export]
 macro_rules! pop_address {
     ($interp:expr, $x1:ident) => {
         if $interp.stack.len() < 1 {
@@ -94,6 +111,8 @@ macro_rules! pop_address {
     };
 }
 
+/// Pops `U256` values from the stack. Fails the instruction if the stack is too small.
+#[macro_export]
 macro_rules! pop {
     ($interp:expr, $x1:ident) => {
         pop_ret!($interp, $x1, ())
@@ -109,6 +128,9 @@ macro_rules! pop {
     };
 }
 
+/// Pops `U256` values from the stack, and returns `ret`.
+/// Fails the instruction if the stack is too small.
+#[macro_export]
 macro_rules! pop_ret {
     ($interp:expr, $x1:ident, $ret:expr) => {
         if $interp.stack.len() < 1 {
@@ -144,6 +166,9 @@ macro_rules! pop_ret {
     };
 }
 
+/// Pops `U256` values from the stack, and returns a reference to the top of the stack.
+/// Fails the instruction if the stack is too small.
+#[macro_export]
 macro_rules! pop_top {
     ($interp:expr, $x1:ident) => {
         if $interp.stack.len() < 1 {
@@ -171,6 +196,7 @@ macro_rules! pop_top {
     };
 }
 
+/// Pushes `B256` values onto the stack. Fails the instruction if the stack is full.
 #[macro_export]
 macro_rules! push_b256 {
 	($interp:expr, $($x:expr),* $(,)?) => ($(
@@ -184,6 +210,7 @@ macro_rules! push_b256 {
     )*)
 }
 
+/// Pushes a `B256` value onto the stack. Fails the instruction if the stack is full.
 #[macro_export]
 macro_rules! push {
     ($interp:expr, $($x:expr),* $(,)?) => ($(
@@ -197,6 +224,8 @@ macro_rules! push {
     )*)
 }
 
+/// Converts a `U256` value to a `u64`, saturating to `MAX` if the value is too large.
+#[macro_export]
 macro_rules! as_u64_saturated {
     ($v:expr) => {{
         let x: &[u64; 4] = $v.as_limbs();
@@ -208,12 +237,16 @@ macro_rules! as_u64_saturated {
     }};
 }
 
+/// Converts a `U256` value to a `usize`, saturating to `MAX` if the value is too large.
+#[macro_export]
 macro_rules! as_usize_saturated {
     ($v:expr) => {
         usize::try_from(as_u64_saturated!($v)).unwrap_or(usize::MAX)
     };
 }
 
+/// Converts a `U256` value to a `usize`, failing the instruction if the value is too large.
+#[macro_export]
 macro_rules! as_usize_or_fail {
     ($interp:expr, $v:expr) => {
         as_usize_or_fail_ret!($interp, $v, ())
@@ -223,6 +256,9 @@ macro_rules! as_usize_or_fail {
     };
 }
 
+/// Converts a `U256` value to a `usize` and returns `ret`,
+/// failing the instruction if the value is too large.
+#[macro_export]
 macro_rules! as_usize_or_fail_ret {
     ($interp:expr, $v:expr, $ret:expr) => {
         as_usize_or_fail_ret!($interp, $v, InstructionResult::InvalidOperandOOG, $ret)
