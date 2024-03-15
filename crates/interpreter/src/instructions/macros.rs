@@ -62,9 +62,9 @@ macro_rules! gas_or_fail {
 /// Resizes the interpreter memory if necessary. Fails the instruction if the memory or gas limit
 /// is exceeded.
 #[macro_export]
-macro_rules! shared_memory_resize {
+macro_rules! resize_memory {
     ($interp:expr, $offset:expr, $len:expr) => {
-        shared_memory_resize!($interp, $offset, $len, ())
+        resize_memory!($interp, $offset, $len, ())
     };
     ($interp:expr, $offset:expr, $len:expr, $ret:expr) => {
         let size = $offset.saturating_add($len);
