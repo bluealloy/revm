@@ -1326,6 +1326,7 @@ dependencies = [
  "hashbrown",
  "paste",
  "revm-interpreter 2.1.0",
+ "rwasm-codegen",
 ]
 
 [[package]]
@@ -3416,6 +3417,7 @@ version = "0.30.0"
 dependencies = [
  "byteorder",
  "downcast-rs",
+ "hashbrown",
  "libm",
  "num-traits",
  "paste",
@@ -3429,6 +3431,7 @@ name = "rwasm-codegen"
 version = "0.30.0"
 dependencies = [
  "byteorder",
+ "hashbrown",
  "rwasm",
 ]
 

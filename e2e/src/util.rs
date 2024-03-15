@@ -3,8 +3,10 @@ use revm::primitives::{
     Account,
     AccountInfo,
     Address,
+    BlockEnv,
     Bytecode,
     Bytes,
+    CfgEnv,
     CreateScheme,
     Env,
     Eval,
@@ -91,6 +93,60 @@ impl TestingContext {
             _ => {}
         }
         res
+    }
+}
+
+impl TestingContext {
+    pub(crate) fn deploy_wasm_contract(
+        &mut self,
+        caller: Address,
+        input_binary: &[u8],
+    ) -> ResultAndState {
+        let mut evm = revm_rwasm::RWASM::with_env(Env {
+            cfg: CfgEnv::default(),
+            block: BlockEnv::default(),
+            tx: TxEnv {
+                gas_limit: 10_000_000,
+                transact_to: TransactTo::Create(CreateScheme::Create),
+                data: Bytes::copy_from_slice(input_binary),
+                caller,
+                ..Default::default()
+            },
+        });
+        let res = evm.transact().unwrap();
+        match &res.result {
+            ExecutionResult::Success { output, .. } => match output {
+                Output::Create(bytecode, address) => {
+                    let bytecode = Bytecode::new_raw(bytecode.clone());
+                    let mut account_info = self.get_account_mut(address.unwrap());
+                    account_info.code = Some(bytecode.clone());
+                    account_info.code_hash = bytecode.hash_slow();
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        res
+    }
+
+    pub(crate) fn call_wasm_contract(
+        &self,
+        caller: Address,
+        to: Address,
+        input: &[u8],
+    ) -> ResultAndState {
+        let mut evm = revm_rwasm::RWASM::with_env(Env {
+            cfg: Default::default(),
+            block: Default::default(),
+            tx: TxEnv {
+                gas_limit: 10_000_000,
+                transact_to: TransactTo::Call(to),
+                data: Bytes::copy_from_slice(input),
+                caller,
+                ..Default::default()
+            },
+        });
+        evm.transact().unwrap()
     }
 }
 
