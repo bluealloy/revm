@@ -17,6 +17,7 @@ macro_rules! check {
     };
 }
 
+#[macro_export]
 macro_rules! gas {
     ($interp:expr, $gas:expr) => {
         gas!($interp, $gas, ())
@@ -47,6 +48,7 @@ macro_rules! gas_or_fail {
     };
 }
 
+#[macro_export]
 macro_rules! shared_memory_resize {
     ($interp:expr, $offset:expr, $len:expr) => {
         shared_memory_resize!($interp, $offset, $len, ())
@@ -55,7 +57,7 @@ macro_rules! shared_memory_resize {
         let size = $offset.saturating_add($len);
         if size > $interp.shared_memory.len() {
             // We are fine with saturating to usize if size is close to MAX value.
-            let rounded_size = crate::interpreter::next_multiple_of_32(size);
+            let rounded_size = $crate::interpreter::next_multiple_of_32(size);
 
             #[cfg(feature = "memory_limit")]
             if $interp.shared_memory.limit_reached(size) {
@@ -65,7 +67,10 @@ macro_rules! shared_memory_resize {
 
             // Gas is calculated in evm words (256bits).
             let words_num = rounded_size / 32;
-            if !$interp.gas.record_memory(crate::gas::memory_gas(words_num)) {
+            if !$interp
+                .gas
+                .record_memory($crate::gas::memory_gas(words_num))
+            {
                 $interp.instruction_result = InstructionResult::MemoryLimitOOG;
                 return $ret;
             }
@@ -94,21 +99,23 @@ macro_rules! pop_address {
     };
 }
 
+#[macro_export]
 macro_rules! pop {
     ($interp:expr, $x1:ident) => {
-        pop_ret!($interp, $x1, ())
+        $crate::pop_ret!($interp, $x1, ())
     };
     ($interp:expr, $x1:ident, $x2:ident) => {
-        pop_ret!($interp, $x1, $x2, ())
+        $crate::pop_ret!($interp, $x1, $x2, ())
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
-        pop_ret!($interp, $x1, $x2, $x3, ())
+        $crate::pop_ret!($interp, $x1, $x2, $x3, ())
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
-        pop_ret!($interp, $x1, $x2, $x3, $x4, ())
+        $crate::pop_ret!($interp, $x1, $x2, $x3, $x4, ())
     };
 }
 
+#[macro_export]
 macro_rules! pop_ret {
     ($interp:expr, $x1:ident, $ret:expr) => {
         if $interp.stack.len() < 1 {
