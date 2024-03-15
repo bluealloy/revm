@@ -448,7 +448,7 @@ mod test {
         },
         Context, ContextPrecompile, ContextStatefulPrecompile, Evm, InMemoryDB, InnerEvmContext,
     };
-    use revm_interpreter::{opcode::InstructionTables, Host, Interpreter};
+    use revm_interpreter::{Host, Interpreter};
     use std::{cell::RefCell, rc::Rc, sync::Arc};
 
     /// Custom evm context
@@ -491,9 +491,9 @@ mod test {
                 // need to make esure the instruction table is a boxed instruction table so that we
                 // can insert the custom instruction as a boxed instruction
                 let mut table = handler.take_instruction_table();
-                table = table.map(InstructionTables::to_boxed).map(|mut table| {
+                table = table.map(|mut table| {
                     // now we can finally insert
-                    table.insert_boxed(0xEF, custom_instruction).unwrap();
+                    table.insert_boxed(0xEF, custom_instruction);
                     table
                 });
                 handler.instruction_table = table;

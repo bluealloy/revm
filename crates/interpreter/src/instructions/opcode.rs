@@ -46,16 +46,17 @@ impl<'a, H: Host + 'a> InstructionTables<'a, H> {
     ///
     /// Returns an error if the table is not boxed.
     #[inline]
-    pub fn insert_boxed(
-        &mut self,
-        opcode: u8,
-        instruction: BoxedInstruction<'a, H>,
-    ) -> Result<(), InsertError> {
+    pub fn insert_boxed(&mut self, opcode: u8, instruction: BoxedInstruction<'a, H>) {
+        // first convert the table to boxed variant
+        self.convert_boxed();
+
+        // now we can insert the instruction
         match self {
-            Self::Plain(_) => Err(InsertError::NotBoxed),
+            Self::Plain(_) => {
+                unreachable!("we already converted the table to boxed variant");
+            }
             Self::Boxed(table) => {
                 table[opcode as usize] = Box::new(instruction);
-                Ok(())
             }
         }
     }
@@ -73,19 +74,21 @@ impl<'a, H: Host + 'a> InstructionTables<'a, H> {
         }
     }
 
-    /// Converts the instruction table to a boxed variant. If the table is already boxed, this does
-    /// nothing and returns the table unchanged.
+    /// Converts the current instruction table to a boxed variant. If the table is already boxed,
+    /// this is a no-op.
     #[inline]
-    pub fn to_boxed(self) -> InstructionTables<'a, H> {
-        let boxed_tables = match self {
-            Self::Plain(table) => core::array::from_fn(|i| {
-                let instruction: BoxedInstruction<'a, H> = Box::new(table[i]);
-                instruction
-            }),
-            Self::Boxed(table) => table,
-        };
+    pub fn convert_boxed(&mut self) {
+        match self {
+            Self::Plain(table) => {
+                let boxed_table = Self::Boxed(core::array::from_fn(|i| {
+                    let instruction: BoxedInstruction<'a, H> = Box::new(table[i]);
+                    instruction
+                }));
 
-        Self::Boxed(boxed_tables)
+                *self = boxed_table;
+            }
+            Self::Boxed(_) => {}
+        };
     }
 }
 
