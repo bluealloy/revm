@@ -81,12 +81,10 @@ impl<'a, H: Host + 'a> InstructionTables<'a, H> {
     pub fn convert_boxed(&mut self) {
         match self {
             Self::Plain(table) => {
-                let boxed_table = Self::Boxed(core::array::from_fn(|i| {
+                *self = Self::Boxed(core::array::from_fn(|i| {
                     let instruction: BoxedInstruction<'a, H> = Box::new(table[i]);
                     instruction
                 }));
-
-                *self = boxed_table;
             }
             Self::Boxed(_) => {}
         };
