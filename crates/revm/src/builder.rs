@@ -449,7 +449,62 @@ mod test {
         Context, ContextPrecompile, ContextStatefulPrecompile, Evm, InMemoryDB, InnerEvmContext,
     };
     use revm_interpreter::{Host, Interpreter};
-    use std::sync::Arc;
+    use std::{cell::RefCell, rc::Rc, sync::Arc};
+
+    /// Custom evm context
+    #[derive(Default, Clone, Debug)]
+    pub(crate) struct CustomContext {
+        pub(crate) inner: Rc<RefCell<u8>>,
+    }
+
+    #[test]
+    fn simple_add_stateful_instruction() {
+        let code = Bytecode::new_raw([0xEF, 0x00].into());
+        let code_hash = code.hash_slow();
+        let to_addr = address!("ffffffffffffffffffffffffffffffffffffffff");
+
+        // initialize the custom context and make sure it's zero
+        let custom_context = CustomContext::default();
+        assert_eq!(*custom_context.inner.borrow(), 0);
+
+        let to_capture = custom_context.clone();
+        let mut evm = Evm::builder()
+            .with_db(InMemoryDB::default())
+            .modify_db(|db| {
+                db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
+            })
+            .modify_tx_env(|tx| tx.transact_to = TransactTo::Call(to_addr))
+            // we need to use handle register box to capture the custom context in the handle
+            // register
+            .append_handler_register_box(Box::new(move |handler| {
+                let custom_context = to_capture.clone();
+
+                // we need to use a box to capture the custom context in the instruction
+                let custom_instruction = Box::new(
+                    move |_interp: &mut Interpreter, _host: &mut Evm<'_, (), InMemoryDB>| {
+                        // modify the value
+                        let mut inner = custom_context.inner.borrow_mut();
+                        *inner += 1;
+                    },
+                );
+
+                // need to make esure the instruction table is a boxed instruction table so that we
+                // can insert the custom instruction as a boxed instruction
+                let mut table = handler.take_instruction_table();
+                table = table.map(|mut table| {
+                    // now we can finally insert
+                    table.insert_boxed(0xEF, custom_instruction);
+                    table
+                });
+                handler.instruction_table = table;
+            }))
+            .build();
+
+        let _result_and_state = evm.transact().unwrap();
+
+        // ensure the custom context was modified
+        assert_eq!(*custom_context.inner.borrow(), 1);
+    }
 
     #[test]
     fn simple_add_instruction() {
