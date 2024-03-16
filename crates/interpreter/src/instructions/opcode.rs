@@ -90,12 +90,6 @@ impl<'a, H: Host + 'a> InstructionTables<'a, H> {
         };
     }
 }
-
-/// An error that can occur when trying to insert instructions into the instruction table.
-#[derive(Debug)]
-pub enum InsertError {
-    /// Tried to insert a boxed instruction into an instruction table which was not boxed.
-    NotBoxed,
 }
 
 /// Make instruction table.
