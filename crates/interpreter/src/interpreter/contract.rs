@@ -1,5 +1,5 @@
 use super::analysis::{to_analysed, BytecodeLocked};
-use crate::primitives::{Address, Bytecode, Bytes, Env, TransactTo, B256, U256};
+use crate::primitives::{block::Block, Address, Bytecode, Bytes, Env, TransactTo, B256, U256};
 use crate::CallContext;
 
 /// EVM contract information.
@@ -45,7 +45,7 @@ impl Contract {
 
     /// Creates a new contract from the given [`Env`].
     #[inline]
-    pub fn new_env(env: &Env, bytecode: Bytecode, hash: B256) -> Self {
+    pub fn new_env<BLOCK: Block>(env: &Env<BLOCK>, bytecode: Bytecode, hash: B256) -> Self {
         let contract_address = match env.tx.transact_to {
             TransactTo::Call(caller) => caller,
             TransactTo::Create(..) => Address::ZERO,

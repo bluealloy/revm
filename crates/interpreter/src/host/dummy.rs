@@ -1,4 +1,4 @@
-use crate::primitives::{hash_map::Entry, Bytecode, HashMap, U256};
+use crate::primitives::{hash_map::Entry, BlockEnv, Bytecode, HashMap, U256};
 use crate::{
     primitives::{Address, Env, Log, B256, KECCAK_EMPTY},
     Host, SStoreResult, SelfDestructResult,
@@ -8,7 +8,7 @@ use std::vec::Vec;
 /// A dummy [Host] implementation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct DummyHost {
-    pub env: Env,
+    pub env: Env<BlockEnv>,
     pub storage: HashMap<U256, U256>,
     pub transient_storage: HashMap<U256, U256>,
     pub log: Vec<Log>,
@@ -17,7 +17,7 @@ pub struct DummyHost {
 impl DummyHost {
     /// Create a new dummy host with the given [`Env`].
     #[inline]
-    pub fn new(env: Env) -> Self {
+    pub fn new(env: Env<BlockEnv>) -> Self {
         Self {
             env,
             ..Default::default()
@@ -33,13 +33,14 @@ impl DummyHost {
 }
 
 impl Host for DummyHost {
+    type Block = BlockEnv;
     #[inline]
-    fn env(&self) -> &Env {
+    fn env(&self) -> &Env<BlockEnv> {
         &self.env
     }
 
     #[inline]
-    fn env_mut(&mut self) -> &mut Env {
+    fn env_mut(&mut self) -> &mut Env<BlockEnv> {
         &mut self.env
     }
 
