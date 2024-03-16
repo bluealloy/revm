@@ -90,7 +90,6 @@ impl<'a, H: Host + 'a> InstructionTables<'a, H> {
         };
     }
 }
-}
 
 /// Make instruction table.
 #[inline]
