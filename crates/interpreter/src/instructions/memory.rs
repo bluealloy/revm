@@ -1,7 +1,7 @@
 use crate::{
     gas,
     primitives::{Spec, U256},
-    Host, InstructionResult, Interpreter,
+    Host, Interpreter,
 };
 use core::cmp::max;
 

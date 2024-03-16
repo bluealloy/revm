@@ -5,7 +5,7 @@ pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges};
 use crate::{
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::{Interpreter, InterpreterAction},
-    primitives::{Address, Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
+    primitives::{Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
     CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
     SStoreResult, Transfer, MAX_INITCODE_SIZE,
 };
