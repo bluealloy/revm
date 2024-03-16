@@ -348,7 +348,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let exec = self.handler.execution();
         // call inner handling of call/create
         let first_frame_or_result = match ctx.evm.env.tx.transact_to {
-            TransactTo::Call(_) => exec.call(
+            TransactTo::Call(_) | TransactTo::DelegateCall(_) => exec.call(
                 ctx,
                 CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
             )?,

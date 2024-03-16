@@ -404,6 +404,8 @@ pub enum HaltReason {
     CreateContractStartingWithEF,
     /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
     CreateInitCodeSizeLimit,
+    /// EIP-5806: opcode is used in restricted context
+    Eip5806Restricted,
 
     /* Internal Halts that can be only found inside Inspector */
     OverflowPayment,

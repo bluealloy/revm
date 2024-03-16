@@ -44,6 +44,8 @@ pub enum InstructionResult {
     CreateContractStartingWithEF,
     /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
     CreateInitCodeSizeLimit,
+    /// EIP-5806: opcode is used in restricted context
+    Eip5806Restricted,
 
     /// Fatal external error. Returned by database.
     FatalExternalError,
@@ -89,6 +91,7 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::CallTooDeep => Self::CallTooDeep,
             #[cfg(feature = "optimism")]
             HaltReason::FailedDeposit => Self::FatalExternalError,
+            HaltReason::Eip5806Restricted => Self::Eip5806Restricted,
         }
     }
 }
@@ -135,6 +138,7 @@ macro_rules! return_error {
             | InstructionResult::CreateContractStartingWithEF
             | InstructionResult::CreateInitCodeSizeLimit
             | InstructionResult::FatalExternalError
+            | InstructionResult::Eip5806Restricted
     };
 }
 
@@ -255,6 +259,7 @@ impl From<InstructionResult> for SuccessOrHalt {
                 Self::Halt(HaltReason::CreateInitCodeSizeLimit)
             }
             InstructionResult::FatalExternalError => Self::FatalExternalError,
+            InstructionResult::Eip5806Restricted => Self::Halt(HaltReason::Eip5806Restricted),
         }
     }
 }
@@ -323,6 +328,7 @@ mod tests {
             InstructionResult::CreateContractStartingWithEF,
             InstructionResult::CreateInitCodeSizeLimit,
             InstructionResult::FatalExternalError,
+            InstructionResult::Eip5806Restricted,
         ];
 
         for result in error_results {
