@@ -6,6 +6,8 @@ pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
     Precompile::Standard(ec_recover_run),
 );
 
+pub use self::secp256k1::ecrecover;
+
 #[cfg(not(feature = "secp256k1"))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
@@ -40,7 +42,7 @@ mod secp256k1 {
 
 #[cfg(feature = "secp256k1")]
 #[allow(clippy::module_inception)]
-pub mod secp256k1 {
+mod secp256k1 {
     use revm_primitives::{alloy_primitives::B512, keccak256, B256};
     use secp256k1::{
         ecdsa::{RecoverableSignature, RecoveryId},
