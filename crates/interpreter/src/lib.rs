@@ -19,7 +19,7 @@ mod host;
 mod inner_models;
 mod instruction_result;
 pub mod instructions;
-mod interpreter;
+pub mod interpreter;
 
 // Reexport primary types.
 pub use call_outcome::CallOutcome;
