@@ -111,7 +111,9 @@ impl Gas {
         true
     }
 
-    /// used in shared_memory_resize! macro to record gas used for memory expansion.
+    /// Records memory expansion gas.
+    ///
+    /// Used in [`resize_memory!`](crate::resize_memory).
     #[inline]
     pub fn record_memory(&mut self, gas_memory: u64) -> bool {
         if gas_memory > self.memory {

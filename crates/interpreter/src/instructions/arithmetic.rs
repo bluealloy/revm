@@ -2,7 +2,7 @@ use super::i256::{i256_div, i256_mod};
 use crate::{
     gas,
     primitives::{Spec, U256},
-    Host, InstructionResult, Interpreter,
+    Host, Interpreter,
 };
 
 pub fn wrapping_add<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {

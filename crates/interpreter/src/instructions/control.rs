@@ -49,7 +49,7 @@ fn return_inner(interpreter: &mut Interpreter, instruction_result: InstructionRe
     let mut output = Bytes::default();
     if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
-        shared_memory_resize!(interpreter, offset, len);
+        resize_memory!(interpreter, offset, len);
 
         output = interpreter.shared_memory.slice(offset, len).to_vec().into()
     }
