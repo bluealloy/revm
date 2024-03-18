@@ -99,7 +99,7 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
                 .await?;
             Ok(U256::from_be_bytes(storage.to_fixed_bytes()))
         };
-        Ok(self.block_on(f)?)
+        self.block_on(f)
     }
 
     fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error> {
@@ -109,7 +109,7 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
         }
         // We known number <= u64::MAX so unwrap is safe
         let number = eU64::from(u64::try_from(number).unwrap());
-        let f = async { Ok(self.client.get_block(BlockId::from(number)).await?) };
+        let f = async { self.client.get_block(BlockId::from(number)).await };
         // If number is given, the block is supposed to be finalized so unwrap is safe too.
         Ok(B256::new(self.block_on(f)?.unwrap().hash.unwrap().0))
     }
