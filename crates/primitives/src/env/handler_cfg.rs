@@ -14,6 +14,12 @@ pub struct HandlerCfg {
     pub is_optimism: bool,
 }
 
+impl Default for HandlerCfg {
+    fn default() -> Self {
+        Self::new(SpecId::default())
+    }
+}
+
 impl HandlerCfg {
     /// Creates new `HandlerCfg` instance.
     pub fn new(spec_id: SpecId) -> Self {
@@ -100,7 +106,7 @@ impl Deref for CfgEnvWithHandlerCfg {
 }
 
 /// Evm environment with the chain spec id.
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub struct EnvWithHandlerCfg {
     /// Evm enironment.
     pub env: Box<Env>,
