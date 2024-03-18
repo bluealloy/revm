@@ -1,4 +1,5 @@
-use revm_primitives::{Bytes, LegacyAnalyzedBytecode};
+use revm_primitives::eof::TypesSection;
+use revm_primitives::{Bytes, Eof, LegacyAnalyzedBytecode};
 
 use crate::opcode;
 use crate::primitives::{
@@ -57,4 +58,80 @@ fn analyze(code: &[u8]) -> JumpTable {
     }
 
     JumpTable(Arc::new(jumps))
+}
+
+/// Validate Eof structures.
+///
+/// do perf test on:
+/// max eof containers
+/// max depth of containers.
+/// bytecode iteration.
+pub fn validate_eof(eof: &Eof) -> Result<(), ()> {
+    // clone is cheat as it is Bytes and a header.
+    let mut analyze_eof = vec![eof.clone()];
+
+    while let Some(eof) = analyze_eof.pop() {
+        // iterate over types and code
+        for (types, bytes) in eof
+            .body
+            .types_section
+            .iter()
+            .zip(eof.body.code_section.iter())
+        {
+            types.validate()?;
+        }
+
+        // iterate over containers, convert them to Eof and add to analyze_eof
+        for container in eof.body.container_section {
+            let container_eof = Eof::decode(container)?;
+            analyze_eof.push(container_eof);
+        }
+    }
+
+    // Eof is valid
+    Ok(())
+}
+
+
+
+pub fn validate_eof_bytecode(code: &[u8], types: &TypesSection) -> Result<(), ()> {
+    let max_stack_size = types.inputs as u16;
+    let stack_size = types.inputs as u16;
+
+    let mut iter = code.as_ptr();
+    let end = code.as_ptr().wrapping_add(code.len());
+
+    let mut eof_table = [0; 256];
+
+    while iter < end {
+        let opcode = unsafe { *iter };
+        let opcode_info = eof_table[opcode as usize] += 1;
+
+        // if opcode::JUMPDEST == opcode {
+        //     // SAFETY: jumps are max length of the code
+        //     unsafe { jumps.set_unchecked(iterator.offset_from(start) as usize, true) }
+        //     iterator = unsafe { iterator.offset(1) };
+        // } else {
+        //     let push_offset = opcode.wrapping_sub(opcode::PUSH1);
+        //     if push_offset < 32 {
+        //         // SAFETY: iterator access range is checked in the while loop
+        //         iterator = unsafe { iterator.offset((push_offset + 2) as isize) };
+        //     } else {
+        //         // SAFETY: iterator access range is checked in the while loop
+        //         iterator = unsafe { iterator.offset(1) };
+        //     }
+        // }
+    }
+
+    // iterate over opcodes
+
+    if max_stack_size != types.max_stack_size {
+        return Err(());
+    }
+
+    if stack_size != types.outputs as u16 {
+        return Err(());
+    }
+
+    Ok(())
 }

@@ -58,12 +58,13 @@ pub fn codecopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 
 pub fn calldataload<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    pop!(interpreter, index);
-    let index = as_usize_saturated!(index);
-    let load = if index < interpreter.contract.input.len() {
-        let have_bytes = 32.min(interpreter.contract.input.len() - index);
+    pop!(interpreter, offset);
+    let offset = as_usize_saturated!(offset);
+    let load = if offset < interpreter.contract.input.len() {
+        let have_bytes = 32.min(interpreter.contract.input.len() - offset);
         let mut bytes = [0u8; 32];
-        bytes[..have_bytes].copy_from_slice(&interpreter.contract.input[index..index + have_bytes]);
+        bytes[..have_bytes]
+            .copy_from_slice(&interpreter.contract.input[offset..offset + have_bytes]);
         B256::new(bytes)
     } else {
         B256::ZERO

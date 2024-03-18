@@ -212,7 +212,6 @@ pub fn extcall_gas_calc<H: Host>(
 
 pub fn extcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     error_on_disabled_eof!(interpreter);
-    panic_on_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
     // input call
@@ -248,7 +247,6 @@ pub fn extcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H)
 
 pub fn extdcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     error_on_disabled_eof!(interpreter);
-    panic_on_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
     // input call
@@ -282,7 +280,6 @@ pub fn extdcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H
 
 pub fn extscall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     error_on_disabled_eof!(interpreter);
-    panic_on_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
     // input call
