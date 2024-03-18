@@ -11,7 +11,6 @@ extern crate alloc as std;
 
 // Define modules.
 
-mod utils;
 mod builder;
 mod context;
 
