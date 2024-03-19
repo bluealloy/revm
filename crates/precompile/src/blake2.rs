@@ -10,7 +10,7 @@ pub const FUN: PrecompileWithAddress =
 /// reference: <https://eips.ethereum.org/EIPS/eip-152>
 /// input format:
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
-fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input = &input[..];
 
     if input.len() != INPUT_LENGTH {
@@ -54,9 +54,9 @@ fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     Ok((gas_used, out.into()))
 }
 
-mod algo {
+pub mod algo {
     /// SIGMA from spec: <https://datatracker.ietf.org/doc/html/rfc7693#section-2.7>
-    const SIGMA: [[usize; 16]; 10] = [
+    pub const SIGMA: [[usize; 16]; 10] = [
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
         [14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3],
         [11, 8, 12, 0, 5, 2, 15, 13, 10, 14, 3, 6, 7, 1, 9, 4],
@@ -70,7 +70,7 @@ mod algo {
     ];
 
     /// got IV from: <https://en.wikipedia.org/wiki/BLAKE_(hash_function)>
-    const IV: [u64; 8] = [
+    pub const IV: [u64; 8] = [
         0x6a09e667f3bcc908,
         0xbb67ae8584caa73b,
         0x3c6ef372fe94f82b,
@@ -84,7 +84,7 @@ mod algo {
     #[inline(always)]
     #[allow(clippy::many_single_char_names)]
     /// G function: <https://tools.ietf.org/html/rfc7693#section-3.1>
-    fn g(v: &mut [u64], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {
+    pub fn g(v: &mut [u64], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {
         v[a] = v[a].wrapping_add(v[b]).wrapping_add(x);
         v[d] = (v[d] ^ v[a]).rotate_right(32);
         v[c] = v[c].wrapping_add(v[d]);

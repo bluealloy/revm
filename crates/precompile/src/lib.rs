@@ -10,13 +10,13 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
-mod blake2;
+pub mod blake2;
 pub mod bn128;
-mod hash;
-mod identity;
+pub mod hash;
+pub mod identity;
 #[cfg(feature = "c-kzg")]
 pub mod kzg_point_evaluation;
-mod modexp;
+pub mod modexp;
 pub mod secp256k1;
 pub mod utilities;
 

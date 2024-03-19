@@ -6,12 +6,12 @@ use sha2::{Digest, Sha256};
 pub const POINT_EVALUATION: PrecompileWithAddress =
     PrecompileWithAddress(ADDRESS, Precompile::Env(run));
 
-const ADDRESS: Address = crate::u64_to_address(0x0A);
-const GAS_COST: u64 = 50_000;
-const VERSIONED_HASH_VERSION_KZG: u8 = 0x01;
+pub const ADDRESS: Address = crate::u64_to_address(0x0A);
+pub const GAS_COST: u64 = 50_000;
+pub const VERSIONED_HASH_VERSION_KZG: u8 = 0x01;
 
 /// `U256(FIELD_ELEMENTS_PER_BLOB).to_be_bytes() ++ BLS_MODULUS.to_bytes32()`
-const RETURN_VALUE: &[u8; 64] = &hex!(
+pub const RETURN_VALUE: &[u8; 64] = &hex!(
     "0000000000000000000000000000000000000000000000000000000000001000"
     "73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001"
 );
@@ -56,14 +56,14 @@ pub fn run(input: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
 
 /// `VERSIONED_HASH_VERSION_KZG ++ sha256(commitment)[1..]`
 #[inline]
-fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
+pub fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
     let mut hash: [u8; 32] = Sha256::digest(commitment).into();
     hash[0] = VERSIONED_HASH_VERSION_KZG;
     hash
 }
 
 #[inline]
-fn verify_kzg_proof(
+pub fn verify_kzg_proof(
     commitment: &Bytes48,
     z: &Bytes32,
     y: &Bytes32,
@@ -75,20 +75,20 @@ fn verify_kzg_proof(
 
 #[inline]
 #[track_caller]
-fn as_array<const N: usize>(bytes: &[u8]) -> &[u8; N] {
+pub fn as_array<const N: usize>(bytes: &[u8]) -> &[u8; N] {
     bytes.try_into().expect("slice with incorrect length")
 }
 
 #[inline]
 #[track_caller]
-fn as_bytes32(bytes: &[u8]) -> &Bytes32 {
+pub fn as_bytes32(bytes: &[u8]) -> &Bytes32 {
     // SAFETY: `#[repr(C)] Bytes32([u8; 32])`
     unsafe { &*as_array::<32>(bytes).as_ptr().cast() }
 }
 
 #[inline]
 #[track_caller]
-fn as_bytes48(bytes: &[u8]) -> &Bytes48 {
+pub fn as_bytes48(bytes: &[u8]) -> &Bytes48 {
     // SAFETY: `#[repr(C)] Bytes48([u8; 48])`
     unsafe { &*as_array::<48>(bytes).as_ptr().cast() }
 }
