@@ -66,7 +66,7 @@ mod secp256k1 {
     }
 }
 
-fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     const ECRECOVER_BASE: u64 = 3_000;
 
     if ECRECOVER_BASE > gas_limit {

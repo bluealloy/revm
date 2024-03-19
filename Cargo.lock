@@ -2353,6 +2353,7 @@ version = "5.0.0"
 dependencies = [
  "aurora-engine-modexp",
  "c-kzg",
+ "criterion",
  "k256",
  "once_cell",
  "revm-primitives",
@@ -2678,6 +2679,7 @@ version = "0.28.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d24b59d129cdadea20aea4fb2352fa053712e5d713eee47d700cd4b2bc002f10"
 dependencies = [
+ "rand",
  "secp256k1-sys",
 ]
 

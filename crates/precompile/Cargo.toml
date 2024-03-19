@@ -29,8 +29,12 @@ k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
 secp256k1 = { version = "0.28.2", default-features = false, features = [
     "alloc",
     "recovery",
+    "rand",
+    "global-context",
 ], optional = true }
 
+[dev-dependencies]
+criterion = { version = "0.5" }
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable"]
@@ -65,3 +69,8 @@ portable = ["revm-primitives/portable", "c-kzg?/portable"]
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
 # In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
 secp256k1 = ["dep:secp256k1"]
+
+[[bench]]
+name = "bench"
+path = "benches/bench.rs"
+harness = false

@@ -62,8 +62,8 @@ pub mod pair {
 
     const ADDRESS: Address = crate::u64_to_address(8);
 
-    const ISTANBUL_PAIR_PER_POINT: u64 = 34_000;
-    const ISTANBUL_PAIR_BASE: u64 = 45_000;
+    pub const ISTANBUL_PAIR_PER_POINT: u64 = 34_000;
+    pub const ISTANBUL_PAIR_BASE: u64 = 45_000;
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
@@ -170,7 +170,7 @@ fn run_mul(input: &[u8]) -> Result<Bytes, Error> {
     Ok(out.into())
 }
 
-fn run_pair(
+pub fn run_pair(
     input: &[u8],
     pair_per_point_cost: u64,
     pair_base_cost: u64,
