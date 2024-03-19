@@ -21,7 +21,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
-    let beneficiary = context.evm.env.block.coinbase;
+    let beneficiary = context.evm.env.block.beneficiary;
     let effective_gas_price = context.evm.env.effective_gas_price();
 
     // transfer fee to coinbase/beneficiary.

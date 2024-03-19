@@ -33,7 +33,7 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
     // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
     if SPEC::enabled(SHANGHAI) {
         context.evm.inner.journaled_state.initial_account_load(
-            context.evm.inner.env.block.coinbase,
+            context.evm.inner.env.block.beneficiary,
             &[],
             &mut context.evm.inner.db,
         )?;

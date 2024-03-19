@@ -415,7 +415,7 @@ pub struct BlockEnv {
     /// Coinbase or miner or address that created and signed the block.
     ///
     /// This is the receiver address of all the gas spent in the block.
-    pub coinbase: Address,
+    pub beneficiary: Address,
 
     /// The timestamp of the block in seconds since the UNIX epoch.
     pub timestamp: U256,
@@ -488,7 +488,7 @@ impl Default for BlockEnv {
     fn default() -> Self {
         Self {
             number: U256::ZERO,
-            coinbase: Address::ZERO,
+            beneficiary: Address::ZERO,
             timestamp: U256::from(1),
             gas_limit: U256::MAX,
             basefee: U256::ZERO,
