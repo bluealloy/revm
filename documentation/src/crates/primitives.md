@@ -15,6 +15,7 @@ Modules:
 - [specification](./primitives/specifications.md): This module defines types related to Ethereum specifications (also known as hard forks).
 - [state](./primitives/state.md): This module provides types and functions for managing Ethereum state, including accounts and storage.
 - [utilities](./primitives/utils.md): This module provides utility functions used in multiple places across the EVM implementation.
+- [kzg](./primitives/kzg.md): This module provides types and functions related to KZG commitment, it is empolyed visibly in the `Point Evalution` Precompile.
 
 External Crates:
 
@@ -25,6 +26,7 @@ External Crates:
 - hex_literal: The hex_literal crate provides a macro for including hexadecimal data directly in the source code.
 - hashbrown: The hashbrown crate provides high-performance hash map and hash set data structures.
 - ruint: The ruint crate provides types and functions for big unsigned integer arithmetic.
+- c-kzg: A minimal implementation of the Polynomial Commitments API for EIP-4844, written in C. (With rust bindings)
 
 Type Aliases:
 
@@ -39,4 +41,4 @@ Re-exported Types:
 - HashMap and HashSet: High-performance hash map and hash set data structures from the hashbrown crate.
 
 Re-exported Modules:
-All types, constants, and functions from the `bytecode`, `constants`, `env`, `log`, `precompile`, `result`, `specification`, `state`, and `utilities` modules are re-exported, allowing users to import these items directly from the `primitives` crate.
+All types, constants, and functions from the `bytecode`, `constants`, `env`, `log`, `precompile`, `result`, `specification`, `state`, `utilities`, `KzgSettings`, `EnvKzgSettings`, `trusted_setup_points` types and methods were all re-exported, allowing users to import these items directly from the `primitives` crate.
