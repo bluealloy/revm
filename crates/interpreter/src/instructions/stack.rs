@@ -1,7 +1,7 @@
 use crate::{
     gas,
     primitives::{Spec, U256},
-    Host, InstructionResult, Interpreter,
+    Host, Interpreter,
 };
 
 pub fn pop<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -86,13 +86,11 @@ pub fn exchange<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 
 #[cfg(test)]
 mod test {
-    use revm_primitives::{Bytecode, PragueSpec};
-
     use super::*;
     use crate::{
         opcode::{make_instruction_table, DUPN, EXCHANGE, SWAPN},
-        primitives::Bytes,
-        DummyHost, Gas, Interpreter,
+        primitives::{Bytecode, Bytes, PragueSpec},
+        DummyHost, Gas, InstructionResult, Interpreter,
     };
 
     #[test]

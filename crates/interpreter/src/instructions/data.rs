@@ -68,7 +68,7 @@ pub fn data_copy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     }
     // fail if mem offset is big as it will spend all the gas
     let mem_offset = as_usize_or_fail!(interpreter, mem_offset);
-    shared_memory_resize!(interpreter, mem_offset, size);
+    resize_memory!(interpreter, mem_offset, size);
 
     let offset = as_usize_saturated!(offset);
     let data = interpreter.contract.bytecode.eof().expect("EOF").data();

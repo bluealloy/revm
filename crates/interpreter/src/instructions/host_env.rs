@@ -1,7 +1,7 @@
 use crate::{
     gas,
     primitives::{Spec, SpecId::*, U256},
-    Host, InstructionResult, Interpreter,
+    Host, Interpreter,
 };
 
 /// EIP-1344: ChainID opcode

@@ -23,8 +23,8 @@ pub fn resize_memory(
     let len = as_usize_or_fail_ret!(interpreter, len, None);
     if len != 0 {
         let offset = as_usize_or_fail_ret!(interpreter, offset, None);
-        shared_memory_resize!(interpreter, offset, len, None);
-        // range is checked in shared_memory_resize! macro and it is bounded by usize.
+        resize_memory!(interpreter, offset, len, None);
+        // range is checked in resize_memory! macro and it is bounded by usize.
         Some(offset..offset + len)
     } else {
         //unrealistic value so we are sure it is not used
@@ -343,7 +343,7 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
         }
 
         let code_offset = as_usize_or_fail!(interpreter, code_offset);
-        shared_memory_resize!(interpreter, code_offset, len);
+        resize_memory!(interpreter, code_offset, len);
         code = Bytes::copy_from_slice(interpreter.shared_memory.slice(code_offset, len));
     }
 

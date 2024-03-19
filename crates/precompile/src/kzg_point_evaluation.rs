@@ -24,7 +24,7 @@ const RETURN_VALUE: &[u8; 64] = &hex!(
 /// | versioned_hash |  z  |  y  | commitment | proof |
 /// |     32         | 32  | 32  |     48     |   48  |
 /// with z and y being padded 32 byte big endian values
-fn run(input: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
+pub fn run(input: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
     if gas_limit < GAS_COST {
         return Err(Error::OutOfGas);
     }

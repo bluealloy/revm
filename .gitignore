@@ -15,3 +15,6 @@ book
 traces
 
 burntpix/svgs
+
+# Rust bug report
+rustc-ice-*

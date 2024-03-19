@@ -36,7 +36,7 @@ pub fn resize_memory_and_return_range(
     let len = as_usize_or_fail_ret!(interpreter, len, None);
     let offset = if len != 0 {
         let offset = as_usize_or_fail_ret!(interpreter, offset, None);
-        shared_memory_resize!(interpreter, offset, len, None);
+        resize_memory!(interpreter, offset, len, None);
         offset
     } else {
         usize::MAX //unrealistic value so we are sure it is not used

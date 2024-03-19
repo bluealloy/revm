@@ -38,6 +38,26 @@ impl<H: Host> InstructionTables<'_, H> {
 }
 
 impl<'a, H: Host + 'a> InstructionTables<'a, H> {
+    /// Inserts a boxed instruction into the table with the specified index.
+    ///
+    /// This will convert the table into the [BoxedInstructionTable] variant if it is currently a
+    /// plain instruction table, before inserting the instruction.
+    #[inline]
+    pub fn insert_boxed(&mut self, opcode: u8, instruction: BoxedInstruction<'a, H>) {
+        // first convert the table to boxed variant
+        self.convert_boxed();
+
+        // now we can insert the instruction
+        match self {
+            Self::Plain(_) => {
+                unreachable!("we already converted the table to boxed variant");
+            }
+            Self::Boxed(table) => {
+                table[opcode as usize] = Box::new(instruction);
+            }
+        }
+    }
+
     /// Inserts the instruction into the table with the specified index.
     #[inline]
     pub fn insert(&mut self, opcode: u8, instruction: Instruction<H>) {
@@ -49,6 +69,21 @@ impl<'a, H: Host + 'a> InstructionTables<'a, H> {
                 table[opcode as usize] = Box::new(instruction);
             }
         }
+    }
+
+    /// Converts the current instruction table to a boxed variant. If the table is already boxed,
+    /// this is a no-op.
+    #[inline]
+    pub fn convert_boxed(&mut self) {
+        match self {
+            Self::Plain(table) => {
+                *self = Self::Boxed(core::array::from_fn(|i| {
+                    let instruction: BoxedInstruction<'a, H> = Box::new(table[i]);
+                    instruction
+                }));
+            }
+            Self::Boxed(_) => {}
+        };
     }
 }
 
@@ -180,6 +215,16 @@ impl OpCode {
     #[inline]
     pub const fn as_str(self) -> &'static str {
         self.info().name
+    }
+
+    /// Returns the opcode name.
+    #[inline]
+    pub const fn name_by_op(opcode: u8) -> &'static str {
+        if let Some(opcode) = Self::new(opcode) {
+            opcode.as_str()
+        } else {
+            "Unknown"
+        }
     }
 
     /// Returns inputs for the given opcode.

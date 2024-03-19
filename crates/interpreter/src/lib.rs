@@ -23,7 +23,7 @@ pub mod gas;
 mod host;
 mod instruction_result;
 pub mod instructions;
-mod interpreter;
+pub mod interpreter;
 
 // Reexport primary types.
 pub use call_inputs::{CallInputs, CallScheme, TransferValue};

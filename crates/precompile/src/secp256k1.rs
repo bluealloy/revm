@@ -6,6 +6,8 @@ pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
     Precompile::Standard(ec_recover_run),
 );
 
+pub use self::secp256k1::ecrecover;
+
 #[cfg(not(feature = "secp256k1"))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
@@ -55,7 +57,7 @@ mod secp256k1 {
         let sig = RecoverableSignature::from_compact(sig.as_slice(), recid)?;
 
         let secp = Secp256k1::new();
-        let msg = Message::from_digest_slice(msg.as_slice())?;
+        let msg = Message::from_digest(msg.0);
         let public = secp.recover_ecdsa(&msg, &sig)?;
 
         let mut hash = keccak256(&public.serialize_uncompressed()[1..]);
@@ -64,7 +66,7 @@ mod secp256k1 {
     }
 }
 
-fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     const ECRECOVER_BASE: u64 = 3_000;
 
     if ECRECOVER_BASE > gas_limit {
