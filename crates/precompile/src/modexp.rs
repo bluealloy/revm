@@ -17,7 +17,7 @@ pub const BERLIN: PrecompileWithAddress =
 
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>
-fn byzantium_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn byzantium_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     run_inner(input, gas_limit, 0, |a, b, c, d| {
         byzantium_gas_calc(a, b, c, d)
     })
@@ -29,7 +29,7 @@ pub fn berlin_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     })
 }
 
-fn calculate_iteration_count(exp_length: u64, exp_highp: &U256) -> u64 {
+pub fn calculate_iteration_count(exp_length: u64, exp_highp: &U256) -> u64 {
     let mut iteration_count: u64 = 0;
 
     if exp_length <= 32 && *exp_highp == U256::ZERO {
@@ -44,7 +44,7 @@ fn calculate_iteration_count(exp_length: u64, exp_highp: &U256) -> u64 {
     max(iteration_count, 1)
 }
 
-fn run_inner<F>(input: &[u8], gas_limit: u64, min_gas: u64, calc_gas: F) -> PrecompileResult
+pub fn run_inner<F>(input: &[u8], gas_limit: u64, min_gas: u64, calc_gas: F) -> PrecompileResult
 where
     F: FnOnce(u64, u64, u64, &U256) -> u64,
 {
@@ -116,7 +116,7 @@ where
     Ok((gas_cost, left_pad_vec(&output, mod_len).into_owned().into()))
 }
 
-fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U256) -> u64 {
+pub fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U256) -> u64 {
     // output of this function is bounded by 2^128
     fn mul_complexity(x: u64) -> U256 {
         if x <= 64 {
@@ -140,7 +140,12 @@ fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U25
 
 // Calculate gas cost according to EIP 2565:
 // https://eips.ethereum.org/EIPS/eip-2565
-fn berlin_gas_calc(base_length: u64, exp_length: u64, mod_length: u64, exp_highp: &U256) -> u64 {
+pub fn berlin_gas_calc(
+    base_length: u64,
+    exp_length: u64,
+    mod_length: u64,
+    exp_highp: &U256,
+) -> u64 {
     fn calculate_multiplication_complexity(base_length: u64, mod_length: u64) -> U256 {
         let max_length = max(base_length, mod_length);
         let mut words = max_length / 8;
