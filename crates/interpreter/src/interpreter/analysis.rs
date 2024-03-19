@@ -99,11 +99,45 @@ pub fn validate_eof_bytecode(code: &[u8], types: &TypesSection) -> Result<(), ()
     let mut iter = code.as_ptr();
     let end = code.as_ptr().wrapping_add(code.len());
 
-    let mut eof_table = [0; 256];
+    let is_returning = false;
 
+    // all bytes that are intermediate.
+    let jumptable = vec![false; code.len()];
+
+    // We can check validity and jump destinations in one pass.
     while iter < end {
-        let opcode = unsafe { *iter };
-        let opcode_info = &OPCODE_INFO_JUMPTABLE[opcode as usize];
+        let op = unsafe { *iter };
+        let opcode_info = &OPCODE_INFO_JUMPTABLE[op as usize];
+
+        // Unknown opcode
+        let Some(opcode) = opcode_info else {
+            return Err(());
+        };
+
+        // check if the size of the opcode is within the bounds of the code
+        if unsafe { iter.add(opcode.size as usize - 1) } > end {
+            return Err(());
+        }
+
+        match op {
+            opcode::RJUMPV | opcode::RJUMP | opcode::RJUMPI => {
+                // check jump destination with bytecode size.
+
+                // check if jump destination is valid
+            }
+            opcode::CALLF => {
+                // check codes size.
+                // targeted code needs to have zero outputs (be non returning).
+            }
+            opcode::RETF => {
+                // check if it is returning. TODO here
+            }
+            _ => {}
+        }
+
+        // if let Some(jump) = opcode_info.jump {
+        //     eof_table[jump as usize] += 1;
+        // }
 
         // if opcode::JUMPDEST == opcode {
         //     // SAFETY: jumps are max length of the code
@@ -131,5 +165,29 @@ pub fn validate_eof_bytecode(code: &[u8], types: &TypesSection) -> Result<(), ()
         return Err(());
     }
 
+    Ok(())
+}
+
+/// Validate stack requirements and if all codes sections are used.
+pub fn validate_stack_requirement(codes: &[u8]) -> Result<(), ()> {
+    #[derive(Copy, Clone)]
+    struct StackInfo {
+        min: u16,
+        max: u16,
+    }
+    let mut code_stack_access: Vec<Option<StackInfo>> = vec![None; codes.len()];
+    let mut worklist: Vec<u16> = Vec::new();
+
+    while let Some(workitem) = worklist.pop() {}
+
+    // Iterate over accessed code, error on not accessed opcode and return max stack requirement.
+    let mut max_stack_requirement = 0;
+    for opcode in code_stack_access {
+        if let Some(opcode) = opcode {
+            max_stack_requirement = core::cmp::max(opcode.max, max_stack_requirement);
+        } else {
+            return Err(());
+        }
+    }
     Ok(())
 }

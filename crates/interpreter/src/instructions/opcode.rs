@@ -234,7 +234,10 @@ pub struct OpCodeInfo {
     pub name: &'static str,
     pub inputs: u8,
     pub outputs: u8,
+    // TODO make this a bitfield
     pub is_eof: bool,
+    // If the opcode is return from execution. aka STOP,RETURN, ..
+    pub is_terminating_opcode: bool,
     pub size: u8,
 }
 
@@ -245,6 +248,7 @@ impl OpCodeInfo {
             inputs: 0,
             outputs: 0,
             is_eof: true,
+            is_terminating_opcode: false,
             size: 1,
         }
     }
@@ -295,12 +299,17 @@ macro_rules! opcodes {
 }
 
 pub const fn not_eof(mut opcode: OpCodeInfo) -> OpCodeInfo {
-    opcode.is_eof = true;
+    opcode.is_eof = false;
     opcode
 }
 
 pub const fn size<const N: u8>(mut opcode: OpCodeInfo) -> OpCodeInfo {
     opcode.size = N;
+    opcode
+}
+
+pub const fn terminating(mut opcode: OpCodeInfo) -> OpCodeInfo {
+    opcode.is_terminating_opcode = true;
     opcode
 }
 
@@ -316,7 +325,7 @@ pub const fn stack_io<const I: u8, const O: u8>(mut opcode: OpCodeInfo) -> OpCod
 // 3. implement the opcode in the corresponding module;
 //    the function signature must be the exact same as the others
 opcodes! {
-    0x00 => STOP => control::stop => stack_io<0,0>;
+    0x00 => STOP => control::stop => stack_io<0,0>, terminating;
 
     0x01 => ADD        => arithmetic::wrapping_add   => stack_io<2, 1>;
     0x02 => MUL        => arithmetic::wrapping_mul   => stack_io<2, 1>;
@@ -404,8 +413,8 @@ opcodes! {
     0x53 => MSTORE8  => memory::mstore8          => stack_io<2, 0>;
     0x54 => SLOAD    => host::sload::<H, SPEC>   => stack_io<1, 1>;
     0x55 => SSTORE   => host::sstore::<H, SPEC>  => stack_io<2, 0>;
-    0x56 => JUMP     => control::jump            => stack_io<1, 0>;
-    0x57 => JUMPI    => control::jumpi           => stack_io<2, 0>;
+    0x56 => JUMP     => control::jump            => stack_io<1, 0>, not_eof;
+    0x57 => JUMPI    => control::jumpi           => stack_io<2, 0>, not_eof;
     0x58 => PC       => control::pc              => stack_io<0, 1>;
     0x59 => MSIZE    => memory::msize            => stack_io<0, 1>;
     0x5A => GAS      => system::gas              => stack_io<0, 1>, not_eof;
@@ -531,7 +540,7 @@ opcodes! {
     // 0xCE
     // 0xCF
     0xD0 => DATALOAD  => data::data_load   => stack_io<1, 1>;
-    0xD1 => DATALOADN => data::data_loadn  => stack_io<0, 1>;
+    0xD1 => DATALOADN => data::data_loadn  => stack_io<0, 1>, size<3>;
     0xD2 => DATASIZE  => data::data_size   => stack_io<0, 1>;
     0xD3 => DATACOPY  => data::data_copy   => stack_io<3, 0>;
     // 0xD4
@@ -546,26 +555,26 @@ opcodes! {
     // 0xDD
     // 0xDE
     // 0xDF
-    0xE0 => RJUMP    => control::rjump  => stack_io<0, 0>;
-    0xE1 => RJUMPI   => control::rjumpi => stack_io<1, 0>;
-    0xE2 => RJUMPV   => control::rjumpv => stack_io<1, 0>;
-    0xE3 => CALLF    => control::callf  => stack_io<0, 0>;
-    0xE4 => RETF     => control::retf   => stack_io<0, 0>;
-    0xE5 => JUMPF    => control::jumpf  => stack_io<0, 0>;
-    0xE6 => DUPN     => stack::dupn     => stack_io<0, 0>;
-    0xE7 => SWAPN    => stack::swapn    => stack_io<0, 0>;
-    0xE8 => EXCHANGE => stack::exchange => stack_io<0, 0>;
+    0xE0 => RJUMP    => control::rjump  => stack_io<0, 0>, size<3>;
+    0xE1 => RJUMPI   => control::rjumpi => stack_io<1, 0>, size<3>;
+    0xE2 => RJUMPV   => control::rjumpv => stack_io<1, 0>, size<3>;
+    0xE3 => CALLF    => control::callf  => stack_io<0, 0>, size<3>;
+    0xE4 => RETF     => control::retf   => stack_io<0, 0>, terminating;
+    0xE5 => JUMPF    => control::jumpf  => stack_io<0, 0>, size<3>;
+    0xE6 => DUPN     => stack::dupn     => stack_io<0, 0>, size<2>;
+    0xE7 => SWAPN    => stack::swapn    => stack_io<0, 0>, size<2>;
+    0xE8 => EXCHANGE => stack::exchange => stack_io<0, 0>, size<2>;
     // 0xE9
     // 0xEA
     // 0xEB
     0xEC => EOFCREATE      => contract::eofcreate::<H>       => stack_io<4, 1>;
     0xED => CREATE4        => contract::txcreate::<H>        => stack_io<5, 1>;
-    0xEE => RETURNCONTRACT => contract::return_contract::<H> => stack_io<0, 0>; // TODO(EOF) input/output
+    0xEE => RETURNCONTRACT => contract::return_contract::<H> => stack_io<0, 0>, terminating; // TODO(EOF) input/output
     // 0xEF
     0xF0 => CREATE       => contract::create::<false, H, SPEC> => stack_io<4, 1>;
     0xF1 => CALL         => contract::call::<H, SPEC>          => stack_io<7, 1>, not_eof;
     0xF2 => CALLCODE     => contract::call_code::<H, SPEC>     => stack_io<7, 1>, not_eof;
-    0xF3 => RETURN       => control::ret                       => stack_io<0, 0>;
+    0xF3 => RETURN       => control::ret                       => stack_io<0, 0>, terminating;
     0xF4 => DELEGATECALL => contract::delegate_call::<H, SPEC> => stack_io<6, 1>, not_eof;
     0xF5 => CREATE2      => contract::create::<true, H, SPEC>  => stack_io<5, 1>;
     // 0xF6
@@ -575,9 +584,9 @@ opcodes! {
     0xFA => STATICCALL     => contract::static_call::<H, SPEC> => stack_io<6, 1>, not_eof;
     0xFB => EXTSCALL       => contract::extscall::<H>          => stack_io<3, 1>;
     // 0xFC
-    0xFD => REVERT       => control::revert::<H, SPEC>    => stack_io<0, 0>;
-    0xFE => INVALID      => control::invalid              => stack_io<0, 0>;
-    0xFF => SELFDESTRUCT => host::selfdestruct::<H, SPEC> => stack_io<1, 0>, not_eof;
+    0xFD => REVERT       => control::revert::<H, SPEC>    => stack_io<0, 0>, terminating;
+    0xFE => INVALID      => control::invalid              => stack_io<0, 0>, not_eof, terminating;
+    0xFF => SELFDESTRUCT => host::selfdestruct::<H, SPEC> => stack_io<1, 0>, not_eof, terminating;
 }
 
 #[cfg(test)]
@@ -592,5 +601,74 @@ mod tests {
         assert_eq!(opcode.is_push(), false);
         assert_eq!(opcode.as_str(), "STOP");
         assert_eq!(opcode.get(), 0x00);
+    }
+
+    const REJECTED_IN_EOF: &[u8] = &[
+        0x38, 0x39, 0x3b, 0x3c, 0x3f, 0x5a, 0xf1, 0xf2, 0xf4, 0xfa, 0xff,
+    ];
+
+    #[test]
+    fn test_eof_disable() {
+        for opcode in REJECTED_IN_EOF.iter() {
+            let opcode = OpCode::new(*opcode).unwrap();
+            assert_eq!(
+                opcode.info().is_eof,
+                false,
+                "Opcode {:?} is not EOF",
+                opcode
+            );
+        }
+    }
+
+    #[test]
+    fn test_opcode_size() {
+        let mut opcodes = [0u8; 256];
+        // PUSH opcodes
+        for push in PUSH1..PUSH32 {
+            opcodes[push as usize] = push - PUSH1 + 1;
+        }
+        opcodes[DATALOADN as usize] = 3;
+        opcodes[RJUMP as usize] = 3;
+        opcodes[RJUMPI as usize] = 3;
+        opcodes[RJUMPV as usize] = 3;
+        opcodes[CALLF as usize] = 3;
+        opcodes[JUMPF as usize] = 3;
+        opcodes[DUPN as usize] = 2;
+        opcodes[SWAPN as usize] = 2;
+        opcodes[EXCHANGE as usize] = 2;
+    }
+
+    #[test]
+    fn test_enabled_opcodes() {
+        // List obtained from https://eips.ethereum.org/EIPS/eip-3670
+        let opcodes = [
+            0x10..=0x1d,
+            0x20..=0x20,
+            0x30..=0x3f,
+            0x40..=0x48,
+            0x50..=0x5b,
+            0x5f..=0x54,
+            0x60..=0x6f,
+            0x70..=0x7f,
+            0x80..=0x8f,
+            0x90..=0x9f,
+            0xa0..=0xa4,
+            0xf0..=0xf5,
+            0xfa..=0xfa,
+            0xfd..=0xfd,
+            //0xfe,
+            0xff..=0xff,
+        ];
+        for i in opcodes {
+            for opcode in i {
+                OpCode::new(opcode).expect("Opcode should be valid and enabled");
+            }
+        }
+    }
+
+    #[test]
+    pub fn test_terminating_opcodes() {
+        // TODO check JUMPF
+        let terminating = [RETF, JUMPF];
     }
 }
