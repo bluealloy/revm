@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v5.0.0...revm-precompile-v5.1.0) - 2024-03-19
+
+### Added
+- add benchmarks for ecpairing, kzg, ecrecover precompiles ([#1211](https://github.com/bluealloy/revm/pull/1211))
+- use Message::from_digest in secp256k1 ecrecover ([#1199](https://github.com/bluealloy/revm/pull/1199))
+
+### Other
+- expose functionality for custom EVMs ([#1201](https://github.com/bluealloy/revm/pull/1201))
+- c-kzg v1.0.0 ([#1190](https://github.com/bluealloy/revm/pull/1190))
+- fix some typos ([#1189](https://github.com/bluealloy/revm/pull/1189))
+
 ## [5.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v4.1.0...revm-precompile-v5.0.0) - 2024-03-08
 
 ### Added
