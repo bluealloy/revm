@@ -2,7 +2,7 @@ use super::i256::{i256_cmp, i256_sign_compl, two_compl, Sign};
 use crate::{
     gas,
     primitives::{Spec, U256},
-    Host, InstructionResult, Interpreter,
+    Host, Interpreter,
 };
 use core::cmp::Ordering;
 

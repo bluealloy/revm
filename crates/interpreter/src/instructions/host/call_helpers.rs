@@ -15,7 +15,7 @@ pub fn get_memory_input_and_out_ranges(
     let in_len = as_usize_or_fail_ret!(interpreter, in_len, None);
     let input = if in_len != 0 {
         let in_offset = as_usize_or_fail_ret!(interpreter, in_offset, None);
-        shared_memory_resize!(interpreter, in_offset, in_len, None);
+        resize_memory!(interpreter, in_offset, in_len, None);
         Bytes::copy_from_slice(interpreter.shared_memory.slice(in_offset, in_len))
     } else {
         Bytes::new()
@@ -24,7 +24,7 @@ pub fn get_memory_input_and_out_ranges(
     let out_len = as_usize_or_fail_ret!(interpreter, out_len, None);
     let out_offset = if out_len != 0 {
         let out_offset = as_usize_or_fail_ret!(interpreter, out_offset, None);
-        shared_memory_resize!(interpreter, out_offset, out_len, None);
+        resize_memory!(interpreter, out_offset, out_len, None);
         out_offset
     } else {
         usize::MAX //unrealistic value so we are sure it is not used

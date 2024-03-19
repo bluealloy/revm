@@ -14,23 +14,43 @@ Data structures of block and transaction can be found inside `Environment`. And 
 
 ## Runtime
 
-Runtime consist of list of functions from `Handler` that are called in predefined order. They are grouped by functionality on `Verification`, `PreExecution`, `Execution`, `PostExecution` and `Instruction` functions. Verification function are related to the preverification of set `Environment` data. Pre/Post execution function are function that deduct and reward caller beneficiary. And `Execution` functions handles initial call and creates and sub calls. `Instruction` functions are instruction table that is used inside Interpreter to execute opcodes.
+Runtime consists of list of functions from `Handler` that are called in predefined order.
+They are grouped by functionality on `Verification`, `PreExecution`, `Execution`, `PostExecution` and `Instruction` functions.
+Verification function are related to the pre-verification of set `Environment` data.
+Pre-/Post-execution functions deduct and reward caller beneficiary.
+And `Execution` functions handle initial call and creates and sub calls.
+`Instruction` functions are part of the instruction table that is used inside `Interpreter` to execute opcodes.
 
-`Evm` execution runs **two** loops. First loop is call loop that everything starts with, it creates call frames, handles subcalls and its return outputs and call Interpreter loop to execute bytecode instructions it is handled by `ExecutionHandler`. Second loop is `Interpreter` loop that loops over bytecode opcodes and executes instruction from `InstructionTable`.
+The `Evm` execution runs **two** loops:
 
-First loop, the call loop, implements stack of `Frames` and it is responsible for handling sub calls and its return outputs. At the start Evm creates first `Frame` that contains `Interpreter` and starts the loop. `Interpreter` returns the `InterpreterAction` and action can be a `Return` of a call this means this interpreter finished its run or `SubCall`/`SubCreate` that means that new `Frame` needs to be created and pushed to the stack. When `Interpreter` returns `Return` action `Frame` is popped from the stack and its return value is pushed to the parent `Frame` stack. When `Interpreter` returns `SubCall`/`SubCreate` action new `Frame` is created and pushed to the stack and the loop continues. When the stack is empty the loop finishes.
 
-Second loop is `Interpreter` loop that loops over bytecode opcodes and executes instruction. It is called from the call loop and it is responsible for executing bytecode instructions. It is implemented in [`Interpreter`](../interpreter.md) crate.
+### Call loop
+The first loop is call loop that everything starts with, it creates call frames, handles subcalls, it returns outputs and calls `Interpreter` loop to execute bytecode instructions.
+It is handled by `ExecutionHandler`.
+
+The first loop implements a stack of `Frames`.
+It is responsible for handling sub calls and its return outputs.
+At the start, `Evm` creates `Frame` containing `Interpreter` and starts the loop.
+
+The `Interpreter` returns the `InterpreterAction` which can be:
+- `Return`: This interpreter finished its run.
+  `Frame` is popped from the stack and its return value is pushed to the parent `Frame` stack.
+- `SubCall`/`SubCreate`: A new `Frame` needs to be created and pushed to the stack.
+  A new `Frame` is created and pushed to the stack and the loop continues.
+  When the stack is empty, the loop finishes.
+
+### Interpreter loop
+The second loop is the `Interpreter` loop which is called by the call loop and loops over bytecode opcodes and executes instructions based on the `InstructionTable`.
+It is implemented in the [`Interpreter`](../interpreter.md) crate.
 
 To dive deeper into the `Evm` logic  check [`Handler`](./handler.md) documentation.
 
 # Functionalities
 
-Function of Evm is to start execution but setting up what Evm is going to execute is done by `EvmBuilder`.
-
-Main function inside evm are:
-* `preverify` - that only preverifies transaction information.
-* `transact preverified` - is next step after preverification that executes transaction.
-* `transact` - it calls both preverifies and it executes transaction.
-* `builder` and `modify` function - allows building or modifying the Evm, more on this can be found in [`EvmBuilder`](./builder.md) documentation. `builder` is main way of creating Evm and `modify` allows you to modify parts of it without dissolving `Evm`.
-* `into_context` - is used we want to get the `Context` from the Evm.
+The function of `Evm` is to start execution, but setting up what it is going to execute is done by `EvmBuilder`.
+The main functions of the builder are:
+* `preverify` - that only pre-verifies transaction information.
+* `transact preverified` - is next step after pre-verification that executes transactions.
+* `transact` - it calls both preverifies and executes transactions.
+* `builder` and `modify` functions - allow building or modifying the `Evm`, more on this can be found in [`EvmBuilder`](./builder.md) documentation. `builder` is the main way of creating `Evm` and `modify` allows you to modify parts of it without dissolving `Evm`.
+* `into_context` - is used when we want to get the `Context` from `Evm`.
