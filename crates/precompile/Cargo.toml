@@ -30,11 +30,11 @@ secp256k1 = { version = "0.28.2", default-features = false, features = [
     "alloc",
     "recovery",
     "rand",
-    "std",
     "global-context",
 ], optional = true }
-criterion = "0.5"
-rand = "0.8"
+
+[dev-dependencies]
+criterion = { version = "0.5" }
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable"]

@@ -3,17 +3,23 @@ use revm_precompile::{
     bn128::{
         pair::{ISTANBUL_PAIR_BASE, ISTANBUL_PAIR_PER_POINT},
         run_pair,
-    }, kzg_point_evaluation::run, secp256k1::ec_recover_run, Bytes
+    },
+    kzg_point_evaluation::run,
+    secp256k1::ec_recover_run,
+    Bytes,
 };
 use revm_primitives::{hex, keccak256, Env, U256, VERSIONED_HASH_VERSION_KZG};
-use secp256k1::{Message, SecretKey, SECP256K1};
+use secp256k1::{rand, Message, SecretKey, SECP256K1};
 use sha2::{Digest, Sha256};
 
-/// Benchmarks different implementations of the root calculation.
-pub fn trie_root_benchmark(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Precompile benchmarks");
+/// Benchmarks different cryptography-related precompiles.
+pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
+    let mut group = c.benchmark_group("Crypto Precompile benchmarks");
     let group_name = |description: &str| format!("precompile bench | {description}");
 
+    // === ECPAIRING ===
+
+    // set up ecpairing input
     let input = hex::decode(
         "\
         1c76476f4def4bb94541d57ebba1193381ffa7aa76ada664dd31c16024c43f59\
@@ -31,10 +37,6 @@ pub fn trie_root_benchmark(c: &mut Criterion) {
     )
     .unwrap();
 
-    // let expected =
-    //     hex::decode("0000000000000000000000000000000000000000000000000000000000000001")
-    //         .unwrap();
-
     let res = run_pair(
         &input,
         ISTANBUL_PAIR_PER_POINT,
@@ -45,6 +47,8 @@ pub fn trie_root_benchmark(c: &mut Criterion) {
     .0;
 
     println!("gas used by regular pairing call: {:?}", res);
+
+    // === ECRECOVER ===
 
     // generate secp256k1 signature
     let data = hex::decode("1337133713371337").unwrap();
@@ -61,23 +65,18 @@ pub fn trie_root_benchmark(c: &mut Criterion) {
     let mut message_and_signature = [0u8; 128];
     message_and_signature[0..32].copy_from_slice(&hash[..]);
 
+    // fit signature into format the precompile expects
     let rec_id = U256::from(rec_id as u64);
     message_and_signature[32..64].copy_from_slice(&rec_id.to_be_bytes::<32>());
     message_and_signature[64..128].copy_from_slice(&data);
-
-    // // `v` must be a 32-byte big-endian integer equal to 27 or 28.
-    // if !(input[32..63].iter().all(|&b| b == 0) && matches!(input[63], 27 | 28)) {
-    //     return Ok((ECRECOVER_BASE, Bytes::new()));
-    // }
-    // let msg = <&B256>::try_from(&input[0..32]).unwrap();
-    // let recid = input[63] - 27;
-    // let sig = <&B512>::try_from(&input[64..128]).unwrap();
 
     let message_and_signature = Bytes::from(message_and_signature);
     let gas = ec_recover_run(&message_and_signature, u64::MAX).unwrap();
     println!("gas used by ecrecover precompile: {:?}", gas);
 
-    // now check kzg
+    // === POINT_EVALUATION ===
+
+    // now check kzg precompile gas
     let commitment = hex!("8f59a8d2a1a625a17f3fea0fe5eb8c896db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7").to_vec();
     let mut versioned_hash = Sha256::digest(&commitment).to_vec();
     versioned_hash[0] = VERSIONED_HASH_VERSION_KZG;
@@ -87,10 +86,9 @@ pub fn trie_root_benchmark(c: &mut Criterion) {
 
     let kzg_input = [versioned_hash, z, y, commitment, proof].concat().into();
 
-    let expected_output = hex!("000000000000000000000000000000000000000000000000000000000000100073eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
     let gas = 50000;
     let env = Env::default();
-    let (actual_gas, actual_output) = run(&kzg_input, gas, &env).unwrap();
+    let (actual_gas, _actual_output) = run(&kzg_input, gas, &env).unwrap();
     println!("gas used by kzg precompile: {:?}", actual_gas);
 
     group.bench_function(group_name("ecrecover precompile"), |b| {
@@ -124,6 +122,6 @@ pub fn trie_root_benchmark(c: &mut Criterion) {
 criterion_group! {
     name = benches;
     config = Criterion::default();
-    targets = trie_root_benchmark
+    targets = benchmark_crypto_precompiles
 }
 criterion_main!(benches);
