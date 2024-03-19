@@ -346,7 +346,7 @@ mod tests {
             let expected = hex::decode(test.expected).unwrap();
             assert_eq!(
                 res.0, test_gas,
-                "used gas not maching for test: {}",
+                "used gas not matching for test: {}",
                 test.name
             );
             assert_eq!(res.1, expected, "test:{}", test.name);
@@ -361,7 +361,7 @@ mod tests {
             let expected = hex::decode(test.expected).unwrap();
             assert_eq!(
                 res.0, test_gas,
-                "used gas not maching for test: {}",
+                "used gas not matching for test: {}",
                 test.name
             );
             assert_eq!(res.1, expected, "test:{}", test.name);
