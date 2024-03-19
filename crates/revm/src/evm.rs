@@ -3,7 +3,7 @@ use crate::{
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
-        opcode::Instructio`1nTables, Host, Interpreter, InterpreterAction, SStoreResult,
+        opcode::InstructionTables, Host, Interpreter, InterpreterAction, SStoreResult,
         SelfDestructResult, SharedMemory,
     },
     primitives::{
