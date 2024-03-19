@@ -16,4 +16,4 @@ pub mod stack;
 pub mod system;
 pub mod utility;
 
-pub use opcode::{Instruction, OpCode, OPCODE_JUMPMAP};
+pub use opcode::{Instruction, OpCode, OPCODE_INFO_JUMPTABLE};

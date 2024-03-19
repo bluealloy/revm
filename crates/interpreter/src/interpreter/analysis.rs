@@ -1,12 +1,12 @@
 use revm_primitives::eof::TypesSection;
 use revm_primitives::{Bytes, Eof, LegacyAnalyzedBytecode};
 
-use crate::opcode;
 use crate::primitives::{
     bitvec::prelude::{bitvec, BitVec, Lsb0},
     legacy::JumpTable,
     Bytecode,
 };
+use crate::{opcode, OPCODE_INFO_JUMPTABLE};
 use std::sync::Arc;
 
 /// Perform bytecode analysis.
@@ -92,8 +92,6 @@ pub fn validate_eof(eof: &Eof) -> Result<(), ()> {
     Ok(())
 }
 
-
-
 pub fn validate_eof_bytecode(code: &[u8], types: &TypesSection) -> Result<(), ()> {
     let max_stack_size = types.inputs as u16;
     let stack_size = types.inputs as u16;
@@ -105,7 +103,7 @@ pub fn validate_eof_bytecode(code: &[u8], types: &TypesSection) -> Result<(), ()
 
     while iter < end {
         let opcode = unsafe { *iter };
-        let opcode_info = eof_table[opcode as usize] += 1;
+        let opcode_info = &OPCODE_INFO_JUMPTABLE[opcode as usize];
 
         // if opcode::JUMPDEST == opcode {
         //     // SAFETY: jumps are max length of the code
