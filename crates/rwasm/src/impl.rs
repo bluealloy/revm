@@ -21,7 +21,6 @@ use fluentbase_core::account::Account;
 use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
 use fluentbase_types::{ExitCode, STATE_DEPLOY, STATE_MAIN};
 use revm_primitives::{CreateScheme, RWASM_MAX_CODE_SIZE};
-use rwasm_codegen::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -198,40 +197,6 @@ impl<'a, GSPEC: Spec + 'static> EVMImpl<'a, GSPEC> {
 
         // main return
         handler.main_return(data, call_result, output, &gas)
-    }
-
-    fn translate_wasm_to_rwasm(
-        input: &Bytes,
-        func_name: &'static str,
-    ) -> Result<Bytes, CompilerError> {
-        #[cfg(feature = "runtime")]
-        {
-            use fluentbase_runtime::Runtime;
-            let import_linker = Runtime::<()>::new_shared_linker();
-            let mut compiler = Compiler::new_with_linker(
-                input.as_ref(),
-                CompilerConfig::default(),
-                Some(&import_linker),
-            )?;
-            compiler.translate(FuncOrExport::Export(func_name))?;
-            let output = compiler.finalize()?;
-            return Ok(Bytes::from(output));
-        };
-        #[cfg(not(feature = "runtime"))]
-        {
-            use rwasm_codegen::{ImportLinker, ImportLinkerDefaults};
-            let mut import_linker = ImportLinker::default();
-            let import_linker_defaults = ImportLinkerDefaults::new_v1alpha();
-            import_linker_defaults.register_import_funcs(&mut import_linker);
-            let mut compiler = Compiler::new_with_linker(
-                input.as_ref(),
-                CompilerConfig::default(),
-                Some(&import_linker),
-            )?;
-            compiler.translate(FuncOrExport::Export(func_name))?;
-            let output = compiler.finalize()?;
-            return Ok(Bytes::from(output));
-        };
     }
 
     /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
@@ -467,7 +432,7 @@ impl<'a, GSPEC: Spec + 'static> EVMImpl<'a, GSPEC> {
 
         let exit_code = fluentbase_core::evm::call::_evm_call(
             gas_limit as u32,
-            caller_account.address.as_ptr(),
+            callee_account.address.as_ptr(),
             value.to_be_bytes::<32>().as_ptr(),
             input.as_ptr(),
             input.len() as u32,

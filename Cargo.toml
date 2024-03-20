@@ -18,11 +18,7 @@ fluentbase-runtime = { path = "../fluentbase/crates/runtime", default-features =
 fluentbase-types = { path = "../fluentbase/crates/types", default-features = false }
 
 # rwasm
-#rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel" }
-rwasm = { path = "../rwasm/rwasm", default-features = false }
-#rwasm-codegen = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel" }
-rwasm-codegen = { path = "../rwasm/codegen", default-features = false }
-
+rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel" }
 
 [profile.release]
 panic = "abort"
