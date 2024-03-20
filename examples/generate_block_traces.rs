@@ -82,7 +82,7 @@ async fn main() -> anyhow::Result<()> {
                 let nn = number.0[0];
                 b.number = U256::from(nn);
             }
-            local_fill!(b.coinbase, block.author);
+            local_fill!(b.beneficiary, block.author);
             local_fill!(b.timestamp, Some(block.timestamp), U256::from_limbs);
             local_fill!(b.difficulty, Some(block.difficulty), U256::from_limbs);
             local_fill!(b.gas_limit, Some(block.gas_limit), U256::from_limbs);
