@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use ethers_core::types::{Block, BlockId, H160 as eH160, H256, TxHash, U64 as eU64};
+use ethers_core::types::{Block, BlockId, TxHash, H160 as eH160, H256, U64 as eU64};
 use ethers_providers::Middleware;
 use tokio::runtime::{Builder, Handle, RuntimeFlavor};
 
@@ -19,7 +19,9 @@ impl<M: Middleware> EthersDB<M> {
         let block_number: Option<BlockId> = if block_number.is_some() {
             block_number
         } else {
-            Some(BlockId::from(Self::block_on(client.get_block_number()).ok()?))
+            Some(BlockId::from(
+                Self::block_on(client.get_block_number()).ok()?,
+            ))
         };
 
         Some(Self {
@@ -96,9 +98,9 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
     fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
         let add = eH160::from(address.0 .0);
         let index = H256::from(index.to_be_bytes());
-        let slot_value: H256 = Self::block_on(self.client.get_storage_at(add, index, self.block_number))?;
+        let slot_value: H256 =
+            Self::block_on(self.client.get_storage_at(add, index, self.block_number))?;
         Ok(U256::from_be_bytes(slot_value.to_fixed_bytes()))
-
     }
 
     fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error> {
@@ -108,7 +110,8 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
         }
         // We know number <= u64::MAX so unwrap is safe
         let number = eU64::from(u64::try_from(number).unwrap());
-        let block: Option<Block<TxHash>> = Self::block_on(self.client.get_block(BlockId::from(number)))?;
+        let block: Option<Block<TxHash>> =
+            Self::block_on(self.client.get_block(BlockId::from(number)))?;
         // If number is given, the block is supposed to be finalized so unwrap is safe too.
         Ok(B256::new(block.unwrap().hash.unwrap().0))
     }
@@ -141,7 +144,6 @@ impl<M: Middleware> Database for EthersDB<M> {
 // Run tests with `cargo test -- --nocapture` to see print statements
 #[cfg(test)]
 mod tests {
-    use super::*;
     use ethers_providers::{Http, Provider};
 
     //#[test]
