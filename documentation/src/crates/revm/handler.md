@@ -33,7 +33,7 @@ They are called in the following order:
 * `validate_env`:
   Verifies if all data is set in `Environment` and if valid, for example if `gas_limit` is smaller than block `gas_limit`.
 * `validate_initial_tx_gas`:
-  Calculates initial gas needed for the transaction to be executed and checks if it is less them the transaction gas_limit.
+  Calculates initial gas needed for the transaction to be executed and checks if it is less than the transaction gas_limit.
   Note that this does not touch the `Database` or state.
 * `validate_tx_against_state`:
   Loads the caller account and checks their information.
