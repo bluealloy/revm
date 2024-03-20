@@ -144,6 +144,7 @@ impl<M: Middleware> Database for EthersDB<M> {
 // Run tests with `cargo test -- --nocapture` to see print statements
 #[cfg(test)]
 mod tests {
+    use super::*;
     use ethers_providers::{Http, Provider};
 
     //#[test]
