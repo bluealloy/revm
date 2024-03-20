@@ -14,7 +14,7 @@ You can implement the traits `Database`, `DatabaseRef` or `Database + DatabaseCo
 - `DatabaseRef`:
   Takes a reference on the object.
   It is useful if you only have a reference on the state and don't want to update anything on it.
-  It enables `previerify_transaction`, `transact_preverified_ref`, `transact_ref` and `inspect_ref` functions.
+  It enables `preverify_transaction`, `transact_preverified_ref`, `transact_ref` and `inspect_ref` functions.
 - `Database + DatabaseCommit`:
   Allows directly committing changes of a transaction.
   It enables `transact_commit` and `inspect_commit` functions.
