@@ -13,6 +13,7 @@ mod bytecode;
 mod constants;
 pub mod db;
 pub mod env;
+#[cfg(not(feature = "std"))]
 pub mod keccak256;
 #[cfg(feature = "c-kzg")]
 pub mod kzg;
@@ -45,6 +46,7 @@ pub use bitvec;
 pub use bytecode::*;
 pub use constants::*;
 pub use env::*;
+#[cfg(not(feature = "std"))]
 pub use keccak256::keccak256;
 
 cfg_if::cfg_if! {
