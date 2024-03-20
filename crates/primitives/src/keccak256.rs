@@ -1,5 +1,4 @@
 use alloy_primitives::B256;
-use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
 
 #[link(wasm_import_module = "fluentbase_v1alpha")]
 extern "C" {
