@@ -7,7 +7,7 @@ This module houses;
 
 1. `KzgSettings`: Stores the setup and parameters needed for computing KZG proofs.
 
-    ```sh
+    ```rust
         pub struct KZGSettings {
             #[doc = " The length of `roots_of_unity`, a power of 2."]
             max_width: u64,
@@ -22,7 +22,7 @@ This module houses;
 
 2. `trusted_setup_points`: This module contains functions and types used for parsing and utilizing the `Trused Setup` for this KZG commitment.
 
-    ```sh
+    ```rust
         pub use trusted_setup_points::{
             parse_kzg_trusted_setup, G1Points, G2Points, KzgErrors, BYTES_PER_G1_POINT, BYTES_PER_G2_POINT,
             G1_POINTS, G2_POINTS, NUM_G1_POINTS, NUM_G2_POINTS,
