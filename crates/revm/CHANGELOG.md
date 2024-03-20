@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.2.0](https://github.com/bluealloy/revm/compare/revm-v7.1.0...revm-v7.2.0) - 2024-03-19
+
+### Added
+- add convert_boxed and insert_boxed for InstructionTable ([#1194](https://github.com/bluealloy/revm/pull/1194))
+- optional nonce check ([#1195](https://github.com/bluealloy/revm/pull/1195))
+
+### Other
+- Change unwrap to ? to propagate errors ([#1207](https://github.com/bluealloy/revm/pull/1207))
+- fix wonky test ([#1197](https://github.com/bluealloy/revm/pull/1197))
+- clippy ([#1196](https://github.com/bluealloy/revm/pull/1196))
+- *(deps)* bump anyhow from 1.0.80 to 1.0.81 ([#1187](https://github.com/bluealloy/revm/pull/1187))
+- fix some typos ([#1189](https://github.com/bluealloy/revm/pull/1189))
+- Fix typo in readme ([#1185](https://github.com/bluealloy/revm/pull/1185))
+- Update post_execution.rs ([#1180](https://github.com/bluealloy/revm/pull/1180))
+
 ## [7.1.0](https://github.com/bluealloy/revm/compare/revm-v7.0.0...revm-v8.0.0) - 2024-03-08
 
 ### Added

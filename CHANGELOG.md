@@ -1,5 +1,18 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v34 tag
+date: 20.03.2024
+
+Small release, few utilities and refactoring, precompiles fn and Interpreter helper macros are made public.
+
+revme: 0.3.0 -> 0.3.1 (✓ API compatible changes)
+revm: 7.1.0 -> 7.2.0 (✓ API compatible changes)
+revm-interpreter: 3.3.0 -> 3.4.0 (✓ API compatible changes)
+revm-primitives: 3.0.0 -> 3.1.0 (✓ API compatible changes)
+revm-precompile: 5.0.0 -> 5.1.0 (✓ API compatible changes)
+
+# v33 tag TODO
+
 # v32 tag
 date: 08.03.2024
 
