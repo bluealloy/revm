@@ -2,7 +2,7 @@
 //!
 //! Implementations of EVM precompiled contracts.
 #![warn(rustdoc::all)]
-#![warn(unused_crate_dependencies)]
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![deny(unused_must_use, rust_2018_idioms)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -10,13 +10,13 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
-mod blake2;
-mod bn128;
-mod hash;
-mod identity;
+pub mod blake2;
+pub mod bn128;
+pub mod hash;
+pub mod identity;
 #[cfg(feature = "c-kzg")]
 pub mod kzg_point_evaluation;
-mod modexp;
+pub mod modexp;
 pub mod secp256k1;
 pub mod utilities;
 

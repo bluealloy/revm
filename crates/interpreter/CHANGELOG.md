@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v3.3.0...revm-interpreter-v3.4.0) - 2024-03-19
+
+### Added
+- *(interpreter)* export utility macros ([#1203](https://github.com/bluealloy/revm/pull/1203))
+- add convert_boxed and insert_boxed for InstructionTable ([#1194](https://github.com/bluealloy/revm/pull/1194))
+- optional nonce check ([#1195](https://github.com/bluealloy/revm/pull/1195))
+
+### Other
+- expose functionality for custom EVMs ([#1201](https://github.com/bluealloy/revm/pull/1201))
+- Fix typo in readme ([#1185](https://github.com/bluealloy/revm/pull/1185))
+
 ## [3.3.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v3.2.0...revm-interpreter-v3.3.0) - 2024-03-08
 
 ### Added
