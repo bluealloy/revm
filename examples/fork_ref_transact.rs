@@ -4,7 +4,7 @@ use ethers_providers::{Http, Provider};
 use revm::{
     db::{CacheDB, EmptyDB, EthersDB},
     primitives::{address, ExecutionResult, Output, TransactTo, U256},
-    Database, EVM,
+    Database, Evm,
 };
 use std::sync::Arc;
 
@@ -65,23 +65,23 @@ async fn main() -> anyhow::Result<()> {
         .unwrap();
 
     // initialise an empty (default) EVM
-    let mut evm = EVM::new();
-
-    // insert pre-built database from above
-    evm.database(cache_db);
-
-    // fill in missing bits of env struct
-    // change that to whatever caller you want to be
-    evm.env.tx.caller = address!("0000000000000000000000000000000000000000");
-    // account you want to transact with
-    evm.env.tx.transact_to = TransactTo::Call(pool_address);
-    // calldata formed via abigen
-    evm.env.tx.data = encoded.0.into();
-    // transaction value in wei
-    evm.env.tx.value = U256::from(0);
+    let mut evm = Evm::builder()
+        .with_db(cache_db)
+        .modify_tx_env(|tx| {
+            // fill in missing bits of env struct
+            // change that to whatever caller you want to be
+            tx.caller = address!("0000000000000000000000000000000000000000");
+            // account you want to transact with
+            tx.transact_to = TransactTo::Call(pool_address);
+            // calldata formed via abigen
+            tx.data = encoded.0.into();
+            // transaction value in wei
+            tx.value = U256::from(0);
+        })
+        .build();
 
     // execute transaction without writing to the DB
-    let ref_tx = evm.transact_ref().unwrap();
+    let ref_tx = evm.transact().unwrap();
     // select ExecutionResult struct
     let result = ref_tx.result;
 

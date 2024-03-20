@@ -1,6 +1,6 @@
 use crate::{Address, Bytes, Log, State, U256};
-use alloc::vec::Vec;
 use core::fmt;
+use std::{boxed::Box, string::String, vec::Vec};
 
 /// Result of EVM execution.
 pub type EVMResult<DBError> = EVMResultGeneric<ResultAndState, DBError>;
@@ -23,7 +23,7 @@ pub struct ResultAndState {
 pub enum ExecutionResult {
     /// Returned successfully
     Success {
-        reason: Eval,
+        reason: SuccessReason,
         gas_used: u64,
         gas_refunded: u64,
         logs: Vec<Log>,
@@ -33,7 +33,7 @@ pub enum ExecutionResult {
     Revert { gas_used: u64, output: Bytes },
     /// Reverted for various reasons and spend all gas.
     Halt {
-        reason: Halt,
+        reason: HaltReason,
         /// Halting will spend all the gas, and will be equal to gas_limit.
         gas_used: u64,
     },
@@ -50,14 +50,6 @@ impl ExecutionResult {
     /// Returns true if execution result is a Halt.
     pub fn is_halt(&self) -> bool {
         matches!(self, Self::Halt { .. })
-    }
-
-    /// Return logs, if execution is not successful, function will return empty vec.
-    pub fn logs(&self) -> Vec<Log> {
-        match self {
-            Self::Success { logs, .. } => logs.clone(),
-            _ => Vec::new(),
-        }
     }
 
     /// Returns the output data of the execution.
@@ -82,7 +74,15 @@ impl ExecutionResult {
         }
     }
 
-    /// Consumes the type and returns logs, if execution is not successful, function will return empty vec.
+    /// Returns the logs if execution is successful, or an empty list otherwise.
+    pub fn logs(&self) -> &[Log] {
+        match self {
+            Self::Success { logs, .. } => logs,
+            _ => &[],
+        }
+    }
+
+    /// Consumes `self` and returns the logs if execution is successful, or an empty list otherwise.
     pub fn into_logs(self) -> Vec<Log> {
         match self {
             Self::Success { logs, .. } => logs,
@@ -90,12 +90,13 @@ impl ExecutionResult {
         }
     }
 
+    /// Returns the gas used.
     pub fn gas_used(&self) -> u64 {
-        let (Self::Success { gas_used, .. }
-        | Self::Revert { gas_used, .. }
-        | Self::Halt { gas_used, .. }) = self;
-
-        *gas_used
+        match *self {
+            Self::Success { gas_used, .. }
+            | Self::Revert { gas_used, .. }
+            | Self::Halt { gas_used, .. } => gas_used,
+        }
     }
 }
 
@@ -123,10 +124,18 @@ impl Output {
             Output::Create(data, _) => data,
         }
     }
+
+    /// Returns the created address, if any.
+    pub fn address(&self) -> Option<&Address> {
+        match self {
+            Output::Call(_) => None,
+            Output::Create(_, address) => address.as_ref(),
+        }
+    }
 }
 
 /// Main EVM error.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EVMError<DBError> {
     /// Transaction validation error.
@@ -135,29 +144,49 @@ pub enum EVMError<DBError> {
     Header(InvalidHeader),
     /// Database error.
     Database(DBError),
+    /// Custom error.
+    ///
+    /// Useful for handler registers where custom logic would want to return their own custom error.
+    Custom(String),
 }
 
 #[cfg(feature = "std")]
-impl<DBError: fmt::Debug + fmt::Display> std::error::Error for EVMError<DBError> {}
+impl<DBError: std::error::Error + 'static> std::error::Error for EVMError<DBError> {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Transaction(e) => Some(e),
+            Self::Header(e) => Some(e),
+            Self::Database(e) => Some(e),
+            Self::Custom(_) => None,
+        }
+    }
+}
 
 impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            EVMError::Transaction(e) => write!(f, "Transaction error: {e:?}"),
-            EVMError::Header(e) => write!(f, "Header error: {e:?}"),
-            EVMError::Database(e) => write!(f, "Database error: {e}"),
+            Self::Transaction(e) => write!(f, "transaction validation error: {e}"),
+            Self::Header(e) => write!(f, "header validation error: {e}"),
+            Self::Database(e) => write!(f, "database error: {e}"),
+            Self::Custom(e) => f.write_str(e),
         }
     }
 }
 
 impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
-    fn from(invalid: InvalidTransaction) -> Self {
-        EVMError::Transaction(invalid)
+    fn from(value: InvalidTransaction) -> Self {
+        Self::Transaction(value)
+    }
+}
+
+impl<DBError> From<InvalidHeader> for EVMError<DBError> {
+    fn from(value: InvalidHeader) -> Self {
+        Self::Header(value)
     }
 }
 
 /// Transaction validation error.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
     /// When using the EIP-1559 fee model introduced in the London upgrade, transactions specify two primary fee fields:
@@ -180,8 +209,8 @@ pub enum InvalidTransaction {
     RejectCallerWithCode,
     /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
     LackOfFundForMaxFee {
-        fee: u64,
-        balance: U256,
+        fee: Box<U256>,
+        balance: Box<U256>,
     },
     /// Overflow payment in transaction.
     OverflowPaymentInTransaction,
@@ -196,7 +225,7 @@ pub enum InvalidTransaction {
         state: u64,
     },
     /// EIP-3860: Limit and meter initcode
-    CreateInitcodeSizeLimit,
+    CreateInitCodeSizeLimit,
     /// Transaction chain id does not match the config chain id.
     InvalidChainId,
     /// Access list is not supported for blocks before the Berlin hardfork.
@@ -216,12 +245,36 @@ pub enum InvalidTransaction {
     TooManyBlobs,
     /// Blob transaction contains a versioned hash with an incorrect version
     BlobVersionNotSupported,
-    /// System transactions are not supported
-    /// post-regolith hardfork.
+    /// System transactions are not supported post-regolith hardfork.
+    ///
+    /// Before the Regolith hardfork, there was a special field in the `Deposit` transaction
+    /// type that differentiated between `system` and `user` deposit transactions. This field
+    /// was deprecated in the Regolith hardfork, and this error is thrown if a `Deposit` transaction
+    /// is found with this field set to `true` after the hardfork activation.
+    ///
+    /// In addition, this error is internal, and bubbles up into a [HaltReason::FailedDeposit] error
+    /// in the `revm` handler for the consumer to easily handle. This is due to a state transition
+    /// rule on OP Stack chains where, if for any reason a deposit transaction fails, the transaction
+    /// must still be included in the block, the sender nonce is bumped, the `mint` value persists, and
+    /// special gas accounting rules are applied. Normally on L1, [EVMError::Transaction] errors
+    /// are cause for non-inclusion, so a special [HaltReason] variant was introduced to handle this
+    /// case for failed deposit transactions.
     #[cfg(feature = "optimism")]
     DepositSystemTxPostRegolith,
-    /// Deposit transaction haults bubble up to the global main return handler,
-    /// wiping state and only increasing the nonce + persisting the mint value.
+    /// Deposit transaction haults bubble up to the global main return handler, wiping state and
+    /// only increasing the nonce + persisting the mint value.
+    ///
+    /// This is a catch-all error for any deposit transaction that is results in a [HaltReason] error
+    /// post-regolith hardfork. This allows for a consumer to easily handle special cases where
+    /// a deposit transaction fails during validation, but must still be included in the block.
+    ///
+    /// In addition, this error is internal, and bubbles up into a [HaltReason::FailedDeposit] error
+    /// in the `revm` handler for the consumer to easily handle. This is due to a state transition
+    /// rule on OP Stack chains where, if for any reason a deposit transaction fails, the transaction
+    /// must still be included in the block, the sender nonce is bumped, the `mint` value persists, and
+    /// special gas accounting rules are applied. Normally on L1, [EVMError::Transaction] errors
+    /// are cause for non-inclusion, so a special [HaltReason] variant was introduced to handle this
+    /// case for failed deposit transactions.
     #[cfg(feature = "optimism")]
     HaltedDepositPostRegolith,
     /// Error that happens when rWASM compilation failes
@@ -234,68 +287,66 @@ impl std::error::Error for InvalidTransaction {}
 impl fmt::Display for InvalidTransaction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            InvalidTransaction::PriorityFeeGreaterThanMaxFee => {
-                write!(f, "Priority fee is greater than max fee")
+            Self::PriorityFeeGreaterThanMaxFee => {
+                write!(f, "priority fee is greater than max fee")
             }
-            InvalidTransaction::GasPriceLessThanBasefee => {
-                write!(f, "Gas price is less than basefee")
+            Self::GasPriceLessThanBasefee => {
+                write!(f, "gas price is less than basefee")
             }
-            InvalidTransaction::CallerGasLimitMoreThanBlock => {
-                write!(f, "Caller gas limit exceeds the block gas limit")
+            Self::CallerGasLimitMoreThanBlock => {
+                write!(f, "caller gas limit exceeds the block gas limit")
             }
-            InvalidTransaction::CallGasCostMoreThanGasLimit => {
-                write!(f, "Call gas cost exceeds the gas limit")
+            Self::CallGasCostMoreThanGasLimit => {
+                write!(f, "call gas cost exceeds the gas limit")
             }
-            InvalidTransaction::RejectCallerWithCode => {
-                write!(f, "Reject transactions from senders with deployed code")
+            Self::RejectCallerWithCode => {
+                write!(f, "reject transactions from senders with deployed code")
             }
-            InvalidTransaction::LackOfFundForMaxFee { fee, balance } => {
-                write!(f, "Lack of funds {} for max fee {}", balance, fee)
+            Self::LackOfFundForMaxFee { fee, balance } => {
+                write!(f, "lack of funds ({balance}) for max fee ({fee})")
             }
-            InvalidTransaction::OverflowPaymentInTransaction => {
-                write!(f, "Overflow payment in transaction")
+            Self::OverflowPaymentInTransaction => {
+                write!(f, "overflow payment in transaction")
             }
-            InvalidTransaction::NonceOverflowInTransaction => {
-                write!(f, "Nonce overflow in transaction")
+            Self::NonceOverflowInTransaction => {
+                write!(f, "nonce overflow in transaction")
             }
-            InvalidTransaction::NonceTooHigh { tx, state } => {
-                write!(f, "Nonce too high {}, expected {}", tx, state)
+            Self::NonceTooHigh { tx, state } => {
+                write!(f, "nonce {tx} too high, expected {state}")
             }
-            InvalidTransaction::NonceTooLow { tx, state } => {
-                write!(f, "Nonce {} too low, expected {}", tx, state)
+            Self::NonceTooLow { tx, state } => {
+                write!(f, "nonce {tx} too low, expected {state}")
             }
-            InvalidTransaction::CreateInitcodeSizeLimit => {
-                write!(f, "Create initcode size limit")
+            Self::CreateInitCodeSizeLimit => {
+                write!(f, "create initcode size limit")
             }
-            InvalidTransaction::InvalidChainId => write!(f, "Invalid chain id"),
-            InvalidTransaction::AccessListNotSupported => {
-                write!(f, "Access list not supported")
+            Self::InvalidChainId => write!(f, "invalid chain ID"),
+            Self::AccessListNotSupported => write!(f, "access list not supported"),
+            Self::MaxFeePerBlobGasNotSupported => {
+                write!(f, "max fee per blob gas not supported")
             }
-            InvalidTransaction::MaxFeePerBlobGasNotSupported => {
-                write!(f, "Max fee per blob gas not supported")
+            Self::BlobVersionedHashesNotSupported => {
+                write!(f, "blob versioned hashes not supported")
             }
-            InvalidTransaction::BlobVersionedHashesNotSupported => {
-                write!(f, "Blob versioned hashes not supported")
+            Self::BlobGasPriceGreaterThanMax => {
+                write!(f, "blob gas price is greater than max fee per blob gas")
             }
-            InvalidTransaction::BlobGasPriceGreaterThanMax => {
-                write!(f, "Blob gas price is greater than max fee per blob gas")
-            }
-            InvalidTransaction::EmptyBlobs => write!(f, "Empty blobs"),
-            InvalidTransaction::BlobCreateTransaction => write!(f, "Blob create transaction"),
-            InvalidTransaction::TooManyBlobs => write!(f, "Too many blobs"),
-            InvalidTransaction::BlobVersionNotSupported => write!(f, "Blob version not supported"),
+            Self::EmptyBlobs => write!(f, "empty blobs"),
+            Self::BlobCreateTransaction => write!(f, "blob create transaction"),
+            Self::TooManyBlobs => write!(f, "too many blobs"),
+            Self::BlobVersionNotSupported => write!(f, "blob version not supported"),
             #[cfg(feature = "optimism")]
-            InvalidTransaction::DepositSystemTxPostRegolith => {
+            Self::DepositSystemTxPostRegolith => {
                 write!(
                     f,
-                    "Deposit system transactions post regolith hardfork are not supported"
+                    "deposit system transactions post regolith hardfork are not supported"
                 )
             }
             #[cfg(feature = "optimism")]
-            InvalidTransaction::HaltedDepositPostRegolith => {
+            Self::HaltedDepositPostRegolith => {
                 write!(
                     f,
-                    "Deposit transaction halted post-regolith. Error will be bubbled up to main return handler."
+                    "deposit transaction halted post-regolith; error will be bubbled up to main return handler"
                 )
             }
             InvalidTransaction::RwasmCompilationFailed => {
@@ -305,13 +356,7 @@ impl fmt::Display for InvalidTransaction {
     }
 }
 
-impl<DBError> From<InvalidHeader> for EVMError<DBError> {
-    fn from(invalid: InvalidHeader) -> Self {
-        EVMError::Header(invalid)
-    }
-}
-
-/// Errors related to misconfiguration of a [`BlockEnv`].
+/// Errors related to misconfiguration of a [`crate::env::BlockEnv`].
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidHeader {
@@ -327,8 +372,8 @@ impl std::error::Error for InvalidHeader {}
 impl fmt::Display for InvalidHeader {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            InvalidHeader::PrevrandaoNotSet => write!(f, "Prevrandao not set"),
-            InvalidHeader::ExcessBlobGasNotSet => write!(f, "Excess blob gas not set"),
+            Self::PrevrandaoNotSet => write!(f, "`prevrandao` not set"),
+            Self::ExcessBlobGasNotSet => write!(f, "`excess_blob_gas` not set"),
         }
     }
 }
@@ -336,7 +381,7 @@ impl fmt::Display for InvalidHeader {
 /// Reason a transaction successfully completed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum Eval {
+pub enum SuccessReason {
     Stop,
     Return,
     SelfDestruct,
@@ -346,7 +391,7 @@ pub enum Eval {
 /// immediately end with all gas being consumed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum Halt {
+pub enum HaltReason {
     OutOfGas(OutOfGasError),
     OpcodeNotFound,
     InvalidFEOpcode,
@@ -363,13 +408,13 @@ pub enum Halt {
     /// Error on created contract that begins with EF
     CreateContractStartingWithEF,
     /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
-    CreateInitcodeSizeLimit,
+    CreateInitCodeSizeLimit,
 
     /* Internal Halts that can be only found inside Inspector */
     OverflowPayment,
     StateChangeDuringStaticCall,
     CallNotAllowedInsideStatic,
-    OutOfFund,
+    OutOfFunds,
     CallTooDeep,
 
     /* Optimism errors */
@@ -381,7 +426,7 @@ pub enum Halt {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OutOfGasError {
     // Basic OOG error
-    BasicOutOfGas,
+    Basic,
     // Tried to expand past REVM limit
     MemoryLimit,
     // Basic OOG error from memory expansion

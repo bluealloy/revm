@@ -1,9 +1,9 @@
-use crate::primitives::{hash_map::Entry, Bytecode, Bytes, HashMap, U256};
+use crate::primitives::{hash_map::Entry, Bytecode, HashMap, U256};
 use crate::{
     primitives::{Address, Env, Log, B256, KECCAK_EMPTY},
-    CallInputs, CreateInputs, Gas, Host, InstructionResult, SelfDestructResult, SharedMemory,
+    Host, SStoreResult, SelfDestructResult,
 };
-use alloc::vec::Vec;
+use std::vec::Vec;
 
 /// A dummy [Host] implementation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -34,7 +34,12 @@ impl DummyHost {
 
 impl Host for DummyHost {
     #[inline]
-    fn env(&mut self) -> &mut Env {
+    fn env(&self) -> &Env {
+        &self.env
+    }
+
+    #[inline]
+    fn env_mut(&mut self) -> &mut Env {
         &mut self.env
     }
 
@@ -75,12 +80,7 @@ impl Host for DummyHost {
     }
 
     #[inline]
-    fn sstore(
-        &mut self,
-        _address: Address,
-        index: U256,
-        value: U256,
-    ) -> Option<(U256, U256, U256, bool)> {
+    fn sstore(&mut self, _address: Address, index: U256, value: U256) -> Option<SStoreResult> {
         let (present, is_cold) = match self.storage.entry(index) {
             Entry::Occupied(mut entry) => (entry.insert(value), false),
             Entry::Vacant(entry) => {
@@ -89,7 +89,12 @@ impl Host for DummyHost {
             }
         };
 
-        Some((U256::ZERO, present, value, is_cold))
+        Some(SStoreResult {
+            original_value: U256::ZERO,
+            present_value: present,
+            new_value: value,
+            is_cold,
+        })
     }
 
     #[inline]
@@ -106,34 +111,12 @@ impl Host for DummyHost {
     }
 
     #[inline]
-    fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {
-        self.log.push(Log {
-            address,
-            topics,
-            data,
-        })
+    fn log(&mut self, log: Log) {
+        self.log.push(log)
     }
 
     #[inline]
     fn selfdestruct(&mut self, _address: Address, _target: Address) -> Option<SelfDestructResult> {
         panic!("Selfdestruct is not supported for this host")
-    }
-
-    #[inline]
-    fn create(
-        &mut self,
-        _inputs: &mut CreateInputs,
-        _shared_memory: &mut SharedMemory,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
-        panic!("Create is not supported for this host")
-    }
-
-    #[inline]
-    fn call(
-        &mut self,
-        _input: &mut CallInputs,
-        _shared_memory: &mut SharedMemory,
-    ) -> (InstructionResult, Gas, Bytes) {
-        panic!("Call is not supported for this host")
     }
 }

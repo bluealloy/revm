@@ -66,20 +66,43 @@ run tests with command: `cargo run --release -- statetest tests/GeneralStateTest
 
 ## Running benchmarks
 
-TODO needs to be updated. Benches can now be found inside `crates/revm/benches`
+Benches can be found in [`crates/revm/benches`](./crates/revm/benches).
+
+Currently, available benches include the following.
+- *analysis*
+- *snailtracer*
+- *transfer*
+
+To run the `snailtracer` bench, execute the `cargo bench` subcommand below.
 
 ```shell
-cargo run --package revm-test --release --bin snailtracer
+cargo bench --package revm --profile release -- snailtracer
 ```
+
+Using [flamegraph][flamegraph], you can create a visualization breaking down the runtime of various
+sections of the bench execution - a flame graph. Executing the `cargo flamegraph` subcommand requires
+installing [flamegraph][flamegraph] by running `cargo install flamegraph`.
 
 ```shell
-cargo flamegraph --root --freq 4000 --min-width 0.001 --package revm-test --bin snailtracer
+cargo flamegraph --root --freq 4000 --min-width 0.001 --package revm --bench bench -- snailtracer
 ```
 
-## Running example
+This command will produce a flamegraph image output to `flamegraph.svg`.
+Flamegraph also requires sudo mode to run (hence the `--root` cli arg) and will prompt you for your password if not in sudo mode already.
+
+[flamegraph]: https://docs.rs/crate/flamegraph/0.1.6
+
+## Running examples
 
 ```shell
 cargo run -p revm --features ethersdb --example fork_ref_transact
+```
+
+Generate block traces and write them to json files in a new `traces/` directory.
+Each file corresponds to a transaction in the block and is named as such: `<tx index>.json`.
+
+```shell
+cargo run -p revm --features std,serde-json,ethersdb --example generate_block_traces
 ```
 
 # Used by:
@@ -89,6 +112,8 @@ cargo run -p revm --features ethersdb --example fork_ref_transact
 * [Reth](https://github.com/paradigmxyz/reth) Modular, contributor-friendly and blazing-fast implementation of the Ethereum protocol
 * [Arbiter](https://github.com/primitivefinance/arbiter) is a framework for stateful Ethereum smart-contract simulation
 * [Zeth](https://github.com/risc0/zeth) is an open-source ZK block prover for Ethereum built on the RISC Zero zkVM.
+* [VERBS](https://github.com/simtopia/verbs) an open-source Ethereum agent-based modelling and simulation library with a Python API.
+* [Hardhat](https://github.com/NomicFoundation/hardhat) is a development environment to compile, deploy, test, and debug your Ethereum software.
 * ...
 
 (If you want to add project to the list, ping me or open the PR)
@@ -109,4 +134,4 @@ mdbook serve documentation
 
 There is public telegram group: https://t.me/+Ig4WDWOzikA3MzA0
 
-Or if you want to hire me or contact me directly, here is my email: dragan0rakita@gmail.com and telegram: https://t.me/draganrakita
+Or if you want to contact me directly, here is my email: dragan0rakita@gmail.com and telegram: https://t.me/draganrakita

@@ -1,5 +1,7 @@
 pub use crate::primitives::CreateScheme;
-use crate::primitives::{Address, Bytes, B256, U256};
+use crate::primitives::{Address, Bytes, TransactTo, TxEnv, U256};
+use core::ops::Range;
+use std::boxed::Box;
 
 /// Inputs for a call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -17,6 +19,8 @@ pub struct CallInputs {
     pub context: CallContext,
     /// Whether this is a static call.
     pub is_static: bool,
+    /// The return memory offset where the output of the call is written.
+    pub return_memory_offset: Range<usize>,
 }
 
 /// Inputs for a create call.
@@ -35,7 +39,61 @@ pub struct CreateInputs {
     pub gas_limit: u64,
 }
 
+impl CallInputs {
+    /// Creates new call inputs.
+    pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
+        let TransactTo::Call(address) = tx_env.transact_to else {
+            return None;
+        };
+
+        Some(CallInputs {
+            contract: address,
+            transfer: Transfer {
+                source: tx_env.caller,
+                target: address,
+                value: tx_env.value,
+            },
+            input: tx_env.data.clone(),
+            gas_limit,
+            context: CallContext {
+                caller: tx_env.caller,
+                address,
+                code_address: address,
+                apparent_value: tx_env.value,
+                scheme: CallScheme::Call,
+            },
+            is_static: false,
+            return_memory_offset: 0..0,
+        })
+    }
+
+    /// Returns boxed call inputs.
+    pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
+        Self::new(tx_env, gas_limit).map(Box::new)
+    }
+}
+
 impl CreateInputs {
+    /// Creates new create inputs.
+    pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
+        let TransactTo::Create(scheme) = tx_env.transact_to else {
+            return None;
+        };
+
+        Some(CreateInputs {
+            caller: tx_env.caller,
+            scheme,
+            value: tx_env.value,
+            init_code: tx_env.data.clone(),
+            gas_limit,
+        })
+    }
+
+    /// Returns boxed create inputs.
+    pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
+        Self::new(tx_env, gas_limit).map(Box::new)
+    }
+
     /// Returns the address that this create call will create.
     pub fn created_address(&self, nonce: u64) -> Address {
         match self.scheme {
@@ -45,23 +103,13 @@ impl CreateInputs {
                 .create2_from_code(salt.to_be_bytes(), &self.init_code),
         }
     }
-
-    /// Returns the address that this create call will create, without calculating the init code hash.
-    ///
-    /// Note: `hash` must be `keccak256(&self.init_code)`.
-    pub fn created_address_with_hash(&self, nonce: u64, hash: &B256) -> Address {
-        match self.scheme {
-            CreateScheme::Create => self.caller.create(nonce),
-            CreateScheme::Create2 { salt } => self.caller.create2(salt.to_be_bytes(), hash),
-        }
-    }
 }
 
 /// Call schemes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CallScheme {
-    /// `CALL`
+    /// `CALL`.
     Call,
     /// `CALLCODE`
     CallCode,

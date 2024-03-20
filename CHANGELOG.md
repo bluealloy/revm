@@ -1,5 +1,82 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v34 tag
+date: 20.03.2024
+
+Small release, few utilities and refactoring, precompiles fn and Interpreter helper macros are made public.
+
+revme: 0.3.0 -> 0.3.1 (✓ API compatible changes)
+revm: 7.1.0 -> 7.2.0 (✓ API compatible changes)
+revm-interpreter: 3.3.0 -> 3.4.0 (✓ API compatible changes)
+revm-primitives: 3.0.0 -> 3.1.0 (✓ API compatible changes)
+revm-precompile: 5.0.0 -> 5.1.0 (✓ API compatible changes)
+
+# v33 tag TODO
+
+# v32 tag
+date: 08.03.2024
+
+Publish revm v7.1.0 that extends v7.0.0 with more restrictive context precompile.
+
+* revm: 7.0.0(yanked) -> 7.1.0 (⚠️ API breaking changes)
+* revm-interpreter: 3.2.0 -> 3.3.0 (✓ API compatible changes)
+
+# v31 tag
+date 08.03.2024
+
+Stateful and context aware precompiles types added. Few improvements and fixes.
+
+* revme: 0.2.2 -> 0.3.0 (⚠️ API breaking changes)
+* revm: 6.1.0 -> 7.0.0(yanked) (⚠️ API breaking changes)
+* revm-interpreter: 3.1.0 -> 3.2.0 (✓ API compatible changes)
+* revm-primitives: 2.1.0 -> 3.0.0 (⚠️ API breaking changes)
+* revm-precompile: 4.1.0 -> 5.0.0 (⚠️ API breaking changes)
+
+# v30 tag
+date: 23.02.2024
+
+Small release.
+Fixes db panic propagation and OP l1block load after cancun.
+
+* revme: 0.2.1 -> 0.2.2 (✓ API compatible changes)
+* revm: 6.0.0 -> 6.1.0 (✓ API compatible changes)
+* revm-interpreter: 3.0.0 -> 3.1.0 (✓ API compatible changes)
+* revm-primitives: 2.0.1 -> 2.1.0 (✓ API compatible changes)
+* revm-precompile: 4.0.1 -> 4.1.0 (✓ API compatible changes)
+
+# v29 tag
+date: 17.02.2024
+
+Small release, `return_memory_range` included inside `CallInput`.
+Few fixes.
+
+* revm: 5.0.0 -> 6.0.0 (⚠️ API breaking changes)
+* revm-interpreter: 2.1.0 -> 3.0.0 (⚠️ API breaking changes)
+* revm-primitives: 2.0.0 -> 2.0.1 (✓ API compatible changes)
+* revm-precompile: 4.0.0 -> 4.0.1 (✓ API compatible changes)
+
+# v28 tag
+date: 12.02.2024
+
+Small release, function renaming and some helper functions added.
+
+* revm: 4.0.0 -> 5.0.0 (⚠️ API breaking changes)
+* revm-interpreter: 2.0.0 -> 2.1.0 (✓ API compatible changes)
+* revm-precompile: 3.0.0 -> 4.0.0 (⚠️ API breaking changes)
+* revm-test: 0.1.0
+
+# v27 tag
+date: 07.02.2024
+
+Refactor of Evm logic as list of handlers inside EvmHandler and EvmBuilder that open up the Evm and allow overwriting the default behavior.
+Change how call loop (Previously it was recursion) is handled in Evm
+
+* revm: v4.0.0
+* revm-precompile: v3.0.0
+* revm-primitives: v2.0.0
+* revm-interpreter: v2.0.0
+* revme: 0.2.1
+
 # v26 tag
 date 02.10.2023
 

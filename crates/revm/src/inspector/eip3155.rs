@@ -1,10 +1,10 @@
-use crate::inspectors::GasInspector;
-use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
-use crate::primitives::{db::Database, hex, Address, Bytes};
-use crate::{EVMData, Inspector};
-use revm_interpreter::primitives::U256;
-use revm_interpreter::{opcode, Interpreter, SharedMemory, Stack};
-use serde_json::json;
+use crate::{
+    inspectors::GasInspector,
+    interpreter::{opcode, CallInputs, CallOutcome, Interpreter},
+    primitives::{db::Database, hex, HashMap, B256, U256},
+    EvmContext, Inspector,
+};
+use serde::Serialize;
 use std::io::Write;
 
 /// [EIP-3155](https://eips.ethereum.org/EIPS/eip-3155) tracer [Inspector].
@@ -12,157 +12,188 @@ pub struct TracerEip3155 {
     output: Box<dyn Write>,
     gas_inspector: GasInspector,
 
-    #[allow(dead_code)]
-    trace_mem: bool,
-    #[allow(dead_code)]
-    trace_return_data: bool,
+    /// Print summary of the execution.
+    print_summary: bool,
 
-    stack: Stack,
+    stack: Vec<U256>,
     pc: usize,
     opcode: u8,
     gas: u64,
+    refunded: i64,
     mem_size: usize,
-    #[allow(dead_code)]
-    memory: Option<SharedMemory>,
     skip: bool,
 }
 
+// # Output
+// The CUT MUST output a `json` object for EACH operation.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Output {
+    // Required fields:
+    /// Program counter
+    pc: u64,
+    /// OpCode
+    op: u8,
+    /// Gas left before executing this operation
+    gas: String,
+    /// Gas cost of this operation
+    gas_cost: String,
+    /// Array of all values on the stack
+    stack: Vec<String>,
+    /// Depth of the call stack
+    depth: u64,
+    /// Data returned by the function call
+    return_data: String,
+    /// Amount of **global** gas refunded
+    refund: String,
+    /// Size of memory array
+    mem_size: String,
+
+    // Optional fields:
+    /// Name of the operation
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    op_name: Option<&'static str>,
+    /// Description of an error (should contain revert reason if supported)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    error: Option<String>,
+    /// Array of all allocated values
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    memory: Option<Vec<String>>,
+    /// Array of all stored values
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    storage: Option<HashMap<String, String>>,
+    /// Array of values, Stack of the called function
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    return_stack: Option<Vec<String>>,
+}
+
+// # Summary and error handling
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Summary {
+    // Required fields:
+    /// Root of the state trie after executing the transaction
+    state_root: String,
+    /// Return values of the function
+    output: String,
+    /// All gas used by the transaction
+    gas_used: String,
+    /// Bool whether transaction was executed successfully
+    pass: bool,
+
+    // Optional fields:
+    /// Time in nanoseconds needed to execute the transaction
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    time: Option<u128>,
+    /// Name of the fork rules used for execution
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    fork: Option<String>,
+}
+
 impl TracerEip3155 {
-    pub fn new(output: Box<dyn Write>, trace_mem: bool, trace_return_data: bool) -> Self {
+    /// Sets the writer to use for the output.
+    pub fn set_writer(&mut self, writer: Box<dyn Write>) {
+        self.output = writer;
+    }
+}
+
+impl TracerEip3155 {
+    pub fn new(output: Box<dyn Write>, print_summary: bool) -> Self {
         Self {
             output,
             gas_inspector: GasInspector::default(),
-            trace_mem,
-            trace_return_data,
-            stack: Stack::new(),
+            print_summary,
+            stack: Default::default(),
             pc: 0,
             opcode: 0,
             gas: 0,
+            refunded: 0,
             mem_size: 0,
-            memory: None,
             skip: false,
         }
+    }
+
+    fn write_value(&mut self, value: &impl serde::Serialize) -> std::io::Result<()> {
+        serde_json::to_writer(&mut *self.output, value)?;
+        self.output.write_all(b"\n")?;
+        self.output.flush()
     }
 }
 
 impl<DB: Database> Inspector<DB> for TracerEip3155 {
-    fn initialize_interp(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
-        self.gas_inspector.initialize_interp(interp, data);
+    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+        self.gas_inspector.initialize_interp(interp, context);
     }
 
-    // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
-    // all other information can be obtained from interp.
-    fn step(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
-        self.gas_inspector.step(interp, data);
-        self.stack = interp.stack.clone();
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+        self.gas_inspector.step(interp, context);
+        self.stack = interp.stack.data().clone();
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
         self.mem_size = interp.shared_memory.len();
-        self.gas = self.gas_inspector.gas_remaining();
+        self.gas = interp.gas.remaining();
+        self.refunded = interp.gas.refunded();
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
-        self.gas_inspector.step_end(interp, data);
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+        self.gas_inspector.step_end(interp, context);
         if self.skip {
             self.skip = false;
             return;
+        }
+
+        let value = Output {
+            pc: self.pc as u64,
+            op: self.opcode,
+            gas: hex_number(self.gas),
+            gas_cost: hex_number(self.gas_inspector.last_gas_cost()),
+            stack: self.stack.iter().map(hex_number_u256).collect(),
+            depth: context.journaled_state.depth(),
+            return_data: "0x".to_string(),
+            refund: hex_number(self.refunded as u64),
+            mem_size: self.mem_size.to_string(),
+
+            op_name: opcode::OPCODE_JUMPMAP[self.opcode as usize],
+            error: if !interp.instruction_result.is_ok() {
+                Some(format!("{:?}", interp.instruction_result))
+            } else {
+                None
+            },
+            memory: None,
+            storage: None,
+            return_stack: None,
         };
-
-        self.print_log_line(data.journaled_state.depth());
-    }
-
-    fn call(
-        &mut self,
-        data: &mut EVMData<'_, DB>,
-        _inputs: &mut CallInputs,
-    ) -> (InstructionResult, Gas, Bytes) {
-        self.print_log_line(data.journaled_state.depth());
-        (InstructionResult::Continue, Gas::new(0), Bytes::new())
+        let _ = self.write_value(&value);
     }
 
     fn call_end(
         &mut self,
-        data: &mut EVMData<'_, DB>,
+        context: &mut EvmContext<DB>,
         inputs: &CallInputs,
-        remaining_gas: Gas,
-        ret: InstructionResult,
-        out: Bytes,
-    ) -> (InstructionResult, Gas, Bytes) {
-        self.gas_inspector
-            .call_end(data, inputs, remaining_gas, ret, out.clone());
-        // self.log_step(interp, data, is_static, eval);
-        self.skip = true;
-        if data.journaled_state.depth() == 0 {
-            let log_line = json!({
-                //stateroot
-                "output": format!("0x{}", hex::encode(out.as_ref())),
-                "gasUsed": format!("0x{:x}", self.gas_inspector.gas_remaining()),
-                //time
-                //fork
-            });
+        outcome: CallOutcome,
+    ) -> CallOutcome {
+        let outcome = self.gas_inspector.call_end(context, inputs, outcome);
+        if self.print_summary && context.journaled_state.depth() == 0 {
+            let value = Summary {
+                state_root: B256::ZERO.to_string(),
+                output: outcome.result.output.to_string(),
+                gas_used: hex_number(self.gas_inspector.gas_remaining()),
+                pass: outcome.result.is_ok(),
 
-            writeln!(self.output, "{}", serde_json::to_string(&log_line).unwrap())
-                .expect("If output fails we can ignore the logging");
+                time: None,
+                fork: None,
+            };
+            let _ = self.write_value(&value);
         }
-        (ret, remaining_gas, out)
-    }
-
-    fn create(
-        &mut self,
-        data: &mut EVMData<'_, DB>,
-        _inputs: &mut CreateInputs,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
-        self.print_log_line(data.journaled_state.depth());
-        (
-            InstructionResult::Continue,
-            None,
-            Gas::new(0),
-            Bytes::default(),
-        )
-    }
-
-    fn create_end(
-        &mut self,
-        data: &mut EVMData<'_, DB>,
-        inputs: &CreateInputs,
-        ret: InstructionResult,
-        address: Option<Address>,
-        remaining_gas: Gas,
-        out: Bytes,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
-        self.gas_inspector
-            .create_end(data, inputs, ret, address, remaining_gas, out.clone());
-        self.skip = true;
-        (ret, address, remaining_gas, out)
+        outcome
     }
 }
 
-impl TracerEip3155 {
-    fn print_log_line(&mut self, depth: u64) {
-        let short_stack: Vec<String> = self.stack.data().iter().map(|&b| short_hex(b)).collect();
-        let log_line = json!({
-            "pc": self.pc,
-            "op": self.opcode,
-            "gas": format!("0x{:x}", self.gas),
-            "gasCost": format!("0x{:x}", self.gas_inspector.last_gas_cost()),
-            //memory?
-            "memSize": self.mem_size,
-            "stack": short_stack,
-            "depth": depth,
-            //returnData
-            //refund
-            "opName": opcode::OPCODE_JUMPMAP[self.opcode as usize],
-            //error
-            //storage
-            //returnStack
-        });
-
-        writeln!(self.output, "{}", serde_json::to_string(&log_line).unwrap())
-            .expect("If output fails we can ignore the logging");
-    }
+fn hex_number(uint: u64) -> String {
+    format!("0x{uint:x}")
 }
 
-fn short_hex(b: U256) -> String {
+fn hex_number_u256(b: &U256) -> String {
     let s = hex::encode(b.to_be_bytes::<32>());
     let s = s.trim_start_matches('0');
     if s.is_empty() {

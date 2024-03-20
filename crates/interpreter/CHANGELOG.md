@@ -1,3 +1,126 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [3.4.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v3.3.0...revm-interpreter-v3.4.0) - 2024-03-19
+
+### Added
+- *(interpreter)* export utility macros ([#1203](https://github.com/bluealloy/revm/pull/1203))
+- add convert_boxed and insert_boxed for InstructionTable ([#1194](https://github.com/bluealloy/revm/pull/1194))
+- optional nonce check ([#1195](https://github.com/bluealloy/revm/pull/1195))
+
+### Other
+- expose functionality for custom EVMs ([#1201](https://github.com/bluealloy/revm/pull/1201))
+- Fix typo in readme ([#1185](https://github.com/bluealloy/revm/pull/1185))
+
+## [3.3.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v3.2.0...revm-interpreter-v3.3.0) - 2024-03-08
+
+### Added
+- *(interpreter)* OpCode struct constants ([#1173](https://github.com/bluealloy/revm/pull/1173))
+
+
+## [3.2.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v3.1.0...revm-interpreter-v3.2.0) - 2024-03-08
+
+### Added
+- add insert method on instruction table ([#1167](https://github.com/bluealloy/revm/pull/1167))
+- use `impl` instead of `dyn` in `GetInspector` ([#1157](https://github.com/bluealloy/revm/pull/1157))
+
+### Other
+- *(interpreter)* use already-computed sign in SAR ([#1147](https://github.com/bluealloy/revm/pull/1147))
+- *(interpreter)* factor out jump logic ([#1146](https://github.com/bluealloy/revm/pull/1146))
+- *(interpreter)* evaluate instruction table constructor at compile time ([#1140](https://github.com/bluealloy/revm/pull/1140))
+
+## [3.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v3.0.0...revm-interpreter-v3.1.0) - 2024-02-22
+
+### Added
+- bump c-kzg, add portable feature, make it default ([#1106](https://github.com/bluealloy/revm/pull/1106))
+
+### Fixed
+- replace tuple in sstore return with struct ([#1115](https://github.com/bluealloy/revm/pull/1115))
+- *(db)* Set instruction result at outcome insert ([#1117](https://github.com/bluealloy/revm/pull/1117))
+
+### Other
+- adding more test for i256 ([#1090](https://github.com/bluealloy/revm/pull/1090))
+- *(refactor)* Propagate fatal error ([#1116](https://github.com/bluealloy/revm/pull/1116))
+- clippy cleanup ([#1112](https://github.com/bluealloy/revm/pull/1112))
+
+## [3.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v2.1.0...revm-interpreter-v3.0.0) - 2024-02-17
+
+### Fixed
+- rename and pass optimism-default-handler to revm-primitives ([#1098](https://github.com/bluealloy/revm/pull/1098))
+
+### Other
+- *(precompile)* use `Bytes` in precompile functions ([#1085](https://github.com/bluealloy/revm/pull/1085))
+- Add memory offset ([#1032](https://github.com/bluealloy/revm/pull/1032))
+- license date and revm docs ([#1080](https://github.com/bluealloy/revm/pull/1080))
+
+## [2.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v2.0.0...revm-interpreter-v2.1.0) - 2024-02-12
+
+### Added
+- *(interpreter)* relax `make_boxed_instruction_table::FN` to `FnMut` ([#1076](https://github.com/bluealloy/revm/pull/1076))
+
+## [2.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v1.3.0...revm-interpreter-v2.0.0) - 2024-02-07
+
+Iterpreter will not be called in recursive calls but would return Action ( CALL/CREATE) that will be executed by the main loop.
+
+### Added
+- tweeks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
+- add `BytecodeLocked::original_bytecode` ([#1037](https://github.com/bluealloy/revm/pull/1037))
+- *(op)* Ecotone hardfork ([#1009](https://github.com/bluealloy/revm/pull/1009))
+- EvmBuilder and External Contexts ([#888](https://github.com/bluealloy/revm/pull/888))
+- add asm-keccak feature ([#972](https://github.com/bluealloy/revm/pull/972))
+- add some conversions to InstructionResult ([#910](https://github.com/bluealloy/revm/pull/910))
+- implement Default for InstructionResult ([#878](https://github.com/bluealloy/revm/pull/878))
+- `Canyon` hardfork behind `optimism` feature flag ([#871](https://github.com/bluealloy/revm/pull/871))
+- Loop call stack ([#851](https://github.com/bluealloy/revm/pull/851))
+- *(cfg)* optionally disable beneficiary reward ([#834](https://github.com/bluealloy/revm/pull/834))
+- *(interpreter)* add more helper methods to memory ([#794](https://github.com/bluealloy/revm/pull/794))
+- derive more traits ([#745](https://github.com/bluealloy/revm/pull/745))
+- add methods to `CreateInput` for calculating created address ([#793](https://github.com/bluealloy/revm/pull/793))
+
+### Fixed
+- *(Interpreter)* is_revert should call is_revert ([#1007](https://github.com/bluealloy/revm/pull/1007))
+- cast overflow in 32-bits OS ([#978](https://github.com/bluealloy/revm/pull/978))
+- dont calculate initcode keccak on CREATE ([#969](https://github.com/bluealloy/revm/pull/969))
+- *(ci)* Workflow Touchups ([#901](https://github.com/bluealloy/revm/pull/901))
+- safer stack ([#879](https://github.com/bluealloy/revm/pull/879))
+- *(interpreter)* Stack `push_slice` fix and dup with pointers ([#837](https://github.com/bluealloy/revm/pull/837))
+
+### Other
+- helper functions around Env ([#1057](https://github.com/bluealloy/revm/pull/1057))
+- *(Execution)* Granular handles create/call,call_return,insert_call_outcome ([#1024](https://github.com/bluealloy/revm/pull/1024))
+- *(Interpreter)* Split calls to separate functions ([#1005](https://github.com/bluealloy/revm/pull/1005))
+- expose InstructionResult getters in Interpreter result ([#1002](https://github.com/bluealloy/revm/pull/1002))
+- *(Inspector)* add CallOutcome to call/call_end ([#985](https://github.com/bluealloy/revm/pull/985))
+- fix serde std flags for no-std build ([#987](https://github.com/bluealloy/revm/pull/987))
+- *(Inspector)* Add CreateOutcome in create/create_end return ([#980](https://github.com/bluealloy/revm/pull/980))
+- *(log)* use alloy_primitives::Log ([#975](https://github.com/bluealloy/revm/pull/975))
+- enhance readability ([#968](https://github.com/bluealloy/revm/pull/968))
+- *(interpreter)* refactor sstore_cost ([#974](https://github.com/bluealloy/revm/pull/974))
+- *(interpreter)* improve enum naming ([#962](https://github.com/bluealloy/revm/pull/962))
+- *(interpreter)* consistency in all_results_are_covered() ([#961](https://github.com/bluealloy/revm/pull/961))
+- *(interpreter)* local return_error! macro ([#956](https://github.com/bluealloy/revm/pull/956))
+- *(interpreter)* simplify the logic of calc.new_cost() ([#939](https://github.com/bluealloy/revm/pull/939))
+- *(interpreter)* fix the name of the macro referenced by record_memory() ([#926](https://github.com/bluealloy/revm/pull/926))
+- *(interpreter)* conditionally enable `optional_beneficiary_reward` ([#925](https://github.com/bluealloy/revm/pull/925))
+- fix case for CreateInitCodeSizeLimit error ([#896](https://github.com/bluealloy/revm/pull/896))
+- simplify use statements ([#864](https://github.com/bluealloy/revm/pull/864))
+- *(interpreter)* use the constants from primitives ([#861](https://github.com/bluealloy/revm/pull/861))
+- review safety comments ([#811](https://github.com/bluealloy/revm/pull/811))
+- rewrite `Stack::push_slice` to allow arbitrary lengths ([#812](https://github.com/bluealloy/revm/pull/812))
+- make context memory pub ([#831](https://github.com/bluealloy/revm/pull/831))
+- refactor main return to handle ([#808](https://github.com/bluealloy/revm/pull/808))
+- *(SharedMemory)* small refactor; tests ([#806](https://github.com/bluealloy/revm/pull/806))
+- use `array::from_fn` in `make_instruction_table` ([#809](https://github.com/bluealloy/revm/pull/809))
+- make memory-limit private ([#796](https://github.com/bluealloy/revm/pull/796))
+- Instruction table ([#759](https://github.com/bluealloy/revm/pull/759))
+- Shared memory between calls ([#673](https://github.com/bluealloy/revm/pull/673))
+- Fix typos ([#790](https://github.com/bluealloy/revm/pull/790))
+- document everything, dedup existing docs ([#741](https://github.com/bluealloy/revm/pull/741))
 
 # v1.3.0
 date 02.10.2023

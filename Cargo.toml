@@ -1,34 +1,23 @@
 [workspace]
-resolver = "2"
 members = [
-    "bins/*",
-    "crates/*",
-    "e2e",
+    "bins/revme",
+    "bins/revm-test",
+    "crates/revm",
+    "crates/primitives",
+    "crates/interpreter",
+    "crates/precompile",
 ]
+resolver = "2"
 default-members = ["crates/revm"]
 
-[workspace.dependencies]
-#fluentbase-codec = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-codec = { path = "../fluentbase/crates/codec", default-features = false }
-#fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-sdk = { path = "../fluentbase/crates/sdk", default-features = false }
-#fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel" }
-fluentbase-runtime = { path = "../fluentbase/crates/runtime", default-features = false }
-#fluentbase-types = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-types = { path = "../fluentbase/crates/types", default-features = false }
-
-# rwasm
-rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel" }
+[workspace.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [profile.release]
-panic = "abort"
 lto = true
-opt-level = 'z'
-strip = false
-debug = false
-debug-assertions = false
-rpath = false
 codegen-units = 1
+debug = true
 
 [profile.ethtests]
 inherits = "test"

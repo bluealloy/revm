@@ -3,14 +3,14 @@ use super::{
     reverts::{AccountInfoRevert, Reverts},
     AccountRevert, AccountStatus, BundleAccount, PlainStateReverts, RevertToSlot, TransitionState,
 };
-use alloc::{
-    collections::{BTreeMap, BTreeSet},
-    vec::Vec,
-};
-use core::ops::RangeInclusive;
+use core::{mem, ops::RangeInclusive};
 use revm_interpreter::primitives::{
     hash_map::{self, Entry},
     AccountInfo, Address, Bytecode, HashMap, HashSet, StorageSlot, B256, KECCAK_EMPTY, U256,
+};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    vec::Vec,
 };
 
 /// This builder is used to help to facilitate the initialization of `BundleState` struct
@@ -32,13 +32,16 @@ pub struct BundleBuilder {
 /// Option for [`BundleState`] when converting it to the plain state.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum OriginalValuesKnown {
-    /// Check changed with original values that [BundleState] has
-    /// If we dont expect parent blocks to be committed or unwinded from database
-    /// this option should be used.
+    /// Check changed with original values that [BundleState] has.
+    ///
+    /// If we don't expect parent blocks to be committed or unwinded from database, this option
+    /// should be used.
     Yes,
-    /// Dont check original values, see CheckOriginalValues for more info.
-    /// If Bundle can be split or extended we would not be sure about
-    /// original values so this option should be used.
+    /// Don't check original values, see the implementation of [BundleState::into_plain_state] for
+    /// more info.
+    ///
+    /// If the Bundle can be split or extended, we would not be sure about original values, in that
+    /// case this option should be used.
     No,
 }
 impl OriginalValuesKnown {
@@ -262,9 +265,6 @@ pub struct BundleState {
     pub contracts: HashMap<B256, Bytecode>,
     /// Changes to revert.
     ///
-    /// If `should_collect_reverts` flag was set to `false`,
-    /// the revert for any given block will be just an empty array.
-    ///  
     /// Note: Inside vector is *not* sorted by address.
     /// But it is unique by address.
     pub reverts: Reverts,
@@ -515,45 +515,11 @@ impl BundleState {
         (plain_state, reverts.into_plain_state_reverts())
     }
 
-    /// Extend the state with state that is build on top of it.
+    /// Extend the bundle with other state
     ///
-    /// If storage was wiped in `other` state, copy `this` plain state
-    /// and put it inside `other` revert (if there is no duplicates of course).
-    ///
-    /// If `this` and `other` accounts were both destroyed invalidate second
-    /// wipe flag (from `other`). As wiping from database should be done only once
-    /// and we already transferred all potentially missing storages to the `other` revert.
-    ///
-    /// Additionally update the `other` state only if `other` is not flagged as destroyed.
-    pub fn extend(&mut self, mut other: Self) {
-        // iterate over reverts and if its storage is wiped try to add previous bundle
-        // state as there is potential missing slots.
-        for (address, revert) in other.reverts.iter_mut().flatten() {
-            if revert.wipe_storage {
-                // If there is wipe storage in `other` revert
-                // we need to move storage from present state.
-                if let Some(this_account) = self.state.get_mut(address) {
-                    // As this account was destroyed inside `other` bundle.
-                    // we are fine to wipe/drain this storage and put it inside revert.
-                    for (key, value) in this_account.storage.drain() {
-                        revert
-                            .storage
-                            .entry(key)
-                            .or_insert(RevertToSlot::Some(value.present_value));
-                    }
-
-                    // nullify `other` wipe as primary database wipe is done in `this`.
-                    if this_account.was_destroyed() {
-                        revert.wipe_storage = false;
-                    }
-                }
-            }
-
-            // Increment reverts size for each of the updated reverts.
-            self.reverts_size += revert.size_hint();
-        }
-
-        for (address, other_account) in other.state {
+    /// Update the `other` state only if `other` is not flagged as destroyed.
+    pub fn extend_state(&mut self, other_state: HashMap<Address, BundleAccount>) {
+        for (address, other_account) in other_state {
             match self.state.entry(address) {
                 hash_map::Entry::Occupied(mut entry) => {
                     let this = entry.get_mut();
@@ -586,6 +552,44 @@ impl BundleState {
                 }
             }
         }
+    }
+    /// Extend the state with state that is build on top of it.
+    ///
+    /// If storage was wiped in `other` state, copy `this` plain state
+    /// and put it inside `other` revert (if there is no duplicates of course).
+    ///
+    /// If `this` and `other` accounts were both destroyed invalidate second
+    /// wipe flag (from `other`). As wiping from database should be done only once
+    /// and we already transferred all potentially missing storages to the `other` revert.
+    pub fn extend(&mut self, mut other: Self) {
+        // iterate over reverts and if its storage is wiped try to add previous bundle
+        // state as there is potential missing slots.
+        for (address, revert) in other.reverts.iter_mut().flatten() {
+            if revert.wipe_storage {
+                // If there is wipe storage in `other` revert
+                // we need to move storage from present state.
+                if let Some(this_account) = self.state.get_mut(address) {
+                    // As this account was destroyed inside `other` bundle.
+                    // we are fine to wipe/drain this storage and put it inside revert.
+                    for (key, value) in this_account.storage.drain() {
+                        revert
+                            .storage
+                            .entry(key)
+                            .or_insert(RevertToSlot::Some(value.present_value));
+                    }
+
+                    // nullify `other` wipe as primary database wipe is done in `this`.
+                    if this_account.was_destroyed() {
+                        revert.wipe_storage = false;
+                    }
+                }
+            }
+
+            // Increment reverts size for each of the updated reverts.
+            self.reverts_size += revert.size_hint();
+        }
+        // Extension of state
+        self.extend_state(other.state);
         // Contract can be just extended, when counter is introduced we will take into account that.
         self.contracts.extend(other.contracts);
         // Reverts can be just extended
@@ -624,16 +628,30 @@ impl BundleState {
         if let Some(reverts) = self.reverts.pop() {
             for (address, revert_account) in reverts.into_iter() {
                 self.reverts_size -= revert_account.size_hint();
-                if let Entry::Occupied(mut entry) = self.state.entry(address) {
-                    let account = entry.get_mut();
-                    self.state_size -= account.size_hint();
-                    if account.revert(revert_account) {
-                        entry.remove();
-                    } else {
-                        self.state_size += account.size_hint();
+                match self.state.entry(address) {
+                    Entry::Occupied(mut entry) => {
+                        let account = entry.get_mut();
+                        self.state_size -= account.size_hint();
+                        if account.revert(revert_account) {
+                            entry.remove();
+                        } else {
+                            self.state_size += account.size_hint();
+                        }
                     }
-                } else {
-                    unreachable!("Account {address:?} {revert_account:?} for revert should exist");
+                    Entry::Vacant(entry) => {
+                        // create empty account that we will revert on.
+                        // Only place where this account is not existing is if revert is DeleteIt.
+                        let mut account = BundleAccount::new(
+                            None,
+                            None,
+                            HashMap::new(),
+                            AccountStatus::LoadedNotExisting,
+                        );
+                        if !account.revert(revert_account) {
+                            self.state_size += account.size_hint();
+                            entry.insert(account);
+                        }
+                    }
                 }
             }
             return true;
@@ -657,6 +675,21 @@ impl BundleState {
                 break;
             }
         }
+    }
+
+    /// Prepends present the state with the given BundleState.
+    /// It adds changes from the given state but does not override any existing changes.
+    ///
+    /// Reverts are not updated.
+    pub fn prepend_state(&mut self, mut other: BundleState) {
+        // take this bundle
+        let this_bundle = mem::take(self);
+        // extend other bundle state with this
+        other.extend_state(this_bundle.state);
+        // extend other contracts
+        other.contracts.extend(this_bundle.contracts);
+        // swap bundles
+        mem::swap(self, &mut other)
     }
 }
 
@@ -944,6 +977,31 @@ mod tests {
     }
 
     #[test]
+    fn test_multi_reverts_with_delete() {
+        let mut state = BundleBuilder::new(0..=3)
+            .revert_address(0, account1())
+            .revert_account_info(2, account1(), Some(Some(AccountInfo::default())))
+            .revert_account_info(3, account1(), Some(None))
+            .build();
+
+        state.revert_latest();
+        // state for account one was deleted
+        assert_eq!(state.state.get(&account1()), None);
+
+        state.revert_latest();
+        // state is set to
+        assert_eq!(
+            state.state.get(&account1()),
+            Some(&BundleAccount::new(
+                None,
+                Some(AccountInfo::default()),
+                HashMap::new(),
+                AccountStatus::Changed
+            ))
+        );
+    }
+
+    #[test]
     fn test_revert_capacity() {
         let state = BundleState::builder(0..=3)
             .revert_address(0, account1())
@@ -999,5 +1057,49 @@ mod tests {
         // take last revert
         let taken_reverts = extended.take_n_reverts(1);
         assert_eq!(taken_reverts, bundle2.reverts);
+    }
+
+    #[test]
+    fn prepend_state() {
+        let address1 = account1();
+        let address2 = account2();
+
+        let account1 = AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        };
+        let account1_changed = AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        };
+        let account2 = AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        };
+
+        let present_state = BundleState::builder(2..=2)
+            .state_present_account_info(address1, account1_changed.clone())
+            .build();
+        assert_eq!(present_state.reverts.len(), 1);
+        let previous_state = BundleState::builder(1..=1)
+            .state_present_account_info(address1, account1)
+            .state_present_account_info(address2, account2.clone())
+            .build();
+        assert_eq!(previous_state.reverts.len(), 1);
+
+        let mut test = present_state;
+
+        test.prepend_state(previous_state);
+
+        assert_eq!(test.state.len(), 2);
+        // reverts num should stay the same.
+        assert_eq!(test.reverts.len(), 1);
+        // account1 is not overwritten.
+        assert_eq!(
+            test.state.get(&address1).unwrap().info,
+            Some(account1_changed)
+        );
+        // account2 got inserted
+        assert_eq!(test.state.get(&address2).unwrap().info, Some(account2));
     }
 }

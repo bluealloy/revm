@@ -1,33 +1,34 @@
 //! # revm-precompile
 //!
 //! Implementations of EVM precompiled contracts.
-#![warn(unused_crate_dependencies)]
+#![warn(rustdoc::all)]
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![deny(unused_must_use, rust_2018_idioms)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
 #[macro_use]
-extern crate alloc;
+#[cfg(not(feature = "std"))]
+extern crate alloc as std;
 
-mod blake2;
-mod bn128;
-mod hash;
-mod identity;
+pub mod blake2;
+pub mod bn128;
+pub mod hash;
+pub mod identity;
 #[cfg(feature = "c-kzg")]
 pub mod kzg_point_evaluation;
-mod modexp;
-mod secp256k1;
+pub mod modexp;
+pub mod secp256k1;
 pub mod utilities;
 
-use alloc::{boxed::Box, collections::BTreeMap, vec::Vec};
-use core::{fmt, hash::Hash};
+use core::hash::Hash;
 use once_cell::race::OnceBox;
 #[doc(hidden)]
 pub use revm_primitives as primitives;
 pub use revm_primitives::{
     precompile::{PrecompileError as Error, *},
-    Address, Bytes, HashMap, B256,
+    Address, Bytes, HashMap, Log, B256,
 };
+use std::{boxed::Box, vec::Vec};
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
@@ -40,13 +41,6 @@ pub struct PrecompileOutput {
     pub logs: Vec<Log>,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
-pub struct Log {
-    pub address: Address,
-    pub topics: Vec<B256>,
-    pub data: Bytes,
-}
-
 impl PrecompileOutput {
     pub fn without_logs(cost: u64, output: Vec<u8>) -> Self {
         Self {
@@ -56,101 +50,37 @@ impl PrecompileOutput {
         }
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct Precompiles {
-    pub inner: Vec<PrecompileWithAddress>,
+    /// Precompiles.
+    pub inner: HashMap<Address, Precompile>,
 }
 
 impl Precompiles {
-    /// Extends the precompiles with the given precompiles.
-    ///
-    /// Other precompiles with overwrite existing precompiles.
-    pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
-        self.inner = self
-            .inner
-            .iter()
-            .cloned()
-            .chain(other)
-            .map(|i| (i.0, i.1.clone()))
-            .collect::<BTreeMap<Address, Precompile>>()
-            .into_iter()
-            .map(|(k, v)| PrecompileWithAddress(k, v))
-            .collect::<Vec<_>>();
-    }
-}
-
-impl Default for Precompiles {
-    fn default() -> Self {
-        Self::new(SpecId::LATEST).clone() //berlin
-    }
-}
-
-#[derive(Clone)]
-pub enum Precompile {
-    Standard(StandardPrecompileFn),
-    Env(EnvPrecompileFn),
-}
-
-impl fmt::Debug for Precompile {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Precompile::Standard(_) => f.write_str("Standard"),
-            Precompile::Env(_) => f.write_str("Env"),
+    /// Returns the precompiles for the given spec.
+    pub fn new(spec: PrecompileSpecId) -> &'static Self {
+        match spec {
+            PrecompileSpecId::HOMESTEAD => Self::homestead(),
+            PrecompileSpecId::BYZANTIUM => Self::byzantium(),
+            PrecompileSpecId::ISTANBUL => Self::istanbul(),
+            PrecompileSpecId::BERLIN => Self::berlin(),
+            PrecompileSpecId::CANCUN => Self::cancun(),
+            PrecompileSpecId::LATEST => Self::latest(),
         }
     }
-}
 
-#[derive(Clone, Debug)]
-pub struct PrecompileWithAddress(Address, Precompile);
-
-impl From<PrecompileWithAddress> for (Address, Precompile) {
-    fn from(value: PrecompileWithAddress) -> Self {
-        (value.0, value.1)
-    }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
-pub enum SpecId {
-    HOMESTEAD,
-    BYZANTIUM,
-    ISTANBUL,
-    BERLIN,
-    CANCUN,
-    LATEST,
-}
-
-impl SpecId {
-    /// Returns the appropriate precompile Spec for the primitive [SpecId](revm_primitives::SpecId)
-    pub const fn from_spec_id(spec_id: revm_primitives::SpecId) -> Self {
-        use revm_primitives::SpecId::*;
-        match spec_id {
-            FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
-                Self::HOMESTEAD
-            }
-            BYZANTIUM | CONSTANTINOPLE | PETERSBURG => Self::BYZANTIUM,
-            ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
-            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
-            CANCUN => Self::CANCUN,
-            LATEST => Self::LATEST,
-            #[cfg(feature = "optimism")]
-            BEDROCK | REGOLITH => Self::BERLIN,
-        }
-    }
-}
-
-impl Precompiles {
     /// Returns precompiles for Homestead spec.
     pub fn homestead() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut inner = vec![
+            let mut precompiles = Precompiles::default();
+            precompiles.extend([
                 secp256k1::ECRECOVER,
                 hash::SHA256,
                 hash::RIPEMD160,
                 identity::FUN,
-            ];
-            inner.sort_unstable_by_key(|i| i.0);
-            Box::new(Self { inner })
+            ]);
+            Box::new(precompiles)
         })
     }
 
@@ -204,7 +134,8 @@ impl Precompiles {
 
     /// Returns precompiles for Cancun spec.
     ///
-    /// If `std` feature is not enabled KZG Point Evaluation precompile will not be included.
+    /// If the `c-kzg` feature is not enabled KZG Point Evaluation precompile will not be included,
+    /// effectively making this the same as Berlin.
     pub fn cancun() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
@@ -230,47 +161,34 @@ impl Precompiles {
         Self::cancun()
     }
 
-    pub fn empty() -> &'static Self {
-        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
-        INSTANCE.get_or_init(|| {
-            Box::new(Self {
-                inner: Default::default(),
-            })
-        })
-    }
-
-    /// Returns the precompiles for the given spec.
-    pub fn new(spec: SpecId) -> &'static Self {
-        match spec {
-            SpecId::HOMESTEAD => Self::homestead(),
-            SpecId::BYZANTIUM => Self::byzantium(),
-            SpecId::ISTANBUL => Self::istanbul(),
-            SpecId::BERLIN => Self::berlin(),
-            SpecId::CANCUN => Self::cancun(),
-            SpecId::LATEST => Self::latest(),
-        }
-    }
-
     /// Returns an iterator over the precompiles addresses.
     #[inline]
-    pub fn addresses(&self) -> impl IntoIterator<Item = &Address> {
-        self.inner.iter().map(|i| &i.0)
+    pub fn addresses(&self) -> impl Iterator<Item = &Address> {
+        self.inner.keys()
+    }
+
+    /// Consumes the type and returns all precompile addresses.
+    #[inline]
+    pub fn into_addresses(self) -> impl Iterator<Item = Address> {
+        self.inner.into_keys()
     }
 
     /// Is the given address a precompile.
     #[inline]
     pub fn contains(&self, address: &Address) -> bool {
-        self.get(address).is_some()
+        self.inner.contains_key(address)
     }
 
     /// Returns the precompile for the given address.
     #[inline]
-    pub fn get(&self, address: &Address) -> Option<Precompile> {
-        //return None;
-        self.inner
-            .binary_search_by_key(address, |i| i.0)
-            .ok()
-            .map(|i| self.inner[i].1.clone())
+    pub fn get(&self, address: &Address) -> Option<&Precompile> {
+        self.inner.get(address)
+    }
+
+    /// Returns the precompile for the given address.
+    #[inline]
+    pub fn get_mut(&mut self, address: &Address) -> Option<&mut Precompile> {
+        self.inner.get_mut(address)
     }
 
     /// Is the precompiles list empty.
@@ -282,6 +200,59 @@ impl Precompiles {
     pub fn len(&self) -> usize {
         self.inner.len()
     }
+
+    /// Extends the precompiles with the given precompiles.
+    ///
+    /// Other precompiles with overwrite existing precompiles.
+    pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
+        self.inner.extend(other.into_iter().map(Into::into));
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct PrecompileWithAddress(pub Address, pub Precompile);
+
+impl From<(Address, Precompile)> for PrecompileWithAddress {
+    fn from(value: (Address, Precompile)) -> Self {
+        PrecompileWithAddress(value.0, value.1)
+    }
+}
+
+impl From<PrecompileWithAddress> for (Address, Precompile) {
+    fn from(value: PrecompileWithAddress) -> Self {
+        (value.0, value.1)
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
+pub enum PrecompileSpecId {
+    HOMESTEAD,
+    BYZANTIUM,
+    ISTANBUL,
+    BERLIN,
+    CANCUN,
+    LATEST,
+}
+
+impl PrecompileSpecId {
+    /// Returns the appropriate precompile Spec for the primitive [SpecId](revm_primitives::SpecId)
+    pub const fn from_spec_id(spec_id: revm_primitives::SpecId) -> Self {
+        use revm_primitives::SpecId::*;
+        match spec_id {
+            FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
+                Self::HOMESTEAD
+            }
+            BYZANTIUM | CONSTANTINOPLE | PETERSBURG => Self::BYZANTIUM,
+            ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
+            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
+            CANCUN => Self::CANCUN,
+            LATEST => Self::LATEST,
+            #[cfg(feature = "optimism")]
+            BEDROCK | REGOLITH | CANYON => Self::BERLIN,
+            #[cfg(feature = "optimism")]
+            ECOTONE => Self::CANCUN,
+        }
+    }
 }
 
 /// Const function for making an address by concatenating the bytes from two given numbers.
@@ -289,7 +260,7 @@ impl Precompiles {
 /// Note that 32 + 128 = 160 = 20 bytes (the length of an address). This function is used
 /// as a convenience for specifying the addresses of the various precompiles.
 #[inline]
-const fn u64_to_address(x: u64) -> Address {
+pub const fn u64_to_address(x: u64) -> Address {
     let x = x.to_be_bytes();
     Address::new([
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7],

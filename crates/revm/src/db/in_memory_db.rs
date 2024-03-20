@@ -4,8 +4,8 @@ use crate::primitives::{
     U256,
 };
 use crate::Database;
-use alloc::vec::Vec;
 use core::convert::Infallible;
+use std::vec::Vec;
 
 /// A [Database] implementation that stores all state changes in memory.
 pub type InMemoryDB = CacheDB<EmptyDB>;
@@ -18,7 +18,8 @@ pub type InMemoryDB = CacheDB<EmptyDB>;
 /// whereas contracts are identified by their code hash, and are stored in the `contracts` map.
 /// The [DbAccount] holds the code hash of the contract, which is used to look up the contract in the `contracts` map.
 #[derive(Debug, Clone)]
-pub struct CacheDB<ExtDB: DatabaseRef> {
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct CacheDB<ExtDB> {
     /// Account info where None means it is not existing. Not existing state is needed for Pre TANGERINE forks.
     /// `code` is always `None`, and bytecode can be found in `contracts`.
     pub accounts: HashMap<Address, DbAccount>,
@@ -34,13 +35,13 @@ pub struct CacheDB<ExtDB: DatabaseRef> {
     pub db: ExtDB,
 }
 
-impl<ExtDB: DatabaseRef + Default> Default for CacheDB<ExtDB> {
+impl<ExtDB: Default> Default for CacheDB<ExtDB> {
     fn default() -> Self {
         Self::new(ExtDB::default())
     }
 }
 
-impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
+impl<ExtDB> CacheDB<ExtDB> {
     pub fn new(db: ExtDB) -> Self {
         let mut contracts = HashMap::new();
         contracts.insert(KECCAK_EMPTY, Bytecode::new());
@@ -80,7 +81,9 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         self.insert_contract(&mut info);
         self.accounts.entry(address).or_default().info = info;
     }
+}
 
+impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     /// Returns the account for the given address.
     ///
     /// If the account was not found in the cache, it will be loaded from the underlying database.
@@ -124,7 +127,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     }
 }
 
-impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
+impl<ExtDB> DatabaseCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: HashMap<Address, Account>) {
         for (address, mut account) in changes {
             if !account.is_touched() {
@@ -288,6 +291,7 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
 }
 
 #[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DbAccount {
     pub info: AccountInfo,
     /// If account is selfdestructed or newly created, storage will be cleared.
@@ -330,6 +334,7 @@ impl From<AccountInfo> for DbAccount {
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AccountState {
     /// Before Spurious Dragon hardfork there was a difference between empty and not existing.
     /// And we are flagging it here.
@@ -423,7 +428,9 @@ mod tests {
 
         let (key, value) = (U256::from(123), U256::from(456));
         let mut new_state = CacheDB::new(init_state);
-        let _ = new_state.insert_account_storage(account, key, value);
+        new_state
+            .insert_account_storage(account, key, value)
+            .unwrap();
 
         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
         assert_eq!(new_state.storage(account, key), Ok(value));
@@ -444,13 +451,41 @@ mod tests {
 
         let (key0, value0) = (U256::from(123), U256::from(456));
         let (key1, value1) = (U256::from(789), U256::from(999));
-        let _ = init_state.insert_account_storage(account, key0, value0);
+        init_state
+            .insert_account_storage(account, key0, value0)
+            .unwrap();
 
         let mut new_state = CacheDB::new(init_state);
-        let _ = new_state.replace_account_storage(account, [(key1, value1)].into());
+        new_state
+            .replace_account_storage(account, [(key1, value1)].into())
+            .unwrap();
 
         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
         assert_eq!(new_state.storage(account, key0), Ok(U256::ZERO));
         assert_eq!(new_state.storage(account, key1), Ok(value1));
+    }
+
+    #[cfg(feature = "serde-json")]
+    #[test]
+    fn test_serialize_deserialize_cachedb() {
+        let account = Address::with_last_byte(69);
+        let nonce = 420;
+        let mut init_state = CacheDB::new(EmptyDB::default());
+        init_state.insert_account_info(
+            account,
+            AccountInfo {
+                nonce,
+                ..Default::default()
+            },
+        );
+
+        let serialized = serde_json::to_string(&init_state).unwrap();
+        let deserialized: CacheDB<EmptyDB> = serde_json::from_str(&serialized).unwrap();
+
+        assert!(deserialized.accounts.get(&account).is_some());
+        assert_eq!(
+            deserialized.accounts.get(&account).unwrap().info.nonce,
+            nonce
+        );
     }
 }

@@ -6,44 +6,82 @@ keywords = ["no_std", "ethereum", "evm", "revm"]
 license = "MIT"
 name = "revm"
 repository = "https://github.com/bluealloy/revm"
-version = "3.5.0"
+version = "7.2.0"
 readme = "../../README.md"
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [dependencies]
-revm-interpreter = { path = "../interpreter", version = "1.3.0", default-features = false }
-revm-precompile = { path = "../precompile", version = "2.2.0", default-features = false }
+# revm
+revm-interpreter = { path = "../interpreter", version = "3.4.0", default-features = false }
+revm-precompile = { path = "../precompile", version = "5.1.0", default-features = false }
 
-#misc
-auto_impl = { version = "1.1", default-features = false }
+# misc
+auto_impl = { version = "1.2", default-features = false }
+cfg-if = "1.0"
+dyn-clone = "1.0"
 
-# Optionalc-kzg
-serde = { version = "1.0", default-features = false, features = ["derive", "rc"], optional = true }
-serde_json = { version = "1.0.108", default-features = false, features = ["alloc"] }
+# Optional
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+], optional = true }
+serde_json = { version = "1.0", default-features = false, features = [
+    "alloc",
+], optional = true }
 
 # ethersdb
-tokio = { version = "1.33", features = [
+tokio = { version = "1.36", features = [
     "rt-multi-thread",
     "macros",
 ], optional = true }
 ethers-providers = { version = "2.0", optional = true }
 ethers-core = { version = "2.0", optional = true }
-futures = { version = "0.3.27", optional = true }
 
 [dev-dependencies]
-ethers-contract = { version = "2.0.10", default-features = false }
-anyhow = "1.0.75"
+ethers-contract = { version = "2.0.14", default-features = false }
+anyhow = "1.0.81"
 criterion = "0.5"
-hex-literal = "0.4.1"
+indicatif = "0.17"
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "serde"]
-std = ["revm-interpreter/std", "revm-precompile/std"]
+default = ["std", "c-kzg", "secp256k1", "portable"]
+std = [
+    "serde?/std",
+    "serde_json?/std",
+    "serde_json?/preserve_order",
+    "revm-interpreter/std",
+    "revm-precompile/std",
+]
 serde = ["dep:serde", "revm-interpreter/serde"]
+serde-json = ["serde", "dep:serde_json"]
 arbitrary = ["revm-interpreter/arbitrary"]
+asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
+portable = ["revm-precompile/portable", "revm-interpreter/portable"]
+
+test-utils = []
 
 optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
+# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
+optimism-default-handler = [
+    "optimism",
+    "revm-precompile/optimism-default-handler",
+    "revm-interpreter/optimism-default-handler",
+]
+negate-optimism-default-handler = [
+    "revm-precompile/negate-optimism-default-handler",
+    "revm-interpreter/negate-optimism-default-handler",
+]
 
-ethersdb = ["std", "tokio", "futures", "ethers-providers", "ethers-core"]
+ethersdb = [
+    "std",
+    "tokio",
+    "ethers-providers",
+    "ethers-core",
+] # Negate optimism default handler
+
 dev = [
     "memory_limit",
     "optional_balance_check",
@@ -54,7 +92,6 @@ dev = [
     "optional_beneficiary_reward",
 ]
 memory_limit = ["revm-interpreter/memory_limit"]
-no_gas_measuring = ["revm-interpreter/no_gas_measuring"]
 optional_balance_check = ["revm-interpreter/optional_balance_check"]
 optional_block_gas_limit = ["revm-interpreter/optional_block_gas_limit"]
 optional_eip3607 = ["revm-interpreter/optional_eip3607"]
@@ -66,14 +103,20 @@ optional_beneficiary_reward = ["revm-interpreter/optional_beneficiary_reward"]
 secp256k1 = ["revm-precompile/secp256k1"]
 c-kzg = ["revm-precompile/c-kzg"]
 
-# deprecated features
-web3db = []
-with-serde = []
-
 [[example]]
 name = "fork_ref_transact"
 path = "../../examples/fork_ref_transact.rs"
 required-features = ["ethersdb"]
+
+[[example]]
+name = "generate_block_traces"
+path = "../../examples/generate_block_traces.rs"
+required-features = ["std", "serde-json", "ethersdb"]
+
+[[example]]
+name = "db_by_ref"
+path = "../../examples/db_by_ref.rs"
+required-features = ["std", "serde-json"]
 
 [[bench]]
 name = "bench"

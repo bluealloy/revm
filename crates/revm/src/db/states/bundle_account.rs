@@ -92,8 +92,16 @@ impl BundleAccount {
             AccountInfoRevert::DoNothing => (),
             AccountInfoRevert::DeleteIt => {
                 self.info = None;
-                self.storage = HashMap::new();
-                return true;
+                if self.original_info.is_none() {
+                    self.storage = HashMap::new();
+                    return true;
+                } else {
+                    // set all storage to zero but preserve original values.
+                    self.storage.iter_mut().for_each(|(_, v)| {
+                        v.present_value = U256::ZERO;
+                    });
+                    return false;
+                }
             }
             AccountInfoRevert::RevertTo(info) => self.info = Some(info),
         };
@@ -102,10 +110,10 @@ impl BundleAccount {
             match slot {
                 RevertToSlot::Some(value) => {
                     // Don't overwrite original values if present
-                    // if storage is not present set original values as current value.
+                    // if storage is not present set original value as current value.
                     self.storage
                         .entry(key)
-                        .or_insert(StorageSlot::new_changed(value, U256::ZERO))
+                        .or_insert(StorageSlot::new(value))
                         .present_value = value;
                 }
                 RevertToSlot::Destroyed => {
@@ -140,7 +148,7 @@ impl BundleAccount {
             |updated_storage: &StorageWithOriginalValues| -> HashMap<U256, RevertToSlot> {
                 updated_storage
                     .iter()
-                    .filter(|s| s.1.previous_or_original_value != s.1.present_value)
+                    .filter(|s| s.1.is_changed())
                     .map(|(key, value)| {
                         (*key, RevertToSlot::Some(value.previous_or_original_value))
                     })
@@ -274,7 +282,7 @@ impl BundleAccount {
                                     .into_iter()
                                     .map(|t| (t.0, RevertToSlot::Some(t.1.present_value)))
                                     .collect::<HashMap<_, _>>();
-                                for (key, _) in &updated_storage {
+                                for key in updated_storage.keys() {
                                     // as it is not existing inside Destroyed storage this means
                                     // that previous values must be zero
                                     storage.entry(*key).or_insert(RevertToSlot::Destroyed);

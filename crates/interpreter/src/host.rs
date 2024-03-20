@@ -1,19 +1,18 @@
-use crate::primitives::Bytecode;
 use crate::{
-    primitives::{Address, Bytes, Env, B256, U256},
-    CallInputs, CreateInputs, Gas, InstructionResult, SelfDestructResult, SharedMemory,
+    primitives::{Address, Bytecode, Env, Log, B256, U256},
+    SelfDestructResult,
 };
-use alloc::vec::Vec;
-pub use dummy::DummyHost;
-pub use fluent::FluentHost;
 
 mod dummy;
-mod fluent;
+pub use dummy::DummyHost;
 
 /// EVM context host.
 pub trait Host {
+    /// Returns a reference to the environment.
+    fn env(&self) -> &Env;
+
     /// Returns a mutable reference to the environment.
-    fn env(&mut self) -> &mut Env;
+    fn env_mut(&mut self) -> &mut Env;
 
     /// Load an account.
     ///
@@ -38,12 +37,7 @@ pub trait Host {
     /// Set storage value of account address at index.
     ///
     /// Returns (original, present, new, is_cold).
-    fn sstore(
-        &mut self,
-        address: Address,
-        index: U256,
-        value: U256,
-    ) -> Option<(U256, U256, U256, bool)>;
+    fn sstore(&mut self, address: Address, index: U256, value: U256) -> Option<SStoreResult>;
 
     /// Get the transient storage value of `address` at `index`.
     fn tload(&mut self, address: Address, index: U256) -> U256;
@@ -51,23 +45,23 @@ pub trait Host {
     /// Set the transient storage value of `address` at `index`.
     fn tstore(&mut self, address: Address, index: U256, value: U256);
 
-    /// Emit a log owned by `address` with given `topics` and `data`.
-    fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes);
-
-    /// Invoke a call operation.
-    fn call(
-        &mut self,
-        input: &mut CallInputs,
-        shared_memory: &mut SharedMemory,
-    ) -> (InstructionResult, Gas, Bytes);
-
-    /// Invoke a create operation.
-    fn create(
-        &mut self,
-        inputs: &mut CreateInputs,
-        shared_memory: &mut SharedMemory,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes);
+    /// Emit a log owned by `address` with given `LogData`.
+    fn log(&mut self, log: Log);
 
     /// Mark `address` to be deleted, with funds transferred to `target`.
     fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult>;
+}
+
+/// Represents the result of an `sstore` operation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SStoreResult {
+    /// Value of the storage when it is first read
+    pub original_value: U256,
+    /// Current value of the storage
+    pub present_value: U256,
+    /// New value that is set
+    pub new_value: U256,
+    /// Is storage slot loaded from database
+    pub is_cold: bool,
 }

@@ -1,7 +1,7 @@
 use super::constants::*;
 use crate::inner_models::SelfDestructResult;
 use crate::primitives::{Address, Spec, SpecId::*, U256};
-use alloc::vec::Vec;
+use std::vec::Vec;
 
 #[allow(clippy::collapsible_else_if)]
 pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i64 {
@@ -176,7 +176,7 @@ pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
         }
     } else if SPEC::enabled(ISTANBUL) {
         // EIP-1884: Repricing for trie-size-dependent opcodes
-        800
+        INSTANBUL_SLOAD_GAS
     } else if SPEC::enabled(TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         200
@@ -193,47 +193,56 @@ pub fn sstore_cost<SPEC: Spec>(
     gas: u64,
     is_cold: bool,
 ) -> Option<u64> {
-    // TODO untangle this mess and make it more elegant
-    let (gas_sload, gas_sstore_reset) = if SPEC::enabled(BERLIN) {
-        (WARM_STORAGE_READ_COST, SSTORE_RESET - COLD_SLOAD_COST)
-    } else {
-        (sload_cost::<SPEC>(is_cold), SSTORE_RESET)
-    };
+    // EIP-1706 Disable SSTORE with gasleft lower than call stipend
+    if SPEC::enabled(ISTANBUL) && gas <= CALL_STIPEND {
+        return None;
+    }
 
-    // https://eips.ethereum.org/EIPS/eip-2200
-    // It’s a combined version of EIP-1283 and EIP-1706
-    let gas_cost = if SPEC::enabled(ISTANBUL) {
-        // EIP-1706
-        if gas <= CALL_STIPEND {
-            return None;
-        }
+    if SPEC::enabled(BERLIN) {
+        // Berlin specification logic
+        let mut gas_cost = istanbul_sstore_cost::<WARM_STORAGE_READ_COST, WARM_SSTORE_RESET>(
+            original, current, new,
+        );
 
-        // EIP-1283
-        if new == current {
-            gas_sload
-        } else {
-            if original == current {
-                if original == U256::ZERO {
-                    SSTORE_SET
-                } else {
-                    gas_sstore_reset
-                }
-            } else {
-                gas_sload
-            }
+        if is_cold {
+            gas_cost += COLD_SLOAD_COST;
         }
-    } else {
-        if current == U256::ZERO && new != U256::ZERO {
-            SSTORE_SET
-        } else {
-            gas_sstore_reset
-        }
-    };
-    // In EIP-2929 we charge extra if the slot has not been used yet in this transaction
-    if SPEC::enabled(BERLIN) && is_cold {
-        Some(gas_cost + COLD_SLOAD_COST)
-    } else {
         Some(gas_cost)
+    } else if SPEC::enabled(ISTANBUL) {
+        // Istanbul logic
+        Some(istanbul_sstore_cost::<INSTANBUL_SLOAD_GAS, SSTORE_RESET>(
+            original, current, new,
+        ))
+    } else {
+        // Frontier logic
+        Some(frontier_sstore_cost(current, new))
+    }
+}
+
+/// EIP-2200: Structured Definitions for Net Gas Metering
+#[inline(always)]
+fn istanbul_sstore_cost<const SLOAD_GAS: u64, const SSTORE_RESET_GAS: u64>(
+    original: U256,
+    current: U256,
+    new: U256,
+) -> u64 {
+    if new == current {
+        SLOAD_GAS
+    } else if original == current && original == U256::ZERO {
+        SSTORE_SET
+    } else if original == current {
+        SSTORE_RESET_GAS
+    } else {
+        SLOAD_GAS
+    }
+}
+
+/// Frontier sstore cost just had two cases set and reset values
+fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
+    if current == U256::ZERO && new != U256::ZERO {
+        SSTORE_SET
+    } else {
+        SSTORE_RESET
     }
 }
 
@@ -262,16 +271,8 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
     gas
 }
 
-pub fn call_cost<SPEC: Spec>(
-    value: U256,
-    is_new: bool,
-    is_cold: bool,
-    is_call_or_callcode: bool,
-    is_call_or_staticcall: bool,
-) -> u64 {
-    let transfers_value = value != U256::default();
-
-    let call_gas = if SPEC::enabled(BERLIN) {
+pub fn call_gas<SPEC: Spec>(is_cold: bool) -> u64 {
+    if SPEC::enabled(BERLIN) {
         if is_cold {
             COLD_ACCOUNT_ACCESS_COST
         } else {
@@ -282,9 +283,17 @@ pub fn call_cost<SPEC: Spec>(
         700
     } else {
         40
-    };
+    }
+}
 
-    call_gas
+pub fn call_cost<SPEC: Spec>(
+    transfers_value: bool,
+    is_new: bool,
+    is_cold: bool,
+    is_call_or_callcode: bool,
+    is_call_or_staticcall: bool,
+) -> u64 {
+    call_gas::<SPEC>(is_cold)
         + xfer_cost(is_call_or_callcode, transfers_value)
         + new_cost::<SPEC>(is_call_or_staticcall, is_new, transfers_value)
 }
@@ -313,22 +322,16 @@ fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
 
 #[inline]
 fn new_cost<SPEC: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_value: bool) -> u64 {
-    if is_call_or_staticcall {
-        // EIP-161: State trie clearing (invariant-preserving alternative)
-        if SPEC::enabled(SPURIOUS_DRAGON) {
-            if transfers_value && is_new {
-                NEWACCOUNT
-            } else {
-                0
-            }
-        } else if is_new {
-            NEWACCOUNT
-        } else {
-            0
-        }
-    } else {
-        0
+    if !is_call_or_staticcall || !is_new {
+        return 0;
     }
+
+    // EIP-161: State trie clearing (invariant-preserving alternative)
+    if SPEC::enabled(SPURIOUS_DRAGON) && !transfers_value {
+        return 0;
+    }
+
+    NEWACCOUNT
 }
 
 #[inline]
@@ -341,7 +344,7 @@ pub fn memory_gas(a: usize) -> u64 {
 
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
-pub fn initial_tx_gas<SPEC: Spec>(
+pub fn validate_initial_tx_gas<SPEC: Spec>(
     input: &[u8],
     is_create: bool,
     access_list: &[(Address, Vec<U256>)],

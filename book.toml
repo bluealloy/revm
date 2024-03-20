@@ -1,5 +1,5 @@
 [book]
-authors = ["Colin Roberts, Waylon Jepsen"]
+authors = ["Colin Roberts, Waylon Jepsen", "Dragan Rakita"]
 language = "en"
 multilingual = false
 src = "documentation/src"

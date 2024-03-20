@@ -3,14 +3,14 @@ use super::{
     CacheAccount, StateBuilder, TransitionAccount, TransitionState,
 };
 use crate::db::EmptyDB;
-use alloc::{
-    boxed::Box,
-    collections::{btree_map, BTreeMap},
-    vec::Vec,
-};
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
     hash_map, Account, AccountInfo, Address, Bytecode, HashMap, B256, BLOCK_HASH_HISTORY, U256,
+};
+use std::{
+    boxed::Box,
+    collections::{btree_map, BTreeMap},
+    vec::Vec,
 };
 
 /// Database boxed with a lifetime and Send.
@@ -26,7 +26,7 @@ pub type StateDBBox<'a, E> = State<DBBox<'a, E>>;
 /// State clear flag is set inside CacheState and by default it is enabled.
 /// If you want to disable it use `set_state_clear_flag` function.
 #[derive(Debug)]
-pub struct State<DB: Database> {
+pub struct State<DB> {
     /// Cached state contains both changed from evm execution and cached/loaded account/storages
     /// from database. This allows us to have only one layer of cache where we can fetch data.
     /// Additionally we can introduce some preloading of data from database.
@@ -204,7 +204,7 @@ impl<DB: Database> State<DB> {
     /// NOTE: If either:
     /// * The [State] has not been built with [StateBuilder::with_bundle_update], or
     /// * The [State] has a [TransitionState] set to `None` when
-    /// [TransitionState::merge_transitions] is called,
+    /// [State::merge_transitions] is called,
     ///
     /// this will panic.
     pub fn take_bundle(&mut self) -> BundleState {
@@ -305,7 +305,7 @@ mod tests {
         states::reverts::AccountInfoRevert, AccountRevert, AccountStatus, BundleAccount,
         RevertToSlot,
     };
-    use revm_interpreter::primitives::StorageSlot;
+    use revm_interpreter::primitives::{keccak256, StorageSlot};
 
     #[test]
     fn block_hash_cache() {
@@ -315,9 +315,9 @@ mod tests {
 
         let test_number = BLOCK_HASH_HISTORY as u64 + 2;
 
-        let block1_hash = B256::from(U256::from(1).to_be_bytes());
-        let block2_hash = B256::from(U256::from(2).to_be_bytes());
-        let block_test_hash = B256::from(U256::from(test_number).to_be_bytes());
+        let block1_hash = keccak256(U256::from(1).to_string().as_bytes());
+        let block2_hash = keccak256(U256::from(2).to_string().as_bytes());
+        let block_test_hash = keccak256(U256::from(test_number).to_string().as_bytes());
 
         assert_eq!(
             state.block_hashes,
@@ -396,12 +396,10 @@ mod tests {
                     previous_info: Some(existing_account_initial_info.clone()),
                     storage: HashMap::from([(
                         slot1,
-                        StorageSlot {
-                            previous_or_original_value: *existing_account_initial_storage
-                                .get(&slot1)
-                                .unwrap(),
-                            present_value: U256::from(1000),
-                        },
+                        StorageSlot::new_changed(
+                            *existing_account_initial_storage.get(&slot1).unwrap(),
+                            U256::from(1000),
+                        ),
                     )]),
                     storage_was_destroyed: false,
                 },
@@ -431,10 +429,7 @@ mod tests {
                     previous_info: Some(new_account_changed_info),
                     storage: HashMap::from([(
                         slot1,
-                        StorageSlot {
-                            previous_or_original_value: U256::ZERO,
-                            present_value: U256::from(1),
-                        },
+                        StorageSlot::new_changed(U256::ZERO, U256::from(1)),
                     )]),
                     storage_was_destroyed: false,
                 },
@@ -449,27 +444,19 @@ mod tests {
                     storage: HashMap::from([
                         (
                             slot1,
-                            StorageSlot {
-                                previous_or_original_value: U256::from(100),
-                                present_value: U256::from(1_000),
-                            },
+                            StorageSlot::new_changed(U256::from(100), U256::from(1_000)),
                         ),
                         (
                             slot2,
-                            StorageSlot {
-                                previous_or_original_value: *existing_account_initial_storage
-                                    .get(&slot2)
-                                    .unwrap(),
-                                present_value: U256::from(2_000),
-                            },
+                            StorageSlot::new_changed(
+                                *existing_account_initial_storage.get(&slot2).unwrap(),
+                                U256::from(2_000),
+                            ),
                         ),
                         // Create new slot
                         (
                             slot3,
-                            StorageSlot {
-                                previous_or_original_value: U256::ZERO,
-                                present_value: U256::from(3_000),
-                            },
+                            StorageSlot::new_changed(U256::ZERO, U256::from(3_000)),
                         ),
                     ]),
                     storage_was_destroyed: false,
@@ -478,10 +465,11 @@ mod tests {
         ]));
 
         state.merge_transitions(BundleRetention::Reverts);
-        let bundle_state = state.take_bundle();
+        let mut bundle_state = state.take_bundle();
 
         // The new account revert should be `DeleteIt` since this was an account creation.
         // The existing account revert should be reverted to its previous state.
+        bundle_state.reverts.sort();
         assert_eq!(
             bundle_state.reverts.as_ref(),
             Vec::from([Vec::from([
@@ -531,10 +519,7 @@ mod tests {
                 status: AccountStatus::InMemoryChange,
                 storage: HashMap::from([(
                     slot1,
-                    StorageSlot {
-                        previous_or_original_value: U256::ZERO,
-                        present_value: U256::from(1),
-                    }
+                    StorageSlot::new_changed(U256::ZERO, U256::from(1))
                 )]),
             }),
             "The latest state of the new account is incorrect"
@@ -551,29 +536,22 @@ mod tests {
                 storage: HashMap::from([
                     (
                         slot1,
-                        StorageSlot {
-                            previous_or_original_value: *existing_account_initial_storage
-                                .get(&slot1)
-                                .unwrap(),
-                            present_value: U256::from(1_000),
-                        },
+                        StorageSlot::new_changed(
+                            *existing_account_initial_storage.get(&slot1).unwrap(),
+                            U256::from(1_000)
+                        )
                     ),
                     (
                         slot2,
-                        StorageSlot {
-                            previous_or_original_value: *existing_account_initial_storage
-                                .get(&slot2)
-                                .unwrap(),
-                            present_value: U256::from(2_000),
-                        },
+                        StorageSlot::new_changed(
+                            *existing_account_initial_storage.get(&slot2).unwrap(),
+                            U256::from(2_000)
+                        )
                     ),
                     // Create new slot
                     (
                         slot3,
-                        StorageSlot {
-                            previous_or_original_value: U256::ZERO,
-                            present_value: U256::from(3_000),
-                        },
+                        StorageSlot::new_changed(U256::ZERO, U256::from(3_000))
                     ),
                 ]),
             }),
@@ -646,18 +624,9 @@ mod tests {
                     storage: HashMap::from([
                         (
                             slot1,
-                            StorageSlot {
-                                previous_or_original_value: U256::from(1),
-                                present_value: U256::from(10),
-                            },
+                            StorageSlot::new_changed(U256::from(1), U256::from(10)),
                         ),
-                        (
-                            slot2,
-                            StorageSlot {
-                                previous_or_original_value: U256::ZERO,
-                                present_value: U256::from(20),
-                            },
-                        ),
+                        (slot2, StorageSlot::new_changed(U256::ZERO, U256::from(20))),
                     ]),
                     storage_was_destroyed: false,
                 },
@@ -696,18 +665,9 @@ mod tests {
                     storage: HashMap::from([
                         (
                             slot1,
-                            StorageSlot {
-                                previous_or_original_value: U256::from(10),
-                                present_value: U256::from(1),
-                            },
+                            StorageSlot::new_changed(U256::from(10), U256::from(1)),
                         ),
-                        (
-                            slot2,
-                            StorageSlot {
-                                previous_or_original_value: U256::from(20),
-                                present_value: U256::ZERO,
-                            },
-                        ),
+                        (slot2, StorageSlot::new_changed(U256::from(20), U256::ZERO)),
                     ]),
                     storage_was_destroyed: false,
                 },
@@ -761,10 +721,7 @@ mod tests {
                 previous_info: None,
                 storage: HashMap::from([(
                     slot1,
-                    StorageSlot {
-                        previous_or_original_value: U256::ZERO,
-                        present_value: U256::from(1),
-                    },
+                    StorageSlot::new_changed(U256::ZERO, U256::from(1)),
                 )]),
                 storage_was_destroyed: false,
             },
@@ -794,10 +751,7 @@ mod tests {
                 previous_info: None,
                 storage: HashMap::from([(
                     slot2,
-                    StorageSlot {
-                        previous_or_original_value: U256::ZERO,
-                        present_value: U256::from(2),
-                    },
+                    StorageSlot::new_changed(U256::ZERO, U256::from(2)),
                 )]),
                 storage_was_destroyed: false,
             },
@@ -816,10 +770,7 @@ mod tests {
                     original_info: Some(existing_account_info.clone()),
                     storage: HashMap::from([(
                         slot2,
-                        StorageSlot {
-                            previous_or_original_value: U256::ZERO,
-                            present_value: U256::from(2),
-                        },
+                        StorageSlot::new_changed(U256::ZERO, U256::from(2))
                     )]),
                     status: AccountStatus::DestroyedChanged,
                 }

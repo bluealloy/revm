@@ -1,19 +1,18 @@
-use crate::{Error, PrecompileWithAddress, StandardPrecompileFn};
-use crate::{Precompile, PrecompileResult};
-use core::convert::TryInto;
+use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress};
+use revm_primitives::Bytes;
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
 
-pub const FUN: PrecompileWithAddress = PrecompileWithAddress(
-    crate::u64_to_address(9),
-    Precompile::Standard(run as StandardPrecompileFn),
-);
+pub const FUN: PrecompileWithAddress =
+    PrecompileWithAddress(crate::u64_to_address(9), Precompile::Standard(run));
 
-/// reference: https://eips.ethereum.org/EIPS/eip-152
+/// reference: <https://eips.ethereum.org/EIPS/eip-152>
 /// input format:
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
-fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+    let input = &input[..];
+
     if input.len() != INPUT_LENGTH {
         return Err(Error::Blake2WrongLength);
     }
@@ -52,12 +51,12 @@ fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         out[i..i + 8].copy_from_slice(&h.to_le_bytes());
     }
 
-    Ok((gas_used, out.to_vec()))
+    Ok((gas_used, out.into()))
 }
 
-mod algo {
-    /// SIGMA from spec: https://datatracker.ietf.org/doc/html/rfc7693#section-2.7
-    const SIGMA: [[usize; 16]; 10] = [
+pub mod algo {
+    /// SIGMA from spec: <https://datatracker.ietf.org/doc/html/rfc7693#section-2.7>
+    pub const SIGMA: [[usize; 16]; 10] = [
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
         [14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3],
         [11, 8, 12, 0, 5, 2, 15, 13, 10, 14, 3, 6, 7, 1, 9, 4],
@@ -70,8 +69,8 @@ mod algo {
         [10, 2, 8, 4, 7, 6, 1, 5, 15, 11, 9, 14, 3, 12, 13, 0],
     ];
 
-    /// got IV from: https://en.wikipedia.org/wiki/BLAKE_(hash_function)
-    const IV: [u64; 8] = [
+    /// got IV from: <https://en.wikipedia.org/wiki/BLAKE_(hash_function)>
+    pub const IV: [u64; 8] = [
         0x6a09e667f3bcc908,
         0xbb67ae8584caa73b,
         0x3c6ef372fe94f82b,
@@ -84,8 +83,8 @@ mod algo {
 
     #[inline(always)]
     #[allow(clippy::many_single_char_names)]
-    /// G function: https://tools.ietf.org/html/rfc7693#section-3.1
-    fn g(v: &mut [u64], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {
+    /// G function: <https://tools.ietf.org/html/rfc7693#section-3.1>
+    pub fn g(v: &mut [u64], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {
         v[a] = v[a].wrapping_add(v[b]).wrapping_add(x);
         v[d] = (v[d] ^ v[a]).rotate_right(32);
         v[c] = v[c].wrapping_add(v[d]);

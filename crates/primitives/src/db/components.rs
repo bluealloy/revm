@@ -7,8 +7,10 @@ pub use state::{State, StateRef};
 
 use crate::{
     db::{Database, DatabaseRef},
-    AccountInfo, Address, Bytecode, B256, U256,
+    Account, AccountInfo, Address, Bytecode, HashMap, B256, U256,
 };
+
+use super::DatabaseCommit;
 
 #[derive(Debug)]
 pub struct DatabaseComponents<S, BH> {
@@ -71,5 +73,11 @@ impl<S: StateRef, BH: BlockHashRef> DatabaseRef for DatabaseComponents<S, BH> {
         self.block_hash
             .block_hash(number)
             .map_err(Self::Error::BlockHash)
+    }
+}
+
+impl<S: DatabaseCommit, BH: BlockHashRef> DatabaseCommit for DatabaseComponents<S, BH> {
+    fn commit(&mut self, changes: HashMap<Address, Account>) {
+        self.state.commit(changes);
     }
 }

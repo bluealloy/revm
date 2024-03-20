@@ -1,5 +1,5 @@
 use revm::primitives::{Address, Bytes, HashMap, B256, U256};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
 mod deserializer;
@@ -14,13 +14,16 @@ pub struct TestSuite(pub BTreeMap<String, TestUnit>);
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TestUnit {
-    #[serde(rename = "_info")]
-    pub info: serde_json::Value,
+    /// Test info is optional
+    #[serde(default, rename = "_info")]
+    pub info: Option<serde_json::Value>,
 
     pub env: Env,
     pub pre: HashMap<Address, AccountInfo>,
     pub post: BTreeMap<SpecName, Vec<Test>>,
     pub transaction: TransactionParts,
+    #[serde(default)]
+    pub out: Option<Bytes>,
 }
 
 /// State test indexed state result deserialization.
@@ -71,7 +74,7 @@ pub struct Env {
     pub current_number: U256,
     pub current_timestamp: U256,
     pub current_base_fee: Option<U256>,
-    pub previous_hash: B256,
+    pub previous_hash: Option<B256>,
 
     pub current_random: Option<B256>,
     pub current_beacon_root: Option<B256>,
@@ -79,9 +82,10 @@ pub struct Env {
 
     pub parent_blob_gas_used: Option<U256>,
     pub parent_excess_blob_gas: Option<U256>,
+    pub current_excess_blob_gas: Option<U256>,
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TransactionParts {
     pub data: Vec<Bytes>,
@@ -89,7 +93,9 @@ pub struct TransactionParts {
     pub gas_price: Option<U256>,
     pub nonce: U256,
     pub secret_key: B256,
-    pub sender: Address,
+    /// if sender is not present we need to derive it from secret key.
+    #[serde(default)]
+    pub sender: Option<Address>,
     #[serde(deserialize_with = "deserialize_maybe_empty")]
     pub to: Option<Address>,
     pub value: Vec<U256>,
@@ -104,7 +110,7 @@ pub struct TransactionParts {
     pub max_fee_per_blob_gas: Option<U256>,
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AccessListItem {
     pub address: Address,
@@ -117,7 +123,6 @@ pub type AccessList = Vec<AccessListItem>;
 mod tests {
 
     use super::*;
-    use revm::primitives::Address;
     use serde_json::Error;
 
     #[test]
@@ -131,6 +136,14 @@ mod tests {
 
         let out: Test = serde_json::from_str(json)?;
         println!("out:{out:?}");
+        Ok(())
+    }
+
+    #[test]
+    pub fn deserialize_minimal_transaction_parts() -> Result<(), Error> {
+        let json = r#"{"data":[],"gasLimit":[],"nonce":"0x0","secretKey":"0x0000000000000000000000000000000000000000000000000000000000000000","to":"","value":[]}"#;
+
+        let _: TransactionParts = serde_json::from_str(json)?;
         Ok(())
     }
 

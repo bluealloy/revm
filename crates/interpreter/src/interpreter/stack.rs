@@ -2,16 +2,17 @@ use crate::{
     primitives::{B256, U256},
     InstructionResult,
 };
-use alloc::vec::Vec;
 use core::fmt;
+use std::vec::Vec;
 
 /// EVM interpreter stack limit.
 pub const STACK_LIMIT: usize = 1024;
 
-/// EVM stack.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// EVM stack with [STACK_LIMIT] capacity of words.
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Stack {
+    /// The underlying data of the stack.
     data: Vec<U256>,
 }
 
@@ -40,7 +41,7 @@ impl Stack {
     #[inline]
     pub fn new() -> Self {
         Self {
-            // Safety: [`Self::push`] assumes that capacity is STACK_LIMIT
+            // SAFETY: expansion functions assume that capacity is `STACK_LIMIT`.
             data: Vec::with_capacity(STACK_LIMIT),
         }
     }
@@ -61,6 +62,12 @@ impl Stack {
     #[inline]
     pub fn data(&self) -> &Vec<U256> {
         &self.data
+    }
+
+    /// Consumes the stack and returns the underlying data.
+    #[inline]
+    pub fn into_data(self) -> Vec<U256> {
+        self.data
     }
 
     /// Removes the topmost element from the stack and returns it, or `StackUnderflow` if it is
@@ -201,9 +208,10 @@ impl Stack {
         } else if len + 1 > STACK_LIMIT {
             Err(InstructionResult::StackOverflow)
         } else {
-            // Safety: check for out of bounds is done above and it makes this safe to do.
+            // SAFETY: check for out of bounds is done above and it makes this safe to do.
             unsafe {
-                *self.data.get_unchecked_mut(len) = *self.data.get_unchecked(len - N);
+                let data = self.data.as_mut_ptr();
+                core::ptr::copy_nonoverlapping(data.add(len - N), data.add(len), 1);
                 self.data.set_len(len + 1);
             }
             Ok(())
@@ -239,33 +247,49 @@ impl Stack {
         // SAFETY: length checked above.
         unsafe {
             let dst = self.data.as_mut_ptr().add(self.data.len()).cast::<u64>();
+            self.data.set_len(new_len);
+
             let mut i = 0;
 
             // write full words
-            let limbs = slice.rchunks_exact(8);
-            let rem = limbs.remainder();
-            for limb in limbs {
-                *dst.add(i) = u64::from_be_bytes(limb.try_into().unwrap());
+            let words = slice.chunks_exact(32);
+            let partial_last_word = words.remainder();
+            for word in words {
+                // Note: we unroll `U256::from_be_bytes` here to write directly into the buffer,
+                // instead of creating a 32 byte array on the stack and then copying it over.
+                for l in word.rchunks_exact(8) {
+                    dst.add(i).write(u64::from_be_bytes(l.try_into().unwrap()));
+                    i += 1;
+                }
+            }
+
+            if partial_last_word.is_empty() {
+                return Ok(());
+            }
+
+            // write limbs of partial last word
+            let limbs = partial_last_word.rchunks_exact(8);
+            let partial_last_limb = limbs.remainder();
+            for l in limbs {
+                dst.add(i).write(u64::from_be_bytes(l.try_into().unwrap()));
                 i += 1;
             }
 
-            // write remainder by padding with zeros
-            if !rem.is_empty() {
+            // write partial last limb by padding with zeros
+            if !partial_last_limb.is_empty() {
                 let mut tmp = [0u8; 8];
-                tmp[8 - rem.len()..].copy_from_slice(rem);
-                *dst.add(i) = u64::from_be_bytes(tmp);
+                tmp[8 - partial_last_limb.len()..].copy_from_slice(partial_last_limb);
+                dst.add(i).write(u64::from_be_bytes(tmp));
                 i += 1;
             }
 
-            debug_assert_eq!((i + 3) / 4, n_words, "wrote beyond end of stack");
+            debug_assert_eq!((i + 3) / 4, n_words, "wrote too much");
 
             // zero out upper bytes of last word
             let m = i % 4; // 32 / 8
             if m != 0 {
                 dst.add(i).write_bytes(0, 4 - m);
             }
-
-            self.data.set_len(new_len);
         }
 
         Ok(())
@@ -283,5 +307,86 @@ impl Stack {
         } else {
             Err(InstructionResult::StackUnderflow)
         }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Stack {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let mut data = Vec::<U256>::deserialize(deserializer)?;
+        if data.len() > STACK_LIMIT {
+            return Err(serde::de::Error::custom(std::format!(
+                "stack size exceeds limit: {} > {}",
+                data.len(),
+                STACK_LIMIT
+            )));
+        }
+        data.reserve(STACK_LIMIT - data.len());
+        Ok(Self { data })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn run(f: impl FnOnce(&mut Stack)) {
+        let mut stack = Stack::new();
+        // fill capacity with non-zero values
+        unsafe {
+            stack.data.set_len(STACK_LIMIT);
+            stack.data.fill(U256::MAX);
+            stack.data.set_len(0);
+        }
+        f(&mut stack);
+    }
+
+    #[test]
+    fn push_slices() {
+        // no-op
+        run(|stack| {
+            stack.push_slice(b"").unwrap();
+            assert_eq!(stack.data, []);
+        });
+
+        // one word
+        run(|stack| {
+            stack.push_slice(&[42]).unwrap();
+            assert_eq!(stack.data, [U256::from(42)]);
+        });
+
+        let n = 0x1111_2222_3333_4444_5555_6666_7777_8888_u128;
+        run(|stack| {
+            stack.push_slice(&n.to_be_bytes()).unwrap();
+            assert_eq!(stack.data, [U256::from(n)]);
+        });
+
+        // more than one word
+        run(|stack| {
+            let b = [U256::from(n).to_be_bytes::<32>(); 2].concat();
+            stack.push_slice(&b).unwrap();
+            assert_eq!(stack.data, [U256::from(n); 2]);
+        });
+
+        run(|stack| {
+            let b = [&[0; 32][..], &[42u8]].concat();
+            stack.push_slice(&b).unwrap();
+            assert_eq!(stack.data, [U256::ZERO, U256::from(42)]);
+        });
+
+        run(|stack| {
+            let b = [&[0; 32][..], &n.to_be_bytes()].concat();
+            stack.push_slice(&b).unwrap();
+            assert_eq!(stack.data, [U256::ZERO, U256::from(n)]);
+        });
+
+        run(|stack| {
+            let b = [&[0; 64][..], &n.to_be_bytes()].concat();
+            stack.push_slice(&b).unwrap();
+            assert_eq!(stack.data, [U256::ZERO, U256::ZERO, U256::from(n)]);
+        });
     }
 }
