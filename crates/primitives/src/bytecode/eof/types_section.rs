@@ -1,5 +1,6 @@
 use super::decode_helpers::{consume_u16, consume_u8};
 
+/// TODO(EOF) Chekc if max_stack_size >= inputs.
 #[derive(Debug, Clone, Default, Hash, PartialEq, Eq, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TypesSection {
@@ -14,6 +15,12 @@ pub struct TypesSection {
 }
 
 impl TypesSection {
+    /// Return the difference between inputs and outputs.
+    #[inline]
+    pub fn io_diff(&self) -> i16 {
+        self.outputs as i16 - self.inputs as i16
+    }
+
     #[inline]
     pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), ()> {
         let (input, inputs) = consume_u8(input)?;

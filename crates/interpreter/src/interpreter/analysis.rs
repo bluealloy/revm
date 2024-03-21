@@ -1,13 +1,15 @@
-use revm_primitives::eof::TypesSection;
-use revm_primitives::{Bytes, Eof, LegacyAnalyzedBytecode};
-
-use crate::primitives::{
-    bitvec::prelude::{bitvec, BitVec, Lsb0},
-    legacy::JumpTable,
-    Bytecode,
+use crate::{
+    instructions::utility::read_u16,
+    opcode,
+    primitives::{
+        bitvec::prelude::{bitvec, BitVec, Lsb0},
+        eof::TypesSection,
+        legacy::JumpTable,
+        Bytecode, Bytes, Eof, LegacyAnalyzedBytecode,
+    },
+    OpCode, OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
 };
-use crate::{opcode, OPCODE_INFO_JUMPTABLE};
-use std::sync::Arc;
+use std::{sync::Arc, vec, vec::Vec};
 
 /// Perform bytecode analysis.
 ///
@@ -92,6 +94,10 @@ pub fn validate_eof(eof: &Eof) -> Result<(), ()> {
     Ok(())
 }
 
+/// Validates that:
+/// * All instructions are valid.
+/// * It ends with a terminating instruction or RJUMP.
+///
 pub fn validate_eof_bytecode(code: &[u8], types: &TypesSection) -> Result<(), ()> {
     let max_stack_size = types.inputs as u16;
     let stack_size = types.inputs as u16;
@@ -115,7 +121,7 @@ pub fn validate_eof_bytecode(code: &[u8], types: &TypesSection) -> Result<(), ()
         };
 
         // check if the size of the opcode is within the bounds of the code
-        if unsafe { iter.add(opcode.size as usize - 1) } > end {
+        if unsafe { iter.add(opcode.immediate_size as usize - 1) } > end {
             return Err(());
         }
 
@@ -169,25 +175,188 @@ pub fn validate_eof_bytecode(code: &[u8], types: &TypesSection) -> Result<(), ()
 }
 
 /// Validate stack requirements and if all codes sections are used.
-pub fn validate_stack_requirement(codes: &[u8]) -> Result<(), ()> {
+///
+/// TODO mark accessed Types/Codes
+///
+/// Preconditions:
+/// * Jump destinations are valid.
+/// * All instructions are valid and well formed.
+/// * All instruction is accessed by forward jumps.
+/// * Bytecode is valid and ends with terminating instruction.
+///
+/// Preconditions are checked in `validate_eof_bytecode`.
+pub fn validate_eof_stack_requirement(
+    codes: &[u8],
+    this_types_index: usize,
+    types: &[TypesSection],
+) -> Result<(), ()> {
     #[derive(Copy, Clone)]
-    struct StackInfo {
-        min: u16,
-        max: u16,
+    struct StackIO {
+        pub min: u16,
+        pub max: u16,
     }
-    let mut code_stack_access: Vec<Option<StackInfo>> = vec![None; codes.len()];
-    let mut worklist: Vec<u16> = Vec::new();
 
-    while let Some(workitem) = worklist.pop() {}
+    impl StackIO {
+        pub fn next(&self, diff: i16) -> Self {
+            Self {
+                min: self.min + diff as u16,
+                max: self.max + diff as u16,
+            }
+        }
+    }
+
+    impl Default for StackIO {
+        fn default() -> Self {
+            Self {
+                min: u16::MAX,
+                max: 0,
+            }
+        }
+    }
+
+    // Stack access information for each instruction section.
+    let mut code_stack_access: Vec<StackIO> = vec![Default::default(); codes.len()];
+
+    // Set first instruction min and max stack requirement as a this code section input.
+    let this_types = &types[this_types_index];
+    code_stack_access[0] = StackIO {
+        min: this_types.inputs as u16,
+        max: this_types.inputs as u16,
+    };
+
+    let max_stack_height = 0;
+    let mut i = 0;
+    while i < codes.len() {
+        let opcode = codes[i];
+
+        let Some(info) = OpCode::new(opcode).map(|i| i.info()) else {
+            panic!("Opcode validity is checked.")
+        };
+
+        let mut stack_i = info.inputs as u16;
+        let mut stack_io_diff = info.io_diff() as i16;
+
+        let stack_io = code_stack_access[i];
+
+        // Jump over intermediate data and set min/max to zero.
+        match opcode {
+            opcode::CALLF => {
+                let code_id = read_u16(unsafe { codes.as_ptr().add(i + 1) }) as usize;
+                let types = &types[code_id];
+                // stack input for this opcode is the input of the called code.
+                stack_i = types.inputs as u16;
+
+                // we decrement types.inputs as they are considered send to the called code.
+                // and included in types.max_stack_size.
+                if stack_io.max - stack_i + types.max_stack_size > STACK_LIMIT as u16 {
+                    // if stack max items + called code max stack size
+                    return Err(());
+                }
+                stack_io_diff = types.io_diff() as i16;
+            }
+            opcode::JUMPF => {
+                let code_id = read_u16(unsafe { codes.as_ptr().add(i + 1) }) as usize;
+
+                let target_types = &types[code_id];
+
+                // we decrement types.inputs as they are considered send to the called code.
+                // and included in types.max_stack_size.
+                if stack_io.max - target_types.inputs as u16 + target_types.max_stack_size
+                    > STACK_LIMIT as u16
+                {
+                    // stack overflow
+                    return Err(());
+                }
+
+                stack_io_diff = 0;
+                if target_types.outputs == 0 {
+                    // if it is not returning
+                    stack_i = target_types.inputs as u16;
+                } else {
+                    // check if target code produces enough outputs.
+                    if target_types.outputs < this_types.outputs {
+                        return Err(());
+                    }
+
+                    // TOOD(EOF) check overflows.
+                    stack_i = (target_types.outputs as i16 + this_types.io_diff()) as u16;
+
+                    // if this instruction max + target_types max is more then stack limit.
+                    if stack_io.max + stack_i > STACK_LIMIT as u16 {
+                        return Err(());
+                    }
+                }
+            }
+            opcode::RETF => {
+                stack_i = this_types.outputs as u16;
+                if stack_io.max > stack_i {
+                    // stack_higher_than_outputs_required
+                    return Err(());
+                }
+            }
+            opcode::DUPN => {
+                stack_i = codes[i + 1] as u16 + 1;
+                stack_io_diff = 1;
+            }
+            opcode::SWAPN => {
+                stack_i = codes[i + 1] as u16 + 2;
+            }
+            opcode::EXCHANGE => {
+                let imm = codes[i + 1];
+                let n = (imm >> 4) + 1;
+                let m = (imm & 0x0F) + 1;
+                stack_i = n as u16 + m as u16;
+            }
+            _ => {}
+        }
+
+        if stack_io.min < stack_i {
+            // should have at least min items for stack input
+            return Err(());
+        }
+
+        // next item stack io;
+        let mut next_stack_io = stack_io.next(stack_io_diff);
+
+        let mut imm_size = info.immediate_size as usize;
+        if opcode == opcode::RJUMPV {
+            // code validation is already done and we can access codes[workitem + 1] safely.
+            imm_size += codes[i + 1] as usize * 2;
+        }
+
+        // Nulify max stack if it is a terminating opcode.
+        if info.is_terminating_opcode {
+            next_stack_io.max = 0;
+            next_stack_io.min = 0;
+        }
+
+        // next instruction index.
+        i += imm_size + 1;
+
+        // check if opcode is terminating or it is RJUMP (to previous dest).
+        if info.is_terminating_opcode || opcode == opcode::RJUMP {
+            // if it is not a jump instruction, we set next stack io.
+            code_stack_access[i + 1] = next_stack_io;
+        }
+
+        // if next instruction is out of bounds, break. Terminal instructions are already handled.
+        if i >= codes.len() {
+            break;
+        }
+
+        //match opcode {}
+
+        // check next instruction, break if it is out of bounds.
+    }
 
     // Iterate over accessed code, error on not accessed opcode and return max stack requirement.
     let mut max_stack_requirement = 0;
     for opcode in code_stack_access {
-        if let Some(opcode) = opcode {
-            max_stack_requirement = core::cmp::max(opcode.max, max_stack_requirement);
-        } else {
+        if opcode.min == u16::MAX {
+            // opcode not accessed.
             return Err(());
         }
+        max_stack_requirement = core::cmp::max(opcode.max, max_stack_requirement);
     }
     Ok(())
 }

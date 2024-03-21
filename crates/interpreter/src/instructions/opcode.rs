@@ -238,8 +238,8 @@ impl OpCode {
     }
 
     /// Returns a difference between input and output.
-    pub const fn diff(&self) -> i8 {
-        self.info().diff()
+    pub const fn io_diff(&self) -> i16 {
+        self.info().io_diff()
     }
 
     pub const fn info_by_op(opcode: u8) -> Option<OpCodeInfo> {
@@ -283,7 +283,11 @@ pub struct OpCodeInfo {
     pub is_eof: bool,
     // If the opcode is return from execution. aka STOP,RETURN, ..
     pub is_terminating_opcode: bool,
-    pub size: u8,
+    /// Size of opcode with its intermediate bytes.
+    ///
+    /// RJUMPV is special case where the bytes len is depending on bytecode value,
+    /// for RJUMV size will be set to one byte while minimum is two.
+    pub immediate_size: u8,
 }
 
 impl OpCodeInfo {
@@ -294,12 +298,12 @@ impl OpCodeInfo {
             outputs: 0,
             is_eof: true,
             is_terminating_opcode: false,
-            size: 1,
+            immediate_size: 0,
         }
     }
 
-    pub const fn diff(&self) -> i8 {
-        self.inputs as i8 - self.outputs as i8
+    pub const fn io_diff(&self) -> i16 {
+        self.inputs as i16 - self.outputs as i16
     }
 }
 
@@ -348,8 +352,9 @@ pub const fn not_eof(mut opcode: OpCodeInfo) -> OpCodeInfo {
     opcode
 }
 
-pub const fn size<const N: u8>(mut opcode: OpCodeInfo) -> OpCodeInfo {
-    opcode.size = N;
+/// Immediate bytes after opcode.
+pub const fn imm_size<const N: u8>(mut opcode: OpCodeInfo) -> OpCodeInfo {
+    opcode.immediate_size = N;
     opcode
 }
 
@@ -469,38 +474,38 @@ opcodes! {
     0x5E => MCOPY    => memory::mcopy::<H, SPEC> => stack_io<3, 0>;
 
     0x5F => PUSH0  => stack::push0::<H, SPEC> => stack_io<0, 1>;
-    0x60 => PUSH1  => stack::push::<1, H>  => stack_io<0, 1>, size<2>;
-    0x61 => PUSH2  => stack::push::<2, H>  => stack_io<0, 1>, size<3>;
-    0x62 => PUSH3  => stack::push::<3, H>  => stack_io<0, 1>, size<4>;
-    0x63 => PUSH4  => stack::push::<4, H>  => stack_io<0, 1>, size<5>;
-    0x64 => PUSH5  => stack::push::<5, H>  => stack_io<0, 1>, size<6>;
-    0x65 => PUSH6  => stack::push::<6, H>  => stack_io<0, 1>, size<7>;
-    0x66 => PUSH7  => stack::push::<7, H>  => stack_io<0, 1>, size<8>;
-    0x67 => PUSH8  => stack::push::<8, H>  => stack_io<0, 1>, size<9>;
-    0x68 => PUSH9  => stack::push::<9, H>  => stack_io<0, 1>, size<10>;
-    0x69 => PUSH10 => stack::push::<10, H> => stack_io<0, 1>, size<11>;
-    0x6A => PUSH11 => stack::push::<11, H> => stack_io<0, 1>, size<12>;
-    0x6B => PUSH12 => stack::push::<12, H> => stack_io<0, 1>, size<13>;
-    0x6C => PUSH13 => stack::push::<13, H> => stack_io<0, 1>, size<14>;
-    0x6D => PUSH14 => stack::push::<14, H> => stack_io<0, 1>, size<15>;
-    0x6E => PUSH15 => stack::push::<15, H> => stack_io<0, 1>, size<16>;
-    0x6F => PUSH16 => stack::push::<16, H> => stack_io<0, 1>, size<17>;
-    0x70 => PUSH17 => stack::push::<17, H> => stack_io<0, 1>, size<18>;
-    0x71 => PUSH18 => stack::push::<18, H> => stack_io<0, 1>, size<19>;
-    0x72 => PUSH19 => stack::push::<19, H> => stack_io<0, 1>, size<20>;
-    0x73 => PUSH20 => stack::push::<20, H> => stack_io<0, 1>, size<21>;
-    0x74 => PUSH21 => stack::push::<21, H> => stack_io<0, 1>, size<22>;
-    0x75 => PUSH22 => stack::push::<22, H> => stack_io<0, 1>, size<23>;
-    0x76 => PUSH23 => stack::push::<23, H> => stack_io<0, 1>, size<24>;
-    0x77 => PUSH24 => stack::push::<24, H> => stack_io<0, 1>, size<25>;
-    0x78 => PUSH25 => stack::push::<25, H> => stack_io<0, 1>, size<26>;
-    0x79 => PUSH26 => stack::push::<26, H> => stack_io<0, 1>, size<27>;
-    0x7A => PUSH27 => stack::push::<27, H> => stack_io<0, 1>, size<28>;
-    0x7B => PUSH28 => stack::push::<28, H> => stack_io<0, 1>, size<29>;
-    0x7C => PUSH29 => stack::push::<29, H> => stack_io<0, 1>, size<30>;
-    0x7D => PUSH30 => stack::push::<30, H> => stack_io<0, 1>, size<31>;
-    0x7E => PUSH31 => stack::push::<31, H> => stack_io<0, 1>, size<32>;
-    0x7F => PUSH32 => stack::push::<32, H> => stack_io<0, 1>, size<33>;
+    0x60 => PUSH1  => stack::push::<1, H>  => stack_io<0, 1>, imm_size<1>;
+    0x61 => PUSH2  => stack::push::<2, H>  => stack_io<0, 1>, imm_size<2>;
+    0x62 => PUSH3  => stack::push::<3, H>  => stack_io<0, 1>, imm_size<3>;
+    0x63 => PUSH4  => stack::push::<4, H>  => stack_io<0, 1>, imm_size<4>;
+    0x64 => PUSH5  => stack::push::<5, H>  => stack_io<0, 1>, imm_size<5>;
+    0x65 => PUSH6  => stack::push::<6, H>  => stack_io<0, 1>, imm_size<6>;
+    0x66 => PUSH7  => stack::push::<7, H>  => stack_io<0, 1>, imm_size<7>;
+    0x67 => PUSH8  => stack::push::<8, H>  => stack_io<0, 1>, imm_size<8>;
+    0x68 => PUSH9  => stack::push::<9, H>  => stack_io<0, 1>, imm_size<9>;
+    0x69 => PUSH10 => stack::push::<10, H> => stack_io<0, 1>, imm_size<10>;
+    0x6A => PUSH11 => stack::push::<11, H> => stack_io<0, 1>, imm_size<11>;
+    0x6B => PUSH12 => stack::push::<12, H> => stack_io<0, 1>, imm_size<12>;
+    0x6C => PUSH13 => stack::push::<13, H> => stack_io<0, 1>, imm_size<13>;
+    0x6D => PUSH14 => stack::push::<14, H> => stack_io<0, 1>, imm_size<14>;
+    0x6E => PUSH15 => stack::push::<15, H> => stack_io<0, 1>, imm_size<15>;
+    0x6F => PUSH16 => stack::push::<16, H> => stack_io<0, 1>, imm_size<16>;
+    0x70 => PUSH17 => stack::push::<17, H> => stack_io<0, 1>, imm_size<17>;
+    0x71 => PUSH18 => stack::push::<18, H> => stack_io<0, 1>, imm_size<18>;
+    0x72 => PUSH19 => stack::push::<19, H> => stack_io<0, 1>, imm_size<19>;
+    0x73 => PUSH20 => stack::push::<20, H> => stack_io<0, 1>, imm_size<20>;
+    0x74 => PUSH21 => stack::push::<21, H> => stack_io<0, 1>, imm_size<21>;
+    0x75 => PUSH22 => stack::push::<22, H> => stack_io<0, 1>, imm_size<22>;
+    0x76 => PUSH23 => stack::push::<23, H> => stack_io<0, 1>, imm_size<23>;
+    0x77 => PUSH24 => stack::push::<24, H> => stack_io<0, 1>, imm_size<24>;
+    0x78 => PUSH25 => stack::push::<25, H> => stack_io<0, 1>, imm_size<25>;
+    0x79 => PUSH26 => stack::push::<26, H> => stack_io<0, 1>, imm_size<26>;
+    0x7A => PUSH27 => stack::push::<27, H> => stack_io<0, 1>, imm_size<27>;
+    0x7B => PUSH28 => stack::push::<28, H> => stack_io<0, 1>, imm_size<28>;
+    0x7C => PUSH29 => stack::push::<29, H> => stack_io<0, 1>, imm_size<29>;
+    0x7D => PUSH30 => stack::push::<30, H> => stack_io<0, 1>, imm_size<30>;
+    0x7E => PUSH31 => stack::push::<31, H> => stack_io<0, 1>, imm_size<31>;
+    0x7F => PUSH32 => stack::push::<32, H> => stack_io<0, 1>, imm_size<32>;
 
     0x80 => DUP1  => stack::dup::<1, H> => stack_io<0, 1>;
     0x81 => DUP2  => stack::dup::<2, H> => stack_io<0, 1>;
@@ -585,7 +590,7 @@ opcodes! {
     // 0xCE
     // 0xCF
     0xD0 => DATALOAD  => data::data_load   => stack_io<1, 1>;
-    0xD1 => DATALOADN => data::data_loadn  => stack_io<0, 1>, size<3>;
+    0xD1 => DATALOADN => data::data_loadn  => stack_io<0, 1>, imm_size<2>;
     0xD2 => DATASIZE  => data::data_size   => stack_io<0, 1>;
     0xD3 => DATACOPY  => data::data_copy   => stack_io<3, 0>;
     // 0xD4
@@ -600,15 +605,15 @@ opcodes! {
     // 0xDD
     // 0xDE
     // 0xDF
-    0xE0 => RJUMP    => control::rjump  => stack_io<0, 0>, size<3>;
-    0xE1 => RJUMPI   => control::rjumpi => stack_io<1, 0>, size<3>;
-    0xE2 => RJUMPV   => control::rjumpv => stack_io<1, 0>, size<3>;
-    0xE3 => CALLF    => control::callf  => stack_io<0, 0>, size<3>;
+    0xE0 => RJUMP    => control::rjump  => stack_io<0, 0>, imm_size<2>;
+    0xE1 => RJUMPI   => control::rjumpi => stack_io<1, 0>, imm_size<2>;
+    0xE2 => RJUMPV   => control::rjumpv => stack_io<1, 0>, imm_size<1>;
+    0xE3 => CALLF    => control::callf  => stack_io<0, 0>, imm_size<2>;
     0xE4 => RETF     => control::retf   => stack_io<0, 0>, terminating;
-    0xE5 => JUMPF    => control::jumpf  => stack_io<0, 0>, size<3>;
-    0xE6 => DUPN     => stack::dupn     => stack_io<0, 0>, size<2>;
-    0xE7 => SWAPN    => stack::swapn    => stack_io<0, 0>, size<2>;
-    0xE8 => EXCHANGE => stack::exchange => stack_io<0, 0>, size<2>;
+    0xE5 => JUMPF    => control::jumpf  => stack_io<0, 0>, imm_size<2>;
+    0xE6 => DUPN     => stack::dupn     => stack_io<0, 0>, imm_size<1>;
+    0xE7 => SWAPN    => stack::swapn    => stack_io<0, 0>, imm_size<1>;
+    0xE8 => EXCHANGE => stack::exchange => stack_io<0, 0>, imm_size<1>;
     // 0xE9
     // 0xEA
     // 0xEB
