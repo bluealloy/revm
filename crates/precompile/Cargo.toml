@@ -20,6 +20,7 @@ ripemd = { version = "0.1", default-features = false }
 sha2 = { version = "0.10", default-features = false }
 # modexp precompile
 aurora-engine-modexp = { version = "1.0", default-features = false }
+#fluentbase-sdk = { path = "../../../fluentbase/crates/sdk", default-features = false }
 
 # Optional KZG point evaluation precompile
 c-kzg = { version = "1.0.0", default-features = false, optional = true }
@@ -40,6 +41,7 @@ criterion = { version = "0.5" }
 default = ["std", "c-kzg", "secp256k1", "portable"]
 std = [
     "revm-primitives/std",
+    #    "fluentbase-sdk/std",
     "k256/std",
     "once_cell/std",
     "ripemd/std",
