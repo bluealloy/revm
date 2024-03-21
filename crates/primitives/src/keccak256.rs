@@ -2,7 +2,7 @@ use alloy_primitives::B256;
 
 #[link(wasm_import_module = "fluentbase_v1alpha")]
 extern "C" {
-    pub fn _crypto_keccak256(data_offset: *const u8, data_len: u32, output32_offset: *mut u8);
+    fn _crypto_keccak256(data_offset: *const u8, data_len: u32, output32_offset: *mut u8);
 }
 
 #[inline(always)]
