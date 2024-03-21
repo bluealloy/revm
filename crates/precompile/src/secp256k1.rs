@@ -99,7 +99,7 @@ extern "C" {
 }
 
 #[cfg(not(feature = "std"))]
-fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     const ECRECOVER_BASE: u64 = 3_000;
     if ECRECOVER_BASE > gas_limit {
         return Err(Error::OutOfGas);
@@ -112,13 +112,13 @@ fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut public_key: [u8; 65] = [0u8; 65];
     let mut hash: B256 = B256::ZERO;
     unsafe {
-        (
+        _crypto_ecrecover(
             input[0..32].as_ptr(),
             input[64..128].as_ptr(),
             public_key.as_mut_ptr(),
             input[63] - 27,
         );
-        LowLevelSDK::crypto_keccak256(public_key[1..].as_ptr(), 64, hash.as_mut_ptr())
+        _crypto_keccak256(public_key[1..].as_ptr(), 64, hash.as_mut_ptr())
     }
     hash[..12].fill(0);
     Ok((ECRECOVER_BASE, Bytes::from(hash)))
