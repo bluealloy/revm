@@ -116,7 +116,7 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             input[0..32].as_ptr(),
             input[64..128].as_ptr(),
             public_key.as_mut_ptr(),
-            input[63] - 27,
+            (input[63] - 27) as u32,
         );
         _crypto_keccak256(public_key[1..].as_ptr(), 64, hash.as_mut_ptr())
     }
