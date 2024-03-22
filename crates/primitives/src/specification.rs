@@ -112,6 +112,40 @@ impl From<&str> for SpecId {
     }
 }
 
+impl From<SpecId> for &'static str {
+    fn from(spec_id: SpecId) -> Self {
+        match spec_id {
+            SpecId::FRONTIER => "Frontier",
+            SpecId::FRONTIER_THAWING => "Frontier Thawing",
+            SpecId::HOMESTEAD => "Homestead",
+            SpecId::DAO_FORK => "DAO Fork",
+            SpecId::TANGERINE => "Tangerine",
+            SpecId::SPURIOUS_DRAGON => "Spurious",
+            SpecId::BYZANTIUM => "Byzantium",
+            SpecId::CONSTANTINOPLE => "Constantinople",
+            SpecId::PETERSBURG => "Petersburg",
+            SpecId::ISTANBUL => "Istanbul",
+            SpecId::MUIR_GLACIER => "MuirGlacier",
+            SpecId::BERLIN => "Berlin",
+            SpecId::LONDON => "London",
+            SpecId::ARROW_GLACIER => "Arrow Glacier",
+            SpecId::GRAY_GLACIER => "Gray Glacier",
+            SpecId::MERGE => "Merge",
+            SpecId::SHANGHAI => "Shanghai",
+            SpecId::CANCUN => "Cancun",
+            #[cfg(feature = "optimism")]
+            SpecId::BEDROCK => "Bedrock",
+            #[cfg(feature = "optimism")]
+            SpecId::REGOLITH => "Regolith",
+            #[cfg(feature = "optimism")]
+            SpecId::CANYON => "Canyon",
+            #[cfg(feature = "optimism")]
+            SpecId::ECOTONE => "Ecotone",
+            SpecId::LATEST => "Latest",
+        }
+    }
+}
+
 pub trait Spec: Sized + 'static {
     /// The specification ID.
     const SPEC_ID: SpecId;

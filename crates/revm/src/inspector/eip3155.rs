@@ -174,14 +174,15 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     ) -> CallOutcome {
         let outcome = self.gas_inspector.call_end(context, inputs, outcome);
         if self.print_summary && context.journaled_state.depth() == 0 {
+            let spec_name: &str = context.spec_id().into();
             let value = Summary {
                 state_root: B256::ZERO.to_string(),
                 output: outcome.result.output.to_string(),
-                gas_used: hex_number(self.gas_inspector.gas_remaining()),
+                gas_used: hex_number(inputs.gas_limit - self.gas_inspector.gas_remaining()),
                 pass: outcome.result.is_ok(),
 
                 time: None,
-                fork: None,
+                fork: Some(spec_name.to_string()),
             };
             let _ = self.write_value(&value);
         }
