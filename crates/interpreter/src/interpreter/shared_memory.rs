@@ -296,7 +296,7 @@ impl SharedMemory {
 
     /// Returns a mutable reference to the memory of the current context.
     #[inline]
-    fn context_memory_mut(&mut self) -> &mut [u8] {
+    pub fn context_memory_mut(&mut self) -> &mut [u8] {
         let buf_len = self.buffer.len();
         // SAFETY: access bounded by buffer length
         unsafe { self.buffer.get_unchecked_mut(self.last_checkpoint..buf_len) }
