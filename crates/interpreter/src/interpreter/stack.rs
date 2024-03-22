@@ -65,6 +65,7 @@ impl Stack {
     }
 
     /// Returns a mutable reference to the underlying data buffer.
+    #[inline]
     pub fn data_mut(&mut self) -> &mut Vec<U256> {
         &mut self.data
     }
