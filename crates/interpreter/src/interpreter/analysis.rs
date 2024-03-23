@@ -1,5 +1,5 @@
 use crate::{
-    instructions::utility::read_u16,
+    instructions::utility::{read_i16, read_u16},
     opcode,
     primitives::{
         bitvec::prelude::{bitvec, BitVec, Lsb0},
@@ -10,6 +10,8 @@ use crate::{
     OpCode, OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
 };
 use std::{sync::Arc, vec, vec::Vec};
+
+const EOF_NON_RETURNING_FUNCTION: u8 = 0x80;
 
 /// Perform bytecode analysis.
 ///
@@ -98,42 +100,146 @@ pub fn validate_eof(eof: &Eof) -> Result<(), ()> {
 /// * All instructions are valid.
 /// * It ends with a terminating instruction or RJUMP.
 ///
-pub fn validate_eof_bytecode(code: &[u8], types: &TypesSection) -> Result<(), ()> {
-    let max_stack_size = types.inputs as u16;
-    let stack_size = types.inputs as u16;
-
-    let mut iter = code.as_ptr();
-    let end = code.as_ptr().wrapping_add(code.len());
-
-    let is_returning = false;
+pub fn validate_eof_bytecode(
+    code: &[u8],
+    accessed_codes: &mut [bool],
+    types: &[TypesSection],
+) -> Result<(), ()> {
+    #[derive(Copy, Default, Clone)]
+    pub struct BytecodeMark {
+        /// Is immediate byte, jumps can't happen on this part of code.
+        is_immediate: bool,
+        /// Have forward jump to this opcode. Used to check if opcode
+        /// after termination is accessed.
+        has_forward_jump: bool,
+    }
 
     // all bytes that are intermediate.
-    let jumptable = vec![false; code.len()];
+    let mut jumps = vec![BytecodeMark::default(); code.len()];
 
+    let mut is_after_termination = false;
+
+    let mut i = 0;
     // We can check validity and jump destinations in one pass.
-    while iter < end {
-        let op = unsafe { *iter };
+    while i < code.len() {
+        let op = code[i];
         let opcode_info = &OPCODE_INFO_JUMPTABLE[op as usize];
+        let this_jump = jumps[i];
 
         // Unknown opcode
         let Some(opcode) = opcode_info else {
+            // err unknown opcode.
             return Err(());
         };
 
-        // check if the size of the opcode is within the bounds of the code
-        if unsafe { iter.add(opcode.immediate_size as usize - 1) } > end {
+        if !opcode.is_eof {
+            // Opcode is disabled in EOF
             return Err(());
         }
 
-        match op {
-            opcode::RJUMPV | opcode::RJUMP | opcode::RJUMPI => {
-                // check jump destination with bytecode size.
+        // Opcodes after termination should be accessed by forward jumps.
+        if is_after_termination && this_jump.has_forward_jump {
+            // opcode after termination was not accessed.
+            return Err(());
+        }
+        is_after_termination = opcode.is_terminating_opcode;
 
-                // check if jump destination is valid
+        // mark immediates as non-jumpable. RJUMPV is special case covered later.
+        if opcode.immediate_size != 0 {
+            // check if the opcode immediates are within the bounds of the code
+            if i + opcode.immediate_size as usize > code.len() {
+                // Malfunctional code
+                return Err(());
             }
+
+            // mark immediate bytes as non-jumpable.
+            for imm in 1..opcode.immediate_size as usize + 1 {
+                // SAFETY: immediate size is checked above.
+                let jumptable = &mut jumps[imm];
+                if jumptable.has_forward_jump {
+                    // There is a jump to the immediate bytes.
+                    return Err(());
+                }
+                jumptable.is_immediate = true;
+            }
+        }
+        let mut additional_immediates = 0;
+        // get absolute jumpdest from RJUMP, RJUMPI and RJUMPV
+        let absolute_jumpdest = match op {
+            opcode::RJUMP | opcode::RJUMPI => {
+                let offset = read_i16(unsafe { code.as_ptr().add(i + 1) }) as isize;
+                if offset == 0 {
+                    // jump immediate instruction is not allowed.
+                    return Err(());
+                }
+                vec![offset + 3 + i as isize]
+            }
+            opcode::RJUMPV => {
+                let max_index = code[i + 1] as usize;
+                additional_immediates = (1 + max_index) * 2;
+
+                // Max index can't be zero as it becomes RJUMPI.
+                if max_index == 0 {
+                    return Err(());
+                }
+
+                // +1 is for max_index byte, and max_index+1 is to get size of vtable.
+                if i + 1 + additional_immediates >= code.len() {
+                    // Malfunctional code RJUMPV vtable is not complete
+                    return Err(());
+                }
+
+                let mut jumps = Vec::with_capacity(max_index);
+                for vtablei in 0..max_index {
+                    let offset =
+                        read_i16(unsafe { code.as_ptr().add(i + 2 + 2 * vtablei) }) as isize;
+                    if offset == 0 {
+                        // jump immediate instruction is not allowed.
+                        return Err(());
+                    }
+                    jumps[vtablei] = offset + i as isize + 2 + additional_immediates as isize;
+                }
+                jumps
+            }
+            _ => vec![],
+        };
+
+        // check if jumpdest are correct.
+        for absolute_jump in absolute_jumpdest {
+            if absolute_jump < 0 {
+                // jump out of bounds.
+                return Err(());
+            }
+            if absolute_jump > code.len() as isize {
+                // jump to out of bounds
+                return Err(());
+            }
+            // fine to cast as bound are checked.
+            let absolute_jump = absolute_jump as usize;
+
+            let target_jump = &mut jumps[absolute_jump];
+            if target_jump.is_immediate {
+                // Jump target is immediate byte.
+                return Err(());
+            }
+            // for previous jumps we already marked them in is immediate.
+            target_jump.has_forward_jump = true;
+        }
+
+        match op {
             opcode::CALLF => {
-                // check codes size.
+                let section_i = read_u16(unsafe { code.as_ptr().add(i + 1) }) as usize;
                 // targeted code needs to have zero outputs (be non returning).
+                let Some(next_section) = types.get(section_i) else {
+                    // code section out of bounds.
+                    return Err(());
+                };
+
+                if next_section.outputs == EOF_NON_RETURNING_FUNCTION {
+                    // callf to non returning function is not allowed
+                    return Err(());
+                }
+                accessed_codes[section_i] = true;
             }
             opcode::RETF => {
                 // check if it is returning. TODO here
@@ -161,13 +267,9 @@ pub fn validate_eof_bytecode(code: &[u8], types: &TypesSection) -> Result<(), ()
         // }
     }
 
-    // iterate over opcodes
-
-    if max_stack_size != types.max_stack_size {
-        return Err(());
-    }
-
-    if stack_size != types.outputs as u16 {
+    // last opcode should be terminating
+    if !is_after_termination {
+        // wrong termination.
         return Err(());
     }
 
