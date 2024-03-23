@@ -84,6 +84,7 @@ pub fn validate_eof(eof: &Eof) -> Result<(), ()> {
         {
             types.validate()?;
         }
+        validate_eof_codes(&eof)?;
 
         // iterate over containers, convert them to Eof and add to analyze_eof
         for container in eof.body.container_section {
@@ -96,17 +97,35 @@ pub fn validate_eof(eof: &Eof) -> Result<(), ()> {
     Ok(())
 }
 
+/// Validate EOF
+pub fn validate_eof_codes(eof: &Eof) -> Result<(), ()> {
+    // TODO(EOF) accessed codes needs to be called in order.
+    // this is not correct rn
+    let mut accessed_codes = vec![false; eof.body.code_section.len()];
+    for codes in eof.body.code_section.iter() {
+        validate_eof_code(
+            &codes,
+            &mut accessed_codes,
+            eof.header.data_size as usize,
+            &eof.body.types_section,
+        )?;
+    }
+
+    Ok(())
+}
+
 /// Validates that:
 /// * All instructions are valid.
 /// * It ends with a terminating instruction or RJUMP.
 ///
-pub fn validate_eof_bytecode(
+pub fn validate_eof_code(
     code: &[u8],
     accessed_codes: &mut [bool],
+    data_size: usize,
     types: &[TypesSection],
 ) -> Result<(), ()> {
     #[derive(Copy, Default, Clone)]
-    pub struct BytecodeMark {
+    struct BytecodeMark {
         /// Is immediate byte, jumps can't happen on this part of code.
         is_immediate: bool,
         /// Have forward jump to this opcode. Used to check if opcode
@@ -116,18 +135,17 @@ pub fn validate_eof_bytecode(
 
     // all bytes that are intermediate.
     let mut jumps = vec![BytecodeMark::default(); code.len()];
-
     let mut is_after_termination = false;
 
     let mut i = 0;
     // We can check validity and jump destinations in one pass.
     while i < code.len() {
         let op = code[i];
-        let opcode_info = &OPCODE_INFO_JUMPTABLE[op as usize];
+        let opcode = &OPCODE_INFO_JUMPTABLE[op as usize];
         let this_jump = jumps[i];
 
         // Unknown opcode
-        let Some(opcode) = opcode_info else {
+        let Some(opcode) = opcode else {
             // err unknown opcode.
             return Err(());
         };
@@ -241,30 +259,28 @@ pub fn validate_eof_bytecode(
                 }
                 accessed_codes[section_i] = true;
             }
-            opcode::RETF => {
-                // check if it is returning. TODO here
+            opcode::JUMPF => {
+                let section_i = read_u16(unsafe { code.as_ptr().add(i + 1) }) as usize;
+                // targeted code needs to have zero outputs (be non returning).
+                let Some(next_section) = types.get(section_i) else {
+                    // code section out of bounds.
+                    return Err(());
+                };
+                // if it is not returning JUMPF becomes terminating opcode.
+                is_after_termination = next_section.outputs == EOF_NON_RETURNING_FUNCTION;
+                accessed_codes[section_i] = true;
+            }
+            opcode::DATALOADN => {
+                let index = read_u16(unsafe { code.as_ptr().add(i + 1) }) as usize;
+                if data_size < 32 || index as isize > data_size as isize - 32 {
+                    // data load out of bounds.
+                    return Err(());
+                }
             }
             _ => {}
         }
-
-        // if let Some(jump) = opcode_info.jump {
-        //     eof_table[jump as usize] += 1;
-        // }
-
-        // if opcode::JUMPDEST == opcode {
-        //     // SAFETY: jumps are max length of the code
-        //     unsafe { jumps.set_unchecked(iterator.offset_from(start) as usize, true) }
-        //     iterator = unsafe { iterator.offset(1) };
-        // } else {
-        //     let push_offset = opcode.wrapping_sub(opcode::PUSH1);
-        //     if push_offset < 32 {
-        //         // SAFETY: iterator access range is checked in the while loop
-        //         iterator = unsafe { iterator.offset((push_offset + 2) as isize) };
-        //     } else {
-        //         // SAFETY: iterator access range is checked in the while loop
-        //         iterator = unsafe { iterator.offset(1) };
-        //     }
-        // }
+        // additional immediates are from RJUMPV vtable.
+        i += 1 + opcode.immediate_size as usize + additional_immediates;
     }
 
     // last opcode should be terminating
