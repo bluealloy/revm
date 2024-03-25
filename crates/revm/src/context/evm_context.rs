@@ -198,12 +198,12 @@ impl<DB: Database> EvmContext<DB> {
                 inputs.return_memory_offset.clone(),
             ))
         } else if !bytecode.is_empty() {
-            let contract = Box::new(Contract::new_with_context(
+            let contract = Contract::new_with_context(
                 inputs.input.clone(),
                 bytecode,
                 code_hash,
                 &inputs.context,
-            ));
+            );
             // Create interpreter and executes call and push new CallStackFrame.
             Ok(FrameOrResult::new_call_frame(
                 inputs.return_memory_offset.clone(),
