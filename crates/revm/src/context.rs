@@ -17,7 +17,7 @@ use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
 pub struct Context<EXT, DB: Database> {
-    /// Evm Context.
+    /// Evm Context (internal context).
     pub evm: EvmContext<DB>,
     /// External contexts.
     pub external: EXT,
