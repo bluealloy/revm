@@ -437,9 +437,16 @@ opcodes! {
 ///
 /// This is always a valid opcode, as declared in the [`opcode`][self] module or the
 /// [`OPCODE_JUMPMAP`] constant.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct OpCode(u8);
+
+impl fmt::Debug for OpCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "OpCode::{self}")
+    }
+}
 
 impl fmt::Display for OpCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -487,20 +494,6 @@ impl OpCode {
     #[inline]
     pub const fn get(self) -> u8 {
         self.0
-    }
-
-    #[inline]
-    #[deprecated(note = "use `new` instead")]
-    #[doc(hidden)]
-    pub const fn try_from_u8(opcode: u8) -> Option<Self> {
-        Self::new(opcode)
-    }
-
-    #[inline]
-    #[deprecated(note = "use `get` instead")]
-    #[doc(hidden)]
-    pub const fn u8(self) -> u8 {
-        self.get()
     }
 }
 
