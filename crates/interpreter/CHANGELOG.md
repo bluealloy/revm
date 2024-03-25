@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v3.4.0...revm-interpreter-v3.5.0) - 2024-03-25
+
+### Added
+- *(interpreter)* expose mutable access methods on stack and memory ([#1219](https://github.com/bluealloy/revm/pull/1219))
+
+### Other
+- *(interpreter)* don't run signextend with 31 too ([#1222](https://github.com/bluealloy/revm/pull/1222))
+
 ## [3.4.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v3.3.0...revm-interpreter-v3.4.0) - 2024-03-19
 
 ### Added
