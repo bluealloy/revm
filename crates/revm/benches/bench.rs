@@ -114,7 +114,7 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<'static, (), B
             // replace memory with empty memory to use it inside interpreter.
             // Later return memory back.
             let temp = core::mem::replace(&mut shared_memory, EMPTY_SHARED_MEMORY);
-            let mut interpreter = Interpreter::new(Box::new(contract.clone()), u64::MAX, false);
+            let mut interpreter = Interpreter::new(contract.clone(), u64::MAX, false);
             let res = interpreter.run(temp, &instruction_table, &mut host);
             shared_memory = interpreter.take_memory();
             host.clear();

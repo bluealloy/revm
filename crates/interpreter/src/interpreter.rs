@@ -17,10 +17,11 @@ use revm_primitives::U256;
 use std::borrow::ToOwned;
 use std::boxed::Box;
 
+/// EVM bytecode interpreter.
 #[derive(Debug)]
 pub struct Interpreter {
     /// Contract information and invoking data
-    pub contract: Box<Contract>,
+    pub contract: Contract,
     /// The current instruction pointer.
     pub instruction_pointer: *const u8,
     /// The execution control flag. If this is not set to `Continue`, the interpreter will stop
@@ -114,7 +115,7 @@ impl InterpreterAction {
 
 impl Interpreter {
     /// Create new interpreter
-    pub fn new(contract: Box<Contract>, gas_limit: u64, is_static: bool) -> Self {
+    pub fn new(contract: Contract, gas_limit: u64, is_static: bool) -> Self {
         Self {
             instruction_pointer: contract.bytecode.as_ptr(),
             contract,
