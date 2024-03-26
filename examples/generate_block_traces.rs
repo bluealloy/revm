@@ -13,6 +13,7 @@ use std::io::BufWriter;
 use std::io::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::time::Instant;
 
 macro_rules! local_fill {
     ($left:expr, $right:expr, $fun:expr) => {
@@ -100,7 +101,7 @@ async fn main() -> anyhow::Result<()> {
     println!("Found {txs} transactions.");
 
     let console_bar = Arc::new(ProgressBar::new(txs as u64));
-    let elapsed = std::time::Duration::ZERO;
+    let start = Instant::now();
 
     // Create the traces directory if it doesn't exist
     std::fs::create_dir_all("traces").expect("Failed to create traces directory");
@@ -109,6 +110,7 @@ async fn main() -> anyhow::Result<()> {
     for tx in block.transactions {
         evm = evm
             .modify()
+            .reset_handler_with_external_context(TracerEip3155::new(Box::new(std::io::stdout()), true))
             .modify_tx_env(|etx| {
                 etx.caller = Address::from(tx.from.as_fixed_bytes());
                 etx.gas_limit = tx.gas.as_u64();
@@ -148,6 +150,7 @@ async fn main() -> anyhow::Result<()> {
                     None => TransactTo::create(),
                 };
             })
+            .append_handler_register(inspector_handle_register)
             .build();
 
         // Construct the file writer to write the trace to
@@ -176,6 +179,8 @@ async fn main() -> anyhow::Result<()> {
     }
 
     console_bar.finish_with_message("Finished all transactions.");
+    
+    let elapsed = start.elapsed();
     println!(
         "Finished execution. Total CPU time: {:.6}s",
         elapsed.as_secs_f64()
