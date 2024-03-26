@@ -110,7 +110,10 @@ async fn main() -> anyhow::Result<()> {
     for tx in block.transactions {
         evm = evm
             .modify()
-            .reset_handler_with_external_context(TracerEip3155::new(Box::new(std::io::stdout()), true))
+            .reset_handler_with_external_context(TracerEip3155::new(
+                Box::new(std::io::stdout()),
+                true,
+            ))
             .modify_tx_env(|etx| {
                 etx.caller = Address::from(tx.from.as_fixed_bytes());
                 etx.gas_limit = tx.gas.as_u64();
@@ -179,7 +182,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     console_bar.finish_with_message("Finished all transactions.");
-    
+
     let elapsed = start.elapsed();
     println!(
         "Finished execution. Total CPU time: {:.6}s",

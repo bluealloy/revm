@@ -178,7 +178,9 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             let value = Summary {
                 state_root: B256::ZERO.to_string(),
                 output: outcome.result.output.to_string(),
-                gas_used: hex_number(context.inner.env().tx.gas_limit - self.gas_inspector.gas_remaining()),
+                gas_used: hex_number(
+                    context.inner.env().tx.gas_limit - self.gas_inspector.gas_remaining(),
+                ),
                 pass: outcome.result.is_ok(),
 
                 time: None,
