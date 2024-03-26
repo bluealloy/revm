@@ -671,21 +671,21 @@ mod tests {
     }
 
     #[test]
-    fn test_opcode_size() {
+    fn test_imm_size() {
         let mut opcodes = [0u8; 256];
         // PUSH opcodes
         for push in PUSH1..PUSH32 {
             opcodes[push as usize] = push - PUSH1 + 1;
         }
-        opcodes[DATALOADN as usize] = 3;
-        opcodes[RJUMP as usize] = 3;
-        opcodes[RJUMPI as usize] = 3;
-        opcodes[RJUMPV as usize] = 3;
-        opcodes[CALLF as usize] = 3;
-        opcodes[JUMPF as usize] = 3;
-        opcodes[DUPN as usize] = 2;
-        opcodes[SWAPN as usize] = 2;
-        opcodes[EXCHANGE as usize] = 2;
+        opcodes[DATALOADN as usize] = 2;
+        opcodes[RJUMP as usize] = 2;
+        opcodes[RJUMPI as usize] = 2;
+        opcodes[RJUMPV as usize] = 2;
+        opcodes[CALLF as usize] = 2;
+        opcodes[JUMPF as usize] = 2;
+        opcodes[DUPN as usize] = 1;
+        opcodes[SWAPN as usize] = 1;
+        opcodes[EXCHANGE as usize] = 1;
     }
 
     #[test]
@@ -717,8 +717,30 @@ mod tests {
     }
 
     #[test]
-    pub fn test_terminating_opcodes() {
-        // TODO check JUMPF
-        let terminating = [RETF, JUMPF];
+    fn test_terminating_opcodes() {
+        let terminating = [
+            RETF,
+            REVERT,
+            RETURN,
+            INVALID,
+            SELFDESTRUCT,
+            RETURNCONTRACT,
+            STOP,
+        ];
+        let mut opcodes = [false; 256];
+        for terminating in terminating.iter() {
+            opcodes[*terminating as usize] = true;
+        }
+
+        for (i, opcode) in OPCODE_INFO_JUMPTABLE.clone().into_iter().enumerate() {
+            assert_eq!(
+                opcode
+                    .map(|opcode| opcode.is_terminating_opcode)
+                    .unwrap_or_default(),
+                opcodes[i],
+                "Opcode {:?} terminating chack failed.",
+                opcode
+            );
+        }
     }
 }

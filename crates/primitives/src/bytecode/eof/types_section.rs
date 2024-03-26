@@ -17,8 +17,8 @@ pub struct TypesSection {
 impl TypesSection {
     /// Return the difference between inputs and outputs.
     #[inline]
-    pub fn io_diff(&self) -> i16 {
-        self.outputs as i16 - self.inputs as i16
+    pub fn io_diff(&self) -> i32 {
+        self.outputs as i32 - self.inputs as i32
     }
 
     #[inline]

@@ -1,3 +1,5 @@
+use revm_primitives::HashSet;
+
 use crate::{
     instructions::utility::{read_i16, read_u16},
     opcode,
@@ -64,6 +66,12 @@ fn analyze(code: &[u8]) -> JumpTable {
     JumpTable(Arc::new(jumps))
 }
 
+pub fn validate_raw_eof(bytecode: Bytes) -> Result<Eof, ()> {
+    let eof = Eof::decode(bytecode)?;
+    validate_eof(&eof)?;
+    Ok(eof)
+}
+
 /// Validate Eof structures.
 ///
 /// do perf test on:
@@ -72,24 +80,17 @@ fn analyze(code: &[u8]) -> JumpTable {
 /// bytecode iteration.
 pub fn validate_eof(eof: &Eof) -> Result<(), ()> {
     // clone is cheat as it is Bytes and a header.
-    let mut analyze_eof = vec![eof.clone()];
+    let mut queue = vec![eof.clone()];
 
-    while let Some(eof) = analyze_eof.pop() {
-        // iterate over types and code
-        for (types, bytes) in eof
-            .body
-            .types_section
-            .iter()
-            .zip(eof.body.code_section.iter())
-        {
+    while let Some(eof) = queue.pop() {
+        // iterate over types
+        for types in &eof.body.types_section {
             types.validate()?;
         }
         validate_eof_codes(&eof)?;
-
         // iterate over containers, convert them to Eof and add to analyze_eof
         for container in eof.body.container_section {
-            let container_eof = Eof::decode(container)?;
-            analyze_eof.push(container_eof);
+            queue.push(Eof::decode(container)?);
         }
     }
 
@@ -99,17 +100,31 @@ pub fn validate_eof(eof: &Eof) -> Result<(), ()> {
 
 /// Validate EOF
 pub fn validate_eof_codes(eof: &Eof) -> Result<(), ()> {
-    // TODO(EOF) accessed codes needs to be called in order.
-    // this is not correct rn
-    let mut accessed_codes = vec![false; eof.body.code_section.len()];
-    for codes in eof.body.code_section.iter() {
-        validate_eof_code(
-            &codes,
-            &mut accessed_codes,
+    let mut queued_codes = vec![false; eof.body.code_section.len()];
+    // first section is default one.
+    queued_codes[0] = true;
+    // start validation from code section 0.
+    let mut queue = vec![0];
+    while let Some(index) = queue.pop() {
+        let code = &eof.body.code_section[index];
+        let accessed_codes = validate_eof_code(
+            &code,
             eof.header.data_size as usize,
+            index,
             &eof.body.types_section,
         )?;
+
+        // queue accessed codes.
+        accessed_codes.into_iter().for_each(|i| {
+            if !queued_codes[i] {
+                queued_codes[i] = true;
+                queue.push(i);
+            }
+        });
     }
+
+    // iterate over accessed codes and check if all are accessed.
+    queued_codes.into_iter().find(|&x| x == false).ok_or(())?;
 
     Ok(())
 }
@@ -117,34 +132,70 @@ pub fn validate_eof_codes(eof: &Eof) -> Result<(), ()> {
 /// Validates that:
 /// * All instructions are valid.
 /// * It ends with a terminating instruction or RJUMP.
+/// * All instructions are accessed by forward jumps or .
 ///
+/// Validate stack requirements and if all codes sections are used.
+///
+/// TODO mark accessed Types/Codes
+///
+/// Preconditions:
+/// * Jump destinations are valid.
+/// * All instructions are valid and well formed.
+/// * All instruction is accessed by forward jumps.
+/// * Bytecode is valid and ends with terminating instruction.
+///
+/// Preconditions are checked in `validate_eof_bytecode`.
 pub fn validate_eof_code(
     code: &[u8],
-    accessed_codes: &mut [bool],
     data_size: usize,
+    this_types_index: usize,
     types: &[TypesSection],
-) -> Result<(), ()> {
-    #[derive(Copy, Default, Clone)]
-    struct BytecodeMark {
+) -> Result<HashSet<usize>, ()> {
+    let mut accessed_codes = HashSet::<usize>::new();
+    let this_types = &types[this_types_index];
+
+    #[derive(Copy, Clone)]
+    struct InstructionInfo {
         /// Is immediate byte, jumps can't happen on this part of code.
         is_immediate: bool,
         /// Have forward jump to this opcode. Used to check if opcode
         /// after termination is accessed.
-        has_forward_jump: bool,
+        is_jumpdest: bool,
+        /// Smallest number of stack items accessed by jumps or sequential opcodes.
+        smallest: i32,
+        /// Biggest number of stack items accessed by jumps or sequential opcodes.
+        biggest: i32,
+    }
+
+    impl Default for InstructionInfo {
+        fn default() -> Self {
+            Self {
+                is_immediate: false,
+                is_jumpdest: false,
+                smallest: i32::MAX,
+                biggest: i32::MIN,
+            }
+        }
     }
 
     // all bytes that are intermediate.
-    let mut jumps = vec![BytecodeMark::default(); code.len()];
+    let mut jumps = vec![InstructionInfo::default(); code.len()];
     let mut is_after_termination = false;
+
+    let mut next_smallest = this_types.inputs as i32;
+    let mut next_biggest = this_types.inputs as i32;
 
     let mut i = 0;
     // We can check validity and jump destinations in one pass.
     while i < code.len() {
         let op = code[i];
         let opcode = &OPCODE_INFO_JUMPTABLE[op as usize];
-        let this_jump = jumps[i];
+        let this_instruction = &mut jumps[i];
+        this_instruction.smallest = core::cmp::min(this_instruction.smallest, next_smallest);
+        this_instruction.biggest = core::cmp::max(this_instruction.biggest, next_biggest);
 
-        // Unknown opcode
+        let this_instruction = *this_instruction;
+
         let Some(opcode) = opcode else {
             // err unknown opcode.
             return Err(());
@@ -156,15 +207,15 @@ pub fn validate_eof_code(
         }
 
         // Opcodes after termination should be accessed by forward jumps.
-        if is_after_termination && this_jump.has_forward_jump {
+        if is_after_termination && this_instruction.is_jumpdest {
             // opcode after termination was not accessed.
             return Err(());
         }
         is_after_termination = opcode.is_terminating_opcode;
 
-        // mark immediates as non-jumpable. RJUMPV is special case covered later.
+        // mark immediate as non-jumpable. RJUMPV is special case covered later.
         if opcode.immediate_size != 0 {
-            // check if the opcode immediates are within the bounds of the code
+            // check if the opcode immediate are within the bounds of the code
             if i + opcode.immediate_size as usize > code.len() {
                 // Malfunctional code
                 return Err(());
@@ -173,36 +224,44 @@ pub fn validate_eof_code(
             // mark immediate bytes as non-jumpable.
             for imm in 1..opcode.immediate_size as usize + 1 {
                 // SAFETY: immediate size is checked above.
-                let jumptable = &mut jumps[imm];
-                if jumptable.has_forward_jump {
+                let jumptable = &mut jumps[i + imm];
+                if jumptable.is_jumpdest {
                     // There is a jump to the immediate bytes.
                     return Err(());
                 }
                 jumptable.is_immediate = true;
             }
         }
-        let mut additional_immediates = 0;
-        // get absolute jumpdest from RJUMP, RJUMPI and RJUMPV
-        let absolute_jumpdest = match op {
+        // IO diff used to generate next instruction smallest/biggest value.
+        let mut stack_io_diff = opcode.io_diff() as i32;
+        // how many stack items are required for this opcode.
+        let mut stack_requirement = opcode.inputs as i32;
+        // additional immediate bytes for RJUMPV, it has dynamic vtable.
+        let mut rjumpv_additional_immediates = 0;
+        // If opcodes is RJUMP, RJUMPI or RJUMPV then this will have absolute jumpdest.
+        let mut absolute_jumpdest = vec![];
+        match op {
             opcode::RJUMP | opcode::RJUMPI => {
                 let offset = read_i16(unsafe { code.as_ptr().add(i + 1) }) as isize;
                 if offset == 0 {
                     // jump immediate instruction is not allowed.
                     return Err(());
                 }
-                vec![offset + 3 + i as isize]
+                absolute_jumpdest = vec![offset + 3 + i as isize]
             }
             opcode::RJUMPV => {
+                // code length for RJUMPV is checked with immediate size.
                 let max_index = code[i + 1] as usize;
-                additional_immediates = (1 + max_index) * 2;
+                // and max_index+1 is to get size of vtable as index starts from 0.
+                rjumpv_additional_immediates = (1 + max_index) * 2;
 
                 // Max index can't be zero as it becomes RJUMPI.
                 if max_index == 0 {
                     return Err(());
                 }
 
-                // +1 is for max_index byte, and max_index+1 is to get size of vtable.
-                if i + 1 + additional_immediates >= code.len() {
+                // +1 is for max_index byte
+                if i + 1 + rjumpv_additional_immediates >= code.len() {
                     // Malfunctional code RJUMPV vtable is not complete
                     return Err(());
                 }
@@ -215,24 +274,125 @@ pub fn validate_eof_code(
                         // jump immediate instruction is not allowed.
                         return Err(());
                     }
-                    jumps[vtablei] = offset + i as isize + 2 + additional_immediates as isize;
+                    jumps[vtablei] =
+                        offset + i as isize + 2 + rjumpv_additional_immediates as isize;
                 }
-                jumps
+                absolute_jumpdest = jumps
             }
-            _ => vec![],
-        };
+            opcode::CALLF => {
+                let section_i = read_u16(unsafe { code.as_ptr().add(i + 1) }) as usize;
+                let Some(target_types) = types.get(section_i) else {
+                    // code section out of bounds.
+                    return Err(());
+                };
 
-        // check if jumpdest are correct.
+                if target_types.outputs == EOF_NON_RETURNING_FUNCTION {
+                    // callf to non returning function is not allowed
+                    return Err(());
+                }
+                // stack input for this opcode is the input of the called code.
+                stack_requirement = target_types.inputs as i32;
+                // stack diff depends on input/output of the called code.
+                stack_io_diff = target_types.io_diff() as i32;
+                // mark called code as accessed.
+                accessed_codes.insert(section_i);
+
+                // we decrement by `types.inputs` as they are considered as send
+                // to the called code and included in types.max_stack_size.
+                if this_instruction.biggest - stack_requirement + target_types.max_stack_size as i32
+                    > STACK_LIMIT as i32
+                {
+                    // if stack max items + called code max stack size
+                    return Err(());
+                }
+            }
+            opcode::JUMPF => {
+                let target_index = read_u16(unsafe { code.as_ptr().add(i + 1) }) as usize;
+                // targeted code needs to have zero outputs (be non returning).
+                let Some(target_types) = types.get(target_index) else {
+                    // code section out of bounds.
+                    return Err(());
+                };
+
+                // we decrement types.inputs as they are considered send to the called code.
+                // and included in types.max_stack_size.
+                if this_instruction.biggest - target_types.inputs as i32
+                    + target_types.max_stack_size as i32
+                    > STACK_LIMIT as i32
+                {
+                    // stack overflow
+                    return Err(());
+                }
+
+                accessed_codes.insert(target_index);
+
+                if target_types.outputs == EOF_NON_RETURNING_FUNCTION {
+                    // if it is not returning
+                    stack_requirement = target_types.inputs as i32;
+                    // if it is not returning JUMPF becomes terminating opcode.
+                    is_after_termination = true;
+                } else {
+                    // check if target code produces enough outputs.
+                    if target_types.outputs < this_types.outputs {
+                        return Err(());
+                    }
+
+                    // TODO(EOF) stack requirements for this opcode.
+                    stack_requirement = (target_types.outputs as i32 + this_types.io_diff()) as i32;
+
+                    // if this instruction max + target_types max is more then stack limit.
+                    if this_instruction.biggest + stack_requirement > STACK_LIMIT as i32 {
+                        return Err(());
+                    }
+                }
+            }
+            opcode::DATALOADN => {
+                let index = read_u16(unsafe { code.as_ptr().add(i + 1) }) as isize;
+                if data_size < 32 || index > data_size as isize - 32 {
+                    // data load out of bounds.
+                    return Err(());
+                }
+            }
+            opcode::RETF => {
+                stack_requirement = this_types.outputs as i32;
+                if this_instruction.biggest > stack_requirement {
+                    // stack_higher_than_outputs_required
+                    return Err(());
+                }
+            }
+            opcode::DUPN => {
+                stack_requirement = code[i + 1] as i32 + 1;
+                stack_io_diff = 1;
+            }
+            opcode::SWAPN => {
+                stack_requirement = code[i + 1] as i32 + 2;
+            }
+            opcode::EXCHANGE => {
+                let imm = code[i + 1];
+                let n = (imm >> 4) + 1;
+                let m = (imm & 0x0F) + 1;
+                stack_requirement = n as i32 + m as i32;
+            }
+            _ => {}
+        }
+
+        // check if stack requirement is more than smallest stack items.
+        if stack_requirement > this_instruction.smallest {
+            // opcode requirement is more than smallest stack items.
+            return Err(());
+        }
+
+        // check if jumpdest are correct and mark forward jumps.
         for absolute_jump in absolute_jumpdest {
             if absolute_jump < 0 {
                 // jump out of bounds.
                 return Err(());
             }
-            if absolute_jump > code.len() as isize {
+            if absolute_jump >= code.len() as isize {
                 // jump to out of bounds
                 return Err(());
             }
-            // fine to cast as bound are checked.
+            // fine to cast as bounds are checked.
             let absolute_jump = absolute_jump as usize;
 
             let target_jump = &mut jumps[absolute_jump];
@@ -240,47 +400,34 @@ pub fn validate_eof_code(
                 // Jump target is immediate byte.
                 return Err(());
             }
-            // for previous jumps we already marked them in is immediate.
-            target_jump.has_forward_jump = true;
-        }
 
-        match op {
-            opcode::CALLF => {
-                let section_i = read_u16(unsafe { code.as_ptr().add(i + 1) }) as usize;
-                // targeted code needs to have zero outputs (be non returning).
-                let Some(next_section) = types.get(section_i) else {
-                    // code section out of bounds.
-                    return Err(());
-                };
+            // needed to mark forward jumps. It does not do anything for backward jumps.
+            target_jump.is_jumpdest = true;
 
-                if next_section.outputs == EOF_NON_RETURNING_FUNCTION {
-                    // callf to non returning function is not allowed
+            if absolute_jump < i {
+                // backward jumps should have same smallest and biggest stack items.
+                if this_instruction.biggest != target_jump.biggest {
+                    // wrong jumpdest.
                     return Err(());
                 }
-                accessed_codes[section_i] = true;
-            }
-            opcode::JUMPF => {
-                let section_i = read_u16(unsafe { code.as_ptr().add(i + 1) }) as usize;
-                // targeted code needs to have zero outputs (be non returning).
-                let Some(next_section) = types.get(section_i) else {
-                    // code section out of bounds.
-                    return Err(());
-                };
-                // if it is not returning JUMPF becomes terminating opcode.
-                is_after_termination = next_section.outputs == EOF_NON_RETURNING_FUNCTION;
-                accessed_codes[section_i] = true;
-            }
-            opcode::DATALOADN => {
-                let index = read_u16(unsafe { code.as_ptr().add(i + 1) }) as usize;
-                if data_size < 32 || index as isize > data_size as isize - 32 {
-                    // data load out of bounds.
+                if this_instruction.smallest != target_jump.smallest {
+                    // wrong jumpdest.
                     return Err(());
                 }
+            } else {
+                // forward jumps can make min even smallest size
+                // while biggest num is needed to check stack overflow
+                target_jump.smallest =
+                    core::cmp::min(target_jump.smallest, this_instruction.smallest);
+                target_jump.biggest = core::cmp::max(target_jump.biggest, this_instruction.biggest);
             }
-            _ => {}
         }
-        // additional immediates are from RJUMPV vtable.
-        i += 1 + opcode.immediate_size as usize + additional_immediates;
+
+        next_smallest = this_instruction.smallest + stack_io_diff;
+        next_biggest = this_instruction.smallest + stack_io_diff;
+
+        // additional immediate are from RJUMPV vtable.
+        i += 1 + opcode.immediate_size as usize + rjumpv_additional_immediates;
     }
 
     // last opcode should be terminating
@@ -289,192 +436,34 @@ pub fn validate_eof_code(
         return Err(());
     }
 
-    Ok(())
-}
-
-/// Validate stack requirements and if all codes sections are used.
-///
-/// TODO mark accessed Types/Codes
-///
-/// Preconditions:
-/// * Jump destinations are valid.
-/// * All instructions are valid and well formed.
-/// * All instruction is accessed by forward jumps.
-/// * Bytecode is valid and ends with terminating instruction.
-///
-/// Preconditions are checked in `validate_eof_bytecode`.
-pub fn validate_eof_stack_requirement(
-    codes: &[u8],
-    this_types_index: usize,
-    types: &[TypesSection],
-) -> Result<(), ()> {
-    #[derive(Copy, Clone)]
-    struct StackIO {
-        pub min: u16,
-        pub max: u16,
-    }
-
-    impl StackIO {
-        pub fn next(&self, diff: i16) -> Self {
-            Self {
-                min: self.min + diff as u16,
-                max: self.max + diff as u16,
-            }
-        }
-    }
-
-    impl Default for StackIO {
-        fn default() -> Self {
-            Self {
-                min: u16::MAX,
-                max: 0,
-            }
-        }
-    }
-
-    // Stack access information for each instruction section.
-    let mut code_stack_access: Vec<StackIO> = vec![Default::default(); codes.len()];
-
-    // Set first instruction min and max stack requirement as a this code section input.
-    let this_types = &types[this_types_index];
-    code_stack_access[0] = StackIO {
-        min: this_types.inputs as u16,
-        max: this_types.inputs as u16,
-    };
-
-    let max_stack_height = 0;
-    let mut i = 0;
-    while i < codes.len() {
-        let opcode = codes[i];
-
-        let Some(info) = OpCode::new(opcode).map(|i| i.info()) else {
-            panic!("Opcode validity is checked.")
-        };
-
-        let mut stack_i = info.inputs as u16;
-        let mut stack_io_diff = info.io_diff() as i16;
-
-        let stack_io = code_stack_access[i];
-
-        // Jump over intermediate data and set min/max to zero.
-        match opcode {
-            opcode::CALLF => {
-                let code_id = read_u16(unsafe { codes.as_ptr().add(i + 1) }) as usize;
-                let types = &types[code_id];
-                // stack input for this opcode is the input of the called code.
-                stack_i = types.inputs as u16;
-
-                // we decrement types.inputs as they are considered send to the called code.
-                // and included in types.max_stack_size.
-                if stack_io.max - stack_i + types.max_stack_size > STACK_LIMIT as u16 {
-                    // if stack max items + called code max stack size
-                    return Err(());
-                }
-                stack_io_diff = types.io_diff() as i16;
-            }
-            opcode::JUMPF => {
-                let code_id = read_u16(unsafe { codes.as_ptr().add(i + 1) }) as usize;
-
-                let target_types = &types[code_id];
-
-                // we decrement types.inputs as they are considered send to the called code.
-                // and included in types.max_stack_size.
-                if stack_io.max - target_types.inputs as u16 + target_types.max_stack_size
-                    > STACK_LIMIT as u16
-                {
-                    // stack overflow
-                    return Err(());
-                }
-
-                stack_io_diff = 0;
-                if target_types.outputs == 0 {
-                    // if it is not returning
-                    stack_i = target_types.inputs as u16;
-                } else {
-                    // check if target code produces enough outputs.
-                    if target_types.outputs < this_types.outputs {
-                        return Err(());
-                    }
-
-                    // TOOD(EOF) check overflows.
-                    stack_i = (target_types.outputs as i16 + this_types.io_diff()) as u16;
-
-                    // if this instruction max + target_types max is more then stack limit.
-                    if stack_io.max + stack_i > STACK_LIMIT as u16 {
-                        return Err(());
-                    }
-                }
-            }
-            opcode::RETF => {
-                stack_i = this_types.outputs as u16;
-                if stack_io.max > stack_i {
-                    // stack_higher_than_outputs_required
-                    return Err(());
-                }
-            }
-            opcode::DUPN => {
-                stack_i = codes[i + 1] as u16 + 1;
-                stack_io_diff = 1;
-            }
-            opcode::SWAPN => {
-                stack_i = codes[i + 1] as u16 + 2;
-            }
-            opcode::EXCHANGE => {
-                let imm = codes[i + 1];
-                let n = (imm >> 4) + 1;
-                let m = (imm & 0x0F) + 1;
-                stack_i = n as u16 + m as u16;
-            }
-            _ => {}
-        }
-
-        if stack_io.min < stack_i {
-            // should have at least min items for stack input
-            return Err(());
-        }
-
-        // next item stack io;
-        let mut next_stack_io = stack_io.next(stack_io_diff);
-
-        let mut imm_size = info.immediate_size as usize;
-        if opcode == opcode::RJUMPV {
-            // code validation is already done and we can access codes[workitem + 1] safely.
-            imm_size += codes[i + 1] as usize * 2;
-        }
-
-        // Nulify max stack if it is a terminating opcode.
-        if info.is_terminating_opcode {
-            next_stack_io.max = 0;
-            next_stack_io.min = 0;
-        }
-
-        // next instruction index.
-        i += imm_size + 1;
-
-        // check if opcode is terminating or it is RJUMP (to previous dest).
-        if info.is_terminating_opcode || opcode == opcode::RJUMP {
-            // if it is not a jump instruction, we set next stack io.
-            code_stack_access[i + 1] = next_stack_io;
-        }
-
-        // if next instruction is out of bounds, break. Terminal instructions are already handled.
-        if i >= codes.len() {
-            break;
-        }
-
-        //match opcode {}
-
-        // check next instruction, break if it is out of bounds.
-    }
-
-    // Iterate over accessed code, error on not accessed opcode and return max stack requirement.
+    // TODO integrate max so we dont need to iterate again
     let mut max_stack_requirement = 0;
-    for opcode in code_stack_access {
-        if opcode.min == u16::MAX {
-            // opcode not accessed.
-            return Err(());
-        }
-        max_stack_requirement = core::cmp::max(opcode.max, max_stack_requirement);
+    for opcode in jumps {
+        max_stack_requirement = core::cmp::max(opcode.biggest, max_stack_requirement);
     }
-    Ok(())
+
+    Ok(accessed_codes)
 }
+
+// For secquential opcodes min and max values are same.
+// /// Difference is with jumps,
+// #[derive(Copy, Clone)]
+// struct StackNum {
+//     /// Smallest number of stack items accessed by jumps or sequential opcodes.
+//     smallest: i32,
+//     /// Biggest number of stack items accessed by jumps or sequential opcodes.
+//     biggest: i32,
+// }
+
+// impl StackNum {
+//     fn next(&self, diff: i16) -> Self {
+//         Self {
+//             smallest: self.smallest + diff as i32,
+//             biggest: self.biggest + diff as i32,
+//         }
+//     }
+//     fn merge_jumpdest(&mut self, other: Self) {
+//         self.smallest = core::cmp::min(self.smallest, other.smallest);
+//         self.biggest = core::cmp::max(self.biggest, other.biggest);
+//     }
+// }
