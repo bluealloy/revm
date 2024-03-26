@@ -66,8 +66,8 @@ fn analyze(code: &[u8]) -> JumpTable {
     JumpTable(Arc::new(jumps))
 }
 
-pub fn validate_raw_eof(bytecode: Bytes) -> Result<Eof, ()> {
-    let eof = Eof::decode(bytecode)?;
+pub fn validate_raw_eof(bytecode: Bytes) -> Result<Eof, EofError> {
+    let eof = Eof::decode(bytecode).map_err(|_| EofError::EofDecode)?;
     validate_eof(&eof)?;
     Ok(eof)
 }
@@ -78,19 +78,21 @@ pub fn validate_raw_eof(bytecode: Bytes) -> Result<Eof, ()> {
 /// max eof containers
 /// max depth of containers.
 /// bytecode iteration.
-pub fn validate_eof(eof: &Eof) -> Result<(), ()> {
+pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
     // clone is cheat as it is Bytes and a header.
     let mut queue = vec![eof.clone()];
 
     while let Some(eof) = queue.pop() {
         // iterate over types
         for types in &eof.body.types_section {
-            types.validate()?;
+            types
+                .validate()
+                .map_err(|_| EofError::InvalidTypesSection)?;
         }
         validate_eof_codes(&eof)?;
         // iterate over containers, convert them to Eof and add to analyze_eof
         for container in eof.body.container_section {
-            queue.push(Eof::decode(container)?);
+            queue.push(Eof::decode(container).map_err(|_| EofError::EofDecode)?);
         }
     }
 
@@ -99,7 +101,7 @@ pub fn validate_eof(eof: &Eof) -> Result<(), ()> {
 }
 
 /// Validate EOF
-pub fn validate_eof_codes(eof: &Eof) -> Result<(), ()> {
+pub fn validate_eof_codes(eof: &Eof) -> Result<(), EofError> {
     let mut queued_codes = vec![false; eof.body.code_section.len()];
     // first section is default one.
     queued_codes[0] = true;
@@ -122,12 +124,115 @@ pub fn validate_eof_codes(eof: &Eof) -> Result<(), ()> {
             }
         });
     }
-
     // iterate over accessed codes and check if all are accessed.
-    queued_codes.into_iter().find(|&x| x == false).ok_or(())?;
+    if queued_codes.into_iter().find(|&x| x == false).is_some() {
+        return Err(EofError::CodeSectionNotAccessed);
+    }
 
     Ok(())
 }
+
+/*
+
+//0x6001800100
+0x6001 PUSH1
+80 DUP1
+01 ADD
+00 STOP
+
+// 0xef0001010004020001000504000000008000026001800100
+0xef00 magic
+01 version
+01 kind
+0004 04 size
+02 kind
+0001 num of codes
+0005 size of code
+04 kind data
+0000 size of data
+00 terminator
+00 inputs
+80 non returning fn
+0002 max stack elements
+6001800100
+
+0x6001 PUSH0
+80
+80
+80
+80
+80
+80
+f1
+00
+
+*/
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+pub enum EofError {
+    TEST,
+    /// Opcode is not known. It is not defined in the opcode table.
+    UnknownOpcode,
+    /// Opcode is disabled in EOF. For example JUMP, JUMPI, etc.
+    OpcodeDisabled,
+    /// Every instruction inside bytecode should be forward accessed.
+    /// Forward access can be a jump or sequential opcode.
+    /// In case after terminal opcode there should be a forward jump.
+    InstructionNotForwardAccessed,
+    /// Bytecode is too small and is missing immediate bytes for instruction.
+    MissingImmediateBytes,
+    /// Similar to [`MissingImmediateBytes`] but for special case of RJUMPV immediate bytes.
+    MissingRJUMPVImmediateBytes,
+    /// Invalid jump into immediate bytes.
+    JumpToImmediateBytes,
+    /// Invalid jump into immediate bytes.
+    BackwardJumpToImmediateBytes,
+    /// MaxIndex in RJUMPV can't be zero. Zero max index makes it RJUMPI.
+    RJUMPVZeroMaxIndex,
+    /// Jump with zero offset would make a jump to next opcode, it does not make sense.
+    JumpZeroOffset,
+    /// CALLF section out of bounds.
+    CodeSectionOutOfBounds,
+    /// CALLF to non returning function is not allowed.
+    CALLFNonReturningFunction,
+    /// CALLF stack overflow.
+    StackOverflow,
+    /// JUMPF needs to have enough outputs.
+    JUMPFEnoughOutputs,
+    /// DATA load out of bounds.
+    DataLoadOutOfBounds,
+    /// TODO(EOF) check this error.
+    RETFBiggestStackNumMoreThenOutputs,
+    /// Stack requirement is more than smallest stack items.
+    StackUnderflow,
+    /// Jump out of bounds.
+    JumpUnderflow,
+    /// Jump to out of bounds.
+    JumpOverflow,
+    /// Backward jump should have same smallest and biggest stack items.
+    BackwardJumpBiggestNumMismatch,
+    /// Backward jump should have same smallest and biggest stack items.
+    BackwardJumpSmallestNumMismatch,
+    /// Last instruction should be terminating.
+    LastInstructionNotTerminating,
+    /// Code section not accessed.
+    CodeSectionNotAccessed,
+    /// Types section invalid
+    InvalidTypesSection,
+    /// EofDecode error,
+    EofDecode,
+    /// Max stack element mismatch.
+    MaxStackMismatch,
+}
+
+/*
+0x6000 PUSH1
+e200
+00035b5b00600160015500
+
+
+ */
+
 
 /// Validates that:
 /// * All instructions are valid.
@@ -150,11 +255,11 @@ pub fn validate_eof_code(
     data_size: usize,
     this_types_index: usize,
     types: &[TypesSection],
-) -> Result<HashSet<usize>, ()> {
+) -> Result<HashSet<usize>, EofError> {
     let mut accessed_codes = HashSet::<usize>::new();
     let this_types = &types[this_types_index];
 
-    #[derive(Copy, Clone)]
+    #[derive(Debug, Copy, Clone)]
     struct InstructionInfo {
         /// Is immediate byte, jumps can't happen on this part of code.
         is_immediate: bool,
@@ -198,27 +303,27 @@ pub fn validate_eof_code(
 
         let Some(opcode) = opcode else {
             // err unknown opcode.
-            return Err(());
+            return Err(EofError::UnknownOpcode);
         };
 
         if !opcode.is_eof {
             // Opcode is disabled in EOF
-            return Err(());
+            return Err(EofError::OpcodeDisabled);
         }
 
         // Opcodes after termination should be accessed by forward jumps.
         if is_after_termination && this_instruction.is_jumpdest {
             // opcode after termination was not accessed.
-            return Err(());
+            return Err(EofError::InstructionNotForwardAccessed);
         }
         is_after_termination = opcode.is_terminating_opcode;
 
         // mark immediate as non-jumpable. RJUMPV is special case covered later.
         if opcode.immediate_size != 0 {
             // check if the opcode immediate are within the bounds of the code
-            if i + opcode.immediate_size as usize > code.len() {
+            if i + opcode.immediate_size as usize >= code.len() {
                 // Malfunctional code
-                return Err(());
+                return Err(EofError::MissingImmediateBytes);
             }
 
             // mark immediate bytes as non-jumpable.
@@ -227,7 +332,7 @@ pub fn validate_eof_code(
                 let jumptable = &mut jumps[i + imm];
                 if jumptable.is_jumpdest {
                     // There is a jump to the immediate bytes.
-                    return Err(());
+                    return Err(EofError::JumpToImmediateBytes);
                 }
                 jumptable.is_immediate = true;
             }
@@ -245,7 +350,7 @@ pub fn validate_eof_code(
                 let offset = read_i16(unsafe { code.as_ptr().add(i + 1) }) as isize;
                 if offset == 0 {
                     // jump immediate instruction is not allowed.
-                    return Err(());
+                    return Err(EofError::JumpToImmediateBytes);
                 }
                 absolute_jumpdest = vec![offset + 3 + i as isize]
             }
@@ -257,13 +362,13 @@ pub fn validate_eof_code(
 
                 // Max index can't be zero as it becomes RJUMPI.
                 if max_index == 0 {
-                    return Err(());
+                    return Err(EofError::RJUMPVZeroMaxIndex);
                 }
 
                 // +1 is for max_index byte
                 if i + 1 + rjumpv_additional_immediates >= code.len() {
                     // Malfunctional code RJUMPV vtable is not complete
-                    return Err(());
+                    return Err(EofError::MissingRJUMPVImmediateBytes);
                 }
 
                 let mut jumps = Vec::with_capacity(max_index);
@@ -272,10 +377,9 @@ pub fn validate_eof_code(
                         read_i16(unsafe { code.as_ptr().add(i + 2 + 2 * vtablei) }) as isize;
                     if offset == 0 {
                         // jump immediate instruction is not allowed.
-                        return Err(());
+                        return Err(EofError::JumpZeroOffset);
                     }
-                    jumps[vtablei] =
-                        offset + i as isize + 2 + rjumpv_additional_immediates as isize;
+                    jumps.push(offset + i as isize + 2 + rjumpv_additional_immediates as isize);
                 }
                 absolute_jumpdest = jumps
             }
@@ -283,12 +387,12 @@ pub fn validate_eof_code(
                 let section_i = read_u16(unsafe { code.as_ptr().add(i + 1) }) as usize;
                 let Some(target_types) = types.get(section_i) else {
                     // code section out of bounds.
-                    return Err(());
+                    return Err(EofError::CodeSectionOutOfBounds);
                 };
 
                 if target_types.outputs == EOF_NON_RETURNING_FUNCTION {
                     // callf to non returning function is not allowed
-                    return Err(());
+                    return Err(EofError::CALLFNonReturningFunction);
                 }
                 // stack input for this opcode is the input of the called code.
                 stack_requirement = target_types.inputs as i32;
@@ -303,7 +407,7 @@ pub fn validate_eof_code(
                     > STACK_LIMIT as i32
                 {
                     // if stack max items + called code max stack size
-                    return Err(());
+                    return Err(EofError::StackOverflow);
                 }
             }
             opcode::JUMPF => {
@@ -311,7 +415,7 @@ pub fn validate_eof_code(
                 // targeted code needs to have zero outputs (be non returning).
                 let Some(target_types) = types.get(target_index) else {
                     // code section out of bounds.
-                    return Err(());
+                    return Err(EofError::CodeSectionOutOfBounds);
                 };
 
                 // we decrement types.inputs as they are considered send to the called code.
@@ -321,7 +425,7 @@ pub fn validate_eof_code(
                     > STACK_LIMIT as i32
                 {
                     // stack overflow
-                    return Err(());
+                    return Err(EofError::StackOverflow);
                 }
 
                 accessed_codes.insert(target_index);
@@ -334,7 +438,7 @@ pub fn validate_eof_code(
                 } else {
                     // check if target code produces enough outputs.
                     if target_types.outputs < this_types.outputs {
-                        return Err(());
+                        return Err(EofError::JUMPFEnoughOutputs);
                     }
 
                     // TODO(EOF) stack requirements for this opcode.
@@ -342,7 +446,7 @@ pub fn validate_eof_code(
 
                     // if this instruction max + target_types max is more then stack limit.
                     if this_instruction.biggest + stack_requirement > STACK_LIMIT as i32 {
-                        return Err(());
+                        return Err(EofError::StackOverflow);
                     }
                 }
             }
@@ -350,14 +454,16 @@ pub fn validate_eof_code(
                 let index = read_u16(unsafe { code.as_ptr().add(i + 1) }) as isize;
                 if data_size < 32 || index > data_size as isize - 32 {
                     // data load out of bounds.
-                    return Err(());
+                    return Err(EofError::DataLoadOutOfBounds);
                 }
             }
             opcode::RETF => {
                 stack_requirement = this_types.outputs as i32;
                 if this_instruction.biggest > stack_requirement {
                     // stack_higher_than_outputs_required
-                    return Err(());
+                    // TODO(EOF) Why is this here. Why are we erroring if biggest number
+                    // is more than outputs?
+                    return Err(EofError::RETFBiggestStackNumMoreThenOutputs);
                 }
             }
             opcode::DUPN => {
@@ -375,22 +481,21 @@ pub fn validate_eof_code(
             }
             _ => {}
         }
-
         // check if stack requirement is more than smallest stack items.
         if stack_requirement > this_instruction.smallest {
             // opcode requirement is more than smallest stack items.
-            return Err(());
+            return Err(EofError::StackUnderflow);
         }
 
         // check if jumpdest are correct and mark forward jumps.
         for absolute_jump in absolute_jumpdest {
             if absolute_jump < 0 {
                 // jump out of bounds.
-                return Err(());
+                return Err(EofError::JumpUnderflow);
             }
             if absolute_jump >= code.len() as isize {
                 // jump to out of bounds
-                return Err(());
+                return Err(EofError::JumpOverflow);
             }
             // fine to cast as bounds are checked.
             let absolute_jump = absolute_jump as usize;
@@ -398,7 +503,7 @@ pub fn validate_eof_code(
             let target_jump = &mut jumps[absolute_jump];
             if target_jump.is_immediate {
                 // Jump target is immediate byte.
-                return Err(());
+                return Err(EofError::BackwardJumpToImmediateBytes);
             }
 
             // needed to mark forward jumps. It does not do anything for backward jumps.
@@ -408,11 +513,11 @@ pub fn validate_eof_code(
                 // backward jumps should have same smallest and biggest stack items.
                 if this_instruction.biggest != target_jump.biggest {
                     // wrong jumpdest.
-                    return Err(());
+                    return Err(EofError::BackwardJumpBiggestNumMismatch);
                 }
                 if this_instruction.smallest != target_jump.smallest {
                     // wrong jumpdest.
-                    return Err(());
+                    return Err(EofError::BackwardJumpSmallestNumMismatch);
                 }
             } else {
                 // forward jumps can make min even smallest size
@@ -422,10 +527,13 @@ pub fn validate_eof_code(
                 target_jump.biggest = core::cmp::max(target_jump.biggest, this_instruction.biggest);
             }
         }
-
+        //println!("stack_io_diff: {}", stack_io_diff);
         next_smallest = this_instruction.smallest + stack_io_diff;
         next_biggest = this_instruction.smallest + stack_io_diff;
-
+        // println!(
+        //     "next_smallest: {} next_biggest: {}",
+        //     next_smallest, next_biggest
+        // );
         // additional immediate are from RJUMPV vtable.
         i += 1 + opcode.immediate_size as usize + rjumpv_additional_immediates;
     }
@@ -433,7 +541,7 @@ pub fn validate_eof_code(
     // last opcode should be terminating
     if !is_after_termination {
         // wrong termination.
-        return Err(());
+        return Err(EofError::LastInstructionNotTerminating);
     }
 
     // TODO integrate max so we dont need to iterate again
@@ -442,28 +550,10 @@ pub fn validate_eof_code(
         max_stack_requirement = core::cmp::max(opcode.biggest, max_stack_requirement);
     }
 
+    if max_stack_requirement != types[this_types_index].max_stack_size as i32 {
+        // stack overflow
+        return Err(EofError::MaxStackMismatch);
+    }
+
     Ok(accessed_codes)
 }
-
-// For secquential opcodes min and max values are same.
-// /// Difference is with jumps,
-// #[derive(Copy, Clone)]
-// struct StackNum {
-//     /// Smallest number of stack items accessed by jumps or sequential opcodes.
-//     smallest: i32,
-//     /// Biggest number of stack items accessed by jumps or sequential opcodes.
-//     biggest: i32,
-// }
-
-// impl StackNum {
-//     fn next(&self, diff: i16) -> Self {
-//         Self {
-//             smallest: self.smallest + diff as i32,
-//             biggest: self.biggest + diff as i32,
-//         }
-//     }
-//     fn merge_jumpdest(&mut self, other: Self) {
-//         self.smallest = core::cmp::min(self.smallest, other.smallest);
-//         self.biggest = core::cmp::max(self.biggest, other.biggest);
-//     }
-// }

@@ -22,6 +22,16 @@ serde = { version = "1.0", default-features = false, features = [
     "rc",
 ], optional = true }
 
+[dev-dependencies]
+walkdir = "2.5"
+serde_json = { version = "1.0"}
+
+[[test]]
+name = "eof"
+path = "tests/eof.rs"
+required-features = ["serde"]
+
+
 [features]
 default = ["std"]
 std = ["serde?/std", "revm-primitives/std"]

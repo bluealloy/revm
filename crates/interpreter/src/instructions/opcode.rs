@@ -303,7 +303,7 @@ impl OpCodeInfo {
     }
 
     pub const fn io_diff(&self) -> i16 {
-        self.inputs as i16 - self.outputs as i16
+        self.outputs as i16 - self.inputs as i16
     }
 }
 
@@ -465,7 +465,7 @@ opcodes! {
     0x55 => SSTORE   => host::sstore::<H, SPEC>  => stack_io<2, 0>;
     0x56 => JUMP     => control::jump            => stack_io<1, 0>, not_eof;
     0x57 => JUMPI    => control::jumpi           => stack_io<2, 0>, not_eof;
-    0x58 => PC       => control::pc              => stack_io<0, 1>;
+    0x58 => PC       => control::pc              => stack_io<0, 1>, not_eof;
     0x59 => MSIZE    => memory::msize            => stack_io<0, 1>;
     0x5A => GAS      => system::gas              => stack_io<0, 1>, not_eof;
     0x5B => JUMPDEST => control::jumpdest_or_nop => stack_io<0, 0>;
@@ -621,12 +621,12 @@ opcodes! {
     0xED => CREATE4        => contract::txcreate::<H>        => stack_io<5, 1>;
     0xEE => RETURNCONTRACT => contract::return_contract::<H> => stack_io<0, 0>, terminating; // TODO(EOF) input/output
     // 0xEF
-    0xF0 => CREATE       => contract::create::<false, H, SPEC> => stack_io<4, 1>;
+    0xF0 => CREATE       => contract::create::<false, H, SPEC> => stack_io<4, 1>, not_eof;
     0xF1 => CALL         => contract::call::<H, SPEC>          => stack_io<7, 1>, not_eof;
     0xF2 => CALLCODE     => contract::call_code::<H, SPEC>     => stack_io<7, 1>, not_eof;
     0xF3 => RETURN       => control::ret                       => stack_io<0, 0>, terminating;
     0xF4 => DELEGATECALL => contract::delegate_call::<H, SPEC> => stack_io<6, 1>, not_eof;
-    0xF5 => CREATE2      => contract::create::<true, H, SPEC>  => stack_io<5, 1>;
+    0xF5 => CREATE2      => contract::create::<true, H, SPEC>  => stack_io<5, 1>, not_eof;
     // 0xF6
     0xF7 => RETURNDATALOAD => system::returndataload::<H>      => stack_io<0, 0>; // TODO(EOF) impl
     0xF8 => EXTCALL        => contract::extcall::<H,SPEC>      => stack_io<4, 1>;
