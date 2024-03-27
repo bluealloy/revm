@@ -23,8 +23,8 @@ mod frame;
 pub mod handler;
 mod inspector;
 mod journaled_state;
-#[cfg(feature = "optimism")]
-pub mod optimism;
+// #[cfg(feature = "optimism")]
+// pub mod optimism;
 #[cfg(feature = "taiko")]
 pub mod taiko;
 
@@ -47,9 +47,9 @@ pub use inspector::{
     inspector_handle_register, inspector_instruction, inspectors, GetInspector, Inspector,
 };
 pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
-// export Optimism types, helpers, and constants
-#[cfg(feature = "optimism")]
-pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
+// // export Optimism types, helpers, and constants
+// #[cfg(feature = "optimism")]
+// pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
 
 // Reexport libraries
 

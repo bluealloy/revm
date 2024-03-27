@@ -240,38 +240,6 @@ pub enum InvalidTransaction {
     TooManyBlobs,
     /// Blob transaction contains a versioned hash with an incorrect version
     BlobVersionNotSupported,
-    /// System transactions are not supported post-regolith hardfork.
-    ///
-    /// Before the Regolith hardfork, there was a special field in the `Deposit` transaction
-    /// type that differentiated between `system` and `user` deposit transactions. This field
-    /// was deprecated in the Regolith hardfork, and this error is thrown if a `Deposit` transaction
-    /// is found with this field set to `true` after the hardfork activation.
-    ///
-    /// In addition, this error is internal, and bubbles up into a [HaltReason::FailedDeposit] error
-    /// in the `revm` handler for the consumer to easily handle. This is due to a state transition
-    /// rule on OP Stack chains where, if for any reason a deposit transaction fails, the transaction
-    /// must still be included in the block, the sender nonce is bumped, the `mint` value persists, and
-    /// special gas accounting rules are applied. Normally on L1, [EVMError::Transaction] errors
-    /// are cause for non-inclusion, so a special [HaltReason] variant was introduced to handle this
-    /// case for failed deposit transactions.
-    #[cfg(feature = "optimism")]
-    DepositSystemTxPostRegolith,
-    /// Deposit transaction haults bubble up to the global main return handler, wiping state and
-    /// only increasing the nonce + persisting the mint value.
-    ///
-    /// This is a catch-all error for any deposit transaction that is results in a [HaltReason] error
-    /// post-regolith hardfork. This allows for a consumer to easily handle special cases where
-    /// a deposit transaction fails during validation, but must still be included in the block.
-    ///
-    /// In addition, this error is internal, and bubbles up into a [HaltReason::FailedDeposit] error
-    /// in the `revm` handler for the consumer to easily handle. This is due to a state transition
-    /// rule on OP Stack chains where, if for any reason a deposit transaction fails, the transaction
-    /// must still be included in the block, the sender nonce is bumped, the `mint` value persists, and
-    /// special gas accounting rules are applied. Normally on L1, [EVMError::Transaction] errors
-    /// are cause for non-inclusion, so a special [HaltReason] variant was introduced to handle this
-    /// case for failed deposit transactions.
-    #[cfg(feature = "optimism")]
-    HaltedDepositPostRegolith,
 
     /// Anchor check failed
     #[cfg(feature = "taiko")]
@@ -332,20 +300,6 @@ impl fmt::Display for InvalidTransaction {
             InvalidTransaction::BlobCreateTransaction => write!(f, "Blob create transaction"),
             InvalidTransaction::TooManyBlobs => write!(f, "Too many blobs"),
             InvalidTransaction::BlobVersionNotSupported => write!(f, "Blob version not supported"),
-            #[cfg(feature = "optimism")]
-            InvalidTransaction::DepositSystemTxPostRegolith => {
-                write!(
-                    f,
-                    "Deposit system transactions post regolith hardfork are not supported"
-                )
-            }
-            #[cfg(feature = "optimism")]
-            InvalidTransaction::HaltedDepositPostRegolith => {
-                write!(
-                    f,
-                    "Deposit transaction halted post-regolith. Error will be bubbled up to main return handler."
-                )
-            }
             #[cfg(feature = "taiko")]
             InvalidTransaction::InvalidAnchorTransaction => {
                 write!(f, "Invalid Anchor transaction.")
@@ -420,10 +374,6 @@ pub enum HaltReason {
     CallNotAllowedInsideStatic,
     OutOfFunds,
     CallTooDeep,
-
-    /* Optimism errors */
-    #[cfg(feature = "optimism")]
-    FailedDeposit,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

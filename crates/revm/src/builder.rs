@@ -31,11 +31,11 @@ pub struct HandlerStage;
 impl<'a> Default for EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
     fn default() -> Self {
         cfg_if::cfg_if! {
-            if #[cfg(all(feature = "optimism-default-handler",
-                not(feature = "negate-optimism-default-handler")))] {
+            if #[cfg(all(feature = "taiko-default-handler",
+                not(feature = "negate-taiko-default-handler")))] {
                     let mut handler_cfg = HandlerCfg::new(SpecId::LATEST);
-                    // set is_optimism to true by default.
-                    handler_cfg.is_optimism = true;
+                    // set is_taiko to true by default.
+                    handler_cfg.is_taiko = true;
 
             } else {
                 let handler_cfg = HandlerCfg::new(SpecId::LATEST);
@@ -155,12 +155,12 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
         }
     }
 
-    /// Sets the Optimism handler with latest spec.
+    /// Sets the taiko handler with latest spec.
     ///
-    /// If `optimism-default-handler` feature is enabled this is not needed.
-    #[cfg(feature = "optimism")]
-    pub fn optimism(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
-        self.handler = Handler::optimism_with_spec(self.handler.cfg.spec_id);
+    /// If `taiko-default-handler` feature is enabled this is not needed.
+    #[cfg(feature = "taiko")]
+    pub fn taiko(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+        self.handler = Handler::taiko_with_spec(self.handler.cfg.spec_id);
         EvmBuilder {
             context: self.context,
             handler: self.handler,
@@ -170,8 +170,8 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
 
     /// Sets the mainnet handler with latest spec.
     ///
-    /// Enabled only with `optimism-default-handler` feature.
-    #[cfg(feature = "optimism-default-handler")]
+    /// Enabled only with `taiko-default-handler` feature.
+    #[cfg(feature = "taiko-default-handler")]
     pub fn mainnet(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
         self.handler = Handler::mainnet_with_spec(self.handler.cfg.spec_id);
         EvmBuilder {
@@ -209,8 +209,8 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
 
     /// Resets the [`Handler`] and sets base mainnet handler.
     ///
-    /// Enabled only with `optimism-default-handler` feature.
-    #[cfg(feature = "optimism-default-handler")]
+    /// Enabled only with `taiko-default-handler` feature.
+    #[cfg(feature = "taiko-default-handler")]
     pub fn reset_handler_with_mainnet(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
         self.handler = Handler::mainnet_with_spec(self.handler.cfg.spec_id);
         EvmBuilder {
@@ -268,7 +268,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
 impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> {
     /// Creates the default handler.
     ///
-    /// This is useful for adding optimism handle register.
+    /// This is useful for adding taiko handle register.
     fn handler(handler_cfg: HandlerCfg) -> Handler<'a, Evm<'a, EXT, DB>, EXT, DB> {
         Handler::new(handler_cfg)
     }

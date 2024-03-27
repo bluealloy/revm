@@ -6,8 +6,6 @@
 #![deny(unused_must_use, rust_2018_idioms)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(all(feature = "taiko", feature = "optimism"))]
-compile_error!("Features 'taiko' and 'optimism' cannot be enabled at the same time.");
 
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;

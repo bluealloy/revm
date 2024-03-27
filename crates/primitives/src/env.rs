@@ -90,20 +90,6 @@ impl Env {
     /// Return initial spend gas (Gas needed to execute transaction).
     #[inline]
     pub fn validate_tx<SPEC: Spec>(&self) -> Result<(), InvalidTransaction> {
-        #[cfg(feature = "optimism")]
-        if self.cfg.optimism {
-            // Do not allow for a system transaction to be processed if Regolith is enabled.
-            if self.tx.optimism.is_system_transaction.unwrap_or(false)
-                && SPEC::enabled(SpecId::REGOLITH)
-            {
-                return Err(InvalidTransaction::DepositSystemTxPostRegolith);
-            }
-
-            // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
-            if self.tx.optimism.source_hash.is_some() {
-                return Ok(());
-            }
-        }
 
         // BASEFEE tx check
         if SPEC::enabled(SpecId::LONDON) {
@@ -568,10 +554,6 @@ pub struct TxEnv {
     pub max_fee_per_blob_gas: Option<U256>,
 
     #[cfg_attr(feature = "serde", serde(flatten))]
-    #[cfg(feature = "optimism")]
-    pub optimism: OptimismFields,
-
-    #[cfg_attr(feature = "serde", serde(flatten))]
     #[cfg(feature = "taiko")]
     pub taiko: TaikoFields,
 }
@@ -617,40 +599,6 @@ impl BlobExcessGasAndPrice {
     }
 }
 
-/// Additional [TxEnv] fields for optimism.
-#[cfg(feature = "optimism")]
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct OptimismFields {
-    /// The source hash is used to make sure that deposit transactions do
-    /// not have identical hashes.
-    ///
-    /// L1 originated deposit transaction source hashes are computed using
-    /// the hash of the l1 block hash and the l1 log index.
-    /// L1 attributes deposit source hashes are computed with the l1 block
-    /// hash and the sequence number = l2 block number - l2 epoch start
-    /// block number.
-    ///
-    /// These two deposit transaction sources specify a domain in the outer
-    /// hash so there are no collisions.
-    pub source_hash: Option<B256>,
-    /// The amount to increase the balance of the `from` account as part of
-    /// a deposit transaction. This is unconditional and is applied to the
-    /// `from` account even if the deposit transaction fails since
-    /// the deposit is pre-paid on L1.
-    pub mint: Option<u128>,
-    /// Whether or not the transaction is a system transaction.
-    pub is_system_transaction: Option<bool>,
-    /// An enveloped EIP-2718 typed transaction. This is used
-    /// to compute the L1 tx cost using the L1 block info, as
-    /// opposed to requiring downstream apps to compute the cost
-    /// externally.
-    /// This field is optional to allow the [TxEnv] to be constructed
-    /// for non-optimism chains when the `optimism` feature is enabled,
-    /// but the [CfgEnv] `optimism` field is set to false.
-    pub enveloped_tx: Option<Bytes>,
-}
-
 impl Default for TxEnv {
     fn default() -> Self {
         Self {
@@ -666,8 +614,6 @@ impl Default for TxEnv {
             access_list: Vec::new(),
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: None,
-            #[cfg(feature = "optimism")]
-            optimism: OptimismFields::default(),
             #[cfg(feature = "taiko")]
             taiko: TaikoFields::default(),
         }
