@@ -95,6 +95,30 @@ impl TracerEip3155 {
     pub fn set_writer(&mut self, writer: Box<dyn Write>) {
         self.output = writer;
     }
+
+    /// Resets the Tracer to its initial state of [Self::new].
+    /// This makes the inspector ready to be used again.
+    pub fn fuse(&mut self) {
+        let Self {
+            gas_inspector,
+            stack,
+            pc,
+            opcode,
+            gas,
+            refunded,
+            mem_size,
+            skip,
+            ..
+        } = self;
+        *gas_inspector = GasInspector::default();
+        stack.clear();
+        *pc = 0;
+        *opcode = 0;
+        *gas = 0;
+        *refunded = 0;
+        *mem_size = 0;
+        *skip = false;
+    }
 }
 
 impl TracerEip3155 {
@@ -173,6 +197,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         outcome: CallOutcome,
     ) -> CallOutcome {
         let outcome = self.gas_inspector.call_end(context, inputs, outcome);
+
         if self.print_summary && context.journaled_state.depth() == 0 {
             let spec_name: &str = context.spec_id().into();
             let value = Summary {
@@ -188,6 +213,12 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             };
             let _ = self.write_value(&value);
         }
+
+        // clear the state if we are at the top level
+        if context.journaled_state.depth() == 0 {
+            self.fuse();
+        }
+
         outcome
     }
 }
