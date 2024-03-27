@@ -272,7 +272,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
             .env
             .block
             .basefee
-            .mul(U256::from(gas.spend() - gas.refunded() as u64));
+            .mul(U256::from(gas.spent() - gas.refunded() as u64));
     }
     Ok(())
 }
@@ -410,7 +410,7 @@ mod tests {
         let gas =
             call_last_frame_return::<BedrockSpec>(env, InstructionResult::Revert, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
-        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.spent(), 10);
         assert_eq!(gas.refunded(), 0);
     }
 
@@ -423,7 +423,7 @@ mod tests {
         let gas =
             call_last_frame_return::<RegolithSpec>(env, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
-        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.spent(), 10);
         assert_eq!(gas.refunded(), 0);
     }
 
@@ -439,12 +439,12 @@ mod tests {
         let gas =
             call_last_frame_return::<RegolithSpec>(env.clone(), InstructionResult::Stop, ret_gas);
         assert_eq!(gas.remaining(), 90);
-        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.spent(), 10);
         assert_eq!(gas.refunded(), 2); // min(20, 10/5)
 
         let gas = call_last_frame_return::<RegolithSpec>(env, InstructionResult::Revert, ret_gas);
         assert_eq!(gas.remaining(), 90);
-        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.spent(), 10);
         assert_eq!(gas.refunded(), 0);
     }
 
@@ -456,7 +456,7 @@ mod tests {
 
         let gas = call_last_frame_return::<BedrockSpec>(env, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 0);
-        assert_eq!(gas.spend(), 100);
+        assert_eq!(gas.spent(), 100);
         assert_eq!(gas.refunded(), 0);
     }
 

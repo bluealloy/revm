@@ -76,8 +76,8 @@ pub mod pair {
         }),
     );
 
-    const BYZANTIUM_PAIR_PER_POINT: u64 = 80_000;
-    const BYZANTIUM_PAIR_BASE: u64 = 100_000;
+    pub const BYZANTIUM_PAIR_PER_POINT: u64 = 80_000;
+    pub const BYZANTIUM_PAIR_BASE: u64 = 100_000;
     pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
@@ -92,13 +92,13 @@ pub mod pair {
 }
 
 /// Input length for the add operation.
-const ADD_INPUT_LEN: usize = 128;
+pub const ADD_INPUT_LEN: usize = 128;
 
 /// Input length for the multiplication operation.
-const MUL_INPUT_LEN: usize = 128;
+pub const MUL_INPUT_LEN: usize = 128;
 
 /// Pair element length.
-const PAIR_ELEMENT_LEN: usize = 192;
+pub const PAIR_ELEMENT_LEN: usize = 192;
 
 /// Reads a single `Fq` from the input slice.
 ///
@@ -106,7 +106,7 @@ const PAIR_ELEMENT_LEN: usize = 192;
 ///
 /// Panics if the input is not at least 32 bytes long.
 #[inline]
-fn read_fq(input: &[u8]) -> Result<Fq, Error> {
+pub fn read_fq(input: &[u8]) -> Result<Fq, Error> {
     Fq::from_slice(&input[..32]).map_err(|_| Error::Bn128FieldPointNotAMember)
 }
 
@@ -116,14 +116,14 @@ fn read_fq(input: &[u8]) -> Result<Fq, Error> {
 ///
 /// Panics if the input is not at least 64 bytes long.
 #[inline]
-fn read_point(input: &[u8]) -> Result<G1, Error> {
+pub fn read_point(input: &[u8]) -> Result<G1, Error> {
     let px = read_fq(&input[0..32])?;
     let py = read_fq(&input[32..64])?;
     new_g1_point(px, py)
 }
 
 /// Creates a new `G1` point from the given `x` and `y` coordinates.
-fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
+pub fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
     if px == Fq::zero() && py == Fq::zero() {
         Ok(G1::zero())
     } else {
@@ -133,7 +133,7 @@ fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
     }
 }
 
-fn run_add(input: &[u8]) -> Result<Bytes, Error> {
+pub fn run_add(input: &[u8]) -> Result<Bytes, Error> {
     let input = right_pad::<ADD_INPUT_LEN>(input);
 
     let p1 = read_point(&input[..64])?;
@@ -154,7 +154,7 @@ fn run_add(input: &[u8]) -> Result<Bytes, Error> {
     Ok(output.into())
 }
 
-fn run_mul(input: &[u8]) -> Result<Bytes, Error> {
+pub fn run_mul(input: &[u8]) -> Result<Bytes, Error> {
     let input = right_pad::<MUL_INPUT_LEN>(input);
 
     let p = read_point(&input[..64])?;

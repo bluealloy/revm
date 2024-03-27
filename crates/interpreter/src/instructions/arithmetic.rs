@@ -88,12 +88,13 @@ pub fn exp<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
 /// bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
 pub fn signextend<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::LOW);
-    pop_top!(interpreter, op1, op2);
-    if op1 < U256::from(32) {
-        // `low_u32` works since op1 < 32
-        let bit_index = (8 * op1.as_limbs()[0] + 7) as usize;
-        let bit = op2.bit(bit_index);
+    pop_top!(interpreter, ext, x);
+    // For 31 we also don't need to do anything.
+    if ext < U256::from(31) {
+        let ext = ext.as_limbs()[0];
+        let bit_index = (8 * ext + 7) as usize;
+        let bit = x.bit(bit_index);
         let mask = (U256::from(1) << bit_index) - U256::from(1);
-        *op2 = if bit { *op2 | !mask } else { *op2 & mask };
+        *x = if bit { *x | !mask } else { *x & mask };
     }
 }

@@ -58,13 +58,19 @@ impl Stack {
         self.data.is_empty()
     }
 
-    /// Returns the underlying data of the stack.
+    /// Returns a reference to the underlying data buffer.
     #[inline]
     pub fn data(&self) -> &Vec<U256> {
         &self.data
     }
 
-    /// Consumes the stack and returns the underlying data.
+    /// Returns a mutable reference to the underlying data buffer.
+    #[inline]
+    pub fn data_mut(&mut self) -> &mut Vec<U256> {
+        &mut self.data
+    }
+
+    /// Consumes the stack and returns the underlying data buffer.
     #[inline]
     pub fn into_data(self) -> Vec<U256> {
         self.data

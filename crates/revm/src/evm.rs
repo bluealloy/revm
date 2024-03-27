@@ -25,7 +25,7 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
-    /// Handler of EVM that contains all the logic. Handler contains specification id
+    /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
     /// and it different depending on the specified fork.
     pub handler: Handler<'a, Self, EXT, DB>,
 }

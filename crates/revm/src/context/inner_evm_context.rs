@@ -275,7 +275,7 @@ impl<DB: Database> InnerEvmContext<DB> {
             }
         };
 
-        let contract = Box::new(Contract::new(
+        let contract = Contract::new(
             Bytes::new(),
             // fine to clone as it is Bytes.
             Bytecode::Eof(inputs.eof_init_code.clone()),
@@ -283,7 +283,7 @@ impl<DB: Database> InnerEvmContext<DB> {
             inputs.created_address,
             inputs.caller,
             inputs.value,
-        ));
+        );
 
         let mut interpreter = Interpreter::new(contract, inputs.gas_limit, false);
         // EOF init will enable RETURNCONTRACT opcode.
@@ -399,14 +399,14 @@ impl<DB: Database> InnerEvmContext<DB> {
 
         let bytecode = Bytecode::new_raw(inputs.init_code.clone());
 
-        let contract = Box::new(Contract::new(
+        let contract = Contract::new(
             Bytes::new(),
             bytecode,
             Some(init_code_hash),
             created_address,
             inputs.caller,
             inputs.value,
-        ));
+        );
 
         Ok(FrameOrResult::new_create_frame(
             created_address,

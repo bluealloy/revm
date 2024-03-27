@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0](https://github.com/bluealloy/revm/compare/revm-primitives-v3.0.0...revm-primitives-v3.1.0) - 2024-03-19
+
+### Added
+- implement Default for EnvWithHandlerCfg ([#1206](https://github.com/bluealloy/revm/pull/1206))
+- optional nonce check ([#1195](https://github.com/bluealloy/revm/pull/1195))
+
+### Fixed
+- use std hashmap with "std" feature ([#1193](https://github.com/bluealloy/revm/pull/1193))
+
+### Other
+- *(deps)* bump bitflags from 2.4.2 to 2.5.0 ([#1210](https://github.com/bluealloy/revm/pull/1210))
+- clarify None nonce ([#1204](https://github.com/bluealloy/revm/pull/1204))
+- c-kzg v1.0.0 ([#1190](https://github.com/bluealloy/revm/pull/1190))
+- fix some typos ([#1189](https://github.com/bluealloy/revm/pull/1189))
+- Fix typo in readme ([#1185](https://github.com/bluealloy/revm/pull/1185))
+- improve error implementations ([#1183](https://github.com/bluealloy/revm/pull/1183))
+
 ## [3.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v2.1.0...revm-primitives-v3.0.0) - 2024-03-08
 
 ### Added

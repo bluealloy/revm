@@ -207,7 +207,7 @@ mod tests {
     fn test_consume_gas() {
         let gas = call_last_frame_return(InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
-        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.spent(), 10);
         assert_eq!(gas.refunded(), 0);
     }
 
@@ -219,12 +219,12 @@ mod tests {
 
         let gas = call_last_frame_return(InstructionResult::Stop, return_gas);
         assert_eq!(gas.remaining(), 90);
-        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.spent(), 10);
         assert_eq!(gas.refunded(), 2);
 
         let gas = call_last_frame_return(InstructionResult::Revert, return_gas);
         assert_eq!(gas.remaining(), 90);
-        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.spent(), 10);
         assert_eq!(gas.refunded(), 0);
     }
 
@@ -232,7 +232,7 @@ mod tests {
     fn test_revert_gas() {
         let gas = call_last_frame_return(InstructionResult::Revert, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
-        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.spent(), 10);
         assert_eq!(gas.refunded(), 0);
     }
 }

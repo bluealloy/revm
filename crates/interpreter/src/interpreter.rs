@@ -17,6 +17,7 @@ use revm_primitives::{Bytecode, Eof, U256};
 use std::borrow::ToOwned;
 use std::boxed::Box;
 
+/// EVM bytecode interpreter.
 #[derive(Debug)]
 pub struct Interpreter {
     /// The current instruction pointer.
@@ -24,7 +25,7 @@ pub struct Interpreter {
     /// The gas state.
     pub gas: Gas,
     /// Contract information and invoking data
-    pub contract: Box<Contract>,
+    pub contract: Contract,
     /// The execution control flag. If this is not set to `Continue`, the interpreter will stop
     /// execution.
     pub instruction_result: InstructionResult,
@@ -62,7 +63,7 @@ pub struct Interpreter {
 
 impl Default for Interpreter {
     fn default() -> Self {
-        Self::new(Box::new(Contract::default()), 0, false)
+        Self::new(Contract::default(), 0, false)
     }
 }
 
@@ -137,7 +138,7 @@ impl InterpreterAction {
 
 impl Interpreter {
     /// Create new interpreter
-    pub fn new(contract: Box<Contract>, gas_limit: u64, is_static: bool) -> Self {
+    pub fn new(contract: Contract, gas_limit: u64, is_static: bool) -> Self {
         if !contract.bytecode.is_execution_ready() {
             panic!("Contract is not execution ready {:?}", contract.bytecode);
         }
@@ -175,14 +176,14 @@ impl Interpreter {
     #[cfg(test)]
     pub fn new_bytecode(bytecode: Bytecode) -> Self {
         Self::new(
-            Box::new(Contract::new(
+            Contract::new(
                 Bytes::new(),
                 bytecode,
                 None,
                 crate::primitives::Address::default(),
                 crate::primitives::Address::default(),
                 U256::ZERO,
-            )),
+            ),
             0,
             false,
         )
