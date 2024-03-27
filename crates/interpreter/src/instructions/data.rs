@@ -3,7 +3,7 @@ use crate::{
     instructions::utility::read_u16,
     interpreter::Interpreter,
     primitives::U256,
-    Host, InstructionResult,
+    Host,
 };
 
 pub fn data_load<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -29,7 +29,7 @@ pub fn data_load<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 pub fn data_loadn<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, VERYLOW);
-    let offset = read_u16(interpreter.instruction_pointer) as usize;
+    let offset = unsafe { read_u16(interpreter.instruction_pointer) } as usize;
 
     let slice = interpreter
         .contract

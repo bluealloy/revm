@@ -10,7 +10,7 @@ use crate::{
     interpreter::{Interpreter, InterpreterAction},
     primitives::{Address, Bytes, Eof, Spec, SpecId::*, B256, U256},
     CallInputs, CallScheme, CreateInputs, CreateScheme, EOFCreateInput, Host, InstructionResult,
-    TransferValue, MAX_INITCODE_SIZE,
+    LoadAccountResult, TransferValue, MAX_INITCODE_SIZE,
 };
 use core::{cmp::max, ops::Range};
 use std::boxed::Box;
@@ -188,8 +188,9 @@ pub fn extcall_gas_calc<H: Host>(
         gas!(interpreter, gas::COLD_ACCOUNT_ACCESS_COST, None);
     }
 
-    let is_new = !load_result.is_not_existing;
-    let call_cost = gas::call_cost::<BerlinSpec>(transfers_value, is_new, load_result.is_cold);
+    // TODO(EOF) is_empty should only be checked on delegatecall
+    let call_cost =
+        gas::call_cost::<BerlinSpec>(transfers_value, load_result.is_cold, load_result.is_empty);
     gas!(interpreter, call_cost, None);
 
     // 7. Calculate the gas available to callee as caller’s
@@ -387,7 +388,8 @@ pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
     pop!(interpreter, value);
-    if interpreter.is_static && value != U256::ZERO {
+    let has_transfer = value != U256::ZERO;
+    if interpreter.is_static && has_transfer {
         interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
         return;
     }
@@ -396,15 +398,15 @@ pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
         return;
     };
 
-    let Some(load_result) = host.load_account(to) else {
+    let Some(LoadAccountResult { is_cold, is_empty }) = host.load_account(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-
     let Some(mut gas_limit) = calc_call_gas::<H, SPEC>(
         interpreter,
-        load_result,
-        value != U256::ZERO,
+        is_cold,
+        has_transfer,
+        is_empty,
         local_gas_limit,
     ) else {
         return;
@@ -413,7 +415,7 @@ pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas_limit);
 
     // add call stipend if there is value to be transferred.
-    if value != U256::ZERO {
+    if has_transfer {
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }
 
@@ -447,15 +449,16 @@ pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut 
         return;
     };
 
-    let Some(load_result) = host.load_account(to) else {
+    let Some(LoadAccountResult { is_cold, .. }) = host.load_account(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
 
     let Some(mut gas_limit) = calc_call_gas::<H, SPEC>(
         interpreter,
-        load_result,
+        is_cold,
         value != U256::ZERO,
+        false,
         local_gas_limit,
     ) else {
         return;
@@ -476,7 +479,7 @@ pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut 
             target_address: interpreter.contract.target_address,
             caller: interpreter.contract.target_address,
             bytecode_address: to,
-            value: TransferValue::ApparentValue(value),
+            value: TransferValue::Value(value),
             scheme: CallScheme::CallCode,
             is_static: interpreter.is_static,
             is_eof: false,
@@ -498,13 +501,12 @@ pub fn delegate_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &
         return;
     };
 
-    let Some(load_result) = host.load_account(to) else {
+    let Some(LoadAccountResult { is_cold, .. }) = host.load_account(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-
     let Some(gas_limit) =
-        calc_call_gas::<H, SPEC>(interpreter, load_result, false, local_gas_limit)
+        calc_call_gas::<H, SPEC>(interpreter, is_cold, false, false, local_gas_limit)
     else {
         return;
     };
@@ -541,13 +543,13 @@ pub fn static_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
         return;
     };
 
-    let Some(load_result) = host.load_account(to) else {
+    let Some(LoadAccountResult { is_cold, .. }) = host.load_account(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
 
     let Some(gas_limit) =
-        calc_call_gas::<H, SPEC>(interpreter, load_result, false, local_gas_limit)
+        calc_call_gas::<H, SPEC>(interpreter, is_cold, false, false, local_gas_limit)
     else {
         return;
     };

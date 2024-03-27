@@ -16,7 +16,7 @@ pub trait GetInspector<DB: Database> {
 }
 
 impl<DB: Database, INSP: Inspector<DB>> GetInspector<DB> for INSP {
-    #[inline(always)]
+    #[inline]
     fn get_inspector(&mut self) -> &mut impl Inspector<DB> {
         self
     }

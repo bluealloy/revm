@@ -12,6 +12,13 @@ extern crate alloc as std;
 #[macro_use]
 mod macros;
 
+// silence lint
+#[cfg(test)]
+use serde_json as _;
+
+#[cfg(test)]
+use walkdir as _;
+
 mod call_inputs;
 mod call_outcome;
 mod create_inputs;

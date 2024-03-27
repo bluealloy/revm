@@ -1,7 +1,7 @@
 use crate::{
-    gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
+    gas::{self, warm_cold_cost},
     interpreter::Interpreter,
-    primitives::{Address, Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
+    primitives::{Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
     Host, InstructionResult, SStoreResult,
 };
 use core::cmp::min;
@@ -47,14 +47,7 @@ pub fn extcodesize<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
         return;
     };
     if SPEC::enabled(BERLIN) {
-        gas!(
-            interpreter,
-            if is_cold {
-                COLD_ACCOUNT_ACCESS_COST
-            } else {
-                WARM_STORAGE_READ_COST
-            }
-        );
+        gas!(interpreter, warm_cold_cost(is_cold));
     } else if SPEC::enabled(TANGERINE) {
         gas!(interpreter, 700);
     } else {
@@ -74,14 +67,7 @@ pub fn extcodehash<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
         return;
     };
     if SPEC::enabled(BERLIN) {
-        gas!(
-            interpreter,
-            if is_cold {
-                COLD_ACCOUNT_ACCESS_COST
-            } else {
-                WARM_STORAGE_READ_COST
-            }
-        );
+        gas!(interpreter, warm_cold_cost(is_cold));
     } else if SPEC::enabled(ISTANBUL) {
         gas!(interpreter, 700);
     } else {

@@ -509,7 +509,7 @@ impl JournaledState {
         Ok(SelfDestructResult {
             had_value: balance != U256::ZERO,
             is_cold: load_result.is_cold,
-            target_exists: !load_result.is_not_existing,
+            target_exists: !load_result.is_empty,
             previously_destroyed,
         })
     }
@@ -586,18 +586,15 @@ impl JournaledState {
         let (acc, is_cold) = self.load_account(address, db)?;
 
         let is_spurious_dragon_enabled = SpecId::enabled(spec, SPURIOUS_DRAGON);
-        let exist = if is_spurious_dragon_enabled {
-            !acc.is_empty()
+        let is_empty = if is_spurious_dragon_enabled {
+            acc.is_empty()
         } else {
-            let is_existing = !acc.is_loaded_as_not_existing();
-            let is_touched = acc.is_touched();
-            is_existing || is_touched
+            let loaded_not_existing = acc.is_loaded_as_not_existing();
+            let is_not_touched = !acc.is_touched();
+            loaded_not_existing && is_not_touched
         };
 
-        Ok(LoadAccountResult {
-            is_not_existing: !exist,
-            is_cold,
-        })
+        Ok(LoadAccountResult { is_empty, is_cold })
     }
 
     /// Loads code.

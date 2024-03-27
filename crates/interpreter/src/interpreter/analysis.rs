@@ -9,7 +9,7 @@ use crate::{
         legacy::JumpTable,
         Bytecode, Bytes, Eof, LegacyAnalyzedBytecode,
     },
-    OpCode, OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
+    OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
 };
 use std::{sync::Arc, vec, vec::Vec};
 
@@ -233,7 +233,6 @@ e200
 
  */
 
-
 /// Validates that:
 /// * All instructions are valid.
 /// * It ends with a terminating instruction or RJUMP.
@@ -347,7 +346,7 @@ pub fn validate_eof_code(
         let mut absolute_jumpdest = vec![];
         match op {
             opcode::RJUMP | opcode::RJUMPI => {
-                let offset = read_i16(unsafe { code.as_ptr().add(i + 1) }) as isize;
+                let offset = unsafe { read_i16(code.as_ptr().add(i + 1)) } as isize;
                 if offset == 0 {
                     // jump immediate instruction is not allowed.
                     return Err(EofError::JumpToImmediateBytes);
@@ -374,7 +373,7 @@ pub fn validate_eof_code(
                 let mut jumps = Vec::with_capacity(max_index);
                 for vtablei in 0..max_index {
                     let offset =
-                        read_i16(unsafe { code.as_ptr().add(i + 2 + 2 * vtablei) }) as isize;
+                        unsafe { read_i16(code.as_ptr().add(i + 2 + 2 * vtablei)) } as isize;
                     if offset == 0 {
                         // jump immediate instruction is not allowed.
                         return Err(EofError::JumpZeroOffset);
@@ -384,7 +383,7 @@ pub fn validate_eof_code(
                 absolute_jumpdest = jumps
             }
             opcode::CALLF => {
-                let section_i = read_u16(unsafe { code.as_ptr().add(i + 1) }) as usize;
+                let section_i = unsafe { read_u16(code.as_ptr().add(i + 1)) } as usize;
                 let Some(target_types) = types.get(section_i) else {
                     // code section out of bounds.
                     return Err(EofError::CodeSectionOutOfBounds);
@@ -411,7 +410,7 @@ pub fn validate_eof_code(
                 }
             }
             opcode::JUMPF => {
-                let target_index = read_u16(unsafe { code.as_ptr().add(i + 1) }) as usize;
+                let target_index = unsafe { read_u16(code.as_ptr().add(i + 1)) } as usize;
                 // targeted code needs to have zero outputs (be non returning).
                 let Some(target_types) = types.get(target_index) else {
                     // code section out of bounds.
@@ -451,7 +450,7 @@ pub fn validate_eof_code(
                 }
             }
             opcode::DATALOADN => {
-                let index = read_u16(unsafe { code.as_ptr().add(i + 1) }) as isize;
+                let index = unsafe { read_u16(code.as_ptr().add(i + 1)) } as isize;
                 if data_size < 32 || index > data_size as isize - 32 {
                     // data load out of bounds.
                     return Err(EofError::DataLoadOutOfBounds);

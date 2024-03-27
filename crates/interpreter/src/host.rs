@@ -67,8 +67,8 @@ pub struct SStoreResult {
 pub struct LoadAccountResult {
     /// Is account cold loaded
     pub is_cold: bool,
-    /// Is account new
-    pub is_not_existing: bool,
+    /// Is account empty, if true account is not created.
+    pub is_empty: bool,
 }
 
 /// Result of a call that resulted in a self destruct.

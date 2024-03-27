@@ -8,7 +8,7 @@ use crate::{
 pub fn rjump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::BASE);
-    let offset = read_i16(interpreter.instruction_pointer) as isize;
+    let offset = unsafe { read_i16(interpreter.instruction_pointer) } as isize;
     // In spec it is +3 but pointer is already incremented in
     // `Interpreter::step` so for revm is +2.
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset + 2) };
@@ -22,7 +22,7 @@ pub fn rjumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     // `Interpreter::step` so for revm is +2.
     let mut offset = 2;
     if !condition.is_zero() {
-        offset += read_i16(interpreter.instruction_pointer) as isize;
+        offset += unsafe { read_i16(interpreter.instruction_pointer) } as isize;
     }
 
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset) };
@@ -40,12 +40,14 @@ pub fn rjumpv<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     let mut offset = (max_index + 1) * 2 + 1;
 
     if case <= max_index {
-        offset += read_i16(unsafe {
-            interpreter
-                .instruction_pointer
-                // offset for max_index that is one byte
-                .offset(1 + case * 2)
-        }) as isize;
+        offset += unsafe {
+            read_i16(
+                interpreter
+                    .instruction_pointer
+                    // offset for max_index that is one byte
+                    .offset(1 + case * 2),
+            )
+        } as isize;
     }
 
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset) };
@@ -67,7 +69,7 @@ pub fn jumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     }
 }
 
-#[inline(always)]
+#[inline]
 fn jump_inner(interpreter: &mut Interpreter, dest: U256) {
     let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidJump);
     if interpreter.contract.is_valid_jump(dest) {
@@ -87,7 +89,7 @@ pub fn callf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::LOW);
 
-    let idx = read_u16(interpreter.instruction_pointer) as usize;
+    let idx = unsafe { read_u16(interpreter.instruction_pointer) } as usize;
     // TODO Check stack with EOF types.
 
     if interpreter.function_stack.return_stack_len() == 1024 {
@@ -119,7 +121,7 @@ pub fn jumpf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::LOW);
 
-    let idx = read_u16(interpreter.instruction_pointer) as usize;
+    let idx = unsafe { read_u16(interpreter.instruction_pointer) } as usize;
 
     // TODO(EOF) do types stack checks
 
@@ -134,7 +136,7 @@ pub fn pc<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     push!(interpreter, U256::from(interpreter.program_counter() - 1));
 }
 
-#[inline(always)]
+#[inline]
 fn return_inner(interpreter: &mut Interpreter, instruction_result: InstructionResult) {
     // zero gas cost
     // gas!(interpreter, gas::ZERO);

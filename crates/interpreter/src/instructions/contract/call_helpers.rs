@@ -4,7 +4,7 @@ use crate::{
     gas,
     interpreter::Interpreter,
     primitives::{Bytes, Spec, SpecId::*},
-    Host, InstructionResult, LoadAccountResult,
+    Host,
 };
 use core::{cmp::min, ops::Range};
 
@@ -47,12 +47,12 @@ pub fn resize_memory_and_return_range(
 #[inline]
 pub fn calc_call_gas<H: Host, SPEC: Spec>(
     interpreter: &mut Interpreter,
-    load_result: LoadAccountResult,
+    is_cold: bool,
     has_transfer: bool,
+    new_account_accounting: bool,
     local_gas_limit: u64,
 ) -> Option<u64> {
-    let is_new = !load_result.is_not_existing;
-    let call_cost = gas::call_cost::<SPEC>(has_transfer, is_new, load_result.is_cold);
+    let call_cost = gas::call_cost::<SPEC>(has_transfer, is_cold, new_account_accounting);
 
     gas!(interpreter, call_cost, None);
 

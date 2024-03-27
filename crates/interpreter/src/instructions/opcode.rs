@@ -628,7 +628,7 @@ opcodes! {
     0xF4 => DELEGATECALL => contract::delegate_call::<H, SPEC> => stack_io<6, 1>, not_eof;
     0xF5 => CREATE2      => contract::create::<true, H, SPEC>  => stack_io<5, 1>, not_eof;
     // 0xF6
-    0xF7 => RETURNDATALOAD => system::returndataload::<H>      => stack_io<0, 0>; // TODO(EOF) impl
+    0xF7 => RETURNDATALOAD => system::returndataload::<H>      => stack_io<1, 1>;
     0xF8 => EXTCALL        => contract::extcall::<H,SPEC>      => stack_io<4, 1>;
     0xF9 => EXFCALL        => contract::extdcall::<H, SPEC>    => stack_io<3, 1>;
     0xFA => STATICCALL     => contract::static_call::<H, SPEC> => stack_io<6, 1>, not_eof;

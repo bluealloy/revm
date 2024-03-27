@@ -317,12 +317,11 @@ impl Interpreter {
         call_outcome: CallOutcome,
     ) {
         self.instruction_result = InstructionResult::Continue;
+        self.return_data_buffer = call_outcome.output().to_owned();
+
         let out_offset = call_outcome.memory_start();
         let out_len = call_outcome.memory_length();
-
-        self.return_data_buffer = call_outcome.output().to_owned();
         let target_len = min(out_len, self.return_data_buffer.len());
-
         match call_outcome.instruction_result() {
             return_ok!() => {
                 // return unspend gas.

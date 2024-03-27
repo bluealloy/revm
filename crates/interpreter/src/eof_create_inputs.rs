@@ -15,7 +15,7 @@ pub struct EOFCreateInput {
     /// Gas limit for the create call.
     pub gas_limit: u64,
     /// Return memory range. If EOF creation Reverts it can return the
-    /// the memmory range.
+    /// the memory range.
     pub return_memory_range: Range<usize>,
 }
 

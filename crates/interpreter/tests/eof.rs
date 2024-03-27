@@ -1,18 +1,17 @@
 use revm_interpreter::analysis::{validate_raw_eof, EofError};
 use revm_primitives::{Bytes, Eof, HashMap};
 use serde::Deserialize;
-use serde_json::Value;
 use std::{
     collections::BTreeMap,
     path::{Path, PathBuf},
 };
 use walkdir::{DirEntry, WalkDir};
 
-// #[test]
-// fn eof_run_all_tests() {
-//     let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests");
-//     run_test(&eof_tests)
-// }
+#[test]
+fn eof_run_all_tests() {
+    let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests");
+    run_test(&eof_tests)
+}
 
 #[test]
 fn eof_validation_eip3540() {

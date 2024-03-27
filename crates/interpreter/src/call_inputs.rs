@@ -9,29 +9,29 @@ pub struct CallInputs {
     /// The call data of the call.
     pub input: Bytes,
     /// The return memory offset where the output of the call is written.
-    /// For EOF this range is invalid as EOF does not return anything.
+    /// For EOF this range is invalid as EOF does write output to memory.
     pub return_memory_offset: Range<usize>,
     /// The gas limit of the call.
     pub gas_limit: u64,
-    /// This account bytecode is going to be executed.  
+    /// The account address of bytecode that is going to be executed.  
     pub bytecode_address: Address,
     /// Target address, this account storage is going to be modified.
     pub target_address: Address,
-    /// This caller is invoking this call.
+    /// This caller that is invoking this call.
     pub caller: Address,
-    /// Ether value that is transferred.
+    /// Value is Ether that is transferred.
     ///
-    /// If enum is `Value` ether transfer is executed
-    /// between `caller`` and the `target_address`.
+    /// If enum is [`TransferValue::Value`] balance is transferer from `caller` to the `target_address`.
     ///
-    /// If enum is `ApparentValue` transfer is not done and apparent value is
-    /// used by CALLVALUE opcode. This is needed for delegate call.
+    /// If enum is [`TransferValue::ApparentValue`] balance transfer
+    /// is **not** done and apparent value is used by CALLVALUE opcode.
+    /// This is used by delegate call.
     pub value: TransferValue,
     /// The scheme used for the call.
     pub scheme: CallScheme,
     /// Whether this is a static call.
     pub is_static: bool,
-    /// Is called from EOF code.
+    /// Call is initiated from EOF bytecode.
     pub is_eof: bool,
 }
 
