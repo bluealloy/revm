@@ -4,7 +4,6 @@ use super::{
 use revm_interpreter::primitives::{
     Account, AccountInfo, Address, Bytecode, HashMap, State as EVMState, B256,
 };
-use std::vec::Vec;
 
 /// Cache state contains both modified and original values.
 ///

@@ -4,7 +4,7 @@ use crate::{
     primitives::{db::Database, EVMError, Spec},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
-use std::{boxed::Box, sync::Arc};
+use std::sync::Arc;
 
 use revm_interpreter::{CallOutcome, CreateOutcome, InterpreterResult};
 

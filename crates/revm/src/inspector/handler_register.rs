@@ -7,7 +7,7 @@ use crate::{
 };
 use core::cell::RefCell;
 use revm_interpreter::opcode::InstructionTables;
-use std::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
+use std::{rc::Rc, sync::Arc};
 
 /// Provides access to an `Inspector` instance.
 pub trait GetInspector<DB: Database> {
@@ -265,9 +265,9 @@ mod tests {
     use crate::{
         db::EmptyDB,
         inspectors::NoOpInspector,
-        interpreter::{opcode::*, CallInputs, CreateInputs, Interpreter},
+        interpreter::{opcode::*, CallInputs, CreateInputs},
         primitives::BerlinSpec,
-        Database, Evm, EvmContext, Inspector,
+        EvmContext,
     };
 
     use revm_interpreter::{CallOutcome, CreateOutcome};

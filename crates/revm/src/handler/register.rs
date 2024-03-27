@@ -1,5 +1,4 @@
 use crate::{db::Database, handler::Handler, Evm};
-use std::boxed::Box;
 
 /// EVM Handler
 pub type EvmHandler<'a, EXT, DB> = Handler<'a, Evm<'a, EXT, DB>, EXT, DB>;

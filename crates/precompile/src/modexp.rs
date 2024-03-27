@@ -166,7 +166,6 @@ pub fn berlin_gas_calc(
 mod tests {
     use super::*;
     use revm_primitives::hex;
-    use std::vec::Vec;
 
     struct Test {
         input: &'static str,

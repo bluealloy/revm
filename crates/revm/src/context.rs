@@ -13,7 +13,6 @@ use crate::{
     db::{Database, EmptyDB},
     primitives::HandlerCfg,
 };
-use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
 pub struct Context<EXT, DB: Database> {

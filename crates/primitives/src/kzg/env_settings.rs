@@ -4,7 +4,7 @@ use super::{
 };
 use core::hash::{Hash, Hasher};
 use once_cell::race::OnceBox;
-use std::{boxed::Box, sync::Arc};
+use std::sync::Arc;
 
 /// KZG Settings that allow us to specify a custom trusted setup.
 /// or use hardcoded default settings.

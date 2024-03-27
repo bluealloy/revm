@@ -14,8 +14,6 @@ use crate::{
 };
 use core::cmp::min;
 use revm_primitives::U256;
-use std::borrow::ToOwned;
-use std::boxed::Box;
 
 /// EVM bytecode interpreter.
 #[derive(Debug)]

@@ -1,7 +1,7 @@
 use crate::{Bytes, Env};
 use core::fmt;
 use dyn_clone::DynClone;
-use std::{boxed::Box, string::String, sync::Arc};
+use std::sync::Arc;
 
 /// A precompile operation result.
 ///

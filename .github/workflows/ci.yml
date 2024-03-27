@@ -30,9 +30,11 @@ jobs:
           toolchain: ${{ matrix.rust }}
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace ${{ matrix.flags }}
+        env:
+          RUSTFLAGS: -Dwarnings
 
-  test-no-std:
-    name: test no_std
+  check-no-std:
+    name: check no_std
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -94,7 +96,7 @@ jobs:
           components: rust-docs
       - run: cargo doc --workspace --all-features --no-deps --document-private-items
         env:
-          RUSTDOCFLAGS: "--cfg docsrs -D warnings"
+          RUSTDOCFLAGS: "--cfg docsrs -Dwarnings"
 
   fmt:
     name: fmt

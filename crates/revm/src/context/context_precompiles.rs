@@ -5,7 +5,7 @@ use crate::{
 use core::ops::{Deref, DerefMut};
 use dyn_clone::DynClone;
 use revm_precompile::Precompiles;
-use std::{boxed::Box, sync::Arc};
+use std::sync::Arc;
 
 use super::InnerEvmContext;
 

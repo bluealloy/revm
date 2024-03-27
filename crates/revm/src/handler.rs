@@ -13,7 +13,6 @@ use crate::{
     Evm,
 };
 use register::{EvmHandler, HandleRegisters};
-use std::vec::Vec;
 
 use self::register::{HandleRegister, HandleRegisterBox};
 

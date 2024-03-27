@@ -5,7 +5,6 @@ use core::{
     fmt,
     ops::{BitAnd, Not},
 };
-use std::vec::Vec;
 
 /// A sequential memory shared between calls, which uses
 /// a `Vec` for internal representation.

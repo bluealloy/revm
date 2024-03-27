@@ -8,8 +8,6 @@ use crate::{
     VERSIONED_HASH_VERSION_KZG,
 };
 use core::cmp::{min, Ordering};
-use std::boxed::Box;
-use std::vec::Vec;
 
 /// EVM environment configuration.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]

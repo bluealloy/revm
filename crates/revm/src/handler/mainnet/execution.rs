@@ -7,7 +7,6 @@ use crate::{
     primitives::{EVMError, Env, Spec},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
-use std::boxed::Box;
 
 use revm_interpreter::{CallOutcome, InterpreterResult};
 
@@ -139,7 +138,7 @@ pub fn insert_create_outcome<EXT, DB: Database>(
 
 #[cfg(test)]
 mod tests {
-    use revm_interpreter::{primitives::CancunSpec, InterpreterResult};
+    use revm_interpreter::{primitives::CancunSpec};
     use revm_precompile::Bytes;
 
     use super::*;

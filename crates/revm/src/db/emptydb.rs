@@ -3,7 +3,6 @@ use revm_interpreter::primitives::{
     db::{Database, DatabaseRef},
     keccak256, AccountInfo, Address, Bytecode, B256, U256,
 };
-use std::string::ToString;
 
 /// An empty database that always returns default values when queried.
 pub type EmptyDB = EmptyDBTyped<Infallible>;
