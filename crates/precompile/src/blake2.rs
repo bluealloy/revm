@@ -81,7 +81,7 @@ pub mod algo {
         0x5be0cd19137e2179,
     ];
 
-    #[inline(always)]
+    #[inline]
     #[allow(clippy::many_single_char_names)]
     /// G function: <https://tools.ietf.org/html/rfc7693#section-3.1>
     pub fn g(v: &mut [u64], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {

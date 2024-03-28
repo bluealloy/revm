@@ -3,10 +3,11 @@
 
 use revm_interpreter::CallOutcome;
 use revm_interpreter::CreateOutcome;
+use revm_interpreter::OpCode;
 
 use crate::{
     inspectors::GasInspector,
-    interpreter::{opcode, CallInputs, CreateInputs, Interpreter},
+    interpreter::{CallInputs, CreateInputs, Interpreter},
     primitives::{Address, U256},
     Database, EvmContext, Inspector,
 };
@@ -28,7 +29,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     // all other information can be obtained from interp.
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         let opcode = interp.current_opcode();
-        let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
+        let name = OpCode::name_by_op(opcode);
 
         let gas_remaining = self.gas_inspector.gas_remaining();
 
@@ -40,7 +41,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             interp.program_counter(),
             gas_remaining,
             gas_remaining,
-            opcode_str.unwrap_or("UNKNOWN"),
+            name,
             opcode,
             interp.gas.refunded(),
             interp.gas.refunded(),
@@ -79,11 +80,12 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         inputs: &mut CallInputs,
     ) -> Option<CallOutcome> {
         println!(
-            "SM CALL:   {:?}, context:{:?}, is_static:{:?}, transfer:{:?}, input_size:{:?}",
-            inputs.contract,
-            inputs.context,
+            "SM Address: {:?}, caller:{:?},target:{:?} is_static:{:?}, transfer:{:?}, input_size:{:?}",
+            inputs.bytecode_address,
+            inputs.caller,
+            inputs.target_address,
             inputs.is_static,
-            inputs.transfer,
+            inputs.value,
             inputs.input.len(),
         );
         None

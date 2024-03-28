@@ -93,7 +93,7 @@ impl<E> DatabaseRef for EmptyDBTyped<E> {
 
     #[inline]
     fn code_by_hash_ref(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
-        Ok(Bytecode::new())
+        Ok(Bytecode::default())
     }
 
     #[inline]

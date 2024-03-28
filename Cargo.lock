@@ -2342,6 +2342,8 @@ version = "3.4.0"
 dependencies = [
  "revm-primitives",
  "serde",
+ "serde_json",
+ "walkdir",
 ]
 
 [[package]]

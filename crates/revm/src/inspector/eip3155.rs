@@ -1,9 +1,10 @@
 use crate::{
     inspectors::GasInspector,
-    interpreter::{opcode, CallInputs, CallOutcome, Interpreter},
+    interpreter::{CallInputs, CallOutcome, Interpreter},
     primitives::{db::Database, hex, HashMap, B256, U256},
     EvmContext, Inspector,
 };
+use revm_interpreter::OpCode;
 use serde::Serialize;
 use std::io::Write;
 
@@ -153,7 +154,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             refund: hex_number(self.refunded as u64),
             mem_size: self.mem_size.to_string(),
 
-            op_name: opcode::OPCODE_JUMPMAP[self.opcode as usize],
+            op_name: OpCode::new(self.opcode).map(|i| i.info().name),
             error: if !interp.instruction_result.is_ok() {
                 Some(format!("{:?}", interp.instruction_result))
             } else {

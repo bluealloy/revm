@@ -1,3 +1,5 @@
+use revm_interpreter::TransferValue;
+
 use super::inner_evm_context::InnerEvmContext;
 use crate::{
     db::Database,
@@ -163,7 +165,7 @@ impl<DB: Database> EvmContext<DB> {
         let (account, _) = self
             .inner
             .journaled_state
-            .load_code(inputs.contract, &mut self.inner.db)?;
+            .load_code(inputs.bytecode_address, &mut self.inner.db)?;
         let code_hash = account.info.code_hash();
         let bytecode = account.info.code.clone().unwrap_or_default();
 
@@ -171,23 +173,28 @@ impl<DB: Database> EvmContext<DB> {
         let checkpoint = self.journaled_state.checkpoint();
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
-        if inputs.transfer.value == U256::ZERO {
-            self.load_account(inputs.context.address)?;
-            self.journaled_state.touch(&inputs.context.address);
-        }
+        match inputs.value {
+            // if transfer value is zero, do the touch.
+            TransferValue::Value(value) if value == U256::ZERO => {
+                self.load_account(inputs.target_address)?;
+                self.journaled_state.touch(&inputs.target_address);
+            }
+            TransferValue::Value(value) => {
+                // Transfer value from caller to called account
+                if let Some(result) = self.inner.journaled_state.transfer(
+                    &inputs.caller,
+                    &inputs.target_address,
+                    value,
+                    &mut self.inner.db,
+                )? {
+                    self.journaled_state.checkpoint_revert(checkpoint);
+                    return return_result(result);
+                }
+            }
+            _ => {}
+        };
 
-        // Transfer value from caller to called account
-        if let Some(result) = self.inner.journaled_state.transfer(
-            &inputs.transfer.source,
-            &inputs.transfer.target,
-            inputs.transfer.value,
-            &mut self.inner.db,
-        )? {
-            self.journaled_state.checkpoint_revert(checkpoint);
-            return return_result(result);
-        }
-
-        if let Some(result) = self.call_precompile(inputs.contract, &inputs.input, gas) {
+        if let Some(result) = self.call_precompile(inputs.bytecode_address, &inputs.input, gas) {
             if matches!(result.result, return_ok!()) {
                 self.journaled_state.checkpoint_commit();
             } else {
@@ -198,12 +205,8 @@ impl<DB: Database> EvmContext<DB> {
                 inputs.return_memory_offset.clone(),
             ))
         } else if !bytecode.is_empty() {
-            let contract = Contract::new_with_context(
-                inputs.input.clone(),
-                bytecode,
-                code_hash,
-                &inputs.context,
-            );
+            let contract =
+                Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
             // Create interpreter and executes call and push new CallStackFrame.
             Ok(FrameOrResult::new_call_frame(
                 inputs.return_memory_offset.clone(),
@@ -220,6 +223,8 @@ impl<DB: Database> EvmContext<DB> {
 /// Test utilities for the [`EvmContext`].
 #[cfg(any(test, feature = "test-utils"))]
 pub(crate) mod test_utils {
+    use revm_interpreter::TransferValue;
+
     use super::*;
     use crate::{
         db::{CacheDB, EmptyDB},
@@ -235,21 +240,14 @@ pub(crate) mod test_utils {
     /// Creates `CallInputs` that calls a provided contract address from the mock caller.
     pub fn create_mock_call_inputs(to: Address) -> CallInputs {
         CallInputs {
-            contract: to,
-            transfer: revm_interpreter::Transfer {
-                source: MOCK_CALLER,
-                target: to,
-                value: U256::ZERO,
-            },
             input: Bytes::new(),
             gas_limit: 0,
-            context: revm_interpreter::CallContext {
-                address: MOCK_CALLER,
-                caller: MOCK_CALLER,
-                code_address: MOCK_CALLER,
-                apparent_value: U256::ZERO,
-                scheme: revm_interpreter::CallScheme::Call,
-            },
+            bytecode_address: to,
+            target_address: to,
+            caller: MOCK_CALLER,
+            value: TransferValue::Value(U256::ZERO),
+            scheme: revm_interpreter::CallScheme::Call,
+            is_eof: false,
             is_static: false,
             return_memory_offset: 0..0,
         }
@@ -352,7 +350,7 @@ mod tests {
         let mut evm_context = test_utils::create_empty_evm_context(Box::new(env), db);
         let contract = address!("dead10000000000000000000000000000001dead");
         let mut call_inputs = test_utils::create_mock_call_inputs(contract);
-        call_inputs.transfer.value = U256::from(1);
+        call_inputs.value = TransferValue::Value(U256::from(1));
         let res = evm_context.make_call_frame(&call_inputs);
         let Ok(FrameOrResult::Result(result)) = res else {
             panic!("Expected FrameOrResult::Result");

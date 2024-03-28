@@ -1,8 +1,9 @@
 use super::constants::*;
-use crate::inner_models::SelfDestructResult;
 use crate::primitives::{Address, Spec, SpecId::*, U256};
+use crate::SelfDestructResult;
 use std::vec::Vec;
 
+#[inline]
 #[allow(clippy::collapsible_else_if)]
 pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i64 {
     if SPEC::enabled(ISTANBUL) {
@@ -55,14 +56,7 @@ pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i6
 
 #[inline]
 pub fn create2_cost(len: usize) -> Option<u64> {
-    let base = CREATE;
-    // ceil(len / 32.0)
-    let len = len as u64;
-    let sha_addup_base = (len / 32) + u64::from((len % 32) != 0);
-    let sha_addup = KECCAK256WORD.checked_mul(sha_addup_base)?;
-    let gas = base.checked_add(sha_addup)?;
-
-    Some(gas)
+    CREATE.checked_add(cost_per_word::<KECCAK256WORD>(len.try_into().ok()?)?)
 }
 
 #[inline]
@@ -105,9 +99,7 @@ pub fn exp_cost<SPEC: Spec>(power: U256) -> Option<u64> {
 
 #[inline]
 pub fn verylowcopy_cost(len: u64) -> Option<u64> {
-    let wordd = len / 32;
-    let wordr = len % 32;
-    VERYLOW.checked_add(COPY.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
+    VERYLOW.checked_add(cost_per_word::<COPY>(len)?)
 }
 
 #[inline]
@@ -116,11 +108,7 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: u64, is_cold: bool) -> Option<u64> {
     let wordr = len % 32;
 
     let base_gas: u64 = if SPEC::enabled(BERLIN) {
-        if is_cold {
-            COLD_ACCOUNT_ACCESS_COST
-        } else {
-            WARM_STORAGE_READ_COST
-        }
+        warm_cold_cost(is_cold)
     } else if SPEC::enabled(TANGERINE) {
         700
     } else {
@@ -129,13 +117,10 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: u64, is_cold: bool) -> Option<u64> {
     base_gas.checked_add(COPY.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
 }
 
+#[inline]
 pub fn account_access_gas<SPEC: Spec>(is_cold: bool) -> u64 {
     if SPEC::enabled(BERLIN) {
-        if is_cold {
-            COLD_ACCOUNT_ACCESS_COST
-        } else {
-            WARM_STORAGE_READ_COST
-        }
+        warm_cold_cost(is_cold)
     } else if SPEC::enabled(ISTANBUL) {
         700
     } else {
@@ -143,15 +128,22 @@ pub fn account_access_gas<SPEC: Spec>(is_cold: bool) -> u64 {
     }
 }
 
+#[inline]
 pub fn log_cost(n: u8, len: u64) -> Option<u64> {
     LOG.checked_add(LOGDATA.checked_mul(len)?)?
         .checked_add(LOGTOPIC * n as u64)
 }
 
+#[inline]
 pub fn keccak256_cost(len: u64) -> Option<u64> {
+    KECCAK256.checked_add(cost_per_word::<KECCAK256WORD>(len)?)
+}
+
+#[inline]
+pub fn cost_per_word<const MULTIPLE: u64>(len: u64) -> Option<u64> {
     let wordd = len / 32;
     let wordr = len % 32;
-    KECCAK256.checked_add(KECCAK256WORD.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
+    MULTIPLE.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })
 }
 
 /// EIP-3860: Limit and meter initcode
@@ -161,9 +153,7 @@ pub fn keccak256_cost(len: u64) -> Option<u64> {
 /// This cannot overflow as the initcode length is assumed to be checked.
 #[inline]
 pub fn initcode_cost(len: u64) -> u64 {
-    let wordd = len / 32;
-    let wordr = len % 32;
-    INITCODE_WORD_COST * if wordr == 0 { wordd } else { wordd + 1 }
+    cost_per_word::<INITCODE_WORD_COST>(len).unwrap()
 }
 
 #[inline]
@@ -185,7 +175,7 @@ pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
     }
 }
 
-#[allow(clippy::collapsible_else_if)]
+#[inline]
 pub fn sstore_cost<SPEC: Spec>(
     original: U256,
     current: U256,
@@ -220,7 +210,7 @@ pub fn sstore_cost<SPEC: Spec>(
 }
 
 /// EIP-2200: Structured Definitions for Net Gas Metering
-#[inline(always)]
+#[inline]
 fn istanbul_sstore_cost<const SLOAD_GAS: u64, const SSTORE_RESET_GAS: u64>(
     original: U256,
     current: U256,
@@ -238,6 +228,7 @@ fn istanbul_sstore_cost<const SLOAD_GAS: u64, const SSTORE_RESET_GAS: u64>(
 }
 
 /// Frontier sstore cost just had two cases set and reset values
+#[inline]
 fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
     if current == U256::ZERO && new != U256::ZERO {
         SSTORE_SET
@@ -246,6 +237,7 @@ fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
     }
 }
 
+#[inline]
 pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
     // EIP-161: State trie clearing (invariant-preserving alternative)
     let should_charge_topup = if SPEC::enabled(SPURIOUS_DRAGON) {
@@ -271,71 +263,61 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
     gas
 }
 
-pub fn call_gas<SPEC: Spec>(is_cold: bool) -> u64 {
-    if SPEC::enabled(BERLIN) {
-        if is_cold {
-            COLD_ACCOUNT_ACCESS_COST
-        } else {
-            WARM_STORAGE_READ_COST
-        }
+/// Calculate call gas cost for the call instruction.
+///
+/// There is three types of gas.
+/// 1. Account access gas. after berlin it can be cold or warm.
+/// 2. Transfer value gas. If value is transferred and balance of target account is updated.
+/// 3. If account is not existing and needs to be created. After Spurious dragon
+/// this is only accounted if value is transferred.
+#[inline]
+pub fn call_cost<SPEC: Spec>(
+    transfers_value: bool,
+    is_cold: bool,
+    new_account_accounting: bool,
+) -> u64 {
+    // Account access.
+    let mut gas = if SPEC::enabled(BERLIN) {
+        warm_cold_cost(is_cold)
     } else if SPEC::enabled(TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         700
     } else {
         40
+    };
+
+    // transfer value cost
+    if transfers_value {
+        gas += CALLVALUE;
     }
-}
 
-pub fn call_cost<SPEC: Spec>(
-    transfers_value: bool,
-    is_new: bool,
-    is_cold: bool,
-    is_call_or_callcode: bool,
-    is_call_or_staticcall: bool,
-) -> u64 {
-    call_gas::<SPEC>(is_cold)
-        + xfer_cost(is_call_or_callcode, transfers_value)
-        + new_cost::<SPEC>(is_call_or_staticcall, is_new, transfers_value)
-}
-
-#[inline]
-pub fn warm_cold_cost<SPEC: Spec>(is_cold: bool, regular_value: u64) -> u64 {
-    if SPEC::enabled(BERLIN) {
-        if is_cold {
-            COLD_ACCOUNT_ACCESS_COST
+    // new account cost
+    if new_account_accounting {
+        // EIP-161: State trie clearing (invariant-preserving alternative)
+        if SPEC::enabled(SPURIOUS_DRAGON) {
+            // account only if there is value transferred.
+            if transfers_value {
+                gas += NEWACCOUNT;
+            }
         } else {
-            WARM_STORAGE_READ_COST
+            gas += NEWACCOUNT;
         }
+    }
+
+    gas
+}
+
+#[inline]
+pub const fn warm_cold_cost(is_cold: bool) -> u64 {
+    if is_cold {
+        COLD_ACCOUNT_ACCESS_COST
     } else {
-        regular_value
+        WARM_STORAGE_READ_COST
     }
 }
 
 #[inline]
-fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
-    if is_call_or_callcode && transfers_value {
-        CALLVALUE
-    } else {
-        0
-    }
-}
-
-#[inline]
-fn new_cost<SPEC: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_value: bool) -> u64 {
-    if !is_call_or_staticcall || !is_new {
-        return 0;
-    }
-
-    // EIP-161: State trie clearing (invariant-preserving alternative)
-    if SPEC::enabled(SPURIOUS_DRAGON) && !transfers_value {
-        return 0;
-    }
-
-    NEWACCOUNT
-}
-
-#[inline]
-pub fn memory_gas(a: usize) -> u64 {
+pub const fn memory_gas(a: usize) -> u64 {
     let a = a as u64;
     MEMORY
         .saturating_mul(a)
@@ -344,6 +326,7 @@ pub fn memory_gas(a: usize) -> u64 {
 
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
+#[inline]
 pub fn validate_initial_tx_gas<SPEC: Spec>(
     input: &[u8],
     is_create: bool,
