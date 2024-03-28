@@ -168,13 +168,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             } else {
                 None
             },
-            memory: match &self.memory {
-                Some(memory) => {
-                    let hex_memory = hex::encode(memory);
-                    Some(format!("0x{hex_memory}"))
-                }
-                None => None,
-            },
+            memory: self.memory.as_ref().map(hex::encode_prefixed),
             storage: None,
             return_stack: None,
         };
