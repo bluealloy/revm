@@ -435,14 +435,6 @@ pub struct BlockEnv {
     pub blob_excess_gas_and_price: Option<BlobExcessGasAndPrice>,
 }
 
-#[cfg(feature = "taiko")]
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct TaikoFields {
-    pub treasury: Address,
-    pub is_anchor: bool,
-}
-
 impl BlockEnv {
     /// Takes `blob_excess_gas` saves it inside env
     /// and calculates `blob_fee` with [`BlobExcessGasAndPrice`].
@@ -573,6 +565,27 @@ impl TxEnv {
     }
 }
 
+impl Default for TxEnv {
+    fn default() -> Self {
+        Self {
+            caller: Address::ZERO,
+            gas_limit: u64::MAX,
+            gas_price: U256::ZERO,
+            gas_priority_fee: None,
+            transact_to: TransactTo::Call(Address::ZERO), // will do nothing
+            value: U256::ZERO,
+            data: Bytes::new(),
+            chain_id: None,
+            nonce: None,
+            access_list: Vec::new(),
+            blob_hashes: Vec::new(),
+            max_fee_per_blob_gas: None,
+            #[cfg(feature = "taiko")]
+            taiko: TaikoFields::default(),
+        }
+    }
+}
+
 /// Structure holding block blob excess gas and it calculates blob fee.
 ///
 /// Incorporated as part of the Cancun upgrade via [EIP-4844].
@@ -598,25 +611,12 @@ impl BlobExcessGasAndPrice {
     }
 }
 
-impl Default for TxEnv {
-    fn default() -> Self {
-        Self {
-            caller: Address::ZERO,
-            gas_limit: u64::MAX,
-            gas_price: U256::ZERO,
-            gas_priority_fee: None,
-            transact_to: TransactTo::Call(Address::ZERO), // will do nothing
-            value: U256::ZERO,
-            data: Bytes::new(),
-            chain_id: None,
-            nonce: None,
-            access_list: Vec::new(),
-            blob_hashes: Vec::new(),
-            max_fee_per_blob_gas: None,
-            #[cfg(feature = "taiko")]
-            taiko: TaikoFields::default(),
-        }
-    }
+#[cfg(feature = "taiko")]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct TaikoFields {
+    pub treasury: Address,
+    pub is_anchor: bool,
 }
 
 /// Transaction destination.

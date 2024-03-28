@@ -1,22 +1,23 @@
 //! Handler related to Taiko chain
 
 use crate::{
-    handler::{mainnet::deduct_caller_inner, register::EvmHandler},
+    handler::{
+        mainnet::{self},
+        register::EvmHandler,
+    },
     interpreter::Gas,
     primitives::{db::Database, spec_to_generic, EVMError, Spec, SpecId, TransactTo, U256},
     Context,
 };
 extern crate alloc;
 use alloc::sync::Arc;
-use SpecId::{CANCUN, LONDON};
+use SpecId::{CANCUN};
 
 pub fn taiko_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {
     spec_to_generic!(handler.cfg.spec_id, {
         handler.pre_execution.deduct_caller = Arc::new(deduct_caller::<SPEC, EXT, DB>);
         handler.post_execution.reimburse_caller = Arc::new(reimburse_caller::<SPEC, EXT, DB>);
         handler.post_execution.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, EXT, DB>);
-        // Done with flags to avoid repetitive code
-        // handler.validation.tx_against_state = Arc::new(mainnet::validate_tx_against_state::<SPEC, EXT, DB>);
     });
 }
 
@@ -25,25 +26,7 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
-    if context.evm.env.tx.taiko.is_anchor {
-        return Ok(());
-    }
-    let caller = context.evm.env.tx.caller;
-    let effective_gas_price = context.evm.env.effective_gas_price();
-
-    // return balance of not spend gas.
-    let (caller_account, _) = context
-        .evm
-        .inner
-        .journaled_state
-        .load_account(caller, &mut context.evm.inner.db)?;
-
-    caller_account.info.balance = caller_account
-        .info
-        .balance
-        .saturating_add(effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64));
-
-    Ok(())
+    mainnet::reimburse_caller::<SPEC, EXT, DB>(context, gas)
 }
 
 /// Reward beneficiary with gas fee.
@@ -55,27 +38,10 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
     if context.evm.env.tx.taiko.is_anchor {
         return Ok(());
     }
-    let beneficiary = context.evm.env.block.coinbase;
-    let effective_gas_price = context.evm.env.effective_gas_price();
+    let _beneficiary = context.evm.env.block.coinbase;
+    let _effective_gas_price = context.evm.env.effective_gas_price();
 
-    // transfer fee to coinbase/beneficiary.
-    // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
-    let coinbase_gas_price = if SPEC::enabled(LONDON) {
-        effective_gas_price.saturating_sub(context.evm.env.block.basefee)
-    } else {
-        effective_gas_price
-    };
-
-    let (coinbase_account, _) = context
-        .evm
-        .inner
-        .journaled_state
-        .load_account(beneficiary, &mut context.evm.inner.db)?;
-    coinbase_account.mark_touch();
-    coinbase_account.info.balance = coinbase_account
-        .info
-        .balance
-        .saturating_add(coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64));
+    mainnet::reward_beneficiary::<SPEC, EXT, DB>(context, gas)?;
 
     let treasury = context.evm.env.tx.taiko.treasury;
     let basefee = context.evm.env.block.basefee;

@@ -283,7 +283,6 @@ mod tests {
 mod taiko_tests {
     use super::*;
 
-    // TODO(Cecilia):  update this range of bits
     #[test]
     fn test_katla_post_merge_hardforks() {
         assert!(SpecId::enabled(SpecId::KATLA, SpecId::MERGE));

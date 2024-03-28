@@ -179,6 +179,12 @@ impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
     }
 }
 
+impl<DBError> From<InvalidHeader> for EVMError<DBError> {
+    fn from(invalid: InvalidHeader) -> Self {
+        EVMError::Header(invalid)
+    }
+}
+
 /// Transaction validation error.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -295,21 +301,15 @@ impl fmt::Display for InvalidTransaction {
             Self::BlobGasPriceGreaterThanMax => {
                 write!(f, "blob gas price is greater than max fee per blob gas")
             }
-            InvalidTransaction::EmptyBlobs => write!(f, "Empty blobs"),
-            InvalidTransaction::BlobCreateTransaction => write!(f, "Blob create transaction"),
-            InvalidTransaction::TooManyBlobs => write!(f, "Too many blobs"),
-            InvalidTransaction::BlobVersionNotSupported => write!(f, "Blob version not supported"),
+            Self::EmptyBlobs => write!(f, "Empty blobs"),
+            Self::BlobCreateTransaction => write!(f, "Blob create transaction"),
+            Self::TooManyBlobs => write!(f, "Too many blobs"),
+            Self::BlobVersionNotSupported => write!(f, "Blob version not supported"),
             #[cfg(feature = "taiko")]
-            InvalidTransaction::InvalidAnchorTransaction => {
+            Self::InvalidAnchorTransaction => {
                 write!(f, "Invalid Anchor transaction.")
             }
         }
-    }
-}
-
-impl<DBError> From<InvalidHeader> for EVMError<DBError> {
-    fn from(invalid: InvalidHeader) -> Self {
-        EVMError::Header(invalid)
     }
 }
 

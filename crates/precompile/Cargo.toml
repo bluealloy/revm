@@ -40,7 +40,6 @@ criterion = { version = "0.5" }
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable"]
-
 std = [
     "revm-primitives/std",
     "k256/std",
