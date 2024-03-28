@@ -20,7 +20,7 @@ mod secp256k1 {
         // truncate to 20 bytes
         hash[..12].fill(0);
         Ok(hash)
-    } 
+    }
 }
 
 #[cfg(all(

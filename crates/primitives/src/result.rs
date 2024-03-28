@@ -179,7 +179,6 @@ impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
     }
 }
 
-
 /// Transaction validation error.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

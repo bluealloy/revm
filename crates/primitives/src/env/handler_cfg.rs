@@ -41,10 +41,7 @@ impl HandlerCfg {
     /// Creates new `HandlerCfg` instance with the taiko feature.
     #[cfg(feature = "taiko")]
     pub fn new_with_taiko(spec_id: SpecId, is_taiko: bool) -> Self {
-        Self {
-            spec_id,
-            is_taiko,
-        }
+        Self { spec_id, is_taiko }
     }
 
     /// Returns `true` if the taiko feature is enabled and flag is set to `true`.

@@ -37,7 +37,7 @@ pub enum SpecId {
 /// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
 #[cfg(feature = "taiko")]
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, enumn::N)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, enumn::N)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SpecId {
     FRONTIER = 0,
@@ -59,13 +59,8 @@ pub enum SpecId {
     SHANGHAI = 16,
     KATLA = 17, // KATLA is before CANCUN, aka does not have 4844
     CANCUN = 18,
+    #[default]
     LATEST = u8::MAX,
-}
-
-impl Default for SpecId {
-    fn default() -> Self {
-        Self::LATEST
-    }
 }
 
 impl SpecId {
@@ -179,7 +174,6 @@ spec!(CANCUN, CancunSpec);
 
 spec!(LATEST, LatestSpec);
 
-
 // Taiko Hardforks
 #[cfg(feature = "taiko")]
 spec!(KATLA, KatlaSpec);
@@ -281,7 +275,6 @@ mod tests {
         spec_to_generic!(LATEST, assert_eq!(SPEC::SPEC_ID, LATEST));
         #[cfg(feature = "taiko")]
         spec_to_generic!(KATLA, assert_eq!(SPEC::SPEC_ID, KATLA));
-
     }
 }
 
