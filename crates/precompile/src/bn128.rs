@@ -92,13 +92,17 @@ pub mod pair {
 }
 
 /// Input length for the add operation.
-pub const ADD_INPUT_LEN: usize = 128;
+/// `ADD` takes two uncompressed G1 points (64 bytes each).
+pub const ADD_INPUT_LEN: usize = 64 + 64;
 
 /// Input length for the multiplication operation.
-pub const MUL_INPUT_LEN: usize = 128;
+/// `MUL` takes an uncompressed G1 point (64 bytes) and scalar (32 bytes).
+pub const MUL_INPUT_LEN: usize = 64 + 32;
 
 /// Pair element length.
-pub const PAIR_ELEMENT_LEN: usize = 192;
+/// `PAIR` elements are composed of an uncompressed G1 point (64 bytes) and an uncompressed G2 point
+/// (128 bytes).
+pub const PAIR_ELEMENT_LEN: usize = 64 + 128;
 
 /// Reads a single `Fq` from the input slice.
 ///
