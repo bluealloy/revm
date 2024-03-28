@@ -145,16 +145,9 @@ pub fn run_add(input: &[u8]) -> Result<Bytes, Error> {
 
     let mut output = [0u8; 64];
     if let Some(sum) = AffineG1::from_jacobian(p1 + p2) {
-        sum.x()
-            .into_u256()
-            .to_big_endian(&mut output[..32])
-            .unwrap();
-        sum.y()
-            .into_u256()
-            .to_big_endian(&mut output[32..])
-            .unwrap();
+        sum.x().to_big_endian(&mut output[..32]).unwrap();
+        sum.y().to_big_endian(&mut output[32..]).unwrap();
     }
-
     Ok(output.into())
 }
 
@@ -166,12 +159,12 @@ pub fn run_mul(input: &[u8]) -> Result<Bytes, Error> {
     // `Fr::from_slice` can only fail when the length is not 32.
     let fr = bn::Fr::from_slice(&input[64..96]).unwrap();
 
-    let mut out = [0u8; 64];
+    let mut output = [0u8; 64];
     if let Some(mul) = AffineG1::from_jacobian(p * fr) {
-        mul.x().to_big_endian(&mut out[..32]).unwrap();
-        mul.y().to_big_endian(&mut out[32..]).unwrap();
+        mul.x().to_big_endian(&mut output[..32]).unwrap();
+        mul.y().to_big_endian(&mut output[32..]).unwrap();
     }
-    Ok(out.into())
+    Ok(output.into())
 }
 
 pub fn run_pair(
