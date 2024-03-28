@@ -301,10 +301,10 @@ impl fmt::Display for InvalidTransaction {
             Self::BlobGasPriceGreaterThanMax => {
                 write!(f, "blob gas price is greater than max fee per blob gas")
             }
-            Self::EmptyBlobs => write!(f, "Empty blobs"),
-            Self::BlobCreateTransaction => write!(f, "Blob create transaction"),
-            Self::TooManyBlobs => write!(f, "Too many blobs"),
-            Self::BlobVersionNotSupported => write!(f, "Blob version not supported"),
+            Self::EmptyBlobs => write!(f, "empty blobs"),
+            Self::BlobCreateTransaction => write!(f, "blob create transaction"),
+            Self::TooManyBlobs => write!(f, "too many blobs"),
+            Self::BlobVersionNotSupported => write!(f, "blob version not supported"),
             #[cfg(feature = "taiko")]
             Self::InvalidAnchorTransaction => {
                 write!(f, "Invalid Anchor transaction.")
