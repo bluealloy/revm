@@ -26,6 +26,9 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
+    if context.evm.env.tx.taiko.is_anchor {
+        return Ok(());
+    }
     mainnet::reimburse_caller::<SPEC, EXT, DB>(context, gas)
 }
 
