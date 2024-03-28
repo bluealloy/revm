@@ -5,7 +5,7 @@ mod constants;
 
 pub use calc::*;
 pub use constants::*;
-use revm_primitives::{Spec, SpecId::LONDON};
+use revm_primitives::SpecId;
 
 /// Represents the state of gas during execution.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -94,8 +94,12 @@ impl Gas {
     ///
     /// Related to EIP-3529: Reduction in refunds
     #[inline]
-    pub fn set_final_refund<SPEC: Spec>(&mut self) {
-        let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 };
+    pub fn set_final_refund(&mut self, spec: SpecId) {
+        let max_refund_quotient = if spec.is_enabled_in(SpecId::LONDON) {
+            5
+        } else {
+            2
+        };
         self.refunded = (self.refunded() as u64).min(self.spent() / max_refund_quotient) as i64;
     }
 
