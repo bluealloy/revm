@@ -4,10 +4,11 @@ use crate::{
         CallInputs, CreateInputs, Gas, InstructionResult, InterpreterResult, SharedMemory,
     },
     primitives::{db::Database, Env, Spec},
-    CallStackFrame, Context, FrameOrResult,
+    CallStackFrame, Context, Evm, FrameOrResult,
 };
 use alloc::{boxed::Box, sync::Arc};
 use core::ops::Range;
+use revm_interpreter::{Interpreter, InterpreterAction};
 
 /// Creates the first frame.
 pub type CreateFirstFrameHandle<'a, EXT, DB> =
@@ -57,6 +58,16 @@ pub type FrameSubCreateHandle<'a, EXT, DB> = Arc<
         + 'a,
 >;
 
+/// Handle interpreter pre-run.
+pub type PreRunInterpreterHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Evm<'_, EXT, DB>,
+            &[Box<dyn Fn(&mut Interpreter, &mut Evm<'_, EXT, DB>)>; 256],
+            &mut Box<CallStackFrame>,
+        ) -> Option<InterpreterAction>
+        + 'a,
+>;
+
 /// Handles related to stack frames.
 pub struct ExecutionLoopHandler<'a, EXT, DB: Database> {
     /// Create Main frame
@@ -71,6 +82,8 @@ pub struct ExecutionLoopHandler<'a, EXT, DB: Database> {
     pub sub_call: FrameSubCallHandle<'a, EXT, DB>,
     /// Frame sub crate
     pub sub_create: FrameSubCreateHandle<'a, EXT, DB>,
+    /// Pre-run interpreter
+    pub pre_run_interpreter: PreRunInterpreterHandle<'a, EXT, DB>,
 }
 
 impl<'a, EXT: 'a, DB: Database + 'a> ExecutionLoopHandler<'a, EXT, DB> {
@@ -82,6 +95,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> ExecutionLoopHandler<'a, EXT, DB> {
             frame_return: Arc::new(mainnet::frame_return::<SPEC, EXT, DB>),
             sub_call: Arc::new(mainnet::sub_call::<SPEC, EXT, DB>),
             sub_create: Arc::new(mainnet::sub_create::<SPEC, EXT, DB>),
+            pre_run_interpreter: Arc::new(mainnet::pre_run::<SPEC, EXT, DB>),
         }
     }
 }

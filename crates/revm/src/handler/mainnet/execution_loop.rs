@@ -5,11 +5,11 @@ use crate::{
         InterpreterResult, SharedMemory,
     },
     primitives::{Env, Spec, TransactTo},
-    CallStackFrame, Context, FrameData, FrameOrResult,
+    CallStackFrame, Context, Evm, FrameData, FrameOrResult,
 };
 use alloc::boxed::Box;
 use core::ops::Range;
-use revm_interpreter::CallOutcome;
+use revm_interpreter::{CallOutcome, Interpreter, InterpreterAction};
 
 /// Creates first frame.
 #[inline]
@@ -159,6 +159,16 @@ pub fn sub_create<SPEC: Spec, EXT, DB: Database>(
             None
         }
     }
+}
+
+/// Handle intrepreter pre-run.
+#[inline]
+pub fn pre_run<SPEC: Spec, EXT, DB: Database>(
+    _evm: &mut Evm<'_, EXT, DB>,
+    _ins: &[Box<dyn Fn(&mut Interpreter, &mut Evm<'_, EXT, DB>)>; 256],
+    _frame: &mut Box<CallStackFrame>,
+) -> Option<InterpreterAction> {
+    None
 }
 
 #[cfg(test)]

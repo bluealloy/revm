@@ -208,11 +208,31 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         loop {
             // run interpreter
-            let action = stack_frame
-                .interpreter
-                .run(shared_memory, instruction_table, self);
-            // take shared memory back.
-            shared_memory = stack_frame.interpreter.take_memory();
+            let action = if let Some(action) = {
+                // I'm so sorry draganrakita
+                let mut boxed: Vec<Box<dyn Fn(&mut Interpreter, &mut Evm<'_, EXT, DB>) + 'static>> =
+                    Vec::new();
+                for ins in instruction_table.iter() {
+                    let ins: Box<dyn Fn(&mut Interpreter, &mut Self)> = Box::new(ins);
+                    let ins: Box<dyn Fn(&mut Interpreter, &mut Evm<'_, EXT, DB>) + 'static> =
+                        unsafe { std::mem::transmute(ins) };
+                    boxed.push(ins);
+                }
+
+                let boxed: [Box<dyn Fn(&mut Interpreter, &mut Evm<'_, EXT, DB>) + 'static>; 256] =
+                    unsafe { boxed.try_into().unwrap_unchecked() };
+
+                self.handler.execution_loop().pre_run_interpreter.clone()(self, &boxed, stack_frame)
+            } {
+                action
+            } else {
+                let res = stack_frame
+                    .interpreter
+                    .run(shared_memory, instruction_table, self);
+                // take shared memory back.
+                shared_memory = stack_frame.interpreter.take_memory();
+                res
+            };
 
             let new_frame = match action {
                 InterpreterAction::SubCall {
