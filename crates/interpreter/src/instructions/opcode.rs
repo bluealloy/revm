@@ -934,24 +934,9 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
                     TABLE
                 }
             )*
-                #[cfg(feature = "optimism")]
-                SpecId::BEDROCK => {
-                    const TABLE: &[OpInfo;256] = &make_gas_table(SpecId::BEDROCK);
-                    TABLE
-                }
-                #[cfg(feature = "optimism")]
-                SpecId::REGOLITH => {
-                    const TABLE: &[OpInfo;256] = &make_gas_table(SpecId::REGOLITH);
-                    TABLE
-                }
-                #[cfg(feature = "optimism")]
-                SpecId::CANYON => {
-                    const TABLE: &[OpInfo;256] = &make_gas_table(SpecId::CANYON);
-                    TABLE
-                }
-                #[cfg(feature = "optimism")]
-                SpecId::ECOTONE => {
-                    const TABLE: &[OpInfo;256] = &make_gas_table(SpecId::ECOTONE);
+                #[cfg(feature = "taiko")]
+                SpecId::KATLA => {
+                    const TABLE: &[OpInfo;256] = &make_gas_table(SpecId::KATLA);
                     TABLE
                 }
             }

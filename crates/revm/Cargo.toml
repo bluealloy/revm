@@ -47,7 +47,7 @@ criterion = "0.5"
 indicatif = "0.17"
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable"]
+default = ["std", "c-kzg", "secp256k1", "portable", "taiko"]
 std = [
     "serde?/std",
     "serde_json?/std",
@@ -63,16 +63,16 @@ portable = ["revm-precompile/portable", "revm-interpreter/portable"]
 
 test-utils = []
 
-optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
-# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
-optimism-default-handler = [
-    "optimism",
-    "revm-precompile/optimism-default-handler",
-    "revm-interpreter/optimism-default-handler",
+taiko = ["revm-interpreter/taiko", "revm-precompile/taiko"]
+# taiko default handler enabled taiko handler register by default in EvmBuilder.
+taiko-default-handler = [
+    "taiko",
+    "revm-precompile/taiko-default-handler",
+    "revm-interpreter/taiko-default-handler",
 ]
-negate-optimism-default-handler = [
-    "revm-precompile/negate-optimism-default-handler",
-    "revm-interpreter/negate-optimism-default-handler",
+negate-taiko-default-handler = [
+    "revm-precompile/negate-taiko-default-handler",
+    "revm-interpreter/negate-taiko-default-handler",
 ]
 
 ethersdb = [
@@ -80,7 +80,7 @@ ethersdb = [
     "tokio",
     "ethers-providers",
     "ethers-core",
-] # Negate optimism default handler
+]
 
 dev = [
     "memory_limit",

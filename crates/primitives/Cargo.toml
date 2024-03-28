@@ -66,10 +66,10 @@ arbitrary = ["std", "alloy-primitives/arbitrary", "bitflags/arbitrary"]
 asm-keccak = ["alloy-primitives/asm-keccak"]
 portable = ["c-kzg?/portable"]
 
-optimism = []
-# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
-optimism-default-handler = ["optimism"]
-negate-optimism-default-handler = []
+taiko = []
+# taiko default handler enabled taiko handler register by default in EvmBuilder.
+taiko-default-handler = ["taiko"]
+negate-taiko-default-handler = []
 
 dev = [
     "memory_limit",

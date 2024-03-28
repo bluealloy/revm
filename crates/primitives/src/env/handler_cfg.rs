@@ -3,15 +3,15 @@ use core::ops::{Deref, DerefMut};
 use std::boxed::Box;
 
 /// Handler configuration fields. It is used to configure the handler.
-/// It contains specification id and the Optimism related field if
-/// optimism feature is enabled.
+/// It contains specification id and the taiko related field if
+/// taiko feature is enabled.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub struct HandlerCfg {
     /// Specification identification.
     pub spec_id: SpecId,
-    /// Optimism related field, it will append the Optimism handle register to the EVM.
-    #[cfg(feature = "optimism")]
-    pub is_optimism: bool,
+    /// taiko related field, it will append the taiko handle register to the EVM.
+    #[cfg(feature = "taiko")]
+    pub is_taiko: bool,
 }
 
 impl Default for HandlerCfg {
@@ -24,34 +24,31 @@ impl HandlerCfg {
     /// Creates new `HandlerCfg` instance.
     pub fn new(spec_id: SpecId) -> Self {
         cfg_if::cfg_if! {
-            if #[cfg(all(feature = "optimism-default-handler",
-                not(feature = "negate-optimism-default-handler")))] {
-                    let is_optimism = true;
-            } else if #[cfg(feature = "optimism")] {
-                let is_optimism = false;
+            if #[cfg(all(feature = "taiko-default-handler",
+                not(feature = "negate-taiko-default-handler")))] {
+                    let is_taiko = true;
+            } else if #[cfg(feature = "taiko")] {
+                let is_taiko = false;
             }
         }
         Self {
             spec_id,
-            #[cfg(feature = "optimism")]
-            is_optimism,
+            #[cfg(feature = "taiko")]
+            is_taiko,
         }
     }
 
-    /// Creates new `HandlerCfg` instance with the optimism feature.
-    #[cfg(feature = "optimism")]
-    pub fn new_with_optimism(spec_id: SpecId, is_optimism: bool) -> Self {
-        Self {
-            spec_id,
-            is_optimism,
-        }
+    /// Creates new `HandlerCfg` instance with the taiko feature.
+    #[cfg(feature = "taiko")]
+    pub fn new_with_taiko(spec_id: SpecId, is_taiko: bool) -> Self {
+        Self { spec_id, is_taiko }
     }
 
-    /// Returns `true` if the optimism feature is enabled and flag is set to `true`.
-    pub fn is_optimism(&self) -> bool {
+    /// Returns `true` if the taiko feature is enabled and flag is set to `true`.
+    pub fn is_taiko(&self) -> bool {
         cfg_if::cfg_if! {
-            if #[cfg(feature = "optimism")] {
-                self.is_optimism
+            if #[cfg(feature = "taiko")] {
+                self.is_taiko
             } else {
                 false
             }
@@ -79,15 +76,15 @@ impl CfgEnvWithHandlerCfg {
 
     /// Returns new `CfgEnvWithHandlerCfg` instance with the chain spec id.
     ///
-    /// is_optimism will be set to default value depending on `optimism-default-handler` feature.
+    /// is_taiko will be set to default value depending on `taiko-default-handler` feature.
     pub fn new_with_spec_id(cfg_env: CfgEnv, spec_id: SpecId) -> Self {
         Self::new(cfg_env, HandlerCfg::new(spec_id))
     }
 
-    /// Enables the optimism feature.
-    #[cfg(feature = "optimism")]
-    pub fn enable_optimism(&mut self) {
-        self.handler_cfg.is_optimism = true;
+    /// Enables the taiko feature.
+    #[cfg(feature = "taiko")]
+    pub fn enable_taiko(&mut self) {
+        self.handler_cfg.is_taiko = true;
     }
 }
 
@@ -122,7 +119,7 @@ impl EnvWithHandlerCfg {
 
     /// Returns new `EnvWithHandlerCfg` instance with the chain spec id.
     ///
-    /// is_optimism will be set to default value depending on `optimism-default-handler` feature.
+    /// is_taiko will be set to default value depending on `taiko-default-handler` feature.
     pub fn new_with_spec_id(env: Box<Env>, spec_id: SpecId) -> Self {
         Self::new(env, HandlerCfg::new(spec_id))
     }
@@ -137,10 +134,10 @@ impl EnvWithHandlerCfg {
         self.handler_cfg.spec_id
     }
 
-    /// Enables the optimism handle register.
-    #[cfg(feature = "optimism")]
-    pub fn enable_optimism(&mut self) {
-        self.handler_cfg.is_optimism = true;
+    /// Enables the taiko handle register.
+    #[cfg(feature = "taiko")]
+    pub fn enable_taiko(&mut self) {
+        self.handler_cfg.is_taiko = true;
     }
 }
 
