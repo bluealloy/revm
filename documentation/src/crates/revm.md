@@ -4,7 +4,7 @@ The `evm` crate is focused on the implementation of Ethereum Virtual Machine (EV
 This crate pulls Primitives, Interpreter and Precompiles together to deliver the rust evm.
 
 The starting point for reading the documentation is [`Evm`](./revm/evm.md), that is main structure of EVM.
-Then, I read about the [`EvmBuilder`](./revm/builder.md) that is used to create the `Evm` and modify it.
+Then, you can read about the [`EvmBuilder`](./revm/builder.md) that is used to create the `Evm` and modify it.
 After, you can read about the [`Handler`](./revm/handler.md) that is used to modify the logic of the Evm, and it will tie with how Evm introspection can be done.
 Finally, you can read about the [`Inspector`](./revm/inspector.md), a legacy interface for inspecting execution that is now repurposed as a handler register example.
 
@@ -34,6 +34,6 @@ Finally, you can read about the [`Inspector`](./revm/inspector.md), a legacy int
 
 - `Database`, `DatabaseCommit`, `InMemoryDB`: These types from the `db` module are re-exported for handling the database operations.
 - `EVM`: The `EVM` struct from the `evm` module is re-exported, serving as the main interface to the EVM implementation.
-- `EvmContext`: The `EvmContext` struct from the `evm_impl` module is re-exported, providing data structures to encapsulate EVM execution data.
+- `EvmContext`: The `EvmContext` struct from the `context` module is re-exported, providing data structures to encapsulate EVM execution data.
 - `JournalEntry`, `JournaledState`: These types from the `journaled_state` module are re-exported, providing the journaling system for the EVM state.
 - `inspectors`, `Inspector`: The `Inspector` trait and its implementations from the `inspector` module are re-exported for observing the EVM execution.
