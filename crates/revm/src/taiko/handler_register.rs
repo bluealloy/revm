@@ -41,8 +41,6 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
     if context.evm.env.tx.taiko.is_anchor {
         return Ok(());
     }
-    let _beneficiary = context.evm.env.block.coinbase;
-    let _effective_gas_price = context.evm.env.effective_gas_price();
 
     mainnet::reward_beneficiary::<SPEC, EXT, DB>(context, gas)?;
 
