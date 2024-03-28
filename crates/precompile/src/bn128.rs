@@ -141,16 +141,9 @@ pub fn run_add(input: &[u8]) -> Result<Bytes, Error> {
 
     let mut output = [0u8; 64];
     if let Some(sum) = AffineG1::from_jacobian(p1 + p2) {
-        sum.x()
-            .into_u256()
-            .to_big_endian(&mut output[..32])
-            .unwrap();
-        sum.y()
-            .into_u256()
-            .to_big_endian(&mut output[32..])
-            .unwrap();
+        sum.x().to_big_endian(&mut output[..32]).unwrap();
+        sum.y().to_big_endian(&mut output[32..]).unwrap();
     }
-
     Ok(output.into())
 }
 
