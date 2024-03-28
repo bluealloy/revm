@@ -199,7 +199,7 @@ impl Interpreter {
             panic!("Code not found")
         };
         self.bytecode = code.clone();
-        self.instruction_pointer = unsafe { self.bytecode.as_ptr().offset(pc as isize) };
+        self.instruction_pointer = unsafe { self.bytecode.as_ptr().add(pc) };
     }
 
     /// Inserts the output of a `create` call into the interpreter.

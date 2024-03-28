@@ -71,7 +71,7 @@ impl EofHeader {
     /// terminator 1 byte
     ///
     /// It is minimum 15 bytes (there is at least one code section).
-    pub fn len(&self) -> usize {
+    pub fn size(&self) -> usize {
         let optional_container_sizes = if self.container_sizes.is_empty() {
             0
         } else {
@@ -84,12 +84,12 @@ impl EofHeader {
         self.types_size as usize / 4
     }
 
-    pub fn body_len(&self) -> usize {
+    pub fn body_size(&self) -> usize {
         self.sum_code_sizes + self.sum_container_sizes + self.data_size as usize
     }
 
-    pub fn eof_len(&self) -> usize {
-        self.len() + self.body_len()
+    pub fn eof_size(&self) -> usize {
+        self.size() + self.body_size()
     }
 
     pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), ()> {

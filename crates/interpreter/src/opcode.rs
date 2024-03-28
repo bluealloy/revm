@@ -1,7 +1,8 @@
 //! EVM opcode definitions and utilities.
 
-use super::*;
-use crate::{primitives::Spec, Host, Interpreter};
+pub mod eof_printer;
+
+use crate::{instructions::*, primitives::Spec, Host, Interpreter};
 use core::fmt;
 use std::boxed::Box;
 
@@ -605,7 +606,7 @@ opcodes! {
     // 0xDD
     // 0xDE
     // 0xDF
-    0xE0 => RJUMP    => control::rjump  => stack_io<0, 0>, imm_size<2>;
+    0xE0 => RJUMP    => control::rjump  => stack_io<0, 0>, imm_size<2>, terminating;
     0xE1 => RJUMPI   => control::rjumpi => stack_io<1, 0>, imm_size<2>;
     0xE2 => RJUMPV   => control::rjumpv => stack_io<1, 0>, imm_size<1>;
     0xE3 => CALLF    => control::callf  => stack_io<0, 0>, imm_size<2>;

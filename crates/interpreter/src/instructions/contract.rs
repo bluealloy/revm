@@ -233,7 +233,7 @@ pub fn extcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H)
         inputs: Box::new(CallInputs {
             input,
             gas_limit,
-            target_address: target_address,
+            target_address,
             caller: interpreter.contract.target_address,
             bytecode_address: target_address,
             value: TransferValue::Value(value),
@@ -265,7 +265,7 @@ pub fn extdcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H
         inputs: Box::new(CallInputs {
             input,
             gas_limit,
-            target_address: target_address,
+            target_address,
             caller: interpreter.contract.target_address,
             bytecode_address: target_address,
             value: TransferValue::ApparentValue(interpreter.contract.call_value),
@@ -297,7 +297,7 @@ pub fn extscall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
         inputs: Box::new(CallInputs {
             input,
             gas_limit,
-            target_address: target_address,
+            target_address,
             caller: interpreter.contract.target_address,
             bytecode_address: target_address,
             value: TransferValue::Value(U256::ZERO),

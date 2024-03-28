@@ -33,7 +33,7 @@ impl Contract {
         caller: Address,
         call_value: U256,
     ) -> Self {
-        let bytecode = to_analysed(bytecode).try_into().expect("it is analyzed");
+        let bytecode = to_analysed(bytecode);
 
         Self {
             input,

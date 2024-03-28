@@ -4,12 +4,13 @@ use super::decode_helpers::{consume_u16, consume_u8};
 #[derive(Debug, Clone, Default, Hash, PartialEq, Eq, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TypesSection {
-    /// inputs	1 byte	0x00-0x7F	number of stack elements the code section consumes
+    /// inputs - 1 byte - `0x00-0x7F`
+    /// number of stack elements the code section consumes
     pub inputs: u8,
-    /// outputs	1 byte	0x00-0x80
+    /// outputs - 1 byte - `0x00-0x80``
     /// number of stack elements the code section returns or 0x80 for non-returning functions
     pub outputs: u8,
-    /// max_stack_height	2 bytes	0x0000-0x03FF
+    /// max_stack_height - 2 bytes - `0x0000-0x03FF`
     /// maximum number of elements ever placed onto the stack by the code section
     pub max_stack_size: u16,
 }

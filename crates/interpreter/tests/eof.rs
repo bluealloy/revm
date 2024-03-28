@@ -7,6 +7,23 @@ use std::{
 };
 use walkdir::{DirEntry, WalkDir};
 
+// EOF_InvalidTypeSectionSize
+// EOF_InvalidJumpDestination
+
+/*
+result:Result { result: false, exception: Some("EOF_InvalidJumpDestination") }
+revm result:Ok(Eof { header: EofHeader { types_size: 4, code_sizes: [7], container_sizes: [], data_size: 0, sum_code_sizes: 7, sum_container_sizes: 0 }, body: EofBody { types_section: [TypesSection { inputs: 0, outputs: 128, max_stack_size: 1 }],
+code_section: [0x6001e200ffff00], container_section: [], data_section: 0x, is_data_filled: true }, raw: Some(0xef0001010004020001000704000000008000016001e200ffff00) })
+
+
+result:Result { result: false, exception: Some("EOF_InvalidTypeSectionSize") }
+revm result:Ok(Eof { header: EofHeader { types_size: 8, code_sizes: [3], container_sizes: [], data_size: 4, sum_code_sizes: 3, sum_container_sizes: 0 }, body: EofBody { types_section: [TypesSection { inputs: 0, outputs: 128, max_stack_size: 1 }, TypesSection { inputs: 0, outputs: 0, max_stack_size: 0 }],
+code_section: [0x305000], container_section: [], data_section: 0x0bad60a7, is_data_filled: true }, raw: Some(0xef000101000802000100030400040000800001000000003050000bad60a7) })
+bytes:0xef000101000802000100030400040000800001000000003050000bad60a7
+
+
+*/
+
 #[test]
 fn eof_run_all_tests() {
     let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests");
@@ -19,24 +36,28 @@ fn eof_validation_eip3540() {
     run_test(&eof_tests)
 }
 
+// One MaxStackMismatch
 #[test]
 fn eof_validation_eip3670() {
     let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP3670");
     run_test(&eof_tests)
 }
 
+// BIG CODE 5b5b5b5b..
 #[test]
 fn eof_validation_eip4200() {
     let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP4200");
     run_test(&eof_tests)
 }
 
+// EOF_InvalidFirstSectionType
 #[test]
 fn eof_validation_eip4750() {
     let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP4750");
     run_test(&eof_tests)
 }
 
+//
 #[test]
 fn eof_validation_eip5450() {
     let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP5450");

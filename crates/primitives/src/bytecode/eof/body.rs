@@ -19,7 +19,7 @@ impl EofBody {
     }
 
     pub fn decode(input: &Bytes, header: &EofHeader) -> Result<Self, ()> {
-        let header_len = header.len();
+        let header_len = header.size();
         let partial_body_len =
             header.sum_code_sizes + header.sum_container_sizes + header.types_size as usize;
         let full_body_len = partial_body_len + header.data_size as usize;

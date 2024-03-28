@@ -11,9 +11,6 @@ pub mod host;
 pub mod host_env;
 pub mod i256;
 pub mod memory;
-pub mod opcode;
 pub mod stack;
 pub mod system;
 pub mod utility;
-
-pub use opcode::{Instruction, OpCode, OPCODE_INFO_JUMPTABLE};

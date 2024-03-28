@@ -105,10 +105,7 @@ impl Bytecode {
 
     /// Returns false if bytecode can't be executed in Interpreter.
     pub fn is_execution_ready(&self) -> bool {
-        match self {
-            Self::LegacyRaw(_) => false,
-            _ => true,
-        }
+        !matches!(self, Self::LegacyRaw(_))
     }
 
     /// Returns a reference to the original bytecode.
@@ -127,7 +124,7 @@ impl Bytecode {
         match self {
             Self::LegacyRaw(bytes) => bytes.len(),
             Self::LegacyAnalyzed(analyzed) => analyzed.original_len(),
-            Self::Eof(eof) => eof.len(),
+            Self::Eof(eof) => eof.size(),
         }
     }
 

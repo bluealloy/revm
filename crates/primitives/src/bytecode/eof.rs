@@ -27,8 +27,8 @@ impl Default for Eof {
 
 impl Eof {
     /// Returns len of the header and body in bytes.
-    pub fn len(&self) -> usize {
-        self.header.len() + self.header.body_len()
+    pub fn size(&self) -> usize {
+        self.header.size() + self.header.body_size()
     }
 
     pub fn raw(&self) -> Option<Bytes> {
