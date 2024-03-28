@@ -22,6 +22,8 @@ pub struct TracerEip3155 {
     refunded: i64,
     mem_size: usize,
     skip: bool,
+    include_memory: bool,
+    memory: Option<Vec<u8>>,
 }
 
 // # Output
@@ -58,7 +60,7 @@ struct Output {
     error: Option<String>,
     /// Array of all allocated values
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    memory: Option<Vec<String>>,
+    memory: Option<String>,
     /// Array of all stored values
     #[serde(default, skip_serializing_if = "Option::is_none")]
     storage: Option<HashMap<String, String>>,
@@ -98,12 +100,14 @@ impl TracerEip3155 {
 }
 
 impl TracerEip3155 {
-    pub fn new(output: Box<dyn Write>, print_summary: bool) -> Self {
+    pub fn new(output: Box<dyn Write>, print_summary: bool, include_memory: bool) -> Self {
         Self {
             output,
             gas_inspector: GasInspector::default(),
             print_summary,
+            include_memory,
             stack: Default::default(),
+            memory: Default::default(),
             pc: 0,
             opcode: 0,
             gas: 0,
@@ -128,6 +132,11 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         self.gas_inspector.step(interp, context);
         self.stack = interp.stack.data().clone();
+        self.memory = if self.include_memory {
+            Some(interp.shared_memory.context_memory().to_owned())
+        } else {
+            None
+        };
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
         self.mem_size = interp.shared_memory.len();
@@ -159,7 +168,13 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             } else {
                 None
             },
-            memory: None,
+            memory: match &self.memory {
+                Some(memory) => {
+                    let hex_memory = hex::encode(memory);
+                    Some(format!("0x{hex_memory}"))
+                }
+                None => None,
+            },
             storage: None,
             return_stack: None,
         };
