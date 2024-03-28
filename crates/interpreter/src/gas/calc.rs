@@ -1,10 +1,29 @@
-use revm_primitives::SpecId;
-
 use super::constants::*;
 use crate::inner_models::SelfDestructResult;
-use crate::primitives::{Address, Spec, SpecId::*, U256};
+use crate::primitives::{Address, Spec, SpecId, SpecId::*, U256};
 use std::vec::Vec;
 
+/// `const` Option `?`.
+macro_rules! tri {
+    ($e:expr) => {
+        match $e {
+            Some(v) => v,
+            None => return None,
+        }
+    };
+}
+
+/// `const` unwrap.
+macro_rules! opt_unwrap {
+    ($e:expr) => {
+        match $e {
+            Some(v) => v,
+            None => panic!("unwrap failed"),
+        }
+    };
+}
+
+/// `SSTORE` opcode refund calculation.
 #[allow(clippy::collapsible_else_if)]
 pub fn sstore_refund(spec_id: SpecId, original: U256, current: U256, new: U256) -> i64 {
     if spec_id.is_enabled_in(SpecId::ISTANBUL) {
@@ -55,16 +74,12 @@ pub fn sstore_refund(spec_id: SpecId, original: U256, current: U256, new: U256) 
     }
 }
 
+/// `CREATE2` opcode cost calculation.
 #[inline]
-pub fn create2_cost(len: usize) -> Option<u64> {
-    let base = CREATE;
-    // ceil(len / 32.0)
-    let len = len as u64;
-    let sha_addup_base = (len / 32) + u64::from((len % 32) != 0);
-    let sha_addup = KECCAK256WORD.checked_mul(sha_addup_base)?;
-    let gas = base.checked_add(sha_addup)?;
-
-    Some(gas)
+pub const fn create2_cost(len: u64) -> Option<u64> {
+    let sha_addup_base = len.div_ceil(32);
+    let sha_addup = tri!(KECCAK256WORD.checked_mul(sha_addup_base));
+    CREATE.checked_add(sha_addup)
 }
 
 #[inline]
@@ -87,6 +102,7 @@ fn log2floor(value: U256) -> u64 {
     l
 }
 
+/// `EXP` opcode cost calculation.
 #[inline]
 pub fn exp_cost(spec_id: SpecId, power: U256) -> Option<u64> {
     if power == U256::ZERO {
@@ -105,19 +121,16 @@ pub fn exp_cost(spec_id: SpecId, power: U256) -> Option<u64> {
     }
 }
 
+/// `*COPY` opcodes cost calculation.
 #[inline]
-pub fn verylowcopy_cost(len: u64) -> Option<u64> {
-    let wordd = len / 32;
-    let wordr = len % 32;
-    VERYLOW.checked_add(COPY.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
+pub const fn verylowcopy_cost(len: u64) -> Option<u64> {
+    VERYLOW.checked_add(tri!(cost_per_word(len, COPY)))
 }
 
+/// `EXTCODECOPY` opcode cost calculation.
 #[inline]
-pub fn extcodecopy_cost(spec_id: SpecId, len: u64, is_cold: bool) -> Option<u64> {
-    let wordd = len / 32;
-    let wordr = len % 32;
-
-    let base_gas: u64 = if spec_id.is_enabled_in(SpecId::BERLIN) {
+pub const fn extcodecopy_cost(spec_id: SpecId, len: u64, is_cold: bool) -> Option<u64> {
+    let base_gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
         if is_cold {
             COLD_ACCOUNT_ACCESS_COST
         } else {
@@ -128,10 +141,12 @@ pub fn extcodecopy_cost(spec_id: SpecId, len: u64, is_cold: bool) -> Option<u64>
     } else {
         20
     };
-    base_gas.checked_add(COPY.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
+    base_gas.checked_add(tri!(cost_per_word(len, COPY)))
 }
 
-pub fn account_access_gas(spec_id: SpecId, is_cold: bool) -> u64 {
+/// `BALANCE` opcode cost calculation.
+#[inline]
+pub const fn account_access_gas(spec_id: SpecId, is_cold: bool) -> u64 {
     if spec_id.is_enabled_in(SpecId::BERLIN) {
         if is_cold {
             COLD_ACCOUNT_ACCESS_COST
@@ -145,15 +160,22 @@ pub fn account_access_gas(spec_id: SpecId, is_cold: bool) -> u64 {
     }
 }
 
-pub fn log_cost(n: u8, len: u64) -> Option<u64> {
-    LOG.checked_add(LOGDATA.checked_mul(len)?)?
-        .checked_add(LOGTOPIC * n as u64)
+/// `LOG` opcode cost calculation.
+#[inline]
+pub const fn log_cost(n: u8, len: u64) -> Option<u64> {
+    tri!(LOG.checked_add(tri!(LOGDATA.checked_mul(len)))).checked_add(LOGTOPIC * n as u64)
 }
 
-pub fn keccak256_cost(len: u64) -> Option<u64> {
-    let wordd = len / 32;
-    let wordr = len % 32;
-    KECCAK256.checked_add(KECCAK256WORD.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
+/// `KECCAK256` opcode cost calculation.
+#[inline]
+pub const fn keccak256_cost(len: u64) -> Option<u64> {
+    KECCAK256.checked_add(tri!(cost_per_word(len, KECCAK256WORD)))
+}
+
+/// Cost for memory length. `ceil(len / 32) * multiple`.
+#[inline]
+pub const fn cost_per_word(len: u64, multiple: u64) -> Option<u64> {
+    len.div_ceil(32).checked_mul(multiple)
 }
 
 /// EIP-3860: Limit and meter initcode
@@ -162,14 +184,13 @@ pub fn keccak256_cost(len: u64) -> Option<u64> {
 ///
 /// This cannot overflow as the initcode length is assumed to be checked.
 #[inline]
-pub fn initcode_cost(len: u64) -> u64 {
-    let wordd = len / 32;
-    let wordr = len % 32;
-    INITCODE_WORD_COST * if wordr == 0 { wordd } else { wordd + 1 }
+pub const fn initcode_cost(len: u64) -> u64 {
+    opt_unwrap!(cost_per_word(len, INITCODE_WORD_COST))
 }
 
+/// `SLOAD` opcode cost calculation.
 #[inline]
-pub fn sload_cost(spec_id: SpecId, is_cold: bool) -> u64 {
+pub const fn sload_cost(spec_id: SpecId, is_cold: bool) -> u64 {
     if spec_id.is_enabled_in(SpecId::BERLIN) {
         if is_cold {
             COLD_SLOAD_COST
@@ -187,7 +208,8 @@ pub fn sload_cost(spec_id: SpecId, is_cold: bool) -> u64 {
     }
 }
 
-#[allow(clippy::collapsible_else_if)]
+/// `SSTORE` opcode cost calculation.
+#[inline]
 pub fn sstore_cost(
     spec_id: SpecId,
     original: U256,
@@ -223,7 +245,7 @@ pub fn sstore_cost(
 }
 
 /// EIP-2200: Structured Definitions for Net Gas Metering
-#[inline(always)]
+#[inline]
 fn istanbul_sstore_cost<const SLOAD_GAS: u64, const SSTORE_RESET_GAS: u64>(
     original: U256,
     current: U256,
@@ -240,7 +262,8 @@ fn istanbul_sstore_cost<const SLOAD_GAS: u64, const SSTORE_RESET_GAS: u64>(
     }
 }
 
-/// Frontier sstore cost just had two cases set and reset values
+/// Frontier sstore cost just had two cases set and reset values.
+#[inline]
 fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
     if current == U256::ZERO && new != U256::ZERO {
         SSTORE_SET
@@ -249,7 +272,9 @@ fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
     }
 }
 
-pub fn selfdestruct_cost(spec_id: SpecId, res: SelfDestructResult) -> u64 {
+/// `SELFDESTRUCT` opcode cost calculation.
+#[inline]
+pub const fn selfdestruct_cost(spec_id: SpecId, res: SelfDestructResult) -> u64 {
     // EIP-161: State trie clearing (invariant-preserving alternative)
     let should_charge_topup = if spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
         res.had_value && !res.target_exists
@@ -279,7 +304,9 @@ pub fn selfdestruct_cost(spec_id: SpecId, res: SelfDestructResult) -> u64 {
     gas
 }
 
-pub fn call_gas(spec_id: SpecId, is_cold: bool) -> u64 {
+/// Basic `CALL` opcode cost calculation, see [`call_cost`].
+#[inline]
+pub const fn call_gas(spec_id: SpecId, is_cold: bool) -> u64 {
     if spec_id.is_enabled_in(SpecId::BERLIN) {
         if is_cold {
             COLD_ACCOUNT_ACCESS_COST
@@ -294,7 +321,9 @@ pub fn call_gas(spec_id: SpecId, is_cold: bool) -> u64 {
     }
 }
 
-pub fn call_cost(
+/// `CALL` opcode cost calculation.
+#[inline]
+pub const fn call_cost(
     spec_id: SpecId,
     transfers_value: bool,
     is_new: bool,
@@ -308,20 +337,7 @@ pub fn call_cost(
 }
 
 #[inline]
-pub fn warm_cold_cost(spec_id: SpecId, is_cold: bool, regular_value: u64) -> u64 {
-    if spec_id.is_enabled_in(SpecId::BERLIN) {
-        if is_cold {
-            COLD_ACCOUNT_ACCESS_COST
-        } else {
-            WARM_STORAGE_READ_COST
-        }
-    } else {
-        regular_value
-    }
-}
-
-#[inline]
-fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
+const fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
     if is_call_or_callcode && transfers_value {
         CALLVALUE
     } else {
@@ -330,7 +346,7 @@ fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
 }
 
 #[inline]
-fn new_cost(
+const fn new_cost(
     spec_id: SpecId,
     is_call_or_staticcall: bool,
     is_new: bool,
@@ -348,8 +364,9 @@ fn new_cost(
     NEWACCOUNT
 }
 
+/// Memory expansion cost calculation.
 #[inline]
-pub fn memory_gas(a: usize) -> u64 {
+pub const fn memory_gas(a: usize) -> u64 {
     let a = a as u64;
     MEMORY
         .saturating_mul(a)

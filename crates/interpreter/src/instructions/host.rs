@@ -288,7 +288,7 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
     // EIP-1014: Skinny CREATE2
     let scheme = if IS_CREATE2 {
         pop!(interpreter, salt);
-        gas_or_fail!(interpreter, gas::create2_cost(len));
+        gas_or_fail!(interpreter, gas::create2_cost(len as u64));
         CreateScheme::Create2 { salt }
     } else {
         gas!(interpreter, gas::CREATE);

@@ -217,7 +217,7 @@ impl Interpreter {
         let out_offset = call_outcome.memory_start();
         let out_len = call_outcome.memory_length();
 
-        self.return_data_buffer = call_outcome.output().to_owned();
+        self.return_data_buffer.clone_from(call_outcome.output());
         let target_len = min(out_len, self.return_data_buffer.len());
 
         match call_outcome.instruction_result() {
