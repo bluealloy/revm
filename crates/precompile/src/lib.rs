@@ -248,7 +248,7 @@ impl PrecompileSpecId {
             CANCUN => Self::CANCUN,
             LATEST => Self::LATEST,
             #[cfg(feature = "taiko")]
-            KATLA => Self::BERLIN, // TODO(Cecilia): what is this?
+            KATLA => Self::BERLIN,
         }
     }
 }
