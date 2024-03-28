@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm", "types"]
 license = "MIT"
 name = "revm-primitives"
 repository = "https://github.com/bluealloy/revm"
-version = "3.1.0"
+version = "3.1.1"
 readme = "../../README.md"
 
 # Don't need to run build script outside of this repo
