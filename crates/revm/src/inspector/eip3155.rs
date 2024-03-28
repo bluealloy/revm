@@ -100,12 +100,12 @@ impl TracerEip3155 {
 }
 
 impl TracerEip3155 {
-    pub fn new(output: Box<dyn Write>, print_summary: bool, include_memory: bool) -> Self {
+    pub fn new(output: Box<dyn Write>) -> Self {
         Self {
             output,
             gas_inspector: GasInspector::default(),
-            print_summary,
-            include_memory,
+            print_summary: true,
+            include_memory: false,
             stack: Default::default(),
             memory: Default::default(),
             pc: 0,
@@ -115,6 +115,18 @@ impl TracerEip3155 {
             mem_size: 0,
             skip: false,
         }
+    }
+
+    /// Don't include a summary at the end of the trace
+    pub fn without_summary(mut self) -> Self {
+        self.print_summary = false;
+        self
+    }
+
+    /// Include a memory field for each step. This significantly increases processing time and output size.
+    pub fn with_memory(mut self) -> Self {
+        self.include_memory = true;
+        self
     }
 
     fn write_value(&mut self, value: &impl serde::Serialize) -> std::io::Result<()> {
