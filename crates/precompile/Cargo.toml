@@ -35,6 +35,7 @@ secp256k1 = { version = "0.28.2", default-features = false, features = [
 
 [dev-dependencies]
 criterion = { version = "0.5" }
+rand = { version = "0.8", features = ["std"] }
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable"]

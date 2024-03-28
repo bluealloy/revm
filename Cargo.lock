@@ -2353,6 +2353,7 @@ dependencies = [
  "criterion",
  "k256",
  "once_cell",
+ "rand",
  "revm-primitives",
  "ripemd",
  "secp256k1",
