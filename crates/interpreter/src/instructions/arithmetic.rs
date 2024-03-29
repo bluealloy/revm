@@ -48,9 +48,7 @@ pub fn rem<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 pub fn smod<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
-    if *op2 != U256::ZERO {
-        *op2 = i256_mod(op1, *op2)
-    }
+    *op2 = i256_mod(op1, *op2)
 }
 
 pub fn addmod<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
