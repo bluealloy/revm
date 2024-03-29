@@ -11,7 +11,7 @@ use crate::{
 };
 extern crate alloc;
 use alloc::sync::Arc;
-use SpecId::{CANCUN};
+use SpecId::CANCUN;
 
 pub fn taiko_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {
     spec_to_generic!(handler.cfg.spec_id, {
