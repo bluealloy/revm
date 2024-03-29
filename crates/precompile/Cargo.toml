@@ -23,7 +23,7 @@ aurora-engine-modexp = { version = "1.0", default-features = false }
 #fluentbase-sdk = { path = "../../../fluentbase/crates/sdk", default-features = false }
 
 # Optional KZG point evaluation precompile
-c-kzg = { version = "1.0.0", default-features = false, optional = true }
+c-kzg = { workspace = true, default-features = false, optional = true }
 
 # ecRecover precompile
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
