@@ -23,7 +23,7 @@ pub struct TracerEip3155 {
     mem_size: usize,
     skip: bool,
     include_memory: bool,
-    memory: Option<Vec<u8>>,
+    memory: Option<String>,
 }
 
 // # Output
@@ -145,7 +145,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         self.gas_inspector.step(interp, context);
         self.stack = interp.stack.data().clone();
         self.memory = if self.include_memory {
-            Some(interp.shared_memory.context_memory().to_owned())
+            Some(hex::encode_prefixed(interp.shared_memory.context_memory()))
         } else {
             None
         };
@@ -180,7 +180,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             } else {
                 None
             },
-            memory: self.memory.as_ref().map(hex::encode_prefixed),
+            memory: self.memory.take(),
             storage: None,
             return_stack: None,
         };
