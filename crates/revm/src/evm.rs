@@ -1,5 +1,5 @@
 use crate::{
-    builder::{EvmBuilder, HandlerStage, SetGenericStage},
+    builder::EvmBuilder,
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
@@ -54,7 +54,7 @@ impl<EXT, DB: Database + DatabaseCommit> Evm<'_, EXT, DB> {
 
 impl<'a> Evm<'a, (), EmptyDB> {
     /// Returns evm builder with empty database and empty external context.
-    pub fn builder() -> EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
+    pub fn builder() -> EvmBuilder<'a, (), EmptyDB> {
         EvmBuilder::default()
     }
 }
@@ -71,7 +71,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
 
     /// Allow for evm setting to be modified by feeding current evm
     /// into the builder for modifications.
-    pub fn modify(self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+    pub fn modify(self) -> EvmBuilder<'a, EXT, DB> {
         EvmBuilder::new(self)
     }
 }
