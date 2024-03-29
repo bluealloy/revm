@@ -9,11 +9,16 @@ pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
 #[cfg(all(target_os = "zkvm", target_vendor = "succinct"))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
-    use crate::B256;
-    use revm_primitives::keccak256;
+    use crate::Error;
+    use revm_primitives::{alloy_primitives::B512, keccak256, B256};
+    use std::string::String;
 
-    pub fn ecrecover(sig: &[u8; 65], msg: &B256) -> Result<B256, anyhow::Error> {
-        let recovered_key = sp1_precompiles::secp256k1::ecrecover(sig, msg)?;
+    pub fn ecrecover(sig: &B512, mut recid: u8, msg: &B256) -> Result<B256, Error> {
+        let sig = [sig.as_slice(), &[recid]].concat();
+        let array: [u8; 65] = sig.try_into().unwrap();
+
+        let recovered_key = sp1_precompiles::secp256k1::ecrecover(&array, msg)
+            .map_err(|_| Error::Other(String::from("recover failed")))?;
 
         let mut hash = keccak256(&recovered_key[1..]);
 
