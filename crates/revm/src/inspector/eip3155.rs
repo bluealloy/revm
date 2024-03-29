@@ -22,6 +22,8 @@ pub struct TracerEip3155 {
     refunded: i64,
     mem_size: usize,
     skip: bool,
+    include_memory: bool,
+    memory: Option<String>,
 }
 
 // # Output
@@ -58,7 +60,7 @@ struct Output {
     error: Option<String>,
     /// Array of all allocated values
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    memory: Option<Vec<String>>,
+    memory: Option<String>,
     /// Array of all stored values
     #[serde(default, skip_serializing_if = "Option::is_none")]
     storage: Option<HashMap<String, String>>,
@@ -98,12 +100,14 @@ impl TracerEip3155 {
 }
 
 impl TracerEip3155 {
-    pub fn new(output: Box<dyn Write>, print_summary: bool) -> Self {
+    pub fn new(output: Box<dyn Write>) -> Self {
         Self {
             output,
             gas_inspector: GasInspector::default(),
-            print_summary,
+            print_summary: true,
+            include_memory: false,
             stack: Default::default(),
+            memory: Default::default(),
             pc: 0,
             opcode: 0,
             gas: 0,
@@ -111,6 +115,18 @@ impl TracerEip3155 {
             mem_size: 0,
             skip: false,
         }
+    }
+
+    /// Don't include a summary at the end of the trace
+    pub fn without_summary(mut self) -> Self {
+        self.print_summary = false;
+        self
+    }
+
+    /// Include a memory field for each step. This significantly increases processing time and output size.
+    pub fn with_memory(mut self) -> Self {
+        self.include_memory = true;
+        self
     }
 
     fn write_value(&mut self, value: &impl serde::Serialize) -> std::io::Result<()> {
@@ -128,6 +144,11 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         self.gas_inspector.step(interp, context);
         self.stack = interp.stack.data().clone();
+        self.memory = if self.include_memory {
+            Some(hex::encode_prefixed(interp.shared_memory.context_memory()))
+        } else {
+            None
+        };
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
         self.mem_size = interp.shared_memory.len();
@@ -159,7 +180,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             } else {
                 None
             },
-            memory: None,
+            memory: self.memory.take(),
             storage: None,
             return_stack: None,
         };

@@ -76,7 +76,7 @@ async fn main() -> anyhow::Result<()> {
     let mut state = StateBuilder::new_with_database(cache_db).build();
     let mut evm = Evm::builder()
         .with_db(&mut state)
-        .with_external_context(TracerEip3155::new(Box::new(std::io::stdout()), true))
+        .with_external_context(TracerEip3155::new(Box::new(std::io::stdout())))
         .modify_block_env(|b| {
             if let Some(number) = block.number {
                 let nn = number.0[0];
