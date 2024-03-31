@@ -101,7 +101,7 @@ impl TracerEip3155 {
 
     /// Resets the Tracer to its initial state of [Self::new].
     /// This makes the inspector ready to be used again.
-    pub fn fuse(&mut self) {
+    pub fn clear(&mut self) {
         let Self {
             gas_inspector,
             stack,
@@ -151,7 +151,7 @@ impl TracerEip3155 {
         result: &InterpreterResult,
         context: &mut EvmContext<DB>,
     ) {
-        if self.print_summary && context.journaled_state.depth() == 0 {
+        if self.print_summary {
             let spec_name: &str = context.spec_id().into();
             let value = Summary {
                 state_root: B256::ZERO.to_string(),
@@ -223,11 +223,10 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     ) -> CallOutcome {
         let outcome = self.gas_inspector.call_end(context, inputs, outcome);
 
-        self.print_summary(&outcome.result, context);
-
-        // clear the state if we are at the top level
         if context.journaled_state.depth() == 0 {
-            self.fuse();
+            self.print_summary(&outcome.result, context);
+            // clear the state if we are at the top level
+            self.clear();
         }
 
         outcome
@@ -241,11 +240,11 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     ) -> CreateOutcome {
         let outcome = self.gas_inspector.create_end(context, inputs, outcome);
 
-        self.print_summary(&outcome.result, context);
-
-        // clear the state if we are at the top level
         if context.journaled_state.depth() == 0 {
-            self.fuse();
+            self.print_summary(&outcome.result, context);
+
+            // clear the state if we are at the top level
+            self.clear();
         }
 
         outcome
