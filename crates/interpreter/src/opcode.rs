@@ -432,7 +432,7 @@ opcodes! {
     0x34 => CALLVALUE    => system::callvalue        => stack_io<0, 1>;
     0x35 => CALLDATALOAD => system::calldataload     => stack_io<1, 1>;
     0x36 => CALLDATASIZE => system::calldatasize     => stack_io<0, 1>;
-    0x37 => CALLDATACOPY => system::calldatacopy     => stack_io<0, 1>;
+    0x37 => CALLDATACOPY => system::calldatacopy     => stack_io<3, 1>;
     0x38 => CODESIZE     => system::codesize         => stack_io<0, 1>, not_eof;
     0x39 => CODECOPY     => system::codecopy         => stack_io<3, 0>, not_eof;
 
@@ -508,39 +508,39 @@ opcodes! {
     0x7E => PUSH31 => stack::push::<31, H> => stack_io<0, 1>, imm_size<31>;
     0x7F => PUSH32 => stack::push::<32, H> => stack_io<0, 1>, imm_size<32>;
 
-    0x80 => DUP1  => stack::dup::<1, H> => stack_io<0, 1>;
-    0x81 => DUP2  => stack::dup::<2, H> => stack_io<0, 1>;
-    0x82 => DUP3  => stack::dup::<3, H> => stack_io<0, 1>;
-    0x83 => DUP4  => stack::dup::<4, H> => stack_io<0, 1>;
-    0x84 => DUP5  => stack::dup::<5, H> => stack_io<0, 1>;
-    0x85 => DUP6  => stack::dup::<6, H> => stack_io<0, 1>;
-    0x86 => DUP7  => stack::dup::<7, H> => stack_io<0, 1>;
-    0x87 => DUP8  => stack::dup::<8, H> => stack_io<0, 1>;
-    0x88 => DUP9  => stack::dup::<9, H> => stack_io<0, 1>;
-    0x89 => DUP10 => stack::dup::<10, H> => stack_io<0, 1>;
-    0x8A => DUP11 => stack::dup::<11, H> => stack_io<0, 1>;
-    0x8B => DUP12 => stack::dup::<12, H> => stack_io<0, 1>;
-    0x8C => DUP13 => stack::dup::<13, H> => stack_io<0, 1>;
-    0x8D => DUP14 => stack::dup::<14, H> => stack_io<0, 1>;
-    0x8E => DUP15 => stack::dup::<15, H> => stack_io<0, 1>;
-    0x8F => DUP16 => stack::dup::<16, H> => stack_io<0, 1>;
+    0x80 => DUP1  => stack::dup::<1, H> => stack_io<1, 2>;
+    0x81 => DUP2  => stack::dup::<2, H> => stack_io<2, 3>;
+    0x82 => DUP3  => stack::dup::<3, H> => stack_io<3, 4>;
+    0x83 => DUP4  => stack::dup::<4, H> => stack_io<4, 5>;
+    0x84 => DUP5  => stack::dup::<5, H> => stack_io<5, 6>;
+    0x85 => DUP6  => stack::dup::<6, H> => stack_io<6, 7>;
+    0x86 => DUP7  => stack::dup::<7, H> => stack_io<7, 8>;
+    0x87 => DUP8  => stack::dup::<8, H> => stack_io<8, 9>;
+    0x88 => DUP9  => stack::dup::<9, H> => stack_io<9, 10>;
+    0x89 => DUP10 => stack::dup::<10, H> => stack_io<10, 11>;
+    0x8A => DUP11 => stack::dup::<11, H> => stack_io<11, 12>;
+    0x8B => DUP12 => stack::dup::<12, H> => stack_io<12, 13>;
+    0x8C => DUP13 => stack::dup::<13, H> => stack_io<13, 14>;
+    0x8D => DUP14 => stack::dup::<14, H> => stack_io<14, 15>;
+    0x8E => DUP15 => stack::dup::<15, H> => stack_io<15, 16>;
+    0x8F => DUP16 => stack::dup::<16, H> => stack_io<16, 17>;
 
-    0x90 => SWAP1  => stack::swap::<1, H> => stack_io<0, 0>;
-    0x91 => SWAP2  => stack::swap::<2, H> => stack_io<0, 0>;
-    0x92 => SWAP3  => stack::swap::<3, H> => stack_io<0, 0>;
-    0x93 => SWAP4  => stack::swap::<4, H> => stack_io<0, 0>;
-    0x94 => SWAP5  => stack::swap::<5, H> => stack_io<0, 0>;
-    0x95 => SWAP6  => stack::swap::<6, H> => stack_io<0, 0>;
-    0x96 => SWAP7  => stack::swap::<7, H> => stack_io<0, 0>;
-    0x97 => SWAP8  => stack::swap::<8, H> => stack_io<0, 0>;
-    0x98 => SWAP9  => stack::swap::<9, H> => stack_io<0, 0>;
-    0x99 => SWAP10 => stack::swap::<10, H> => stack_io<0, 0>;
-    0x9A => SWAP11 => stack::swap::<11, H> => stack_io<0, 0>;
-    0x9B => SWAP12 => stack::swap::<12, H> => stack_io<0, 0>;
-    0x9C => SWAP13 => stack::swap::<13, H> => stack_io<0, 0>;
-    0x9D => SWAP14 => stack::swap::<14, H> => stack_io<0, 0>;
-    0x9E => SWAP15 => stack::swap::<15, H> => stack_io<0, 0>;
-    0x9F => SWAP16 => stack::swap::<16, H> => stack_io<0, 0>;
+    0x90 => SWAP1  => stack::swap::<1, H> => stack_io<2, 2>;
+    0x91 => SWAP2  => stack::swap::<2, H> => stack_io<3, 3>;
+    0x92 => SWAP3  => stack::swap::<3, H> => stack_io<4, 4>;
+    0x93 => SWAP4  => stack::swap::<4, H> => stack_io<5, 5>;
+    0x94 => SWAP5  => stack::swap::<5, H> => stack_io<6, 6>;
+    0x95 => SWAP6  => stack::swap::<6, H> => stack_io<7, 7>;
+    0x96 => SWAP7  => stack::swap::<7, H> => stack_io<8, 8>;
+    0x97 => SWAP8  => stack::swap::<8, H> => stack_io<9, 9>;
+    0x98 => SWAP9  => stack::swap::<9, H> => stack_io<10, 10>;
+    0x99 => SWAP10 => stack::swap::<10, H> => stack_io<11, 11>;
+    0x9A => SWAP11 => stack::swap::<11, H> => stack_io<12, 12>;
+    0x9B => SWAP12 => stack::swap::<12, H> => stack_io<13, 13>;
+    0x9C => SWAP13 => stack::swap::<13, H> => stack_io<14, 14>;
+    0x9D => SWAP14 => stack::swap::<14, H> => stack_io<15, 15>;
+    0x9E => SWAP15 => stack::swap::<15, H> => stack_io<16, 16>;
+    0x9F => SWAP16 => stack::swap::<16, H> => stack_io<17, 17>;
 
     0xA0 => LOG0 => host::log::<0, H> => stack_io<2, 0>;
     0xA1 => LOG1 => host::log::<1, H> => stack_io<3, 0>;
@@ -611,21 +611,21 @@ opcodes! {
     0xE2 => RJUMPV   => control::rjumpv => stack_io<1, 0>, imm_size<1>;
     0xE3 => CALLF    => control::callf  => stack_io<0, 0>, imm_size<2>;
     0xE4 => RETF     => control::retf   => stack_io<0, 0>, terminating;
-    0xE5 => JUMPF    => control::jumpf  => stack_io<0, 0>, imm_size<2>;
-    0xE6 => DUPN     => stack::dupn     => stack_io<0, 0>, imm_size<1>;
+    0xE5 => JUMPF    => control::jumpf  => stack_io<0, 0>, imm_size<2>, terminating;
+    0xE6 => DUPN     => stack::dupn     => stack_io<0, 1>, imm_size<1>;
     0xE7 => SWAPN    => stack::swapn    => stack_io<0, 0>, imm_size<1>;
     0xE8 => EXCHANGE => stack::exchange => stack_io<0, 0>, imm_size<1>;
     // 0xE9
     // 0xEA
     // 0xEB
-    0xEC => EOFCREATE      => contract::eofcreate::<H>       => stack_io<4, 1>;
-    0xED => CREATE4        => contract::txcreate::<H>        => stack_io<5, 1>;
-    0xEE => RETURNCONTRACT => contract::return_contract::<H> => stack_io<0, 0>, terminating; // TODO(EOF) input/output
+    0xEC => EOFCREATE      => contract::eofcreate::<H>       => stack_io<4, 1>, imm_size<1>;
+    0xED => TXCREATE        => contract::txcreate::<H>        => stack_io<5, 1>;
+    0xEE => RETURNCONTRACT => contract::return_contract::<H> => stack_io<2, 0>, imm_size<1>, terminating; // TODO(EOF) input/output
     // 0xEF
     0xF0 => CREATE       => contract::create::<false, H, SPEC> => stack_io<4, 1>, not_eof;
     0xF1 => CALL         => contract::call::<H, SPEC>          => stack_io<7, 1>, not_eof;
     0xF2 => CALLCODE     => contract::call_code::<H, SPEC>     => stack_io<7, 1>, not_eof;
-    0xF3 => RETURN       => control::ret                       => stack_io<0, 0>, terminating;
+    0xF3 => RETURN       => control::ret                       => stack_io<2, 0>, terminating;
     0xF4 => DELEGATECALL => contract::delegate_call::<H, SPEC> => stack_io<6, 1>, not_eof;
     0xF5 => CREATE2      => contract::create::<true, H, SPEC>  => stack_io<5, 1>, not_eof;
     // 0xF6
@@ -635,8 +635,8 @@ opcodes! {
     0xFA => STATICCALL     => contract::static_call::<H, SPEC> => stack_io<6, 1>, not_eof;
     0xFB => EXTSCALL       => contract::extscall::<H>          => stack_io<3, 1>;
     // 0xFC
-    0xFD => REVERT       => control::revert::<H, SPEC>    => stack_io<0, 0>, terminating;
-    0xFE => INVALID      => control::invalid              => stack_io<0, 0>, not_eof, terminating;
+    0xFD => REVERT       => control::revert::<H, SPEC>    => stack_io<2, 0>, terminating;
+    0xFE => INVALID      => control::invalid              => stack_io<0, 0>, terminating;
     0xFF => SELFDESTRUCT => host::selfdestruct::<H, SPEC> => stack_io<1, 0>, not_eof, terminating;
 }
 

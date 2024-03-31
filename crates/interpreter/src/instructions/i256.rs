@@ -123,7 +123,7 @@ pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use core::num::Wrapping;
+    use core::{num::Wrapping, ops::Sub};
 
     #[test]
     fn div_i256() {
@@ -190,6 +190,11 @@ mod tests {
         let two = U256::from(2);
         assert_eq!(i256_div(MIN_NEGATIVE_VALUE, one), MIN_NEGATIVE_VALUE);
         assert_eq!(i256_div(U256::from(4), two), U256::from(2));
+
+        let neg_one = U256::MAX;
+        let neg_two = U256::MAX.sub(&U256::from(1));
+        assert_eq!(i256_div(two, neg_one), neg_two);
+        assert_eq!(i256_div(neg_two, neg_one), two);
     }
 
     #[test]

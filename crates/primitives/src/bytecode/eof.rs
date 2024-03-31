@@ -50,7 +50,7 @@ impl Eof {
         &self.body.data_section
     }
 
-    pub fn decode(raw: Bytes) -> Result<Self, ()> {
+    pub fn decode(raw: Bytes) -> Result<Self, EofDecodeError> {
         let (header, _) = EofHeader::decode(&raw)?;
         let body = EofBody::decode(&raw, &header)?;
         Ok(Self {
@@ -66,6 +66,39 @@ impl Eof {
         // We can be little wasteful here and just replace the raw Bytes and
         // data section in the body. Other sections would still pin old raw Bytes.
     }
+}
+
+/// EOF decode errors.
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+pub enum EofDecodeError {
+    /// Short input while processing EOF.
+    MissingInput,
+    /// Short body while processing EOF.
+    MissingBodyWithoutData,
+    /// Body size is more than specified in the header.
+    DanglingData,
+    /// Invalid types section data.
+    InvalidTypesSection,
+    /// Invalid EOF magic number.
+    InvalidEOFMagicNumber,
+    /// Invalid EOF version.
+    InvalidEOFVersion,
+    /// Invalid number for types kind
+    InvalidTypesKind,
+    /// Invalid number for code kind
+    InvalidCodeKind,
+    /// Invalid terminal code
+    InvalidTerminalByte,
+    /// Invalid data kind
+    InvalidDataKind,
+    /// Invalid kind after code
+    InvalidKindAfterCode,
+    /// There should be at least one size.
+    NonSizes,
+    /// Missing size.
+    ShortInputForSizes,
+    /// Size cant be zero
+    ZeroSize,
 }
 
 #[cfg(test)]

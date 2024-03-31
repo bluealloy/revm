@@ -1,9 +1,10 @@
 use revm_interpreter::analysis::{validate_raw_eof, EofError};
-use revm_primitives::{Bytes, Eof, HashMap};
+use revm_primitives::{Bytes, Eof};
 use serde::Deserialize;
 use std::{
     collections::BTreeMap,
     path::{Path, PathBuf},
+    time::Instant,
 };
 use walkdir::{DirEntry, WalkDir};
 
@@ -11,64 +12,117 @@ use walkdir::{DirEntry, WalkDir};
 // EOF_InvalidJumpDestination
 
 /*
-result:Result { result: false, exception: Some("EOF_InvalidJumpDestination") }
-revm result:Ok(Eof { header: EofHeader { types_size: 4, code_sizes: [7], container_sizes: [], data_size: 0, sum_code_sizes: 7, sum_container_sizes: 0 }, body: EofBody { types_section: [TypesSection { inputs: 0, outputs: 128, max_stack_size: 1 }],
-code_section: [0x6001e200ffff00], container_section: [], data_section: 0x, is_data_filled: true }, raw: Some(0xef0001010004020001000704000000008000016001e200ffff00) })
-
-
-result:Result { result: false, exception: Some("EOF_InvalidTypeSectionSize") }
-revm result:Ok(Eof { header: EofHeader { types_size: 8, code_sizes: [3], container_sizes: [], data_size: 4, sum_code_sizes: 3, sum_container_sizes: 0 }, body: EofBody { types_section: [TypesSection { inputs: 0, outputs: 128, max_stack_size: 1 }, TypesSection { inputs: 0, outputs: 0, max_stack_size: 0 }],
-code_section: [0x305000], container_section: [], data_section: 0x0bad60a7, is_data_filled: true }, raw: Some(0xef000101000802000100030400040000800001000000003050000bad60a7) })
-bytes:0xef000101000802000100030400040000800001000000003050000bad60a7
-
-
+Types of error: {
+    FalsePossitive: 10,
+    Error(
+        Decode(
+            InvalidTerminalByte,
+        ),
+    ): 3,
+    Error(
+        Validation(
+            OpcodeDisabled,
+        ),
+    ): 19,
+}
+Passed tests: 2012/2044
 */
-
 #[test]
 fn eof_run_all_tests() {
     let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests");
     run_test(&eof_tests)
 }
 
+/*
+Types of error: {
+    FalsePossitive: 9,
+}
+Passed tests: 1254/1263
+
+EOF_InvalidNumberOfOutputs x7
+EOF_EofCreateWithTruncatedContainer
+EOF_InvalidContainerSectionIndex
+*/
 #[test]
-fn eof_validation_eip3540() {
-    let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP3540");
+fn eof_validation() {
+    let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/eof_validation");
     run_test(&eof_tests)
 }
 
-// One MaxStackMismatch
-#[test]
-fn eof_validation_eip3670() {
-    let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP3670");
-    run_test(&eof_tests)
+/*
+Types of error: {
+    OpcodeDisabled: 8,
 }
-
-// BIG CODE 5b5b5b5b..
-#[test]
-fn eof_validation_eip4200() {
-    let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP4200");
-    run_test(&eof_tests)
-}
-
-// EOF_InvalidFirstSectionType
-#[test]
-fn eof_validation_eip4750() {
-    let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP4750");
-    run_test(&eof_tests)
-}
-
-//
+Passed tests: 194/202
+*/
 #[test]
 fn eof_validation_eip5450() {
     let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP5450");
     run_test(&eof_tests)
 }
 
+/*
+Types of error: {
+    OpcodeDisabled: 9,
+}
+Passed tests: 290/299
+ */
+// 0x60018080808080fa00 STATICCALL validInvalid - validInvalid_89
+// 0x60018080808080f400 DELEGATECALL validInvalid - validInvalid_88
+// 0x60018080808080f400 CALL validInvalid - validInvalid_86
+// 0x38e4 CODESIZE  validInvalid - validInvalid_4
+// 0x60013f00 EXTCODEHASH validInvalid - validInvalid_39
+// 0x60018080803c00 EXTCODECOPY validInvalid - validInvalid_37
+// 0x60013b00 eXTCODESIZE validInvalid - validInvalid_36
+// 0x600180803900 CODECOPY validInvalid - validInvalid_35
+// 0x5a00 GAS validInvalid - validInvalid_60
+// 0xfe opcode is considered valid, should it be disabled?
+#[test]
+fn eof_validation_eip3670() {
+    let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP3670");
+    run_test(&eof_tests)
+}
+
+/*
+// One big bytecode.
+Types of error: {
+    TEST: 1,
+}
+Passed tests: 34/35
+*/
+#[test]
+fn eof_validation_eip4750() {
+    let inst = Instant::now();
+    let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP4750");
+    run_test(&eof_tests);
+    println!("Elapsed:{:?}", inst.elapsed())
+}
+
+/// PASSING ALL
+#[test]
+fn eof_validation_eip3540() {
+    let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP3540");
+    run_test(&eof_tests)
+}
+
+/// ALL PASSED
+#[test]
+fn eof_validation_eip4200() {
+    let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP4200");
+    run_test(&eof_tests);
+}
+
 pub fn run_test(path: &Path) {
     let test_files = find_all_json_tests(path);
     let mut test_sum = 0;
     let mut passed_tests = 0;
-    let mut types_of_error: HashMap<EofError, usize> = HashMap::new();
+
+    #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+    enum ErrorType {
+        FalsePossitive,
+        Error(EofError),
+    }
+    let mut types_of_error: BTreeMap<ErrorType, usize> = BTreeMap::new();
     for test_file in test_files {
         let s = std::fs::read_to_string(test_file).unwrap();
         let suite: TestSuite = serde_json::from_str(&s).unwrap();
@@ -79,14 +133,18 @@ pub fn run_test(path: &Path) {
                 if res.is_ok() != test_vector.results.prague.result {
                     let eof = Eof::decode(test_vector.code.clone());
                     println!(
-                        "Test failed: {} - {}\nresult:{:?}\nrevm result:{:?}\nbytes:{:?}\neof: {eof:?}",
+                        "\nTest failed: {} - {}\nresult:{:?}\nrevm result:{:#?}\nbytes:{:?}\neof:{eof:#?}",
                         name, vector_name, test_vector.results.prague, res, test_vector.code
                     );
                     *types_of_error
-                        .entry(res.err().unwrap_or(EofError::TEST))
+                        .entry(
+                            res.err()
+                                .map(|i| ErrorType::Error(i))
+                                .unwrap_or(ErrorType::FalsePossitive),
+                        )
                         .or_default() += 1;
                 } else {
-                    println!("Test passed: {} - {}", name, vector_name);
+                    //println!("Test passed: {} - {}", name, vector_name);
                     passed_tests += 1;
                 }
             }

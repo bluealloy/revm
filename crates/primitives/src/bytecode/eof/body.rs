@@ -1,4 +1,4 @@
-use super::{EofHeader, TypesSection};
+use super::{EofDecodeError, EofHeader, TypesSection};
 use crate::Bytes;
 use std::vec::Vec;
 
@@ -18,18 +18,18 @@ impl EofBody {
         self.code_section.get(index)
     }
 
-    pub fn decode(input: &Bytes, header: &EofHeader) -> Result<Self, ()> {
+    pub fn decode(input: &Bytes, header: &EofHeader) -> Result<Self, EofDecodeError> {
         let header_len = header.size();
         let partial_body_len =
             header.sum_code_sizes + header.sum_container_sizes + header.types_size as usize;
         let full_body_len = partial_body_len + header.data_size as usize;
 
         if input.len() < header_len + partial_body_len {
-            return Err(());
+            return Err(EofDecodeError::MissingBodyWithoutData);
         }
 
         if input.len() > header_len + full_body_len {
-            return Err(());
+            return Err(EofDecodeError::DanglingData);
         }
 
         let mut body = EofBody::default();

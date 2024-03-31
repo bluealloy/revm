@@ -1,19 +1,18 @@
+use self::utility::read_i16;
+use super::*;
 use revm_primitives::hex;
 
-use self::utility::read_i16;
-
-use super::*;
-
+#[cfg(feature = "std")]
 pub fn print_eof_code(code: &[u8]) {
     // We can check validity and jump destinations in one pass.
     let mut i = 0;
-    let mut rjumpv_additional_immediates = 0;
     while i < code.len() {
         let op = code[i];
         let opcode = &OPCODE_INFO_JUMPTABLE[op as usize];
 
         let Some(opcode) = opcode else {
             println!("Unknown opcode: 0x{:02X}", op);
+            i += 1;
             continue;
         };
 
@@ -34,7 +33,7 @@ pub fn print_eof_code(code: &[u8]) {
         }
         println!("");
 
-        rjumpv_additional_immediates = 0;
+        let mut rjumpv_additional_immediates = 0;
         if op == RJUMPV {
             let max_index = code[i + 1] as usize;
             let len = max_index + 1;
@@ -49,9 +48,10 @@ pub fn print_eof_code(code: &[u8]) {
 
             for vtablei in 0..len {
                 let offset = unsafe { read_i16(code.as_ptr().add(i + 2 + 2 * vtablei)) } as isize;
-                if offset == 0 {
-                    println!("Malformed code: zero offset in RJUMPV");
-                }
+                // TODO(EOF) for now disable checks for testing.
+                // if offset == 0 {
+                //     println!("Malformed code: zero offset in RJUMPV");
+                // }
 
                 println!("RJUMPV[{vtablei}]: 0x{offset:04X}({offset})");
             }

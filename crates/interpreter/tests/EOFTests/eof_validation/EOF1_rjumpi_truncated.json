@@ -1,0 +1,24 @@
+{
+  "EOF1_rjumpi_truncated": {
+    "vectors": {
+      "EOF1_rjumpi_truncated_0": {
+        "code": "0xef0001010004020001000304000000008000006000e1",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TruncatedImmediate",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpi_truncated_1": {
+        "code": "0xef0001010004020001000404000000008000006000e100",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TruncatedImmediate",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

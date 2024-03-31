@@ -1,3 +1,4 @@
+pub mod bytecode;
 pub mod evmrunner;
 pub mod format_kzg_setup;
 pub mod statetest;
@@ -18,6 +19,8 @@ pub enum MainCmd {
         about = "Evm runner command allows running arbitrary evm bytecode.\nBytecode can be provided from cli or from file with --path option."
     )]
     Evm(evmrunner::Cmd),
+    #[structopt(alias = "bc", about = "Prints the opcodes of an hex Bytecodes.")]
+    Bytecode(bytecode::Cmd),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -36,6 +39,10 @@ impl MainCmd {
             Self::Statetest(cmd) => cmd.run().map_err(Into::into),
             Self::FormatKzgSetup(cmd) => cmd.run().map_err(Into::into),
             Self::Evm(cmd) => cmd.run().map_err(Into::into),
+            Self::Bytecode(cmd) => {
+                cmd.run();
+                Ok(())
+            }
         }
     }
 }

@@ -1,0 +1,24 @@
+{
+  "EOF1_dataloadn_truncated": {
+    "vectors": {
+      "EOF1_dataloadn_truncated_0": {
+        "code": "0xef000101000402000100010400000000800000d1",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TruncatedImmediate",
+            "result": false
+          }
+        }
+      },
+      "EOF1_dataloadn_truncated_1": {
+        "code": "0xef000101000402000100020400000000800000d100",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TruncatedImmediate",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

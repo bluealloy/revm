@@ -1,0 +1,60 @@
+{
+  "EOF1_unknown_section": {
+    "vectors": {
+      "EOF1_unknown_section_0": {
+        "code": "0xef000105000100fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_unknown_section_1": {
+        "code": "0xef0001ff000100fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_unknown_section_2": {
+        "code": "0xef000101000402000100010500010000800000fe00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_DataSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_unknown_section_3": {
+        "code": "0xef00010100040200010001ff00010000800000fe00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_DataSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_unknown_section_4": {
+        "code": "0xef000101000402000100010400010500010000800000feaa00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_HeaderTerminatorMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_unknown_section_5": {
+        "code": "0xef00010100040200010001040001ff00010000800000feaa00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_HeaderTerminatorMissing",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

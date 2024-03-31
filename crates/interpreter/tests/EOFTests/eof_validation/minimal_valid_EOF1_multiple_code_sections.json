@@ -1,0 +1,31 @@
+{
+  "minimal_valid_EOF1_multiple_code_sections": {
+    "vectors": {
+      "no_data_section": {
+        "code": "0xef000101000802000200010001000080000000800000fefe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_DataSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "non_void_input_output": {
+        "code": "0xef0001010010020004000500060008000204000000008000010100000100010003020300035fe300010050e3000250e43080e300035050e480e4",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "with_data_section": {
+        "code": "0xef000101000802000200030001040001000080000000800000e50001feda",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "non_returning_status": {
+    "vectors": {
+      "non_returning_status_0": {
+        "code": "0xef00010100040200010001040000000080000000",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "non_returning_status_1": {
+        "code": "0xef000101000802000200030001040000000080000000800000e5000100",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "non_returning_status_10": {
+        "code": "0xef000101000c0200030001000700010400000000800000018000010000000000e10001e4e50002e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNonReturningFlag",
+            "result": false
+          }
+        }
+      },
+      "non_returning_status_11": {
+        "code": "0xef00010100080200020001000704000000008000000180000100e10001e4e50000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNonReturningFlag",
+            "result": false
+          }
+        }
+      },
+      "non_returning_status_12": {
+        "code": "0xef000101000c02000300030003000304000000008000000080000000800000e50001e50002e50001",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "non_returning_status_13": {
+        "code": "0xef000101000c02000300040003000304000000008000000000000000000000e3000100e50002e50001",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "non_returning_status_2": {
+        "code": "0xef000101000802000200040001040000000080000000000000e3000100e4",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "non_returning_status_3": {
+        "code": "0xef000101000c02000300040003000104000000008000000000000000000000e3000100e50002e4",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "non_returning_status_4": {
+        "code": "0xef000101000c020003000500070001040000000080000101000001000000005fe3000100e10001e4e50002e4",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "non_returning_status_5": {
+        "code": "0xef0001010008020002000500070400000000800001010000015fe3000100e10001e4e50000",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "non_returning_status_6": {
+        "code": "0xef00010100080200020001000104000000008000000080000000e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNonReturningFlag",
+            "result": false
+          }
+        }
+      },
+      "non_returning_status_7": {
+        "code": "0xef000101000402000100010400000000800000e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNonReturningFlag",
+            "result": false
+          }
+        }
+      },
+      "non_returning_status_8": {
+        "code": "0xef000101000c0200030001000300010400000000800000008000000000000000e50002e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNonReturningFlag",
+            "result": false
+          }
+        }
+      },
+      "non_returning_status_9": {
+        "code": "0xef00010100080200020001000304000000008000000000000000e50000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNonReturningFlag",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

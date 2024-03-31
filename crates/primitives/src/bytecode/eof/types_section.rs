@@ -1,4 +1,7 @@
-use super::decode_helpers::{consume_u16, consume_u8};
+use super::{
+    decode_helpers::{consume_u16, consume_u8},
+    EofDecodeError,
+};
 
 /// TODO(EOF) Chekc if max_stack_size >= inputs.
 #[derive(Debug, Clone, Default, Hash, PartialEq, Eq, Copy)]
@@ -23,7 +26,7 @@ impl TypesSection {
     }
 
     #[inline]
-    pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), ()> {
+    pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), EofDecodeError> {
         let (input, inputs) = consume_u8(input)?;
         let (input, outputs) = consume_u8(input)?;
         let (input, max_stack_size) = consume_u16(input)?;
@@ -36,9 +39,9 @@ impl TypesSection {
         Ok((section, input))
     }
 
-    pub fn validate(&self) -> Result<(), ()> {
+    pub fn validate(&self) -> Result<(), EofDecodeError> {
         if self.inputs > 0x7f || self.outputs > 0x80 || self.max_stack_size > 0x03FF {
-            return Err(());
+            return Err(EofDecodeError::InvalidTypesSection);
         }
         Ok(())
     }
