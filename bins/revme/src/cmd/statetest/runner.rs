@@ -48,7 +48,7 @@ pub enum TestErrorKind {
         got_exception: Option<String>,
     },
     #[error("Unexpected output: {got_output:?} but test expects:{expected_output:?}")]
-    UnexpecteOutput {
+    UnexpectedOutput {
         expected_output: Option<Bytes>,
         got_output: Option<Bytes>,
     },
@@ -79,7 +79,7 @@ fn skip_test(path: &Path) -> bool {
         | "RevertPrecompiledTouch_storage.json"
         | "RevertPrecompiledTouch.json"
 
-        // txbyte is of type 02 and we dont parse tx bytes for this test to fail.
+        // txbyte is of type 02 and we don't parse tx bytes for this test to fail.
         | "typeTwoBerlin.json"
 
         // Need to handle Test errors
@@ -139,7 +139,7 @@ fn check_evm_execution<EXT>(
         }
     };
 
-    // if we expect exception revm should return error from execution.
+    // If we expect exception revm should return error from execution.
     // So we do not check logs and state root.
     //
     // Note that some tests that have exception and run tests from before state clear
@@ -155,7 +155,7 @@ fn check_evm_execution<EXT>(
             // check output
             if let Some((expected_output, output)) = expected_output.zip(result.output()) {
                 if expected_output != output {
-                    let kind = TestErrorKind::UnexpecteOutput {
+                    let kind = TestErrorKind::UnexpectedOutput {
                         expected_output: Some(expected_output.clone()),
                         got_output: result.output().cloned(),
                     };

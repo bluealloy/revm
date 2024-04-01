@@ -21,7 +21,7 @@ use self::register::{HandleRegister, HandleRegisterBox};
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
 pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
-    /// Handler config.
+    /// Handler configuration.
     pub cfg: HandlerCfg,
     /// Instruction table type.
     pub instruction_table: Option<InstructionTables<'a, H>>,
@@ -29,9 +29,9 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     pub registers: Vec<HandleRegisters<EXT, DB>>,
     /// Validity handles.
     pub validation: ValidationHandler<'a, EXT, DB>,
-    /// Pre execution handle
+    /// Pre execution handle.
     pub pre_execution: PreExecutionHandler<'a, EXT, DB>,
-    /// post Execution handle
+    /// Post Execution handle.
     pub post_execution: PostExecutionHandler<'a, EXT, DB>,
     /// Execution loop that handles frames.
     pub execution: ExecutionHandler<'a, EXT, DB>,
@@ -40,7 +40,7 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
 impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     /// Created new Handler with given configuration.
     ///
-    /// Internaly it calls `mainnet_with_spec` with the given spec id.
+    /// Internally it calls `mainnet_with_spec` with the given spec id.
     /// Or `optimism_with_spec` if the optimism feature is enabled and `cfg.is_optimism` is set.
     pub fn new(cfg: HandlerCfg) -> Self {
         cfg_if::cfg_if! {
@@ -85,7 +85,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
         handler
     }
 
-    /// Optimism with spec. Similar to [`Self::mainnet_with_spec`]
+    /// Optimism with spec. Similar to [`Self::mainnet_with_spec`].
     #[cfg(feature = "optimism")]
     pub fn optimism_with_spec(spec_id: SpecId) -> Self {
         spec_to_generic!(spec_id, Self::optimism::<SPEC>())
@@ -185,7 +185,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
         let registers = core::mem::take(&mut self.registers);
         // register for optimism is added as a register, so we need to create mainnet handler here.
         let mut handler = Handler::mainnet_with_spec(spec_id);
-        // apply all registers to default handeler and raw mainnet instruction table.
+        // apply all registers to default handler and raw mainnet instruction table.
         for register in registers {
             handler.append_handler_register(register)
         }
