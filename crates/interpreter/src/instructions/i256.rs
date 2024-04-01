@@ -18,13 +18,6 @@ const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
     0x8000000000000000,
 ]);
 
-const MAX_POSITIVE_VALUE: U256 = U256::from_limbs([
-    0xffffffffffffffff,
-    0xffffffffffffffff,
-    0xffffffffffffffff,
-    0x7fffffffffffffff,
-]);
-
 const FLIPH_BITMASK_U64: u64 = 0x7FFFFFFFFFFFFFFF;
 
 #[inline]
@@ -134,6 +127,13 @@ mod tests {
     use super::*;
     use core::num::Wrapping;
     use revm_primitives::uint;
+
+    const MAX_POSITIVE_VALUE: U256 = U256::from_limbs([
+        0xffffffffffffffff,
+        0xffffffffffffffff,
+        0xffffffffffffffff,
+        0x7fffffffffffffff,
+    ]);
 
     #[test]
     fn div_i256() {
