@@ -11,7 +11,7 @@ resolver = "2"
 default-members = ["crates/revm"]
 
 [workspace.dependencies]
-c-kzg = { version = "1.0.0", default-features = false }
+c-kzg = { version = "1.0", default-features = false }
 
 [workspace.metadata.docs.rs]
 all-features = true
