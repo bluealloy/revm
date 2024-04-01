@@ -355,10 +355,7 @@ pub fn execute_test_suite(
                 let (e, exec_result) = if trace {
                     let mut evm = evm
                         .modify()
-                        .reset_handler_with_external_context(TracerEip3155::new(
-                            Box::new(stderr()),
-                            false,
-                        ))
+                        .reset_handler_with_external_context(TracerEip3155::new(Box::new(stderr())))
                         .append_handler_register(inspector_handle_register)
                         .build();
 
@@ -421,7 +418,7 @@ pub fn execute_test_suite(
                 let mut evm = Evm::builder()
                     .with_spec_id(spec_id)
                     .with_db(state)
-                    .with_external_context(TracerEip3155::new(Box::new(stdout()), false))
+                    .with_external_context(TracerEip3155::new(Box::new(stdout())))
                     .append_handler_register(inspector_handle_register)
                     .build();
                 let _ = evm.transact_commit();
