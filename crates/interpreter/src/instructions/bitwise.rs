@@ -145,133 +145,56 @@ mod tests {
         }
 
         let test_cases = [
-            /*
-            PUSH 0x0000000000000000000000000000000000000000000000000000000000000001
-            PUSH 0x00
-            SHL
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000001
-            */
             TestCase {
                 value: "0x0000000000000000000000000000000000000000000000000000000000000001",
                 shift: "0x00",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
             },
-            /*
-            PUSH 0x0000000000000000000000000000000000000000000000000000000000000001
-            PUSH 0x01
-            SHL
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000002
-            */
             TestCase {
                 value: "0x0000000000000000000000000000000000000000000000000000000000000001",
                 shift: "0x01",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000002",
             },
-            /*
-            PUSH 0x0000000000000000000000000000000000000000000000000000000000000001
-            PUSH 0xff
-            SHL
-            ---
-            0x8000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x0000000000000000000000000000000000000000000000000000000000000001",
                 shift: "0xff",
                 expected: "0x8000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0x0000000000000000000000000000000000000000000000000000000000000001
-            PUSH 0x0100
-            SHL
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x0000000000000000000000000000000000000000000000000000000000000001",
                 shift: "0x0100",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0x0000000000000000000000000000000000000000000000000000000000000001
-            PUSH 0x0101
-            SHL
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x0000000000000000000000000000000000000000000000000000000000000001",
                 shift: "0x0101",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0x00
-            SHL
-            ---
-            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            */
             TestCase {
                 value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0x00",
                 expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
             },
-            /*
-            PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0x01
-            SHL
-            ---
-            0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe
-            */
             TestCase {
                 value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0x01",
                 expected: "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
             },
-            /*
-            PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0xff
-            SHL
-            ---
-            0x8000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0xff",
                 expected: "0x8000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0x0100
-            SHL
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0x0100",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0x0000000000000000000000000000000000000000000000000000000000000000
-            PUSH 0x01
-            SHL
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x0000000000000000000000000000000000000000000000000000000000000000",
                 shift: "0x01",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0x01
-            SHL
-            ---
-            0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe
-            */
             TestCase {
                 value: "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0x01",
@@ -301,133 +224,56 @@ mod tests {
         }
 
         let test_cases = [
-            /*
-            PUSH 0x0000000000000000000000000000000000000000000000000000000000000001
-            PUSH 0x00
-            SHR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000001
-            */
             TestCase {
                 value: "0x0000000000000000000000000000000000000000000000000000000000000001",
                 shift: "0x00",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
             },
-            /*
-            PUSH 0x0000000000000000000000000000000000000000000000000000000000000001
-            PUSH 0x01
-            SHR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x0000000000000000000000000000000000000000000000000000000000000001",
                 shift: "0x01",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0x8000000000000000000000000000000000000000000000000000000000000000
-            PUSH 0x01
-            SHR
-            ---
-            0x4000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x8000000000000000000000000000000000000000000000000000000000000000",
                 shift: "0x01",
                 expected: "0x4000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0x8000000000000000000000000000000000000000000000000000000000000000
-            PUSH 0xff
-            SHR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000001
-            */
             TestCase {
                 value: "0x8000000000000000000000000000000000000000000000000000000000000000",
                 shift: "0xff",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
             },
-            /*
-            PUSH 0x8000000000000000000000000000000000000000000000000000000000000000
-            PUSH 0x0100
-            SHR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x8000000000000000000000000000000000000000000000000000000000000000",
                 shift: "0x0100",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0x8000000000000000000000000000000000000000000000000000000000000000
-            PUSH 0x0101
-            SHR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x8000000000000000000000000000000000000000000000000000000000000000",
                 shift: "0x0101",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0x00
-            SHR
-            ---
-            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            */
             TestCase {
                 value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0x00",
                 expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
             },
-            /*
-            PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0x01
-            SHR
-            ---
-            0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            */
             TestCase {
                 value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0x01",
                 expected: "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
             },
-            /*
-            PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0xff
-            SHR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000001
-            */
             TestCase {
                 value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0xff",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
             },
-            /*
-            PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0x0100
-            SHR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0x0100",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0x0000000000000000000000000000000000000000000000000000000000000000
-            PUSH 0x01
-            SHR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x0000000000000000000000000000000000000000000000000000000000000000",
                 shift: "0x01",
@@ -457,193 +303,81 @@ mod tests {
         }
 
         let test_cases = [
-            /*
-            PUSH 0x0000000000000000000000000000000000000000000000000000000000000001
-            PUSH 0x00
-            SAR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000001
-            */
             TestCase {
                 value: "0x0000000000000000000000000000000000000000000000000000000000000001",
                 shift: "0x00",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
             },
-            /*
-            PUSH 0x0000000000000000000000000000000000000000000000000000000000000001
-            PUSH 0x01
-            SAR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x0000000000000000000000000000000000000000000000000000000000000001",
                 shift: "0x01",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0x8000000000000000000000000000000000000000000000000000000000000000
-            PUSH 0x01
-            SAR
-            ---
-            0xc000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x8000000000000000000000000000000000000000000000000000000000000000",
                 shift: "0x01",
                 expected: "0xc000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0x8000000000000000000000000000000000000000000000000000000000000000
-            PUSH 0xff
-            SAR
-            ---
-            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            */
             TestCase {
                 value: "0x8000000000000000000000000000000000000000000000000000000000000000",
                 shift: "0xff",
                 expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
             },
-            /*
-            PUSH 0x8000000000000000000000000000000000000000000000000000000000000000
-            PUSH 0x0100
-            SAR
-            ---
-            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            */
             TestCase {
                 value: "0x8000000000000000000000000000000000000000000000000000000000000000",
                 shift: "0x0100",
                 expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
             },
-            /*
-            PUSH 0x8000000000000000000000000000000000000000000000000000000000000000
-            PUSH 0x0101
-            SAR
-            ---
-            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            */
             TestCase {
                 value: "0x8000000000000000000000000000000000000000000000000000000000000000",
                 shift: "0x0101",
                 expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
             },
-            /*
-            PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0x00
-            SAR
-            ---
-            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            */
             TestCase {
                 value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0x00",
                 expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
             },
-            /*
-            PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0x01
-            SAR
-            ---
-            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            */
             TestCase {
                 value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0x01",
                 expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
             },
-            /*
-            PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0xff
-            SAR
-            ---
-            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            */
             TestCase {
                 value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0xff",
                 expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
             },
-            /*
-            PUSH 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0x0100
-            SAR
-            ---
-            0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            */
             TestCase {
                 value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0x0100",
                 expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
             },
-            /*
-            PUSH 0x0000000000000000000000000000000000000000000000000000000000000000
-            PUSH 0x01
-            SAR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x0000000000000000000000000000000000000000000000000000000000000000",
                 shift: "0x01",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0x4000000000000000000000000000000000000000000000000000000000000000
-            PUSH 0xfe
-            SAR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000001
-            */
             TestCase {
                 value: "0x4000000000000000000000000000000000000000000000000000000000000000",
                 shift: "0xfe",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
             },
-            /*
-            PUSH 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0xf8
-            SAR
-            ---
-            0x000000000000000000000000000000000000000000000000000000000000007f
-            */
             TestCase {
                 value: "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0xf8",
                 expected: "0x000000000000000000000000000000000000000000000000000000000000007f",
             },
-            /*
-            PUSH 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0xfe
-            SAR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000001
-            */
             TestCase {
                 value: "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0xfe",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
             },
-            /*
-            PUSH 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0xff
-            SAR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0xff",
                 expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
             },
-            /*
-            PUSH 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-            PUSH 0x0100
-            SAR
-            ---
-            0x0000000000000000000000000000000000000000000000000000000000000000
-            */
             TestCase {
                 value: "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                 shift: "0x0100",
