@@ -5,7 +5,6 @@ use crate::{
 use alloy_provider::Provider;
 use alloy_rpc_types::BlockId;
 use alloy_transport::TransportError;
-use std::sync::Arc;
 use tokio::runtime::{Builder, Handle};
 
 /// An alloy-powered REVM [Database].
@@ -14,14 +13,14 @@ use tokio::runtime::{Builder, Handle};
 #[derive(Debug, Clone)]
 pub struct AlloyDB<P: Provider> {
     /// The provider to fetch the data from.
-    provider: Arc<P>,
+    provider: P,
     /// The block number on which the queries will be based on.
     block_number: Option<BlockId>,
 }
 
 impl<P: Provider> AlloyDB<P> {
     /// Create a new AlloyDB instance, with a [Provider] and a block (Use None for latest).
-    pub fn new(provider: Arc<P>, block_number: Option<BlockId>) -> Self {
+    pub fn new(provider: P, block_number: Option<BlockId>) -> Self {
         Self {
             provider,
             block_number,
@@ -167,7 +166,6 @@ mod tests {
             )
             .unwrap()
             .boxed();
-        let client = Arc::new(client);
         let alloydb = AlloyDB::new(client, Some(BlockId::from(16148323)));
 
         // ETH/USDT pair on Uniswap V2
