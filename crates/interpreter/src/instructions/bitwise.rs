@@ -135,13 +135,8 @@ mod tests {
 
     #[test]
     fn test_shift_left() {
-        let contract = Contract {
-            input: Bytes::default(),
-            bytecode: BytecodeLocked::default(),
-            ..Default::default()
-        };
         let mut host = DummyHost::new(Env::default());
-        let mut interpreter = Interpreter::new(contract.clone(), u64::MAX, false);
+        let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
 
         struct TestCase {
             value: &'static str,
@@ -296,13 +291,8 @@ mod tests {
 
     #[test]
     fn test_logical_shift_right() {
-        let contract = Contract {
-            input: Bytes::default(),
-            bytecode: BytecodeLocked::default(),
-            ..Default::default()
-        };
         let mut host = DummyHost::new(Env::default());
-        let mut interpreter = Interpreter::new(contract.clone(), u64::MAX, false);
+        let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
 
         struct TestCase {
             value: &'static str,
@@ -457,13 +447,8 @@ mod tests {
 
     #[test]
     fn test_arithmetic_shift_right() {
-        let contract = Contract {
-            input: Bytes::default(),
-            bytecode: BytecodeLocked::default(),
-            ..Default::default()
-        };
         let mut host = DummyHost::new(Env::default());
-        let mut interpreter = Interpreter::new(contract.clone(), u64::MAX, false);
+        let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
 
         struct TestCase {
             value: &'static str,
