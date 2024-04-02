@@ -52,6 +52,8 @@ criterion = "0.5"
 indicatif = "0.17"
 
 alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", default-features = false, features = ["reqwest"] }
+# needed for enabling TLS to use HTTPS connections when testing alloy DB
+alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git" }
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable"]
