@@ -14,7 +14,7 @@ use std::boxed::Box;
 pub struct CallFrame {
     /// Call frame has return memory range where output will be stored.
     pub return_memory_range: Range<usize>,
-    /// Frame data
+    /// Frame data.
     pub frame_data: FrameData,
 }
 
@@ -22,7 +22,7 @@ pub struct CallFrame {
 pub struct CreateFrame {
     /// Create frame has a created address.
     pub created_address: Address,
-    /// Frame data
+    /// Frame data.
     pub frame_data: FrameData,
 }
 
@@ -36,9 +36,9 @@ pub struct EOFCreateFrame {
 
 #[derive(Debug)]
 pub struct FrameData {
-    /// Journal checkpoint
+    /// Journal checkpoint.
     pub checkpoint: JournalCheckpoint,
-    /// Interpreter
+    /// Interpreter.
     pub interpreter: Interpreter,
 }
 

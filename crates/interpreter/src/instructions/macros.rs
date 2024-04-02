@@ -100,7 +100,7 @@ macro_rules! resize_memory {
                 return $ret;
             }
 
-            // Gas is calculated in evm words (256bits).
+            // Gas is calculated in evm words (256 bits).
             let words_num = rounded_size / 32;
             if !$interp
                 .gas

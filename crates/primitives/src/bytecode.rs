@@ -70,12 +70,12 @@ impl Bytecode {
         Self::LegacyRaw(bytecode)
     }
 
-    /// Create new checked bytecode
+    /// Create new checked bytecode.
     ///
     /// # Safety
     ///
     /// Bytecode need to end with STOP (0x00) opcode as checked bytecode assumes
-    /// that it is safe to iteßrate over bytecode without checking lengths
+    /// that it is safe to iterate over bytecode without checking lengths.
     pub unsafe fn new_analyzed(
         bytecode: Bytes,
         original_len: usize,

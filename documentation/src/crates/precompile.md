@@ -11,6 +11,7 @@ There are 6 precompiles implemented in REVM, and they are: `blake2`, `bn128` cur
 - [bn128](./precompile/bn128.md): Implements precompiled contracts for addition, scalar multiplication, and optimal ate pairing check on the `alt_bn128` elliptic curve.
 - [hash](./precompile/hash.md): Implements the `SHA256` and `RIPEMD160` hash functions.
 - [identity](./precompile/identity.md): Implements the `Identity` precompile, which returns the input data unchanged.
+- [point_evaluation](./precompile/point_evaluation.md): Implements the point evaluation precompile for [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844).
 - [modexp](./precompile/modexp.md): Implements the big integer modular exponentiation precompile.
 - [secp256k1](./precompile/secp256k1.md): Implements the ECDSA public key recovery precompile, based on `secp256k1` curves.
 
@@ -42,5 +43,5 @@ There are 6 precompiles implemented in REVM, and they are: `blake2`, `bn128` cur
 
 ### Re-exported Functionality:
 
-- `Precompiles` provides a static method for each Ethereum hard fork specification (e.g., `homestead`, `byzantium`, `istanbul`, `berlin`, and `latest`), each returning a set of precompiles for that specification.
+- `Precompiles` provides a static method for each Ethereum hard fork specification (e.g., `homestead`, `byzantium`, `istanbul`, `berlin`, `cancun`, and `latest`), each returning a set of precompiles for that specification.
 - `Precompiles` also provides methods to retrieve the list of precompile addresses (`addresses`), to check if a given address is a precompile (`contains`), to get the precompile at a given address (`get`), to check if there are no precompiles (`is_empty`), and to get the number of precompiles (`len`).
