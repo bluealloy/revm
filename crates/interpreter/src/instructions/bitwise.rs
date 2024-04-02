@@ -116,7 +116,7 @@ pub fn sar<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
             Sign::Minus => U256::MAX,
         }
     } else {
-        const ONE: U256 = uint! {1_U256};
+        const ONE: U256 = uint!(1_U256);
         // SAFETY: shift count is checked above; it's less than 255.
         let shift = usize::try_from(op1).unwrap();
         match value_sign {
