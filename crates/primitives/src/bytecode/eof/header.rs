@@ -173,6 +173,10 @@ impl EofHeader {
             return Err(EofDecodeError::TooManyCodeSections);
         }
 
+        if sizes.is_empty() {
+            return Err(EofDecodeError::ZeroCodeSections);
+        }
+
         if sizes.len() != (types_size / 4) as usize {
             return Err(EofDecodeError::MismatchCodeAndTypesSize);
         }
@@ -186,6 +190,10 @@ impl EofHeader {
             KIND_CONTAINER => {
                 // container_sections_sizes
                 let (input, sizes, sum) = consume_header_section_size(input)?;
+                // the number of container sections must not exceed 256
+                if sizes.len() > 256 {
+                    return Err(EofDecodeError::TooManyContainerSections);
+                }
                 header.container_sizes = sizes;
                 header.sum_container_sizes = sum;
                 let (input, kind_data) = consume_u8(input)?;
@@ -212,36 +220,6 @@ impl EofHeader {
         }
 
         Ok((header, input))
-    }
-
-    pub fn validate(&self) -> Result<(), ()> {
-        // minimum valid header size is 15 bytes (Checked in decode)
-        // version must be 0x01  (Checked in decode)
-
-        // types_size is divisible by 4
-        if self.types_size % 4 != 0 {
-            return Err(());
-        }
-
-        // the number of code sections must be equal to types_size / 4
-        if self.code_sizes.len() != self.types_size as usize / 4 {
-            return Err(());
-        }
-        // the number of code sections must not exceed 1024
-        if self.code_sizes.len() > 1024 {
-            return Err(());
-        }
-        // code_size may not be 0
-        if self.code_sizes.is_empty() {
-            return Err(());
-        }
-        // the number of container sections must not exceed 256
-        if self.container_sizes.len() > 256 {
-            return Err(());
-        }
-        // container_size may not be 0, but container sections are optional
-        // (Checked in decode)
-        Ok(())
     }
 }
 

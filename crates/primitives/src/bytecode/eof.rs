@@ -125,8 +125,12 @@ pub enum EofDecodeError {
     ShortInputForSizes,
     /// Size cant be zero
     ZeroSize,
-    /// Invalid code numbers.
-    TooManyCodeSections
+    /// Invalid code number.
+    TooManyCodeSections,
+    /// Invalid number of code sections.
+    ZeroCodeSections,
+    /// Invalid container number.
+    TooManyContainerSections,
 }
 
 #[cfg(test)]

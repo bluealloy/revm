@@ -8,8 +8,6 @@ use std::{
 };
 use walkdir::{DirEntry, WalkDir};
 
-// EOF_InvalidTypeSectionSize
-// EOF_InvalidJumpDestination
 
 /*
 Types of error: {
@@ -45,7 +43,7 @@ Types of error: {
     OpcodeDisabled: 8,
 }
 Passed tests: 194/202
-Probably same a below.
+Probably same as below.
 */
 #[test]
 fn eof_validation_eip5450() {
@@ -91,7 +89,7 @@ fn eof_validation_eip3540() {
     run_test(&eof_tests)
 }
 
-/// ALL PASSED
+/// PASSING ALL
 #[test]
 fn eof_validation_eip4200() {
     let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP4200");
@@ -105,7 +103,7 @@ pub fn run_test(path: &Path) {
 
     #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
     enum ErrorType {
-        FalsePossitive,
+        FalsePositive,
         Error(EofError),
     }
     let mut types_of_error: BTreeMap<ErrorType, usize> = BTreeMap::new();
@@ -119,18 +117,18 @@ pub fn run_test(path: &Path) {
                 if res.is_ok() != test_vector.results.prague.result {
                     let eof = Eof::decode(test_vector.code.clone());
                     println!(
-                        "\nTest failed: {} - {}\nresult:{:?}\nrevm result:{:#?}\nbytes:{:?}\n",
+                        "\nTest failed: {} - {}\nresult:{:?}\nrevm err_result:{:#?}\nbytes:{:?}\n,eof:{eof:#?}",
                         name,
                         vector_name,
                         test_vector.results.prague,
-                        false, /*res*/
+                        res.as_ref().err(),
                         test_vector.code
                     );
                     *types_of_error
                         .entry(
                             res.err()
                                 .map(|i| ErrorType::Error(i))
-                                .unwrap_or(ErrorType::FalsePossitive),
+                                .unwrap_or(ErrorType::FalsePositive),
                         )
                         .or_default() += 1;
                 } else {
