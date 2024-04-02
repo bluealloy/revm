@@ -129,9 +129,9 @@ pub fn sar<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
 #[cfg(test)]
 mod tests {
     use crate::instructions::bitwise::{sar, shl, shr};
-    use crate::{BytecodeLocked, Contract, DummyHost, Interpreter};
+    use crate::{Contract, DummyHost, Interpreter};
     use core::str::FromStr;
-    use revm_primitives::{Bytes, Env, LatestSpec, U256};
+    use revm_primitives::{Env, LatestSpec, U256};
 
     #[test]
     fn test_shift_left() {
