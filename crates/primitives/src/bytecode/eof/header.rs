@@ -95,6 +95,41 @@ impl EofHeader {
         self.size() + self.body_size()
     }
 
+    pub fn encode(&self, buffer: &mut Vec<u8>) {
+        // magic	2 bytes	0xEF00	EOF prefix
+        buffer.extend_from_slice(&0xEF00u16.to_be_bytes());
+        // version	1 byte	0x01	EOF version
+        buffer.push(0x01);
+        // kind_types	1 byte	0x01	kind marker for types size section
+        buffer.push(KIND_TYPES);
+        // types_size	2 bytes	0x0004-0xFFFF
+        buffer.extend_from_slice(&self.types_size.to_be_bytes());
+        // kind_code	1 byte	0x02	kind marker for code size section
+        buffer.push(KIND_CODE);
+        // code_sections_sizes
+        buffer.extend_from_slice(&(self.code_sizes.len() as u16).to_be_bytes());
+        for size in &self.code_sizes {
+            buffer.extend_from_slice(&size.to_be_bytes());
+        }
+        // kind_container_or_data	1 byte	0x03 or 0x04	kind marker for container size section or data size section
+        if self.container_sizes.is_empty() {
+            buffer.push(KIND_DATA);
+        } else {
+            buffer.push(KIND_CONTAINER);
+            // container_sections_sizes
+            buffer.extend_from_slice(&(self.container_sizes.len() as u16).to_be_bytes());
+            for size in &self.container_sizes {
+                buffer.extend_from_slice(&size.to_be_bytes());
+            }
+            // kind_data	1 byte	0x04	kind marker for data size section
+            buffer.push(KIND_DATA);
+        }
+        // data_size	2 bytes	0x0000-0xFFFF	16-bit unsigned big-endian integer denoting the length of the data section content
+        buffer.extend_from_slice(&self.data_size.to_be_bytes());
+        // terminator	1 byte	0x00	marks the end of the EofHeader
+        buffer.push(KIND_TERMINAL);
+    }
+
     pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), EofDecodeError> {
         let mut header = EofHeader::default();
 
@@ -121,6 +156,10 @@ impl EofHeader {
         let (input, types_size) = consume_u16(input)?;
         header.types_size = types_size;
 
+        if header.types_size % 4 != 0 {
+            return Err(EofDecodeError::InvalidTypesSection);
+        }
+
         // kind_code	1 byte	0x02	kind marker for code size section
         let (input, kind_types) = consume_u8(input)?;
         if kind_types != KIND_CODE {
@@ -129,6 +168,15 @@ impl EofHeader {
 
         // code_sections_sizes
         let (input, sizes, sum) = consume_header_section_size(input)?;
+
+        if sizes.len() > 1024 {
+            return Err(EofDecodeError::TooManyCodeSections);
+        }
+
+        if sizes.len() != (types_size / 4) as usize {
+            return Err(EofDecodeError::MismatchCodeAndTypesSize);
+        }
+
         header.code_sizes = sizes;
         header.sum_code_sizes = sum;
 

@@ -25,6 +25,12 @@ impl TypesSection {
         self.outputs as i32 - self.inputs as i32
     }
 
+    pub fn encode(&self, buffer: &mut Vec<u8>) {
+        buffer.push(self.inputs);
+        buffer.push(self.outputs);
+        buffer.extend_from_slice(&self.max_stack_size.to_be_bytes());
+    }
+
     #[inline]
     pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), EofDecodeError> {
         let (input, inputs) = consume_u8(input)?;

@@ -50,6 +50,28 @@ impl Eof {
         &self.body.data_section
     }
 
+    /// Re-encode the raw EOF bytes.
+    pub fn reencode_inner(&mut self) {
+        self.raw = Some(self.encode_slow().into())
+    }
+
+    /// Slow encode EOF bytes.
+    pub fn encode_slow(&self) -> Bytes {
+        let mut buffer: Vec<u8> = Vec::with_capacity(self.size());
+        self.header.encode(&mut buffer);
+        self.body.encode(&mut buffer);
+        buffer.into()
+    }
+
+    /// Encode the EOF into bytes.
+    pub fn encode(&self) -> Bytes {
+        if let Some(raw) = &self.raw {
+            raw.clone()
+        } else {
+            self.encode_slow()
+        }
+    }
+
     pub fn decode(raw: Bytes) -> Result<Self, EofDecodeError> {
         let (header, _) = EofHeader::decode(&raw)?;
         let body = EofBody::decode(&raw, &header)?;
@@ -79,6 +101,8 @@ pub enum EofDecodeError {
     DanglingData,
     /// Invalid types section data.
     InvalidTypesSection,
+    /// Invalid types section size.
+    InvalidTypesSectionSize,
     /// Invalid EOF magic number.
     InvalidEOFMagicNumber,
     /// Invalid EOF version.
@@ -93,12 +117,16 @@ pub enum EofDecodeError {
     InvalidDataKind,
     /// Invalid kind after code
     InvalidKindAfterCode,
+    /// Mismatch of code and types sizes.
+    MismatchCodeAndTypesSize,
     /// There should be at least one size.
     NonSizes,
     /// Missing size.
     ShortInputForSizes,
     /// Size cant be zero
     ZeroSize,
+    /// Invalid code numbers.
+    TooManyCodeSections
 }
 
 #[cfg(test)]
@@ -109,14 +137,15 @@ mod test {
 
     #[test]
     fn decode_eof() {
-        let bytes = alloy_primitives::bytes!("ef000101000402000100010400000000800000fe");
-        Eof::decode(bytes).unwrap();
+        let bytes = bytes!("ef000101000402000100010400000000800000fe");
+        let eof = Eof::decode(bytes.clone()).unwrap();
+        assert_eq!(bytes, eof.encode_slow());
     }
 
     #[test]
     fn data_slice() {
-        let bytes = alloy_primitives::bytes!("ef000101000402000100010400000000800000fe");
-        let mut eof = Eof::decode(bytes).unwrap();
+        let bytes = bytes!("ef000101000402000100010400000000800000fe");
+        let mut eof = Eof::decode(bytes.clone()).unwrap();
         eof.body.data_section = bytes!("01020304");
         assert_eq!(eof.data_slice(0, 1), &[0x01]);
         assert_eq!(eof.data_slice(0, 4), &[0x01, 0x02, 0x03, 0x04]);

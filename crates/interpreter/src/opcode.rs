@@ -618,9 +618,9 @@ opcodes! {
     // 0xE9
     // 0xEA
     // 0xEB
-    0xEC => EOFCREATE      => contract::eofcreate::<H>       => stack_io<4, 1>, imm_size<1>;
+    0xEC => EOFCREATE       => contract::eofcreate::<H>       => stack_io<4, 1>, imm_size<1>;
     0xED => TXCREATE        => contract::txcreate::<H>        => stack_io<5, 1>;
-    0xEE => RETURNCONTRACT => contract::return_contract::<H> => stack_io<2, 0>, imm_size<1>, terminating; // TODO(EOF) input/output
+    0xEE => RETURNCONTRACT  => contract::return_contract::<H> => stack_io<2, 0>, imm_size<1>, terminating;
     // 0xEF
     0xF0 => CREATE       => contract::create::<false, H, SPEC> => stack_io<4, 1>, not_eof;
     0xF1 => CALL         => contract::call::<H, SPEC>          => stack_io<7, 1>, not_eof;

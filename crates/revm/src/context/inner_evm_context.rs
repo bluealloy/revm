@@ -219,7 +219,6 @@ impl<DB: Database> InnerEvmContext<DB> {
     }
 
     /// Make create frame.
-    /// TODO(EOF) refactor with crate function.
     #[inline]
     pub fn make_eofcreate_frame(
         &mut self,

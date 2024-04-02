@@ -18,6 +18,22 @@ impl EofBody {
         self.code_section.get(index)
     }
 
+    pub fn encode(&self, buffer: &mut Vec<u8>) {
+        for types_section in &self.types_section {
+            types_section.encode(buffer);
+        }
+
+        for code_section in &self.code_section {
+            buffer.extend_from_slice(&code_section);
+        }
+
+        for container_section in &self.container_section {
+            buffer.extend_from_slice(&container_section);
+        }
+
+        buffer.extend_from_slice(&self.data_section);
+    }
+
     pub fn decode(input: &Bytes, header: &EofHeader) -> Result<Self, EofDecodeError> {
         let header_len = header.size();
         let partial_body_len =

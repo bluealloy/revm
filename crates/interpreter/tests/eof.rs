@@ -13,19 +13,13 @@ use walkdir::{DirEntry, WalkDir};
 
 /*
 Types of error: {
-    FalsePossitive: 10,
-    Error(
-        Decode(
-            InvalidTerminalByte,
-        ),
-    ): 3,
+    FalsePossitive: 1,
     Error(
         Validation(
             OpcodeDisabled,
         ),
     ): 19,
 }
-Passed tests: 2012/2044
 */
 #[test]
 fn eof_run_all_tests() {
@@ -35,13 +29,10 @@ fn eof_run_all_tests() {
 
 /*
 Types of error: {
-    FalsePossitive: 9,
+    FalsePossitive: 1,
 }
-Passed tests: 1254/1263
-
-EOF_InvalidNumberOfOutputs x7
-EOF_EofCreateWithTruncatedContainer
-EOF_InvalidContainerSectionIndex
+Passed tests: 1262/1263
+EOF_EofCreateWithTruncatedContainer TODO
 */
 #[test]
 fn eof_validation() {
@@ -54,6 +45,7 @@ Types of error: {
     OpcodeDisabled: 8,
 }
 Passed tests: 194/202
+Probably same a below.
 */
 #[test]
 fn eof_validation_eip5450() {
@@ -73,7 +65,7 @@ Passed tests: 290/299
 // 0x38e4 CODESIZE  validInvalid - validInvalid_4
 // 0x60013f00 EXTCODEHASH validInvalid - validInvalid_39
 // 0x60018080803c00 EXTCODECOPY validInvalid - validInvalid_37
-// 0x60013b00 eXTCODESIZE validInvalid - validInvalid_36
+// 0x60013b00 EXTCODESIZE validInvalid - validInvalid_36
 // 0x600180803900 CODECOPY validInvalid - validInvalid_35
 // 0x5a00 GAS validInvalid - validInvalid_60
 // 0xfe opcode is considered valid, should it be disabled?
@@ -83,13 +75,7 @@ fn eof_validation_eip3670() {
     run_test(&eof_tests)
 }
 
-/*
-// One big bytecode.
-Types of error: {
-    TEST: 1,
-}
-Passed tests: 34/35
-*/
+/// PASSING ALL
 #[test]
 fn eof_validation_eip4750() {
     let inst = Instant::now();
@@ -133,8 +119,12 @@ pub fn run_test(path: &Path) {
                 if res.is_ok() != test_vector.results.prague.result {
                     let eof = Eof::decode(test_vector.code.clone());
                     println!(
-                        "\nTest failed: {} - {}\nresult:{:?}\nrevm result:{:#?}\nbytes:{:?}\neof:{eof:#?}",
-                        name, vector_name, test_vector.results.prague, res, test_vector.code
+                        "\nTest failed: {} - {}\nresult:{:?}\nrevm result:{:#?}\nbytes:{:?}\n",
+                        name,
+                        vector_name,
+                        test_vector.results.prague,
+                        false, /*res*/
+                        test_vector.code
                     );
                     *types_of_error
                         .entry(

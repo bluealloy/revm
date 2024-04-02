@@ -99,7 +99,6 @@ pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
 pub fn validate_eof_codes(eof: &Eof) -> Result<(), EofValidationError> {
     let mut queued_codes = vec![false; eof.body.code_section.len()];
     if eof.body.code_section.len() != eof.body.types_section.len() {
-        // TODO(EOF) add custom error.
         return Err(EofValidationError::InvalidTypesSection);
     }
 
@@ -125,6 +124,7 @@ pub fn validate_eof_codes(eof: &Eof) -> Result<(), EofValidationError> {
             code,
             eof.header.data_size as usize,
             index,
+            eof.body.container_section.len(),
             &eof.body.types_section,
         )?;
 
@@ -186,6 +186,8 @@ pub enum EofValidationError {
     RJUMPVZeroMaxIndex,
     /// Jump with zero offset would make a jump to next opcode, it does not make sense.
     JumpZeroOffset,
+    /// EOFCREATE points to container out of bounds.
+    EOFCREATEInvalidIndex,
     /// CALLF section out of bounds.
     CodeSectionOutOfBounds,
     /// CALLF to non returning function is not allowed.
@@ -194,6 +196,8 @@ pub enum EofValidationError {
     StackOverflow,
     /// JUMPF needs to have enough outputs.
     JUMPFEnoughOutputs,
+    /// JUMPF Stack
+    JUMPFStackHigherThanOutputs,
     /// DATA load out of bounds.
     DataLoadOutOfBounds,
     /// TODO(EOF) check this error.
@@ -245,6 +249,7 @@ pub fn validate_eof_code(
     code: &[u8],
     data_size: usize,
     this_types_index: usize,
+    num_of_containers: usize,
     types: &[TypesSection],
 ) -> Result<HashSet<usize>, EofValidationError> {
     let mut accessed_codes = HashSet::<usize>::new();
@@ -443,7 +448,6 @@ pub fn validate_eof_code(
                     // stack overflow
                     return Err(EofValidationError::StackOverflow);
                 }
-
                 accessed_codes.insert(target_index);
 
                 if target_types.outputs == EOF_NON_RETURNING_FUNCTION {
@@ -458,10 +462,22 @@ pub fn validate_eof_code(
                     stack_requirement = this_types.outputs as i32 + target_types.inputs as i32
                         - target_types.outputs as i32;
 
+                    // Stack requirement needs to more than this instruction biggest stack number.
+                    if this_instruction.biggest > stack_requirement {
+                        return Err(EofValidationError::JUMPFStackHigherThanOutputs);
+                    }
+
                     // if this instruction max + target_types max is more then stack limit.
                     if this_instruction.biggest + stack_requirement > STACK_LIMIT as i32 {
                         return Err(EofValidationError::StackOverflow);
                     }
+                }
+            }
+            opcode::EOFCREATE => {
+                let index = code[i + 1] as usize;
+                if index >= num_of_containers {
+                    // code section out of bounds.
+                    return Err(EofValidationError::EOFCREATEInvalidIndex);
                 }
             }
             opcode::DATALOADN => {
@@ -474,9 +490,6 @@ pub fn validate_eof_code(
             opcode::RETF => {
                 stack_requirement = this_types.outputs as i32;
                 if this_instruction.biggest > stack_requirement {
-                    // stack_higher_than_outputs_required
-                    // TODO(EOF) Why is this here. Why are we erroring if biggest number
-                    // is more than outputs?
                     return Err(EofValidationError::RETFBiggestStackNumMoreThenOutputs);
                 }
             }
@@ -587,5 +600,16 @@ mod test {
         let err =
             validate_raw_eof(hex!("ef000101000c02000300040004000204000000008000020002000100010001e30001005fe500025fe4").into());
         assert!(err.is_ok(), "{err:#?}");
+    }
+
+    #[test]
+    fn test3() {
+        //result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
+        let err =
+            validate_raw_eof(hex!("ef000101000c02000300040008000304000000008000020002000503010003e30001005f5f5f5f5fe500025050e4").into());
+        assert_eq!(
+            err,
+            Err(EofError::Validation(EofValidationError::JUMPFEnoughOutputs))
+        );
     }
 }
