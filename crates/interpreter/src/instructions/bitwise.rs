@@ -130,8 +130,7 @@ pub fn sar<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
 mod tests {
     use crate::instructions::bitwise::{sar, shl, shr};
     use crate::{Contract, DummyHost, Interpreter};
-    use core::str::FromStr;
-    use revm_primitives::{Env, LatestSpec, U256};
+    use revm_primitives::{uint, Env, LatestSpec, U256};
 
     #[test]
     fn test_shift_left() {
@@ -139,76 +138,78 @@ mod tests {
         let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
 
         struct TestCase {
-            value: &'static str,
-            shift: &'static str,
-            expected: &'static str,
+            value: U256,
+            shift: U256,
+            expected: U256,
         }
 
-        let test_cases = [
-            TestCase {
-                value: "0x0000000000000000000000000000000000000000000000000000000000000001",
-                shift: "0x00",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
-            },
-            TestCase {
-                value: "0x0000000000000000000000000000000000000000000000000000000000000001",
-                shift: "0x01",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000002",
-            },
-            TestCase {
-                value: "0x0000000000000000000000000000000000000000000000000000000000000001",
-                shift: "0xff",
-                expected: "0x8000000000000000000000000000000000000000000000000000000000000000",
-            },
-            TestCase {
-                value: "0x0000000000000000000000000000000000000000000000000000000000000001",
-                shift: "0x0100",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
-            },
-            TestCase {
-                value: "0x0000000000000000000000000000000000000000000000000000000000000001",
-                shift: "0x0101",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
-            },
-            TestCase {
-                value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0x00",
-                expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-            },
-            TestCase {
-                value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0x01",
-                expected: "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
-            },
-            TestCase {
-                value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0xff",
-                expected: "0x8000000000000000000000000000000000000000000000000000000000000000",
-            },
-            TestCase {
-                value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0x0100",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
-            },
-            TestCase {
-                value: "0x0000000000000000000000000000000000000000000000000000000000000000",
-                shift: "0x01",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
-            },
-            TestCase {
-                value: "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0x01",
-                expected: "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
-            },
-        ];
+        uint! {
+            let test_cases = [
+                TestCase {
+                    value: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
+                    shift: 0x00_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
+                },
+                TestCase {
+                    value: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
+                    shift: 0x01_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000002_U256,
+                },
+                TestCase {
+                    value: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
+                    shift: 0xff_U256,
+                    expected: 0x8000000000000000000000000000000000000000000000000000000000000000_U256,
+                },
+                TestCase {
+                    value: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
+                    shift: 0x0100_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
+                },
+                TestCase {
+                    value: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
+                    shift: 0x0101_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
+                },
+                TestCase {
+                    value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                    shift: 0x00_U256,
+                    expected: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                },
+                TestCase {
+                    value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                    shift: 0x01_U256,
+                    expected: 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe_U256,
+                },
+                TestCase {
+                    value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                    shift: 0xff_U256,
+                    expected: 0x8000000000000000000000000000000000000000000000000000000000000000_U256,
+                },
+                TestCase {
+                    value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                    shift: 0x0100_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
+                },
+                TestCase {
+                    value: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
+                    shift: 0x01_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
+                },
+                TestCase {
+                    value: 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                    shift: 0x01_U256,
+                    expected: 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe_U256,
+                },
+            ];
+        }
 
         for test in test_cases {
             host.clear();
-            push!(interpreter, U256::from_str(test.value).unwrap());
-            push!(interpreter, U256::from_str(test.shift).unwrap());
+            push!(interpreter, test.value);
+            push!(interpreter, test.shift);
             shl::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
-            assert_eq!(res, U256::from_str(test.expected).unwrap());
+            assert_eq!(res, test.expected);
         }
     }
 
@@ -218,76 +219,78 @@ mod tests {
         let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
 
         struct TestCase {
-            value: &'static str,
-            shift: &'static str,
-            expected: &'static str,
+            value: U256,
+            shift: U256,
+            expected: U256,
         }
 
-        let test_cases = [
-            TestCase {
-                value: "0x0000000000000000000000000000000000000000000000000000000000000001",
-                shift: "0x00",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
-            },
-            TestCase {
-                value: "0x0000000000000000000000000000000000000000000000000000000000000001",
-                shift: "0x01",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
-            },
-            TestCase {
-                value: "0x8000000000000000000000000000000000000000000000000000000000000000",
-                shift: "0x01",
-                expected: "0x4000000000000000000000000000000000000000000000000000000000000000",
-            },
-            TestCase {
-                value: "0x8000000000000000000000000000000000000000000000000000000000000000",
-                shift: "0xff",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
-            },
-            TestCase {
-                value: "0x8000000000000000000000000000000000000000000000000000000000000000",
-                shift: "0x0100",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
-            },
-            TestCase {
-                value: "0x8000000000000000000000000000000000000000000000000000000000000000",
-                shift: "0x0101",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
-            },
-            TestCase {
-                value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0x00",
-                expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-            },
-            TestCase {
-                value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0x01",
-                expected: "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-            },
-            TestCase {
-                value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0xff",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
-            },
-            TestCase {
-                value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0x0100",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
-            },
-            TestCase {
-                value: "0x0000000000000000000000000000000000000000000000000000000000000000",
-                shift: "0x01",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
-            },
-        ];
+        uint! {
+            let test_cases = [
+                TestCase {
+                    value: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
+                    shift: 0x00_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
+                },
+                TestCase {
+                    value: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
+                    shift: 0x01_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
+                },
+                TestCase {
+                    value: 0x8000000000000000000000000000000000000000000000000000000000000000_U256,
+                    shift: 0x01_U256,
+                    expected: 0x4000000000000000000000000000000000000000000000000000000000000000_U256,
+                },
+                TestCase {
+                    value: 0x8000000000000000000000000000000000000000000000000000000000000000_U256,
+                    shift: 0xff_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
+                },
+                TestCase {
+                    value: 0x8000000000000000000000000000000000000000000000000000000000000000_U256,
+                    shift: 0x0100_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
+                },
+                TestCase {
+                    value: 0x8000000000000000000000000000000000000000000000000000000000000000_U256,
+                    shift: 0x0101_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
+                },
+                TestCase {
+                    value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                    shift: 0x00_U256,
+                    expected: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                },
+                TestCase {
+                    value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                    shift: 0x01_U256,
+                    expected: 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                },
+                TestCase {
+                    value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                    shift: 0xff_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
+                },
+                TestCase {
+                    value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                    shift: 0x0100_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
+                },
+                TestCase {
+                    value: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
+                    shift: 0x01_U256,
+                    expected: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
+                },
+            ];
+        }
 
         for test in test_cases {
             host.clear();
-            push!(interpreter, U256::from_str(test.value).unwrap());
-            push!(interpreter, U256::from_str(test.shift).unwrap());
+            push!(interpreter, test.value);
+            push!(interpreter, test.shift);
             shr::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
-            assert_eq!(res, U256::from_str(test.expected).unwrap());
+            assert_eq!(res, test.expected);
         }
     }
 
@@ -297,101 +300,103 @@ mod tests {
         let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
 
         struct TestCase {
-            value: &'static str,
-            shift: &'static str,
-            expected: &'static str,
+            value: U256,
+            shift: U256,
+            expected: U256,
         }
 
+        uint! {
         let test_cases = [
             TestCase {
-                value: "0x0000000000000000000000000000000000000000000000000000000000000001",
-                shift: "0x00",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
+                value: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
+                shift: 0x00_U256,
+                expected: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
             },
             TestCase {
-                value: "0x0000000000000000000000000000000000000000000000000000000000000001",
-                shift: "0x01",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
+                value: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
+                shift: 0x01_U256,
+                expected: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
             },
             TestCase {
-                value: "0x8000000000000000000000000000000000000000000000000000000000000000",
-                shift: "0x01",
-                expected: "0xc000000000000000000000000000000000000000000000000000000000000000",
+                value: 0x8000000000000000000000000000000000000000000000000000000000000000_U256,
+                shift: 0x01_U256,
+                expected: 0xc000000000000000000000000000000000000000000000000000000000000000_U256,
             },
             TestCase {
-                value: "0x8000000000000000000000000000000000000000000000000000000000000000",
-                shift: "0xff",
-                expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                value: 0x8000000000000000000000000000000000000000000000000000000000000000_U256,
+                shift: 0xff_U256,
+                expected: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
             },
             TestCase {
-                value: "0x8000000000000000000000000000000000000000000000000000000000000000",
-                shift: "0x0100",
-                expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                value: 0x8000000000000000000000000000000000000000000000000000000000000000_U256,
+                shift: 0x0100_U256,
+                expected: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
             },
             TestCase {
-                value: "0x8000000000000000000000000000000000000000000000000000000000000000",
-                shift: "0x0101",
-                expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                value: 0x8000000000000000000000000000000000000000000000000000000000000000_U256,
+                shift: 0x0101_U256,
+                expected: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
             },
             TestCase {
-                value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0x00",
-                expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                shift: 0x00_U256,
+                expected: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
             },
             TestCase {
-                value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0x01",
-                expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                shift: 0x01_U256,
+                expected: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
             },
             TestCase {
-                value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0xff",
-                expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                shift: 0xff_U256,
+                expected: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
             },
             TestCase {
-                value: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0x0100",
-                expected: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                shift: 0x0100_U256,
+                expected: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
             },
             TestCase {
-                value: "0x0000000000000000000000000000000000000000000000000000000000000000",
-                shift: "0x01",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
+                value: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
+                shift: 0x01_U256,
+                expected: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
             },
             TestCase {
-                value: "0x4000000000000000000000000000000000000000000000000000000000000000",
-                shift: "0xfe",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
+                value: 0x4000000000000000000000000000000000000000000000000000000000000000_U256,
+                shift: 0xfe_U256,
+                expected: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
             },
             TestCase {
-                value: "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0xf8",
-                expected: "0x000000000000000000000000000000000000000000000000000000000000007f",
+                value: 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                shift: 0xf8_U256,
+                expected: 0x000000000000000000000000000000000000000000000000000000000000007f_U256,
             },
             TestCase {
-                value: "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0xfe",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000001",
+                value: 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                shift: 0xfe_U256,
+                expected: 0x0000000000000000000000000000000000000000000000000000000000000001_U256,
             },
             TestCase {
-                value: "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0xff",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
+                value: 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                shift: 0xff_U256,
+                expected: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
             },
             TestCase {
-                value: "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-                shift: "0x0100",
-                expected: "0x0000000000000000000000000000000000000000000000000000000000000000",
+                value: 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff_U256,
+                shift: 0x0100_U256,
+                expected: 0x0000000000000000000000000000000000000000000000000000000000000000_U256,
             },
         ];
+            }
 
         for test in test_cases {
             host.clear();
-            push!(interpreter, U256::from_str(test.value).unwrap());
-            push!(interpreter, U256::from_str(test.shift).unwrap());
+            push!(interpreter, test.value);
+            push!(interpreter, test.shift);
             sar::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
-            assert_eq!(res, U256::from_str(test.expected).unwrap());
+            assert_eq!(res, test.expected);
         }
     }
 }
