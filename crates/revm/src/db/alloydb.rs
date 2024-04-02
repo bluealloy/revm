@@ -11,6 +11,7 @@ use tokio::runtime::{Builder, Handle};
 /// An alloy-powered REVM [Database].
 ///
 /// When accessing the database, it'll use the given provider to fetch the corresponding account's data.
+#[derive(Debug, Clone)]
 pub struct AlloyDB<P: Provider> {
     /// The provider to fetch the data from.
     provider: Arc<P>,
