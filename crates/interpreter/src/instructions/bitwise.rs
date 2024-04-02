@@ -116,7 +116,7 @@ pub fn sar<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
             Sign::Minus => U256::MAX,
         }
     } else {
-        const ONE: U256 = uint!{1_U256};
+        const ONE: U256 = uint! {1_U256};
         // SAFETY: shift count is checked above; it's less than 255.
         let shift = usize::try_from(op1).unwrap();
         match value_sign {
@@ -131,7 +131,7 @@ mod tests {
     use crate::instructions::bitwise::{sar, shl, shr};
     use crate::{BytecodeLocked, Contract, DummyHost, Interpreter};
     use core::str::FromStr;
-    use revm_primitives::{Bytes, LatestSpec, Env, U256};
+    use revm_primitives::{Bytes, Env, LatestSpec, U256};
 
     #[test]
     fn test_shift_left() {
