@@ -171,7 +171,7 @@ mod tests {
         let alloydb = AlloyDB::new(client, Some(BlockId::from(16148323)));
 
         // ETH/USDT pair on Uniswap V2
-        let address: Address = "0x1F98431c8aD98523631AE4a59f267346ea31F984"
+        let address: Address = "0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852"
             .parse()
             .unwrap();
 
