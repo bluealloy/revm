@@ -24,13 +24,13 @@ pub fn simple_example() {
     // Microbenchmark
     let bench_options = microbench::Options::default().time(Duration::from_secs(2));
 
-    microbench::bench(
-        &bench_options,
-        "Snailtracer Host+Interpreter benchmark",
-        || {
+    //microbench::bench(
+    //    &bench_options,
+    //    "Snailtracer Host+Interpreter benchmark",
+    //    || {
             let _ = evm.transact();
-        },
-    );
+    //    },
+    //);
 }
 
 fn main() {
