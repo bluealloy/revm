@@ -131,7 +131,7 @@ mod tests {
     use crate::instructions::bitwise::{sar, shl, shr};
     use crate::{BytecodeLocked, Contract, DummyHost, Interpreter};
     use core::str::FromStr;
-    use revm_primitives::{Bytes, CancunSpec, Env, U256};
+    use revm_primitives::{Bytes, LatestSpec, Env, U256};
 
     #[test]
     fn test_shift_left() {
@@ -288,7 +288,7 @@ mod tests {
             host.clear();
             push!(interpreter, U256::from_str(test.value).unwrap());
             push!(interpreter, U256::from_str(test.shift).unwrap());
-            shl::<DummyHost, CancunSpec>(&mut interpreter, &mut host);
+            shl::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, U256::from_str(test.expected).unwrap());
         }
@@ -449,7 +449,7 @@ mod tests {
             host.clear();
             push!(interpreter, U256::from_str(test.value).unwrap());
             push!(interpreter, U256::from_str(test.shift).unwrap());
-            shr::<DummyHost, CancunSpec>(&mut interpreter, &mut host);
+            shr::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, U256::from_str(test.expected).unwrap());
         }
@@ -670,7 +670,7 @@ mod tests {
             host.clear();
             push!(interpreter, U256::from_str(test.value).unwrap());
             push!(interpreter, U256::from_str(test.shift).unwrap());
-            sar::<DummyHost, CancunSpec>(&mut interpreter, &mut host);
+            sar::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, U256::from_str(test.expected).unwrap());
         }
