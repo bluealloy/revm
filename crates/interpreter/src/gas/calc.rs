@@ -110,7 +110,7 @@ pub fn exp_cost(spec_id: SpecId, power: U256) -> Option<u64> {
     } else {
         // EIP-160: EXP cost increase
         let gas_byte = U256::from(if spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
-            50u64
+            50
         } else {
             10
         });

@@ -28,12 +28,12 @@ pub type BoxedInstructionTable<'a, H> = [BoxedInstruction<'a, H>; 256];
 /// Note that `Plain` variant gives us 10-20% faster Interpreter execution.
 ///
 /// Boxed variant can be used to wrap plain function pointer with closure.
-pub enum InstructionTables<'a, H> {
+pub enum InstructionTables<'a, H: ?Sized> {
     Plain(InstructionTable<H>),
     Boxed(BoxedInstructionTable<'a, H>),
 }
 
-impl<H: Host> InstructionTables<'_, H> {
+impl<H: Host + ?Sized> InstructionTables<'_, H> {
     /// Creates a plain instruction table for the given spec.
     #[inline]
     pub const fn new_plain<SPEC: Spec>() -> Self {
@@ -41,7 +41,7 @@ impl<H: Host> InstructionTables<'_, H> {
     }
 }
 
-impl<'a, H: Host + 'a> InstructionTables<'a, H> {
+impl<'a, H: Host + ?Sized + 'a> InstructionTables<'a, H> {
     /// Inserts a boxed instruction into the table with the specified index.
     ///
     /// This will convert the table into the [BoxedInstructionTable] variant if it is currently a
@@ -93,13 +93,14 @@ impl<'a, H: Host + 'a> InstructionTables<'a, H> {
 
 /// Make instruction table.
 #[inline]
-pub const fn make_instruction_table<H: Host, SPEC: Spec>() -> InstructionTable<H> {
+pub const fn make_instruction_table<H: Host + ?Sized, SPEC: Spec>() -> InstructionTable<H> {
     // Force const-eval of the table creation, making this function trivial.
     // TODO: Replace this with a `const {}` block once it is stable.
-    struct ConstTable<H: Host, SPEC: Spec> {
-        _phantom: core::marker::PhantomData<(H, SPEC)>,
+    struct ConstTable<H: Host + ?Sized, SPEC: Spec> {
+        _host: core::marker::PhantomData<H>,
+        _spec: core::marker::PhantomData<SPEC>,
     }
-    impl<H: Host, SPEC: Spec> ConstTable<H, SPEC> {
+    impl<H: Host + ?Sized, SPEC: Spec> ConstTable<H, SPEC> {
         const NEW: InstructionTable<H> = {
             let mut tables: InstructionTable<H> = [control::unknown; 256];
             let mut i = 0;
@@ -120,7 +121,7 @@ pub fn make_boxed_instruction_table<'a, H, SPEC, FN>(
     mut outer: FN,
 ) -> BoxedInstructionTable<'a, H>
 where
-    H: Host,
+    H: Host + ?Sized,
     SPEC: Spec + 'a,
     FN: FnMut(Instruction<H>) -> BoxedInstruction<'a, H>,
 {
@@ -154,7 +155,7 @@ macro_rules! opcodes {
         };
 
         /// Returns the instruction function for the given opcode and spec.
-        pub const fn instruction<H: Host, SPEC: Spec>(opcode: u8) -> Instruction<H> {
+        pub const fn instruction<H: Host + ?Sized, SPEC: Spec>(opcode: u8) -> Instruction<H> {
             match opcode {
                 $($name => $f,)*
                 _ => control::unknown,
@@ -437,9 +438,16 @@ opcodes! {
 ///
 /// This is always a valid opcode, as declared in the [`opcode`][self] module or the
 /// [`OPCODE_JUMPMAP`] constant.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct OpCode(u8);
+
+impl fmt::Debug for OpCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "OpCode::{self}")
+    }
+}
 
 impl fmt::Display for OpCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -487,20 +495,6 @@ impl OpCode {
     #[inline]
     pub const fn get(self) -> u8 {
         self.0
-    }
-
-    #[inline]
-    #[deprecated(note = "use `new` instead")]
-    #[doc(hidden)]
-    pub const fn try_from_u8(opcode: u8) -> Option<Self> {
-        Self::new(opcode)
-    }
-
-    #[inline]
-    #[deprecated(note = "use `get` instead")]
-    #[doc(hidden)]
-    pub const fn u8(self) -> u8 {
-        self.get()
     }
 }
 

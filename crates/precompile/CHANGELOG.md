@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v5.1.0...revm-precompile-v6.0.0) - 2024-04-02
+
+### Fixed
+- update/enable bn128 tests ([#1242](https://github.com/bluealloy/revm/pull/1242))
+- use correct bn128 mul input length ([#1238](https://github.com/bluealloy/revm/pull/1238))
+- use correct rand package for thread_rng ([#1233](https://github.com/bluealloy/revm/pull/1233))
+
+### Other
+- remove unnecessary call to into_u256() for bn128 add ([#1239](https://github.com/bluealloy/revm/pull/1239))
+
 ## [5.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v5.0.0...revm-precompile-v5.1.0) - 2024-03-19
 
 ### Added

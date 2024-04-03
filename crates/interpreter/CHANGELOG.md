@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v3.4.0...revm-interpreter-v4.0.0) - 2024-04-02
+
+### Added
+- add tests for shift instructions ([#1254](https://github.com/bluealloy/revm/pull/1254))
+- derive serde for OpCode, improve implementations ([#1215](https://github.com/bluealloy/revm/pull/1215))
+- *(interpreter)* expose mutable access methods on stack and memory ([#1219](https://github.com/bluealloy/revm/pull/1219))
+
+### Other
+- use uint macro & fix various small things ([#1253](https://github.com/bluealloy/revm/pull/1253))
+- move div by zero check from smod to i256_mod ([#1248](https://github.com/bluealloy/revm/pull/1248))
+- *(interpreter)* unbox contract field ([#1228](https://github.com/bluealloy/revm/pull/1228))
+- *(interpreter)* keep track of remaining gas rather than spent ([#1221](https://github.com/bluealloy/revm/pull/1221))
+- *(interpreter)* don't run signextend with 31 too ([#1222](https://github.com/bluealloy/revm/pull/1222))
+
 ## [3.4.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v3.3.0...revm-interpreter-v3.4.0) - 2024-03-19
 
 ### Added
