@@ -2,28 +2,32 @@ use crate::{
     db::{Database, DatabaseRef},
     primitives::{AccountInfo, Address, Bytecode, B256, KECCAK_EMPTY, U256},
 };
-use alloy_provider::Provider;
+use alloy_provider::{Network, Provider};
 use alloy_rpc_types::BlockId;
-use alloy_transport::TransportError;
+use alloy_transport::{Transport, TransportError};
 use tokio::runtime::{Builder, Handle};
 
 /// An alloy-powered REVM [Database].
 ///
 /// When accessing the database, it'll use the given provider to fetch the corresponding account's data.
 #[derive(Debug, Clone)]
-pub struct AlloyDB<P: Provider> {
+pub struct AlloyDB<T: Transport + Clone, N: Network, P: Provider<T, N>> {
     /// The provider to fetch the data from.
     provider: P,
     /// The block number on which the queries will be based on.
     block_number: Option<BlockId>,
+    _network: std::marker::PhantomData<N>,
+    _transport: std::marker::PhantomData<T>,
 }
 
-impl<P: Provider> AlloyDB<P> {
+impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
     /// Create a new AlloyDB instance, with a [Provider] and a block (Use None for latest).
     pub fn new(provider: P, block_number: Option<BlockId>) -> Self {
         Self {
             provider,
             block_number,
+            _network: std::marker::PhantomData,
+            _transport: std::marker::PhantomData,
         }
     }
 
@@ -66,7 +70,7 @@ impl<P: Provider> AlloyDB<P> {
     }
 }
 
-impl<P: Provider> DatabaseRef for AlloyDB<P> {
+impl<T: Transport + Clone, N: Network, P: Provider<T, N>> DatabaseRef for AlloyDB<T, N, P> {
     type Error = TransportError;
 
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
@@ -126,7 +130,7 @@ impl<P: Provider> DatabaseRef for AlloyDB<P> {
     }
 }
 
-impl<P: Provider> Database for AlloyDB<P> {
+impl<T: Transport + Clone, N: Network, P: Provider<T, N>> Database for AlloyDB<T, N, P> {
     type Error = TransportError;
 
     #[inline]
@@ -164,8 +168,7 @@ mod tests {
                     .parse()
                     .unwrap(),
             )
-            .unwrap()
-            .boxed();
+            .unwrap();
         let alloydb = AlloyDB::new(client, Some(BlockId::from(16148323)));
 
         // ETH/USDT pair on Uniswap V2
