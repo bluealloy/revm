@@ -7,67 +7,67 @@ use crate::{
 use core::cmp::Ordering;
 use revm_primitives::uint;
 
-pub fn lt<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn lt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(op1 < *op2);
 }
 
-pub fn gt<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn gt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(op1 > *op2);
 }
 
-pub fn slt<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn slt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Less);
 }
 
-pub fn sgt<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn sgt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Greater);
 }
 
-pub fn eq<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn eq<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(op1 == *op2);
 }
 
-pub fn iszero<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn iszero<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1);
     *op1 = U256::from(*op1 == U256::ZERO);
 }
 
-pub fn bitand<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn bitand<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1 & *op2;
 }
 
-pub fn bitor<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn bitor<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1 | *op2;
 }
 
-pub fn bitxor<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn bitxor<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1 ^ *op2;
 }
 
-pub fn not<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn not<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1);
     *op1 = !*op1;
 }
 
-pub fn byte<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn byte<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
 
@@ -81,7 +81,7 @@ pub fn byte<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shl<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn shl<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
@@ -89,7 +89,7 @@ pub fn shl<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shr<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn shr<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
@@ -97,7 +97,7 @@ pub fn shr<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn sar<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn sar<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);

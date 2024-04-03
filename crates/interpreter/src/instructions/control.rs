@@ -5,7 +5,7 @@ use crate::{
     Host, InstructionResult, Interpreter, InterpreterResult,
 };
 
-pub fn rjump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn rjump<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::BASE);
     let offset = unsafe { read_i16(interpreter.instruction_pointer) } as isize;
@@ -14,7 +14,7 @@ pub fn rjump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset + 2) };
 }
 
-pub fn rjumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn rjumpi<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::CONDITION_JUMP_GAS);
     pop!(interpreter, condition);
@@ -28,7 +28,7 @@ pub fn rjumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset) };
 }
 
-pub fn rjumpv<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn rjumpv<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::CONDITION_JUMP_GAS);
     pop!(interpreter, case);
@@ -53,14 +53,14 @@ pub fn rjumpv<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset) };
 }
 
-pub fn jump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jump<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     panic_on_eof!(interpreter);
     gas!(interpreter, gas::MID);
     pop!(interpreter, dest);
     jump_inner(interpreter, dest);
 }
 
-pub fn jumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jumpi<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     panic_on_eof!(interpreter);
     gas!(interpreter, gas::HIGH);
     pop!(interpreter, dest, value);
@@ -81,11 +81,11 @@ fn jump_inner(interpreter: &mut Interpreter, dest: U256) {
     }
 }
 
-pub fn jumpdest_or_nop<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jumpdest_or_nop<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::JUMPDEST);
 }
 
-pub fn callf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn callf<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::LOW);
 
@@ -106,7 +106,7 @@ pub fn callf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.load_eof_code(idx, 0)
 }
 
-pub fn retf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn retf<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::RETF_GAS);
 
@@ -117,7 +117,7 @@ pub fn retf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.load_eof_code(fframe.idx, fframe.pc);
 }
 
-pub fn jumpf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jumpf<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::LOW);
 
@@ -129,7 +129,7 @@ pub fn jumpf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.load_eof_code(idx, 0)
 }
 
-pub fn pc<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn pc<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     panic_on_eof!(interpreter);
     gas!(interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
@@ -160,28 +160,28 @@ fn return_inner(interpreter: &mut Interpreter, instruction_result: InstructionRe
     };
 }
 
-pub fn ret<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn ret<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     return_inner(interpreter, InstructionResult::Return);
 }
 
 /// EIP-140: REVERT instruction
-pub fn revert<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn revert<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, BYZANTIUM);
     return_inner(interpreter, InstructionResult::Revert);
 }
 
 /// Stop opcode. This opcode halts the execution.
-pub fn stop<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn stop<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_result = InstructionResult::Stop;
 }
 
 /// Invalid opcode. This opcode halts the execution.
-pub fn invalid<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn invalid<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_result = InstructionResult::InvalidFEOpcode;
 }
 
 /// Unknown opcode. This opcode halts the execution.
-pub fn unknown<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn unknown<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_result = InstructionResult::OpcodeNotFound;
 }
 

@@ -80,3 +80,16 @@ pub struct SelfDestructResult {
     pub is_cold: bool,
     pub previously_destroyed: bool,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_host<H: Host + ?Sized>() {}
+
+    #[test]
+    fn object_safety() {
+        assert_host::<DummyHost>();
+        assert_host::<dyn Host>();
+    }
+}

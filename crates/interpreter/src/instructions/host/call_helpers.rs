@@ -34,7 +34,7 @@ pub fn get_memory_input_and_out_ranges(
 }
 
 #[inline]
-pub fn calc_call_gas<H: Host, SPEC: Spec>(
+pub fn calc_call_gas<H: Host + ?Sized, SPEC: Spec>(
     interpreter: &mut Interpreter,
     host: &mut H,
     to: Address,

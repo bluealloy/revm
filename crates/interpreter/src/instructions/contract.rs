@@ -32,7 +32,7 @@ pub fn resize_memory(
     }
 }
 
-pub fn eofcreate<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn eofcreate<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
     let initcontainer_index = unsafe { *interpreter.instruction_pointer };
@@ -89,7 +89,7 @@ pub fn eofcreate<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
 }
 
-pub fn txcreate<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn txcreate<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
     pop!(
@@ -156,7 +156,7 @@ pub fn txcreate<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn return_contract<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn return_contract<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
 }
 
@@ -173,7 +173,7 @@ pub fn extcall_input(interpreter: &mut Interpreter) -> Option<Bytes> {
     ))
 }
 
-pub fn extcall_gas_calc<H: Host>(
+pub fn extcall_gas_calc<H: Host+?Sized>(
     interpreter: &mut Interpreter,
     host: &mut H,
     target: Address,
@@ -279,7 +279,7 @@ pub fn extdcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn extscall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extscall<H: Host+?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     error_on_disabled_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
