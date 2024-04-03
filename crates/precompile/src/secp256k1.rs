@@ -6,32 +6,26 @@ pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
     Precompile::Standard(ec_recover_run),
 );
 
-#[cfg(all(target_os = "zkvm", target_vendor = "succinct"))]
+#[cfg(feature = "zk-op")]
 #[allow(clippy::module_inception)]
-mod secp256k1 {
+mod secp256k1_zk {
     use crate::Error;
     use revm_primitives::{alloy_primitives::B512, keccak256, B256};
-    use std::string::String;
 
     pub fn ecrecover(sig: &B512, mut recid: u8, msg: &B256) -> Result<B256, Error> {
-        let sig = [sig.as_slice(), &[recid]].concat();
-        let array: [u8; 65] = sig.try_into().unwrap();
-
-        let recovered_key = sp1_precompiles::secp256k1::ecrecover(&array, msg)
-            .map_err(|_| Error::Other(String::from("recover failed")))?;
-
-        let mut hash = keccak256(&recovered_key[1..]);
-
-        // truncate to 20 bytes
-        hash[..12].fill(0);
-        Ok(hash)
+        if crate::zk_op::contains_operation(&crate::zk_op::Operation::Secp256k1) {
+            crate::zk_op::ZKVM_OPERATOR
+                .get()
+                .expect("ZKVM_OPERATOR unset")
+                .secp256k1_ecrecover(sig, recid, msg)
+                .map(Into::into)
+        } else {
+            super::secp256k1::ecrecover(sig, recid, msg).map_err(|e| Error::Other(e.to_string()))
+        }
     }
 }
 
-#[cfg(all(
-    not(all(target_os = "zkvm", target_vendor = "succinct")),
-    not(feature = "secp256k1")
-))]
+#[cfg(all(not(feature = "zk-op"), not(feature = "secp256k1")))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use k256::ecdsa::{Error, RecoveryId, Signature, VerifyingKey};
@@ -63,10 +57,7 @@ mod secp256k1 {
     }
 }
 
-#[cfg(all(
-    not(all(target_os = "zkvm", target_vendor = "succinct")),
-    feature = "secp256k1"
-))]
+#[cfg(feature = "secp256k1")]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use revm_primitives::{alloy_primitives::B512, keccak256, B256};

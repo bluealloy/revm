@@ -9,7 +9,7 @@ use crate::{
 use core::marker::PhantomData;
 use std::boxed::Box;
 
-// #[cfg(feature = "zk-op")]
+#[cfg(feature = "zk-op")]
 use revm_precompile::zk_op::Operation;
 
 /// Evm Builder allows building or modifying EVM.
@@ -438,10 +438,11 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
         self
     }
 
-    // #[cfg(feature = "zk-op")]
+    #[cfg(feature = "zk-op")]
     /// Modifiy precompile to the zk operations.
     pub fn set_zkvm_operations(zk_op: Vec<Operation>) {
-        revm_precompile::zk_op::ZKVM_OPERATIONS.set(Box::new(zk_op))
+        revm_precompile::zk_op::ZKVM_OPERATIONS
+            .set(Box::new(zk_op))
             .expect("Failed to set zk operations");
     }
 }

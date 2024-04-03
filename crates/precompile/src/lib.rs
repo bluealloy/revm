@@ -19,7 +19,7 @@ pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
 pub mod utilities;
- // #[cfg(feature = "zk-op")]
+#[cfg(feature = "zk-op")]
 pub mod zk_op;
 
 use core::{cell::OnceCell, hash::Hash};
@@ -30,9 +30,10 @@ pub use revm_primitives::{
     precompile::{PrecompileError as Error, *},
     Address, Bytes, HashMap, Log, B256,
 };
-use zk_op::ZkvmOperator;
 use std::{boxed::Box, sync::OnceLock, vec::Vec};
 
+#[cfg(feature = "zk-op")]
+use zk_op::ZkvmOperator;
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base

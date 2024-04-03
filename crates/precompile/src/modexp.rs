@@ -110,6 +110,17 @@ where
     debug_assert_eq!(modulus.len(), mod_len);
 
     // Call the modexp.
+    #[cfg(feature = "zk_op")]
+    let output = if crate::zk_op::contains_operation(&crate::zk_op::Operation::Modexp) {
+        crate::zk_op::ZKVM_OPERATOR
+            .get()
+            .expect("ZKVM_OPERATOR unset")
+            .modexp_run(base, exponent, modulus)?
+            .into()
+    } else {
+        modexp(base, exponent, modulus)
+    };
+    #[cfg(not(feature = "zk_op"))]
     let output = modexp(base, exponent, modulus);
 
     // left pad the result to modulus length. bytes will always by less or equal to modulus length.

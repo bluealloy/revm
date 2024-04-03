@@ -2361,6 +2361,7 @@ version = "5.1.0"
 dependencies = [
  "aurora-engine-modexp",
  "c-kzg",
+ "cfg-if",
  "criterion",
  "k256",
  "once_cell",

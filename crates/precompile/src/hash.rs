@@ -19,8 +19,19 @@ pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if cost > gas_limit {
         Err(Error::OutOfGas)
     } else {
-        let output = sha2::Sha256::digest(input);
-        Ok((cost, output.to_vec().into()))
+        #[cfg(feature = "zk-op")]
+        let output = if crate::zk_op::contains_operation(&crate::zk_op::Operation::Sha256) {
+            crate::zk_op::ZKVM_OPERATOR
+                .get()
+                .expect("ZKVM_OPERATOR unset")
+                .sha256_run(input.as_ref())?
+                .into()
+        } else {
+            sha2::Sha256::digest(input).to_vec()
+        };
+        #[cfg(not(feature = "zk-op)"))]
+        let output = sha2::Sha256::digest(input).to_vec();
+        Ok((cost, output.into()))
     }
 }
 
@@ -32,11 +43,25 @@ pub fn ripemd160_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if gas_used > gas_limit {
         Err(Error::OutOfGas)
     } else {
-        let mut hasher = ripemd::Ripemd160::new();
-        hasher.update(input);
+        let do_hash = || -> [u8; 32] {
+            let mut hasher = ripemd::Ripemd160::new();
+            hasher.update(input);
+            let mut output = [0u8; 32];
+            hasher.finalize_into((&mut output[12..]).into());
+            output
+        };
+        #[cfg(feature = "zk-op")]
+        let output = if crate::zk_op::contains_operation(&crate::zk_op::Operation::Ripemd160) {
+            crate::zk_op::ZKVM_OPERATOR
+                .get()
+                .expect("ZKVM_OPERATOR unset")
+                .ripemd160_run(input.as_ref())?
+        } else {
+            do_hash()
+        };
+        #[cfg(not(feature = "zk-op"))]
+        let output = do_hash();
 
-        let mut output = [0u8; 32];
-        hasher.finalize_into((&mut output[12..]).into());
         Ok((gas_used, output.to_vec().into()))
     }
 }

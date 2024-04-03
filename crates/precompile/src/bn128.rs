@@ -21,11 +21,15 @@ pub mod add {
             }
             #[cfg(feature = "zk-op")]
             if zk_op::contains_operation(&Operation::Bn128Add) {
-                let operator = zk_op::ZKVM_OPERATOR.get().expect("ZKVM_OPERATOR unset");
-                return Ok((150, operator.bn128_run_add(input)?));
+                let res = zk_op::ZKVM_OPERATOR
+                    .get()
+                    .expect("ZKVM_OPERATOR unset")
+                    .bn128_run_add(input)?;
+                return Ok((150, res.into()));
             } else {
                 return Ok((150, super::run_add(input)?));
             }
+            #[cfg(not(feature = "zk-op)"))]
             Ok((150, super::run_add(input)?))
         }),
     );
@@ -54,11 +58,15 @@ pub mod mul {
             }
             #[cfg(feature = "zk-op")]
             if zk_op::contains_operation(&Operation::Bn128Mul) {
-                let operator = zk_op::ZKVM_OPERATOR.get().expect("ZKVM_OPERATOR unset");
-                return Ok((6_000, operator.bn128_run_mul(input)?));
+                let res = zk_op::ZKVM_OPERATOR
+                    .get()
+                    .expect("ZKVM_OPERATOR unset")
+                    .bn128_run_mul(input)?;
+                return Ok((6_000, res.into()));
             } else {
                 return Ok((6_000, super::run_mul(input)?));
             }
+            #[cfg(not(feature = "zk-op)"))]
             Ok((6_000, super::run_mul(input)?))
         }),
     );
@@ -69,6 +77,17 @@ pub mod mul {
             if 40_000 > gas_limit {
                 return Err(Error::OutOfGas);
             }
+            #[cfg(feature = "zk-op")]
+            if zk_op::contains_operation(&Operation::Bn128Mul) {
+                let res = zk_op::ZKVM_OPERATOR
+                    .get()
+                    .expect("ZKVM_OPERATOR unset")
+                    .bn128_run_mul(input)?;
+                return Ok((40_000, res.into()));
+            } else {
+                return Ok((40_000, super::run_mul(input)?));
+            }
+            #[cfg(not(feature = "zk-op)"))]
             Ok((40_000, super::run_mul(input)?))
         }),
     );
@@ -90,11 +109,12 @@ pub mod pair {
                     .get()
                     .expect("ZKVM_OPERATOR unset")
                     .bn128_run_pairing(input)?;
-                let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * ISTANBUL_PAIR_PER_POINT + ISTANBUL_PAIR_BASE;
+                let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * ISTANBUL_PAIR_PER_POINT
+                    + ISTANBUL_PAIR_BASE;
                 if gas_used > gas_limit {
                     return Err(Error::OutOfGas);
                 }
-                return  Ok((gas_used, bool_to_bytes32(success)))
+                return Ok((gas_used, bool_to_bytes32(success)));
             } else {
                 return super::run_pair(
                     input,
@@ -103,6 +123,7 @@ pub mod pair {
                     gas_limit,
                 );
             }
+            #[cfg(not(feature = "zk-op)"))]
             super::run_pair(
                 input,
                 ISTANBUL_PAIR_PER_POINT,
@@ -117,6 +138,27 @@ pub mod pair {
     pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
+            #[cfg(feature = "zk-op")]
+            if zk_op::contains_operation(&Operation::Bn128Pairing) {
+                let success = zk_op::ZKVM_OPERATOR
+                    .get()
+                    .expect("ZKVM_OPERATOR unset")
+                    .bn128_run_pairing(input)?;
+                let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * BYZANTIUM_PAIR_PER_POINT
+                    + BYZANTIUM_PAIR_BASE;
+                if gas_used > gas_limit {
+                    return Err(Error::OutOfGas);
+                }
+                return Ok((gas_used, bool_to_bytes32(success)));
+            } else {
+                return super::run_pair(
+                    input,
+                    ISTANBUL_PAIR_PER_POINT,
+                    ISTANBUL_PAIR_BASE,
+                    gas_limit,
+                );
+            }
+            #[cfg(not(feature = "zk-op)"))]
             super::run_pair(
                 input,
                 BYZANTIUM_PAIR_PER_POINT,
@@ -169,7 +211,9 @@ pub fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
     }
 }
 
-pub fn run_add_zk(input: &[u8]) -> Result<Bytes, Error> { unimplemented!() }
+pub fn run_add_zk(input: &[u8]) -> Result<Bytes, Error> {
+    unimplemented!()
+}
 
 pub fn run_add(input: &[u8]) -> Result<Bytes, Error> {
     let input = right_pad::<ADD_INPUT_LEN>(input);

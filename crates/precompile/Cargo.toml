@@ -20,6 +20,7 @@ ripemd = { version = "0.1", default-features = false }
 sha2 = { version = "0.10", default-features = false }
 # modexp precompile
 aurora-engine-modexp = { version = "1.0", default-features = false }
+cfg-if = "1"
 
 # Optional KZG point evaluation precompile
 c-kzg = { version = "1.0.0", default-features = false, optional = true }
@@ -39,7 +40,7 @@ sp1-precompiles = { git = "https://github.com/succinctlabs/sp1.git" }
 criterion = { version = "0.5" }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable"]
+default = ["std", "c-kzg", "secp256k1", "portable", "zk-op"]
 std = [
     "revm-primitives/std",
     "k256/std",
