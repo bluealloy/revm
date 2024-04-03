@@ -43,7 +43,8 @@ pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
     let is_create = env.tx.transact_to.is_create();
     let access_list = &env.tx.access_list;
 
-    let initial_gas_spend = gas::validate_initial_tx_gas::<SPEC>(input, is_create, access_list);
+    let initial_gas_spend =
+        gas::validate_initial_tx_gas(SPEC::SPEC_ID, input, is_create, access_list);
 
     // Additional check to see if limit is big enough to cover initial gas.
     if initial_gas_spend > env.tx.gas_limit {

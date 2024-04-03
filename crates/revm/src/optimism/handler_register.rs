@@ -133,7 +133,7 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
     // Prior to Regolith, deposit transactions did not receive gas refunds.
     let is_gas_refund_disabled = env.cfg.is_gas_refund_disabled() || (is_deposit && !is_regolith);
     if !is_gas_refund_disabled {
-        gas.set_final_refund::<SPEC>();
+        gas.set_final_refund(SPEC::SPEC_ID.is_enabled_in(SpecId::LONDON));
     }
     Ok(())
 }

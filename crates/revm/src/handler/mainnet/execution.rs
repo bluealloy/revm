@@ -4,12 +4,11 @@ use crate::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
     },
-    primitives::{EVMError, Env, Spec},
+    primitives::{EVMError, Env, Spec, SpecId},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
-use std::boxed::Box;
-
 use revm_interpreter::{CallOutcome, InterpreterResult};
+use std::boxed::Box;
 
 /// Helper function called inside [`last_frame_return`]
 #[inline]
@@ -44,7 +43,7 @@ pub fn frame_return_with_refund_flag<SPEC: Spec>(
     // gas spend. (Before london it was 2th part of gas spend)
     if refund_enabled {
         // EIP-3529: Reduction in refunds
-        gas.set_final_refund::<SPEC>();
+        gas.set_final_refund(SPEC::SPEC_ID.is_enabled_in(SpecId::LONDON));
     }
 }
 
@@ -139,10 +138,9 @@ pub fn insert_create_outcome<EXT, DB: Database>(
 
 #[cfg(test)]
 mod tests {
-    use revm_interpreter::{primitives::CancunSpec, InterpreterResult};
-    use revm_precompile::Bytes;
-
     use super::*;
+    use revm_interpreter::primitives::CancunSpec;
+    use revm_precompile::Bytes;
 
     /// Creates frame result.
     fn call_last_frame_return(instruction_result: InstructionResult, gas: Gas) -> Gas {

@@ -23,7 +23,7 @@ pub fn balance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
         interpreter,
         if SPEC::enabled(ISTANBUL) {
             // EIP-1884: Repricing for trie-size-dependent opcodes
-            gas::account_access_gas::<SPEC>(is_cold)
+            gas::account_access_gas(SPEC::SPEC_ID, is_cold)
         } else if SPEC::enabled(TANGERINE) {
             400
         } else {
@@ -105,7 +105,7 @@ pub fn extcodecopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
     let len = as_usize_or_fail!(interpreter, len_u256);
     gas_or_fail!(
         interpreter,
-        gas::extcodecopy_cost::<SPEC>(len as u64, is_cold)
+        gas::extcodecopy_cost(SPEC::SPEC_ID, len as u64, is_cold)
     );
     if len == 0 {
         return;
@@ -146,7 +146,7 @@ pub fn sload<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: 
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-    gas!(interpreter, gas::sload_cost::<SPEC>(is_cold));
+    gas!(interpreter, gas::sload_cost(SPEC::SPEC_ID, is_cold));
     push!(interpreter, value);
 }
 
@@ -166,9 +166,12 @@ pub fn sstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host:
     };
     gas_or_fail!(interpreter, {
         let remaining_gas = interpreter.gas.remaining();
-        gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
+        gas::sstore_cost(SPEC::SPEC_ID, original, old, new, remaining_gas, is_cold)
     });
-    refund!(interpreter, gas::sstore_refund::<SPEC>(original, old, new));
+    refund!(
+        interpreter,
+        gas::sstore_refund(SPEC::SPEC_ID, original, old, new)
+    );
 }
 
 /// EIP-1153: Transient storage opcodes
@@ -240,7 +243,7 @@ pub fn selfdestruct<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter,
     if !SPEC::enabled(LONDON) && !res.previously_destroyed {
         refund!(interpreter, gas::SELFDESTRUCT)
     }
-    gas!(interpreter, gas::selfdestruct_cost::<SPEC>(res));
+    gas!(interpreter, gas::selfdestruct_cost(SPEC::SPEC_ID, res));
 
     interpreter.instruction_result = InstructionResult::SelfDestruct;
 }
@@ -285,7 +288,7 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
     // EIP-1014: Skinny CREATE2
     let scheme = if IS_CREATE2 {
         pop!(interpreter, salt);
-        gas_or_fail!(interpreter, gas::create2_cost(len));
+        gas_or_fail!(interpreter, gas::create2_cost(len as u64));
         CreateScheme::Create2 { salt }
     } else {
         gas!(interpreter, gas::CREATE);
