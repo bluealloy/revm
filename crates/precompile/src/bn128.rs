@@ -5,8 +5,9 @@ use crate::{
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 use revm_primitives::Bytes;
 
-// #[cfg(feature = "zk-op")]
-use crate::zk_op::*;
+#[cfg(feature = "zk-op")]
+use crate::zk_op::{self, Operation};
+
 pub mod add {
     use super::*;
 
@@ -18,10 +19,10 @@ pub mod add {
             if 150 > gas_limit {
                 return Err(Error::OutOfGas);
             }
-            // #[cfg(feature = "zk-op")]
-            if contains_operation(&Operation::Bn128Add) {
-                let operator = ZKVM_OPERATOR.get().expect("ZKVM_OPERATOR unset");
-                return Ok((150, operator().bn128_run_add(input)?));
+            #[cfg(feature = "zk-op")]
+            if zk_op::contains_operation(&Operation::Bn128Add) {
+                let operator = zk_op::ZKVM_OPERATOR.get().expect("ZKVM_OPERATOR unset");
+                return Ok((150, operator.bn128_run_add(input)?));
             } else {
                 return Ok((150, super::run_add(input)?));
             }
@@ -51,6 +52,13 @@ pub mod mul {
             if 6_000 > gas_limit {
                 return Err(Error::OutOfGas);
             }
+            #[cfg(feature = "zk-op")]
+            if zk_op::contains_operation(&Operation::Bn128Mul) {
+                let operator = zk_op::ZKVM_OPERATOR.get().expect("ZKVM_OPERATOR unset");
+                return Ok((6_000, operator.bn128_run_mul(input)?));
+            } else {
+                return Ok((6_000, super::run_mul(input)?));
+            }
             Ok((6_000, super::run_mul(input)?))
         }),
     );
@@ -76,6 +84,25 @@ pub mod pair {
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
+            #[cfg(feature = "zk-op")]
+            if zk_op::contains_operation(&Operation::Bn128Pairing) {
+                let success = zk_op::ZKVM_OPERATOR
+                    .get()
+                    .expect("ZKVM_OPERATOR unset")
+                    .bn128_run_pairing(input)?;
+                let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * ISTANBUL_PAIR_PER_POINT + ISTANBUL_PAIR_BASE;
+                if gas_used > gas_limit {
+                    return Err(Error::OutOfGas);
+                }
+                return  Ok((gas_used, bool_to_bytes32(success)))
+            } else {
+                return super::run_pair(
+                    input,
+                    ISTANBUL_PAIR_PER_POINT,
+                    ISTANBUL_PAIR_BASE,
+                    gas_limit,
+                );
+            }
             super::run_pair(
                 input,
                 ISTANBUL_PAIR_PER_POINT,

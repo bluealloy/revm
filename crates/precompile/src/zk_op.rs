@@ -25,11 +25,6 @@ pub enum Operation {
 pub trait ZkvmOperator: Send + Sync {
     fn bn128_run_add(&self, input: &[u8]) -> Result<Bytes, Error>;
     fn bn128_run_mul(&self, input: &[u8]) -> Result<Bytes, Error>;
-    fn bn128_run_pairing(
-        input: &[u8],
-        pair_per_point_cost: u64,
-        pair_base_cost: u64,
-        gas_limit: u64,
-    ) -> bool;
+    fn bn128_run_pairing(&self, input: &[u8]) -> Result<bool, Error>;
 
 }
