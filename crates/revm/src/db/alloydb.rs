@@ -16,8 +16,7 @@ pub struct AlloyDB<T: Transport + Clone, N: Network, P: Provider<T, N>> {
     provider: P,
     /// The block number on which the queries will be based on.
     block_number: Option<BlockId>,
-    _network: std::marker::PhantomData<N>,
-    _transport: std::marker::PhantomData<T>,
+    _marker: std::marker::PhantomData<fn() -> (T, N)>,
 }
 
 impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
@@ -26,8 +25,7 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
         Self {
             provider,
             block_number,
-            _network: std::marker::PhantomData,
-            _transport: std::marker::PhantomData,
+            _marker: std::marker::PhantomData,
         }
     }
 
