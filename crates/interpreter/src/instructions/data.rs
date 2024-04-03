@@ -6,7 +6,7 @@ use crate::{
     Host,
 };
 
-pub fn data_load<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn data_load<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, DATA_LOAD_GAS);
     pop_top!(interpreter, offset);
@@ -26,7 +26,7 @@ pub fn data_load<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     *offset = U256::from_be_bytes(word);
 }
 
-pub fn data_loadn<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn data_loadn<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, VERYLOW);
     let offset = unsafe { read_u16(interpreter.instruction_pointer) } as usize;
@@ -47,7 +47,7 @@ pub fn data_loadn<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) 
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(2) };
 }
 
-pub fn data_size<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn data_size<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, BASE);
     let data_size = interpreter.eof().expect("eof").header.data_size;
@@ -55,7 +55,7 @@ pub fn data_size<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     push!(interpreter, U256::from(data_size));
 }
 
-pub fn data_copy<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, VERYLOW);
     pop!(interpreter, mem_offset, offset, size);

@@ -14,7 +14,7 @@ pub fn rjump<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset + 2) };
 }
 
-pub fn rjumpi<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn rjumpi<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::CONDITION_JUMP_GAS);
     pop!(interpreter, condition);
@@ -28,7 +28,7 @@ pub fn rjumpi<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset) };
 }
 
-pub fn rjumpv<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn rjumpv<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::CONDITION_JUMP_GAS);
     pop!(interpreter, case);
@@ -53,7 +53,7 @@ pub fn rjumpv<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset) };
 }
 
-pub fn jump<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jump<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     panic_on_eof!(interpreter);
     gas!(interpreter, gas::MID);
     pop!(interpreter, dest);
@@ -85,7 +85,7 @@ pub fn jumpdest_or_nop<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &
     gas!(interpreter, gas::JUMPDEST);
 }
 
-pub fn callf<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn callf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::LOW);
 
@@ -106,7 +106,7 @@ pub fn callf<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.load_eof_code(idx, 0)
 }
 
-pub fn retf<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn retf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::RETF_GAS);
 
@@ -117,7 +117,7 @@ pub fn retf<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.load_eof_code(fframe.idx, fframe.pc);
 }
 
-pub fn jumpf<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jumpf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::LOW);
 
@@ -129,7 +129,7 @@ pub fn jumpf<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.load_eof_code(idx, 0)
 }
 
-pub fn pc<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn pc<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     panic_on_eof!(interpreter);
     gas!(interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`

@@ -29,13 +29,13 @@ pub fn caller<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     push_b256!(interpreter, interpreter.contract.caller.into_word());
 }
 
-pub fn codesize<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn codesize<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     panic_on_eof!(interpreter);
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.contract.bytecode.len()));
 }
 
-pub fn codecopy<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn codecopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     panic_on_eof!(interpreter);
     pop!(interpreter, memory_offset, code_offset, len);
     let len = as_usize_or_fail!(interpreter, len);
@@ -136,7 +136,7 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
 }
 
 /// Part of EOF https://eips.ethereum.org/EIPS/eip-7069
-pub fn returndataload<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn returndataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, offset);
@@ -150,7 +150,7 @@ pub fn returndataload<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut
         B256::from_slice(&interpreter.return_data_buffer[offset_usize..offset_usize + 32]).into();
 }
 
-pub fn gas<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn gas<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     panic_on_eof!(interpreter);
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.gas.remaining()));

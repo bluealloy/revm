@@ -51,7 +51,7 @@ pub fn swap<const N: usize, H: Host + ?Sized>(interpreter: &mut Interpreter, _ho
     }
 }
 
-pub fn dupn<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn dupn<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     let imm = unsafe { *interpreter.instruction_pointer };
@@ -61,7 +61,7 @@ pub fn dupn<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
 }
 
-pub fn swapn<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn swapn<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     let imm = unsafe { *interpreter.instruction_pointer };
@@ -71,7 +71,7 @@ pub fn swapn<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
 }
 
-pub fn exchange<H: Host+?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn exchange<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     let imm = unsafe { *interpreter.instruction_pointer };

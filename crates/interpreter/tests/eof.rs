@@ -8,7 +8,6 @@ use std::{
 };
 use walkdir::{DirEntry, WalkDir};
 
-
 /*
 Types of error: {
     FalsePossitive: 1,

@@ -1,8 +1,7 @@
 use crate::{
     inspectors::GasInspector,
     interpreter::{
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter,
-        InterpreterResult,
+        CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
     },
     primitives::{db::Database, hex, HashMap, B256, U256},
     EvmContext, Inspector,

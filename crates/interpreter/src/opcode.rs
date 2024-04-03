@@ -90,13 +90,14 @@ impl<'a, H: Host + 'a> InstructionTables<'a, H> {
 
 /// Make instruction table.
 #[inline]
-pub const fn make_instruction_table<H: Host, SPEC: Spec>() -> InstructionTable<H> {
+pub const fn make_instruction_table<H: Host + ?Sized, SPEC: Spec>() -> InstructionTable<H> {
     // Force const-eval of the table creation, making this function trivial.
     // TODO: Replace this with a `const {}` block once it is stable.
-    struct ConstTable<H: Host, SPEC: Spec> {
-        _phantom: core::marker::PhantomData<(H, SPEC)>,
+    struct ConstTable<H: Host + ?Sized, SPEC: Spec> {
+        _host: core::marker::PhantomData<H>,
+        _spec: core::marker::PhantomData<SPEC>,
     }
-    impl<H: Host, SPEC: Spec> ConstTable<H, SPEC> {
+    impl<H: Host + ?Sized, SPEC: Spec> ConstTable<H, SPEC> {
         const NEW: InstructionTable<H> = {
             let mut tables: InstructionTable<H> = [control::unknown; 256];
             let mut i = 0;
@@ -339,7 +340,7 @@ macro_rules! opcodes {
         };
 
         /// Returns the instruction function for the given opcode and spec.
-        pub const fn instruction<H: Host, SPEC: Spec>(opcode: u8) -> Instruction<H> {
+        pub const fn instruction<H: Host + ?Sized, SPEC: Spec>(opcode: u8) -> Instruction<H> {
             match opcode {
                 $($name => $f,)*
                 _ => control::unknown,

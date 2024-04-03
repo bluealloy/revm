@@ -39,7 +39,7 @@ pub fn selfbalance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
     push!(interpreter, balance);
 }
 
-pub fn extcodesize<H: Host+?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extcodesize<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     panic_on_eof!(interpreter);
     pop_address!(interpreter, address);
     let Some((code, is_cold)) = host.code(address) else {
@@ -58,7 +58,7 @@ pub fn extcodesize<H: Host+?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
 }
 
 /// EIP-1052: EXTCODEHASH opcode
-pub fn extcodehash<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extcodehash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     panic_on_eof!(interpreter);
     check!(interpreter, CONSTANTINOPLE);
     pop_address!(interpreter, address);
@@ -76,7 +76,7 @@ pub fn extcodehash<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
     push_b256!(interpreter, code_hash);
 }
 
-pub fn extcodecopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extcodecopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     panic_on_eof!(interpreter);
     pop_address!(interpreter, address);
     pop!(interpreter, memory_offset, code_offset, len_u256);
@@ -134,7 +134,7 @@ pub fn sload<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: 
     push!(interpreter, value);
 }
 
-pub fn sstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn sstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     error_on_static_call!(interpreter);
 
     pop!(interpreter, index, value);
@@ -178,7 +178,7 @@ pub fn tload<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: 
     *index = host.tload(interpreter.contract.target_address, *index);
 }
 
-pub fn log<const N: usize, H: Host+?Sized>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn log<const N: usize, H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     error_on_static_call!(interpreter);
 
     pop!(interpreter, offset, len);
@@ -211,7 +211,7 @@ pub fn log<const N: usize, H: Host+?Sized>(interpreter: &mut Interpreter, host: 
     host.log(log);
 }
 
-pub fn selfdestruct<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn selfdestruct<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     panic_on_eof!(interpreter);
     error_on_static_call!(interpreter);
     pop_address!(interpreter, target);
