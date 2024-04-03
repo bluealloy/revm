@@ -16,6 +16,12 @@ pub mod add {
             if 150 > gas_limit {
                 return Err(Error::OutOfGas);
             }
+            // #[cfg(feature = "zk-op")]
+            if crate::ZKVM_OPERATIONS.get().expect("ZKVM_OPERATIONS unset").contains(&"bn128_add_") {
+                return Ok((150, crate::ZKVM_OPERATOR.get().unwrap().bn128_run_add(input)?));
+            } else {
+                return Ok((150, super::run_add(input)?));
+            }
             Ok((150, super::run_add(input)?))
         }),
     );
@@ -132,6 +138,8 @@ pub fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
             .map_err(|_| Error::Bn128AffineGFailedToCreate)
     }
 }
+
+pub fn run_add_zk(input: &[u8]) -> Result<Bytes, Error> { unimplemented!() }
 
 pub fn run_add(input: &[u8]) -> Result<Bytes, Error> {
     let input = right_pad::<ADD_INPUT_LEN>(input);
