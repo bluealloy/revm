@@ -5,6 +5,8 @@ use crate::{
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 use revm_primitives::Bytes;
 
+// #[cfg(feature = "zk-op")]
+use crate::zk_op::*;
 pub mod add {
     use super::*;
 
@@ -17,8 +19,9 @@ pub mod add {
                 return Err(Error::OutOfGas);
             }
             // #[cfg(feature = "zk-op")]
-            if crate::ZKVM_OPERATIONS.get().expect("ZKVM_OPERATIONS unset").contains(&"bn128_add_") {
-                return Ok((150, crate::ZKVM_OPERATOR.get().unwrap().bn128_run_add(input)?));
+            if contains_operation(&Operation::Bn128Add) {
+                let operator = ZKVM_OPERATOR.get().expect("ZKVM_OPERATOR unset");
+                return Ok((150, operator().bn128_run_add(input)?));
             } else {
                 return Ok((150, super::run_add(input)?));
             }

@@ -33,10 +33,6 @@ pub use revm_primitives::{
 use zk_op::ZkvmOperator;
 use std::{boxed::Box, sync::OnceLock, vec::Vec};
 
- // #[cfg(feature = "zk-op")]
-pub static ZKVM_OPERATIONS:  Lazy<OnceBox<Vec<&str>>>  = Lazy::new(OnceBox::<Vec::<&str>>::new);
-pub static ZKVM_OPERATOR: OnceLock<Box<dyn ZkvmOperator>> = OnceLock::new();
-
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
