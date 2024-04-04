@@ -26,7 +26,7 @@ mod secp256k1_zk {
     }
 }
 
-#[cfg(all(not(feature = "zk-op"), not(feature = "secp256k1")))]
+#[cfg(not(feature = "secp256k1"))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use k256::ecdsa::{Error, RecoveryId, Signature, VerifyingKey};
@@ -103,7 +103,12 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let recid = input[63] - 27;
     let sig = <&B512>::try_from(&input[64..128]).unwrap();
 
-    let out = secp256k1::ecrecover(sig, recid, msg)
+    #[cfg(feature = "zk-op")]
+    let ecrecover = secp256k1_zk::ecrecover;
+    #[cfg(not(feature = "zk-op"))]
+    let ecrecover = secp256k1::ecrecover;
+
+    let out = ecrecover(sig, recid, msg)
         .map(|o| o.to_vec().into())
         .unwrap_or_default();
     Ok((ECRECOVER_BASE, out))
