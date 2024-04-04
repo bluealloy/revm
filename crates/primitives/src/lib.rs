@@ -28,15 +28,8 @@ pub use bitvec;
 pub use bytecode::*;
 pub use constants::*;
 pub use env::*;
-
-cfg_if::cfg_if! {
-    if #[cfg(feature = "std")] {
-        pub use std::collections::{hash_map, hash_set, HashMap, HashSet};
-        use hashbrown as _;
-    } else {
-        pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
-    }
-}
+// Use hashbrown for everything to avoid dep collision on std::collections.
+pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
 
 #[cfg(feature = "c-kzg")]
 pub use kzg::{EnvKzgSettings, KzgSettings};
