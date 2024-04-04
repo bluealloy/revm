@@ -9,12 +9,13 @@ pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
 #[cfg(feature = "zk-op")]
 #[allow(clippy::module_inception)]
 mod secp256k1_zk {
+    use crate::zk_op::{self, Operation};
     use crate::Error;
     use revm_primitives::{alloy_primitives::B512, keccak256, B256};
 
     pub fn ecrecover(sig: &B512, mut recid: u8, msg: &B256) -> Result<B256, Error> {
-        if crate::zk_op::contains_operation(&crate::zk_op::Operation::Secp256k1) {
-            crate::zk_op::ZKVM_OPERATOR
+        if zk_op::contains_operation(&Operation::Secp256k1) {
+            zk_op::ZKVM_OPERATOR
                 .get()
                 .expect("ZKVM_OPERATOR unset")
                 .secp256k1_ecrecover(sig, recid, msg)

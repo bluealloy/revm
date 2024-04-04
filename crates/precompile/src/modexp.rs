@@ -1,3 +1,5 @@
+#[cfg(feature = "zk-op")]
+use crate::zk_op::{self, Operation};
 use crate::{
     primitives::U256,
     utilities::{left_pad, left_pad_vec, right_pad_vec, right_pad_with_offset},
@@ -111,8 +113,8 @@ where
 
     // Call the modexp.
     #[cfg(feature = "zk_op")]
-    let output = if crate::zk_op::contains_operation(&crate::zk_op::Operation::Modexp) {
-        crate::zk_op::ZKVM_OPERATOR
+    let output = if zk_op::contains_operation(&Operation::Modexp) {
+        zk_op::ZKVM_OPERATOR
             .get()
             .expect("ZKVM_OPERATOR unset")
             .modexp_run(base, exponent, modulus)?

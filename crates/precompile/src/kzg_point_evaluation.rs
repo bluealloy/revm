@@ -3,6 +3,9 @@ use c_kzg::{Bytes32, Bytes48, KzgProof, KzgSettings};
 use revm_primitives::{hex_literal::hex, Bytes, Env};
 use sha2::{Digest, Sha256};
 
+#[cfg(feature = "zk-op")]
+use crate::zk_op::{self, Operation};
+
 pub const POINT_EVALUATION: PrecompileWithAddress =
     PrecompileWithAddress(ADDRESS, Precompile::Env(run));
 
@@ -70,6 +73,18 @@ pub fn verify_kzg_proof(
     proof: &Bytes48,
     kzg_settings: &KzgSettings,
 ) -> bool {
+    #[cfg(feature = "zk-op")]
+    if zk_op::contains_operation(&Operation::VerifyKzg) {
+        let (g1_points, g2_points) = zk_op::kzg_setting_to_points(kzg_settings);
+        zk_op::ZKVM_OPERATOR
+            .get()
+            .expect("ZKVM_OPERATOR unset")
+            .verify_kzg_proof(commitment, z, y, proof, &g1_points, &g2_points)
+            .unwrap_or(false)
+    } else {
+        KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
+    }
+    #[cfg(not(feature = "zk-op"))]
     KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
 }
 
