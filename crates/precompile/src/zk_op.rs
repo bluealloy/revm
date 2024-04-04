@@ -26,7 +26,7 @@ pub enum Operation {
 
 // TODO(Cecilia): figure out best data types for each ZkVM
 // endianess etc.
-pub trait ZkvmOperator: Send + Sync + Debug {
+pub trait ZkvmOperator: Send + Sync + 'static {
     fn bn128_run_add(&self, input: &[u8]) -> Result<[u8; 64], Error>;
     fn bn128_run_mul(&self, input: &[u8]) -> Result<[u8; 64], Error>;
     fn bn128_run_pairing(&self, input: &[u8]) -> Result<bool, Error>;
