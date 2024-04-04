@@ -1,12 +1,7 @@
 use std::sync::OnceLock;
 
 use crate::Error;
-use c_kzg::{KzgSettings, BYTES_PER_G1_POINT, BYTES_PER_G2_POINT};
 use once_cell::{race::OnceBox, sync::Lazy};
-use revm_primitives::{
-    kzg::{NUM_G1_POINTS, NUM_G2_POINTS},
-    Bytes,
-};
 
 pub static ZKVM_OPERATIONS: Lazy<OnceBox<Vec<Operation>>> =
     Lazy::new(OnceBox::<Vec<Operation>>::new);
@@ -45,23 +40,23 @@ pub trait ZkvmOperator: Send + Sync {
         recid: u8,
         msg: &[u8; 32],
     ) -> Result<[u8; 32], Error>;
-    fn verify_kzg_proof(
-        &self,
-        commitment_bytes: &[u8; 48],
-        z_bytes: &[u8; 32],
-        y_bytes: &[u8; 32],
-        proof_bytes: &[u8; 48],
-        G1: &[[u32; BYTES_PER_G1_POINT]; NUM_G1_POINTS],
-        G2: &[[u32; BYTES_PER_G2_POINT]; NUM_G2_POINTS],
-    ) -> Result<bool, Error>;
+    // fn verify_kzg_proof(
+    //     &self,
+    //     commitment_bytes: &[u8; 48],
+    //     z_bytes: &[u8; 32],
+    //     y_bytes: &[u8; 32],
+    //     proof_bytes: &[u8; 48],
+    //     G1: &[[u32; BYTES_PER_G1_POINT]; NUM_G1_POINTS],
+    //     G2: &[[u32; BYTES_PER_G2_POINT]; NUM_G2_POINTS],
+    // ) -> Result<bool, Error>;
 }
 
-pub fn kzg_setting_to_points(
-    kzg_settings: &KzgSettings,
-) -> (
-    [[u32; BYTES_PER_G1_POINT]; NUM_G1_POINTS],
-    [[u32; BYTES_PER_G2_POINT]; NUM_G2_POINTS],
-) {
-    // TODO(Cecilia): figure out what's the best interface for trusted setup in common ZKVM
-    todo!()
-}
+// pub fn kzg_setting_to_points(
+//     kzg_settings: &KzgSettings,
+// ) -> (
+//     [[u32; BYTES_PER_G1_POINT]; NUM_G1_POINTS],
+//     [[u32; BYTES_PER_G2_POINT]; NUM_G2_POINTS],
+// ) {
+//     // TODO(Cecilia): figure out what's the best interface for trusted setup in common ZKVM
+//     todo!()
+// }
