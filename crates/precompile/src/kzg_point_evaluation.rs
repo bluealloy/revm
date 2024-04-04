@@ -73,19 +73,25 @@ pub fn verify_kzg_proof(
     proof: &Bytes48,
     kzg_settings: &KzgSettings,
 ) -> bool {
+    let do_verify = || -> bool {
+        KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
+    };
     #[cfg(feature = "zk-op")]
     if zk_op::contains_operation(&Operation::VerifyKzg) {
         let (g1_points, g2_points) = zk_op::kzg_setting_to_points(kzg_settings);
         zk_op::ZKVM_OPERATOR
             .get()
-            .expect("ZKVM_OPERATOR unset")
-            .verify_kzg_proof(commitment, z, y, proof, &g1_points, &g2_points)
-            .unwrap_or(false)
+            .and_then(|operator| {
+                operator
+                    .verify_kzg_proof(commitment, z, y, proof, &g1_points, &g2_points)
+                    .ok()
+            })
+            .unwrap_or_else(do_verify)
     } else {
-        KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
+        do_verify()
     }
     #[cfg(not(feature = "zk-op"))]
-    KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
+    do_verify()
 }
 
 #[inline]

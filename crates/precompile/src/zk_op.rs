@@ -13,10 +13,7 @@ pub static ZKVM_OPERATIONS: Lazy<OnceBox<Vec<Operation>>> =
 pub static ZKVM_OPERATOR: OnceLock<Box<dyn ZkvmOperator>> = OnceLock::new();
 
 pub fn contains_operation(op: &Operation) -> bool {
-    ZKVM_OPERATIONS
-        .get()
-        .expect("ZKVM_OPERATIONS unset")
-        .contains(&op)
+    ZKVM_OPERATIONS.get().is_some_and(|ops| ops.contains(op))
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -32,6 +29,8 @@ pub enum Operation {
     VerifyKzg,
 }
 
+// TODO(Cecilia): figure out best data types for each ZkVM
+// endianess etc.
 pub trait ZkvmOperator: Send + Sync {
     fn bn128_run_add(&self, input: &[u8]) -> Result<[u8; 64], Error>;
     fn bn128_run_mul(&self, input: &[u8]) -> Result<[u8; 64], Error>;
@@ -63,5 +62,6 @@ pub fn kzg_setting_to_points(
     [[u32; BYTES_PER_G1_POINT]; NUM_G1_POINTS],
     [[u32; BYTES_PER_G2_POINT]; NUM_G2_POINTS],
 ) {
+    // TODO(Cecilia): figure out what's the best interface for trusted setup in common ZKVM
     todo!()
 }
