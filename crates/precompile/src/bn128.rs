@@ -66,7 +66,6 @@ pub mod mul {
             } else {
                 return Ok((6_000, super::run_mul(input)?));
             }
-            // #[cfg(not(feature = "zk-op)"))]
             Ok((6_000, super::run_mul(input)?))
         }),
     );
@@ -87,7 +86,6 @@ pub mod mul {
             } else {
                 return Ok((40_000, super::run_mul(input)?));
             }
-            // #[cfg(not(feature = "zk-op)"))]
             Ok((40_000, super::run_mul(input)?))
         }),
     );
