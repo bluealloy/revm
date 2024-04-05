@@ -34,7 +34,7 @@ pub fn get_memory_input_and_out_ranges(
 }
 
 #[inline]
-pub fn calc_call_gas<H: Host, SPEC: Spec>(
+pub fn calc_call_gas<H: Host + ?Sized, SPEC: Spec>(
     interpreter: &mut Interpreter,
     host: &mut H,
     to: Address,
@@ -49,7 +49,8 @@ pub fn calc_call_gas<H: Host, SPEC: Spec>(
     };
     let is_new = !exist;
 
-    let call_cost = gas::call_cost::<SPEC>(
+    let call_cost = gas::call_cost(
+        SPEC::SPEC_ID,
         has_transfer,
         is_new,
         is_cold,

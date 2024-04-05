@@ -1,6 +1,9 @@
 use crate::{
     inspectors::GasInspector,
-    interpreter::{opcode, CallInputs, CallOutcome, Interpreter},
+    interpreter::{
+        opcode, CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter,
+        InterpreterResult,
+    },
     primitives::{db::Database, hex, HashMap, B256, U256},
     EvmContext, Inspector,
 };
@@ -22,6 +25,8 @@ pub struct TracerEip3155 {
     refunded: i64,
     mem_size: usize,
     skip: bool,
+    include_memory: bool,
+    memory: Option<String>,
 }
 
 // # Output
@@ -58,7 +63,7 @@ struct Output {
     error: Option<String>,
     /// Array of all allocated values
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    memory: Option<Vec<String>>,
+    memory: Option<String>,
     /// Array of all stored values
     #[serde(default, skip_serializing_if = "Option::is_none")]
     storage: Option<HashMap<String, String>>,
@@ -95,15 +100,41 @@ impl TracerEip3155 {
     pub fn set_writer(&mut self, writer: Box<dyn Write>) {
         self.output = writer;
     }
+
+    /// Resets the Tracer to its initial state of [Self::new].
+    /// This makes the inspector ready to be used again.
+    pub fn clear(&mut self) {
+        let Self {
+            gas_inspector,
+            stack,
+            pc,
+            opcode,
+            gas,
+            refunded,
+            mem_size,
+            skip,
+            ..
+        } = self;
+        *gas_inspector = GasInspector::default();
+        stack.clear();
+        *pc = 0;
+        *opcode = 0;
+        *gas = 0;
+        *refunded = 0;
+        *mem_size = 0;
+        *skip = false;
+    }
 }
 
 impl TracerEip3155 {
-    pub fn new(output: Box<dyn Write>, print_summary: bool) -> Self {
+    pub fn new(output: Box<dyn Write>) -> Self {
         Self {
             output,
             gas_inspector: GasInspector::default(),
-            print_summary,
+            print_summary: true,
+            include_memory: false,
             stack: Default::default(),
+            memory: Default::default(),
             pc: 0,
             opcode: 0,
             gas: 0,
@@ -113,10 +144,44 @@ impl TracerEip3155 {
         }
     }
 
+    /// Don't include a summary at the end of the trace
+    pub fn without_summary(mut self) -> Self {
+        self.print_summary = false;
+        self
+    }
+
+    /// Include a memory field for each step. This significantly increases processing time and output size.
+    pub fn with_memory(mut self) -> Self {
+        self.include_memory = true;
+        self
+    }
+
     fn write_value(&mut self, value: &impl serde::Serialize) -> std::io::Result<()> {
         serde_json::to_writer(&mut *self.output, value)?;
         self.output.write_all(b"\n")?;
         self.output.flush()
+    }
+
+    fn print_summary<DB: Database>(
+        &mut self,
+        result: &InterpreterResult,
+        context: &mut EvmContext<DB>,
+    ) {
+        if self.print_summary {
+            let spec_name: &str = context.spec_id().into();
+            let value = Summary {
+                state_root: B256::ZERO.to_string(),
+                output: result.output.to_string(),
+                gas_used: hex_number(
+                    context.inner.env().tx.gas_limit - self.gas_inspector.gas_remaining(),
+                ),
+                pass: result.is_ok(),
+
+                time: None,
+                fork: Some(spec_name.to_string()),
+            };
+            let _ = self.write_value(&value);
+        }
     }
 }
 
@@ -128,6 +193,11 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         self.gas_inspector.step(interp, context);
         self.stack = interp.stack.data().clone();
+        self.memory = if self.include_memory {
+            Some(hex::encode_prefixed(interp.shared_memory.context_memory()))
+        } else {
+            None
+        };
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
         self.mem_size = interp.shared_memory.len();
@@ -159,7 +229,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             } else {
                 None
             },
-            memory: None,
+            memory: self.memory.take(),
             storage: None,
             return_stack: None,
         };
@@ -173,18 +243,31 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         outcome: CallOutcome,
     ) -> CallOutcome {
         let outcome = self.gas_inspector.call_end(context, inputs, outcome);
-        if self.print_summary && context.journaled_state.depth() == 0 {
-            let value = Summary {
-                state_root: B256::ZERO.to_string(),
-                output: outcome.result.output.to_string(),
-                gas_used: hex_number(self.gas_inspector.gas_remaining()),
-                pass: outcome.result.is_ok(),
 
-                time: None,
-                fork: None,
-            };
-            let _ = self.write_value(&value);
+        if context.journaled_state.depth() == 0 {
+            self.print_summary(&outcome.result, context);
+            // clear the state if we are at the top level
+            self.clear();
         }
+
+        outcome
+    }
+
+    fn create_end(
+        &mut self,
+        context: &mut EvmContext<DB>,
+        inputs: &CreateInputs,
+        outcome: CreateOutcome,
+    ) -> CreateOutcome {
+        let outcome = self.gas_inspector.create_end(context, inputs, outcome);
+
+        if context.journaled_state.depth() == 0 {
+            self.print_summary(&outcome.result, context);
+
+            // clear the state if we are at the top level
+            self.clear();
+        }
+
         outcome
     }
 }

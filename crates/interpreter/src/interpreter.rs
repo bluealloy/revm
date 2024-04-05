@@ -17,10 +17,11 @@ use revm_primitives::U256;
 use std::borrow::ToOwned;
 use std::boxed::Box;
 
+/// EVM bytecode interpreter.
 #[derive(Debug)]
 pub struct Interpreter {
     /// Contract information and invoking data
-    pub contract: Box<Contract>,
+    pub contract: Contract,
     /// The current instruction pointer.
     pub instruction_pointer: *const u8,
     /// The execution control flag. If this is not set to `Continue`, the interpreter will stop
@@ -51,7 +52,7 @@ pub struct Interpreter {
 }
 
 /// The result of an interpreter operation.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct InterpreterResult {
     /// The result of the instruction execution.
     pub result: InstructionResult,
@@ -61,7 +62,7 @@ pub struct InterpreterResult {
     pub gas: Gas,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum InterpreterAction {
     /// CALL, CALLCODE, DELEGATECALL or STATICCALL instruction called.
     Call {
@@ -114,7 +115,7 @@ impl InterpreterAction {
 
 impl Interpreter {
     /// Create new interpreter
-    pub fn new(contract: Box<Contract>, gas_limit: u64, is_static: bool) -> Self {
+    pub fn new(contract: Contract, gas_limit: u64, is_static: bool) -> Self {
         Self {
             instruction_pointer: contract.bytecode.as_ptr(),
             contract,
@@ -216,7 +217,7 @@ impl Interpreter {
         let out_offset = call_outcome.memory_start();
         let out_len = call_outcome.memory_length();
 
-        self.return_data_buffer = call_outcome.output().to_owned();
+        self.return_data_buffer.clone_from(call_outcome.output());
         let target_len = min(out_len, self.return_data_buffer.len());
 
         match call_outcome.instruction_result() {
@@ -282,7 +283,7 @@ impl Interpreter {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline(always)]
-    fn step<FN, H: Host>(&mut self, instruction_table: &[FN; 256], host: &mut H)
+    fn step<FN, H: Host + ?Sized>(&mut self, instruction_table: &[FN; 256], host: &mut H)
     where
         FN: Fn(&mut Interpreter, &mut H),
     {
@@ -304,7 +305,7 @@ impl Interpreter {
     }
 
     /// Executes the interpreter until it returns or stops.
-    pub fn run<FN, H: Host>(
+    pub fn run<FN, H: Host + ?Sized>(
         &mut self,
         shared_memory: SharedMemory,
         instruction_table: &[FN; 256],
@@ -353,5 +354,27 @@ impl InterpreterResult {
     #[inline]
     pub const fn is_error(&self) -> bool {
         self.result.is_error()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{opcode::InstructionTable, DummyHost};
+    use revm_primitives::CancunSpec;
+
+    #[test]
+    fn object_safety() {
+        let mut interp = Interpreter::new(Contract::default(), u64::MAX, false);
+
+        let mut host = crate::DummyHost::default();
+        let table: InstructionTable<DummyHost> =
+            crate::opcode::make_instruction_table::<DummyHost, CancunSpec>();
+        let _ = interp.run(EMPTY_SHARED_MEMORY, &table, &mut host);
+
+        let host: &mut dyn Host = &mut host as &mut dyn Host;
+        let table: InstructionTable<dyn Host> =
+            crate::opcode::make_instruction_table::<dyn Host, CancunSpec>();
+        let _ = interp.run(EMPTY_SHARED_MEMORY, &table, host);
     }
 }

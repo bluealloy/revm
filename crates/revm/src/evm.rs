@@ -25,7 +25,7 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
-    /// Handler of EVM that contains all the logic. Handler contains specification id
+    /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
     /// and it different depending on the specified fork.
     pub handler: Handler<'a, Self, EXT, DB>,
 }
@@ -217,7 +217,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         &mut self,
         first_frame: Frame,
     ) -> Result<FrameResult, EVMError<DB::Error>> {
-        // take instruction talbe
+        // take instruction table
         let table = self
             .handler
             .take_instruction_table()
@@ -265,7 +265,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             let next_action = interpreter.run(shared_memory, instruction_table, self);
 
             // take error and break the loop if there is any.
-            // This error is set From Interpreter when its interacting with Host.
+            // This error is set From Interpreter when it's interacting with Host.
             core::mem::replace(&mut self.context.evm.error, Ok(()))?;
             // take shared memory back.
             shared_memory = interpreter.take_memory();

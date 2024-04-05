@@ -27,6 +27,7 @@
   - [precompile](./crates/primitives/precompile.md)
   - [state](./crates/primitives/state.md)
   - [utils](./crates/primitives/utils.md)
+  - [kzg](./crates/primitives/kzg.md)
 - [Precompile](./crates/precompile.md)
   - [blake2](./crates/precompile/blake2.md)
   - [bn128 curve](./crates/precompile/bn128.md)

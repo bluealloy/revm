@@ -289,14 +289,14 @@ impl<DB: Database> InnerEvmContext<DB> {
 
         let bytecode = Bytecode::new_raw(inputs.init_code.clone());
 
-        let contract = Box::new(Contract::new(
+        let contract = Contract::new(
             Bytes::new(),
             bytecode,
             init_code_hash,
             created_address,
             inputs.caller,
             inputs.value,
-        ));
+        );
 
         Ok(FrameOrResult::new_create_frame(
             created_address,

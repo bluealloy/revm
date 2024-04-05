@@ -67,15 +67,19 @@ pub enum SpecId {
 }
 
 impl SpecId {
+    /// Returns the `SpecId` for the given `u8`.
     #[inline]
     pub fn try_from_u8(spec_id: u8) -> Option<Self> {
         Self::n(spec_id)
     }
 
-    pub fn is_enabled_in(&self, other: Self) -> bool {
-        Self::enabled(*self, other)
+    /// Returns `true` if the given specification ID is enabled in this spec.
+    #[inline]
+    pub const fn is_enabled_in(self, other: Self) -> bool {
+        Self::enabled(self, other)
     }
 
+    /// Returns `true` if the given specification ID is enabled in this spec.
     #[inline]
     pub const fn enabled(our: SpecId, other: SpecId) -> bool {
         our as u8 >= other as u8
@@ -108,6 +112,40 @@ impl From<&str> for SpecId {
             #[cfg(feature = "optimism")]
             "Ecotone" => SpecId::ECOTONE,
             _ => Self::LATEST,
+        }
+    }
+}
+
+impl From<SpecId> for &'static str {
+    fn from(spec_id: SpecId) -> Self {
+        match spec_id {
+            SpecId::FRONTIER => "Frontier",
+            SpecId::FRONTIER_THAWING => "Frontier Thawing",
+            SpecId::HOMESTEAD => "Homestead",
+            SpecId::DAO_FORK => "DAO Fork",
+            SpecId::TANGERINE => "Tangerine",
+            SpecId::SPURIOUS_DRAGON => "Spurious",
+            SpecId::BYZANTIUM => "Byzantium",
+            SpecId::CONSTANTINOPLE => "Constantinople",
+            SpecId::PETERSBURG => "Petersburg",
+            SpecId::ISTANBUL => "Istanbul",
+            SpecId::MUIR_GLACIER => "MuirGlacier",
+            SpecId::BERLIN => "Berlin",
+            SpecId::LONDON => "London",
+            SpecId::ARROW_GLACIER => "Arrow Glacier",
+            SpecId::GRAY_GLACIER => "Gray Glacier",
+            SpecId::MERGE => "Merge",
+            SpecId::SHANGHAI => "Shanghai",
+            SpecId::CANCUN => "Cancun",
+            #[cfg(feature = "optimism")]
+            SpecId::BEDROCK => "Bedrock",
+            #[cfg(feature = "optimism")]
+            SpecId::REGOLITH => "Regolith",
+            #[cfg(feature = "optimism")]
+            SpecId::CANYON => "Canyon",
+            #[cfg(feature = "optimism")]
+            SpecId::ECOTONE => "Ecotone",
+            SpecId::LATEST => "Latest",
         }
     }
 }
