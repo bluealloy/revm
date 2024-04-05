@@ -52,7 +52,7 @@ pub struct Interpreter {
 }
 
 /// The result of an interpreter operation.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct InterpreterResult {
     /// The result of the instruction execution.
     pub result: InstructionResult,
@@ -62,7 +62,7 @@ pub struct InterpreterResult {
     pub gas: Gas,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum InterpreterAction {
     /// CALL, CALLCODE, DELEGATECALL or STATICCALL instruction called.
     Call {
