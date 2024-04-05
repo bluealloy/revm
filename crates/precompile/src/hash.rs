@@ -21,17 +21,12 @@ pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if cost > gas_limit {
         Err(Error::OutOfGas)
     } else {
-        // #[cfg(feature = "zk-op")]
-        let output = if zk_op::contains_operation(&Operation::Sha256) {
-            zk_op::ZKVM_OPERATOR
-                .get()
-                .expect("ZKVM_OPERATOR unset")
-                .sha256_run(input.as_ref())?
-                .into()
-        } else {
-            sha2::Sha256::digest(input).to_vec()
-        };
-        // #[cfg(not(feature = "zk-op)"))]
+        if zk_op::contains_operation(&Operation::Sha256) {
+            zk_op::ZKVM_OPERATOR.get().map(|op| {
+                let out: Bytes = op.sha256_run(input.as_ref())?.into();
+                Ok::<(u64, Bytes), Error>((cost, out))
+            });
+        }
         let output = sha2::Sha256::digest(input).to_vec();
         Ok((cost, output.into()))
     }
@@ -45,25 +40,16 @@ pub fn ripemd160_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if gas_used > gas_limit {
         Err(Error::OutOfGas)
     } else {
-        let do_hash = || -> [u8; 32] {
-            let mut hasher = ripemd::Ripemd160::new();
-            hasher.update(input);
-            let mut output = [0u8; 32];
-            hasher.finalize_into((&mut output[12..]).into());
-            output
-        };
-        // #[cfg(feature = "zk-op")]
-        let output = if zk_op::contains_operation(&zk_op::Operation::Ripemd160) {
-            zk_op::ZKVM_OPERATOR
-                .get()
-                .expect("ZKVM_OPERATOR unset")
-                .ripemd160_run(input.as_ref())?
-        } else {
-            do_hash()
-        };
-        #[cfg(not(feature = "zk-op"))]
-        let output = do_hash();
-
+        if zk_op::contains_operation(&zk_op::Operation::Ripemd160) {
+            zk_op::ZKVM_OPERATOR.get().map(|op| {
+                let out: Bytes = op.ripemd160_run(input.as_ref())?.into();
+                Ok::<(u64, Bytes), Error>((gas_used, out))
+            });
+        }
+        let mut hasher = ripemd::Ripemd160::new();
+        hasher.update(input);
+        let mut output = [0u8; 32];
+        hasher.finalize_into((&mut output[12..]).into());
         Ok((gas_used, output.to_vec().into()))
     }
 }

@@ -11,18 +11,17 @@ pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
 mod secp256k1_zk {
     use crate::zk_op::{self, Operation};
     use crate::Error;
-    use revm_primitives::{alloy_primitives::B512, keccak256, B256};
+    use revm_primitives::{alloy_primitives::B512, B256};
 
-    pub fn ecrecover(sig: &B512, mut recid: u8, msg: &B256) -> Result<B256, Error> {
+    pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, Error> {
         if zk_op::contains_operation(&Operation::Secp256k1) {
-            zk_op::ZKVM_OPERATOR
-                .get()
-                .expect("ZKVM_OPERATOR unset")
-                .secp256k1_ecrecover(sig, recid, msg)
-                .map(Into::into)
-        } else {
-            super::secp256k1::ecrecover(sig, recid, msg).map_err(|e| Error::Other(e.to_string()))
+            zk_op::ZKVM_OPERATOR.get().map(|op| {
+                op
+                    .secp256k1_ecrecover(sig, recid, msg)
+                    .map(Into::<B256>::into)
+            });
         }
+        super::secp256k1::ecrecover(sig, recid, msg).map_err(|e| Error::Other(e.to_string()))
     }
 }
 

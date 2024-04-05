@@ -3,9 +3,6 @@ use c_kzg::{Bytes32, Bytes48, KzgProof, KzgSettings};
 use revm_primitives::{hex_literal::hex, Bytes, Env};
 use sha2::{Digest, Sha256};
 
-// #[cfg(feature = "zk-op")]
-use crate::zk_op::{self, Operation};
-
 pub const POINT_EVALUATION: PrecompileWithAddress =
     PrecompileWithAddress(ADDRESS, Precompile::Env(run));
 
