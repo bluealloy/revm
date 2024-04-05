@@ -28,6 +28,7 @@ pub use revm_primitives::{
     Address, Bytes, HashMap, Log, B256,
 };
 use std::{boxed::Box, vec::Vec};
+use once_cell::race::OnceBox;
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
