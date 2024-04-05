@@ -6,7 +6,7 @@ pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
     Precompile::Standard(ec_recover_run),
 );
 
-#[cfg(feature = "zk-op")]
+// #[cfg(feature = "zk-op")]
 #[allow(clippy::module_inception)]
 mod secp256k1_zk {
     use crate::zk_op::{self, Operation};
@@ -103,7 +103,7 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let recid = input[63] - 27;
     let sig = <&B512>::try_from(&input[64..128]).unwrap();
 
-    #[cfg(feature = "zk-op")]
+    // #[cfg(feature = "zk-op")]
     let ecrecover = secp256k1_zk::ecrecover;
     #[cfg(not(feature = "zk-op"))]
     let ecrecover = secp256k1::ecrecover;

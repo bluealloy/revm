@@ -1,5 +1,5 @@
 use super::calc_linear_cost_u32;
-#[cfg(feature = "zk-op")]
+// #[cfg(feature = "zk-op")]
 use crate::zk_op::{self, Operation};
 use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress};
 use revm_primitives::Bytes;
@@ -21,7 +21,7 @@ pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if cost > gas_limit {
         Err(Error::OutOfGas)
     } else {
-        #[cfg(feature = "zk-op")]
+        // #[cfg(feature = "zk-op")]
         let output = if zk_op::contains_operation(&Operation::Sha256) {
             zk_op::ZKVM_OPERATOR
                 .get()
@@ -31,7 +31,7 @@ pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         } else {
             sha2::Sha256::digest(input).to_vec()
         };
-        #[cfg(not(feature = "zk-op)"))]
+        // #[cfg(not(feature = "zk-op)"))]
         let output = sha2::Sha256::digest(input).to_vec();
         Ok((cost, output.into()))
     }
@@ -52,7 +52,7 @@ pub fn ripemd160_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             hasher.finalize_into((&mut output[12..]).into());
             output
         };
-        #[cfg(feature = "zk-op")]
+        // #[cfg(feature = "zk-op")]
         let output = if zk_op::contains_operation(&zk_op::Operation::Ripemd160) {
             zk_op::ZKVM_OPERATOR
                 .get()

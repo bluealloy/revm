@@ -1,7 +1,7 @@
 use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress};
 use revm_primitives::Bytes;
 
-#[cfg(feature = "zk-op")]
+// #[cfg(feature = "zk-op")]
 use crate::zk_op::{self, Operation};
 
 const F_ROUND: u64 = 1;
@@ -57,7 +57,7 @@ pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         out
     };
 
-    #[cfg(feature = "zk-op")]
+    // #[cfg(feature = "zk-op")]
     let out = if zk_op::contains_operation(&Operation::Blake2) {
         zk_op::ZKVM_OPERATOR
             .get()
@@ -66,7 +66,7 @@ pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     } else {
         do_round()
     };
-    #[cfg(not(feature = "zk-op)"))]
+    // #[cfg(not(feature = "zk-op)"))]
     let out = do_round();
 
     Ok((gas_used, out.into()))

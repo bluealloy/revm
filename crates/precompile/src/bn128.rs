@@ -5,7 +5,7 @@ use crate::{
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 use revm_primitives::Bytes;
 
-#[cfg(feature = "zk-op")]
+// #[cfg(feature = "zk-op")]
 use crate::zk_op::{self, Operation};
 
 pub mod add {
@@ -19,7 +19,7 @@ pub mod add {
             if 150 > gas_limit {
                 return Err(Error::OutOfGas);
             }
-            #[cfg(feature = "zk-op")]
+            // #[cfg(feature = "zk-op")]
             if zk_op::contains_operation(&Operation::Bn128Add) {
                 let res = zk_op::ZKVM_OPERATOR
                     .get()
@@ -29,7 +29,7 @@ pub mod add {
             } else {
                 return Ok((150, super::run_add(input)?));
             }
-            #[cfg(not(feature = "zk-op)"))]
+            // #[cfg(not(feature = "zk-op)"))]
             Ok((150, super::run_add(input)?))
         }),
     );
@@ -56,7 +56,7 @@ pub mod mul {
             if 6_000 > gas_limit {
                 return Err(Error::OutOfGas);
             }
-            #[cfg(feature = "zk-op")]
+            // #[cfg(feature = "zk-op")]
             if zk_op::contains_operation(&Operation::Bn128Mul) {
                 let res = zk_op::ZKVM_OPERATOR
                     .get()
@@ -66,7 +66,7 @@ pub mod mul {
             } else {
                 return Ok((6_000, super::run_mul(input)?));
             }
-            #[cfg(not(feature = "zk-op)"))]
+            // #[cfg(not(feature = "zk-op)"))]
             Ok((6_000, super::run_mul(input)?))
         }),
     );
@@ -77,7 +77,7 @@ pub mod mul {
             if 40_000 > gas_limit {
                 return Err(Error::OutOfGas);
             }
-            #[cfg(feature = "zk-op")]
+            // #[cfg(feature = "zk-op")]
             if zk_op::contains_operation(&Operation::Bn128Mul) {
                 let res = zk_op::ZKVM_OPERATOR
                     .get()
@@ -87,7 +87,7 @@ pub mod mul {
             } else {
                 return Ok((40_000, super::run_mul(input)?));
             }
-            #[cfg(not(feature = "zk-op)"))]
+            // #[cfg(not(feature = "zk-op)"))]
             Ok((40_000, super::run_mul(input)?))
         }),
     );
@@ -103,7 +103,7 @@ pub mod pair {
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
-            #[cfg(feature = "zk-op")]
+            // #[cfg(feature = "zk-op")]
             if zk_op::contains_operation(&Operation::Bn128Pairing) {
                 let success = zk_op::ZKVM_OPERATOR
                     .get()
@@ -123,7 +123,7 @@ pub mod pair {
                     gas_limit,
                 );
             }
-            #[cfg(not(feature = "zk-op)"))]
+            // #[cfg(not(feature = "zk-op)"))]
             super::run_pair(
                 input,
                 ISTANBUL_PAIR_PER_POINT,
@@ -138,7 +138,7 @@ pub mod pair {
     pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
-            #[cfg(feature = "zk-op")]
+            // #[cfg(feature = "zk-op")]
             if zk_op::contains_operation(&Operation::Bn128Pairing) {
                 let success = zk_op::ZKVM_OPERATOR
                     .get()
@@ -158,7 +158,7 @@ pub mod pair {
                     gas_limit,
                 );
             }
-            #[cfg(not(feature = "zk-op)"))]
+            // #[cfg(not(feature = "zk-op)"))]
             super::run_pair(
                 input,
                 BYZANTIUM_PAIR_PER_POINT,
