@@ -1,5 +1,4 @@
 use super::calc_linear_cost_u32;
-// #[cfg(feature = "zk-op")]
 use crate::zk_op::{self, Operation};
 use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress};
 use revm_primitives::Bytes;

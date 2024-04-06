@@ -1,4 +1,3 @@
-// #[cfg(feature = "zk-op")]
 use crate::zk_op::{self, Operation};
 use crate::{
     primitives::U256,
