@@ -88,7 +88,7 @@ pub fn insert_call_outcome<EXT, DB: Database>(
     shared_memory: &mut SharedMemory,
     outcome: CallOutcome,
 ) -> Result<(), EVMError<DB::Error>> {
-    core::mem::replace(&mut context.evm.error, Ok(()))?;
+    context.evm.take_error()?;
     frame
         .frame_data_mut()
         .interpreter
@@ -128,7 +128,7 @@ pub fn insert_create_outcome<EXT, DB: Database>(
     frame: &mut Frame,
     outcome: CreateOutcome,
 ) -> Result<(), EVMError<DB::Error>> {
-    core::mem::replace(&mut context.evm.error, Ok(()))?;
+    context.evm.take_error()?;
     frame
         .frame_data_mut()
         .interpreter
