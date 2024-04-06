@@ -6,27 +6,27 @@ use crate::{
 
 pub fn jump<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::MID);
-    pop!(interpreter, dest);
-    jump_inner(interpreter, dest);
+    pop!(interpreter, target);
+    jump_inner(interpreter, target);
 }
 
 pub fn jumpi<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::HIGH);
-    pop!(interpreter, dest, value);
-    if value != U256::ZERO {
-        jump_inner(interpreter, dest);
+    pop!(interpreter, target, cond);
+    if cond != U256::ZERO {
+        jump_inner(interpreter, target);
     }
 }
 
 #[inline(always)]
-fn jump_inner(interpreter: &mut Interpreter, dest: U256) {
-    let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidJump);
-    if !interpreter.contract.is_valid_jump(dest) {
+fn jump_inner(interpreter: &mut Interpreter, target: U256) {
+    let target = as_usize_or_fail!(interpreter, target, InstructionResult::InvalidJump);
+    if !interpreter.contract.is_valid_jump(target) {
         interpreter.instruction_result = InstructionResult::InvalidJump;
         return;
     }
     // SAFETY: `is_valid_jump` ensures that `dest` is in bounds.
-    interpreter.instruction_pointer = unsafe { interpreter.contract.bytecode.as_ptr().add(dest) };
+    interpreter.instruction_pointer = unsafe { interpreter.contract.bytecode.as_ptr().add(target) };
 }
 
 pub fn jumpdest<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
