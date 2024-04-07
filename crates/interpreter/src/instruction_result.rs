@@ -47,19 +47,12 @@ pub enum InstructionResult {
     CreateInitCodeSizeLimit,
     /// Fatal external error. Returned by database.
     FatalExternalError,
-    /// Opcode called that are not found in EOF.
-    /// This should not happen if the bytecode is validated correctly.
-    OpcodeDisabledInEof,
     /// RETURNCONTRACT called in not init eof code.
     ReturnContractInNotInitEOF,
     /// Legacy contract is calling opcode that is enabled only in EOF.
     EOFOpcodeDisabledInLegacy,
     /// EOF function stack overflow
     EOFFunctionStackOverflow,
-    /// EOF idx is out of bounds
-    EOFCodeIdxOutOfBounds,
-    /// Eof container idx is out of bounds
-    EOFCOntainerOutOfBounds,
 }
 
 impl From<SuccessReason> for InstructionResult {
@@ -149,12 +142,9 @@ macro_rules! return_error {
             | InstructionResult::CreateContractStartingWithEF
             | InstructionResult::CreateInitCodeSizeLimit
             | InstructionResult::FatalExternalError
-            | InstructionResult::OpcodeDisabledInEof
             | InstructionResult::ReturnContractInNotInitEOF
             | InstructionResult::EOFOpcodeDisabledInLegacy
             | InstructionResult::EOFFunctionStackOverflow
-            | InstructionResult::EOFCodeIdxOutOfBounds
-            | InstructionResult::EOFCOntainerOutOfBounds
     };
 }
 
@@ -250,7 +240,9 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::InvalidOperandOOG => {
                 Self::Halt(HaltReason::OutOfGas(OutOfGasError::InvalidOperand))
             }
-            InstructionResult::OpcodeNotFound => Self::Halt(HaltReason::OpcodeNotFound),
+            InstructionResult::OpcodeNotFound | InstructionResult::ReturnContractInNotInitEOF => {
+                Self::Halt(HaltReason::OpcodeNotFound)
+            }
             InstructionResult::CallNotAllowedInsideStatic => {
                 Self::Halt(HaltReason::CallNotAllowedInsideStatic)
             } // first call is not static call
@@ -277,12 +269,8 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::FatalExternalError => Self::FatalExternalError,
             InstructionResult::EOFOpcodeDisabledInLegacy => Self::Halt(HaltReason::OpcodeNotFound),
             InstructionResult::EOFFunctionStackOverflow => Self::FatalExternalError,
-            flag @ (InstructionResult::ReturnContract
-            | InstructionResult::EOFCodeIdxOutOfBounds
-            | InstructionResult::OpcodeDisabledInEof
-            | InstructionResult::ReturnContractInNotInitEOF
-            | InstructionResult::EOFCOntainerOutOfBounds) => {
-                panic!("Unexpected internal return flag: {:?}", flag)
+            InstructionResult::ReturnContract => {
+                panic!("Unexpected EOF internal Return Contract")
             }
         }
     }

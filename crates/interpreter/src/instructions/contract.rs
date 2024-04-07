@@ -44,19 +44,14 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     let initcontainer_index = unsafe { *interpreter.instruction_pointer };
     pop!(interpreter, value, salt, data_offset, data_size);
 
-    let Some(sub_container) = interpreter
+    let sub_container = interpreter
         .eof()
         .expect("EOF is set")
         .body
         .container_section
         .get(initcontainer_index as usize)
         .cloned()
-    else {
-        // Container idx bound is checked in verification.
-        // This is training wheel that should be removed in future.
-        interpreter.instruction_result = InstructionResult::EOFCodeIdxOutOfBounds;
-        return;
-    };
+        .expect("EOF is checked");
 
     // resize memory and get return range.
     let Some(return_range) = resize_memory(interpreter, data_offset, data_size) else {
@@ -175,17 +170,14 @@ pub fn return_contract<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &
     pop!(interpreter, aux_data_offset, aux_data_size);
     let aux_data_size = as_usize_or_fail!(interpreter, aux_data_size);
     // important: offset must be ignored if len is zeros
-    let Some(container) = interpreter
+    let container = interpreter
         .eof()
         .expect("EOF is set")
         .body
         .container_section
         .get(deploy_container_index as usize)
-    else {
-        // training wheel that should be removed in future.
-        interpreter.instruction_result = InstructionResult::EOFCOntainerOutOfBounds;
-        return;
-    };
+        .expect("EOF is checked");
+
     // convert to EOF so we can check data section size.
     let new_eof = Eof::decode(container.clone()).expect("Container is verified");
 

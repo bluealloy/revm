@@ -26,7 +26,7 @@ macro_rules! error_on_disabled_eof {
 #[macro_export]
 macro_rules! error_on_not_init_eof {
     ($interp:expr) => {
-        if $interp.is_eof_init {
+        if !$interp.is_eof_init {
             $interp.instruction_result = $crate::InstructionResult::ReturnContractInNotInitEOF;
             return;
         }
