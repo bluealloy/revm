@@ -9,6 +9,7 @@ pub use types_section::TypesSection;
 
 use crate::Bytes;
 use core::cmp::min;
+use std::vec::Vec;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

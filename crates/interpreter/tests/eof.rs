@@ -126,7 +126,7 @@ pub fn run_test(path: &Path) {
                     *types_of_error
                         .entry(
                             res.err()
-                                .map(|i| ErrorType::Error(i))
+                                .map(ErrorType::Error)
                                 .unwrap_or(ErrorType::FalsePositive),
                         )
                         .or_default() += 1;

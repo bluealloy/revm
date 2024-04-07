@@ -728,6 +728,8 @@ mod tests {
             SELFDESTRUCT,
             RETURNCONTRACT,
             STOP,
+            RJUMP,
+            JUMPF,
         ];
         let mut opcodes = [false; 256];
         for terminating in terminating.iter() {
