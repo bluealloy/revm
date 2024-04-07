@@ -22,6 +22,17 @@ macro_rules! error_on_disabled_eof {
     };
 }
 
+/// Error if not init eof call.
+#[macro_export]
+macro_rules! error_on_not_init_eof {
+    ($interp:expr) => {
+        if $interp.is_eof_init {
+            $interp.instruction_result = $crate::InstructionResult::ReturnContractInNotInitEOF;
+            return;
+        }
+    };
+}
+
 /// Panic if the current call is EOF. Thes macro is training wheel and should be removed once
 /// EOF is fully implemented.
 macro_rules! panic_on_eof {

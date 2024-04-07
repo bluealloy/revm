@@ -45,12 +45,13 @@ pub enum InstructionResult {
     CreateContractStartingWithEF,
     /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
     CreateInitCodeSizeLimit,
-    /* External error */
     /// Fatal external error. Returned by database.
     FatalExternalError,
     /// Opcode called that are not found in EOF.
     /// This should not happen if the bytecode is validated correctly.
     OpcodeDisabledInEof,
+    /// RETURNCONTRACT called in not init eof code.
+    ReturnContractInNotInitEOF,
     /// Legacy contract is calling opcode that is enabled only in EOF.
     EOFOpcodeDisabledInLegacy,
     /// EOF function stack overflow
@@ -147,6 +148,7 @@ macro_rules! return_error {
             | InstructionResult::CreateInitCodeSizeLimit
             | InstructionResult::FatalExternalError
             | InstructionResult::OpcodeDisabledInEof
+            | InstructionResult::ReturnContractInNotInitEOF
             | InstructionResult::EOFOpcodeDisabledInLegacy
             | InstructionResult::EOFFunctionStackOverflow
             | InstructionResult::EOFCodeIdxOutOfBounds
@@ -231,8 +233,6 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::Return => Self::Success(SuccessReason::Return),
             InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
-            // TODO EOFCreate is not external opcode.
-            InstructionResult::ReturnContract => Self::FatalExternalError,
             InstructionResult::CallOrCreate => Self::InternalCallOrCreate, // used only in interpreter loop
             InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), // not gonna happen for first call
             InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), // Check for first call is done separately.
@@ -272,14 +272,14 @@ impl From<InstructionResult> for SuccessOrHalt {
                 Self::Halt(HaltReason::CreateInitCodeSizeLimit)
             }
             InstructionResult::FatalExternalError => Self::FatalExternalError,
-            // TODO(EOF) Check how to propagate error that should be a EVM panic!
-            InstructionResult::OpcodeDisabledInEof => Self::FatalExternalError,
-            // TODO(EOF) make proper error
             InstructionResult::EOFOpcodeDisabledInLegacy => Self::Halt(HaltReason::OpcodeNotFound),
-            // TODO(EOF)
             InstructionResult::EOFFunctionStackOverflow => Self::FatalExternalError,
-            // TODO(EOF)
-            InstructionResult::EOFCodeIdxOutOfBounds => Self::FatalExternalError,
+            flag @ (InstructionResult::ReturnContract
+            | InstructionResult::EOFCodeIdxOutOfBounds
+            | InstructionResult::OpcodeDisabledInEof
+            | InstructionResult::ReturnContractInNotInitEOF) => {
+                panic!("Unexpected internal return flag: {:?}", flag)
+            }
         }
     }
 }

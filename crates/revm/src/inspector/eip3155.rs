@@ -176,7 +176,6 @@ impl TracerEip3155 {
                     context.inner.env().tx.gas_limit - self.gas_inspector.gas_remaining(),
                 ),
                 pass: result.is_ok(),
-
                 time: None,
                 fork: Some(spec_name.to_string()),
             };

@@ -31,7 +31,6 @@ pub fn print_eof_code(code: &[u8]) {
                 hex::encode(&code[i + 1..i + 1 + opcode.immediate_size as usize])
             );
         }
-        println!("");
 
         let mut rjumpv_additional_immediates = 0;
         if op == RJUMPV {

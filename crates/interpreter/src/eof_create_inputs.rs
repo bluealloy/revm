@@ -1,7 +1,7 @@
 use crate::primitives::{Address, Eof, U256};
 use core::ops::Range;
 
-/// Inputs for create call.
+/// Inputs for EOF create call.
 #[derive(Debug, Default, Clone)]
 pub struct EOFCreateInput {
     /// Caller of Eof Craate

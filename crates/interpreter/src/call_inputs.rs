@@ -17,17 +17,16 @@ pub struct CallInputs {
     pub bytecode_address: Address,
     /// Target address, this account storage is going to be modified.
     pub target_address: Address,
-    /// This caller that is invoking this call.
+    /// This caller is invoking the call.
     pub caller: Address,
-    /// Value is Ether that is transferred.
+    /// Value that is transferred in Ether.
     ///
     /// If enum is [`TransferValue::Value`] balance is transferer from `caller` to the `target_address`.
     ///
-    /// If enum is [`TransferValue::ApparentValue`] balance transfer
-    /// is **not** done and apparent value is used by CALLVALUE opcode.
-    /// This is used by delegate call.
+    /// If enum is [`TransferValue::ApparentValue`] balance transfer is **not**
+    /// done and apparent value is used by CALLVALUE opcode. Used by delegate call.
     pub value: TransferValue,
-    /// The scheme used for the call.
+    /// The scheme used for the call. Call, callcode, delegatecall or staticcall.
     pub scheme: CallScheme,
     /// Whether this is a static call.
     pub is_static: bool,

@@ -52,7 +52,7 @@ impl Eof {
 
     /// Re-encode the raw EOF bytes.
     pub fn reencode_inner(&mut self) {
-        self.raw = Some(self.encode_slow().into())
+        self.raw = Some(self.encode_slow())
     }
 
     /// Slow encode EOF bytes.

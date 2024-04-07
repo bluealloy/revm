@@ -245,6 +245,14 @@ pub enum InvalidTransaction {
     TooManyBlobs,
     /// Blob transaction contains a versioned hash with an incorrect version
     BlobVersionNotSupported,
+    /// EOF TxCreate transaction is not supported before Prague hardfork.
+    EofInitcodesNotSupported,
+    /// EOF TxCreate transaction max initcode number reached.
+    EofInitcodesNumberLimit,
+    /// EOF initcode in TXCreate is too large.
+    EofInitcodesSizeLimit,
+    /// EOF crate should have `to` address
+    EofCrateShouldHaveToAddress,
     /// System transactions are not supported post-regolith hardfork.
     ///
     /// Before the Regolith hardfork, there was a special field in the `Deposit` transaction
@@ -333,6 +341,10 @@ impl fmt::Display for InvalidTransaction {
             Self::BlobCreateTransaction => write!(f, "blob create transaction"),
             Self::TooManyBlobs => write!(f, "too many blobs"),
             Self::BlobVersionNotSupported => write!(f, "blob version not supported"),
+            Self::EofInitcodesNotSupported => write!(f, "EOF initcodes not supported"),
+            Self::EofCrateShouldHaveToAddress => write!(f, "EOF crate should have `to` address"),
+            Self::EofInitcodesSizeLimit => write!(f, "EOF initcodes size limit"),
+            Self::EofInitcodesNumberLimit => write!(f, "EOF initcodes number limit"),
             #[cfg(feature = "optimism")]
             Self::DepositSystemTxPostRegolith => {
                 write!(

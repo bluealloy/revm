@@ -24,11 +24,11 @@ impl EofBody {
         }
 
         for code_section in &self.code_section {
-            buffer.extend_from_slice(&code_section);
+            buffer.extend_from_slice(code_section);
         }
 
         for container_section in &self.container_section {
-            buffer.extend_from_slice(&container_section);
+            buffer.extend_from_slice(container_section);
         }
 
         buffer.extend_from_slice(&self.data_section);

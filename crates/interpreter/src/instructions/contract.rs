@@ -6,15 +6,20 @@ pub use call_helpers::{
 use revm_primitives::{keccak256, BerlinSpec};
 
 use crate::{
+    analysis::validate_eof,
     gas::{self, cost_per_word, BASE, EOF_CREATE_GAS, KECCAK256WORD},
+    instructions::utility::read_u16,
     interpreter::{Interpreter, InterpreterAction},
     primitives::{Address, Bytes, Eof, Spec, SpecId::*, B256, U256},
     CallInputs, CallScheme, CreateInputs, CreateScheme, EOFCreateInput, Host, InstructionResult,
-    LoadAccountResult, TransferValue, MAX_INITCODE_SIZE,
+    InterpreterResult, LoadAccountResult, TransferValue, MAX_INITCODE_SIZE,
 };
 use core::{cmp::max, ops::Range};
 use std::boxed::Box;
 
+/// Resize memory and return memory range if successful.
+/// Return `None` if there is not enough gas. And if `len`
+/// is zero return `Some(usize::MAX..usize::MAX)`.
 pub fn resize_memory(
     interpreter: &mut Interpreter,
     offset: U256,
@@ -32,6 +37,7 @@ pub fn resize_memory(
     }
 }
 
+/// EOF Create instruction
 pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
@@ -46,8 +52,9 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
         .get(initcontainer_index as usize)
         .cloned()
     else {
-        // TODO(EOF) handle error
-        interpreter.instruction_result = InstructionResult::FatalExternalError;
+        // Container idx bound is checked in verification.
+        // This is training wheel that should be removed in future.
+        interpreter.instruction_result = InstructionResult::EOFCodeIdxOutOfBounds;
         return;
     };
 
@@ -89,7 +96,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
 }
 
-pub fn txcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn txcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
     pop!(
@@ -100,20 +107,28 @@ pub fn txcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) 
         data_offset,
         data_size
     );
-    // TODO(EOF) check when memory resize should be done
+    let tx_initcode_hash = B256::from(tx_initcode_hash);
+
+    // resize memory and get return range.
     let Some(return_range) = resize_memory(interpreter, data_offset, data_size) else {
         return;
     };
 
-    let tx_initcode_hash = B256::from(tx_initcode_hash);
-
-    // TODO(EOF) get initcode from TxEnv.
-    let initcode = Bytes::new();
+    // fetch initcode, if not found push ZERO.
+    let Some(initcode) = host.env().tx.eof_initcodes.get(&tx_initcode_hash).cloned() else {
+        push!(interpreter, U256::ZERO);
+        return;
+    };
 
     // deduct gas for validation
     gas_or_fail!(interpreter, cost_per_word::<BASE>(initcode.len() as u64));
 
-    // TODO check if data container is full
+    // deduct gas for hash. TODO check order of actions.
+    gas_or_fail!(
+        interpreter,
+        cost_per_word::<KECCAK256WORD>(initcode.len() as u64)
+    );
+
     let Ok(eof) = Eof::decode(initcode.clone()) else {
         push!(interpreter, U256::ZERO);
         return;
@@ -125,13 +140,11 @@ pub fn txcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) 
         return;
     }
 
-    // TODO(EOF) validate initcode, we should do this only once and cache result.
-
-    // deduct gas for hash.
-    gas_or_fail!(
-        interpreter,
-        cost_per_word::<KECCAK256WORD>(initcode.len() as u64)
-    );
+    // Validate initcode
+    if validate_eof(&eof).is_err() {
+        push!(interpreter, U256::ZERO);
+        return;
+    }
 
     // Create new address. Gas for it is already deducted.
     let created_address = interpreter
@@ -157,7 +170,60 @@ pub fn txcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) 
 }
 
 pub fn return_contract<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    error_on_disabled_eof!(interpreter);
+    error_on_not_init_eof!(interpreter);
+    let deploy_container_index = unsafe { read_u16(interpreter.instruction_pointer) };
+    pop!(interpreter, aux_data_offset, aux_data_size);
+    let aux_data_size = as_usize_or_fail!(interpreter, aux_data_size);
+    // important: offset must be ignored if len is zeros
+    let Some(container) = interpreter
+        .eof()
+        .expect("EOF is set")
+        .body
+        .container_section
+        .get(deploy_container_index as usize)
+    else {
+        // TODO(EOF) handle error. Should not happen.
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
+        return;
+    };
+    // convert to EOF so we can check data section size.
+    let new_eof = Eof::decode(container.clone()).expect("Container is verified");
+
+    let aux_slice = if aux_data_size != 0 {
+        let aux_data_offset = as_usize_or_fail!(interpreter, aux_data_offset);
+        resize_memory!(interpreter, aux_data_offset, aux_data_size);
+
+        interpreter
+            .shared_memory
+            .slice(aux_data_offset, aux_data_size)
+    } else {
+        &[]
+    };
+
+    let new_data_size = new_eof.body.data_section.len() + aux_slice.len();
+    if new_data_size > 0xFFFF {
+        // aux data is too big
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
+        return;
+    }
+    if new_data_size < new_eof.header.data_size as usize {
+        // aux data is too small
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
+        return;
+    }
+
+    // append data bytes
+    let output = [&new_eof.raw.unwrap(), aux_slice].concat().into();
+
+    let result = InstructionResult::ReturnContract;
+    interpreter.instruction_result = result;
+    interpreter.next_action = crate::InterpreterAction::Return {
+        result: InterpreterResult {
+            output,
+            gas: interpreter.gas,
+            result,
+        },
+    };
 }
 
 pub fn extcall_input(interpreter: &mut Interpreter) -> Option<Bytes> {

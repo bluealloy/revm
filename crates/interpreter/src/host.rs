@@ -63,6 +63,7 @@ pub struct SStoreResult {
     pub is_cold: bool,
 }
 
+/// Result of the account load from Journal state.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct LoadAccountResult {
     /// Is account cold loaded
@@ -71,7 +72,7 @@ pub struct LoadAccountResult {
     pub is_empty: bool,
 }
 
-/// Result of a call that resulted in a self destruct.
+/// Result of a selfdestruct instruction.
 #[derive(Default, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SelfDestructResult {

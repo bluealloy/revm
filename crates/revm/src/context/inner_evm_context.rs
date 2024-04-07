@@ -318,7 +318,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         // commit changes reduces depth by -1.
         self.journaled_state.checkpoint_commit();
 
-        // decode bytecode is fast operation.
+        // decode bytecode has a performance hit, but it has reasonable restrains.
         let bytecode =
             Eof::decode(interpreter_result.output.clone()).expect("Eof is already verified");
 
