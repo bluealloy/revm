@@ -230,8 +230,8 @@ mod tests {
 
     #[test]
     fn sanity_header_decode() {
-        let mut input = hex!("ef000101000402000100010400000000800000fe");
-        let (header, _) = EofHeader::decode(&mut input).unwrap();
+        let input = hex!("ef000101000402000100010400000000800000fe");
+        let (header, _) = EofHeader::decode(&input).unwrap();
         assert_eq!(header.types_size, 4);
         assert_eq!(header.code_sizes, vec![1]);
         assert_eq!(header.container_sizes, vec![]);
@@ -240,11 +240,8 @@ mod tests {
 
     #[test]
     fn decode_header_not_terminated() {
-        let mut input = hex!("ef0001010004");
-        assert_eq!(
-            EofHeader::decode(&mut input),
-            Err(EofDecodeError::MissingInput)
-        );
+        let input = hex!("ef0001010004");
+        assert_eq!(EofHeader::decode(&input), Err(EofDecodeError::MissingInput));
     }
 
     #[test]
