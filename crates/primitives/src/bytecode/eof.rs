@@ -9,7 +9,7 @@ pub use types_section::TypesSection;
 
 use crate::Bytes;
 use core::cmp::min;
-use std::vec::Vec;
+use std::{vec, vec::Vec};
 
 /// EOF - Ethereum Object Format.
 ///

@@ -1,9 +1,9 @@
-use self::utility::read_i16;
-use super::*;
-use revm_primitives::hex;
-
 #[cfg(feature = "std")]
 pub fn print_eof_code(code: &[u8]) {
+    use super::*;
+    use crate::instructions::utility::read_i16;
+    use revm_primitives::hex;
+
     // We can check validity and jump destinations in one pass.
     let mut i = 0;
     while i < code.len() {
@@ -58,6 +58,7 @@ pub fn print_eof_code(code: &[u8]) {
 #[cfg(test)]
 mod test {
     use super::*;
+    use revm_primitives::hex;
 
     #[test]
     fn sanity_test() {
