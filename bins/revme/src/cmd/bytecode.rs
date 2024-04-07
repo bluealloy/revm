@@ -17,7 +17,7 @@ impl Cmd {
     /// Run statetest command.
     pub fn run(&self) {
         let trimmed = self.bytes.trim_start_matches("0x");
-        let Ok(bytes) = hex::decode(&trimmed) else {
+        let Ok(bytes) = hex::decode(trimmed) else {
             eprintln!("Invalid hex string");
             return;
         };

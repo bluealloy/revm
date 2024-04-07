@@ -243,7 +243,7 @@ mod tests {
         let mut input = hex!("ef0001010004");
         assert_eq!(
             EofHeader::decode(&mut input),
-            Err(EofDecodeError::InvalidTerminalByte)
+            Err(EofDecodeError::MissingInput)
         );
     }
 

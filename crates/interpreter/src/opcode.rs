@@ -648,9 +648,9 @@ mod tests {
     #[test]
     fn test_opcode() {
         let opcode = OpCode::new(0x00).unwrap();
-        assert_eq!(opcode.is_jumpdest(), false);
-        assert_eq!(opcode.is_jump(), false);
-        assert_eq!(opcode.is_push(), false);
+        assert!(!opcode.is_jumpdest());
+        assert!(!opcode.is_jump());
+        assert!(!opcode.is_push());
         assert_eq!(opcode.as_str(), "STOP");
         assert_eq!(opcode.get(), 0x00);
     }
@@ -663,12 +663,7 @@ mod tests {
     fn test_eof_disable() {
         for opcode in REJECTED_IN_EOF.iter() {
             let opcode = OpCode::new(*opcode).unwrap();
-            assert_eq!(
-                opcode.info().is_eof,
-                false,
-                "Opcode {:?} is not EOF",
-                opcode
-            );
+            assert!(!opcode.info().is_eof, "Opcode {:?} is not EOF", opcode);
         }
     }
 
@@ -699,7 +694,7 @@ mod tests {
             0x30..=0x3f,
             0x40..=0x48,
             0x50..=0x5b,
-            0x5f..=0x54,
+            0x54..=0x5f,
             0x60..=0x6f,
             0x70..=0x7f,
             0x80..=0x8f,
@@ -736,7 +731,7 @@ mod tests {
             opcodes[*terminating as usize] = true;
         }
 
-        for (i, opcode) in OPCODE_INFO_JUMPTABLE.clone().into_iter().enumerate() {
+        for (i, opcode) in OPCODE_INFO_JUMPTABLE.into_iter().enumerate() {
             assert_eq!(
                 opcode
                     .map(|opcode| opcode.is_terminating_opcode)
