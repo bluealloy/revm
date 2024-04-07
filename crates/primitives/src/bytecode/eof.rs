@@ -11,18 +11,33 @@ use crate::Bytes;
 use core::cmp::min;
 use std::vec::Vec;
 
+/// EOF - Ethereum Object Format.
+///
+/// It consist of a header, body and raw original bytes Specified in EIP.
+/// Most of body contain Bytes so it references to the raw bytes.
+///
+/// If there is a need to create new EOF from scratch, it is recommended to use `EofBody` and
+/// use `encode` function to create full `Eof`` object.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eof {
     pub header: EofHeader,
     pub body: EofBody,
-    pub raw: Option<Bytes>,
+    pub raw: Bytes,
 }
 
 impl Default for Eof {
     fn default() -> Self {
-        // TODO(EOF) make proper minimal EOF.
-        Eof::decode("ef000101000402000100010400000000800000fe".into()).unwrap()
+        let body = EofBody {
+            // types section with zero inputs, zero outputs and zero max stack size.
+            types_section: vec![TypesSection::default()],
+            // One code section with a STOP byte.
+            code_section: vec![[0x00].into()],
+            container_section: vec![],
+            data_section: Bytes::new(),
+            is_data_filled: true,
+        };
+        body.into_eof()
     }
 }
 
@@ -32,8 +47,9 @@ impl Eof {
         self.header.size() + self.header.body_size()
     }
 
-    pub fn raw(&self) -> Option<Bytes> {
-        self.raw.clone()
+    /// Return raw EOF bytes.
+    pub fn raw(&self) -> &Bytes {
+        &self.raw
     }
 
     /// Returns a slice of the raw bytes.
@@ -47,13 +63,9 @@ impl Eof {
             .unwrap_or(&[])
     }
 
+    /// Returns a slice of the data section.
     pub fn data(&self) -> &[u8] {
         &self.body.data_section
-    }
-
-    /// Re-encode the raw EOF bytes.
-    pub fn reencode_inner(&mut self) {
-        self.raw = Some(self.encode_slow())
     }
 
     /// Slow encode EOF bytes.
@@ -64,23 +76,11 @@ impl Eof {
         buffer.into()
     }
 
-    /// Encode the EOF into bytes.
-    pub fn encode(&self) -> Bytes {
-        if let Some(raw) = &self.raw {
-            raw.clone()
-        } else {
-            self.encode_slow()
-        }
-    }
-
+    /// Decode EOF from raw bytes.
     pub fn decode(raw: Bytes) -> Result<Self, EofDecodeError> {
         let (header, _) = EofHeader::decode(&raw)?;
         let body = EofBody::decode(&raw, &header)?;
-        Ok(Self {
-            header,
-            body,
-            raw: Some(raw),
-        })
+        Ok(Self { header, body, raw })
     }
 }
 

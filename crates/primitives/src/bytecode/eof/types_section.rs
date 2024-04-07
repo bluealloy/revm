@@ -4,7 +4,7 @@ use super::{
 };
 use std::vec::Vec;
 
-/// TODO(EOF) Chekc if max_stack_size >= inputs.
+/// Types section that contains stack information for matching code section.
 #[derive(Debug, Clone, Default, Hash, PartialEq, Eq, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TypesSection {
@@ -26,12 +26,15 @@ impl TypesSection {
         self.outputs as i32 - self.inputs as i32
     }
 
+    /// Encode the section into the buffer.
+    #[inline]
     pub fn encode(&self, buffer: &mut Vec<u8>) {
         buffer.push(self.inputs);
         buffer.push(self.outputs);
         buffer.extend_from_slice(&self.max_stack_size.to_be_bytes());
     }
 
+    /// Decode the section from the input.
     #[inline]
     pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), EofDecodeError> {
         let (input, inputs) = consume_u8(input)?;
@@ -46,8 +49,12 @@ impl TypesSection {
         Ok((section, input))
     }
 
+    /// Validate the section.
     pub fn validate(&self) -> Result<(), EofDecodeError> {
         if self.inputs > 0x7f || self.outputs > 0x80 || self.max_stack_size > 0x03FF {
+            return Err(EofDecodeError::InvalidTypesSection);
+        }
+        if self.inputs as u16 > self.max_stack_size {
             return Err(EofDecodeError::InvalidTypesSection);
         }
         Ok(())

@@ -200,7 +200,7 @@ pub enum EofValidationError {
     JUMPFStackHigherThanOutputs,
     /// DATA load out of bounds.
     DataLoadOutOfBounds,
-    /// TODO(EOF) check this error.
+    /// RETF biggest stack num more then outputs.
     RETFBiggestStackNumMoreThenOutputs,
     /// Stack requirement is more than smallest stack items.
     StackUnderflow,
@@ -358,11 +358,6 @@ pub fn validate_eof_code(
         match op {
             opcode::RJUMP | opcode::RJUMPI => {
                 let offset = unsafe { read_i16(code.as_ptr().add(i + 1)) } as isize;
-                // TODO(EOF) temporarily disabled for tests
-                // if offset == 0 {
-                //     // jump immediate instruction is not allowed.
-                //     return Err(EofValidationError::JumpToImmediateBytes);
-                // }
                 absolute_jumpdest = vec![offset + 3 + i as isize];
                 // RJUMP is considered a terminating opcode.
             }
@@ -372,12 +367,6 @@ pub fn validate_eof_code(
                 let len = max_index + 1;
                 // and max_index+1 is to get size of vtable as index starts from 0.
                 rjumpv_additional_immediates = len * 2;
-
-                // Max index can't be zero as it becomes RJUMPI.
-                // TODO(EOF) temporarily disabled this
-                // if max_index == 0 {
-                //     return Err(EofValidationError::RJUMPVZeroMaxIndex);
-                // }
 
                 // +1 is for max_index byte
                 if i + 1 + rjumpv_additional_immediates >= code.len() {
@@ -395,11 +384,6 @@ pub fn validate_eof_code(
                 for vtablei in 0..len {
                     let offset =
                         unsafe { read_i16(code.as_ptr().add(i + 2 + 2 * vtablei)) } as isize;
-                    // TODO(EOF) temporarily disabled for tests
-                    // if offset == 0 {
-                    //     // jump immediate instruction is not allowed.
-                    //     return Err(EofValidationError::JumpZeroOffset);
-                    // }
                     jumps.push(offset + i as isize + 2 + rjumpv_additional_immediates as isize);
                 }
                 absolute_jumpdest = jumps

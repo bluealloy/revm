@@ -276,7 +276,6 @@ impl Interpreter {
                 self.gas.erase_cost(create_outcome.gas().remaining());
                 self.gas.record_refund(create_outcome.gas().refunded());
             }
-            // TODO(EOF) check what do to with Depth call and out of fund errors.
             return_revert!() => {
                 push!(self, U256::ZERO);
                 self.gas.erase_cost(create_outcome.gas().remaining());

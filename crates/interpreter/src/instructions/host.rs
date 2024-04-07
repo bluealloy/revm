@@ -16,9 +16,11 @@ pub fn balance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
     };
     gas!(
         interpreter,
-        if SPEC::enabled(ISTANBUL) {
+        if SPEC::enabled(BERLIN) {
+            warm_cold_cost(is_cold)
+        } else if SPEC::enabled(ISTANBUL) {
             // EIP-1884: Repricing for trie-size-dependent opcodes
-            gas::account_access_gas(SPEC::SPEC_ID, is_cold)
+            700
         } else if SPEC::enabled(TANGERINE) {
             400
         } else {

@@ -243,7 +243,6 @@ impl<DB: Database> InnerEvmContext<DB> {
         };
 
         // Check depth
-        // TODO(EOF) what to do on system error is still discussed.
         if self.journaled_state.depth() > CALL_STACK_LIMIT {
             return return_error(InstructionResult::CallTooDeep);
         }
@@ -327,7 +326,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         let bytecode =
             Eof::decode(interpreter_result.output.clone()).expect("Eof is already verified");
 
-        // TODO(EOF) should we do keccak256 over bytes?
+        // eof bytecode is going to be hashed.
         self.journaled_state
             .set_code(address, Bytecode::Eof(bytecode));
     }

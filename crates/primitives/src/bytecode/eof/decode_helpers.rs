@@ -1,5 +1,6 @@
 use super::EofDecodeError;
 
+/// Consumes a u8 from the input.
 #[inline]
 pub(crate) fn consume_u8(input: &[u8]) -> Result<(&[u8], u8), EofDecodeError> {
     if input.is_empty() {

@@ -22,7 +22,7 @@ impl JumpTable {
         self.0.as_raw_slice()
     }
 
-    /// Construct a jumpa map from raw bytes
+    /// Construct a jump map from raw bytes
     #[inline]
     pub fn from_slice(slice: &[u8]) -> Self {
         Self(Arc::new(BitVec::from_slice(slice)))

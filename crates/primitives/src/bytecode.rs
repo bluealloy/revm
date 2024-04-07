@@ -114,7 +114,7 @@ impl Bytecode {
         match self {
             Self::LegacyRaw(bytes) => bytes.clone(),
             Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
-            Self::Eof(eof) => eof.raw().expect("TODO see if we should remove Option"),
+            Self::Eof(eof) => eof.raw().clone(),
         }
     }
 

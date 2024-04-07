@@ -83,18 +83,22 @@ impl EofHeader {
         13 + self.code_sizes.len() * 2 + optional_container_sizes
     }
 
-    pub fn types_items(&self) -> usize {
+    /// Returns number of types.
+    pub fn types_count(&self) -> usize {
         self.types_size as usize / 4
     }
 
+    /// Returns body size. It is sum of code sizes, container sizes and data size.
     pub fn body_size(&self) -> usize {
         self.sum_code_sizes + self.sum_container_sizes + self.data_size as usize
     }
 
+    /// Returns raw size of the EOF.
     pub fn eof_size(&self) -> usize {
         self.size() + self.body_size()
     }
 
+    /// Encodes EOF header into binary form.
     pub fn encode(&self, buffer: &mut Vec<u8>) {
         // magic	2 bytes	0xEF00	EOF prefix
         buffer.extend_from_slice(&0xEF00u16.to_be_bytes());
@@ -130,6 +134,7 @@ impl EofHeader {
         buffer.push(KIND_TERMINAL);
     }
 
+    /// Decodes EOF header from binary form.
     pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), EofDecodeError> {
         let mut header = EofHeader::default();
 

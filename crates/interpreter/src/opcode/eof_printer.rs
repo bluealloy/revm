@@ -47,11 +47,6 @@ pub fn print_eof_code(code: &[u8]) {
 
             for vtablei in 0..len {
                 let offset = unsafe { read_i16(code.as_ptr().add(i + 2 + 2 * vtablei)) } as isize;
-                // TODO(EOF) for now disable checks for testing.
-                // if offset == 0 {
-                //     println!("Malformed code: zero offset in RJUMPV");
-                // }
-
                 println!("RJUMPV[{vtablei}]: 0x{offset:04X}({offset})");
             }
         }

@@ -78,11 +78,10 @@ pub const fn create2_cost(len: u64) -> Option<u64> {
 }
 
 #[inline]
-fn log2floor(value: U256) -> u64 {
-    assert!(value != U256::ZERO);
+const fn log2floor(value: U256) -> u64 {
     let mut l: u64 = 256;
-    for i in 0..4 {
-        let i = 3 - i;
+    let mut i = 3;
+    loop {
         if value.as_limbs()[i] == 0u64 {
             l -= 64;
         } else {
@@ -93,6 +92,10 @@ fn log2floor(value: U256) -> u64 {
                 return l - 1;
             }
         }
+        if i == 0 {
+            break;
+        }
+        i -= 1;
     }
     l
 }
@@ -126,11 +129,7 @@ pub const fn verylowcopy_cost(len: u64) -> Option<u64> {
 #[inline]
 pub const fn extcodecopy_cost(spec_id: SpecId, len: u64, is_cold: bool) -> Option<u64> {
     let base_gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
-        if is_cold {
-            COLD_ACCOUNT_ACCESS_COST
-        } else {
-            WARM_STORAGE_READ_COST
-        }
+        warm_cold_cost(is_cold)
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
         700
     } else {
@@ -139,27 +138,19 @@ pub const fn extcodecopy_cost(spec_id: SpecId, len: u64, is_cold: bool) -> Optio
     base_gas.checked_add(tri!(cost_per_word(len, COPY)))
 }
 
-#[inline]
-pub const fn account_access_gas(spec_id: SpecId, is_cold: bool) -> u64 {
-    if spec_id.is_enabled_in(SpecId::BERLIN) {
-        warm_cold_cost(is_cold)
-    } else if spec_id.is_enabled_in(SpecId::ISTANBUL) {
-        700
-    } else {
-        20
-    }
-}
-
+/// `LOG` opcode cost calculation.
 #[inline]
 pub const fn log_cost(n: u8, len: u64) -> Option<u64> {
     tri!(LOG.checked_add(tri!(LOGDATA.checked_mul(len)))).checked_add(LOGTOPIC * n as u64)
 }
 
+/// `KECCAK256` opcode cost calculation.
 #[inline]
 pub const fn keccak256_cost(len: u64) -> Option<u64> {
     KECCAK256.checked_add(tri!(cost_per_word(len, KECCAK256WORD)))
 }
 
+/// Calculate the cost of buffer per word.
 #[inline]
 pub const fn cost_per_word(len: u64, multiple: u64) -> Option<u64> {
     multiple.checked_mul(len.div_ceil(32))
@@ -198,6 +189,7 @@ pub const fn sload_cost(spec_id: SpecId, is_cold: bool) -> u64 {
     }
 }
 
+/// `SSTORE` opcode cost calculation.
 #[inline]
 pub fn sstore_cost(
     spec_id: SpecId,
@@ -261,6 +253,7 @@ fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
     }
 }
 
+/// `SELFDESTRUCT` opcode cost calculation.
 #[inline]
 pub const fn selfdestruct_cost(spec_id: SpecId, res: SelfDestructResult) -> u64 {
     // EIP-161: State trie clearing (invariant-preserving alternative)
@@ -337,6 +330,7 @@ pub const fn call_cost(
     gas
 }
 
+/// Berlin warm and cold storage access cost for account access.
 #[inline]
 pub const fn warm_cold_cost(is_cold: bool) -> u64 {
     if is_cold {
@@ -346,6 +340,7 @@ pub const fn warm_cold_cost(is_cold: bool) -> u64 {
     }
 }
 
+/// Memory expansion cost calculation.
 #[inline]
 pub const fn memory_gas(a: usize) -> u64 {
     let a = a as u64;

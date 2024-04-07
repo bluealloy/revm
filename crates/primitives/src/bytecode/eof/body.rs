@@ -1,7 +1,10 @@
-use super::{EofDecodeError, EofHeader, TypesSection};
+use super::{Eof, EofDecodeError, EofHeader, TypesSection};
 use crate::Bytes;
 use std::vec::Vec;
 
+/// EOF Body, contains types, code, container and data sections.
+///
+/// Can be used to create new EOF object.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EofBody {
@@ -18,6 +21,32 @@ impl EofBody {
         self.code_section.get(index)
     }
 
+    /// Create EOF from body.
+    pub fn into_eof(self) -> Eof {
+        // TODO add bounds checks.
+        let header = EofHeader {
+            types_size: self.types_section.len() as u16 * 4,
+            code_sizes: self.code_section.iter().map(|x| x.len() as u16).collect(),
+            container_sizes: self
+                .container_section
+                .iter()
+                .map(|x| x.len() as u16)
+                .collect(),
+            data_size: self.data_section.len() as u16,
+            sum_code_sizes: self.code_section.iter().map(|x| x.len()).sum(),
+            sum_container_sizes: self.container_section.iter().map(|x| x.len()).sum(),
+        };
+        let mut buffer = Vec::new();
+        header.encode(&mut buffer);
+        self.encode(&mut buffer);
+        Eof {
+            header,
+            body: self,
+            raw: buffer.into(),
+        }
+    }
+
+    /// Encode Body into buffer.
     pub fn encode(&self, buffer: &mut Vec<u8>) {
         for types_section in &self.types_section {
             types_section.encode(buffer);
@@ -34,6 +63,7 @@ impl EofBody {
         buffer.extend_from_slice(&self.data_section);
     }
 
+    /// Decode EOF body from buffer and Header.
     pub fn decode(input: &Bytes, header: &EofHeader) -> Result<Self, EofDecodeError> {
         let header_len = header.size();
         let partial_body_len =
@@ -51,7 +81,7 @@ impl EofBody {
         let mut body = EofBody::default();
 
         let mut types_input = &input[header_len..];
-        for _ in 0..header.types_items() {
+        for _ in 0..header.types_count() {
             let (types_section, local_input) = TypesSection::decode(types_input)?;
             types_input = local_input;
             body.types_section.push(types_section);

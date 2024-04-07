@@ -205,7 +205,7 @@ pub fn return_contract<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &
     }
 
     // append data bytes
-    let output = [&new_eof.raw.unwrap(), aux_slice].concat().into();
+    let output = [new_eof.raw(), aux_slice].concat().into();
 
     let result = InstructionResult::ReturnContract;
     interpreter.instruction_result = result;
