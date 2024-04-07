@@ -62,7 +62,7 @@ impl Contract {
         )
     }
 
-    /// Creates a new contract from the given [`CallContext`].
+    /// Creates a new contract from the given inputs.
     #[inline]
     pub fn new_with_context(
         input: Bytes,

@@ -176,7 +176,7 @@ pub enum EofValidationError {
     InstructionNotForwardAccessed,
     /// Bytecode is too small and is missing immediate bytes for instruction.
     MissingImmediateBytes,
-    /// Similar to [`MissingImmediateBytes`] but for special case of RJUMPV immediate bytes.
+    /// Similar to [`EofValidationError::MissingImmediateBytes`] but for special case of RJUMPV immediate bytes.
     MissingRJUMPVImmediateBytes,
     /// Invalid jump into immediate bytes.
     JumpToImmediateBytes,
@@ -609,7 +609,9 @@ mod test {
             validate_raw_eof(hex!("ef000101000c02000300040008000304000000008000020002000503010003e30001005f5f5f5f5fe500025050e4").into());
         assert_eq!(
             err,
-            Err(EofError::Validation(EofValidationError::JUMPFEnoughOutputs))
+            Err(EofError::Validation(
+                EofValidationError::JUMPFStackHigherThanOutputs
+            ))
         );
     }
 }

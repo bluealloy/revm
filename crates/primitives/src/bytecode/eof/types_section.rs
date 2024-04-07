@@ -11,7 +11,7 @@ pub struct TypesSection {
     /// inputs - 1 byte - `0x00-0x7F`
     /// number of stack elements the code section consumes
     pub inputs: u8,
-    /// outputs - 1 byte - `0x00-0x80``
+    /// outputs - 1 byte - `0x00-0x80`
     /// number of stack elements the code section returns or 0x80 for non-returning functions
     pub outputs: u8,
     /// max_stack_height - 2 bytes - `0x0000-0x03FF`

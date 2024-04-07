@@ -133,7 +133,7 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
     }
 }
 
-/// Part of EOF https://eips.ethereum.org/EIPS/eip-7069
+/// Part of EOF `<https://eips.ethereum.org/EIPS/eip-7069>`.
 pub fn returndataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
