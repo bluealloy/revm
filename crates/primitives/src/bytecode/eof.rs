@@ -17,7 +17,7 @@ use std::{vec, vec::Vec};
 /// Most of body contain Bytes so it references to the raw bytes.
 ///
 /// If there is a need to create new EOF from scratch, it is recommended to use `EofBody` and
-/// use `encode` function to create full `Eof`` object.
+/// use `encode` function to create full [`Eof`] object.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eof {
