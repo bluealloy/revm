@@ -266,7 +266,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
             // take error and break the loop if there is any.
             // This error is set From Interpreter when it's interacting with Host.
-            core::mem::replace(&mut self.context.evm.error, Ok(()))?;
+            self.context.evm.take_error()?;
             // take shared memory back.
             shared_memory = interpreter.take_memory();
 

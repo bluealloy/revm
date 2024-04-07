@@ -52,7 +52,7 @@ pub fn calc_call_gas<H: Host + ?Sized, SPEC: Spec>(
     new_account_accounting: bool,
     local_gas_limit: u64,
 ) -> Option<u64> {
-    let call_cost = gas::call_cost::<SPEC>(has_transfer, is_cold, new_account_accounting);
+    let call_cost = gas::call_cost(SPEC::SPEC_ID, has_transfer, is_cold, new_account_accounting);
 
     gas!(interpreter, call_cost, None);
 

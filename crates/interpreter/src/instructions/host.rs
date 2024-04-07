@@ -18,7 +18,7 @@ pub fn balance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
         interpreter,
         if SPEC::enabled(ISTANBUL) {
             // EIP-1884: Repricing for trie-size-dependent opcodes
-            gas::account_access_gas::<SPEC>(is_cold)
+            gas::account_access_gas(SPEC::SPEC_ID, is_cold)
         } else if SPEC::enabled(TANGERINE) {
             400
         } else {
@@ -40,7 +40,6 @@ pub fn selfbalance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
 }
 
 pub fn extcodesize<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    panic_on_eof!(interpreter);
     pop_address!(interpreter, address);
     let Some((code, is_cold)) = host.code(address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
@@ -59,7 +58,6 @@ pub fn extcodesize<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
 
 /// EIP-1052: EXTCODEHASH opcode
 pub fn extcodehash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    panic_on_eof!(interpreter);
     check!(interpreter, CONSTANTINOPLE);
     pop_address!(interpreter, address);
     let Some((code_hash, is_cold)) = host.code_hash(address) else {
@@ -77,7 +75,6 @@ pub fn extcodehash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
 }
 
 pub fn extcodecopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    panic_on_eof!(interpreter);
     pop_address!(interpreter, address);
     pop!(interpreter, memory_offset, code_offset, len_u256);
 
@@ -89,7 +86,7 @@ pub fn extcodecopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
     let len = as_usize_or_fail!(interpreter, len_u256);
     gas_or_fail!(
         interpreter,
-        gas::extcodecopy_cost::<SPEC>(len as u64, is_cold)
+        gas::extcodecopy_cost(SPEC::SPEC_ID, len as u64, is_cold)
     );
     if len == 0 {
         return;
@@ -130,7 +127,7 @@ pub fn sload<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: 
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-    gas!(interpreter, gas::sload_cost::<SPEC>(is_cold));
+    gas!(interpreter, gas::sload_cost(SPEC::SPEC_ID, is_cold));
     push!(interpreter, value);
 }
 
@@ -150,9 +147,12 @@ pub fn sstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host:
     };
     gas_or_fail!(interpreter, {
         let remaining_gas = interpreter.gas.remaining();
-        gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
+        gas::sstore_cost(SPEC::SPEC_ID, original, old, new, remaining_gas, is_cold)
     });
-    refund!(interpreter, gas::sstore_refund::<SPEC>(original, old, new));
+    refund!(
+        interpreter,
+        gas::sstore_refund(SPEC::SPEC_ID, original, old, new)
+    );
 }
 
 /// EIP-1153: Transient storage opcodes
@@ -212,7 +212,6 @@ pub fn log<const N: usize, H: Host + ?Sized>(interpreter: &mut Interpreter, host
 }
 
 pub fn selfdestruct<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    panic_on_eof!(interpreter);
     error_on_static_call!(interpreter);
     pop_address!(interpreter, target);
 
@@ -225,7 +224,7 @@ pub fn selfdestruct<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter,
     if !SPEC::enabled(LONDON) && !res.previously_destroyed {
         refund!(interpreter, gas::SELFDESTRUCT)
     }
-    gas!(interpreter, gas::selfdestruct_cost::<SPEC>(res));
+    gas!(interpreter, gas::selfdestruct_cost(SPEC::SPEC_ID, res));
 
     interpreter.instruction_result = InstructionResult::SelfDestruct;
 }

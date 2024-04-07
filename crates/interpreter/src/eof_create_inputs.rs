@@ -2,7 +2,7 @@ use crate::primitives::{Address, Eof, U256};
 use core::ops::Range;
 
 /// Inputs for EOF create call.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct EOFCreateInput {
     /// Caller of Eof Craate
     pub caller: Address,

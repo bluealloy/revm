@@ -54,14 +54,12 @@ pub fn rjumpv<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 pub fn jump<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    panic_on_eof!(interpreter);
     gas!(interpreter, gas::MID);
     pop!(interpreter, dest);
     jump_inner(interpreter, dest);
 }
 
 pub fn jumpi<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    panic_on_eof!(interpreter);
     gas!(interpreter, gas::HIGH);
     pop!(interpreter, dest, value);
     if value != U256::ZERO {
@@ -130,7 +128,6 @@ pub fn jumpf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 pub fn pc<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    panic_on_eof!(interpreter);
     gas!(interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(interpreter, U256::from(interpreter.program_counter() - 1));

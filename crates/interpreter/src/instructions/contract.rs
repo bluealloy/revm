@@ -73,7 +73,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     // deduct gas for hash that is needed to calculate address.
     gas_or_fail!(
         interpreter,
-        cost_per_word::<KECCAK256WORD>(sub_container.len() as u64)
+        cost_per_word(sub_container.len() as u64, KECCAK256WORD)
     );
 
     let created_address = interpreter
@@ -121,12 +121,12 @@ pub fn txcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     };
 
     // deduct gas for validation
-    gas_or_fail!(interpreter, cost_per_word::<BASE>(initcode.len() as u64));
+    gas_or_fail!(interpreter, cost_per_word(initcode.len() as u64, BASE));
 
     // deduct gas for hash. TODO check order of actions.
     gas_or_fail!(
         interpreter,
-        cost_per_word::<KECCAK256WORD>(initcode.len() as u64)
+        cost_per_word(initcode.len() as u64, KECCAK256WORD)
     );
 
     let Ok(eof) = Eof::decode(initcode.clone()) else {
@@ -255,8 +255,12 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
     }
 
     // TODO(EOF) is_empty should only be checked on delegatecall
-    let call_cost =
-        gas::call_cost::<BerlinSpec>(transfers_value, load_result.is_cold, load_result.is_empty);
+    let call_cost = gas::call_cost(
+        BerlinSpec::SPEC_ID,
+        transfers_value,
+        load_result.is_cold,
+        load_result.is_empty,
+    );
     gas!(interpreter, call_cost, None);
 
     // 7. Calculate the gas available to callee as caller’s
@@ -380,7 +384,6 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
     interpreter: &mut Interpreter,
     host: &mut H,
 ) {
-    panic_on_eof!(interpreter);
     error_on_static_call!(interpreter);
 
     // EIP-1014: Skinny CREATE2
@@ -417,7 +420,8 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
     // EIP-1014: Skinny CREATE2
     let scheme = if IS_CREATE2 {
         pop!(interpreter, salt);
-        gas_or_fail!(interpreter, gas::create2_cost(len));
+        // SAFETY: len is reasonable in size as gas for it is already deducted.
+        gas_or_fail!(interpreter, gas::create2_cost(len.try_into().unwrap()));
         CreateScheme::Create2 { salt }
     } else {
         gas!(interpreter, gas::CREATE);
@@ -447,7 +451,6 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
 }
 
 pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    panic_on_eof!(interpreter);
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);
     // max gas limit is not possible in real ethereum situation.
@@ -504,7 +507,6 @@ pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &
 }
 
 pub fn call_code<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    panic_on_eof!(interpreter);
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);
     // max gas limit is not possible in real ethereum situation.
@@ -556,7 +558,6 @@ pub fn call_code<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
 }
 
 pub fn delegate_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    panic_on_eof!(interpreter);
     check!(interpreter, HOMESTEAD);
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);
@@ -598,7 +599,6 @@ pub fn delegate_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter
 }
 
 pub fn static_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    panic_on_eof!(interpreter);
     check!(interpreter, BYZANTIUM);
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);

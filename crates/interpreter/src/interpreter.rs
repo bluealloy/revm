@@ -68,7 +68,7 @@ impl Default for Interpreter {
 }
 
 /// The result of an interpreter operation.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct InterpreterResult {
     /// The result of the instruction execution.
     pub result: InstructionResult,
@@ -78,7 +78,7 @@ pub struct InterpreterResult {
     pub gas: Gas,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum InterpreterAction {
     /// CALL, CALLCODE, DELEGATECALL or STATICCALL instruction called.
     Call {
@@ -318,10 +318,11 @@ impl Interpreter {
         call_outcome: CallOutcome,
     ) {
         self.instruction_result = InstructionResult::Continue;
-        self.return_data_buffer = call_outcome.output().to_owned();
+        self.return_data_buffer.clone_from(call_outcome.output());
 
         let out_offset = call_outcome.memory_start();
         let out_len = call_outcome.memory_length();
+
         let target_len = min(out_len, self.return_data_buffer.len());
         match call_outcome.instruction_result() {
             return_ok!() => {

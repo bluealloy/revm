@@ -5,12 +5,11 @@ use crate::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
     },
-    primitives::{EVMError, Env, Spec},
+    primitives::{EVMError, Env, Spec, SpecId},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
-use std::boxed::Box;
-
 use revm_interpreter::{CallOutcome, EOFCreateInput, EOFCreateOutcome, InterpreterResult};
+use std::boxed::Box;
 
 /// Helper function called inside [`last_frame_return`]
 #[inline]
@@ -45,7 +44,7 @@ pub fn frame_return_with_refund_flag<SPEC: Spec>(
     // gas spend. (Before london it was 2th part of gas spend)
     if refund_enabled {
         // EIP-3529: Reduction in refunds
-        gas.set_final_refund::<SPEC>();
+        gas.set_final_refund(SPEC::SPEC_ID.is_enabled_in(SpecId::LONDON));
     }
 }
 
@@ -90,7 +89,7 @@ pub fn insert_call_outcome<EXT, DB: Database>(
     shared_memory: &mut SharedMemory,
     outcome: CallOutcome,
 ) -> Result<(), EVMError<DB::Error>> {
-    core::mem::replace(&mut context.evm.error, Ok(()))?;
+    context.evm.take_error()?;
     frame
         .frame_data_mut()
         .interpreter
@@ -130,7 +129,7 @@ pub fn insert_create_outcome<EXT, DB: Database>(
     frame: &mut Frame,
     outcome: CreateOutcome,
 ) -> Result<(), EVMError<DB::Error>> {
-    core::mem::replace(&mut context.evm.error, Ok(()))?;
+    context.evm.take_error()?;
     frame
         .frame_data_mut()
         .interpreter
@@ -181,10 +180,9 @@ pub fn insert_eofcreate_outcome<EXT, DB: Database>(
 
 #[cfg(test)]
 mod tests {
-    use revm_interpreter::{primitives::CancunSpec, InterpreterResult};
-    use revm_precompile::Bytes;
-
     use super::*;
+    use revm_interpreter::primitives::CancunSpec;
+    use revm_precompile::Bytes;
 
     /// Creates frame result.
     fn call_last_frame_return(instruction_result: InstructionResult, gas: Gas) -> Gas {
