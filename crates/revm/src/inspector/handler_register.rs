@@ -260,26 +260,23 @@ pub fn inspector_instruction<
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
     use crate::{
         db::EmptyDB,
         inspectors::NoOpInspector,
-        interpreter::{opcode::*, CallInputs, CreateInputs, Interpreter},
+        interpreter::{opcode::*, CallInputs, CallOutcome, CreateInputs, CreateOutcome},
         primitives::BerlinSpec,
-        Database, Evm, EvmContext, Inspector,
+        EvmContext,
     };
 
-    use revm_interpreter::{CallOutcome, CreateOutcome};
-
+    // Test that this pattern builds.
     #[test]
     fn test_make_boxed_instruction_table() {
-        // test that this pattern builds.
-        let inst: InstructionTable<Evm<'_, NoOpInspector, EmptyDB>> =
-            make_instruction_table::<Evm<'_, _, _>, BerlinSpec>();
-        let _test: BoxedInstructionTable<'_, Evm<'_, _, _>> =
-            make_boxed_instruction_table::<'_, Evm<'_, NoOpInspector, EmptyDB>, BerlinSpec, _>(
-                inst,
+        type MyEvm<'a> = Evm<'a, NoOpInspector, EmptyDB>;
+        let table: InstructionTable<MyEvm<'_>> = make_instruction_table::<MyEvm<'_>, BerlinSpec>();
+        let _boxed_table: BoxedInstructionTable<'_, MyEvm<'_>> =
+            make_boxed_instruction_table::<'_, MyEvm<'_>, BerlinSpec, _>(
+                table,
                 inspector_instruction,
             );
     }

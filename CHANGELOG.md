@@ -1,5 +1,17 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v35 tag
+date: 02.04.2024
+
+Small release. Alloy bump. Small refactors and deprecated functions removed.
+
+revme: 0.3.1 -> 0.4.0 (✓ API compatible changes)
+revm: 7.2.0 -> 8.0.0 (⚠️ API breaking changes)
+revm-interpreter: 3.4.0 -> 4.0.0 (⚠️ API breaking changes)
+revm-primitives: 3.1.0 -> 3.1.1 (✓ API compatible changes)
+revm-precompile: 5.1.0 -> 6.0.0 (⚠️ API breaking changes)
+revm-test: 0.1.0
+
 # v34 tag
 date: 20.03.2024
 

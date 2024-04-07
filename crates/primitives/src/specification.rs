@@ -67,15 +67,19 @@ pub enum SpecId {
 }
 
 impl SpecId {
+    /// Returns the `SpecId` for the given `u8`.
     #[inline]
     pub fn try_from_u8(spec_id: u8) -> Option<Self> {
         Self::n(spec_id)
     }
 
-    pub fn is_enabled_in(&self, other: Self) -> bool {
-        Self::enabled(*self, other)
+    /// Returns `true` if the given specification ID is enabled in this spec.
+    #[inline]
+    pub const fn is_enabled_in(self, other: Self) -> bool {
+        Self::enabled(self, other)
     }
 
+    /// Returns `true` if the given specification ID is enabled in this spec.
     #[inline]
     pub const fn enabled(our: SpecId, other: SpecId) -> bool {
         our as u8 >= other as u8

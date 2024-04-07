@@ -65,3 +65,16 @@ pub struct SStoreResult {
     /// Is storage slot loaded from database
     pub is_cold: bool,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_host<H: Host + ?Sized>() {}
+
+    #[test]
+    fn object_safety() {
+        assert_host::<DummyHost>();
+        assert_host::<dyn Host>();
+    }
+}

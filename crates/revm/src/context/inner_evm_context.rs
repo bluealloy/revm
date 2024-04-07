@@ -113,6 +113,11 @@ impl<DB: Database> InnerEvmContext<DB> {
         &mut self.env
     }
 
+    /// Returns the error by replacing it with `Ok(())`, if any.
+    pub fn take_error(&mut self) -> Result<(), EVMError<DB::Error>> {
+        core::mem::replace(&mut self.error, Ok(()))
+    }
+
     /// Fetch block hash from database.
     #[inline]
     pub fn block_hash(&mut self, number: U256) -> Result<B256, EVMError<DB::Error>> {
