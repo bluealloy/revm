@@ -58,6 +58,8 @@ pub enum InstructionResult {
     EOFFunctionStackOverflow,
     /// EOF idx is out of bounds
     EOFCodeIdxOutOfBounds,
+    /// Eof container idx is out of bounds
+    EOFCOntainerOutOfBounds,
 }
 
 impl From<SuccessReason> for InstructionResult {
@@ -152,6 +154,7 @@ macro_rules! return_error {
             | InstructionResult::EOFOpcodeDisabledInLegacy
             | InstructionResult::EOFFunctionStackOverflow
             | InstructionResult::EOFCodeIdxOutOfBounds
+            | InstructionResult::EOFCOntainerOutOfBounds
     };
 }
 
@@ -277,7 +280,8 @@ impl From<InstructionResult> for SuccessOrHalt {
             flag @ (InstructionResult::ReturnContract
             | InstructionResult::EOFCodeIdxOutOfBounds
             | InstructionResult::OpcodeDisabledInEof
-            | InstructionResult::ReturnContractInNotInitEOF) => {
+            | InstructionResult::ReturnContractInNotInitEOF
+            | InstructionResult::EOFCOntainerOutOfBounds) => {
                 panic!("Unexpected internal return flag: {:?}", flag)
             }
         }

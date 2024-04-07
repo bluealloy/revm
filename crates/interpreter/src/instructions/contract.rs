@@ -182,8 +182,8 @@ pub fn return_contract<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &
         .container_section
         .get(deploy_container_index as usize)
     else {
-        // TODO(EOF) handle error. Should not happen.
-        interpreter.instruction_result = InstructionResult::FatalExternalError;
+        // training wheel that should be removed in future.
+        interpreter.instruction_result = InstructionResult::EOFCOntainerOutOfBounds;
         return;
     };
     // convert to EOF so we can check data section size.

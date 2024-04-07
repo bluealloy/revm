@@ -81,13 +81,6 @@ impl Eof {
             raw: Some(raw),
         })
     }
-
-    /// TODO implement it.
-    pub fn push_aux_data(&mut self, _aux_data: Bytes) {
-        // Need to modify/replace raw Bytes, and recalculate body sections.
-        // We can be little wasteful here and just replace the raw Bytes and
-        // data section in the body. Other sections would still pin old raw Bytes.
-    }
 }
 
 /// EOF decode errors.

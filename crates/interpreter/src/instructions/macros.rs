@@ -33,17 +33,6 @@ macro_rules! error_on_not_init_eof {
     };
 }
 
-/// Panic if the current call is EOF. Thes macro is training wheel and should be removed once
-/// EOF is fully implemented.
-macro_rules! panic_on_eof {
-    ($interp:expr) => {
-        if $interp.is_eof {
-            $interp.instruction_result = $crate::InstructionResult::OpcodeDisabledInEof;
-            return;
-        }
-    };
-}
-
 /// Check if the `SPEC` is enabled, and fail the instruction if it is not.
 #[macro_export]
 macro_rules! check {
