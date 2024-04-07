@@ -123,14 +123,13 @@ pub fn blockhash<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) 
 }
 
 pub fn sload<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    pop!(interpreter, index);
-
-    let Some((value, is_cold)) = host.sload(interpreter.contract.target_address, index) else {
+    pop_top!(interpreter, index);
+    let Some((value, is_cold)) = host.sload(interpreter.contract.target_address, *index) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
     gas!(interpreter, gas::sload_cost(SPEC::SPEC_ID, is_cold));
-    push!(interpreter, value);
+    *index = value;
 }
 
 pub fn sstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {

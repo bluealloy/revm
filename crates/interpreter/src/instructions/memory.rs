@@ -7,26 +7,26 @@ use core::cmp::max;
 
 pub fn mload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, item);
-    let index = as_usize_or_fail!(interpreter, item);
-    resize_memory!(interpreter, index, 32);
-    *item = interpreter.shared_memory.get_u256(index);
+    pop_top!(interpreter, top);
+    let offset = as_usize_or_fail!(interpreter, top);
+    resize_memory!(interpreter, offset, 32);
+    *top = interpreter.shared_memory.get_u256(offset);
 }
 
 pub fn mstore<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    pop!(interpreter, index, value);
-    let index = as_usize_or_fail!(interpreter, index);
-    resize_memory!(interpreter, index, 32);
-    interpreter.shared_memory.set_u256(index, value);
+    pop!(interpreter, offset, value);
+    let offset = as_usize_or_fail!(interpreter, offset);
+    resize_memory!(interpreter, offset, 32);
+    interpreter.shared_memory.set_u256(offset, value);
 }
 
 pub fn mstore8<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    pop!(interpreter, index, value);
-    let index = as_usize_or_fail!(interpreter, index);
-    resize_memory!(interpreter, index, 1);
-    interpreter.shared_memory.set_byte(index, value.byte(0))
+    pop!(interpreter, offset, value);
+    let offset = as_usize_or_fail!(interpreter, offset);
+    resize_memory!(interpreter, offset, 1);
+    interpreter.shared_memory.set_byte(offset, value.byte(0))
 }
 
 pub fn msize<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
