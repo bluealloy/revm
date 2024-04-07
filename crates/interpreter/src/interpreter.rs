@@ -383,7 +383,7 @@ impl Interpreter {
     /// Executes the instruction at the current instruction pointer.
     ///
     /// Internally it will increment instruction pointer by one.
-    #[inline(always)]
+    #[inline]
     pub(crate) fn step<FN, H: Host + ?Sized>(&mut self, instruction_table: &[FN; 256], host: &mut H)
     where
         FN: Fn(&mut Interpreter, &mut H),

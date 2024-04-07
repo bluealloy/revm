@@ -232,10 +232,9 @@ impl Stack {
         } else {
             // SAFETY: check for out of bounds is done above and it makes this safe to do.
             unsafe {
-                let data = self.data.as_mut_ptr();
-                core::ptr::copy_nonoverlapping(data.add(len - n), data.add(len), 1);
                 self.data.set_len(len + 1);
             }
+            self.data[len] = self.data[len - n];
             Ok(())
         }
     }
