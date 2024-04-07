@@ -2,6 +2,7 @@ use super::{
     decode_helpers::{consume_u16, consume_u8},
     EofDecodeError,
 };
+use std::vec::Vec;
 
 /// TODO(EOF) Chekc if max_stack_size >= inputs.
 #[derive(Debug, Clone, Default, Hash, PartialEq, Eq, Copy)]
