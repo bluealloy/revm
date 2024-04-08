@@ -184,7 +184,7 @@ impl Stack {
     /// unchanged.
     #[inline]
     pub fn push(&mut self, value: U256) -> Result<(), InstructionResult> {
-        // allows the compiler to optimize out the `Vec::push` capacity check
+        // Allows the compiler to optimize out the `Vec::push` capacity check.
         assume!(self.data.capacity() == STACK_LIMIT);
         if self.data.len() == STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);

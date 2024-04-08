@@ -3,20 +3,20 @@ use crate::{
     primitives::{Spec, B256, KECCAK_EMPTY, U256},
     Host, InstructionResult, Interpreter,
 };
+use core::ptr;
 
 pub fn keccak256<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    pop!(interpreter, from, len);
-    let len = as_usize_or_fail!(interpreter, len);
+    pop_top!(interpreter, offset, len_ptr);
+    let len = as_usize_or_fail!(interpreter, len_ptr);
     gas_or_fail!(interpreter, gas::keccak256_cost(len as u64));
     let hash = if len == 0 {
         KECCAK_EMPTY
     } else {
-        let from = as_usize_or_fail!(interpreter, from);
+        let from = as_usize_or_fail!(interpreter, offset);
         resize_memory!(interpreter, from, len);
         crate::primitives::keccak256(interpreter.shared_memory.slice(from, len))
     };
-
-    push_b256!(interpreter, hash);
+    *len_ptr = hash.into();
 }
 
 pub fn address<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -56,18 +56,25 @@ pub fn codecopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) 
 
 pub fn calldataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    pop!(interpreter, index);
-    let index = as_usize_saturated!(index);
-    let load = if index < interpreter.contract.input.len() {
-        let have_bytes = 32.min(interpreter.contract.input.len() - index);
-        let mut bytes = [0u8; 32];
-        bytes[..have_bytes].copy_from_slice(&interpreter.contract.input[index..index + have_bytes]);
-        B256::new(bytes)
-    } else {
-        B256::ZERO
-    };
-
-    push_b256!(interpreter, load);
+    pop_top!(interpreter, offset_ptr);
+    let mut word = B256::ZERO;
+    let offset = as_usize_saturated!(offset_ptr);
+    if offset < interpreter.contract.input.len() {
+        let count = 32.min(interpreter.contract.input.len() - offset);
+        // SAFETY: count is bounded by the calldata length.
+        // This is `word[..count].copy_from_slice(input[offset..offset + count])`, written using
+        // raw pointers as apparently the compiler cannot optimize the slice version, and using
+        // `get_unchecked` twice is uglier.
+        debug_assert!(count <= 32 && offset + count <= interpreter.contract.input.len());
+        unsafe {
+            ptr::copy_nonoverlapping(
+                interpreter.contract.input.as_ptr().add(offset),
+                word.as_mut_ptr(),
+                count,
+            )
+        };
+    }
+    *offset_ptr = word.into();
 }
 
 pub fn calldatasize<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {

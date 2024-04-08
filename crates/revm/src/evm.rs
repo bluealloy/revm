@@ -382,11 +382,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 }
 
 impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
-    fn env_mut(&mut self) -> &mut Env {
-        &mut self.context.evm.env
-    }
     fn env(&self) -> &Env {
         &self.context.evm.env
+    }
+
+    fn env_mut(&mut self) -> &mut Env {
+        &mut self.context.evm.env
     }
 
     fn block_hash(&mut self, number: U256) -> Option<B256> {
