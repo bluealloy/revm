@@ -29,6 +29,8 @@ pub struct Cmd {
     /// It will stop second run of evm on failure.
     #[structopt(short = "o", long)]
     json_outcome: bool,
+    #[structopt(long, alias = "no-fail-fast")]
+    keep_going: bool,
 }
 
 impl Cmd {
@@ -37,7 +39,13 @@ impl Cmd {
         for path in &self.path {
             println!("\nRunning tests in {}...", path.display());
             let test_files = find_all_json_tests(path);
-            run(test_files, self.single_thread, self.json, self.json_outcome)?
+            run(
+                test_files,
+                self.single_thread,
+                self.json,
+                self.json_outcome,
+                self.keep_going,
+            )?
         }
         Ok(())
     }
