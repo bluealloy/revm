@@ -6,12 +6,10 @@ It is set up to be compatible with environments that do not include Rust's stand
 
 ### Modules:
 
-- [bits](./primitives/bits.md): This module provides types for handling specific sizes of byte arrays (Address and B256).
 - [bytecode](./primitives/bytecode.md): This module provides functionality related to EVM bytecode.
 - [constants](./primitives/constants.md): This module contains constant values used throughout the EVM implementation.
 - [db](./primitives/database.md): This module contains data structures and functions related to the EVM's database implementation.
 - [env](./primitives/environment.md): This module contains types and functions related to the EVM's environment, including block headers, and environment values.
-- [log](./primitives/log.md): This module provides types and functionality for Ethereum logs.
 - [precompile](./primitives/precompile.md): This module contains types related to Ethereum's precompiled contracts.
 - [result](./primitives/result.md): This module provides types for representing execution results and errors in the EVM.
 - [specification](./primitives/specifications.md): This module defines types related to Ethereum specifications (also known as hard forks).
@@ -30,10 +28,6 @@ It is set up to be compatible with environments that do not include Rust's stand
 - `ruint`: The ruint crate provides types and functions for big unsigned integer arithmetic.
 - `c-kzg`: A minimal implementation of the Polynomial Commitments API for EIP-4844, written in C. (With rust bindings)
 
-### Type Aliases:
-
-- `Hash`: An alias for B256, typically used to represent 256-bit hashes or integer values in Ethereum.
-
 ### Re-exported Types:
 
 - `Address`: A type representing a 160-bit (or 20-byte) array, typically used for Ethereum addresses.
@@ -43,4 +37,4 @@ It is set up to be compatible with environments that do not include Rust's stand
 - `HashMap` and `HashSet`: High-performance hash map and hash set data structures from the hashbrown crate.
 
 Re-exported Modules:
-All types, constants, and functions from the `bytecode`, `constants`, `env`, `log`, `precompile`, `result`, `specification`, `state`, `utilities`, `KzgSettings`, `EnvKzgSettings`, `trusted_setup_points` types and methods were all re-exported, allowing users to import these items directly from the `primitives` crate.
+All types, constants, and functions from the `bytecode`, `constants`, `env`, `precompile`, `result`, `specification`, `state`, `utilities`, `KzgSettings`, `EnvKzgSettings`, `trusted_setup_points` types and methods were all re-exported, allowing users to import these items directly from the `primitives` crate.
