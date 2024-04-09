@@ -14,7 +14,7 @@ There are several built-in inspectors in this module:
 - `TracerEip3155`:
   This is an inspector that conforms to the [EIP-3155](https://eips.ethereum.org/EIPS/eip-3155) standard for tracing Ethereum transactions.
   It's used to generate detailed trace data of transaction execution, which can be useful for debugging, analysis, or for building tools that need to understand the inner workings of Ethereum transactions.
-  This is only available when both `std` and `serde` features are enabled.
+  This is only available when both `std` and `serde-json` features are enabled.
 
 ## Inspector trait
 
