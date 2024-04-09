@@ -122,6 +122,7 @@ dependencies = [
  "derive_arbitrary",
  "derive_more",
  "ethereum_ssz",
+ "getrandom",
  "hex-literal",
  "itoa",
  "k256",

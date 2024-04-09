@@ -78,64 +78,6 @@ pub struct InterpreterResult {
     pub gas: Gas,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub enum InterpreterAction {
-    /// CALL, CALLCODE, DELEGATECALL or STATICCALL instruction called.
-    Call {
-        /// Call inputs
-        inputs: Box<CallInputs>,
-    },
-    /// CREATE or CREATE2 instruction called.
-    Create {
-        inputs: Box<CreateInputs>,
-    },
-    EOFCreate {
-        inputs: Box<EOFCreateInput>,
-    },
-    /// Interpreter finished execution.
-    Return {
-        result: InterpreterResult,
-    },
-    /// No action
-    #[default]
-    None,
-}
-
-impl InterpreterAction {
-    /// Returns true if action is call.
-    pub fn is_call(&self) -> bool {
-        matches!(self, InterpreterAction::Call { .. })
-    }
-
-    /// Returns true if action is create.
-    pub fn is_create(&self) -> bool {
-        matches!(self, InterpreterAction::Create { .. })
-    }
-
-    /// Returns true if action is return.
-    pub fn is_return(&self) -> bool {
-        matches!(self, InterpreterAction::Return { .. })
-    }
-
-    /// Returns true if action is none.
-    pub fn is_none(&self) -> bool {
-        matches!(self, InterpreterAction::None)
-    }
-
-    /// Returns true if action is some.
-    pub fn is_some(&self) -> bool {
-        !self.is_none()
-    }
-
-    /// Returns result if action is return.
-    pub fn into_result_return(self) -> Option<InterpreterResult> {
-        match self {
-            InterpreterAction::Return { result } => Some(result),
-            _ => None,
-        }
-    }
-}
-
 impl Interpreter {
     /// Create new interpreter
     pub fn new(contract: Contract, gas_limit: u64, is_static: bool) -> Self {
