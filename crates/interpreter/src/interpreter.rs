@@ -1,5 +1,7 @@
 pub mod analysis;
 mod contract;
+#[cfg(feature = "serde")]
+pub mod serde;
 mod shared_memory;
 mod stack;
 
@@ -68,6 +70,7 @@ impl Default for Interpreter {
 
 /// The result of an interpreter operation.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct InterpreterResult {
     /// The result of the instruction execution.
     pub result: InstructionResult,

@@ -8,6 +8,7 @@ use revm_primitives::{Address, Bytes};
 /// This struct holds the result of the operation along with an optional address.
 /// It provides methods to determine the next action based on the result of the operation.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EOFCreateOutcome {
     /// The result of the interpreter operation.
     pub result: InterpreterResult,

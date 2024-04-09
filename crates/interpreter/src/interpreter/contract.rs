@@ -6,6 +6,7 @@ use crate::{
 
 /// EVM contract information.
 #[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Contract {
     /// Contracts data
     pub input: Bytes,

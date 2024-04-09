@@ -11,6 +11,7 @@ use std::boxed::Box;
 
 /// Call CallStackFrame.
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallFrame {
     /// Call frame has return memory range where output will be stored.
     pub return_memory_range: Range<usize>,
@@ -19,6 +20,7 @@ pub struct CallFrame {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateFrame {
     /// Create frame has a created address.
     pub created_address: Address,
@@ -28,6 +30,7 @@ pub struct CreateFrame {
 
 /// Eof Create Frame.
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EOFCreateFrame {
     pub created_address: Address,
     pub return_memory_range: Range<usize>,
@@ -35,6 +38,7 @@ pub struct EOFCreateFrame {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FrameData {
     /// Journal checkpoint.
     pub checkpoint: JournalCheckpoint,
@@ -44,12 +48,14 @@ pub struct FrameData {
 
 /// Call stack frame.
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Frame {
     Call(Box<CallFrame>),
     Create(Box<CreateFrame>),
     EOFCreate(Box<EOFCreateFrame>),
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FrameResult {
     Call(CallOutcome),
     Create(CreateOutcome),
@@ -129,6 +135,7 @@ impl FrameResult {
 }
 
 /// Contains either a frame or a result.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FrameOrResult {
     /// Boxed call or create frame.
     Frame(Frame),
