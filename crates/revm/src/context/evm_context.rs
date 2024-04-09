@@ -2,10 +2,18 @@ use super::inner_evm_context::InnerEvmContext;
 use crate::{
     db::Database,
     interpreter::{
-        return_ok, CallInputs, Contract, Gas, InstructionResult, Interpreter, InterpreterResult,
+        return_ok,
+        CallInputs,
+        Contract,
+        Gas,
+        InstructionResult,
+        Interpreter,
+        InterpreterResult,
     },
     primitives::{Address, Bytes, EVMError, Env, HashSet, U256},
-    ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
+    ContextPrecompiles,
+    FrameOrResult,
+    CALL_STACK_LIMIT,
 };
 use core::{
     fmt,
@@ -224,7 +232,7 @@ pub(crate) mod test_utils {
     use crate::{
         db::{CacheDB, EmptyDB},
         journaled_state::JournaledState,
-        primitives::{address, Address, Bytes, Env, HashSet, SpecId, B256, U256},
+        primitives::{address, AccountInfo, Address, Bytes, Env, HashSet, SpecId, B256, U256},
         InnerEvmContext,
     };
     use std::boxed::Box;
@@ -264,12 +272,13 @@ pub(crate) mod test_utils {
         balance: U256,
     ) -> EvmContext<CacheDB<EmptyDB>> {
         db.insert_account_info(
-            test_utils::MOCK_CALLER,
-            crate::primitives::AccountInfo {
+            MOCK_CALLER,
+            AccountInfo {
                 nonce: 0,
                 balance,
                 code_hash: B256::default(),
                 code: None,
+                ..Default::default()
             },
         );
         create_cache_db_evm_context(env, db)
@@ -312,15 +321,16 @@ pub(crate) mod test_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_utils::*;
-
     use crate::{
         db::{CacheDB, EmptyDB},
         interpreter::InstructionResult,
-        primitives::{address, Bytecode, Bytes, Env, U256},
-        Frame, FrameOrResult, JournalEntry,
+        primitives::{address, AccountInfo, Bytecode, Bytes, Env, U256},
+        Frame,
+        FrameOrResult,
+        JournalEntry,
     };
     use std::boxed::Box;
+    use test_utils::*;
 
     // Tests that the `EVMContext::make_call_frame` function returns an error if the
     // call stack is too deep.
@@ -390,11 +400,12 @@ mod tests {
         let contract = address!("dead10000000000000000000000000000001dead");
         cdb.insert_account_info(
             contract,
-            crate::primitives::AccountInfo {
+            AccountInfo {
                 nonce: 0,
                 balance: bal,
                 code_hash: by.clone().hash_slow(),
                 code: Some(by),
+                ..Default::default()
             },
         );
         let mut evm_context = create_cache_db_evm_context_with_balance(Box::new(env), cdb, bal);
