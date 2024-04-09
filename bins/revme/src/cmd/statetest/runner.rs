@@ -19,8 +19,10 @@ use std::{
     convert::Infallible,
     io::{stderr, stdout},
     path::{Path, PathBuf},
-    sync::atomic::Ordering,
-    sync::{atomic::AtomicBool, Arc, Mutex},
+    sync::{
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+        Arc, Mutex,
+    },
     time::{Duration, Instant},
 };
 use thiserror::Error;
@@ -35,33 +37,35 @@ pub struct TestError {
 
 #[derive(Debug, Error)]
 pub enum TestErrorKind {
-    #[error("logs root mismatch: expected {expected:?}, got {got:?}")]
+    #[error("logs root mismatch: got {got}, expected {expected}")]
     LogsRootMismatch { got: B256, expected: B256 },
-    #[error("state root mismatch: expected {expected:?}, got {got:?}")]
+    #[error("state root mismatch: got {got}, expected {expected}")]
     StateRootMismatch { got: B256, expected: B256 },
-    #[error("Unknown private key: {0:?}")]
+    #[error("unknown private key: {0:?}")]
     UnknownPrivateKey(B256),
-    #[error("Unexpected exception: {got_exception:?} but test expects:{expected_exception:?}")]
+    #[error("unexpected exception: got {got_exception:?}, expected {expected_exception:?}")]
     UnexpectedException {
         expected_exception: Option<String>,
         got_exception: Option<String>,
     },
-    #[error("Unexpected output: {got_output:?} but test expects:{expected_output:?}")]
+    #[error("unexpected output: got {got_output:?}, expected {expected_output:?}")]
     UnexpectedOutput {
         expected_output: Option<Bytes>,
         got_output: Option<Bytes>,
     },
     #[error(transparent)]
     SerdeDeserialize(#[from] serde_json::Error),
+    #[error("thread panicked")]
+    Panic,
 }
 
 pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
     WalkDir::new(path)
         .into_iter()
-        .filter_map(|e| e.ok())
-        .filter(|e| e.file_name().to_string_lossy().ends_with(".json"))
+        .filter_map(Result::ok)
+        .filter(|e| e.path().extension() == Some("json".as_ref()))
         .map(DirEntry::into_path)
-        .collect::<Vec<PathBuf>>()
+        .collect()
 }
 
 fn skip_test(path: &Path) -> bool {
@@ -120,19 +124,26 @@ fn check_evm_execution<EXT>(
     let print_json_output = |error: Option<String>| {
         if print_json_outcome {
             let json = json!({
-                    "stateRoot": state_root,
-                    "logsRoot": logs_root,
-                    "output": exec_result.as_ref().ok().and_then(|r| r.output().cloned()).unwrap_or_default(),
-                    "gasUsed": exec_result.as_ref().ok().map(|r| r.gas_used()).unwrap_or_default(),
-                    "pass": error.is_none(),
-                    "errorMsg": error.unwrap_or_default(),
-                    "evmResult": exec_result.as_ref().err().map(|e| e.to_string()).unwrap_or("Ok".to_string()),
-                    "postLogsHash": logs_root,
-                    "fork": evm.handler.cfg().spec_id,
-                    "test": test_name,
-                    "d": test.indexes.data,
-                    "g": test.indexes.gas,
-                    "v": test.indexes.value,
+                "stateRoot": state_root,
+                "logsRoot": logs_root,
+                "output": exec_result.as_ref().ok().and_then(|r| r.output().cloned()).unwrap_or_default(),
+                "gasUsed": exec_result.as_ref().ok().map(|r| r.gas_used()).unwrap_or_default(),
+                "pass": error.is_none(),
+                "errorMsg": error.unwrap_or_default(),
+                "evmResult": match exec_result {
+                    Ok(r) => match r {
+                        ExecutionResult::Success { reason, .. } => format!("Success: {reason:?}"),
+                        ExecutionResult::Revert { .. } => "Revert".to_string(),
+                        ExecutionResult::Halt { reason, .. } => format!("Halt: {reason:?}"),
+                    },
+                    Err(e) => e.to_string(),
+                },
+                "postLogsHash": logs_root,
+                "fork": evm.handler.cfg().spec_id,
+                "test": test_name,
+                "d": test.indexes.data,
+                "g": test.indexes.gas,
+                "v": test.indexes.value,
             });
             eprintln!("{json}");
         }
@@ -443,6 +454,7 @@ pub fn run(
     mut single_thread: bool,
     trace: bool,
     mut print_outcome: bool,
+    keep_going: bool,
 ) -> Result<(), TestError> {
     // trace implies print_outcome
     if trace {
@@ -454,7 +466,7 @@ pub fn run(
     }
     let n_files = test_files.len();
 
-    let endjob = Arc::new(AtomicBool::new(false));
+    let n_errors = Arc::new(AtomicUsize::new(0));
     let console_bar = Arc::new(ProgressBar::with_draw_target(
         Some(n_files as u64),
         ProgressDrawTarget::stdout(),
@@ -470,14 +482,14 @@ pub fn run(
     let mut handles = Vec::with_capacity(num_threads);
     for i in 0..num_threads {
         let queue = queue.clone();
-        let endjob = endjob.clone();
+        let n_errors = n_errors.clone();
         let console_bar = console_bar.clone();
         let elapsed = elapsed.clone();
 
         let thread = std::thread::Builder::new().name(format!("runner-{i}"));
 
         let f = move || loop {
-            if endjob.load(Ordering::SeqCst) {
+            if !keep_going && n_errors.load(Ordering::SeqCst) > 0 {
                 return Ok(());
             }
 
@@ -491,20 +503,27 @@ pub fn run(
                 (prev_idx, test_path)
             };
 
-            if let Err(err) = execute_test_suite(&test_path, &elapsed, trace, print_outcome) {
-                endjob.store(true, Ordering::SeqCst);
-                return Err(err);
-            }
             console_bar.inc(1);
+            if let Err(err) = execute_test_suite(&test_path, &elapsed, trace, print_outcome) {
+                n_errors.fetch_add(1, Ordering::SeqCst);
+                if !keep_going {
+                    return Err(err);
+                }
+            }
         };
         handles.push(thread.spawn(f).unwrap());
     }
 
     // join all threads before returning an error
-    let mut errors = Vec::new();
-    for handle in handles {
-        if let Err(e) = handle.join().unwrap() {
-            errors.push(e);
+    let mut thread_errors = Vec::new();
+    for (i, handle) in handles.into_iter().enumerate() {
+        match handle.join() {
+            Ok(Ok(())) => {}
+            Ok(Err(e)) => thread_errors.push(e),
+            Err(_) => thread_errors.push(TestError {
+                name: format!("thread {i} panicked"),
+                kind: TestErrorKind::Panic,
+            }),
         }
     }
     console_bar.finish();
@@ -513,17 +532,25 @@ pub fn run(
         "Finished execution. Total CPU time: {:.6}s",
         elapsed.lock().unwrap().as_secs_f64()
     );
-    if errors.is_empty() {
+
+    let n_errors = n_errors.load(Ordering::SeqCst);
+    let n_thread_errors = thread_errors.len();
+    if n_errors == 0 && n_thread_errors == 0 {
         println!("All tests passed!");
         Ok(())
     } else {
-        let n = errors.len();
-        if n > 1 {
-            println!("{n} threads returned an error, out of {num_threads} total:");
-            for error in &errors {
+        println!("Encountered {n_errors} errors out of {n_files} total tests");
+
+        if n_thread_errors == 0 {
+            std::process::exit(1);
+        }
+
+        if n_thread_errors > 1 {
+            println!("{n_thread_errors} threads returned an error, out of {num_threads} total:");
+            for error in &thread_errors {
                 println!("{error}");
             }
         }
-        Err(errors.swap_remove(0))
+        Err(thread_errors.swap_remove(0))
     }
 }
