@@ -9,13 +9,12 @@ pub use stack::{Stack, STACK_LIMIT};
 
 use crate::EOFCreateOutcome;
 use crate::{
-    primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CallOutcome,
-    CreateInputs, CreateOutcome, EOFCreateInput, FunctionStack, Gas, Host, InstructionResult,
+    primitives::Bytes, push, push_b256, return_ok, return_revert, CallOutcome, CreateOutcome,
+    FunctionStack, Gas, Host, InstructionResult, InterpreterAction,
 };
 use core::cmp::min;
 use revm_primitives::{Bytecode, Eof, U256};
 use std::borrow::ToOwned;
-use std::boxed::Box;
 
 /// EVM bytecode interpreter.
 #[derive(Debug)]

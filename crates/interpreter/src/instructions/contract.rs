@@ -9,10 +9,10 @@ use crate::{
     analysis::validate_eof,
     gas::{self, cost_per_word, BASE, EOF_CREATE_GAS, KECCAK256WORD},
     instructions::utility::read_u16,
-    interpreter::{Interpreter, InterpreterAction},
+    interpreter::Interpreter,
     primitives::{Address, Bytes, Eof, Spec, SpecId::*, B256, U256},
     CallInputs, CallScheme, CreateInputs, CreateScheme, EOFCreateInput, Host, InstructionResult,
-    InterpreterResult, LoadAccountResult, TransferValue, MAX_INITCODE_SIZE,
+    InterpreterAction, InterpreterResult, LoadAccountResult, TransferValue, MAX_INITCODE_SIZE,
 };
 use core::{cmp::max, ops::Range};
 use std::boxed::Box;
