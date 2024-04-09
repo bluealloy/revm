@@ -1,0 +1,38 @@
+{
+  "EOF1_valid_rjumpv": {
+    "vectors": {
+      "single_entry_case_0": {
+        "code": "0xef0001010004020001000904000000008000016000e2000000600100",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "three_entries_case_2": {
+        "code": "0xef0001010004020001001004000000008000016002e20200000003fff6600100600200",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "two_entries_case_0": {
+        "code": "0xef0001010004020001000e04000000008000016000e20100000003600100600200",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "two_entries_case_2": {
+        "code": "0xef0001010004020001000e04000000008000016002e20100000003600100600200",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      }
+    }
+  }
+}

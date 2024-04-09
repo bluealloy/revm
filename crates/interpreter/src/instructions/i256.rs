@@ -11,7 +11,14 @@ pub enum Sign {
     Plus = 1,
 }
 
-const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
+pub const MAX_POSITIVE_VALUE: U256 = U256::from_limbs([
+    0xffffffffffffffff,
+    0xffffffffffffffff,
+    0xffffffffffffffff,
+    0x7fffffffffffffff,
+]);
+
+pub const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
     0x0000000000000000,
     0x0000000000000000,
     0x0000000000000000,
@@ -125,15 +132,8 @@ pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::primitives::uint;
     use core::num::Wrapping;
-    use revm_primitives::uint;
-
-    const MAX_POSITIVE_VALUE: U256 = U256::from_limbs([
-        0xffffffffffffffff,
-        0xffffffffffffffff,
-        0xffffffffffffffff,
-        0x7fffffffffffffff,
-    ]);
 
     #[test]
     fn div_i256() {

@@ -2,7 +2,7 @@
 
 /// Fails the instruction if the current call is static.
 #[macro_export]
-macro_rules! check_staticcall {
+macro_rules! error_on_static_call {
     ($interp:expr) => {
         if $interp.is_static {
             $interp.instruction_result = $crate::InstructionResult::StateChangeDuringStaticCall;
@@ -11,7 +11,29 @@ macro_rules! check_staticcall {
     };
 }
 
-/// Fails the instruction if the `min` is not enabled in `SPEC`.
+/// Error if the current call is executing EOF.
+#[macro_export]
+macro_rules! error_on_disabled_eof {
+    ($interp:expr) => {
+        if !$interp.is_eof {
+            $interp.instruction_result = $crate::InstructionResult::EOFOpcodeDisabledInLegacy;
+            return;
+        }
+    };
+}
+
+/// Error if not init eof call.
+#[macro_export]
+macro_rules! error_on_not_init_eof {
+    ($interp:expr) => {
+        if !$interp.is_eof_init {
+            $interp.instruction_result = $crate::InstructionResult::ReturnContractInNotInitEOF;
+            return;
+        }
+    };
+}
+
+/// Check if the `SPEC` is enabled, and fail the instruction if it is not.
 #[macro_export]
 macro_rules! check {
     ($interp:expr, $min:ident) => {
@@ -96,19 +118,30 @@ macro_rules! resize_memory {
 #[macro_export]
 macro_rules! pop_address {
     ($interp:expr, $x1:ident) => {
+        pop_address_ret!($interp, $x1, ())
+    };
+    ($interp:expr, $x1:ident, $x2:ident) => {
+        pop_address_ret!($interp, $x1, $x2, ())
+    };
+}
+
+/// Pop `Address` values from the stack, returns `ret` on stack underflow.
+#[macro_export]
+macro_rules! pop_address_ret {
+    ($interp:expr, $x1:ident, $ret:expr) => {
         if $interp.stack.len() < 1 {
             $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return;
+            return $ret;
         }
         // SAFETY: Length is checked above.
         let $x1 = $crate::primitives::Address::from_word($crate::primitives::B256::from(unsafe {
             $interp.stack.pop_unsafe()
         }));
     };
-    ($interp:expr, $x1:ident, $x2:ident) => {
+    ($interp:expr, $x1:ident, $x2:ident, $ret:expr) => {
         if $interp.stack.len() < 2 {
             $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return;
+            return $ret;
         }
         // SAFETY: Length is checked above.
         let $x1 = $crate::primitives::Address::from_word($crate::primitives::B256::from(unsafe {
@@ -134,6 +167,9 @@ macro_rules! pop {
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
         $crate::pop_ret!($interp, $x1, $x2, $x3, $x4, ())
+    };
+    ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $x5:ident) => {
+        pop_ret!($interp, $x1, $x2, $x3, $x4, $x5, ())
     };
 }
 
@@ -172,6 +208,14 @@ macro_rules! pop_ret {
         }
         // SAFETY: Length is checked above.
         let ($x1, $x2, $x3, $x4) = unsafe { $interp.stack.pop4_unsafe() };
+    };
+    ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $x5:ident, $ret:expr) => {
+        if $interp.stack.len() < 4 {
+            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
+            return $ret;
+        }
+        // SAFETY: Length is checked above.
+        let ($x1, $x2, $x3, $x4, $x5) = unsafe { $interp.stack.pop5_unsafe() };
     };
 }
 
@@ -251,6 +295,16 @@ macro_rules! as_u64_saturated {
 macro_rules! as_usize_saturated {
     ($v:expr) => {
         usize::try_from($crate::as_u64_saturated!($v)).unwrap_or(usize::MAX)
+    };
+}
+
+/// Converts a `U256` value to a `isize`, saturating to `isize::MAX` if the value is too large.
+#[macro_export]
+macro_rules! as_isize_saturated {
+    ($v:expr) => {
+        // `isize_try_from(u64::MAX)`` will fail and return isize::MAX
+        // this is expected behavior as we are saturating the value.
+        isize::try_from($crate::as_u64_saturated!($v)).unwrap_or(isize::MAX)
     };
 }
 

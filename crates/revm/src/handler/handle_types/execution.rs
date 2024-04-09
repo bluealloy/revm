@@ -1,4 +1,5 @@
 use crate::{
+    frame::EOFCreateFrame,
     handler::mainnet,
     interpreter::{CallInputs, CreateInputs, SharedMemory},
     primitives::{db::Database, EVMError, Spec},
@@ -6,7 +7,9 @@ use crate::{
 };
 use std::{boxed::Box, sync::Arc};
 
-use revm_interpreter::{CallOutcome, CreateOutcome, InterpreterResult};
+use revm_interpreter::{
+    CallOutcome, CreateOutcome, EOFCreateInput, EOFCreateOutcome, InterpreterResult,
+};
 
 /// Handles first frame return handle.
 pub type LastFrameReturnHandle<'a, EXT, DB> = Arc<
@@ -73,6 +76,35 @@ pub type InsertCreateOutcomeHandle<'a, EXT, DB> = Arc<
         + 'a,
 >;
 
+/// Handle EOF sub create.
+pub type FrameEOFCreateHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<EXT, DB>,
+            Box<EOFCreateInput>,
+        ) -> Result<FrameOrResult, EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
+
+/// Handle EOF create return
+pub type FrameEOFCreateReturnHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<EXT, DB>,
+            Box<EOFCreateFrame>,
+            InterpreterResult,
+        ) -> Result<EOFCreateOutcome, EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
+
+/// Insert EOF crate outcome to the parent
+pub type InsertEOFCreateOutcomeHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<EXT, DB>,
+            &mut Frame,
+            EOFCreateOutcome,
+        ) -> Result<(), EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
+
 /// Handles related to stack frames.
 pub struct ExecutionHandler<'a, EXT, DB: Database> {
     /// Handles last frame return, modified gas for refund and
@@ -90,6 +122,12 @@ pub struct ExecutionHandler<'a, EXT, DB: Database> {
     pub create_return: FrameCreateReturnHandle<'a, EXT, DB>,
     /// Insert create outcome.
     pub insert_create_outcome: InsertCreateOutcomeHandle<'a, EXT, DB>,
+    /// Frame EOFCreate
+    pub eofcreate: FrameEOFCreateHandle<'a, EXT, DB>,
+    /// EOFCreate return
+    pub eofcreate_return: FrameEOFCreateReturnHandle<'a, EXT, DB>,
+    /// Insert EOFCreate outcome.
+    pub insert_eofcreate_outcome: InsertEOFCreateOutcomeHandle<'a, EXT, DB>,
 }
 
 impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
@@ -103,6 +141,9 @@ impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
             create: Arc::new(mainnet::create::<SPEC, EXT, DB>),
             create_return: Arc::new(mainnet::create_return::<SPEC, EXT, DB>),
             insert_create_outcome: Arc::new(mainnet::insert_create_outcome),
+            eofcreate: Arc::new(mainnet::eofcreate::<SPEC, EXT, DB>),
+            eofcreate_return: Arc::new(mainnet::eofcreate_return::<SPEC, EXT, DB>),
+            insert_eofcreate_outcome: Arc::new(mainnet::insert_eofcreate_outcome),
         }
     }
 }
@@ -181,5 +222,37 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         outcome: CreateOutcome,
     ) -> Result<(), EVMError<DB::Error>> {
         (self.insert_create_outcome)(context, frame, outcome)
+    }
+
+    /// Call Create frame
+    #[inline]
+    pub fn eofcreate(
+        &self,
+        context: &mut Context<EXT, DB>,
+        inputs: Box<EOFCreateInput>,
+    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+        (self.eofcreate)(context, inputs)
+    }
+
+    /// Call handler for create return.
+    #[inline]
+    pub fn eofcreate_return(
+        &self,
+        context: &mut Context<EXT, DB>,
+        frame: Box<EOFCreateFrame>,
+        interpreter_result: InterpreterResult,
+    ) -> Result<EOFCreateOutcome, EVMError<DB::Error>> {
+        (self.eofcreate_return)(context, frame, interpreter_result)
+    }
+
+    /// Call handler for inserting create outcome.
+    #[inline]
+    pub fn insert_eofcreate_outcome(
+        &self,
+        context: &mut Context<EXT, DB>,
+        frame: &mut Frame,
+        outcome: EOFCreateOutcome,
+    ) -> Result<(), EVMError<DB::Error>> {
+        (self.insert_eofcreate_outcome)(context, frame, outcome)
     }
 }

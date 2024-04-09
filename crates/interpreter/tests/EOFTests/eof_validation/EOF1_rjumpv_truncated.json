@@ -1,0 +1,42 @@
+{
+  "EOF1_rjumpv_truncated": {
+    "vectors": {
+      "EOF1_rjumpv_truncated_0": {
+        "code": "0xef0001010004020001000504000000008000006000e20000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TruncatedImmediate",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_truncated_1": {
+        "code": "0xef0001010004020001000704000000008000006000e201000000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TruncatedImmediate",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_truncated_2": {
+        "code": "0xef0001010004020001000604000000008000006002e2010000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TruncatedImmediate",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_truncated_3": {
+        "code": "0xef0001010004020001000904000000008000006002e20200000003ff",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TruncatedImmediate",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

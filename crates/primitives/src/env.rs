@@ -3,16 +3,17 @@ pub mod handler_cfg;
 pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
-    calc_blob_gasprice, Account, Address, Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId,
-    B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
+    calc_blob_gasprice, Account, Address, Bytes, HashMap, InvalidHeader, InvalidTransaction, Spec,
+    SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
     VERSIONED_HASH_VERSION_KZG,
 };
 use core::cmp::{min, Ordering};
+use core::hash::Hash;
 use std::boxed::Box;
 use std::vec::Vec;
 
 /// EVM environment configuration.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Env {
     /// Configuration of the EVM itself.
@@ -184,6 +185,41 @@ impl Env {
             }
         }
 
+        if SPEC::enabled(SpecId::PRAGUE) {
+            if !self.tx.eof_initcodes.is_empty() {
+                // If initcode is set other fields must be empty
+                if !self.tx.blob_hashes.is_empty() {
+                    return Err(InvalidTransaction::BlobVersionedHashesNotSupported);
+                }
+                // EOF Create tx extends EIP-1559 tx. It must have max_fee_per_blob_gas
+                if self.tx.max_fee_per_blob_gas.is_some() {
+                    return Err(InvalidTransaction::MaxFeePerBlobGasNotSupported);
+                }
+                // EOF Create must have a to address
+                if matches!(self.tx.transact_to, TransactTo::Call(_)) {
+                    return Err(InvalidTransaction::EofCrateShouldHaveToAddress);
+                }
+            } else {
+                // If initcode is set check its bounds.
+                if self.tx.eof_initcodes.len() > 256 {
+                    return Err(InvalidTransaction::EofInitcodesNumberLimit);
+                }
+                if self
+                    .tx
+                    .eof_initcodes_hashed
+                    .iter()
+                    .any(|(_, i)| i.len() >= MAX_INITCODE_SIZE)
+                {
+                    return Err(InvalidTransaction::EofInitcodesSizeLimit);
+                }
+            }
+        } else {
+            // Initcode set when not supported.
+            if !self.tx.eof_initcodes.is_empty() {
+                return Err(InvalidTransaction::EofInitcodesNotSupported);
+            }
+        }
+
         Ok(())
     }
 
@@ -247,7 +283,7 @@ impl Env {
 
 /// EVM configuration.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub struct CfgEnv {
     /// Chain ID of the EVM, it will be compared to the transaction's Chain ID.
@@ -483,7 +519,7 @@ impl Default for BlockEnv {
 }
 
 /// The transaction environment.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     /// Caller aka Author aka transaction signer.
@@ -539,9 +575,31 @@ pub struct TxEnv {
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     pub max_fee_per_blob_gas: Option<U256>,
 
+    /// EOF Initcodes for EOF CREATE transaction
+    ///
+    /// Incorporated as part of the Prague upgrade via [EOF]
+    ///
+    /// [EOF]: https://eips.ethereum.org/EIPS/eip-4844
+    pub eof_initcodes: Vec<Bytes>,
+
+    /// Internal Temporary field that stores the hashes of the EOF initcodes.
+    ///
+    /// Those are always cleared after the transaction is executed.
+    /// And calculated/overwritten every time transaction starts.
+    /// They are calculated from the [`Self::eof_initcodes`] field.
+    pub eof_initcodes_hashed: HashMap<B256, Bytes>,
+
     #[cfg_attr(feature = "serde", serde(flatten))]
     #[cfg(feature = "optimism")]
+    /// Optimism fields.
     pub optimism: OptimismFields,
+}
+
+pub enum TxType {
+    Legacy,
+    Eip1559,
+    BlobTx,
+    EofCreate,
 }
 
 impl TxEnv {
@@ -575,6 +633,8 @@ impl Default for TxEnv {
             access_list: Vec::new(),
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: None,
+            eof_initcodes: Vec::new(),
+            eof_initcodes_hashed: HashMap::new(),
             #[cfg(feature = "optimism")]
             optimism: OptimismFields::default(),
         }
@@ -647,7 +707,7 @@ pub enum TransactTo {
     /// Simple call to an address.
     Call(Address),
     /// Contract creation.
-    Create(CreateScheme),
+    Create,
 }
 
 impl TransactTo {
@@ -660,15 +720,8 @@ impl TransactTo {
     /// Creates a contract.
     #[inline]
     pub fn create() -> Self {
-        Self::Create(CreateScheme::Create)
+        Self::Create
     }
-
-    /// Creates a contract with the given salt using `CREATE2`.
-    #[inline]
-    pub fn create2(salt: U256) -> Self {
-        Self::Create(CreateScheme::Create2 { salt })
-    }
-
     /// Returns `true` if the transaction is `Call`.
     #[inline]
     pub fn is_call(&self) -> bool {
@@ -678,7 +731,7 @@ impl TransactTo {
     /// Returns `true` if the transaction is `Create` or `Create2`.
     #[inline]
     pub fn is_create(&self) -> bool {
-        matches!(self, Self::Create(_))
+        matches!(self, Self::Create)
     }
 }
 
@@ -701,8 +754,6 @@ pub enum CreateScheme {
 pub enum AnalysisKind {
     /// Do not perform bytecode analysis.
     Raw,
-    /// Check the bytecode for validity.
-    Check,
     /// Perform bytecode analysis.
     #[default]
     Analyse,

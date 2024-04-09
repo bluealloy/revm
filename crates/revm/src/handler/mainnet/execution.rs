@@ -1,5 +1,6 @@
 use crate::{
     db::Database,
+    frame::EOFCreateFrame,
     interpreter::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
@@ -7,7 +8,7 @@ use crate::{
     primitives::{EVMError, Env, Spec, SpecId},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
-use revm_interpreter::{CallOutcome, InterpreterResult};
+use revm_interpreter::{CallOutcome, EOFCreateInput, EOFCreateOutcome, InterpreterResult};
 use std::boxed::Box;
 
 /// Helper function called inside [`last_frame_return`]
@@ -133,6 +134,47 @@ pub fn insert_create_outcome<EXT, DB: Database>(
         .frame_data_mut()
         .interpreter
         .insert_create_outcome(outcome);
+    Ok(())
+}
+
+/// Handle frame sub create.
+#[inline]
+pub fn eofcreate<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+    inputs: Box<EOFCreateInput>,
+) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    context.evm.make_eofcreate_frame(SPEC::SPEC_ID, &inputs)
+}
+
+#[inline]
+pub fn eofcreate_return<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+    frame: Box<EOFCreateFrame>,
+    mut interpreter_result: InterpreterResult,
+) -> Result<EOFCreateOutcome, EVMError<DB::Error>> {
+    context.evm.eofcreate_return::<SPEC>(
+        &mut interpreter_result,
+        frame.created_address,
+        frame.frame_data.checkpoint,
+    );
+    Ok(EOFCreateOutcome::new(
+        interpreter_result,
+        frame.created_address,
+        frame.return_memory_range,
+    ))
+}
+
+#[inline]
+pub fn insert_eofcreate_outcome<EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+    frame: &mut Frame,
+    outcome: EOFCreateOutcome,
+) -> Result<(), EVMError<DB::Error>> {
+    core::mem::replace(&mut context.evm.error, Ok(()))?;
+    frame
+        .frame_data_mut()
+        .interpreter
+        .insert_eofcreate_outcome(outcome);
     Ok(())
 }
 

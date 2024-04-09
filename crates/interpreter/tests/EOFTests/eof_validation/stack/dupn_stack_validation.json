@@ -1,0 +1,58 @@
+{
+  "dupn_stack_validation": {
+    "vectors": {
+      "dupn_stack_validation_0": {
+        "code": "0xef0001010004020001002b040000000080001560016001600160016001600160016001600160016001600160016001600160016001600160016001e60000",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "dupn_stack_validation_1": {
+        "code": "0xef0001010004020001002b040000000080001560016001600160016001600160016001600160016001600160016001600160016001600160016001e61300",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "dupn_stack_validation_2": {
+        "code": "0xef0001010004020001002b040000000080001560016001600160016001600160016001600160016001600160016001600160016001600160016001e61400",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "dupn_stack_validation_3": {
+        "code": "0xef0001010004020001002b040000000080001560016001600160016001600160016001600160016001600160016001600160016001600160016001e6d000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "dupn_stack_validation_4": {
+        "code": "0xef0001010004020001002b040000000080001560016001600160016001600160016001600160016001600160016001600160016001600160016001e6fe00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "dupn_stack_validation_5": {
+        "code": "0xef0001010004020001002b040000000080001560016001600160016001600160016001600160016001600160016001600160016001600160016001e6ff00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

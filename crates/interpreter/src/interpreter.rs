@@ -3,32 +3,39 @@ mod contract;
 mod shared_memory;
 mod stack;
 
-pub use analysis::BytecodeLocked;
 pub use contract::Contract;
 pub use shared_memory::{next_multiple_of_32, SharedMemory, EMPTY_SHARED_MEMORY};
 pub use stack::{Stack, STACK_LIMIT};
 
+use crate::EOFCreateOutcome;
 use crate::{
-    primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CallOutcome,
-    CreateInputs, CreateOutcome, Gas, Host, InstructionResult,
+    primitives::Bytes, push, push_b256, return_ok, return_revert, CallOutcome, CreateOutcome,
+    FunctionStack, Gas, Host, InstructionResult, InterpreterAction,
 };
 use core::cmp::min;
-use revm_primitives::U256;
+use revm_primitives::{Bytecode, Eof, U256};
 use std::borrow::ToOwned;
-use std::boxed::Box;
 
 /// EVM bytecode interpreter.
 #[derive(Debug)]
 pub struct Interpreter {
-    /// Contract information and invoking data
-    pub contract: Contract,
     /// The current instruction pointer.
     pub instruction_pointer: *const u8,
+    /// The gas state.
+    pub gas: Gas,
+    /// Contract information and invoking data
+    pub contract: Contract,
     /// The execution control flag. If this is not set to `Continue`, the interpreter will stop
     /// execution.
     pub instruction_result: InstructionResult,
-    /// The gas state.
-    pub gas: Gas,
+    /// Currently run Bytecode that instruction result will point to.
+    /// Bytecode is owned by the contract.
+    pub bytecode: Bytes,
+    /// Whether we are Interpreting the Ethereum Object Format (EOF) bytecode.
+    /// This is local field that is set from `contract.is_eof()`.
+    pub is_eof: bool,
+    /// Is init flag for eof create
+    pub is_eof_init: bool,
     /// Shared memory.
     ///
     /// Note: This field is only set while running the interpreter loop.
@@ -36,6 +43,8 @@ pub struct Interpreter {
     pub shared_memory: SharedMemory,
     /// Stack.
     pub stack: Stack,
+    /// EOF function stack.
+    pub function_stack: FunctionStack,
     /// The return data buffer for internal calls.
     /// It has multi usage:
     ///
@@ -51,6 +60,12 @@ pub struct Interpreter {
     pub next_action: InterpreterAction,
 }
 
+impl Default for Interpreter {
+    fn default() -> Self {
+        Self::new(Contract::default(), 0, false)
+    }
+}
+
 /// The result of an interpreter operation.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct InterpreterResult {
@@ -62,71 +77,70 @@ pub struct InterpreterResult {
     pub gas: Gas,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub enum InterpreterAction {
-    /// CALL, CALLCODE, DELEGATECALL or STATICCALL instruction called.
-    Call {
-        /// Call inputs
-        inputs: Box<CallInputs>,
-    },
-    /// CREATE or CREATE2 instruction called.
-    Create { inputs: Box<CreateInputs> },
-    /// Interpreter finished execution.
-    Return { result: InterpreterResult },
-    /// No action
-    #[default]
-    None,
-}
-
-impl InterpreterAction {
-    /// Returns true if action is call.
-    pub fn is_call(&self) -> bool {
-        matches!(self, InterpreterAction::Call { .. })
-    }
-
-    /// Returns true if action is create.
-    pub fn is_create(&self) -> bool {
-        matches!(self, InterpreterAction::Create { .. })
-    }
-
-    /// Returns true if action is return.
-    pub fn is_return(&self) -> bool {
-        matches!(self, InterpreterAction::Return { .. })
-    }
-
-    /// Returns true if action is none.
-    pub fn is_none(&self) -> bool {
-        matches!(self, InterpreterAction::None)
-    }
-
-    /// Returns true if action is some.
-    pub fn is_some(&self) -> bool {
-        !self.is_none()
-    }
-
-    /// Returns result if action is return.
-    pub fn into_result_return(self) -> Option<InterpreterResult> {
-        match self {
-            InterpreterAction::Return { result } => Some(result),
-            _ => None,
-        }
-    }
-}
-
 impl Interpreter {
     /// Create new interpreter
     pub fn new(contract: Contract, gas_limit: u64, is_static: bool) -> Self {
+        if !contract.bytecode.is_execution_ready() {
+            panic!("Contract is not execution ready {:?}", contract.bytecode);
+        }
+        let is_eof = contract.bytecode.is_eof();
+        let bytecode = contract.bytecode.bytecode_bytes();
         Self {
-            instruction_pointer: contract.bytecode.as_ptr(),
+            instruction_pointer: bytecode.as_ptr(),
+            bytecode,
             contract,
             gas: Gas::new(gas_limit),
             instruction_result: InstructionResult::Continue,
+            function_stack: FunctionStack::default(),
             is_static,
+            is_eof,
+            is_eof_init: false,
             return_data_buffer: Bytes::new(),
             shared_memory: EMPTY_SHARED_MEMORY,
             stack: Stack::new(),
             next_action: InterpreterAction::None,
         }
+    }
+
+    /// Set set is_eof_init to true, this is used to enable `RETURNCONTRACT` opcode.
+    #[inline]
+    pub fn set_is_eof_init(&mut self) {
+        self.is_eof_init = true;
+    }
+
+    #[inline]
+    pub fn eof(&self) -> Option<&Eof> {
+        self.contract.bytecode.eof()
+    }
+
+    /// Test related helper
+    #[cfg(test)]
+    pub fn new_bytecode(bytecode: Bytecode) -> Self {
+        Self::new(
+            Contract::new(
+                Bytes::new(),
+                bytecode,
+                None,
+                crate::primitives::Address::default(),
+                crate::primitives::Address::default(),
+                U256::ZERO,
+            ),
+            0,
+            false,
+        )
+    }
+
+    /// Load EOF code into interpreter. PC is assumed to be correctly set
+    pub(crate) fn load_eof_code(&mut self, idx: usize, pc: usize) {
+        // SAFETY: eof flag is true only if bytecode is Eof.
+        let Bytecode::Eof(eof) = &self.contract.bytecode else {
+            panic!("Expected EOF bytecode")
+        };
+        let Some(code) = eof.body.code(idx) else {
+            panic!("Code not found")
+        };
+        self.bytecode = code.clone();
+        self.instruction_pointer = unsafe { self.bytecode.as_ptr().add(pc) };
     }
 
     /// Inserts the output of a `create` call into the interpreter.
@@ -186,6 +200,36 @@ impl Interpreter {
         }
     }
 
+    pub fn insert_eofcreate_outcome(&mut self, create_outcome: EOFCreateOutcome) {
+        let instruction_result = create_outcome.instruction_result();
+
+        self.return_data_buffer = if *instruction_result == InstructionResult::Revert {
+            // Save data to return data buffer if the create reverted
+            create_outcome.output().to_owned()
+        } else {
+            // Otherwise clear it. Note that RETURN opcode should abort.
+            Bytes::new()
+        };
+
+        match instruction_result {
+            InstructionResult::ReturnContract => {
+                push_b256!(self, create_outcome.address.into_word());
+                self.gas.erase_cost(create_outcome.gas().remaining());
+                self.gas.record_refund(create_outcome.gas().refunded());
+            }
+            return_revert!() => {
+                push!(self, U256::ZERO);
+                self.gas.erase_cost(create_outcome.gas().remaining());
+            }
+            InstructionResult::FatalExternalError => {
+                panic!("Fatal external error in insert_eofcreate_outcome");
+            }
+            _ => {
+                push!(self, U256::ZERO);
+            }
+        }
+    }
+
     /// Inserts the outcome of a call into the virtual machine's state.
     ///
     /// This function takes the result of a call, represented by `CallOutcome`,
@@ -214,12 +258,12 @@ impl Interpreter {
         call_outcome: CallOutcome,
     ) {
         self.instruction_result = InstructionResult::Continue;
+        self.return_data_buffer.clone_from(call_outcome.output());
+
         let out_offset = call_outcome.memory_start();
         let out_len = call_outcome.memory_length();
 
-        self.return_data_buffer.clone_from(call_outcome.output());
         let target_len = min(out_len, self.return_data_buffer.len());
-
         match call_outcome.instruction_result() {
             return_ok!() => {
                 // return unspend gas.
@@ -273,17 +317,14 @@ impl Interpreter {
     pub fn program_counter(&self) -> usize {
         // SAFETY: `instruction_pointer` should be at an offset from the start of the bytecode.
         // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
-        unsafe {
-            self.instruction_pointer
-                .offset_from(self.contract.bytecode.as_ptr()) as usize
-        }
+        unsafe { self.instruction_pointer.offset_from(self.bytecode.as_ptr()) as usize }
     }
 
     /// Executes the instruction at the current instruction pointer.
     ///
     /// Internally it will increment instruction pointer by one.
-    #[inline(always)]
-    fn step<FN, H: Host + ?Sized>(&mut self, instruction_table: &[FN; 256], host: &mut H)
+    #[inline]
+    pub(crate) fn step<FN, H: Host + ?Sized>(&mut self, instruction_table: &[FN; 256], host: &mut H)
     where
         FN: Fn(&mut Interpreter, &mut H),
     {

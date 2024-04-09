@@ -7,10 +7,10 @@ use core::cmp::max;
 
 pub fn mload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, offset_ptr);
-    let offset = as_usize_or_fail!(interpreter, offset_ptr);
+    pop_top!(interpreter, top);
+    let offset = as_usize_or_fail!(interpreter, top);
     resize_memory!(interpreter, offset, 32);
-    *offset_ptr = interpreter.shared_memory.get_u256(offset);
+    *top = interpreter.shared_memory.get_u256(offset);
 }
 
 pub fn mstore<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {

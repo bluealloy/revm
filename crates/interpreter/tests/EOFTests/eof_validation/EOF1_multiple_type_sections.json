@@ -1,0 +1,24 @@
+{
+  "EOF1_multiple_type_sections": {
+    "vectors": {
+      "EOF1_multiple_type_sections_0": {
+        "code": "0xef000101000401000402000200010001000080000000800000fefe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_CodeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_multiple_type_sections_1": {
+        "code": "0xef0001030002010001010001040002000000fefe0000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

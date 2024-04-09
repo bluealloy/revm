@@ -21,7 +21,7 @@ pub fn timestamp<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) 
     push!(interpreter, host.env().block.timestamp);
 }
 
-pub fn number<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn block_number<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, host.env().block.number);
 }

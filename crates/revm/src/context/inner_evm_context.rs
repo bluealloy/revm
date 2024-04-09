@@ -1,19 +1,19 @@
 use crate::{
     db::Database,
     interpreter::{
-        analysis::to_analysed, gas, return_ok, Contract, CreateInputs, Gas, InstructionResult,
-        Interpreter, InterpreterResult, MAX_CODE_SIZE,
+        analysis::to_analysed, gas, return_ok, Contract, CreateInputs, EOFCreateInput, Gas,
+        InstructionResult, Interpreter, InterpreterResult, LoadAccountResult, SStoreResult,
+        SelfDestructResult, MAX_CODE_SIZE,
     },
     journaled_state::JournaledState,
     primitives::{
         keccak256, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env,
-        HashSet, Spec,
+        Eof, HashSet, Spec,
         SpecId::{self, *},
         B256, U256,
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
-use revm_interpreter::{SStoreResult, SelfDestructResult};
 use std::boxed::Box;
 
 /// EVM contexts contains data that EVM needs for execution.
@@ -146,7 +146,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     pub fn load_account_exist(
         &mut self,
         address: Address,
-    ) -> Result<(bool, bool), EVMError<DB::Error>> {
+    ) -> Result<LoadAccountResult, EVMError<DB::Error>> {
         self.journaled_state
             .load_account_exist(address, &mut self.db)
     }
@@ -225,6 +225,114 @@ impl<DB: Database> InnerEvmContext<DB> {
 
     /// Make create frame.
     #[inline]
+    pub fn make_eofcreate_frame(
+        &mut self,
+        spec_id: SpecId,
+        inputs: &EOFCreateInput,
+    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+        let return_error = |e| {
+            Ok(FrameOrResult::new_eofcreate_result(
+                InterpreterResult {
+                    result: e,
+                    gas: Gas::new(inputs.gas_limit),
+                    output: Bytes::new(),
+                },
+                inputs.created_address,
+                inputs.return_memory_range.clone(),
+            ))
+        };
+
+        // Check depth
+        if self.journaled_state.depth() > CALL_STACK_LIMIT {
+            return return_error(InstructionResult::CallTooDeep);
+        }
+
+        // Fetch balance of caller.
+        let (caller_balance, _) = self.balance(inputs.caller)?;
+
+        // Check if caller has enough balance to send to the created contract.
+        if caller_balance < inputs.value {
+            return return_error(InstructionResult::OutOfFunds);
+        }
+
+        // Increase nonce of caller and check if it overflows
+        if self.journaled_state.inc_nonce(inputs.caller).is_none() {
+            // can't happen on mainnet.
+            return return_error(InstructionResult::Return);
+        }
+
+        // Load account so it needs to be marked as warm for access list.
+        self.journaled_state
+            .load_account(inputs.created_address, &mut self.db)?;
+
+        // create account, transfer funds and make the journal checkpoint.
+        let checkpoint = match self.journaled_state.create_account_checkpoint(
+            inputs.caller,
+            inputs.created_address,
+            inputs.value,
+            spec_id,
+        ) {
+            Ok(checkpoint) => checkpoint,
+            Err(e) => {
+                return return_error(e);
+            }
+        };
+
+        let contract = Contract::new(
+            Bytes::new(),
+            // fine to clone as it is Bytes.
+            Bytecode::Eof(inputs.eof_init_code.clone()),
+            None,
+            inputs.created_address,
+            inputs.caller,
+            inputs.value,
+        );
+
+        let mut interpreter = Interpreter::new(contract, inputs.gas_limit, false);
+        // EOF init will enable RETURNCONTRACT opcode.
+        interpreter.set_is_eof_init();
+
+        Ok(FrameOrResult::new_eofcreate_frame(
+            inputs.created_address,
+            inputs.return_memory_range.clone(),
+            checkpoint,
+            interpreter,
+        ))
+    }
+
+    /// If error is present revert changes, otherwise save EOF bytecode.
+    pub fn eofcreate_return<SPEC: Spec>(
+        &mut self,
+        interpreter_result: &mut InterpreterResult,
+        address: Address,
+        journal_checkpoint: JournalCheckpoint,
+    ) {
+        // Note we still execute RETURN opcode and return the bytes.
+        // In EOF those opcodes should abort execution.
+        //
+        // In RETURN gas is still protecting us from ddos and in oog,
+        // behaviour will be same as if it failed on return.
+        //
+        // Bytes of RETURN will drained in `insert_eofcreate_outcome`.
+        if interpreter_result.result != InstructionResult::ReturnContract {
+            self.journaled_state.checkpoint_revert(journal_checkpoint);
+            return;
+        }
+
+        // commit changes reduces depth by -1.
+        self.journaled_state.checkpoint_commit();
+
+        // decode bytecode has a performance hit, but it has reasonable restrains.
+        let bytecode =
+            Eof::decode(interpreter_result.output.clone()).expect("Eof is already verified");
+
+        // eof bytecode is going to be hashed.
+        self.journaled_state
+            .set_code(address, Bytecode::Eof(bytecode));
+    }
+
+    /// Make create frame.
+    #[inline]
     pub fn make_create_frame(
         &mut self,
         spec_id: SpecId,
@@ -297,7 +405,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         let contract = Contract::new(
             Bytes::new(),
             bytecode,
-            init_code_hash,
+            Some(init_code_hash),
             created_address,
             inputs.caller,
             inputs.value,
@@ -385,9 +493,6 @@ impl<DB: Database> InnerEvmContext<DB> {
         // Do analysis of bytecode straight away.
         let bytecode = match self.env.cfg.perf_analyse_created_bytecodes {
             AnalysisKind::Raw => Bytecode::new_raw(interpreter_result.output.clone()),
-            AnalysisKind::Check => {
-                Bytecode::new_raw(interpreter_result.output.clone()).to_checked()
-            }
             AnalysisKind::Analyse => {
                 to_analysed(Bytecode::new_raw(interpreter_result.output.clone()))
             }

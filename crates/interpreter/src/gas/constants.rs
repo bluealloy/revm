@@ -1,6 +1,13 @@
 pub const ZERO: u64 = 0;
 pub const BASE: u64 = 2;
+
 pub const VERYLOW: u64 = 3;
+pub const DATA_LOADN_GAS: u64 = 3;
+
+pub const CONDITION_JUMP_GAS: u64 = 4;
+pub const RETF_GAS: u64 = 4;
+pub const DATA_LOAD_GAS: u64 = 4;
+
 pub const LOW: u64 = 5;
 pub const MID: u64 = 8;
 pub const HIGH: u64 = 10;
@@ -29,6 +36,8 @@ pub const REFUND_SSTORE_CLEARS: i64 = 15000;
 pub const TRANSACTION_ZERO_DATA: u64 = 4;
 pub const TRANSACTION_NON_ZERO_DATA_INIT: u64 = 16;
 pub const TRANSACTION_NON_ZERO_DATA_FRONTIER: u64 = 68;
+
+pub const EOF_CREATE_GAS: u64 = 32000;
 
 // berlin eip2929 constants
 pub const ACCESS_LIST_ADDRESS: u64 = 2400;

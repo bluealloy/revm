@@ -3,8 +3,8 @@ use crate::{
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
-        opcode::InstructionTables, Host, Interpreter, InterpreterAction, SStoreResult,
-        SelfDestructResult, SharedMemory,
+        opcode::InstructionTables, Host, Interpreter, InterpreterAction, LoadAccountResult,
+        SStoreResult, SelfDestructResult, SharedMemory,
     },
     primitives::{
         specification::SpecId, Address, BlockEnv, Bytecode, CfgEnv, EVMError, EVMResult, Env,
@@ -274,6 +274,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             let frame_or_result = match next_action {
                 InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs)?,
                 InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs)?,
+                InterpreterAction::EOFCreate { inputs } => {
+                    exec.eofcreate(&mut self.context, inputs)?
+                }
                 InterpreterAction::Return { result } => {
                     // free memory context.
                     shared_memory.free_context();
@@ -292,6 +295,10 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         Frame::Create(frame) => {
                             // return_create
                             FrameResult::Create(exec.create_return(ctx, frame, result)?)
+                        }
+                        Frame::EOFCreate(frame) => {
+                            // return_eofcreate
+                            FrameResult::EOFCreate(exec.eofcreate_return(ctx, frame, result)?)
                         }
                     })
                 }
@@ -321,6 +328,10 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         FrameResult::Create(outcome) => {
                             // return_create
                             exec.insert_create_outcome(ctx, stack_frame, outcome)?
+                        }
+                        FrameResult::EOFCreate(outcome) => {
+                            // return_eofcreate
+                            exec.insert_eofcreate_outcome(ctx, stack_frame, outcome)?
                         }
                     }
                 }
@@ -352,7 +363,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 ctx,
                 CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
             )?,
-            TransactTo::Create(_) => exec.create(
+            TransactTo::Create => exec.create(
                 ctx,
                 CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
             )?,
@@ -398,7 +409,7 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
             .ok()
     }
 
-    fn load_account(&mut self, address: Address) -> Option<(bool, bool)> {
+    fn load_account(&mut self, address: Address) -> Option<LoadAccountResult> {
         self.context
             .evm
             .load_account_exist(address)

@@ -107,7 +107,7 @@ impl Gas {
     /// Records an explicit cost.
     ///
     /// Returns `false` if the gas limit is exceeded.
-    #[inline(always)]
+    #[inline]
     pub fn record_cost(&mut self, cost: u64) -> bool {
         let (remaining, overflow) = self.remaining.overflowing_sub(cost);
         if overflow {

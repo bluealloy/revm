@@ -171,6 +171,22 @@ impl Stack {
         (pop1, pop2, pop3, pop4)
     }
 
+    /// Pops 5 values from the stack.
+    ///
+    /// # Safety
+    ///
+    /// The caller is responsible for checking the length of the stack.
+    #[inline]
+    pub unsafe fn pop5_unsafe(&mut self) -> (U256, U256, U256, U256, U256) {
+        let pop1 = self.pop_unsafe();
+        let pop2 = self.pop_unsafe();
+        let pop3 = self.pop_unsafe();
+        let pop4 = self.pop_unsafe();
+        let pop5 = self.pop_unsafe();
+
+        (pop1, pop2, pop3, pop4, pop5)
+    }
+
     /// Push a new value into the stack. If it will exceed the stack limit,
     /// returns `StackOverflow` error and leaves the stack unchanged.
     #[inline]
@@ -207,32 +223,45 @@ impl Stack {
 
     /// Duplicates the `N`th value from the top of the stack.
     #[inline]
-    pub fn dup<const N: usize>(&mut self) -> Result<(), InstructionResult> {
+    pub fn dup(&mut self, n: usize) -> Result<(), InstructionResult> {
         let len = self.data.len();
-        if len < N {
+        if len < n {
             Err(InstructionResult::StackUnderflow)
         } else if len + 1 > STACK_LIMIT {
             Err(InstructionResult::StackOverflow)
         } else {
             // SAFETY: check for out of bounds is done above and it makes this safe to do.
             unsafe {
-                let data = self.data.as_mut_ptr();
-                core::ptr::copy_nonoverlapping(data.add(len - N), data.add(len), 1);
                 self.data.set_len(len + 1);
             }
+            self.data[len] = self.data[len - n];
             Ok(())
         }
     }
 
     /// Swaps the topmost value with the `N`th value from the top.
     #[inline]
-    pub fn swap<const N: usize>(&mut self) -> Result<(), InstructionResult> {
+    pub fn swap(&mut self, n: usize) -> Result<(), InstructionResult> {
         let len = self.data.len();
-        if len <= N {
+        if n >= len {
             return Err(InstructionResult::StackUnderflow);
         }
-        let last = len - 1;
-        self.data.swap(last, last - N);
+        let last_index = len - 1;
+        self.data.swap(last_index, last_index - n);
+        Ok(())
+    }
+
+    /// Exchange two values on the stack. where `N` is first index and second index
+    /// is calculated as N+M
+    #[inline]
+    pub fn exchange(&mut self, n: usize, m: usize) -> Result<(), InstructionResult> {
+        let len = self.data.len();
+        let n_m_index = n + m;
+        if n_m_index >= len {
+            return Err(InstructionResult::StackUnderflow);
+        }
+        let last_index = len - 1;
+        self.data.swap(last_index - n, last_index - n_m_index);
         Ok(())
     }
 

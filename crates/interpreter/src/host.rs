@@ -1,7 +1,4 @@
-use crate::{
-    primitives::{Address, Bytecode, Env, Log, B256, U256},
-    SelfDestructResult,
-};
+use crate::primitives::{Address, Bytecode, Env, Log, B256, U256};
 
 mod dummy;
 pub use dummy::DummyHost;
@@ -17,7 +14,7 @@ pub trait Host {
     /// Load an account.
     ///
     /// Returns (is_cold, is_new_account)
-    fn load_account(&mut self, address: Address) -> Option<(bool, bool)>;
+    fn load_account(&mut self, address: Address) -> Option<LoadAccountResult>;
 
     /// Get the block hash of the given block `number`.
     fn block_hash(&mut self, number: U256) -> Option<B256>;
@@ -64,6 +61,25 @@ pub struct SStoreResult {
     pub new_value: U256,
     /// Is storage slot loaded from database
     pub is_cold: bool,
+}
+
+/// Result of the account load from Journal state.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct LoadAccountResult {
+    /// Is account cold loaded
+    pub is_cold: bool,
+    /// Is account empty, if true account is not created.
+    pub is_empty: bool,
+}
+
+/// Result of a selfdestruct instruction.
+#[derive(Default, Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SelfDestructResult {
+    pub had_value: bool,
+    pub target_exists: bool,
+    pub is_cold: bool,
+    pub previously_destroyed: bool,
 }
 
 #[cfg(test)]
