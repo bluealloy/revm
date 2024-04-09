@@ -53,6 +53,7 @@ std = [
     "bitvec/std",
     "bitflags/std",
 ]
+hashbrown = []
 serde = [
     "dep:serde",
     "alloy-primitives/serde",
