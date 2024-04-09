@@ -1,4 +1,4 @@
-use crate::{Address, Bytecode, HashMap, B256, KECCAK_EMPTY, U256};
+use crate::{Address, Bytecode, HashMap, B256, KECCAK_EMPTY, POSEIDON_EMPTY, U256};
 use bitflags::bitflags;
 use core::hash::{Hash, Hasher};
 
@@ -192,6 +192,7 @@ pub struct AccountInfo {
     pub nonce: u64,
     /// code hash,
     pub code_hash: B256,
+    pub rwasm_code_hash: B256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
     /// inside of `revm`.
     pub code: Option<Bytecode>,
@@ -202,6 +203,7 @@ impl Default for AccountInfo {
         Self {
             balance: U256::ZERO,
             code_hash: KECCAK_EMPTY,
+            rwasm_code_hash: POSEIDON_EMPTY,
             code: Some(Bytecode::new()),
             nonce: 0,
         }
@@ -231,6 +233,7 @@ impl AccountInfo {
             nonce,
             code: Some(code),
             code_hash,
+            rwasm_code_hash: POSEIDON_EMPTY,
         }
     }
 

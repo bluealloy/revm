@@ -1,11 +1,18 @@
 use crate::{
-    b256, B256, BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK,
+    b256,
+    B256,
+    BLOB_GASPRICE_UPDATE_FRACTION,
+    MIN_BLOB_GASPRICE,
+    TARGET_BLOB_GAS_PER_BLOCK,
 };
 pub use alloy_primitives::keccak256;
 
 /// The Keccak-256 hash of the empty string `""`.
 pub const KECCAK_EMPTY: B256 =
     b256!("c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
+
+pub const POSEIDON_EMPTY: B256 =
+    b256!("2098f5fb9e239eab3ceac3f27b81e481dc3124d55ffed523a839ee8446b64864");
 
 /// Calculates the `excess_blob_gas` from the parent header's `blob_gas_used` and `excess_blob_gas`.
 ///
@@ -126,7 +133,8 @@ mod tests {
             (2314057, 1),
             (2314058, 2),
             (10 * 1024 * 1024, 23),
-            // calc_blob_gasprice approximates `e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)` using Taylor expansion
+            // calc_blob_gasprice approximates `e ** (excess_blob_gas /
+            // BLOB_GASPRICE_UPDATE_FRACTION)` using Taylor expansion
             //
             // to roughly find where boundaries will be hit:
             // 2 ** bits = e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)
