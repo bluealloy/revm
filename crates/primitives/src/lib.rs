@@ -17,6 +17,7 @@ pub mod env;
 pub mod keccak256;
 #[cfg(feature = "c-kzg")]
 pub mod kzg;
+mod poseidon;
 pub mod precompile;
 pub mod result;
 pub mod specification;
@@ -48,6 +49,7 @@ pub use constants::*;
 pub use env::*;
 #[cfg(not(feature = "std"))]
 pub use keccak256::keccak256;
+pub use poseidon::poseidon_hash;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "std")] {
