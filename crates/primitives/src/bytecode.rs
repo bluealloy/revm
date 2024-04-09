@@ -47,7 +47,7 @@ impl Bytecode {
         if self.is_empty() {
             KECCAK_EMPTY
         } else {
-            keccak256(&self.original_bytes())
+            keccak256(self.original_byte_slice())
         }
     }
 
@@ -115,6 +115,16 @@ impl Bytecode {
             Self::LegacyRaw(bytes) => bytes.clone(),
             Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
             Self::Eof(eof) => eof.raw().clone(),
+        }
+    }
+
+    /// Returns the original bytecode as a byte slice.
+    #[inline]
+    pub fn original_byte_slice(&self) -> &[u8] {
+        match self {
+            Self::LegacyRaw(bytes) => bytes,
+            Self::LegacyAnalyzed(analyzed) => analyzed.original_byte_slice(),
+            Self::Eof(eof) => eof.raw(),
         }
     }
 

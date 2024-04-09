@@ -53,7 +53,12 @@ impl LegacyAnalyzedBytecode {
 
     /// Original bytes without padding.
     pub fn original_bytes(&self) -> Bytes {
-        self.bytecode.slice(0..self.original_len)
+        self.bytecode.slice(..self.original_len)
+    }
+
+    /// Original bytes without padding.
+    pub fn original_byte_slice(&self) -> &[u8] {
+        &self.bytecode[..self.original_len]
     }
 
     /// Jumptable of analyzed bytes.
