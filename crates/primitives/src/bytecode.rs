@@ -74,7 +74,7 @@ impl Bytecode {
     ///
     /// # Safety
     ///
-    /// Bytecode need to end with STOP (0x00) opcode as checked bytecode assumes
+    /// Bytecode needs to end with STOP (0x00) opcode as checked bytecode assumes
     /// that it is safe to iterate over bytecode without checking lengths.
     pub unsafe fn new_analyzed(
         bytecode: Bytes,

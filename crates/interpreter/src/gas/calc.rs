@@ -1,3 +1,5 @@
+use revm_primitives::Bytes;
+
 use super::constants::*;
 use crate::{
     primitives::{
@@ -356,10 +358,18 @@ pub fn validate_initial_tx_gas(
     input: &[u8],
     is_create: bool,
     access_list: &[(Address, Vec<U256>)],
+    initcodes: &[Bytes],
 ) -> u64 {
     let mut initial_gas = 0;
-    let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
-    let non_zero_data_len = input.len() as u64 - zero_data_len;
+    let mut zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
+    let mut non_zero_data_len = input.len() as u64 - zero_data_len;
+
+    // Enabling of initcode is checked in `validate_env` handler.
+    for initcode in initcodes {
+        let zeros = initcode.iter().filter(|v| **v == 0).count() as u64;
+        zero_data_len += zeros;
+        non_zero_data_len += initcode.len() as u64 - zeros;
+    }
 
     // initdate stipend
     initial_gas += zero_data_len * TRANSACTION_ZERO_DATA;

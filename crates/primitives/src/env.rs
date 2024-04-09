@@ -199,21 +199,24 @@ impl Env {
                 if matches!(self.tx.transact_to, TransactTo::Call(_)) {
                     return Err(InvalidTransaction::EofCrateShouldHaveToAddress);
                 }
+            } else {
+                // If initcode is set check its bounds.
+                if self.tx.eof_initcodes.len() > 256 {
+                    return Err(InvalidTransaction::EofInitcodesNumberLimit);
+                }
+                if self
+                    .tx
+                    .eof_initcodes_hashed
+                    .iter()
+                    .any(|(_, i)| i.len() >= MAX_INITCODE_SIZE)
+                {
+                    return Err(InvalidTransaction::EofInitcodesSizeLimit);
+                }
             }
         } else {
+            // Initcode set when not supported.
             if !self.tx.eof_initcodes.is_empty() {
                 return Err(InvalidTransaction::EofInitcodesNotSupported);
-            }
-            if self.tx.eof_initcodes.len() > 256 {
-                return Err(InvalidTransaction::EofInitcodesNumberLimit);
-            }
-            if self
-                .tx
-                .eof_initcodes
-                .iter()
-                .any(|(_, i)| i.len() >= MAX_INITCODE_SIZE)
-            {
-                return Err(InvalidTransaction::EofInitcodesSizeLimit);
             }
         }
 
@@ -577,10 +580,18 @@ pub struct TxEnv {
     /// Incorporated as part of the Prague upgrade via [EOF]
     ///
     /// [EOF]: https://eips.ethereum.org/EIPS/eip-4844
-    pub eof_initcodes: HashMap<B256, Bytes>,
+    pub eof_initcodes: Vec<Bytes>,
+
+    /// Internal Temporary field that stores the hashes of the EOF initcodes.
+    ///
+    /// Those are always cleared after the transaction is executed.
+    /// And calculated/overwritten every time transaction starts.
+    /// They are calculated from the [`Self::eof_initcodes`] field.
+    pub eof_initcodes_hashed: HashMap<B256, Bytes>,
 
     #[cfg_attr(feature = "serde", serde(flatten))]
     #[cfg(feature = "optimism")]
+    /// Optimism fields.
     pub optimism: OptimismFields,
 }
 
@@ -622,7 +633,8 @@ impl Default for TxEnv {
             access_list: Vec::new(),
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: None,
-            eof_initcodes: HashMap::new(),
+            eof_initcodes: Vec::new(),
+            eof_initcodes_hashed: HashMap::new(),
             #[cfg(feature = "optimism")]
             optimism: OptimismFields::default(),
         }

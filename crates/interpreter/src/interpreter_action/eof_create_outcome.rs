@@ -18,16 +18,17 @@ pub struct EOFCreateOutcome {
 }
 
 impl EOFCreateOutcome {
-    /// Constructs a new `CreateOutcome`.
+    /// Constructs a new [`EOFCreateOutcome`].
     ///
     /// # Arguments
     ///
     /// * `result` - An `InterpreterResult` representing the result of the interpreter operation.
     /// * `address` - An optional `Address` associated with the create operation.
+    /// * `return_memory_range` - The memory range that Revert bytes are going to be written.
     ///
     /// # Returns
     ///
-    /// A new `CreateOutcome` instance.
+    /// A new [`EOFCreateOutcome`] instance.
     pub fn new(
         result: InterpreterResult,
         address: Address,
@@ -40,7 +41,7 @@ impl EOFCreateOutcome {
         }
     }
 
-    /// Retrieves a reference to the `InstructionResult` from the `InterpreterResult`.
+    /// Retrieves a reference to the [`InstructionResult`] from the [`InterpreterResult`].
     ///
     /// This method provides access to the `InstructionResult` which represents the
     /// outcome of the instruction execution. It encapsulates the result information

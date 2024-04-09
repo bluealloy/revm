@@ -110,7 +110,13 @@ pub fn txcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     };
 
     // fetch initcode, if not found push ZERO.
-    let Some(initcode) = host.env().tx.eof_initcodes.get(&tx_initcode_hash).cloned() else {
+    let Some(initcode) = host
+        .env()
+        .tx
+        .eof_initcodes_hashed
+        .get(&tx_initcode_hash)
+        .cloned()
+    else {
         push!(interpreter, U256::ZERO);
         return;
     };

@@ -10,11 +10,13 @@ pub struct FunctionReturnFrame {
 }
 
 impl FunctionReturnFrame {
+    /// Return new function frame.
     pub fn new(idx: usize, pc: usize) -> Self {
         Self { idx, pc }
     }
 }
 
+/// Function Stack
 #[derive(Debug, Default)]
 pub struct FunctionStack {
     pub return_stack: Vec<FunctionReturnFrame>,
@@ -22,6 +24,7 @@ pub struct FunctionStack {
 }
 
 impl FunctionStack {
+    /// Returns new function stack.
     pub fn new() -> Self {
         Self {
             return_stack: Vec::new(),

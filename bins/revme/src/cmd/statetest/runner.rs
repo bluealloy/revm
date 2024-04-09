@@ -67,9 +67,7 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
 fn skip_test(path: &Path) -> bool {
     let path_str = path.to_str().expect("Path is not valid UTF-8");
     let name = path.file_name().unwrap().to_str().unwrap();
-    if path_str.contains("stRandom") {
-        return true;
-    }
+
     matches!(
         name,
         // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require

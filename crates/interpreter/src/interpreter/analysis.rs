@@ -73,13 +73,8 @@ pub fn validate_raw_eof(bytecode: Bytes) -> Result<Eof, EofError> {
 }
 
 /// Validate Eof structures.
-///
-/// do perf test on:
-/// max eof containers
-/// max depth of containers.
-/// bytecode iteration.
 pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
-    // clone is cheat as it is Bytes and a header.
+    // clone is cheap as it is Bytes and a header.
     let mut queue = vec![eof.clone()];
 
     while let Some(eof) = queue.pop() {
@@ -316,8 +311,6 @@ pub fn validate_eof_code(
 
         let this_instruction = &mut jumps[i];
 
-        //println!("next b: {next_biggest}, next s: {next_smallest} terminal: {is_after_termination} opcode: {}",opcode.name);
-
         // update biggest/smallest values for next instruction only if it is not after termination.
         if !is_after_termination {
             this_instruction.smallest = core::cmp::min(this_instruction.smallest, next_smallest);
@@ -497,10 +490,9 @@ pub fn validate_eof_code(
             return Err(EofValidationError::StackUnderflow);
         }
 
-        //println!("stack_io_diff: {}", stack_io_diff);
         next_smallest = this_instruction.smallest + stack_io_diff;
         next_biggest = this_instruction.biggest + stack_io_diff;
-        //println!("absolute_jumpdest: {absolute_jumpdest:?}");
+
         // check if jumpdest are correct and mark forward jumps.
         for absolute_jump in absolute_jumpdest {
             if absolute_jump < 0 {
@@ -524,7 +516,6 @@ pub fn validate_eof_code(
             target_jump.is_jumpdest = true;
 
             if absolute_jump <= i {
-                //println!("JUMP: {i} -> {target_jump:?}");
                 // backward jumps should have same smallest and biggest stack items.
                 if target_jump.biggest != next_biggest {
                     // wrong jumpdest.
@@ -572,7 +563,7 @@ mod test {
 
     #[test]
     fn test1() {
-        //result:Result { result: false, exception: Some("EOF_ConflictingStackHeight") }
+        // result:Result { result: false, exception: Some("EOF_ConflictingStackHeight") }
         let err =
             validate_raw_eof(hex!("ef0001010004020001000704000000008000016000e200fffc00").into());
         assert!(err.is_err(), "{err:#?}");
@@ -580,7 +571,7 @@ mod test {
 
     #[test]
     fn test2() {
-        //result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
+        // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
         let err =
             validate_raw_eof(hex!("ef000101000c02000300040004000204000000008000020002000100010001e30001005fe500025fe4").into());
         assert!(err.is_ok(), "{err:#?}");
@@ -588,7 +579,7 @@ mod test {
 
     #[test]
     fn test3() {
-        //result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
+        // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
         let err =
             validate_raw_eof(hex!("ef000101000c02000300040008000304000000008000020002000503010003e30001005f5f5f5f5fe500025050e4").into());
         assert_eq!(

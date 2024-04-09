@@ -171,7 +171,7 @@ impl Stack {
         (pop1, pop2, pop3, pop4)
     }
 
-    /// Pops 4 values from the stack.
+    /// Pops 5 values from the stack.
     ///
     /// # Safety
     ///
