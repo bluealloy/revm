@@ -59,7 +59,6 @@ impl<'de> Deserialize<'de> for Interpreter {
             NextAction,
         }
 
-        #[allow(clippy::too_many_arguments)]
         fn rebuild_interp(
             program_counter: isize,
             gas: Gas,
@@ -208,13 +207,7 @@ impl<'de> Deserialize<'de> for Interpreter {
             }
         }
 
-<<<<<<< HEAD
         const FIELDS: &'static [&'static str] = &[
-=======
-        const FIELDS: &[&str] = &[
-            "contract",
-            // use program_counter instead of instruction_pointer
->>>>>>> 8335dd6 (style(interpreter): make clippy happy)
             "program_counter",
             "gas",
             "contract",
@@ -239,7 +232,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_interpreter_serde() {
+    fn test_serde() {
         let interp = Interpreter::new(Contract::default(), u64::MAX, false);
         let serialized = bincode::serialize(&interp).unwrap();
         let de: Interpreter = bincode::deserialize(&serialized).unwrap();
