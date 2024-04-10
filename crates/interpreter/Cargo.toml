@@ -25,6 +25,7 @@ serde = { version = "1.0", default-features = false, features = [
 [features]
 default = ["std"]
 std = ["serde?/std", "revm-primitives/std"]
+hashbrown = ["revm-primitives/hashbrown"]
 serde = ["dep:serde", "revm-primitives/serde"]
 arbitrary = ["std", "revm-primitives/arbitrary"]
 asm-keccak = ["revm-primitives/asm-keccak"]

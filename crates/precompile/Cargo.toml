@@ -48,6 +48,7 @@ std = [
     "c-kzg?/std",
     "secp256k1?/std",
 ]
+hashbrown = ["revm-primitives/hashbrown"]
 asm-keccak = ["revm-primitives/asm-keccak"]
 
 optimism = ["revm-primitives/optimism"]
