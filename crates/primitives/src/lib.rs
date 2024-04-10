@@ -46,18 +46,9 @@ pub use bitvec;
 pub use bytecode::*;
 pub use constants::*;
 pub use env::*;
+pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
 #[cfg(not(feature = "std"))]
 pub use keccak256::keccak256;
-
-cfg_if::cfg_if! {
-    if #[cfg(feature = "std")] {
-        pub use std::collections::{hash_map, hash_set, HashMap, HashSet};
-        use hashbrown as _;
-    } else {
-        pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
-    }
-}
-
 #[cfg(feature = "c-kzg")]
 pub use kzg::{EnvKzgSettings, KzgSettings};
 pub use precompile::*;
