@@ -6,7 +6,7 @@ use crate::{
 };
 
 pub fn rjump<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    error_on_disabled_eof!(interpreter);
+    require_eof!(interpreter);
     gas!(interpreter, gas::BASE);
     let offset = unsafe { read_i16(interpreter.instruction_pointer) } as isize;
     // In spec it is +3 but pointer is already incremented in
@@ -15,7 +15,7 @@ pub fn rjump<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 pub fn rjumpi<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    error_on_disabled_eof!(interpreter);
+    require_eof!(interpreter);
     gas!(interpreter, gas::CONDITION_JUMP_GAS);
     pop!(interpreter, condition);
     // In spec it is +3 but pointer is already incremented in
@@ -29,7 +29,7 @@ pub fn rjumpi<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 pub fn rjumpv<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    error_on_disabled_eof!(interpreter);
+    require_eof!(interpreter);
     gas!(interpreter, gas::CONDITION_JUMP_GAS);
     pop!(interpreter, case);
     let case = as_isize_saturated!(case);
@@ -83,7 +83,7 @@ pub fn jumpdest_or_nop<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &
 }
 
 pub fn callf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    error_on_disabled_eof!(interpreter);
+    require_eof!(interpreter);
     gas!(interpreter, gas::LOW);
 
     let idx = unsafe { read_u16(interpreter.instruction_pointer) } as usize;
@@ -104,7 +104,7 @@ pub fn callf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 pub fn retf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    error_on_disabled_eof!(interpreter);
+    require_eof!(interpreter);
     gas!(interpreter, gas::RETF_GAS);
 
     let Some(fframe) = interpreter.function_stack.pop() else {
@@ -115,7 +115,7 @@ pub fn retf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 pub fn jumpf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    error_on_disabled_eof!(interpreter);
+    require_eof!(interpreter);
     gas!(interpreter, gas::LOW);
 
     let idx = unsafe { read_u16(interpreter.instruction_pointer) } as usize;
