@@ -379,9 +379,9 @@ pub const fn stack_io<const I: u8, const O: u8>(mut opcode: OpCodeInfo) -> OpCod
 opcodes! {
     0x00 => STOP => control::stop => stack_io<0,0>, terminating;
 
-    0x01 => ADD        => arithmetic::wrapping_add   => stack_io<2, 1>;
-    0x02 => MUL        => arithmetic::wrapping_mul   => stack_io<2, 1>;
-    0x03 => SUB        => arithmetic::wrapping_sub   => stack_io<2, 1>;
+    0x01 => ADD        => arithmetic::add            => stack_io<2, 1>;
+    0x02 => MUL        => arithmetic::mul            => stack_io<2, 1>;
+    0x03 => SUB        => arithmetic::sub            => stack_io<2, 1>;
     0x04 => DIV        => arithmetic::div            => stack_io<2, 1>;
     0x05 => SDIV       => arithmetic::sdiv           => stack_io<2, 1>;
     0x06 => MOD        => arithmetic::rem            => stack_io<2, 1>;
