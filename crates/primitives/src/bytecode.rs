@@ -1,4 +1,4 @@
-use crate::{hex, keccak256, Bytes, B256, KECCAK_EMPTY, POSEIDON_EMPTY};
+use crate::{hex, keccak256, Bytes, B256, KECCAK_EMPTY};
 use bitvec::{
     prelude::{bitvec, Lsb0},
     vec::BitVec,
