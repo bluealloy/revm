@@ -71,13 +71,40 @@ pub fn byte<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
 
-    let o1 = as_usize_saturated!(op1);
+    let o1 = as_u64_saturated!(op1);
+    const MAX_BYTE: u64 = 31;
+
     *op2 = if o1 < 32 {
-        // `31 - o1` because `byte` returns LE, while we want BE
-        U256::from(op2.byte(31 - o1))
+        /*
+			number := z[4-1-number/8]
+			offset := (n[0] & 0x7) << 3 // 8*(n.d % 8)
+			z[0] = (number & (0xff00000000000000 >> offset)) >> (56 - offset)
+			z[3], z[2], z[1] = 0, 0, 0
+			return z
+         */
+        // Calculate which byte to extract
+        // Calculate bit position for the byte extraction
+        let byte_index = (o1 * 8) as u64;
+        let shift_amount = 248 - byte_index;
+
+        // Shift the value down to the least significant byte and mask off the rest
+        (*op2 >> shift_amount) & U256::from(0xFF)
     } else {
         U256::ZERO
     };
+}
+
+/// Converts a `U256` value to a `u64`, saturating to `MAX` if the value is too large.
+#[macro_export]
+macro_rules! as_u64_saturated {
+    ($v:expr) => {{
+        let x: &[u64; 4] = $v.as_limbs();
+        if x[1] == 0 && x[2] == 0 && x[3] == 0 {
+            x[0]
+        } else {
+            u64::MAX
+        }
+    }};
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
