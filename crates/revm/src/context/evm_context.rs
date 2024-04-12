@@ -223,16 +223,12 @@ impl<DB: Database> EvmContext<DB> {
 /// Test utilities for the [`EvmContext`].
 #[cfg(any(test, feature = "test-utils"))]
 pub(crate) mod test_utils {
-    use revm_interpreter::TransferValue;
-
     use super::*;
     use crate::{
         db::{CacheDB, EmptyDB},
         journaled_state::JournaledState,
-        primitives::{address, Address, Bytes, Env, HashSet, SpecId, B256, U256},
-        InnerEvmContext,
+        primitives::{address, SpecId, B256},
     };
-    use std::boxed::Box;
 
     /// Mock caller address.
     pub const MOCK_CALLER: Address = address!("0000000000000000000000000000000000000000");
@@ -310,15 +306,13 @@ pub(crate) mod test_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_utils::*;
-
     use crate::{
         db::{CacheDB, EmptyDB},
-        interpreter::InstructionResult,
-        primitives::{address, Bytecode, Bytes, Env, U256},
-        Frame, FrameOrResult, JournalEntry,
+        primitives::{address, Bytecode},
+        Frame, JournalEntry,
     };
     use std::boxed::Box;
+    use test_utils::*;
 
     // Tests that the `EVMContext::make_call_frame` function returns an error if the
     // call stack is too deep.

@@ -164,8 +164,8 @@ mod test {
     use super::*;
     use crate::{
         opcode::{make_instruction_table, RETURNDATALOAD},
-        primitives::{bytes, Bytecode, PragueSpec, U256},
-        DummyHost, Gas, Interpreter,
+        primitives::{bytes, Bytecode, PragueSpec},
+        DummyHost, Gas,
     };
 
     #[test]
