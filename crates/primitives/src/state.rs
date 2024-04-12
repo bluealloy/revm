@@ -194,18 +194,20 @@ pub struct AccountInfo {
     pub code_hash: B256,
     pub rwasm_code_hash: B256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
-    /// inside of `revm`.
+    /// inside `revm`.
     pub code: Option<Bytecode>,
+    pub rwasm_code: Option<Bytecode>,
 }
 
 impl Default for AccountInfo {
     fn default() -> Self {
         Self {
             balance: U256::ZERO,
+            nonce: 0,
             code_hash: KECCAK_EMPTY,
             rwasm_code_hash: POSEIDON_EMPTY,
             code: Some(Bytecode::new()),
-            nonce: 0,
+            rwasm_code: Some(Bytecode::new()),
         }
     }
 }
@@ -215,6 +217,7 @@ impl PartialEq for AccountInfo {
         self.balance == other.balance
             && self.nonce == other.nonce
             && self.code_hash == other.code_hash
+            && self.rwasm_code_hash == other.rwasm_code_hash
     }
 }
 
@@ -223,6 +226,7 @@ impl Hash for AccountInfo {
         self.balance.hash(state);
         self.nonce.hash(state);
         self.code_hash.hash(state);
+        self.rwasm_code_hash.hash(state);
     }
 }
 
@@ -232,6 +236,7 @@ impl AccountInfo {
             balance,
             nonce,
             code: Some(code),
+            rwasm_code: None,
             code_hash,
             rwasm_code_hash: POSEIDON_EMPTY,
         }

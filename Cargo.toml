@@ -6,7 +6,6 @@ members = [
     "crates/precompile",
     "crates/primitives",
     "crates/revm",
-    "crates/rwasm",
 ]
 resolver = "2"
 default-members = ["crates/revm"]

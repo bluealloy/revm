@@ -2380,26 +2380,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "revm-rwasm"
-version = "7.2.0"
-dependencies = [
- "anyhow",
- "auto_impl",
- "cfg-if",
- "criterion",
- "dyn-clone",
- "ethers-contract",
- "ethers-core",
- "ethers-providers",
- "indicatif",
- "revm-interpreter",
- "revm-precompile",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "revm-test"
 version = "0.1.0"
 dependencies = [
