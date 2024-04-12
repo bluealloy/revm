@@ -72,7 +72,7 @@ pub fn byte<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     pop_top!(interpreter, op1, op2);
 
     let o1 = as_u64_saturated!(op1);
-    const MAX_BYTE: u64 = 31;
+    //const MAX_BYTE: u64 = 31;
 
     *op2 = if o1 < 32 {
         /*
@@ -92,19 +92,6 @@ pub fn byte<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     } else {
         U256::ZERO
     };
-}
-
-/// Converts a `U256` value to a `u64`, saturating to `MAX` if the value is too large.
-#[macro_export]
-macro_rules! as_u64_saturated {
-    ($v:expr) => {{
-        let x: &[u64; 4] = $v.as_limbs();
-        if x[1] == 0 && x[2] == 0 && x[3] == 0 {
-            x[0]
-        } else {
-            u64::MAX
-        }
-    }};
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
