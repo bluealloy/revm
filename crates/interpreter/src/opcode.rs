@@ -433,7 +433,7 @@ opcodes! {
     0x34 => CALLVALUE    => system::callvalue        => stack_io<0, 1>;
     0x35 => CALLDATALOAD => system::calldataload     => stack_io<1, 1>;
     0x36 => CALLDATASIZE => system::calldatasize     => stack_io<0, 1>;
-    0x37 => CALLDATACOPY => system::calldatacopy     => stack_io<3, 1>;
+    0x37 => CALLDATACOPY => system::calldatacopy     => stack_io<3, 0>;
     0x38 => CODESIZE     => system::codesize         => stack_io<0, 1>, not_eof;
     0x39 => CODECOPY     => system::codecopy         => stack_io<3, 0>, not_eof;
 
@@ -623,12 +623,12 @@ opcodes! {
     0xED => TXCREATE        => contract::txcreate::<H>        => stack_io<5, 1>;
     0xEE => RETURNCONTRACT  => contract::return_contract::<H> => stack_io<2, 0>, imm_size<1>, terminating;
     // 0xEF
-    0xF0 => CREATE       => contract::create::<false, H, SPEC> => stack_io<4, 1>, not_eof;
+    0xF0 => CREATE       => contract::create::<false, H, SPEC> => stack_io<3, 1>, not_eof;
     0xF1 => CALL         => contract::call::<H, SPEC>          => stack_io<7, 1>, not_eof;
     0xF2 => CALLCODE     => contract::call_code::<H, SPEC>     => stack_io<7, 1>, not_eof;
     0xF3 => RETURN       => control::ret                       => stack_io<2, 0>, terminating;
     0xF4 => DELEGATECALL => contract::delegate_call::<H, SPEC> => stack_io<6, 1>, not_eof;
-    0xF5 => CREATE2      => contract::create::<true, H, SPEC>  => stack_io<5, 1>, not_eof;
+    0xF5 => CREATE2      => contract::create::<true, H, SPEC>  => stack_io<4, 1>, not_eof;
     // 0xF6
     0xF7 => RETURNDATALOAD => system::returndataload::<H>      => stack_io<1, 1>;
     0xF8 => EXTCALL        => contract::extcall::<H,SPEC>      => stack_io<4, 1>;
