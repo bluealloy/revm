@@ -64,6 +64,7 @@ std = [
     "revm-interpreter/std",
     "revm-precompile/std",
 ]
+hashbrown = ["revm-interpreter/hashbrown", "revm-precompile/hashbrown"]
 serde = ["dep:serde", "revm-interpreter/serde"]
 serde-json = ["serde", "dep:serde_json"]
 arbitrary = ["revm-interpreter/arbitrary"]
