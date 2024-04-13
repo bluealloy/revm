@@ -836,6 +836,7 @@ pub enum JournalEntry {
 
 /// SubRoutine checkpoint that will help us to go back from this
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournalCheckpoint {
     log_i: usize,
     journal_i: usize,

@@ -16,6 +16,7 @@ use crate::InterpreterResult;
 use std::boxed::Box;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InterpreterAction {
     /// CALL, CALLCODE, DELEGATECALL, STATICCALL
     /// or EOF EXT instuction called.

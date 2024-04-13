@@ -8,6 +8,7 @@ pub use constants::*;
 
 /// Represents the state of gas during execution.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Gas {
     /// The initial gas limit. This is constant throughout execution.
     limit: u64,

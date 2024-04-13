@@ -3,6 +3,7 @@ use core::ops::Range;
 
 /// Inputs for EOF create call.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EOFCreateInput {
     /// Caller of Eof Craate
     pub caller: Address,

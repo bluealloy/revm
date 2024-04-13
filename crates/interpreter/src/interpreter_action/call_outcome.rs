@@ -12,6 +12,7 @@ use revm_primitives::Bytes;
 /// * `result` - The result of the interpreter's execution, including output data and gas usage.
 /// * `memory_offset` - The range in memory where the output data is located.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallOutcome {
     pub result: InterpreterResult,
     pub memory_offset: Range<usize>,
