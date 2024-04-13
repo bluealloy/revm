@@ -282,8 +282,8 @@ impl AccountInfo {
     }
 
     /// Take bytecode from account. Code will be set to None.
-    pub fn take_bytecode(&mut self) -> Option<Bytecode> {
-        self.code.take()
+    pub fn take_bytecode(&mut self) -> (Option<Bytecode>, Option<Bytecode>) {
+        (self.code.take(), self.rwasm_code.take())
     }
 
     pub fn from_balance(balance: U256) -> Self {
