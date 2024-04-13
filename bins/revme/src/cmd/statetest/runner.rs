@@ -60,12 +60,16 @@ pub enum TestErrorKind {
 }
 
 pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
-    WalkDir::new(path)
-        .into_iter()
-        .filter_map(Result::ok)
-        .filter(|e| e.path().extension() == Some("json".as_ref()))
-        .map(DirEntry::into_path)
-        .collect()
+    if path.is_file() {
+        vec![path.to_path_buf()]
+    } else {
+        WalkDir::new(path)
+            .into_iter()
+            .filter_map(Result::ok)
+            .filter(|e| e.path().extension() == Some("json".as_ref()))
+            .map(DirEntry::into_path)
+            .collect()
+    }
 }
 
 fn skip_test(path: &Path) -> bool {
