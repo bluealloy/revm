@@ -15,12 +15,18 @@ hashbrown = "0.14"
 indicatif = "0.17"
 microbench = "0.5"
 plain_hasher = "0.2"
-revm = { path = "../../crates/revm", version = "7.2.0", default-features = false, features = [
+revm = { package = "fluentbase-revm", path = "../../../fluentbase/crates/revm", default-features = false, features = [
     "ethersdb",
     "std",
     "serde-json",
     "c-kzg",
 ] }
+#revm = { path = "../../crates/revm", version = "7.2.0", default-features = false, features = [
+#    "ethersdb",
+#    "std",
+#    "serde-json",
+#    "c-kzg",
+#] }
 alloy-rlp = { version = "0.3", default-features = false, features = [
     "arrayvec",
     "derive",

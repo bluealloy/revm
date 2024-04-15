@@ -206,8 +206,8 @@ impl Default for AccountInfo {
             nonce: 0,
             code_hash: KECCAK_EMPTY,
             rwasm_code_hash: POSEIDON_EMPTY,
-            code: Some(Bytecode::new()),
-            rwasm_code: Some(Bytecode::new()),
+            code: None,
+            rwasm_code: None,
         }
     }
 }

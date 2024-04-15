@@ -55,7 +55,7 @@ std = [
     "revm-interpreter/std",
     "revm-precompile/std",
 ]
-serde = ["dep:serde", "revm-interpreter/serde"]
+serde = ["dep:serde", "revm-interpreter/serde", "revm-precompile/serde"]
 serde-json = ["serde", "dep:serde_json"]
 arbitrary = ["revm-interpreter/arbitrary"]
 asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
