@@ -90,7 +90,7 @@ mod test {
     use crate::{
         opcode::{make_instruction_table, DUPN, EXCHANGE, SWAPN},
         primitives::{Bytecode, Bytes, PragueSpec},
-        DummyHost, Gas, InstructionResult, Interpreter,
+        DummyHost, Gas, InstructionResult,
     };
 
     #[test]
