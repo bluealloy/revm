@@ -117,7 +117,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
         &self.pre_execution
     }
 
-    /// Returns reference to pre execution handler.
+    /// Returns reference to post execution handler.
     pub fn post_execution(&self) -> &PostExecutionHandler<'a, EXT, DB> {
         &self.post_execution
     }

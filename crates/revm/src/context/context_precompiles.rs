@@ -59,12 +59,12 @@ impl<DB: Database> ContextPrecompiles<DB> {
     #[inline]
     pub fn call(
         &mut self,
-        addess: Address,
+        address: Address,
         bytes: &Bytes,
         gas_price: u64,
         evmctx: &mut InnerEvmContext<DB>,
     ) -> Option<PrecompileResult> {
-        let precompile = self.inner.get_mut(&addess)?;
+        let precompile = self.inner.get_mut(&address)?;
 
         match precompile {
             ContextPrecompile::Ordinary(p) => Some(p.call(bytes, gas_price, &evmctx.env)),
