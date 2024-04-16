@@ -31,6 +31,8 @@ pub fn caller<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 
 pub fn codesize<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
+    // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
+    assume!(!interpreter.contract.bytecode.is_eof());
     push!(interpreter, U256::from(interpreter.contract.bytecode.len()));
 }
 
@@ -45,6 +47,8 @@ pub fn codecopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) 
     let code_offset = as_usize_saturated!(code_offset);
     resize_memory!(interpreter, memory_offset, len);
 
+    // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
+    assume!(!interpreter.contract.bytecode.is_eof());
     // Note: this can't panic because we resized memory to fit.
     interpreter.shared_memory.set_data(
         memory_offset,

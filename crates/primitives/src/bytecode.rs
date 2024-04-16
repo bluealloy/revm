@@ -52,7 +52,8 @@ impl Bytecode {
     }
 
     /// Return reference to the EOF if bytecode is EOF.
-    pub fn eof(&self) -> Option<&Eof> {
+    #[inline]
+    pub const fn eof(&self) -> Option<&Eof> {
         match self {
             Self::Eof(eof) => Some(eof),
             _ => None,
@@ -60,7 +61,8 @@ impl Bytecode {
     }
 
     /// Return true if bytecode is EOF.
-    pub fn is_eof(&self) -> bool {
+    #[inline]
+    pub const fn is_eof(&self) -> bool {
         matches!(self, Self::Eof(_))
     }
 
