@@ -133,7 +133,7 @@ pub fn sload<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: 
 }
 
 pub fn sstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    error_on_static_call!(interpreter);
+    require_non_staticcall!(interpreter);
 
     pop!(interpreter, index, value);
     let Some(SStoreResult {
@@ -160,7 +160,7 @@ pub fn sstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host:
 /// Store value to transient storage
 pub fn tstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, CANCUN);
-    error_on_static_call!(interpreter);
+    require_non_staticcall!(interpreter);
     gas!(interpreter, gas::WARM_STORAGE_READ_COST);
 
     pop!(interpreter, index, value);
@@ -180,7 +180,7 @@ pub fn tload<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: 
 }
 
 pub fn log<const N: usize, H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
-    error_on_static_call!(interpreter);
+    require_non_staticcall!(interpreter);
 
     pop!(interpreter, offset, len);
     let len = as_usize_or_fail!(interpreter, len);
@@ -213,7 +213,7 @@ pub fn log<const N: usize, H: Host + ?Sized>(interpreter: &mut Interpreter, host
 }
 
 pub fn selfdestruct<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    error_on_static_call!(interpreter);
+    require_non_staticcall!(interpreter);
     pop_address!(interpreter, target);
 
     let Some(res) = host.selfdestruct(interpreter.contract.target_address, target) else {

@@ -2,7 +2,7 @@
 
 /// Fails the instruction if the current call is static.
 #[macro_export]
-macro_rules! error_on_static_call {
+macro_rules! require_non_staticcall {
     ($interp:expr) => {
         if $interp.is_static {
             $interp.instruction_result = $crate::InstructionResult::StateChangeDuringStaticCall;
@@ -13,7 +13,7 @@ macro_rules! error_on_static_call {
 
 /// Error if the current call is executing EOF.
 #[macro_export]
-macro_rules! error_on_disabled_eof {
+macro_rules! require_eof {
     ($interp:expr) => {
         if !$interp.is_eof {
             $interp.instruction_result = $crate::InstructionResult::EOFOpcodeDisabledInLegacy;
@@ -24,7 +24,7 @@ macro_rules! error_on_disabled_eof {
 
 /// Error if not init eof call.
 #[macro_export]
-macro_rules! error_on_not_init_eof {
+macro_rules! require_init_eof {
     ($interp:expr) => {
         if !$interp.is_eof_init {
             $interp.instruction_result = $crate::InstructionResult::ReturnContractInNotInitEOF;

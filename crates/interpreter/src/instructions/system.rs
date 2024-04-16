@@ -145,7 +145,7 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
 
 /// Part of EOF `<https://eips.ethereum.org/EIPS/eip-7069>`.
 pub fn returndataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    error_on_disabled_eof!(interpreter);
+    require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, offset);
     let offset_usize = as_usize_or_fail!(interpreter, offset);

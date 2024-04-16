@@ -39,7 +39,7 @@ pub fn resize_memory(
 
 /// EOF Create instruction
 pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    error_on_disabled_eof!(interpreter);
+    require_eof!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
     let initcontainer_index = unsafe { *interpreter.instruction_pointer };
     pop!(interpreter, value, salt, data_offset, data_size);
@@ -92,7 +92,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
 }
 
 pub fn txcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
-    error_on_disabled_eof!(interpreter);
+    require_eof!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
     pop!(
         interpreter,
@@ -171,7 +171,7 @@ pub fn txcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
 }
 
 pub fn return_contract<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    error_on_not_init_eof!(interpreter);
+    require_init_eof!(interpreter);
     let deploy_container_index = unsafe { read_u16(interpreter.instruction_pointer) };
     pop!(interpreter, aux_data_offset, aux_data_size);
     let aux_data_size = as_usize_or_fail!(interpreter, aux_data_size);
@@ -280,7 +280,7 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
 }
 
 pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    error_on_disabled_eof!(interpreter);
+    require_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
     // input call
@@ -315,7 +315,7 @@ pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
 }
 
 pub fn extdcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    error_on_disabled_eof!(interpreter);
+    require_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
     // input call
@@ -348,7 +348,7 @@ pub fn extdcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, hos
 }
 
 pub fn extscall<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
-    error_on_disabled_eof!(interpreter);
+    require_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
     // input call
@@ -382,7 +382,7 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
     interpreter: &mut Interpreter,
     host: &mut H,
 ) {
-    error_on_static_call!(interpreter);
+    require_non_staticcall!(interpreter);
 
     // EIP-1014: Skinny CREATE2
     if IS_CREATE2 {
