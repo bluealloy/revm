@@ -5,19 +5,19 @@ use crate::{
     Host, Interpreter,
 };
 
-pub fn wrapping_add<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn add<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1.wrapping_add(*op2);
 }
 
-pub fn wrapping_mul<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn mul<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1.wrapping_mul(*op2);
 }
 
-pub fn wrapping_sub<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn sub<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1.wrapping_sub(*op2);
