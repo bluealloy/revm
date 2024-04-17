@@ -5,11 +5,11 @@ use core::ops::Range;
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EOFCreateInput {
-    /// Caller of Eof Craate
+    /// Caller of Eof Crate
     pub caller: Address,
     /// New contract address.
     pub created_address: Address,
-    /// Values of ether transfered
+    /// Values of ether transferred
     pub value: U256,
     /// Init eof code that is going to be executed.
     pub eof_init_code: Eof,

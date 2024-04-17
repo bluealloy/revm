@@ -117,7 +117,7 @@ pub enum EofDecodeError {
     NonSizes,
     /// Missing size.
     ShortInputForSizes,
-    /// Size cant be zero
+    /// Size can't be zero
     ZeroSize,
     /// Invalid code number.
     TooManyCodeSections,

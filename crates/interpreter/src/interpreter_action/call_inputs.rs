@@ -81,7 +81,7 @@ pub enum CallScheme {
     StaticCall,
 }
 
-/// Transfered value from caller to callee.
+/// Transferred value from caller to callee.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransferValue {
