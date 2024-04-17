@@ -338,6 +338,10 @@ pub struct CfgEnv {
 }
 
 impl CfgEnv {
+    pub fn with_chain_id(&self, chain_id:u64) -> Self {
+        Self { chain_id, ..self.clone() }
+    }
+
     #[cfg(feature = "optional_eip3607")]
     pub fn is_eip3607_disabled(&self) -> bool {
         self.disable_eip3607
