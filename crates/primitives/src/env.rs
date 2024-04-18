@@ -338,11 +338,9 @@ pub struct CfgEnv {
 }
 
 impl CfgEnv {
-    pub fn with_chain_id(&self, chain_id: u64) -> Self {
-        Self {
-            chain_id,
-            ..self.clone()
-        }
+    pub fn with_chain_id(mut self, chain_id: u64) -> Self {
+        self.chain_id = chain_id;
+        self
     }
 
     #[cfg(feature = "optional_eip3607")]
