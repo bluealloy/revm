@@ -9,45 +9,54 @@ pub struct CallInputs {
     /// The call data of the call.
     pub input: Bytes,
     /// The return memory offset where the output of the call is written.
-    /// For EOF this range is invalid as EOF does write output to memory.
+    ///
+    /// In EOF, this range is invalid as EOF calls do not write output to memory.
     pub return_memory_offset: Range<usize>,
     /// The gas limit of the call.
     pub gas_limit: u64,
-    /// The account address of bytecode that is going to be executed.  
+    /// The account address of bytecode that is going to be executed.
+    ///
+    /// Previously `context.code_address`.
     pub bytecode_address: Address,
     /// Target address, this account storage is going to be modified.
+    ///
+    /// Previously `context.address`.
     pub target_address: Address,
     /// This caller is invoking the call.
+    ///
+    /// Previously `context.caller`.
     pub caller: Address,
-    /// Value that is transferred in Ether.
+    /// Call value.
     ///
-    /// If enum is [`TransferValue::Value`] balance is transferer from `caller` to the `target_address`.
+    /// NOTE: This value may not necessarily be transferred from caller to callee, see [`CallValue`].
     ///
-    /// If enum is [`TransferValue::ApparentValue`] balance transfer is **not**
-    /// done and apparent value is used by CALLVALUE opcode. Used by delegate call.
-    pub value: TransferValue,
-    /// The scheme used for the call. Call, callcode, delegatecall or staticcall.
+    /// Previously `transfer.value` or `context.apparent_value`.
+    pub value: CallValue,
+    /// The call scheme.
+    ///
+    /// Previously `context.scheme`.
     pub scheme: CallScheme,
-    /// Whether this is a static call.
+    /// Whether the call is initiated inside a static call.
     pub is_static: bool,
-    /// Call is initiated from EOF bytecode.
+    /// Whether the call is initiated from EOF bytecode.
     pub is_eof: bool,
 }
 
 impl CallInputs {
     /// Creates new call inputs.
+    ///
+    /// Returns `None` if the transaction is not a call.
     pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
         let TransactTo::Call(target_address) = tx_env.transact_to else {
             return None;
         };
-
         Some(CallInputs {
             input: tx_env.data.clone(),
             gas_limit,
             target_address,
             bytecode_address: target_address,
             caller: tx_env.caller,
-            value: TransferValue::Value(tx_env.value),
+            value: CallValue::Transfer(tx_env.value),
             scheme: CallScheme::Call,
             is_static: false,
             is_eof: false,
@@ -55,19 +64,61 @@ impl CallInputs {
         })
     }
 
-    /// Returns boxed call inputs.
+    /// Creates new boxed call inputs.
+    ///
+    /// Returns `None` if the transaction is not a call.
     pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
         Self::new(tx_env, gas_limit).map(Box::new)
     }
 
-    /// Return call value
-    pub fn call_value(&self) -> U256 {
-        let (TransferValue::Value(value) | TransferValue::ApparentValue(value)) = self.value;
-        value
+    /// Returns `true` if the call will transfer a non-zero value.
+    #[inline]
+    pub fn transfers_value(&self) -> bool {
+        self.value.transfer().is_some_and(|x| x > U256::ZERO)
+    }
+
+    /// Returns the transfer value.
+    ///
+    /// This is the value that is transferred from caller to callee, see [`CallValue`].
+    #[inline]
+    pub const fn transfer_value(&self) -> Option<U256> {
+        self.value.transfer()
+    }
+
+    /// Returns the **apparent** call value.
+    ///
+    /// This value is not actually transferred, see [`CallValue`].
+    #[inline]
+    pub const fn apparent_value(&self) -> Option<U256> {
+        self.value.apparent()
+    }
+
+    /// Returns the address of the transfer source account.
+    ///
+    /// This is only meaningful if `transfers_value` is `true`.
+    #[inline]
+    pub const fn transfer_from(&self) -> Address {
+        self.caller
+    }
+
+    /// Returns the address of the transfer target account.
+    ///
+    /// This is only meaningful if `transfers_value` is `true`.
+    #[inline]
+    pub const fn transfer_to(&self) -> Address {
+        self.target_address
+    }
+
+    /// Returns the call value, regardless of the transfer value type.
+    ///
+    /// NOTE: this value may not necessarily be transferred from caller to callee, see [`CallValue`].
+    #[inline]
+    pub const fn call_value(&self) -> U256 {
+        self.value.get()
     }
 }
 
-/// Call schemes.
+/// Call scheme.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CallScheme {
@@ -81,19 +132,61 @@ pub enum CallScheme {
     StaticCall,
 }
 
-/// Transfered value from caller to callee.
+/// Call value.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum TransferValue {
-    /// Transfer value from caller to callee.
-    Value(U256),
-    /// For delegate call, the value is not transferred but
-    /// apparent value is used for CALLVALUE opcode
-    ApparentValue(U256),
+pub enum CallValue {
+    /// Concrete value, transferred from caller to callee at the end of the transaction.
+    Transfer(U256),
+    /// Apparent value, that is **not** actually transferred.
+    ///
+    /// Set when in a `DELEGATECALL` call type, and used by the `CALLVALUE` opcode.
+    Apparent(U256),
 }
 
-impl Default for TransferValue {
+impl Default for CallValue {
+    #[inline]
     fn default() -> Self {
-        TransferValue::Value(U256::ZERO)
+        CallValue::Transfer(U256::ZERO)
+    }
+}
+
+impl CallValue {
+    /// Returns the call value, regardless of the type.
+    #[inline]
+    pub const fn get(&self) -> U256 {
+        match *self {
+            Self::Transfer(value) | Self::Apparent(value) => value,
+        }
+    }
+
+    /// Returns the transferred value, if any.
+    #[inline]
+    pub const fn transfer(&self) -> Option<U256> {
+        match *self {
+            Self::Transfer(transfer) => Some(transfer),
+            Self::Apparent(_) => None,
+        }
+    }
+
+    /// Returns whether the call value will be transferred.
+    #[inline]
+    pub const fn is_transfer(&self) -> bool {
+        matches!(self, Self::Transfer(_))
+    }
+
+    /// Returns the apparent value, if any.
+    #[inline]
+    pub const fn apparent(&self) -> Option<U256> {
+        match *self {
+            Self::Transfer(_) => None,
+            Self::Apparent(apparent) => Some(apparent),
+        }
+    }
+
+    /// Returns whether the call value is apparent, and not actually transferred.
+    #[inline]
+    pub const fn is_apparent(&self) -> bool {
+        matches!(self, Self::Apparent(_))
     }
 }

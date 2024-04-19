@@ -1,4 +1,4 @@
-use revm_interpreter::TransferValue;
+use revm_interpreter::CallValue;
 
 use super::inner_evm_context::InnerEvmContext;
 use crate::{
@@ -175,11 +175,11 @@ impl<DB: Database> EvmContext<DB> {
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         match inputs.value {
             // if transfer value is zero, do the touch.
-            TransferValue::Value(value) if value == U256::ZERO => {
+            CallValue::Transfer(value) if value == U256::ZERO => {
                 self.load_account(inputs.target_address)?;
                 self.journaled_state.touch(&inputs.target_address);
             }
-            TransferValue::Value(value) => {
+            CallValue::Transfer(value) => {
                 // Transfer value from caller to called account
                 if let Some(result) = self.inner.journaled_state.transfer(
                     &inputs.caller,
@@ -241,7 +241,7 @@ pub(crate) mod test_utils {
             bytecode_address: to,
             target_address: to,
             caller: MOCK_CALLER,
-            value: TransferValue::Value(U256::ZERO),
+            value: CallValue::Transfer(U256::ZERO),
             scheme: revm_interpreter::CallScheme::Call,
             is_eof: false,
             is_static: false,
@@ -344,7 +344,7 @@ mod tests {
         let mut evm_context = test_utils::create_empty_evm_context(Box::new(env), db);
         let contract = address!("dead10000000000000000000000000000001dead");
         let mut call_inputs = test_utils::create_mock_call_inputs(contract);
-        call_inputs.value = TransferValue::Value(U256::from(1));
+        call_inputs.value = CallValue::Transfer(U256::from(1));
         let res = evm_context.make_call_frame(&call_inputs);
         let Ok(FrameOrResult::Result(result)) = res else {
             panic!("Expected FrameOrResult::Result");

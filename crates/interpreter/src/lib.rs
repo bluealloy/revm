@@ -38,8 +38,8 @@ pub use interpreter::{
     EMPTY_SHARED_MEMORY, STACK_LIMIT,
 };
 pub use interpreter_action::{
-    CallInputs, CallOutcome, CallScheme, CreateInputs, CreateOutcome, CreateScheme, EOFCreateInput,
-    EOFCreateOutcome, InterpreterAction, TransferValue,
+    CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome, CreateScheme,
+    EOFCreateInput, EOFCreateOutcome, InterpreterAction,
 };
 pub use opcode::{Instruction, OpCode, OPCODE_INFO_JUMPTABLE};
 pub use primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
