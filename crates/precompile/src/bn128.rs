@@ -1,4 +1,4 @@
-use crate::zk_op::{self, Operation};
+use crate::zk_op::{self, ZkOperation};
 use crate::{
     utilities::{bool_to_bytes32, right_pad},
     Address, Error, Precompile, PrecompileResult, PrecompileWithAddress,
@@ -17,7 +17,7 @@ pub mod add {
             if 150 > gas_limit {
                 return Err(Error::OutOfGas);
             }
-            if zk_op::contains_operation(&Operation::Bn128Add) {
+            if zk_op::contains_operation(&ZkOperation::Bn128Add) {
                 if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
                     let out: Bytes = op.bn128_run_add(input)?.into();
                     return Ok::<(u64, Bytes), Error>((150, out))
@@ -33,7 +33,7 @@ pub mod add {
             if 500 > gas_limit {
                 return Err(Error::OutOfGas);
             }
-            if zk_op::contains_operation(&Operation::Bn128Add) {
+            if zk_op::contains_operation(&ZkOperation::Bn128Add) {
                 if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
                     let out: Bytes = op.bn128_run_add(input)?.into();
                     return Ok::<(u64, Bytes), Error>((150, out))
@@ -55,7 +55,7 @@ pub mod mul {
             if 6_000 > gas_limit {
                 return Err(Error::OutOfGas);
             }
-            if zk_op::contains_operation(&Operation::Bn128Mul) {
+            if zk_op::contains_operation(&ZkOperation::Bn128Mul) {
                 if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
                     let out: Bytes = op.bn128_run_mul(input)?.into();
                     return Ok::<(u64, Bytes), Error>((6_000, out))
@@ -71,7 +71,7 @@ pub mod mul {
             if 40_000 > gas_limit {
                 return Err(Error::OutOfGas);
             }
-            if zk_op::contains_operation(&Operation::Bn128Mul) {
+            if zk_op::contains_operation(&ZkOperation::Bn128Mul) {
                 if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
                     let out: Bytes = op.bn128_run_mul(input)?.into();
                     return Ok::<(u64, Bytes), Error>((40_000, out))
@@ -92,7 +92,7 @@ pub mod pair {
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
-            if zk_op::contains_operation(&Operation::Bn128Pairing) {
+            if zk_op::contains_operation(&ZkOperation::Bn128Pairing) {
                 if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
                     let success = op.bn128_run_pairing(input)?;
                     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64
@@ -118,7 +118,7 @@ pub mod pair {
     pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
-            if zk_op::contains_operation(&Operation::Bn128Pairing) {
+            if zk_op::contains_operation(&ZkOperation::Bn128Pairing) {
                 if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
                     let success = op.bn128_run_pairing(input)?;
                     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64

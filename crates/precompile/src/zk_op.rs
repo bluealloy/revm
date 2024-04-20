@@ -3,16 +3,16 @@ use std::sync::OnceLock;
 use crate::Error;
 use once_cell::{race::OnceBox, sync::Lazy};
 
-pub static ZKVM_OPERATIONS: Lazy<OnceBox<Vec<Operation>>> =
-    Lazy::new(OnceBox::<Vec<Operation>>::new);
+pub static ZKVM_OPERATIONS: Lazy<OnceBox<Vec<ZkOperation>>> =
+    Lazy::new(OnceBox::<Vec<ZkOperation>>::new);
 pub static ZKVM_OPERATOR: OnceLock<Box<dyn ZkvmOperator>> = OnceLock::new();
 
-pub fn contains_operation(op: &Operation) -> bool {
+pub fn contains_operation(op: &ZkOperation) -> bool {
     ZKVM_OPERATIONS.get().is_some_and(|ops| ops.contains(op))
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Operation {
+pub enum ZkOperation {
     Bn128Add,
     Bn128Mul,
     Bn128Pairing,

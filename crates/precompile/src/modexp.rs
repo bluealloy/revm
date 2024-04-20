@@ -1,4 +1,4 @@
-use crate::zk_op::{self, Operation};
+use crate::zk_op::{self, ZkOperation};
 use crate::{
     primitives::U256,
     utilities::{left_pad, left_pad_vec, right_pad_vec, right_pad_with_offset},
@@ -111,7 +111,7 @@ where
     debug_assert_eq!(modulus.len(), mod_len);
 
     // Call the modexp.
-    if zk_op::contains_operation(&Operation::Modexp) {
+    if zk_op::contains_operation(&ZkOperation::Modexp) {
         if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
             return op.modexp_run(base, exponent, modulus).map(|out| {
                 let padded: Bytes = left_pad_vec(&out, mod_len).into_owned().into();

@@ -400,15 +400,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
-name = "bincode"
-version = "1.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1f45e9417d87227c7a56d22e471c6206462cba514c7590c09aff4cf6d1ddcad"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "bit-set"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -889,7 +880,6 @@ dependencies = [
  "rand_core",
  "sec1",
  "subtle",
- "tap",
  "zeroize",
 ]
 
@@ -1126,7 +1116,6 @@ version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ded41244b729663b1e574f1b4fb731469f69f79c17667b5d776b16cda0479449"
 dependencies = [
- "bitvec",
  "rand_core",
  "subtle",
 ]
@@ -2390,7 +2379,6 @@ dependencies = [
  "ripemd",
  "secp256k1",
  "sha2",
- "sp1-precompiles",
  "substrate-bn",
 ]
 
@@ -2891,20 +2879,6 @@ checksum = "05ffd9c0a93b7543e062e759284fcf5f5e3b098501104bfbdde4d404db792871"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
-]
-
-[[package]]
-name = "sp1-precompiles"
-version = "0.1.0"
-source = "git+https://github.com/succinctlabs/sp1.git#bd94f18389c7f13a1919f80eb0b9aaf641941c7e"
-dependencies = [
- "anyhow",
- "bincode",
- "cfg-if",
- "getrandom",
- "k256",
- "rand",
- "serde",
 ]
 
 [[package]]

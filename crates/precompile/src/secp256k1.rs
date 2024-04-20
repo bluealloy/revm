@@ -8,12 +8,12 @@ pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
 
 #[allow(clippy::module_inception)]
 mod secp256k1_zk {
-    use crate::zk_op::{self, Operation};
+    use crate::zk_op::{self, ZkOperation};
     use crate::Error;
     use revm_primitives::{alloy_primitives::B512, B256};
 
     pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, Error> {
-        if zk_op::contains_operation(&Operation::Secp256k1) {
+        if zk_op::contains_operation(&ZkOperation::Secp256k1) {
             if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
                 return op
                     .secp256k1_ecrecover(sig, recid, msg)
@@ -67,7 +67,6 @@ mod secp256k1 {
 
     // Silence the unused crate dependency warning.
     use k256 as _;
-    use sp1_precompiles as _;
 
     pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, secp256k1::Error> {
         let recid = RecoveryId::from_i32(recid as i32).expect("recovery ID is valid");
