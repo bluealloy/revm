@@ -2,7 +2,7 @@ use crate::{
     primitives::{B256, U256},
     InstructionResult,
 };
-use core::fmt;
+use core::{fmt, ptr};
 use std::vec::Vec;
 
 /// EVM interpreter stack limit.
@@ -222,8 +222,14 @@ impl Stack {
     }
 
     /// Duplicates the `N`th value from the top of the stack.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n` is 0.
     #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn dup(&mut self, n: usize) -> Result<(), InstructionResult> {
+        assume!(n > 0, "attempted to dup 0");
         let len = self.data.len();
         if len < n {
             Err(InstructionResult::StackUnderflow)
@@ -232,16 +238,23 @@ impl Stack {
         } else {
             // SAFETY: check for out of bounds is done above and it makes this safe to do.
             unsafe {
+                let ptr = self.data.as_mut_ptr().add(len);
+                ptr::copy_nonoverlapping(ptr.sub(n), ptr, 1);
                 self.data.set_len(len + 1);
             }
-            self.data[len] = self.data[len - n];
             Ok(())
         }
     }
 
     /// Swaps the topmost value with the `N`th value from the top.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n` is 0.
     #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn swap(&mut self, n: usize) -> Result<(), InstructionResult> {
+        assume!(n > 0, "attempted to swap with 0");
         let len = self.data.len();
         if n >= len {
             return Err(InstructionResult::StackUnderflow);
