@@ -18,10 +18,10 @@ pub mod add {
                 return Err(Error::OutOfGas);
             }
             if zk_op::contains_operation(&Operation::Bn128Add) {
-                zk_op::ZKVM_OPERATOR.get().map(|op| {
+                if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
                     let out: Bytes = op.bn128_run_add(input)?.into();
-                    Ok::<(i32, Bytes), Error>((150, out))
-                });
+                    return Ok::<(u64, Bytes), Error>((150, out))
+                }
             }
             Ok((150, super::run_add(input)?))
         }),
@@ -34,10 +34,10 @@ pub mod add {
                 return Err(Error::OutOfGas);
             }
             if zk_op::contains_operation(&Operation::Bn128Add) {
-                zk_op::ZKVM_OPERATOR.get().map(|op| {
+                if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
                     let out: Bytes = op.bn128_run_add(input)?.into();
-                    Ok::<(i32, Bytes), Error>((150, out))
-                });
+                    return Ok::<(u64, Bytes), Error>((150, out))
+                }
             }
             Ok((150, super::run_add(input)?))
         }),
@@ -56,10 +56,10 @@ pub mod mul {
                 return Err(Error::OutOfGas);
             }
             if zk_op::contains_operation(&Operation::Bn128Mul) {
-                zk_op::ZKVM_OPERATOR.get().map(|op| {
+                if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
                     let out: Bytes = op.bn128_run_mul(input)?.into();
-                    Ok::<(i32, Bytes), Error>((6_000, out))
-                });
+                    return Ok::<(u64, Bytes), Error>((6_000, out))
+                }
             }
             Ok((6_000, super::run_mul(input)?))
         }),
@@ -72,10 +72,10 @@ pub mod mul {
                 return Err(Error::OutOfGas);
             }
             if zk_op::contains_operation(&Operation::Bn128Mul) {
-                zk_op::ZKVM_OPERATOR.get().map(|op| {
+                if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
                     let out: Bytes = op.bn128_run_mul(input)?.into();
-                    Ok::<(i32, Bytes), Error>((40_000, out))
-                });
+                    return Ok::<(u64, Bytes), Error>((40_000, out))
+                }
             }
             Ok((40_000, super::run_mul(input)?))
         }),
@@ -93,7 +93,7 @@ pub mod pair {
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
             if zk_op::contains_operation(&Operation::Bn128Pairing) {
-                zk_op::ZKVM_OPERATOR.get().map(|op| {
+                if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
                     let success = op.bn128_run_pairing(input)?;
                     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64
                         * ISTANBUL_PAIR_PER_POINT
@@ -101,8 +101,8 @@ pub mod pair {
                     if gas_used > gas_limit {
                         return Err(Error::OutOfGas);
                     }
-                    Ok((gas_used, bool_to_bytes32(success)))
-                });
+                    return Ok::<(u64, Bytes), Error>((gas_used, bool_to_bytes32(success)))
+                }
             }
             super::run_pair(
                 input,
@@ -119,19 +119,16 @@ pub mod pair {
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
             if zk_op::contains_operation(&Operation::Bn128Pairing) {
-                zk_op::ZKVM_OPERATOR.get().map(|op| {
-                    let success = zk_op::ZKVM_OPERATOR
-                        .get()
-                        .expect("ZKVM_OPERATOR unset")
-                        .bn128_run_pairing(input)?;
+                if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
+                    let success = op.bn128_run_pairing(input)?;
                     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64
                         * BYZANTIUM_PAIR_PER_POINT
                         + BYZANTIUM_PAIR_BASE;
                     if gas_used > gas_limit {
                         return Err(Error::OutOfGas);
                     }
-                    Ok((gas_used, bool_to_bytes32(success)))
-                });
+                    return Ok::<(u64, Bytes), Error>((gas_used, bool_to_bytes32(success)))
+                }
             }
             super::run_pair(
                 input,

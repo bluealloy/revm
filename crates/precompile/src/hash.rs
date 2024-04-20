@@ -21,10 +21,9 @@ pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         Err(Error::OutOfGas)
     } else {
         if zk_op::contains_operation(&Operation::Sha256) {
-            zk_op::ZKVM_OPERATOR.get().map(|op| {
-                let out: Bytes = op.sha256_run(input.as_ref())?.into();
-                Ok::<(u64, Bytes), Error>((cost, out))
-            });
+            if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
+                return op.sha256_run(input.as_ref()).map(|out| (cost, out.into()));
+            }
         }
         let output = sha2::Sha256::digest(input).to_vec();
         Ok((cost, output.into()))
@@ -40,10 +39,9 @@ pub fn ripemd160_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         Err(Error::OutOfGas)
     } else {
         if zk_op::contains_operation(&zk_op::Operation::Ripemd160) {
-            zk_op::ZKVM_OPERATOR.get().map(|op| {
-                let out: Bytes = op.ripemd160_run(input.as_ref())?.into();
-                Ok::<(u64, Bytes), Error>((gas_used, out))
-            });
+            if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
+                return op.ripemd160_run(input.as_ref()).map(|out| (gas_used, out.into()));
+            }
         }
         let mut hasher = ripemd::Ripemd160::new();
         hasher.update(input);

@@ -112,11 +112,12 @@ where
 
     // Call the modexp.
     if zk_op::contains_operation(&Operation::Modexp) {
-        zk_op::ZKVM_OPERATOR.get().map(|op| {
-            let out = op.modexp_run(base, exponent, modulus)?;
-            let padded: Bytes = left_pad_vec(&out, mod_len).into_owned().into();
-            Ok::<(u64, Bytes), Error>((gas_cost, padded))
-        });
+        if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
+            return op.modexp_run(base, exponent, modulus).map(|out| {
+                let padded: Bytes = left_pad_vec(&out, mod_len).into_owned().into();
+                (gas_cost, padded)
+            });
+        }
     }
     let output = modexp(base, exponent, modulus);
     // left pad the result to modulus length. bytes will always by less or equal to modulus length.
