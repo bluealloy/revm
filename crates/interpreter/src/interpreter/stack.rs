@@ -251,30 +251,35 @@ impl Stack {
     /// # Panics
     ///
     /// Panics if `n` is 0.
-    #[inline]
+    #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn swap(&mut self, n: usize) -> Result<(), InstructionResult> {
-        assume!(n > 0, "attempted to swap with 0");
-        let len = self.data.len();
-        if n >= len {
-            return Err(InstructionResult::StackUnderflow);
-        }
-        let last_index = len - 1;
-        self.data.swap(last_index, last_index - n);
-        Ok(())
+        self.exchange(0, n)
     }
 
-    /// Exchange two values on the stack. where `N` is first index and second index
-    /// is calculated as N+M
+    /// Exchange two values on the stack.
+    ///
+    /// `n` is the first index, and the second index is calculated as `n + m`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `m` is zero.
     #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn exchange(&mut self, n: usize, m: usize) -> Result<(), InstructionResult> {
+        assume!(m > 0, "overlapping exchange");
         let len = self.data.len();
         let n_m_index = n + m;
         if n_m_index >= len {
             return Err(InstructionResult::StackUnderflow);
         }
-        let last_index = len - 1;
-        self.data.swap(last_index - n, last_index - n_m_index);
+        // SAFETY: `n` and `n_m` are checked to be within bounds, and they don't overlap.
+        unsafe {
+            // NOTE: `mem::swap` performs better than `slice::swap`/`ptr::swap`, as they cannot
+            // assume that the pointers are non-overlapping when we know they are not.
+            let top = self.data.as_mut_ptr().add(len - 1);
+            core::mem::swap(&mut *top.sub(n), &mut *top.sub(n_m_index));
+        }
         Ok(())
     }
 
