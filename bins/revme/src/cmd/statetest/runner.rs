@@ -369,7 +369,9 @@ pub fn execute_test_suite(
                 let (e, exec_result) = if trace {
                     let mut evm = evm
                         .modify()
-                        .reset_handler_with_external_context(TracerEip3155::new(Box::new(stderr())))
+                        .reset_handler_with_external_context(
+                            TracerEip3155::new(Box::new(stderr())).without_summary(),
+                        )
                         .append_handler_register(inspector_handle_register)
                         .build();
 
