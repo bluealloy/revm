@@ -327,15 +327,15 @@ pub fn validate_eof_code(
         is_after_termination = opcode.is_terminating();
 
         // mark immediate as non-jumpable. RJUMPV is special case covered later.
-        if opcode.imm_size() != 0 {
+        if opcode.immediate_size() != 0 {
             // check if the opcode immediate are within the bounds of the code
-            if i + opcode.imm_size() as usize >= code.len() {
+            if i + opcode.immediate_size() as usize >= code.len() {
                 // Malfunctional code
                 return Err(EofValidationError::MissingImmediateBytes);
             }
 
             // mark immediate bytes as non-jumpable.
-            for imm in 1..opcode.imm_size() as usize + 1 {
+            for imm in 1..opcode.immediate_size() as usize + 1 {
                 // SAFETY: immediate size is checked above.
                 jumps[i + imm].mark_as_immediate()?;
             }
@@ -534,7 +534,7 @@ pub fn validate_eof_code(
         }
 
         // additional immediate are from RJUMPV vtable.
-        i += 1 + opcode.imm_size() as usize + rjumpv_additional_immediates;
+        i += 1 + opcode.immediate_size() as usize + rjumpv_additional_immediates;
     }
 
     // last opcode should be terminating

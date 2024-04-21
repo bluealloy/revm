@@ -294,7 +294,7 @@ pub struct OpCodeInfo {
     outputs: u8,
     not_eof: bool,
     terminating: bool,
-    imm_size: u8,
+    immediate_size: u8,
 }
 
 impl fmt::Debug for OpCodeInfo {
@@ -305,7 +305,7 @@ impl fmt::Debug for OpCodeInfo {
             .field("outputs", &self.outputs())
             .field("not_eof", &self.is_disabled_in_eof())
             .field("terminating", &self.is_terminating())
-            .field("imm_size", &self.imm_size())
+            .field("immediate_size", &self.immediate_size())
             .finish()
     }
 }
@@ -321,7 +321,7 @@ impl OpCodeInfo {
             outputs: 0,
             not_eof: false,
             terminating: false,
-            imm_size: 0,
+            immediate_size: 0,
         }
     }
 
@@ -368,41 +368,41 @@ impl OpCodeInfo {
 
     /// Returns the size of the immediate value in bytes.
     #[inline]
-    pub const fn imm_size(&self) -> u8 {
-        self.imm_size
+    pub const fn immediate_size(&self) -> u8 {
+        self.immediate_size
     }
+}
 
-    /// Sets the EOF flag to false.
-    #[inline]
-    pub const fn not_eof(mut self) -> Self {
-        self.not_eof = true;
-        self
-    }
+/// Sets the EOF flag to false.
+#[inline]
+pub const fn not_eof(mut op: OpCodeInfo) -> OpCodeInfo {
+    op.not_eof = true;
+    op
+}
 
-    /// Sets the immediate bytes number.
-    ///
-    /// RJUMPV is special case where the bytes len is depending on bytecode value,
-    /// for RJUMPV size will be set to one byte while minimum is two.
-    #[inline]
-    pub const fn set_imm_size(mut self, n: u8) -> Self {
-        self.imm_size = n;
-        self
-    }
+/// Sets the immediate bytes number.
+///
+/// RJUMPV is special case where the bytes len is depending on bytecode value,
+/// for RJUMPV size will be set to one byte while minimum is two.
+#[inline]
+pub const fn immediate_size(mut op: OpCodeInfo, n: u8) -> OpCodeInfo {
+    op.immediate_size = n;
+    op
+}
 
-    /// Sets the terminating flag to true.
-    #[inline]
-    pub const fn terminating(mut self) -> Self {
-        self.terminating = true;
-        self
-    }
+/// Sets the terminating flag to true.
+#[inline]
+pub const fn terminating(mut op: OpCodeInfo) -> OpCodeInfo {
+    op.terminating = true;
+    op
+}
 
-    /// Sets the number of stack inputs and outputs.
-    #[inline]
-    pub const fn stack_io(mut self, inputs: u8, outputs: u8) -> Self {
-        self.inputs = inputs;
-        self.outputs = outputs;
-        self
-    }
+/// Sets the number of stack inputs and outputs.
+#[inline]
+pub const fn stack_io(mut op: OpCodeInfo, inputs: u8, outputs: u8) -> OpCodeInfo {
+    op.inputs = inputs;
+    op.outputs = outputs;
+    op
 }
 
 /// Alias for the [`JUMPDEST`] opcode.
@@ -428,10 +428,11 @@ macro_rules! opcodes {
                 let val: u8 = $val;
                 assert!(val == 0 || val > prev, "opcodes must be sorted in ascending order");
                 prev = val;
-                map[$val] = Some(
-                    OpCodeInfo::new(stringify!($name))
-                    $( .$modifier($($($modifier_arg),*)?) )*
-                );
+                let info = OpCodeInfo::new(stringify!($name));
+                $(
+                let info = $modifier(info, $($($modifier_arg),*)?);
+                )*
+                map[$val] = Some(info);
             )*
             let _ = prev;
             map
@@ -551,38 +552,38 @@ opcodes! {
     0x5E => MCOPY    => memory::mcopy::<H, SPEC> => stack_io(3, 0);
 
     0x5F => PUSH0  => stack::push0::<H, SPEC> => stack_io(0, 1);
-    0x60 => PUSH1  => stack::push::<1, H>     => stack_io(0, 1), set_imm_size(1);
-    0x61 => PUSH2  => stack::push::<2, H>     => stack_io(0, 1), set_imm_size(2);
-    0x62 => PUSH3  => stack::push::<3, H>     => stack_io(0, 1), set_imm_size(3);
-    0x63 => PUSH4  => stack::push::<4, H>     => stack_io(0, 1), set_imm_size(4);
-    0x64 => PUSH5  => stack::push::<5, H>     => stack_io(0, 1), set_imm_size(5);
-    0x65 => PUSH6  => stack::push::<6, H>     => stack_io(0, 1), set_imm_size(6);
-    0x66 => PUSH7  => stack::push::<7, H>     => stack_io(0, 1), set_imm_size(7);
-    0x67 => PUSH8  => stack::push::<8, H>     => stack_io(0, 1), set_imm_size(8);
-    0x68 => PUSH9  => stack::push::<9, H>     => stack_io(0, 1), set_imm_size(9);
-    0x69 => PUSH10 => stack::push::<10, H>    => stack_io(0, 1), set_imm_size(10);
-    0x6A => PUSH11 => stack::push::<11, H>    => stack_io(0, 1), set_imm_size(11);
-    0x6B => PUSH12 => stack::push::<12, H>    => stack_io(0, 1), set_imm_size(12);
-    0x6C => PUSH13 => stack::push::<13, H>    => stack_io(0, 1), set_imm_size(13);
-    0x6D => PUSH14 => stack::push::<14, H>    => stack_io(0, 1), set_imm_size(14);
-    0x6E => PUSH15 => stack::push::<15, H>    => stack_io(0, 1), set_imm_size(15);
-    0x6F => PUSH16 => stack::push::<16, H>    => stack_io(0, 1), set_imm_size(16);
-    0x70 => PUSH17 => stack::push::<17, H>    => stack_io(0, 1), set_imm_size(17);
-    0x71 => PUSH18 => stack::push::<18, H>    => stack_io(0, 1), set_imm_size(18);
-    0x72 => PUSH19 => stack::push::<19, H>    => stack_io(0, 1), set_imm_size(19);
-    0x73 => PUSH20 => stack::push::<20, H>    => stack_io(0, 1), set_imm_size(20);
-    0x74 => PUSH21 => stack::push::<21, H>    => stack_io(0, 1), set_imm_size(21);
-    0x75 => PUSH22 => stack::push::<22, H>    => stack_io(0, 1), set_imm_size(22);
-    0x76 => PUSH23 => stack::push::<23, H>    => stack_io(0, 1), set_imm_size(23);
-    0x77 => PUSH24 => stack::push::<24, H>    => stack_io(0, 1), set_imm_size(24);
-    0x78 => PUSH25 => stack::push::<25, H>    => stack_io(0, 1), set_imm_size(25);
-    0x79 => PUSH26 => stack::push::<26, H>    => stack_io(0, 1), set_imm_size(26);
-    0x7A => PUSH27 => stack::push::<27, H>    => stack_io(0, 1), set_imm_size(27);
-    0x7B => PUSH28 => stack::push::<28, H>    => stack_io(0, 1), set_imm_size(28);
-    0x7C => PUSH29 => stack::push::<29, H>    => stack_io(0, 1), set_imm_size(29);
-    0x7D => PUSH30 => stack::push::<30, H>    => stack_io(0, 1), set_imm_size(30);
-    0x7E => PUSH31 => stack::push::<31, H>    => stack_io(0, 1), set_imm_size(31);
-    0x7F => PUSH32 => stack::push::<32, H>    => stack_io(0, 1), set_imm_size(32);
+    0x60 => PUSH1  => stack::push::<1, H>     => stack_io(0, 1), immediate_size(1);
+    0x61 => PUSH2  => stack::push::<2, H>     => stack_io(0, 1), immediate_size(2);
+    0x62 => PUSH3  => stack::push::<3, H>     => stack_io(0, 1), immediate_size(3);
+    0x63 => PUSH4  => stack::push::<4, H>     => stack_io(0, 1), immediate_size(4);
+    0x64 => PUSH5  => stack::push::<5, H>     => stack_io(0, 1), immediate_size(5);
+    0x65 => PUSH6  => stack::push::<6, H>     => stack_io(0, 1), immediate_size(6);
+    0x66 => PUSH7  => stack::push::<7, H>     => stack_io(0, 1), immediate_size(7);
+    0x67 => PUSH8  => stack::push::<8, H>     => stack_io(0, 1), immediate_size(8);
+    0x68 => PUSH9  => stack::push::<9, H>     => stack_io(0, 1), immediate_size(9);
+    0x69 => PUSH10 => stack::push::<10, H>    => stack_io(0, 1), immediate_size(10);
+    0x6A => PUSH11 => stack::push::<11, H>    => stack_io(0, 1), immediate_size(11);
+    0x6B => PUSH12 => stack::push::<12, H>    => stack_io(0, 1), immediate_size(12);
+    0x6C => PUSH13 => stack::push::<13, H>    => stack_io(0, 1), immediate_size(13);
+    0x6D => PUSH14 => stack::push::<14, H>    => stack_io(0, 1), immediate_size(14);
+    0x6E => PUSH15 => stack::push::<15, H>    => stack_io(0, 1), immediate_size(15);
+    0x6F => PUSH16 => stack::push::<16, H>    => stack_io(0, 1), immediate_size(16);
+    0x70 => PUSH17 => stack::push::<17, H>    => stack_io(0, 1), immediate_size(17);
+    0x71 => PUSH18 => stack::push::<18, H>    => stack_io(0, 1), immediate_size(18);
+    0x72 => PUSH19 => stack::push::<19, H>    => stack_io(0, 1), immediate_size(19);
+    0x73 => PUSH20 => stack::push::<20, H>    => stack_io(0, 1), immediate_size(20);
+    0x74 => PUSH21 => stack::push::<21, H>    => stack_io(0, 1), immediate_size(21);
+    0x75 => PUSH22 => stack::push::<22, H>    => stack_io(0, 1), immediate_size(22);
+    0x76 => PUSH23 => stack::push::<23, H>    => stack_io(0, 1), immediate_size(23);
+    0x77 => PUSH24 => stack::push::<24, H>    => stack_io(0, 1), immediate_size(24);
+    0x78 => PUSH25 => stack::push::<25, H>    => stack_io(0, 1), immediate_size(25);
+    0x79 => PUSH26 => stack::push::<26, H>    => stack_io(0, 1), immediate_size(26);
+    0x7A => PUSH27 => stack::push::<27, H>    => stack_io(0, 1), immediate_size(27);
+    0x7B => PUSH28 => stack::push::<28, H>    => stack_io(0, 1), immediate_size(28);
+    0x7C => PUSH29 => stack::push::<29, H>    => stack_io(0, 1), immediate_size(29);
+    0x7D => PUSH30 => stack::push::<30, H>    => stack_io(0, 1), immediate_size(30);
+    0x7E => PUSH31 => stack::push::<31, H>    => stack_io(0, 1), immediate_size(31);
+    0x7F => PUSH32 => stack::push::<32, H>    => stack_io(0, 1), immediate_size(32);
 
     0x80 => DUP1  => stack::dup::<1, H>  => stack_io(1, 2);
     0x81 => DUP2  => stack::dup::<2, H>  => stack_io(2, 3);
@@ -667,7 +668,7 @@ opcodes! {
     // 0xCE
     // 0xCF
     0xD0 => DATALOAD  => data::data_load   => stack_io(1, 1);
-    0xD1 => DATALOADN => data::data_loadn  => stack_io(0, 1), set_imm_size(2);
+    0xD1 => DATALOADN => data::data_loadn  => stack_io(0, 1), immediate_size(2);
     0xD2 => DATASIZE  => data::data_size   => stack_io(0, 1);
     0xD3 => DATACOPY  => data::data_copy   => stack_io(3, 0);
     // 0xD4
@@ -682,21 +683,21 @@ opcodes! {
     // 0xDD
     // 0xDE
     // 0xDF
-    0xE0 => RJUMP    => control::rjump  => stack_io(0, 0), set_imm_size(2), terminating;
-    0xE1 => RJUMPI   => control::rjumpi => stack_io(1, 0), set_imm_size(2);
-    0xE2 => RJUMPV   => control::rjumpv => stack_io(1, 0), set_imm_size(1);
-    0xE3 => CALLF    => control::callf  => stack_io(0, 0), set_imm_size(2);
+    0xE0 => RJUMP    => control::rjump  => stack_io(0, 0), immediate_size(2), terminating;
+    0xE1 => RJUMPI   => control::rjumpi => stack_io(1, 0), immediate_size(2);
+    0xE2 => RJUMPV   => control::rjumpv => stack_io(1, 0), immediate_size(1);
+    0xE3 => CALLF    => control::callf  => stack_io(0, 0), immediate_size(2);
     0xE4 => RETF     => control::retf   => stack_io(0, 0), terminating;
-    0xE5 => JUMPF    => control::jumpf  => stack_io(0, 0), set_imm_size(2), terminating;
-    0xE6 => DUPN     => stack::dupn     => stack_io(0, 1), set_imm_size(1);
-    0xE7 => SWAPN    => stack::swapn    => stack_io(0, 0), set_imm_size(1);
-    0xE8 => EXCHANGE => stack::exchange => stack_io(0, 0), set_imm_size(1);
+    0xE5 => JUMPF    => control::jumpf  => stack_io(0, 0), immediate_size(2), terminating;
+    0xE6 => DUPN     => stack::dupn     => stack_io(0, 1), immediate_size(1);
+    0xE7 => SWAPN    => stack::swapn    => stack_io(0, 0), immediate_size(1);
+    0xE8 => EXCHANGE => stack::exchange => stack_io(0, 0), immediate_size(1);
     // 0xE9
     // 0xEA
     // 0xEB
-    0xEC => EOFCREATE       => contract::eofcreate            => stack_io(4, 1), set_imm_size(1);
+    0xEC => EOFCREATE       => contract::eofcreate            => stack_io(4, 1), immediate_size(1);
     0xED => TXCREATE        => contract::txcreate             => stack_io(5, 1);
-    0xEE => RETURNCONTRACT  => contract::return_contract      => stack_io(2, 0), set_imm_size(1), terminating;
+    0xEE => RETURNCONTRACT  => contract::return_contract      => stack_io(2, 0), immediate_size(1), terminating;
     // 0xEF
     0xF0 => CREATE       => contract::create::<false, H, SPEC> => stack_io(3, 1), not_eof;
     0xF1 => CALL         => contract::call::<H, SPEC>          => stack_io(7, 1), not_eof;
@@ -746,7 +747,7 @@ mod tests {
     }
 
     #[test]
-    fn test_imm_size() {
+    fn test_immediate_size() {
         let mut expected = [0u8; 256];
         // PUSH opcodes
         for push in PUSH1..=PUSH32 {
@@ -767,9 +768,9 @@ mod tests {
         for (i, opcode) in OPCODE_INFO_JUMPTABLE.iter().enumerate() {
             if let Some(opcode) = opcode {
                 assert_eq!(
-                    opcode.imm_size(),
+                    opcode.immediate_size(),
                     expected[i],
-                    "imm_size check failed for {opcode:#?}",
+                    "immediate_size check failed for {opcode:#?}",
                 );
             }
         }
