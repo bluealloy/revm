@@ -1,11 +1,23 @@
+use alloy_primitives::address;
+
 use crate::Address;
 
 /// EIP-170: Contract code size limit
 /// By default limit is 0x6000 (~25kb)
 pub const MAX_CODE_SIZE: usize = 0x6000;
 
-/// Number of block hashes that EVM can access in the past
+/// Number of block hashes that EVM can access in the past (pre-Prague).
 pub const BLOCK_HASH_HISTORY: usize = 256;
+
+/// EIP-2935: Serve historical block hashes from state
+///
+/// Number of block hashes the EVM can access in the past (Prague).
+pub const HISTORY_SERVE_WINDOW: usize = 8192;
+
+/// EIP-2935: Serve historical block hashes from state
+///
+/// The address where historical blockhashes are available.
+pub const HISTORY_STORAGE_ADDRESS: Address = address!("25a219378dad9b3503c8268c9ca836a52427a4fb");
 
 /// EIP-3860: Limit and meter initcode
 ///
