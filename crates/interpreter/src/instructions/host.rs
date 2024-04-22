@@ -5,7 +5,7 @@ use crate::{
     Host, InstructionResult, SStoreResult,
 };
 use core::cmp::min;
-use revm_primitives::BLOCK_HASH_HISTORY;
+use revm_primitives::{BLOCK_HASH_HISTORY, HISTORY_SERVE_WINDOW, HISTORY_STORAGE_ADDRESS};
 use std::vec::Vec;
 
 pub fn balance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
@@ -103,14 +103,27 @@ pub fn extcodecopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
         .set_data(memory_offset, code_offset, len, &code.original_bytes());
 }
 
-pub fn blockhash<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BLOCKHASH);
     pop_top!(interpreter, number);
 
-    if let Some(diff) = host.env().block.number.checked_sub(*number) {
+    let block_number = host.env().block.number;
+
+    if let Some(diff) = block_number.checked_sub(*number) {
         let diff = as_usize_saturated!(diff);
+
         // blockhash should push zero if number is same as current block number.
-        if diff <= BLOCK_HASH_HISTORY && diff != 0 {
+        if SPEC::enabled(PRAGUE) && diff <= HISTORY_SERVE_WINDOW && diff != 0 {
+            let Some((value, is_cold)) = host.sload(
+                HISTORY_STORAGE_ADDRESS,
+                number.wrapping_rem(U256::from(HISTORY_SERVE_WINDOW)),
+            ) else {
+                interpreter.instruction_result = InstructionResult::FatalExternalError;
+                return;
+            };
+            gas!(interpreter, gas::sload_cost(SPEC::SPEC_ID, is_cold));
+            *number = value;
+        } else if diff <= BLOCK_HASH_HISTORY && diff != 0 {
             let Some(hash) = host.block_hash(*number) else {
                 interpreter.instruction_result = InstructionResult::FatalExternalError;
                 return;
@@ -119,6 +132,7 @@ pub fn blockhash<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) 
             return;
         }
     }
+
     *number = U256::ZERO;
 }
 
