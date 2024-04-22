@@ -123,6 +123,7 @@ pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
             };
             gas!(interpreter, gas::sload_cost(SPEC::SPEC_ID, is_cold));
             *number = value;
+            return;
         } else if diff <= BLOCK_HASH_HISTORY && diff != 0 {
             let Some(hash) = host.block_hash(*number) else {
                 interpreter.instruction_result = InstructionResult::FatalExternalError;
