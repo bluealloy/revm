@@ -103,6 +103,11 @@ optional_beneficiary_reward = ["revm-interpreter/optional_beneficiary_reward"]
 secp256k1 = ["revm-precompile/secp256k1"]
 c-kzg = ["revm-precompile/c-kzg"]
 
+rwasm = [
+    "revm-interpreter/rwasm",
+    "revm-precompile/rwasm",
+]
+
 [[example]]
 name = "fork_ref_transact"
 path = "../../examples/fork_ref_transact.rs"

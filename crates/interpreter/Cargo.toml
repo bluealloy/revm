@@ -23,7 +23,7 @@ serde = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 [features]
-default = ["std"]
+default = ["std", "rwasm"]
 std = ["serde?/std", "revm-primitives/std"]
 serde = ["dep:serde", "revm-primitives/serde"]
 arbitrary = ["std", "revm-primitives/arbitrary"]
@@ -56,3 +56,5 @@ optional_eip3607 = ["revm-primitives/optional_eip3607"]
 optional_gas_refund = ["revm-primitives/optional_gas_refund"]
 optional_no_base_fee = ["revm-primitives/optional_no_base_fee"]
 optional_beneficiary_reward = ["revm-primitives/optional_beneficiary_reward"]
+
+rwasm = ["revm-primitives/rwasm"]
