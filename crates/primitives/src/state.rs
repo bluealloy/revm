@@ -1,4 +1,4 @@
-use crate::{Address, Bytecode, HashMap, B256, KECCAK_EMPTY, POSEIDON_EMPTY, U256};
+use crate::{Address, Bytecode, HashMap, B256, KECCAK_EMPTY, U256};
 use bitflags::bitflags;
 use core::hash::{Hash, Hasher};
 
@@ -192,10 +192,12 @@ pub struct AccountInfo {
     pub nonce: u64,
     /// code hash,
     pub code_hash: B256,
+    #[cfg(feature = "rwasm")]
     pub rwasm_code_hash: B256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
     /// inside `revm`.
     pub code: Option<Bytecode>,
+    #[cfg(feature = "rwasm")]
     pub rwasm_code: Option<Bytecode>,
 }
 
@@ -205,13 +207,16 @@ impl Default for AccountInfo {
             balance: U256::ZERO,
             nonce: 0,
             code_hash: KECCAK_EMPTY,
-            rwasm_code_hash: POSEIDON_EMPTY,
+            #[cfg(feature = "rwasm")]
+            rwasm_code_hash: crate::POSEIDON_EMPTY,
             code: None,
+            #[cfg(feature = "rwasm")]
             rwasm_code: None,
         }
     }
 }
 
+#[cfg(feature = "rwasm")]
 impl PartialEq for AccountInfo {
     fn eq(&self, other: &Self) -> bool {
         self.balance == other.balance
@@ -221,11 +226,21 @@ impl PartialEq for AccountInfo {
     }
 }
 
+#[cfg(not(feature = "rwasm"))]
+impl PartialEq for AccountInfo {
+    fn eq(&self, other: &Self) -> bool {
+        self.balance == other.balance
+            && self.nonce == other.nonce
+            && self.code_hash == other.code_hash
+    }
+}
+
 impl Hash for AccountInfo {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.balance.hash(state);
         self.nonce.hash(state);
         self.code_hash.hash(state);
+        #[cfg(feature = "rwasm")]
         self.rwasm_code_hash.hash(state);
     }
 }
@@ -236,9 +251,11 @@ impl AccountInfo {
             balance,
             nonce,
             code: Some(code),
+            #[cfg(feature = "rwasm")]
             rwasm_code: None,
             code_hash,
-            rwasm_code_hash: POSEIDON_EMPTY,
+            #[cfg(feature = "rwasm")]
+            rwasm_code_hash: crate::POSEIDON_EMPTY,
         }
     }
 
@@ -282,8 +299,14 @@ impl AccountInfo {
     }
 
     /// Take bytecode from account. Code will be set to None.
+    #[cfg(feature = "rwasm")]
     pub fn take_bytecode(&mut self) -> (Option<Bytecode>, Option<Bytecode>) {
         (self.code.take(), self.rwasm_code.take())
+    }
+
+    #[cfg(not(feature = "rwasm"))]
+    pub fn take_bytecode(&mut self) -> Option<Bytecode> {
+        self.code.take()
     }
 
     pub fn from_balance(balance: U256) -> Self {
