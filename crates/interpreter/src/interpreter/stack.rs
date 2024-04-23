@@ -275,9 +275,11 @@ impl Stack {
         }
         // SAFETY: `n` and `n_m` are checked to be within bounds, and they don't overlap.
         unsafe {
-            // NOTE: `mem::swap` performs better than `slice::swap`/`ptr::swap`, as they cannot
-            // assume that the pointers are non-overlapping when we know they are not.
+            // NOTE: `mem::swap` is more efficient than `slice::swap` or `ptr::swap` because it
+            // operates under the assumption that the pointers do not overlap,
+            // which is a condition we know to be true in this context.
             let top = self.data.as_mut_ptr().add(len - 1);
+            #[allow(clippy::swap_ptr_to_ref)] // See above.
             core::mem::swap(&mut *top.sub(n), &mut *top.sub(n_m_index));
         }
         Ok(())
