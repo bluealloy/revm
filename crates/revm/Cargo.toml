@@ -46,6 +46,8 @@ alloy-rpc-types = {git = "https://github.com/alloy-rs/alloy.git", optional = tru
 alloy-transport = {git = "https://github.com/alloy-rs/alloy.git", optional = true, default-features = false }
 
 [dev-dependencies]
+alloy-primitives = { version = "0.7.0", default-features = false }
+alloy-sol-types = { version = "0.7.0", default-features = false }
 ethers-contract = { version = "2.0.14", default-features = false }
 anyhow = "1.0.82"
 criterion = "0.5"

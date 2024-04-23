@@ -2853,8 +2853,10 @@ dependencies = [
 name = "revm"
 version = "8.0.0"
 dependencies = [
+ "alloy-primitives",
  "alloy-provider",
  "alloy-rpc-types",
+ "alloy-sol-types",
  "alloy-transport",
  "alloy-transport-http",
  "anyhow",
