@@ -12,10 +12,14 @@ pub use self::secp256k1::ecrecover;
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use crate::B256;
-    use revm_primitives::keccak256;
+    use revm_primitives::{alloy_primitives::B512, keccak256};
 
-    pub fn ecrecover(sig: &[u8; 65], msg: &B256) -> Result<B256, anyhow::Error> {
-        let recovered_key = sp1_precompiles::secp256k1::ecrecover(sig, msg)?;
+    pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, anyhow::Error> {
+        let mut sig_plus_recid = [0u8; 65];
+        sig_plus_recid[..64].copy_from_slice(&sig.0);
+        sig_plus_recid[64] = recid;
+        // TODO: Can we clean up the interface for this logic?
+        let recovered_key = sp1_precompiles::secp256k1::ecrecover(&sig_plus_recid, msg)?;
 
         let mut hash = keccak256(&recovered_key[1..]);
 

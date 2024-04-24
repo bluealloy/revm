@@ -33,6 +33,7 @@ secp256k1 = { version = "0.28.2", default-features = false, features = [
     "global-context",
 ], optional = true }
 sp1-precompiles = { git = "https://github.com/succinctlabs/sp1.git" }
+anyhow = "1.0.79"
 
 [dev-dependencies]
 criterion = { version = "0.5" }
