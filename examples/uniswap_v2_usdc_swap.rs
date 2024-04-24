@@ -1,9 +1,10 @@
-use alloy_primitives::{address, Address, U256};
 use alloy_sol_types::{sol, SolCall, SolValue};
 use ethers_providers::{Http, Provider};
 use revm::{
     db::{CacheDB, EmptyDB, EmptyDBTyped, EthersDB},
-    primitives::{keccak256, AccountInfo, Bytes, ExecutionResult, Output, TransactTo},
+    primitives::{
+        address, keccak256, AccountInfo, Address, Bytes, ExecutionResult, Output, TransactTo, U256,
+    },
     Database, Evm,
 };
 use std::ops::Div;
