@@ -5,7 +5,7 @@ use crate::{
     Host, InstructionResult, SStoreResult,
 };
 use core::cmp::min;
-use revm_primitives::{BLOCK_HASH_HISTORY, HISTORY_SERVE_WINDOW, HISTORY_STORAGE_ADDRESS};
+use revm_primitives::{Address, BLOCK_HASH_HISTORY, HISTORY_SERVE_WINDOW, HISTORY_STORAGE_ADDRESS};
 use std::vec::Vec;
 
 pub fn balance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
@@ -109,28 +109,32 @@ pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
 
     let block_number = host.env().block.number;
 
-    if let Some(diff) = block_number.checked_sub(*number) {
-        let diff = as_usize_saturated!(diff);
+    match block_number.checked_sub(*number) {
+        Some(diff) if !diff.is_zero() => {
+            let diff = as_usize_saturated!(diff);
 
-        // blockhash should push zero if number is same as current block number.
-        if SPEC::enabled(PRAGUE) && diff <= HISTORY_SERVE_WINDOW && diff != 0 {
-            let Some((value, is_cold)) = host.sload(
-                HISTORY_STORAGE_ADDRESS,
-                number.wrapping_rem(U256::from(HISTORY_SERVE_WINDOW)),
-            ) else {
-                interpreter.instruction_result = InstructionResult::FatalExternalError;
+            // blockhash should push zero if number is same as current block number.
+            if SPEC::enabled(PRAGUE) && diff <= HISTORY_SERVE_WINDOW {
+                let value = sload!(
+                    interpreter,
+                    host,
+                    HISTORY_STORAGE_ADDRESS,
+                    number.wrapping_rem(U256::from(HISTORY_SERVE_WINDOW))
+                );
+                *number = value;
                 return;
-            };
-            gas!(interpreter, gas::sload_cost(SPEC::SPEC_ID, is_cold));
-            *number = value;
-            return;
-        } else if diff <= BLOCK_HASH_HISTORY && diff != 0 {
-            let Some(hash) = host.block_hash(*number) else {
-                interpreter.instruction_result = InstructionResult::FatalExternalError;
+            } else if diff <= BLOCK_HASH_HISTORY {
+                let Some(hash) = host.block_hash(*number) else {
+                    interpreter.instruction_result = InstructionResult::FatalExternalError;
+                    return;
+                };
+                *number = U256::from_be_bytes(hash.0);
                 return;
-            };
-            *number = U256::from_be_bytes(hash.0);
-            return;
+            }
+        }
+        _ => {
+            // If blockhash is requested for the current block, the hash should be 0, so we fall
+            // through.
         }
     }
 
@@ -139,11 +143,12 @@ pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
 
 pub fn sload<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     pop_top!(interpreter, index);
-    let Some((value, is_cold)) = host.sload(interpreter.contract.target_address, *index) else {
-        interpreter.instruction_result = InstructionResult::FatalExternalError;
-        return;
-    };
-    gas!(interpreter, gas::sload_cost(SPEC::SPEC_ID, is_cold));
+    let value = sload!(
+        interpreter,
+        host,
+        interpreter.contract.target_address,
+        *index
+    );
     *index = value;
 }
 
