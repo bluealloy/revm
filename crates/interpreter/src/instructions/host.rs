@@ -5,7 +5,7 @@ use crate::{
     Host, InstructionResult, SStoreResult,
 };
 use core::cmp::min;
-use revm_primitives::{Address, BLOCK_HASH_HISTORY, HISTORY_SERVE_WINDOW, HISTORY_STORAGE_ADDRESS};
+use revm_primitives::{BLOCK_HASH_HISTORY, HISTORY_SERVE_WINDOW, HISTORY_STORAGE_ADDRESS};
 use std::vec::Vec;
 
 pub fn balance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
