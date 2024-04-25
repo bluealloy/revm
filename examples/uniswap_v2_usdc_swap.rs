@@ -1,5 +1,6 @@
 use alloy_provider::ProviderBuilder;
 use alloy_sol_types::{sol, SolCall, SolValue};
+use anyhow::{anyhow, Result};
 use revm::{
     db::{AlloyDB, CacheDB, EmptyDB, EmptyDBTyped},
     primitives::{
@@ -11,7 +12,7 @@ use std::ops::Div;
 use std::{convert::Infallible, sync::Arc};
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<()> {
     let client = ProviderBuilder::new()
         .on_reqwest_http(
             "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27"
@@ -145,7 +146,7 @@ async fn balance_of(
     token: Address,
     address: Address,
     cache_db: &mut CacheDB<EmptyDBTyped<Infallible>>,
-) -> anyhow::Result<U256> {
+) -> Result<U256> {
     sol! {
         function balanceOf(address account) public returns (uint256);
     }
@@ -171,10 +172,10 @@ async fn balance_of(
             output: Output::Call(value),
             ..
         } => value,
-        result => panic!("'balance_of' execution failed: {result:?}"),
+        result => return Err(anyhow!("'balanceOf' execution failed: {result:?}")),
     };
 
-    let balance: U256 = <U256>::abi_decode(&value, false)?;
+    let balance = <U256>::abi_decode(&value, false)?;
 
     Ok(balance)
 }
@@ -184,7 +185,7 @@ async fn get_amount_out(
     reserve_in: U256,
     reserve_out: U256,
     cache_db: &mut CacheDB<EmptyDBTyped<Infallible>>,
-) -> anyhow::Result<U256> {
+) -> Result<U256> {
     let uniswap_v2_router = address!("7a250d5630b4cf539739df2c5dacb4c659f2488d");
     sol! {
         function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut);
@@ -215,18 +216,18 @@ async fn get_amount_out(
             output: Output::Call(value),
             ..
         } => value,
-        result => panic!("'get_amount_out' execution failed: {result:?}"),
+        result => return Err(anyhow!("'getAmountOut' execution failed: {result:?}")),
     };
 
-    let result = <U256>::abi_decode(&value, false)?;
+    let amount_out = <U256>::abi_decode(&value, false)?;
 
-    Ok(result)
+    Ok(amount_out)
 }
 
 async fn get_reserves(
     pair_address: Address,
     cache_db: &mut CacheDB<EmptyDBTyped<Infallible>>,
-) -> anyhow::Result<(U256, U256)> {
+) -> Result<(U256, U256)> {
     sol! {
         function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
     }
@@ -251,11 +252,10 @@ async fn get_reserves(
             output: Output::Call(value),
             ..
         } => value,
-        result => panic!("'get_reserves' execution failed: {result:?}"),
+        result => return Err(anyhow!("'getReserves' execution failed: {result:?}")),
     };
 
-    let (reserve0, reserve1, _): (U256, U256, u32) =
-        <(U256, U256, u32)>::abi_decode(&value, false)?;
+    let (reserve0, reserve1, _) = <(U256, U256, u32)>::abi_decode(&value, false)?;
 
     Ok((reserve0, reserve1))
 }
@@ -267,7 +267,7 @@ async fn swap(
     amount_out: U256,
     is_token0: bool,
     cache_db: &mut CacheDB<EmptyDBTyped<Infallible>>,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     sol! {
         function swap(uint amount0Out, uint amount1Out, address target, bytes callback) external;
     }
@@ -297,7 +297,7 @@ async fn swap(
 
     match ref_tx {
         ExecutionResult::Success { .. } => {}
-        result => panic!("'swap' execution failed: {result:?}"),
+        result => return Err(anyhow!("'swap' execution failed: {result:?}")),
     };
 
     Ok(())
@@ -309,7 +309,7 @@ async fn transfer(
     amount: U256,
     token: Address,
     cache_db: &mut CacheDB<EmptyDBTyped<Infallible>>,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     sol! {
         function transfer(address to, uint amount) external returns (bool);
     }
@@ -327,22 +327,16 @@ async fn transfer(
         .build();
 
     let ref_tx = evm.transact_commit().unwrap();
-    let result: bool = match ref_tx {
+    let success: bool = match ref_tx {
         ExecutionResult::Success {
             output: Output::Call(value),
             ..
-        } => {
-            let success: bool = match <bool>::abi_decode(&value, false) {
-                Ok(balance) => balance,
-                Err(e) => panic!("'transfer' decode failed: {:?}", e),
-            };
-            success
-        }
-        result => panic!("'transfer' execution failed: {result:?}"),
+        } => <bool>::abi_decode(&value, false)?,
+        result => return Err(anyhow!("'transfer' execution failed: {result:?}")),
     };
 
-    if !result {
-        panic!("transfer failed");
+    if !success {
+        return Err(anyhow!("'transfer' failed"));
     }
 
     Ok(())
