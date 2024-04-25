@@ -174,10 +174,7 @@ async fn balance_of(
         result => panic!("'balance_of' execution failed: {result:?}"),
     };
 
-    let balance: u128 = match <u128>::abi_decode(&value, false) {
-        Ok(balance) => balance,
-        Err(e) => panic!("'balance_of' decode failed: {:?}", e),
-    };
+    let balance: u128 = <u128>::abi_decode(&value, false)?;
 
     Ok(balance)
 }
@@ -221,12 +218,9 @@ async fn get_amount_out(
         result => panic!("'get_amount_out' execution failed: {result:?}"),
     };
 
-    let amount_out: u128 = match <u128>::abi_decode(&value, false) {
-        Ok(amount_out) => amount_out,
-        Err(e) => panic!("'get_amount_out' decode failed: {:?}", e),
-    };
+    let result = <u128>::abi_decode(&value, false)?;
 
-    Ok(U256::from(amount_out))
+    Ok(U256::from(result))
 }
 
 async fn get_reserves(
@@ -260,10 +254,8 @@ async fn get_reserves(
         result => panic!("'get_reserves' execution failed: {result:?}"),
     };
 
-    let (reserve0, reserve1): (u128, u128) = match <(u128, u128, u32)>::abi_decode(&value, false) {
-        Ok((reserve0, reserve1, _)) => (reserve0, reserve1),
-        Err(e) => panic!("'get_reserves' decode failed: {:?}", e),
-    };
+    let (reserve0, reserve1, _): (u128, u128, u32) =
+        <(u128, u128, u32)>::abi_decode(&value, false)?;
 
     Ok((U256::from(reserve0), U256::from(reserve1)))
 }
