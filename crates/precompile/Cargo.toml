@@ -48,7 +48,6 @@ std = [
     "ripemd/std",
     "sha2/std",
     "c-kzg?/std",
-    "secp256k1?/std",
 ]
 asm-keccak = ["revm-primitives/asm-keccak"]
 
