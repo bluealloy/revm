@@ -47,7 +47,7 @@ criterion = "0.5"
 indicatif = "0.17"
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable"]
+default = []
 std = [
     "serde?/std",
     "serde_json?/std",
