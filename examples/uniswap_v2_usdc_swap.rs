@@ -88,10 +88,18 @@ async fn main() -> anyhow::Result<()> {
     cache_db.insert_account_info(account, acc_info);
 
     // populate UniswapV2 pair slots
+    // 6 - token0
+    // 7 - token1
+    // 8 - (reserve0, reserve1, blockTimestampLast)
+    // 12 - unlocked
+
     let usdc_weth_pair_address = usdc_weth_pair;
     let pair_acc_info = alloydb.basic(usdc_weth_pair_address).unwrap().unwrap();
     cache_db.insert_account_info(usdc_weth_pair_address, pair_acc_info);
-    for i in 0..=12 {
+
+    let pair_slots = [6, 7, 8, 12];
+
+    for i in pair_slots {
         let storage_slot = U256::from(i);
         let value = alloydb
             .storage(usdc_weth_pair_address, storage_slot)
