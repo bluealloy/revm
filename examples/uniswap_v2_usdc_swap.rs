@@ -1,7 +1,7 @@
+use alloy_provider::ProviderBuilder;
 use alloy_sol_types::{sol, SolCall, SolValue};
-use ethers_providers::{Http, Provider};
 use revm::{
-    db::{CacheDB, EmptyDB, EmptyDBTyped, EthersDB},
+    db::{AlloyDB, CacheDB, EmptyDB, EmptyDBTyped},
     primitives::{
         address, keccak256, AccountInfo, Address, Bytes, ExecutionResult, Output, TransactTo, U256,
     },
@@ -12,12 +12,15 @@ use std::{convert::Infallible, sync::Arc};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let client = Provider::<Http>::try_from(
-        "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27",
-    )?;
-
+    let client = ProviderBuilder::new()
+        .on_reqwest_http(
+            "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27"
+                .parse()
+                .unwrap(),
+        )
+        .unwrap();
     let client = Arc::new(client);
-    let mut ethersdb = EthersDB::new(Arc::clone(&client), None).unwrap();
+    let mut alloydb = AlloyDB::new(client, None);
     let mut cache_db = CacheDB::new(EmptyDB::default());
 
     // Random empty account
@@ -32,12 +35,12 @@ async fn main() -> anyhow::Result<()> {
     let usdc_impl_slot: U256 = "0x7050c9e0f4ca769c69bd3a8ef740bc37934f8e2c036e5a723fd8ee048ed3f8c3"
         .parse()
         .unwrap();
-    let usdc_impl_raw = ethersdb.storage(usdc, usdc_impl_slot).unwrap();
+    let usdc_impl_raw = alloydb.storage(usdc, usdc_impl_slot).unwrap();
     let usdc_impl: Address = format!("{:x}", usdc_impl_raw)[24..].parse().unwrap();
 
     // populate basic data
     for addr in [weth, usdc, usdc_weth_pair, uniswap_v2_router, usdc_impl] {
-        let acc_info = ethersdb.basic(addr).unwrap().unwrap();
+        let acc_info = alloydb.basic(addr).unwrap().unwrap();
         cache_db.insert_account_info(addr, acc_info);
     }
 
@@ -50,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
 
     let pair_weth_balance_slot = keccak256((usdc_weth_pair, weth_balance_slot).abi_encode());
 
-    let value = ethersdb
+    let value = alloydb
         .storage(weth, pair_weth_balance_slot.into())
         .unwrap();
     cache_db
@@ -62,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
 
     let pair_usdc_balance_slot = keccak256((usdc_weth_pair, usdc_balance_slot).abi_encode());
 
-    let value = ethersdb
+    let value = alloydb
         .storage(usdc, pair_usdc_balance_slot.into())
         .unwrap();
     cache_db
@@ -86,11 +89,11 @@ async fn main() -> anyhow::Result<()> {
 
     // populate UniswapV2 pair slots
     let usdc_weth_pair_address = usdc_weth_pair;
-    let pair_acc_info = ethersdb.basic(usdc_weth_pair_address).unwrap().unwrap();
+    let pair_acc_info = alloydb.basic(usdc_weth_pair_address).unwrap().unwrap();
     cache_db.insert_account_info(usdc_weth_pair_address, pair_acc_info);
     for i in 0..=12 {
         let storage_slot = U256::from(i);
-        let value = ethersdb
+        let value = alloydb
             .storage(usdc_weth_pair_address, storage_slot)
             .unwrap();
         cache_db

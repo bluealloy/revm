@@ -140,7 +140,7 @@ required-features = ["std", "serde-json"]
 [[example]]
 name = "uniswap_v2_usdc_swap"
 path = "../../examples/uniswap_v2_usdc_swap.rs"
-required-features = ["std", "serde-json", "ethersdb"]
+required-features = ["std", "serde-json", "alloydb"]
 
 [[bench]]
 name = "bench"
