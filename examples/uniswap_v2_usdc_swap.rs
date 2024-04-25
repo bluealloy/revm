@@ -145,7 +145,7 @@ async fn balance_of(
     token: Address,
     address: Address,
     cache_db: &mut CacheDB<EmptyDBTyped<Infallible>>,
-) -> anyhow::Result<u128> {
+) -> anyhow::Result<U256> {
     sol! {
         function balanceOf(address account) public returns (uint256);
     }
@@ -174,7 +174,7 @@ async fn balance_of(
         result => panic!("'balance_of' execution failed: {result:?}"),
     };
 
-    let balance: u128 = <u128>::abi_decode(&value, false)?;
+    let balance: U256 = <U256>::abi_decode(&value, false)?;
 
     Ok(balance)
 }
@@ -218,9 +218,9 @@ async fn get_amount_out(
         result => panic!("'get_amount_out' execution failed: {result:?}"),
     };
 
-    let result = <u128>::abi_decode(&value, false)?;
+    let result = <U256>::abi_decode(&value, false)?;
 
-    Ok(U256::from(result))
+    Ok(result)
 }
 
 async fn get_reserves(
@@ -254,10 +254,10 @@ async fn get_reserves(
         result => panic!("'get_reserves' execution failed: {result:?}"),
     };
 
-    let (reserve0, reserve1, _): (u128, u128, u32) =
-        <(u128, u128, u32)>::abi_decode(&value, false)?;
+    let (reserve0, reserve1, _): (U256, U256, u32) =
+        <(U256, U256, u32)>::abi_decode(&value, false)?;
 
-    Ok((U256::from(reserve0), U256::from(reserve1)))
+    Ok((reserve0, reserve1))
 }
 
 async fn swap(
