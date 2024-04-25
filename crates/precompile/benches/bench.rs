@@ -9,11 +9,13 @@ use revm_precompile::{
     Bytes,
 };
 use revm_primitives::{hex, keccak256, Env, U256, VERSIONED_HASH_VERSION_KZG};
-use secp256k1::{Message, SecretKey, SECP256K1};
 use sha2::{Digest, Sha256};
 
 /// Benchmarks different cryptography-related precompiles.
+#[cfg(feature = "secp256k1")]
 pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
+    use secp256k1::{Message, SecretKey, SECP256K1};
+
     let mut group = c.benchmark_group("Crypto Precompile benchmarks");
     let group_name = |description: &str| format!("precompile bench | {description}");
 
@@ -119,9 +121,14 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     });
 }
 
+#[cfg(feature = "secp256k1")]
 criterion_group! {
     name = benches;
     config = Criterion::default();
     targets = benchmark_crypto_precompiles
 }
+#[cfg(feature = "secp256k1")]
 criterion_main!(benches);
+
+#[cfg(not(feature = "secp256k1"))]
+fn main() {}
