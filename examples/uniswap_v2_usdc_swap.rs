@@ -97,9 +97,7 @@ async fn main() -> anyhow::Result<()> {
     let pair_acc_info = alloydb.basic(usdc_weth_pair_address).unwrap().unwrap();
     cache_db.insert_account_info(usdc_weth_pair_address, pair_acc_info);
 
-    let pair_slots = [6, 7, 8, 12];
-
-    for i in pair_slots {
+    for i in [6, 7, 8, 12] {
         let storage_slot = U256::from(i);
         let value = alloydb
             .storage(usdc_weth_pair_address, storage_slot)
@@ -124,7 +122,7 @@ async fn main() -> anyhow::Result<()> {
     // transfer WETH to USDC-WETH pair
     transfer(account, usdc_weth_pair, amount_in, weth, &mut cache_db).await?;
 
-    // exeucte low-level swap without using UniswapV2 router
+    // execute low-level swap without using UniswapV2 router
     swap(
         account,
         usdc_weth_pair,
