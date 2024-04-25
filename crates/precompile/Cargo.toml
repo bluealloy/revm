@@ -40,7 +40,7 @@ criterion = { version = "0.5" }
 rand = { version = "0.8", features = ["std"] }
 
 [features]
-default = ["std", "c-kzg", "portable"]
+default = []
 std = [
     "revm-primitives/std",
     "k256/std",
