@@ -1,15 +1,19 @@
-use alloy_provider::ProviderBuilder;
+use alloy_provider::{network::Ethereum, ProviderBuilder, RootProvider};
 use alloy_sol_types::{sol, SolCall, SolValue};
+use alloy_transport_http::Http;
 use anyhow::{anyhow, Result};
+use reqwest::Client;
 use revm::{
-    db::{AlloyDB, CacheDB, EmptyDB, EmptyDBTyped},
+    db::{AlloyDB, CacheDB},
     primitives::{
         address, keccak256, AccountInfo, Address, Bytes, ExecutionResult, Output, TransactTo, U256,
     },
-    Database, Evm,
+    Evm,
 };
 use std::ops::Div;
-use std::{convert::Infallible, sync::Arc};
+use std::sync::Arc;
+
+type AlloyCacheDB = CacheDB<AlloyDB<Http<Client>, Ethereum, Arc<RootProvider<Http<Client>>>>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -21,8 +25,7 @@ async fn main() -> Result<()> {
         )
         .unwrap();
     let client = Arc::new(client);
-    let mut alloydb = AlloyDB::new(client, None);
-    let mut cache_db = CacheDB::new(EmptyDB::default());
+    let mut cache_db = CacheDB::new(AlloyDB::new(client, None));
 
     // Random empty account
     let account = address!("18B06aaF27d44B756FCF16Ca20C1f183EB49111f");
@@ -30,48 +33,8 @@ async fn main() -> Result<()> {
     let weth = address!("c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2");
     let usdc = address!("a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48");
     let usdc_weth_pair = address!("B4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc");
-    let uniswap_v2_router = address!("7a250d5630b4cf539739df2c5dacb4c659f2488d");
 
-    // USDC uses a proxy pattern so we have to fetch implementation address
-    let usdc_impl_slot: U256 = "0x7050c9e0f4ca769c69bd3a8ef740bc37934f8e2c036e5a723fd8ee048ed3f8c3"
-        .parse()
-        .unwrap();
-    let usdc_impl_raw = alloydb.storage(usdc, usdc_impl_slot).unwrap();
-    let usdc_impl: Address = format!("{:x}", usdc_impl_raw)[24..].parse().unwrap();
-
-    // populate basic data
-    for addr in [weth, usdc, usdc_weth_pair, uniswap_v2_router, usdc_impl] {
-        let acc_info = alloydb.basic(addr).unwrap().unwrap();
-        cache_db.insert_account_info(addr, acc_info);
-    }
-
-    cache_db
-        .insert_account_storage(usdc, usdc_impl_slot, usdc_impl_raw)
-        .unwrap();
-
-    // populate WETH balance for USDC-WETH pair
     let weth_balance_slot = U256::from(3);
-
-    let pair_weth_balance_slot = keccak256((usdc_weth_pair, weth_balance_slot).abi_encode());
-
-    let value = alloydb
-        .storage(weth, pair_weth_balance_slot.into())
-        .unwrap();
-    cache_db
-        .insert_account_storage(weth, pair_weth_balance_slot.into(), value)
-        .unwrap();
-
-    // populate USDC balance for USDC-WETH pair
-    let usdc_balance_slot = U256::from(9);
-
-    let pair_usdc_balance_slot = keccak256((usdc_weth_pair, usdc_balance_slot).abi_encode());
-
-    let value = alloydb
-        .storage(usdc, pair_usdc_balance_slot.into())
-        .unwrap();
-    cache_db
-        .insert_account_storage(usdc, pair_usdc_balance_slot.into(), value)
-        .unwrap();
 
     // give our test account some fake WETH and ETH
     let one_ether = U256::from(1_000_000_000_000_000_000u128);
@@ -88,32 +51,12 @@ async fn main() -> Result<()> {
     };
     cache_db.insert_account_info(account, acc_info);
 
-    // populate UniswapV2 pair slots
-    // 6 - token0
-    // 7 - token1
-    // 8 - (reserve0, reserve1, blockTimestampLast)
-    // 12 - unlocked
-
-    let usdc_weth_pair_address = usdc_weth_pair;
-    let pair_acc_info = alloydb.basic(usdc_weth_pair_address).unwrap().unwrap();
-    cache_db.insert_account_info(usdc_weth_pair_address, pair_acc_info);
-
-    for i in [6, 7, 8, 12] {
-        let storage_slot = U256::from(i);
-        let value = alloydb
-            .storage(usdc_weth_pair_address, storage_slot)
-            .unwrap();
-        cache_db
-            .insert_account_storage(usdc_weth_pair_address, storage_slot, value)
-            .unwrap();
-    }
-
-    let acc_weth_balance_before = balance_of(weth, account, &mut cache_db).await?;
+    let acc_weth_balance_before = balance_of(weth, account, &mut cache_db)?;
     println!("WETH balance before swap: {}", acc_weth_balance_before);
-    let acc_usdc_balance_before = balance_of(usdc, account, &mut cache_db).await?;
+    let acc_usdc_balance_before = balance_of(usdc, account, &mut cache_db)?;
     println!("USDC balance before swap: {}", acc_usdc_balance_before);
 
-    let (reserve0, reserve1) = get_reserves(usdc_weth_pair, &mut cache_db).await?;
+    let (reserve0, reserve1) = get_reserves(usdc_weth_pair, &mut cache_db)?;
 
     let amount_in = one_ether.div(U256::from(10));
 
@@ -121,7 +64,7 @@ async fn main() -> Result<()> {
     let amount_out = get_amount_out(amount_in, reserve1, reserve0, &mut cache_db).await?;
 
     // transfer WETH to USDC-WETH pair
-    transfer(account, usdc_weth_pair, amount_in, weth, &mut cache_db).await?;
+    transfer(account, usdc_weth_pair, amount_in, weth, &mut cache_db)?;
 
     // execute low-level swap without using UniswapV2 router
     swap(
@@ -131,22 +74,17 @@ async fn main() -> Result<()> {
         amount_out,
         true,
         &mut cache_db,
-    )
-    .await?;
+    )?;
 
-    let acc_weth_balance_after = balance_of(weth, account, &mut cache_db).await?;
+    let acc_weth_balance_after = balance_of(weth, account, &mut cache_db)?;
     println!("WETH balance after swap: {}", acc_weth_balance_after);
-    let acc_usdc_balance_after = balance_of(usdc, account, &mut cache_db).await?;
+    let acc_usdc_balance_after = balance_of(usdc, account, &mut cache_db)?;
     println!("USDC balance after swap: {}", acc_usdc_balance_after);
 
     Ok(())
 }
 
-async fn balance_of(
-    token: Address,
-    address: Address,
-    cache_db: &mut CacheDB<EmptyDBTyped<Infallible>>,
-) -> Result<U256> {
+fn balance_of(token: Address, address: Address, cache_db: &mut AlloyCacheDB) -> Result<U256> {
     sol! {
         function balanceOf(address account) public returns (uint256);
     }
@@ -184,7 +122,7 @@ async fn get_amount_out(
     amount_in: U256,
     reserve_in: U256,
     reserve_out: U256,
-    cache_db: &mut CacheDB<EmptyDBTyped<Infallible>>,
+    cache_db: &mut AlloyCacheDB,
 ) -> Result<U256> {
     let uniswap_v2_router = address!("7a250d5630b4cf539739df2c5dacb4c659f2488d");
     sol! {
@@ -224,10 +162,7 @@ async fn get_amount_out(
     Ok(amount_out)
 }
 
-async fn get_reserves(
-    pair_address: Address,
-    cache_db: &mut CacheDB<EmptyDBTyped<Infallible>>,
-) -> Result<(U256, U256)> {
+fn get_reserves(pair_address: Address, cache_db: &mut AlloyCacheDB) -> Result<(U256, U256)> {
     sol! {
         function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
     }
@@ -260,13 +195,13 @@ async fn get_reserves(
     Ok((reserve0, reserve1))
 }
 
-async fn swap(
+fn swap(
     from: Address,
     pool_address: Address,
     target: Address,
     amount_out: U256,
     is_token0: bool,
-    cache_db: &mut CacheDB<EmptyDBTyped<Infallible>>,
+    cache_db: &mut AlloyCacheDB,
 ) -> Result<()> {
     sol! {
         function swap(uint amount0Out, uint amount1Out, address target, bytes callback) external;
@@ -303,12 +238,12 @@ async fn swap(
     Ok(())
 }
 
-async fn transfer(
+fn transfer(
     from: Address,
     to: Address,
     amount: U256,
     token: Address,
-    cache_db: &mut CacheDB<EmptyDBTyped<Infallible>>,
+    cache_db: &mut AlloyCacheDB,
 ) -> Result<()> {
     sol! {
         function transfer(address to, uint amount) external returns (bool);

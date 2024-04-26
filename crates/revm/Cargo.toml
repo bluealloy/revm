@@ -51,6 +51,7 @@ ethers-contract = { version = "2.0.14", default-features = false }
 anyhow = "1.0.82"
 criterion = "0.5"
 indicatif = "0.17"
+reqwest = { version = "0.12" }
 
 alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", default-features = false, features = ["reqwest"] }
 # needed for enabling TLS to use HTTPS connections when testing alloy DB
