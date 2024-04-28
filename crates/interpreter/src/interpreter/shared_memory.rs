@@ -1,10 +1,5 @@
+use core::{cmp::min, fmt, ops::Range};
 use revm_primitives::{B256, U256};
-
-use core::{
-    cmp::min,
-    fmt,
-    ops::{BitAnd, Not, Range},
-};
 use std::vec::Vec;
 
 /// A sequential memory shared between calls, which uses
@@ -126,6 +121,12 @@ impl SharedMemory {
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    /// Returns the gas cost for the current memory expansion.
+    #[inline]
+    pub fn current_expansion_cost(&self) -> u64 {
+        crate::gas::memory_gas_for_len(self.len())
     }
 
     /// Resizes the memory in-place so that `len` is equal to `new_len`.
@@ -312,12 +313,11 @@ impl SharedMemory {
     }
 }
 
-/// Rounds up `x` to the closest multiple of 32. If `x % 32 == 0` then `x` is returned. Note, if `x`
-/// is greater than `usize::MAX - 31` this will return `usize::MAX` which isn't a multiple of 32.
+/// Returns number of words what would fit to provided number of bytes,
+/// i.e. it rounds up the number bytes to number of words.
 #[inline]
-pub fn next_multiple_of_32(x: usize) -> usize {
-    let r = x.bitand(31).not().wrapping_add(1).bitand(31);
-    x.saturating_add(r)
+pub const fn num_words(len: u64) -> u64 {
+    len.saturating_add(31) / 32
 }
 
 #[cfg(test)]
@@ -325,24 +325,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_next_multiple_of_32() {
-        // next_multiple_of_32 returns x when it is a multiple of 32
-        for i in 0..32 {
-            let x = i * 32;
-            assert_eq!(x, next_multiple_of_32(x));
-        }
-
-        // next_multiple_of_32 rounds up to the nearest multiple of 32 when `x % 32 != 0`
-        for x in 0..1024 {
-            if x % 32 == 0 {
-                continue;
-            }
-            let next_multiple = x + 32 - (x % 32);
-            assert_eq!(next_multiple, next_multiple_of_32(x));
-        }
-
-        // We expect large values to saturate and not overflow.
-        assert_eq!(usize::MAX, next_multiple_of_32(usize::MAX));
+    fn test_num_words() {
+        assert_eq!(num_words(0), 0);
+        assert_eq!(num_words(1), 1);
+        assert_eq!(num_words(31), 1);
+        assert_eq!(num_words(32), 1);
+        assert_eq!(num_words(33), 2);
+        assert_eq!(num_words(63), 2);
+        assert_eq!(num_words(64), 2);
+        assert_eq!(num_words(65), 3);
+        assert_eq!(num_words(u64::MAX), u64::MAX / 32);
     }
 
     #[test]

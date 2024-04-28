@@ -342,13 +342,18 @@ pub const fn warm_cold_cost(is_cold: bool) -> u64 {
     }
 }
 
-/// Memory expansion cost calculation.
+/// Memory expansion cost calculation for a given memory length.
 #[inline]
-pub const fn memory_gas(a: usize) -> u64 {
-    let a = a as u64;
+pub const fn memory_gas_for_len(len: usize) -> u64 {
+    memory_gas(crate::interpreter::num_words(len as u64))
+}
+
+/// Memory expansion cost calculation for a given number of words.
+#[inline]
+pub const fn memory_gas(num_words: u64) -> u64 {
     MEMORY
-        .saturating_mul(a)
-        .saturating_add(a.saturating_mul(a) / 512)
+        .saturating_mul(num_words)
+        .saturating_add(num_words.saturating_mul(num_words) / 512)
 }
 
 /// Initial gas that is deducted for transaction to be included.
