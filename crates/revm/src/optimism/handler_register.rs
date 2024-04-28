@@ -82,8 +82,7 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
     let remaining = gas.remaining();
     let refunded = gas.refunded();
     // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-    *gas = Gas::new(tx_gas_limit);
-    gas.record_cost(tx_gas_limit);
+    *gas = Gas::new_spent(tx_gas_limit);
 
     match instruction_result {
         return_ok!() => {

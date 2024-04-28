@@ -35,6 +35,18 @@ impl Gas {
         }
     }
 
+    /// Creates a new `Gas` struct with the given gas limit, but without any gas remaining.
+    #[inline]
+    pub const fn new_spent(limit: u64) -> Self {
+        Self {
+            limit,
+            remaining: 0,
+            remaining_nomem: 0,
+            memory: 0,
+            refunded: 0,
+        }
+    }
+
     /// Returns the gas limit.
     #[inline]
     pub const fn limit(&self) -> u64 {
@@ -77,6 +89,13 @@ impl Gas {
     pub fn erase_cost(&mut self, returned: u64) {
         self.remaining_nomem += returned;
         self.remaining += returned;
+    }
+
+    /// Spends all remaining gas.
+    #[inline]
+    pub fn spend_all(&mut self) {
+        self.remaining = 0;
+        self.remaining_nomem = 0;
     }
 
     /// Records a refund value.
