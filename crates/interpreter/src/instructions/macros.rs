@@ -106,7 +106,7 @@ macro_rules! resize_memory {
                 .gas
                 .record_memory($crate::gas::memory_gas(words_num))
             {
-                $interp.instruction_result = $crate::InstructionResult::MemoryLimitOOG;
+                $interp.instruction_result = $crate::InstructionResult::MemoryOOG;
                 return $ret;
             }
             $interp.shared_memory.resize(rounded_size);
