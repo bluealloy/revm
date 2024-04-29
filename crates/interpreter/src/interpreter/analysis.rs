@@ -304,7 +304,7 @@ pub fn validate_eof_code(
             return Err(EofValidationError::UnknownOpcode);
         };
 
-        if !opcode.is_eof {
+        if opcode.is_disabled_in_eof() {
             // Opcode is disabled in EOF
             return Err(EofValidationError::OpcodeDisabled);
         }
@@ -324,18 +324,18 @@ pub fn validate_eof_code(
             // opcode after termination was not accessed.
             return Err(EofValidationError::InstructionNotForwardAccessed);
         }
-        is_after_termination = opcode.is_terminating_opcode;
+        is_after_termination = opcode.is_terminating();
 
         // mark immediate as non-jumpable. RJUMPV is special case covered later.
-        if opcode.immediate_size != 0 {
+        if opcode.immediate_size() != 0 {
             // check if the opcode immediate are within the bounds of the code
-            if i + opcode.immediate_size as usize >= code.len() {
+            if i + opcode.immediate_size() as usize >= code.len() {
                 // Malfunctional code
                 return Err(EofValidationError::MissingImmediateBytes);
             }
 
             // mark immediate bytes as non-jumpable.
-            for imm in 1..opcode.immediate_size as usize + 1 {
+            for imm in 1..opcode.immediate_size() as usize + 1 {
                 // SAFETY: immediate size is checked above.
                 jumps[i + imm].mark_as_immediate()?;
             }
@@ -343,7 +343,7 @@ pub fn validate_eof_code(
         // IO diff used to generate next instruction smallest/biggest value.
         let mut stack_io_diff = opcode.io_diff() as i32;
         // how many stack items are required for this opcode.
-        let mut stack_requirement = opcode.inputs as i32;
+        let mut stack_requirement = opcode.inputs() as i32;
         // additional immediate bytes for RJUMPV, it has dynamic vtable.
         let mut rjumpv_additional_immediates = 0;
         // If opcodes is RJUMP, RJUMPI or RJUMPV then this will have absolute jumpdest.
@@ -534,7 +534,7 @@ pub fn validate_eof_code(
         }
 
         // additional immediate are from RJUMPV vtable.
-        i += 1 + opcode.immediate_size as usize + rjumpv_additional_immediates;
+        i += 1 + opcode.immediate_size() as usize + rjumpv_additional_immediates;
     }
 
     // last opcode should be terminating
