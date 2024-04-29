@@ -409,7 +409,8 @@ impl InterpreterResult {
 }
 
 /// Resize the memory to the new size. Returns whether the gas was enough to resize the memory.
-#[inline]
+#[inline(never)]
+#[cold]
 #[must_use]
 pub fn resize_memory(memory: &mut SharedMemory, gas: &mut Gas, new_size: usize) -> bool {
     let new_words = num_words(new_size as u64);

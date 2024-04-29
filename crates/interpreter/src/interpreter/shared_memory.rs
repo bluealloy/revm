@@ -146,21 +146,18 @@ impl SharedMemory {
         self.slice_range(offset..offset + size)
     }
 
+    /// Returns a byte slice of the memory region at the given offset.
+    ///
+    /// # Panics
+    ///
+    /// Panics on out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn slice_range(&self, range: Range<usize>) -> &[u8] {
-        let last_checkpoint = self.last_checkpoint;
-
-        self.buffer
-            .get(last_checkpoint + range.start..last_checkpoint + range.end)
-            .unwrap_or_else(|| {
-                debug_unreachable!(
-                    "slice OOB: {}..{}; len: {}",
-                    range.start,
-                    range.end,
-                    self.len()
-                )
-            })
+    pub fn slice_range(&self, range @ Range { start, end }: Range<usize>) -> &[u8] {
+        match self.context_memory().get(range) {
+            Some(slice) => slice,
+            None => debug_unreachable!("slice OOB: {start}..{end}; len: {}", self.len()),
+        }
     }
 
     /// Returns a byte slice of the memory region at the given offset.
@@ -171,13 +168,11 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_mut(&mut self, offset: usize, size: usize) -> &mut [u8] {
-        let len = self.len();
         let end = offset + size;
-        let last_checkpoint = self.last_checkpoint;
-
-        self.buffer
-            .get_mut(last_checkpoint + offset..last_checkpoint + offset + size)
-            .unwrap_or_else(|| debug_unreachable!("slice OOB: {offset}..{end}; len: {}", len))
+        match self.context_memory_mut().get_mut(offset..end) {
+            Some(slice) => slice,
+            None => debug_unreachable!("slice OOB: {offset}..{end}"),
+        }
     }
 
     /// Returns the byte at the given offset.
