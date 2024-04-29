@@ -14,10 +14,6 @@ pub struct Gas {
     limit: u64,
     /// The remaining gas.
     remaining: u64,
-    /// The remaining gas, without memory expansion.
-    remaining_nomem: u64,
-    /// The **last** memory expansion cost.
-    memory: u64,
     /// Refunded gas. This is used only at the end of execution.
     refunded: i64,
 }
@@ -29,8 +25,6 @@ impl Gas {
         Self {
             limit,
             remaining: limit,
-            remaining_nomem: limit,
-            memory: 0,
             refunded: 0,
         }
     }
@@ -41,8 +35,6 @@ impl Gas {
         Self {
             limit,
             remaining: 0,
-            remaining_nomem: 0,
-            memory: 0,
             refunded: 0,
         }
     }
@@ -55,8 +47,11 @@ impl Gas {
 
     /// Returns the **last** memory expansion cost.
     #[inline]
+    #[deprecated = "memory expansion cost is not tracked anymore; \
+                    calculate it using `SharedMemory::current_expansion_cost` instead"]
+    #[doc(hidden)]
     pub const fn memory(&self) -> u64 {
-        self.memory
+        0
     }
 
     /// Returns the total amount of gas that was refunded.
@@ -87,7 +82,6 @@ impl Gas {
     /// Erases a gas cost from the totals.
     #[inline]
     pub fn erase_cost(&mut self, returned: u64) {
-        self.remaining_nomem += returned;
         self.remaining += returned;
     }
 
@@ -95,7 +89,6 @@ impl Gas {
     #[inline]
     pub fn spend_all(&mut self) {
         self.remaining = 0;
-        self.remaining_nomem = 0;
     }
 
     /// Records a refund value.
@@ -128,30 +121,13 @@ impl Gas {
     ///
     /// Returns `false` if the gas limit is exceeded.
     #[inline]
+    #[must_use]
     pub fn record_cost(&mut self, cost: u64) -> bool {
         let (remaining, overflow) = self.remaining.overflowing_sub(cost);
-        if overflow {
-            return false;
-        }
-
-        self.remaining_nomem -= cost;
-        self.remaining = remaining;
-        true
-    }
-
-    /// Records memory expansion gas.
-    ///
-    /// Used in [`resize_memory!`](crate::resize_memory).
-    #[inline]
-    pub fn record_memory(&mut self, gas_memory: u64) -> bool {
-        if gas_memory > self.memory {
-            let (remaining, overflow) = self.remaining_nomem.overflowing_sub(gas_memory);
-            if overflow {
-                return false;
-            }
-            self.memory = gas_memory;
+        let success = !overflow;
+        if success {
             self.remaining = remaining;
         }
-        true
+        success
     }
 }

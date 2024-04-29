@@ -89,27 +89,23 @@ macro_rules! resize_memory {
         $crate::resize_memory!($interp, $offset, $len, ())
     };
     ($interp:expr, $offset:expr, $len:expr, $ret:expr) => {
-        let size = $offset.saturating_add($len);
-        if size > $interp.shared_memory.len() {
-            // We are fine with saturating to usize if size is close to MAX value.
-            let rounded_size = $crate::interpreter::next_multiple_of_32(size);
-
+        let new_size = $offset.saturating_add($len);
+        if new_size > $interp.shared_memory.len() {
             #[cfg(feature = "memory_limit")]
-            if $interp.shared_memory.limit_reached(size) {
+            if $interp.shared_memory.limit_reached(new_size) {
                 $interp.instruction_result = $crate::InstructionResult::MemoryLimitOOG;
                 return $ret;
             }
 
-            // Gas is calculated in evm words (256 bits).
-            let words_num = rounded_size / 32;
-            if !$interp
-                .gas
-                .record_memory($crate::gas::memory_gas(words_num))
-            {
+            // Note: we can't use `Interpreter` directly here because of potential double-borrows.
+            if !$crate::interpreter::resize_memory(
+                &mut $interp.shared_memory,
+                &mut $interp.gas,
+                new_size,
+            ) {
                 $interp.instruction_result = $crate::InstructionResult::MemoryOOG;
                 return $ret;
             }
-            $interp.shared_memory.resize(rounded_size);
         }
     };
 }

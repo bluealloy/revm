@@ -6,12 +6,12 @@ mod shared_memory;
 mod stack;
 
 pub use contract::Contract;
-pub use shared_memory::{next_multiple_of_32, SharedMemory, EMPTY_SHARED_MEMORY};
+pub use shared_memory::{num_words, SharedMemory, EMPTY_SHARED_MEMORY};
 pub use stack::{Stack, STACK_LIMIT};
 
 use crate::EOFCreateOutcome;
 use crate::{
-    primitives::Bytes, push, push_b256, return_ok, return_revert, CallOutcome, CreateOutcome,
+    gas, primitives::Bytes, push, push_b256, return_ok, return_revert, CallOutcome, CreateOutcome,
     FunctionStack, Gas, Host, InstructionResult, InterpreterAction,
 };
 use core::cmp::min;
@@ -379,6 +379,13 @@ impl Interpreter {
             },
         }
     }
+
+    /// Resize the memory to the new size. Returns whether the gas was enough to resize the memory.
+    #[inline]
+    #[must_use]
+    pub fn resize_memory(&mut self, new_size: usize) -> bool {
+        resize_memory(&mut self.shared_memory, &mut self.gas, new_size)
+    }
 }
 
 impl InterpreterResult {
@@ -399,6 +406,22 @@ impl InterpreterResult {
     pub const fn is_error(&self) -> bool {
         self.result.is_error()
     }
+}
+
+/// Resize the memory to the new size. Returns whether the gas was enough to resize the memory.
+#[inline(never)]
+#[cold]
+#[must_use]
+pub fn resize_memory(memory: &mut SharedMemory, gas: &mut Gas, new_size: usize) -> bool {
+    let new_words = num_words(new_size as u64);
+    let new_cost = gas::memory_gas(new_words);
+    let current_cost = memory.current_expansion_cost();
+    let cost = new_cost - current_cost;
+    let success = gas.record_cost(cost);
+    if success {
+        memory.resize((new_words as usize) * 32);
+    }
+    success
 }
 
 #[cfg(test)]

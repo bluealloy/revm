@@ -19,7 +19,7 @@ pub fn simple_example() {
         })
         .build();
 
-    let _ = evm.transact();
+    let _ = evm.transact().unwrap();
 }
 
 fn main() {
