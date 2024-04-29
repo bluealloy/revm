@@ -511,6 +511,7 @@ mod test {
         const CUSTOM_INSTRUCTION_COST: u64 = 133;
         const INITIAL_TX_GAS: u64 = 21000;
         const EXPECTED_RESULT_GAS: u64 = INITIAL_TX_GAS + CUSTOM_INSTRUCTION_COST;
+
         fn custom_instruction(interp: &mut Interpreter, _host: &mut impl Host) {
             // just spend some gas
             gas!(interp, CUSTOM_INSTRUCTION_COST);

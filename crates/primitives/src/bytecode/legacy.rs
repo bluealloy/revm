@@ -39,11 +39,11 @@ impl LegacyAnalyzedBytecode {
         }
     }
 
-    /// Returns bytes of bytecode.
+    /// Returns a reference to the bytecode.
     ///
-    /// Bytes are padded with 32 zero bytes.
-    pub fn bytes(&self) -> Bytes {
-        self.bytecode.clone()
+    /// The bytecode is padded with 32 zero bytes.
+    pub fn bytecode(&self) -> &Bytes {
+        &self.bytecode
     }
 
     /// Original bytes length.

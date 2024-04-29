@@ -222,7 +222,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             refund: hex_number(self.refunded as u64),
             mem_size: self.mem_size.to_string(),
 
-            op_name: OpCode::new(self.opcode).map(|i| i.info().name),
+            op_name: OpCode::new(self.opcode).map(|i| i.as_str()),
             error: if !interp.instruction_result.is_ok() {
                 Some(format!("{:?}", interp.instruction_result))
             } else {

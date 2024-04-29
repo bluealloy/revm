@@ -103,7 +103,7 @@ macro_rules! resize_memory {
                 &mut $interp.gas,
                 new_size,
             ) {
-                $interp.instruction_result = $crate::InstructionResult::MemoryLimitOOG;
+                $interp.instruction_result = $crate::InstructionResult::MemoryOOG;
                 return $ret;
             }
         }

@@ -91,17 +91,17 @@ impl Bytecode {
     }
 
     /// Returns a reference to the bytecode.
+    ///
     /// In case of EOF this will be the first code section.
     #[inline]
-    pub fn bytecode_bytes(&self) -> Bytes {
+    pub fn bytecode(&self) -> &Bytes {
         match self {
-            Self::LegacyRaw(bytes) => bytes.clone(),
-            Self::LegacyAnalyzed(analyzed) => analyzed.bytes(),
+            Self::LegacyRaw(bytes) => bytes,
+            Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
             Self::Eof(eof) => eof
                 .body
                 .code(0)
-                .expect("Valid EOF has at least one code section")
-                .clone(),
+                .expect("Valid EOF has at least one code section"),
         }
     }
 

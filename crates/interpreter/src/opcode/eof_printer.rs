@@ -16,19 +16,19 @@ pub fn print_eof_code(code: &[u8]) {
             continue;
         };
 
-        if opcode.immediate_size != 0 {
+        if opcode.immediate_size() != 0 {
             // check if the opcode immediate are within the bounds of the code
-            if i + opcode.immediate_size as usize >= code.len() {
+            if i + opcode.immediate_size() as usize >= code.len() {
                 println!("Malformed code: immediate out of bounds");
                 break;
             }
         }
 
-        print!("{}", opcode.name);
-        if opcode.immediate_size != 0 {
+        print!("{}", opcode.name());
+        if opcode.immediate_size() != 0 {
             print!(
                 " : 0x{:}",
-                hex::encode(&code[i + 1..i + 1 + opcode.immediate_size as usize])
+                hex::encode(&code[i + 1..i + 1 + opcode.immediate_size() as usize])
             );
         }
 
@@ -51,7 +51,7 @@ pub fn print_eof_code(code: &[u8]) {
             }
         }
 
-        i += 1 + opcode.immediate_size as usize + rjumpv_additional_immediates;
+        i += 1 + opcode.immediate_size() as usize + rjumpv_additional_immediates;
     }
 }
 

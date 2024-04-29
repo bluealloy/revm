@@ -87,7 +87,7 @@ impl Interpreter {
             panic!("Contract is not execution ready {:?}", contract.bytecode);
         }
         let is_eof = contract.bytecode.is_eof();
-        let bytecode = contract.bytecode.bytecode_bytes();
+        let bytecode = contract.bytecode.bytecode().clone();
         Self {
             instruction_pointer: bytecode.as_ptr(),
             bytecode,
