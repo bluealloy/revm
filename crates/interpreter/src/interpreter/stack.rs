@@ -2,7 +2,7 @@ use crate::{
     primitives::{B256, U256},
     InstructionResult,
 };
-use core::fmt;
+use core::{fmt, ptr};
 use std::vec::Vec;
 
 /// EVM interpreter stack limit.
@@ -222,8 +222,14 @@ impl Stack {
     }
 
     /// Duplicates the `N`th value from the top of the stack.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n` is 0.
     #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn dup(&mut self, n: usize) -> Result<(), InstructionResult> {
+        assume!(n > 0, "attempted to dup 0");
         let len = self.data.len();
         if len < n {
             Err(InstructionResult::StackUnderflow)
@@ -232,36 +238,50 @@ impl Stack {
         } else {
             // SAFETY: check for out of bounds is done above and it makes this safe to do.
             unsafe {
+                let ptr = self.data.as_mut_ptr().add(len);
+                ptr::copy_nonoverlapping(ptr.sub(n), ptr, 1);
                 self.data.set_len(len + 1);
             }
-            self.data[len] = self.data[len - n];
             Ok(())
         }
     }
 
     /// Swaps the topmost value with the `N`th value from the top.
-    #[inline]
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n` is 0.
+    #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn swap(&mut self, n: usize) -> Result<(), InstructionResult> {
-        let len = self.data.len();
-        if n >= len {
-            return Err(InstructionResult::StackUnderflow);
-        }
-        let last_index = len - 1;
-        self.data.swap(last_index, last_index - n);
-        Ok(())
+        self.exchange(0, n)
     }
 
-    /// Exchange two values on the stack. where `N` is first index and second index
-    /// is calculated as N+M
+    /// Exchange two values on the stack.
+    ///
+    /// `n` is the first index, and the second index is calculated as `n + m`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `m` is zero.
     #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn exchange(&mut self, n: usize, m: usize) -> Result<(), InstructionResult> {
+        assume!(m > 0, "overlapping exchange");
         let len = self.data.len();
         let n_m_index = n + m;
         if n_m_index >= len {
             return Err(InstructionResult::StackUnderflow);
         }
-        let last_index = len - 1;
-        self.data.swap(last_index - n, last_index - n_m_index);
+        // SAFETY: `n` and `n_m` are checked to be within bounds, and they don't overlap.
+        unsafe {
+            // NOTE: `ptr::swap_nonoverlapping` is more efficient than `slice::swap` or `ptr::swap`
+            // because it operates under the assumption that the pointers do not overlap,
+            // eliminating an intemediate copy,
+            // which is a condition we know to be true in this context.
+            let top = self.data.as_mut_ptr().add(len - 1);
+            core::ptr::swap_nonoverlapping(top.sub(n), top.sub(n_m_index), 1);
+        }
         Ok(())
     }
 
