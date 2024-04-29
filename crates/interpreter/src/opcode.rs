@@ -286,15 +286,23 @@ impl OpCode {
 /// Information about opcode, such as name, and stack inputs and outputs.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OpCodeInfo {
-    // TODO: make this a bitfield. This is OK for now since we have a few alignment bytes to spare.
-    // Invariant: `(name_ptr, name_len)` is a `&'static str`.
+    /// Invariant: `(name_ptr, name_len)` is a `&'static str`. It is a shorted variant of `str` as the name size is always 
+    /// less than 256 characters.
     name_ptr: NonNull<u8>,
     name_len: u8,
+    /// Stack inputs.
     inputs: u8,
+    /// Stack outputs.
     outputs: u8,
-    not_eof: bool,
-    terminating: bool,
+    /// Number of intermediate bytes.
+    ///
+    /// RJUMPV is a special case where the bytes len depends on bytecode value,
+    /// for RJUMV size will be set to one byte as it is the minimum immediate size.
     immediate_size: u8,
+    /// Used by EOF verification. All not EOF opcodes are marked false.
+    not_eof: bool,
+    /// If the opcode stops execution. aka STOP, RETURN, ..
+    terminating: bool,
 }
 
 impl fmt::Debug for OpCodeInfo {
