@@ -286,8 +286,8 @@ impl OpCode {
 /// Information about opcode, such as name, and stack inputs and outputs.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OpCodeInfo {
-    /// Invariant: `(name_ptr, name_len)` is a `&'static str`. It is a shorted variant of `str` as the name size is always 
-    /// less than 256 characters.
+    /// Invariant: `(name_ptr, name_len)` is a `&'static str`. It is a shorted variant of `str` as
+    /// the name length is always less than 256 characters.
     name_ptr: NonNull<u8>,
     name_len: u8,
     /// Stack inputs.
