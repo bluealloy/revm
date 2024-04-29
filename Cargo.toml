@@ -15,7 +15,9 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [profile.release]
+lto = true
 codegen-units = 1
+debug = true
 
 [profile.ethtests]
 inherits = "test"
