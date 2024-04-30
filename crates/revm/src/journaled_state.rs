@@ -91,6 +91,7 @@ impl JournaledState {
         }
     }
 
+    /// Clears the JournaledState. Preserving only the spec.
     pub fn clear(&mut self) {
         let spec = self.spec;
         *self = Self::new(spec, HashSet::new());

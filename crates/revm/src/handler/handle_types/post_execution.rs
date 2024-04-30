@@ -35,8 +35,8 @@ pub type EndHandle<'a, EXT, DB> = Arc<
         + 'a,
 >;
 
-/// Clear handle,doesn't take input or has output, its purpose is to clear the
-/// context. It will be always called.
+/// Clear handle, doesn't have output, its purpose is to clear the
+/// context. It will be always called even on failed validation.
 pub type ClearHandle<'a, EXT, DB> = Arc<dyn Fn(&mut Context<EXT, DB>) + 'a>;
 
 /// Handles related to post execution after the stack loop is finished.
@@ -47,7 +47,7 @@ pub struct PostExecutionHandler<'a, EXT, DB: Database> {
     pub reward_beneficiary: RewardBeneficiaryHandle<'a, EXT, DB>,
     /// Main return handle, returns the output of the transact.
     pub output: OutputHandle<'a, EXT, DB>,
-    /// End handle. Called when execution ends its execution.
+    /// End handle. Called when execution ends.
     /// End in comparison to output will be called every time after execution.
     /// Output in case of error will not be called.
     pub end: EndHandle<'a, EXT, DB>,

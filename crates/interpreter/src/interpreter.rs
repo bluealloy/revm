@@ -2,7 +2,6 @@ pub mod analysis;
 mod contract;
 #[cfg(feature = "serde")]
 pub mod serde;
-
 mod shared_memory;
 mod stack;
 
