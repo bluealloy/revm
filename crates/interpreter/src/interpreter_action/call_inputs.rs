@@ -130,6 +130,8 @@ pub enum CallScheme {
     DelegateCall,
     /// `STATICCALL`
     StaticCall,
+    /// `AUTHCALL`
+    AuthCall,
 }
 
 /// Call value.
