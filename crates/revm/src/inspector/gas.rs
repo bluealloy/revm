@@ -60,10 +60,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         mut outcome: CallOutcome,
     ) -> CallOutcome {
         if outcome.result.result.is_error() {
-            outcome
-                .result
-                .gas
-                .record_cost(outcome.result.gas.remaining());
+            outcome.result.gas.spend_all();
             self.gas_remaining = 0;
         }
         outcome
@@ -76,10 +73,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         mut outcome: CreateOutcome,
     ) -> CreateOutcome {
         if outcome.result.result.is_error() {
-            outcome
-                .result
-                .gas
-                .record_cost(outcome.result.gas.remaining());
+            outcome.result.gas.spend_all();
             self.gas_remaining = 0;
         }
         outcome
