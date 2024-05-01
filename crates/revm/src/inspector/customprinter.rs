@@ -116,8 +116,8 @@ mod test {
     use crate::{
         inspector_handle_register,
         inspectors::CustomPrintTracer,
-        primitives::{address, bytes, SpecId},
-        Evm, InMemoryDB,
+        primitives::{address, bytes},
+        Evm, InMemoryDB, SpecId,
     };
 
     #[test]

@@ -1,6 +1,6 @@
 use crate::{
     gas,
-    primitives::{Spec, SpecId::*, U256},
+    primitives::{EthSpecId::*, Spec, U256},
     Host, Interpreter,
 };
 

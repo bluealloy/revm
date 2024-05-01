@@ -236,8 +236,8 @@ pub enum PrecompileSpecId {
 
 impl PrecompileSpecId {
     /// Returns the appropriate precompile Spec for the primitive [SpecId](revm_primitives::SpecId)
-    pub const fn from_spec_id(spec_id: revm_primitives::SpecId) -> Self {
-        use revm_primitives::SpecId::*;
+    pub const fn from_spec_id(spec_id: revm_primitives::EthSpecId) -> Self {
+        use revm_primitives::EthSpecId::*;
         match spec_id {
             FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
                 Self::HOMESTEAD
@@ -247,10 +247,6 @@ impl PrecompileSpecId {
             BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
             CANCUN | PRAGUE => Self::CANCUN,
             LATEST => Self::LATEST,
-            #[cfg(feature = "optimism")]
-            BEDROCK | REGOLITH | CANYON => Self::BERLIN,
-            #[cfg(feature = "optimism")]
-            ECOTONE => Self::CANCUN,
         }
     }
 }

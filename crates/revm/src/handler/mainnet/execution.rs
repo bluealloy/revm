@@ -5,7 +5,7 @@ use crate::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
     },
-    primitives::{EVMError, Env, Spec, SpecId},
+    primitives::{EVMError, Env, EthSpecId, Spec},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use revm_interpreter::{CallOutcome, EOFCreateInput, EOFCreateOutcome, InterpreterResult};
@@ -43,7 +43,7 @@ pub fn frame_return_with_refund_flag<SPEC: Spec>(
     // gas spend. (Before london it was 2th part of gas spend)
     if refund_enabled {
         // EIP-3529: Reduction in refunds
-        gas.set_final_refund(SPEC::SPEC_ID.is_enabled_in(SpecId::LONDON));
+        gas.set_final_refund(SPEC::SPEC_ID.is_enabled_in(EthSpecId::LONDON));
     }
 }
 

@@ -6,9 +6,9 @@ use crate::{
     precompile::{PrecompileSpecId, Precompiles},
     primitives::{
         db::Database,
-        Account, EVMError, Env, Spec,
-        SpecId::{CANCUN, SHANGHAI},
-        TransactTo, U256,
+        Account, EVMError, Env,
+        EthSpecId::{CANCUN, SHANGHAI},
+        Spec, TransactTo, U256,
     },
     Context, ContextPrecompiles,
 };

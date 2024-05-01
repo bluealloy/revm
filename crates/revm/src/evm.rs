@@ -1,17 +1,16 @@
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
-    handler::Handler,
+    handler::{EnvWithHandlerCfg, Handler, HandlerCfg},
     interpreter::{
         opcode::InstructionTables, Host, Interpreter, InterpreterAction, LoadAccountResult,
         SStoreResult, SelfDestructResult, SharedMemory,
     },
     primitives::{
-        specification::SpecId, Address, BlockEnv, Bytecode, CfgEnv, EVMError, EVMResult, Env,
-        EnvWithHandlerCfg, ExecutionResult, HandlerCfg, Log, ResultAndState, TransactTo, TxEnv,
-        B256, U256,
+        Address, BlockEnv, Bytecode, CfgEnv, EVMError, EVMResult, Env, ExecutionResult, Log,
+        ResultAndState, TransactTo, TxEnv, B256, U256,
     },
-    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
+    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult, SpecId,
 };
 use core::fmt;
 use revm_interpreter::{CallInputs, CreateInputs};
@@ -65,7 +64,10 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         mut context: Context<EXT, DB>,
         handler: Handler<'a, Self, EXT, DB>,
     ) -> Evm<'a, EXT, DB> {
-        context.evm.journaled_state.set_spec_id(handler.cfg.spec_id);
+        context
+            .evm
+            .journaled_state
+            .set_spec_id(handler.cfg.spec_id.into());
         Evm { context, handler }
     }
 

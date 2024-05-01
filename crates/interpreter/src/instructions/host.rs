@@ -1,7 +1,7 @@
 use crate::{
     gas::{self, warm_cold_cost},
     interpreter::Interpreter,
-    primitives::{Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
+    primitives::{Bytes, EthSpecId::*, Log, LogData, Spec, B256, U256},
     Host, InstructionResult, SStoreResult,
 };
 use core::cmp::min;

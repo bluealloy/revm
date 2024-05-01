@@ -2928,6 +2928,7 @@ dependencies = [
  "cfg-if",
  "criterion",
  "dyn-clone",
+ "enumn",
  "ethers-contract",
  "ethers-core",
  "ethers-providers",

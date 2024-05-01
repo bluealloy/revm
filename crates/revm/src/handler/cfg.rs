@@ -1,6 +1,10 @@
-use super::{BlockEnv, CfgEnv, Env, SpecId, TxEnv};
 use core::ops::{Deref, DerefMut};
 use std::boxed::Box;
+
+use crate::{
+    primitives::{BlockEnv, CfgEnv, Env, TxEnv},
+    SpecId,
+};
 
 /// Handler configuration fields. It is used to configure the handler.
 /// It contains specification id and the Optimism related field if

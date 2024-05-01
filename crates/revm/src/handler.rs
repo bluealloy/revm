@@ -1,16 +1,18 @@
 // Modules.
+pub mod cfg;
 mod handle_types;
 pub mod mainnet;
 pub mod register;
 
 // Exports.
+pub use cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 pub use handle_types::*;
 
 // Includes.
 use crate::{
     interpreter::{opcode::InstructionTables, Host},
-    primitives::{db::Database, spec_to_generic, HandlerCfg, Spec, SpecId},
-    Evm,
+    primitives::{db::Database, spec_to_generic, Spec},
+    Evm, SpecId,
 };
 use register::{EvmHandler, HandleRegisters};
 use std::vec::Vec;
@@ -58,8 +60,13 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
 
     /// Default handler for Ethereum mainnet.
     pub fn mainnet<SPEC: Spec>() -> Self {
+        let spec_id = SPEC::SPEC_ID;
+
+        #[cfg(feature = "optimism")]
+        let spec_id = spec_id.into();
+
         Self {
-            cfg: HandlerCfg::new(SPEC::SPEC_ID),
+            cfg: HandlerCfg::new(spec_id),
             instruction_table: Some(InstructionTables::new_plain::<SPEC>()),
             registers: Vec::new(),
             validation: ValidationHandler::new::<SPEC>(),
@@ -87,13 +94,15 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
 
     /// Optimism with spec. Similar to [`Self::mainnet_with_spec`].
     #[cfg(feature = "optimism")]
-    pub fn optimism_with_spec(spec_id: SpecId) -> Self {
-        spec_to_generic!(spec_id, Self::optimism::<SPEC>())
+    pub fn optimism_with_spec(spec_id: crate::optimism::OptimismSpecId) -> Self {
+        crate::optimism_spec_to_generic!(spec_id, Self::optimism::<SPEC>())
     }
-
     /// Creates handler with variable spec id, inside it will call `mainnet::<SPEC>` for
     /// appropriate spec.
     pub fn mainnet_with_spec(spec_id: SpecId) -> Self {
+        #[cfg(feature = "optimism")]
+        let spec_id = spec_id.into();
+
         spec_to_generic!(spec_id, Self::mainnet::<SPEC>())
     }
 
@@ -182,9 +191,13 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
             return;
         }
 
+        let eth_spec_id = spec_id;
+        #[cfg(feature = "optimism")]
+        let eth_spec_id = eth_spec_id.into();
+
         let registers = core::mem::take(&mut self.registers);
         // register for optimism is added as a register, so we need to create mainnet handler here.
-        let mut handler = Handler::mainnet_with_spec(spec_id);
+        let mut handler = Handler::mainnet_with_spec(eth_spec_id);
         // apply all registers to default handler and raw mainnet instruction table.
         for register in registers {
             handler.append_handler_register(register)
@@ -214,7 +227,12 @@ mod test {
             })
         };
 
-        let mut handler = EvmHandler::<(), EmptyDB>::new(HandlerCfg::new(SpecId::LATEST));
+        #[cfg(not(feature = "optimism"))]
+        let spec_id = SpecId::LATEST;
+        #[cfg(feature = "optimism")]
+        let spec_id = crate::optimism::OptimismSpecId::LATEST;
+
+        let mut handler = EvmHandler::<(), EmptyDB>::new(HandlerCfg::new(spec_id));
         let test = Rc::new(RefCell::new(0));
 
         handler.append_handler_register_box(register(&test));

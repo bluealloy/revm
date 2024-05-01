@@ -22,6 +22,7 @@ revm-precompile = { path = "../precompile", version = "6.0.0", default-features 
 auto_impl = { version = "1.2", default-features = false }
 cfg-if = "1.0"
 dyn-clone = "1.0"
+enumn = { version = "0.1", optional = true }
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -75,7 +76,7 @@ portable = ["revm-precompile/portable", "revm-interpreter/portable"]
 
 test-utils = []
 
-optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
+optimism = ["dep:enumn", "revm-interpreter/optimism", "revm-precompile/optimism"]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
 optimism-default-handler = [
     "optimism",

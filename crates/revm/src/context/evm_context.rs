@@ -227,7 +227,7 @@ pub(crate) mod test_utils {
     use crate::{
         db::{CacheDB, EmptyDB},
         journaled_state::JournaledState,
-        primitives::{address, SpecId, B256},
+        primitives::{address, EthSpecId, B256},
     };
 
     /// Mock caller address.
@@ -277,7 +277,7 @@ pub(crate) mod test_utils {
         EvmContext {
             inner: InnerEvmContext {
                 env,
-                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
+                journaled_state: JournaledState::new(EthSpecId::CANCUN, HashSet::new()),
                 db,
                 error: Ok(()),
                 #[cfg(feature = "optimism")]
@@ -292,7 +292,7 @@ pub(crate) mod test_utils {
         EvmContext {
             inner: InnerEvmContext {
                 env,
-                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
+                journaled_state: JournaledState::new(EthSpecId::CANCUN, HashSet::new()),
                 db,
                 error: Ok(()),
                 #[cfg(feature = "optimism")]

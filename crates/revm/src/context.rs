@@ -11,7 +11,7 @@ pub use inner_evm_context::InnerEvmContext;
 
 use crate::{
     db::{Database, EmptyDB},
-    primitives::HandlerCfg,
+    handler::HandlerCfg,
 };
 use std::boxed::Box;
 

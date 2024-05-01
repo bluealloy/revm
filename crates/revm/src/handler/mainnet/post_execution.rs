@@ -1,7 +1,7 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, EVMError, ExecutionResult, ResultAndState, Spec, SpecId::LONDON, U256,
+        db::Database, EVMError, EthSpecId::LONDON, ExecutionResult, ResultAndState, Spec, U256,
     },
     Context, FrameResult,
 };

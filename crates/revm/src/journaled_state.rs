@@ -1,10 +1,10 @@
 use crate::interpreter::{InstructionResult, SelfDestructResult};
 use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, HashMap, HashSet, Log,
-    SpecId::*, State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
+    db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, EthSpecId::*, HashMap,
+    HashSet, Log, State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use core::mem;
-use revm_interpreter::primitives::SpecId;
+use revm_interpreter::primitives::EthSpecId;
 use revm_interpreter::{LoadAccountResult, SStoreResult};
 use std::vec::Vec;
 
@@ -26,7 +26,7 @@ pub struct JournaledState {
     /// Ethereum before EIP-161 differently defined empty and not-existing account
     /// Spec is needed for two things SpuriousDragon's `EIP-161 State clear`,
     /// and for Cancun's `EIP-6780: SELFDESTRUCT in same transaction`
-    pub spec: SpecId,
+    pub spec: EthSpecId,
     /// Warm loaded addresses are used to check if loaded address
     /// should be considered cold or warm loaded when the account
     /// is first accessed.
@@ -48,7 +48,7 @@ impl JournaledState {
     /// # Note
     ///
     ///
-    pub fn new(spec: SpecId, warm_preloaded_addresses: HashSet<Address>) -> JournaledState {
+    pub fn new(spec: EthSpecId, warm_preloaded_addresses: HashSet<Address>) -> JournaledState {
         Self {
             state: HashMap::new(),
             transient_storage: TransientStorage::default(),
@@ -68,7 +68,7 @@ impl JournaledState {
 
     /// Sets SpecId.
     #[inline]
-    pub fn set_spec_id(&mut self, spec: SpecId) {
+    pub fn set_spec_id(&mut self, spec: EthSpecId) {
         self.spec = spec;
     }
 
@@ -242,7 +242,7 @@ impl JournaledState {
         caller: Address,
         address: Address,
         balance: U256,
-        spec_id: SpecId,
+        spec_id: EthSpecId,
     ) -> Result<JournalCheckpoint, InstructionResult> {
         // Enter subroutine
         let checkpoint = self.checkpoint();
@@ -425,7 +425,7 @@ impl JournaledState {
     /// Reverts all changes to state until given checkpoint.
     #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
-        let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
+        let is_spurious_dragon_enabled = EthSpecId::enabled(self.spec, SPURIOUS_DRAGON);
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
         self.depth -= 1;
@@ -481,7 +481,7 @@ impl JournaledState {
         let acc = self.state.get_mut(&address).unwrap();
         let balance = acc.info.balance;
         let previously_destroyed = acc.is_selfdestructed();
-        let is_cancun_enabled = SpecId::enabled(self.spec, CANCUN);
+        let is_cancun_enabled = EthSpecId::enabled(self.spec, CANCUN);
 
         // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
         let journal_entry = if acc.is_created() || !is_cancun_enabled {
@@ -591,7 +591,7 @@ impl JournaledState {
         let spec = self.spec;
         let (acc, is_cold) = self.load_account(address, db)?;
 
-        let is_spurious_dragon_enabled = SpecId::enabled(spec, SPURIOUS_DRAGON);
+        let is_spurious_dragon_enabled = EthSpecId::enabled(spec, SPURIOUS_DRAGON);
         let is_empty = if is_spurious_dragon_enabled {
             acc.is_empty()
         } else {

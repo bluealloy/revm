@@ -57,3 +57,8 @@ pub use revm_interpreter as interpreter;
 pub use revm_interpreter::primitives;
 #[doc(inline)]
 pub use revm_precompile as precompile;
+
+#[cfg(not(feature = "optimism"))]
+pub type SpecId = crate::primitives::EthSpecId;
+#[cfg(feature = "optimism")]
+pub type SpecId = crate::optimism::OptimismSpecId;

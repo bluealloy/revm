@@ -1,10 +1,8 @@
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
-    handler::register,
-    primitives::{
-        BlockEnv, CfgEnv, CfgEnvWithHandlerCfg, Env, EnvWithHandlerCfg, HandlerCfg, SpecId, TxEnv,
-    },
-    Context, ContextWithHandlerCfg, Evm, Handler,
+    handler::{register, CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg},
+    primitives::{BlockEnv, CfgEnv, Env, TxEnv},
+    Context, ContextWithHandlerCfg, Evm, Handler, SpecId,
 };
 use core::marker::PhantomData;
 use std::boxed::Box;

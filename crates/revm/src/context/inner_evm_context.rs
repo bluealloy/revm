@@ -8,9 +8,9 @@ use crate::{
     journaled_state::JournaledState,
     primitives::{
         keccak256, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env,
-        Eof, HashSet, Spec,
-        SpecId::{self, *},
-        B256, U256,
+        Eof,
+        EthSpecId::{self, *},
+        HashSet, Spec, B256, U256,
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
@@ -53,7 +53,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     pub fn new(db: DB) -> Self {
         Self {
             env: Box::default(),
-            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
+            journaled_state: JournaledState::new(EthSpecId::LATEST, HashSet::new()),
             db,
             error: Ok(()),
             #[cfg(feature = "optimism")]
@@ -66,7 +66,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     pub fn new_with_env(db: DB, env: Box<Env>) -> Self {
         Self {
             env,
-            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
+            journaled_state: JournaledState::new(EthSpecId::LATEST, HashSet::new()),
             db,
             error: Ok(()),
             #[cfg(feature = "optimism")]
@@ -91,7 +91,7 @@ impl<DB: Database> InnerEvmContext<DB> {
 
     /// Returns the configured EVM spec ID.
     #[inline]
-    pub const fn spec_id(&self) -> SpecId {
+    pub const fn spec_id(&self) -> EthSpecId {
         self.journaled_state.spec
     }
 
@@ -227,7 +227,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     #[inline]
     pub fn make_eofcreate_frame(
         &mut self,
-        spec_id: SpecId,
+        spec_id: EthSpecId,
         inputs: &EOFCreateInput,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
         let return_error = |e| {
@@ -335,7 +335,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     #[inline]
     pub fn make_create_frame(
         &mut self,
-        spec_id: SpecId,
+        spec_id: EthSpecId,
         inputs: &CreateInputs,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
         // Prepare crate.
