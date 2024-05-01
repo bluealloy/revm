@@ -274,19 +274,33 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         shared_memory.new_context();
 
-        // peek last stack frame.
+        // Peek the last stack frame.
         let mut stack_frame = call_stack.last_mut().unwrap();
 
         loop {
-            // run interpreter
-            let interpreter = &mut stack_frame.frame_data_mut().interpreter;
-            let next_action = interpreter.run(shared_memory, instruction_table, self);
+            // Execute the frame.
+            let next_action;
+            'blk: {
+                // Run the execute frame hook if set.
+                if let Some(execute_frame) = self.handler.execution.execute_frame.take() {
+                    let maybe_next_action = execute_frame(stack_frame, &mut shared_memory, self);
+                    self.handler.execution.execute_frame = Some(execute_frame);
+                    if let Some(a) = maybe_next_action {
+                        next_action = a;
+                        break 'blk;
+                    }
+                }
 
-            // take error and break the loop if there is any.
-            // This error is set From Interpreter when it's interacting with Host.
+                // Otherwise, or if the hook returned `None`, run the interpreter.
+                let interpreter = stack_frame.interpreter_mut();
+                next_action = interpreter.run(shared_memory, instruction_table, self);
+                // Take the shared memory back.
+                shared_memory = interpreter.take_memory();
+            }
+
+            // Take error and break the loop, if any.
+            // This error can be set in the Interpreter when it's interacting with the host (Self).
             self.context.evm.take_error()?;
-            // take shared memory back.
-            shared_memory = interpreter.take_memory();
 
             let exec = &mut self.handler.execution;
             let frame_or_result = match next_action {
@@ -332,7 +346,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 }
                 FrameOrResult::Result(result) => {
                     let Some(top_frame) = call_stack.last_mut() else {
-                        // Break the look if there are no more frames.
+                        // Break the loop if there are no more frames.
                         return Ok(result);
                     };
                     stack_frame = top_frame;

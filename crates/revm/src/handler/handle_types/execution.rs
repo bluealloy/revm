@@ -3,18 +3,24 @@ use crate::{
     handler::mainnet,
     interpreter::{CallInputs, CreateInputs, SharedMemory},
     primitives::{db::Database, EVMError, Spec},
-    CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
+    CallFrame, Context, CreateFrame, Evm, Frame, FrameOrResult, FrameResult,
+};
+use revm_interpreter::{
+    CallOutcome, CreateOutcome, EOFCreateInput, EOFCreateOutcome, InterpreterAction,
+    InterpreterResult,
 };
 use std::{boxed::Box, sync::Arc};
-
-use revm_interpreter::{
-    CallOutcome, CreateOutcome, EOFCreateInput, EOFCreateOutcome, InterpreterResult,
-};
 
 /// Handles first frame return handle.
 pub type LastFrameReturnHandle<'a, EXT, DB> = Arc<
     dyn Fn(&mut Context<EXT, DB>, &mut FrameResult) -> Result<(), EVMError<<DB as Database>::Error>>
         + 'a,
+>;
+
+/// Executes a single frame. Errors can be returned in the EVM context.
+/// If `None` is returned, the frame is instead executed normally through the interpreter.
+pub type ExecuteFrameHandle<'a, EXT, DB> = Arc<
+    dyn Fn(&mut Frame, &mut SharedMemory, &mut Evm<'a, EXT, DB>) -> Option<InterpreterAction> + 'a,
 >;
 
 /// Handle sub call.
@@ -110,6 +116,8 @@ pub struct ExecutionHandler<'a, EXT, DB: Database> {
     /// Handles last frame return, modified gas for refund and
     /// sets tx gas limit.
     pub last_frame_return: LastFrameReturnHandle<'a, EXT, DB>,
+    /// Executes a single frame.
+    pub execute_frame: Option<ExecuteFrameHandle<'a, EXT, DB>>,
     /// Frame call
     pub call: FrameCallHandle<'a, EXT, DB>,
     /// Call return
@@ -135,6 +143,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
     pub fn new<SPEC: Spec + 'a>() -> Self {
         Self {
             last_frame_return: Arc::new(mainnet::last_frame_return::<SPEC, EXT, DB>),
+            execute_frame: None,
             call: Arc::new(mainnet::call::<SPEC, EXT, DB>),
             call_return: Arc::new(mainnet::call_return::<EXT, DB>),
             insert_call_outcome: Arc::new(mainnet::insert_call_outcome),
