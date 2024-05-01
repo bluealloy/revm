@@ -105,4 +105,7 @@ Is a list of functions that are called after the execution. They are called in t
     Returns the state changes and the result of the execution.
 
 * `end`:
-    Always called as the last function of the handler.
+    Always called after transaction. End handler will not be called if validation fails.
+
+* `clear`:
+    Clears journal state and error and it is always called for the cleanup.
