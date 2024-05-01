@@ -125,6 +125,21 @@ where
     core::array::from_fn(|i| outer(table[i]))
 }
 
+/// An error indicating that an opcode is invalid.
+#[derive(Debug, PartialEq, Eq)]
+#[cfg(feature = "parse")]
+pub struct OpCodeError(());
+
+#[cfg(feature = "parse")]
+impl fmt::Display for OpCodeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("invalid opcode")
+    }
+}
+
+#[cfg(all(feature = "std", feature = "parse"))]
+impl std::error::Error for OpCodeError {}
+
 /// An EVM opcode.
 ///
 /// This is always a valid opcode, as declared in the [`opcode`][self] module or the
@@ -144,6 +159,16 @@ impl fmt::Display for OpCode {
     }
 }
 
+#[cfg(feature = "parse")]
+impl core::str::FromStr for OpCode {
+    type Err = OpCodeError;
+
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::parse(s).ok_or(OpCodeError(()))
+    }
+}
+
 impl OpCode {
     /// Instantiate a new opcode from a u8.
     #[inline]
@@ -152,6 +177,13 @@ impl OpCode {
             Some(_) => Some(Self(opcode)),
             None => None,
         }
+    }
+
+    /// Parses an opcode from a string. This is the inverse of [`as_str`](Self::as_str).
+    #[inline]
+    #[cfg(feature = "parse")]
+    pub fn parse(s: &str) -> Option<Self> {
+        NAME_TO_OPCODE.get(s).copied()
     }
 
     /// Returns true if the opcode is a jump destination.
@@ -213,7 +245,7 @@ impl OpCode {
         Self(opcode)
     }
 
-    /// Returns the opcode as a string.
+    /// Returns the opcode as a string. This is the inverse of [`parse`](Self::parse).
     #[doc(alias = "name")]
     #[inline]
     pub const fn as_str(self) -> &'static str {
@@ -416,6 +448,25 @@ pub const fn stack_io(mut op: OpCodeInfo, inputs: u8, outputs: u8) -> OpCodeInfo
 /// Alias for the [`JUMPDEST`] opcode.
 pub const NOP: u8 = JUMPDEST;
 
+/// Callback for creating a [`phf`] map with `stringify_with_cb`.
+#[cfg(feature = "parse")]
+macro_rules! phf_map_cb {
+    ($(#[doc = $s:literal] $id:ident)*) => {
+        phf::phf_map! {
+            $($s => OpCode::$id),*
+        }
+    };
+}
+
+/// Stringifies identifiers with `paste` so that they are available as literals.
+/// This doesn't work with `stringify!` because it cannot be expanded inside of another macro.
+#[cfg(feature = "parse")]
+macro_rules! stringify_with_cb {
+    ($callback:ident; $($id:ident)*) => { paste::paste! {
+        $callback! { $(#[doc = "" $id ""] $id)* }
+    }};
+}
+
 macro_rules! opcodes {
     ($($val:literal => $name:ident => $f:expr => $($modifier:ident $(( $($modifier_arg:expr),* ))?),*);* $(;)?) => {
         // Constants for each opcode. This also takes care of duplicate names.
@@ -428,7 +479,7 @@ macro_rules! opcodes {
             pub const $name: Self = Self($val);
         )*}
 
-        /// Maps each opcode to its name.
+        /// Maps each opcode to its info.
         pub const OPCODE_INFO_JUMPTABLE: [Option<OpCodeInfo>; 256] = {
             let mut map = [None; 256];
             let mut prev: u8 = 0;
@@ -445,6 +496,10 @@ macro_rules! opcodes {
             let _ = prev;
             map
         };
+
+        /// Maps each name to its opcode.
+        #[cfg(feature = "parse")]
+        static NAME_TO_OPCODE: phf::Map<&'static str, OpCode> = stringify_with_cb! { phf_map_cb; $($name)* };
 
         /// Returns the instruction function for the given opcode and spec.
         pub const fn instruction<H: Host + ?Sized, SPEC: Spec>(opcode: u8) -> Instruction<H> {
@@ -837,6 +892,16 @@ mod tests {
                 "Opcode {:?} terminating chack failed.",
                 opcode
             );
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "parse")]
+    fn test_parsing() {
+        for i in 0..=u8::MAX {
+            if let Some(op) = OpCode::new(i) {
+                assert_eq!(OpCode::parse(op.as_str()), Some(op));
+            }
         }
     }
 }
