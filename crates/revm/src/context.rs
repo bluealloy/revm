@@ -13,19 +13,22 @@ use revm_interpreter::as_usize_saturated;
 use crate::{
     db::{Database, EmptyDB},
     interpreter::{Host, LoadAccountResult, SStoreResult, SelfDestructResult},
-    primitives::{Address, Bytes, Env, HandlerCfg, Log, B256, BLOCK_HASH_HISTORY, U256},
+    primitives::{
+        Address, Block as _, Bytes, ChainSpec, Env, EthChainSpec, Log, B256, BLOCK_HASH_HISTORY,
+        U256,
+    },
 };
 use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
-pub struct Context<EXT, DB: Database> {
+pub struct Context<ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Evm Context (internal context).
-    pub evm: EvmContext<DB>,
+    pub evm: EvmContext<ChainSpecT, DB>,
     /// External contexts.
     pub external: EXT,
 }
 
-impl<EXT: Clone, DB: Database + Clone> Clone for Context<EXT, DB>
+impl<ChainSpecT: ChainSpec, EXT: Clone, DB: Database + Clone> Clone for Context<ChainSpecT, EXT, DB>
 where
     DB::Error: Clone,
 {
@@ -37,15 +40,15 @@ where
     }
 }
 
-impl Default for Context<(), EmptyDB> {
+impl Default for Context<EthChainSpec, (), EmptyDB> {
     fn default() -> Self {
         Self::new_empty()
     }
 }
 
-impl Context<(), EmptyDB> {
+impl<ChainSpecT: ChainSpec> Context<ChainSpecT, (), EmptyDB> {
     /// Creates empty context. This is useful for testing.
-    pub fn new_empty() -> Context<(), EmptyDB> {
+    pub fn new_empty() -> Context<ChainSpecT, (), EmptyDB> {
         Context {
             evm: EvmContext::new(EmptyDB::new()),
             external: (),
@@ -53,9 +56,9 @@ impl Context<(), EmptyDB> {
     }
 }
 
-impl<DB: Database> Context<(), DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> Context<ChainSpecT, (), DB> {
     /// Creates new context with database.
-    pub fn new_with_db(db: DB) -> Context<(), DB> {
+    pub fn new_with_db(db: DB) -> Context<ChainSpecT, (), DB> {
         Context {
             evm: EvmContext::new_with_env(db, Box::default()),
             external: (),
@@ -63,53 +66,56 @@ impl<DB: Database> Context<(), DB> {
     }
 }
 
-impl<EXT, DB: Database> Context<EXT, DB> {
+impl<ChainSpecT: ChainSpec, EXT, DB: Database> Context<ChainSpecT, EXT, DB> {
     /// Creates new context with external and database.
-    pub fn new(evm: EvmContext<DB>, external: EXT) -> Context<EXT, DB> {
+    pub fn new(evm: EvmContext<ChainSpecT, DB>, external: EXT) -> Context<ChainSpecT, EXT, DB> {
         Context { evm, external }
     }
 }
 
 /// Context with handler configuration.
-pub struct ContextWithHandlerCfg<EXT, DB: Database> {
+pub struct ContextWithChainSpec<ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Context of execution.
-    pub context: Context<EXT, DB>,
+    pub context: Context<ChainSpecT, EXT, DB>,
     /// Handler configuration.
-    pub cfg: HandlerCfg,
+    pub spec_id: ChainSpecT::Hardfork,
 }
 
-impl<EXT, DB: Database> ContextWithHandlerCfg<EXT, DB> {
+impl<ChainSpecT: ChainSpec, EXT, DB: Database> ContextWithChainSpec<ChainSpecT, EXT, DB> {
     /// Creates new context with handler configuration.
-    pub fn new(context: Context<EXT, DB>, cfg: HandlerCfg) -> Self {
-        Self { cfg, context }
+    pub fn new(context: Context<ChainSpecT, EXT, DB>, spec_id: ChainSpecT::Hardfork) -> Self {
+        Self { spec_id, context }
     }
 }
 
-impl<EXT: Clone, DB: Database + Clone> Clone for ContextWithHandlerCfg<EXT, DB>
+impl<ChainSpecT: ChainSpec, EXT: Clone, DB: Database + Clone> Clone
+    for ContextWithChainSpec<ChainSpecT, EXT, DB>
 where
     DB::Error: Clone,
 {
     fn clone(&self) -> Self {
         Self {
             context: self.context.clone(),
-            cfg: self.cfg,
+            spec_id: self.spec_id,
         }
     }
 }
 
-impl<EXT, DB: Database> Host for Context<EXT, DB> {
+impl<ChainSpecT: ChainSpec, EXT, DB: Database> Host for Context<ChainSpecT, EXT, DB> {
+    type ChainSpecT = ChainSpecT;
+
     /// Returns reference to Environment.
     #[inline]
-    fn env(&self) -> &Env {
+    fn env(&self) -> &Env<ChainSpecT> {
         &self.evm.env
     }
 
-    fn env_mut(&mut self) -> &mut Env {
+    fn env_mut(&mut self) -> &mut Env<ChainSpecT> {
         &mut self.evm.env
     }
 
     fn block_hash(&mut self, number: u64) -> Option<B256> {
-        let block_number = as_usize_saturated!(self.env().block.number);
+        let block_number = as_usize_saturated!(self.env().block.number());
         let requested_number = usize::try_from(number).unwrap_or(usize::MAX);
 
         let Some(diff) = block_number.checked_sub(requested_number) else {

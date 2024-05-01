@@ -8,10 +8,10 @@ use crate::{
     },
     journaled_state::JournaledState,
     primitives::{
-        keccak256, AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme,
-        EVMError, Env, Eof, HashSet, Spec,
+        keccak256, AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, ChainSpec,
+        CreateScheme, Env, Eof, HashSet, Spec,
         SpecId::{self, *},
-        B256, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
+        Transaction as _, B256, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
@@ -19,22 +19,19 @@ use std::{boxed::Box, sync::Arc};
 
 /// EVM contexts contains data that EVM needs for execution.
 #[derive(Debug)]
-pub struct InnerEvmContext<DB: Database> {
+pub struct InnerEvmContext<ChainSpecT: ChainSpec, DB: Database> {
     /// EVM Environment contains all the information about config, block and transaction that
     /// evm needs.
-    pub env: Box<Env>,
+    pub env: Box<Env<ChainSpecT>>,
     /// EVM State with journaling support.
     pub journaled_state: JournaledState,
     /// Database to load data from.
     pub db: DB,
     /// Error that happened during execution.
-    pub error: Result<(), EVMError<DB::Error>>,
-    /// Used as temporary value holder to store L1 block info.
-    #[cfg(feature = "optimism")]
-    pub l1_block_info: Option<crate::optimism::L1BlockInfo>,
+    pub error: Result<(), DB::Error>,
 }
 
-impl<DB: Database + Clone> Clone for InnerEvmContext<DB>
+impl<ChainSpecT: ChainSpec, DB: Database + Clone> Clone for InnerEvmContext<ChainSpecT, DB>
 where
     DB::Error: Clone,
 {
@@ -44,34 +41,28 @@ where
             journaled_state: self.journaled_state.clone(),
             db: self.db.clone(),
             error: self.error.clone(),
-            #[cfg(feature = "optimism")]
-            l1_block_info: self.l1_block_info.clone(),
         }
     }
 }
 
-impl<DB: Database> InnerEvmContext<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> InnerEvmContext<ChainSpecT, DB> {
     pub fn new(db: DB) -> Self {
         Self {
             env: Box::default(),
             journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
             db,
             error: Ok(()),
-            #[cfg(feature = "optimism")]
-            l1_block_info: None,
         }
     }
 
     /// Creates a new context with the given environment and database.
     #[inline]
-    pub fn new_with_env(db: DB, env: Box<Env>) -> Self {
+    pub fn new_with_env(db: DB, env: Box<Env<ChainSpecT>>) -> Self {
         Self {
             env,
             journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
             db,
             error: Ok(()),
-            #[cfg(feature = "optimism")]
-            l1_block_info: None,
         }
     }
 
@@ -79,14 +70,12 @@ impl<DB: Database> InnerEvmContext<DB> {
     ///
     /// Note that this will ignore the previous `error` if set.
     #[inline]
-    pub fn with_db<ODB: Database>(self, db: ODB) -> InnerEvmContext<ODB> {
+    pub fn with_db<ODB: Database>(self, db: ODB) -> InnerEvmContext<ChainSpecT, ODB> {
         InnerEvmContext {
             env: self.env,
             journaled_state: self.journaled_state,
             db,
             error: Ok(()),
-            #[cfg(feature = "optimism")]
-            l1_block_info: self.l1_block_info,
         }
     }
 
@@ -100,11 +89,11 @@ impl<DB: Database> InnerEvmContext<DB> {
     ///
     /// Loading of accounts/storages is needed to make them warm.
     #[inline]
-    pub fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
+    pub fn load_access_list(&mut self) -> Result<(), DB::Error> {
         for AccessListItem {
             address,
             storage_keys,
-        } in self.env.tx.access_list.iter()
+        } in self.env.tx.access_list()
         {
             self.journaled_state.initial_account_load(
                 *address,
@@ -117,20 +106,20 @@ impl<DB: Database> InnerEvmContext<DB> {
 
     /// Return environment.
     #[inline]
-    pub fn env(&mut self) -> &mut Env {
+    pub fn env(&mut self) -> &mut Env<ChainSpecT> {
         &mut self.env
     }
 
     /// Returns the error by replacing it with `Ok(())`, if any.
     #[inline]
-    pub fn take_error(&mut self) -> Result<(), EVMError<DB::Error>> {
+    pub fn take_error(&mut self) -> Result<(), DB::Error> {
         core::mem::replace(&mut self.error, Ok(()))
     }
 
     /// Fetch block hash from database.
     #[inline]
-    pub fn block_hash(&mut self, number: u64) -> Result<B256, EVMError<DB::Error>> {
-        self.db.block_hash(number).map_err(EVMError::Database)
+    pub fn block_hash(&mut self, number: u64) -> Result<B256, DB::Error> {
+        self.db.block_hash(number)
     }
 
     /// Mark account as touched as only touched accounts will be added to state.
@@ -141,10 +130,7 @@ impl<DB: Database> InnerEvmContext<DB> {
 
     /// Loads an account into memory. Returns `true` if it is cold accessed.
     #[inline]
-    pub fn load_account(
-        &mut self,
-        address: Address,
-    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
+    pub fn load_account(&mut self, address: Address) -> Result<(&mut Account, bool), DB::Error> {
         self.journaled_state.load_account(address, &mut self.db)
     }
 
@@ -152,17 +138,14 @@ impl<DB: Database> InnerEvmContext<DB> {
     ///
     /// Return boolean pair where first is `is_cold` second bool `exists`.
     #[inline]
-    pub fn load_account_exist(
-        &mut self,
-        address: Address,
-    ) -> Result<LoadAccountResult, EVMError<DB::Error>> {
+    pub fn load_account_exist(&mut self, address: Address) -> Result<LoadAccountResult, DB::Error> {
         self.journaled_state
             .load_account_exist(address, &mut self.db)
     }
 
     /// Return account balance and is_cold flag.
     #[inline]
-    pub fn balance(&mut self, address: Address) -> Result<(U256, bool), EVMError<DB::Error>> {
+    pub fn balance(&mut self, address: Address) -> Result<(U256, bool), DB::Error> {
         self.journaled_state
             .load_account(address, &mut self.db)
             .map(|(acc, is_cold)| (acc.info.balance, is_cold))
@@ -172,7 +155,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     ///
     /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
     #[inline]
-    pub fn code(&mut self, address: Address) -> Result<(Bytes, bool), EVMError<DB::Error>> {
+    pub fn code(&mut self, address: Address) -> Result<(Bytes, bool), DB::Error> {
         self.journaled_state
             .load_code(address, &mut self.db)
             .map(|(a, is_cold)| {
@@ -191,7 +174,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     /// In case of EOF account it will return `EOF_MAGIC_HASH`
     /// (the hash of `0xEF00`).
     #[inline]
-    pub fn code_hash(&mut self, address: Address) -> Result<(B256, bool), EVMError<DB::Error>> {
+    pub fn code_hash(&mut self, address: Address) -> Result<(B256, bool), DB::Error> {
         let (acc, is_cold) = self.journaled_state.load_code(address, &mut self.db)?;
         if acc.is_empty() {
             return Ok((B256::ZERO, is_cold));
@@ -204,11 +187,7 @@ impl<DB: Database> InnerEvmContext<DB> {
 
     /// Load storage slot, if storage is not present inside the account then it will be loaded from database.
     #[inline]
-    pub fn sload(
-        &mut self,
-        address: Address,
-        index: U256,
-    ) -> Result<(U256, bool), EVMError<DB::Error>> {
+    pub fn sload(&mut self, address: Address, index: U256) -> Result<(U256, bool), DB::Error> {
         // account is always warm. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.journaled_state.sload(address, index, &mut self.db)
     }
@@ -220,7 +199,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         address: Address,
         index: U256,
         value: U256,
-    ) -> Result<SStoreResult, EVMError<DB::Error>> {
+    ) -> Result<SStoreResult, DB::Error> {
         self.journaled_state
             .sstore(address, index, value, &mut self.db)
     }
@@ -243,7 +222,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         &mut self,
         address: Address,
         target: Address,
-    ) -> Result<SelfDestructResult, EVMError<DB::Error>> {
+    ) -> Result<SelfDestructResult, DB::Error> {
         self.journaled_state
             .selfdestruct(address, target, &mut self.db)
     }
@@ -254,7 +233,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         &mut self,
         spec_id: SpecId,
         inputs: &EOFCreateInputs,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    ) -> Result<FrameOrResult, DB::Error> {
         let return_error = |e| {
             Ok(FrameOrResult::new_eofcreate_result(
                 InterpreterResult {
@@ -276,9 +255,9 @@ impl<DB: Database> InnerEvmContext<DB> {
                 // Use nonce from tx (if set) or from account (if not).
                 // Nonce for call is bumped in deduct_caller
                 // TODO(make this part of nonce increment code)
-                let nonce = self.env.tx.nonce.unwrap_or_else(|| {
-                    let caller = self.env.tx.caller;
-                    self.load_account(caller)
+                let nonce = self.env.tx.nonce().unwrap_or_else(|| {
+                    let caller = self.env.tx.caller();
+                    self.load_account(*caller)
                         .map(|(a, _)| a.info.nonce)
                         .unwrap_or_default()
                 });
@@ -293,7 +272,7 @@ impl<DB: Database> InnerEvmContext<DB> {
                     return return_error(InstructionResult::InvalidEOFInitCode);
                 }
 
-                (input, eof, self.env.tx.caller.create(nonce))
+                (input, eof, self.env.tx.caller().create(nonce))
             }
         };
 
@@ -405,7 +384,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         &mut self,
         spec_id: SpecId,
         inputs: &CreateInputs,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    ) -> Result<FrameOrResult, DB::Error> {
         let return_error = |e| {
             Ok(FrameOrResult::new_create_result(
                 InterpreterResult {

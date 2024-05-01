@@ -28,6 +28,11 @@ use std::{
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 
+#[cfg(feature = "optimism")]
+type TestChainSpec = revm::optimism::OptimismChainSpec;
+#[cfg(not(feature = "optimism"))]
+type TestChainSpec = revm::primitives::EthChainSpec;
+
 #[derive(Debug, Error)]
 #[error("Test {name} failed: {kind}")]
 pub struct TestError {
@@ -130,8 +135,8 @@ fn check_evm_execution<EXT>(
     test: &Test,
     expected_output: Option<&Bytes>,
     test_name: &str,
-    exec_result: &EVMResultGeneric<ExecutionResult, Infallible>,
-    evm: &Evm<'_, EXT, &mut State<EmptyDB>>,
+    exec_result: &EVMResultGeneric<ExecutionResult<TestChainSpec>, TestChainSpec, Infallible>,
+    evm: &Evm<'_, TestChainSpec, EXT, &mut State<EmptyDB>>,
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
@@ -155,7 +160,7 @@ fn check_evm_execution<EXT>(
                     Err(e) => e.to_string(),
                 },
                 "postLogsHash": logs_root,
-                "fork": evm.handler.cfg().spec_id,
+                "fork": evm.handler.spec_id(),
                 "test": test_name,
                 "d": test.indexes.data,
                 "g": test.indexes.gas,
@@ -273,7 +278,7 @@ pub fn execute_test_suite(
             cache_state.insert_account_with_storage(address, acc_info, info.storage);
         }
 
-        let mut env = Box::<Env>::default();
+        let mut env = Box::<Env<TestChainSpec>>::default();
         // for mainnet
         env.cfg.chain_id = 1;
         // env.cfg.spec_id is set down the road
@@ -360,10 +365,7 @@ pub fn execute_test_suite(
                 env.tx.transact_to = to;
 
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(
-                    spec_id,
-                    revm::primitives::SpecId::SPURIOUS_DRAGON,
-                ));
+                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
                 let mut state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
@@ -429,10 +431,7 @@ pub fn execute_test_suite(
 
                 // re build to run with tracing
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(
-                    spec_id,
-                    revm::primitives::SpecId::SPURIOUS_DRAGON,
-                ));
+                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
                 let state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
