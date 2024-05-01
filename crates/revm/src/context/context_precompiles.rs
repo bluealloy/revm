@@ -1,25 +1,25 @@
 use super::InnerEvmContext;
 use crate::{
     precompile::{Precompile, PrecompileResult},
-    primitives::{db::Database, Address, Bytes, HashMap, HashSet},
+    primitives::{db::Database, Address, Bytes, ChainSpec, HashMap, HashSet},
 };
 use dyn_clone::DynClone;
 use revm_precompile::{PrecompileSpecId, PrecompileWithAddress, Precompiles};
 use std::{boxed::Box, sync::Arc};
 
 /// A single precompile handler.
-pub enum ContextPrecompile<DB: Database> {
+pub enum ContextPrecompile<ChainSpecT: ChainSpec, DB: Database> {
     /// Ordinary precompiles
     Ordinary(Precompile),
     /// Stateful precompile that is Arc over [`ContextStatefulPrecompile`] trait.
     /// It takes a reference to input, gas limit and Context.
-    ContextStateful(ContextStatefulPrecompileArc<DB>),
+    ContextStateful(ContextStatefulPrecompileArc<ChainSpecT, DB>),
     /// Mutable stateful precompile that is Box over [`ContextStatefulPrecompileMut`] trait.
     /// It takes a reference to input, gas limit and context.
-    ContextStatefulMut(ContextStatefulPrecompileBox<DB>),
+    ContextStatefulMut(ContextStatefulPrecompileBox<ChainSpecT, DB>),
 }
 
-impl<DB: Database> Clone for ContextPrecompile<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> Clone for ContextPrecompile<ChainSpecT, DB> {
     fn clone(&self) -> Self {
         match self {
             Self::Ordinary(p) => Self::Ordinary(p.clone()),
@@ -29,13 +29,13 @@ impl<DB: Database> Clone for ContextPrecompile<DB> {
     }
 }
 
-enum PrecompilesCow<DB: Database> {
+enum PrecompilesCow<ChainSpecT: ChainSpec, DB: Database> {
     /// Default precompiles, returned by `Precompiles::new`. Used to fast-path the default case.
     StaticRef(&'static Precompiles),
-    Owned(HashMap<Address, ContextPrecompile<DB>>),
+    Owned(HashMap<Address, ContextPrecompile<ChainSpecT, DB>>),
 }
 
-impl<DB: Database> Clone for PrecompilesCow<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> Clone for PrecompilesCow<ChainSpecT, DB> {
     fn clone(&self) -> Self {
         match *self {
             PrecompilesCow::StaticRef(p) => PrecompilesCow::StaticRef(p),
@@ -45,11 +45,11 @@ impl<DB: Database> Clone for PrecompilesCow<DB> {
 }
 
 /// Precompiles context.
-pub struct ContextPrecompiles<DB: Database> {
-    inner: PrecompilesCow<DB>,
+pub struct ContextPrecompiles<ChainSpecT: ChainSpec, DB: Database> {
+    inner: PrecompilesCow<ChainSpecT, DB>,
 }
 
-impl<DB: Database> Clone for ContextPrecompiles<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> Clone for ContextPrecompiles<ChainSpecT, DB> {
     fn clone(&self) -> Self {
         Self {
             inner: self.inner.clone(),
@@ -57,7 +57,7 @@ impl<DB: Database> Clone for ContextPrecompiles<DB> {
     }
 }
 
-impl<DB: Database> ContextPrecompiles<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> ContextPrecompiles<ChainSpecT, DB> {
     /// Creates a new precompiles context at the given spec ID.
     ///
     /// This is a cheap operation that does not allocate by reusing the global precompiles.
@@ -79,7 +79,9 @@ impl<DB: Database> ContextPrecompiles<DB> {
 
     /// Creates a new precompiles context from the given precompiles.
     #[inline]
-    pub fn from_precompiles(precompiles: HashMap<Address, ContextPrecompile<DB>>) -> Self {
+    pub fn from_precompiles(
+        precompiles: HashMap<Address, ContextPrecompile<ChainSpecT, DB>>,
+    ) -> Self {
         Self {
             inner: PrecompilesCow::Owned(precompiles),
         }
@@ -120,12 +122,14 @@ impl<DB: Database> ContextPrecompiles<DB> {
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-        evmctx: &mut InnerEvmContext<DB>,
+        evmctx: &mut InnerEvmContext<ChainSpecT, DB>,
     ) -> Option<PrecompileResult> {
         Some(match self.inner {
-            PrecompilesCow::StaticRef(p) => p.get(address)?.call_ref(bytes, gas_limit, &evmctx.env),
+            PrecompilesCow::StaticRef(p) => {
+                p.get(address)?.call_ref(bytes, gas_limit, &evmctx.env.cfg)
+            }
             PrecompilesCow::Owned(ref mut owned) => match owned.get_mut(address)? {
-                ContextPrecompile::Ordinary(p) => p.call(bytes, gas_limit, &evmctx.env),
+                ContextPrecompile::Ordinary(p) => p.call(bytes, gas_limit, &evmctx.env.cfg),
                 ContextPrecompile::ContextStateful(p) => p.call(bytes, gas_limit, evmctx),
                 ContextPrecompile::ContextStatefulMut(p) => p.call_mut(bytes, gas_limit, evmctx),
             },
@@ -136,7 +140,7 @@ impl<DB: Database> ContextPrecompiles<DB> {
     ///
     /// Clones the precompiles map if it is shared.
     #[inline]
-    pub fn to_mut(&mut self) -> &mut HashMap<Address, ContextPrecompile<DB>> {
+    pub fn to_mut(&mut self) -> &mut HashMap<Address, ContextPrecompile<ChainSpecT, DB>> {
         if let PrecompilesCow::StaticRef(_) = self.inner {
             self.mutate_into_owned();
         }
@@ -164,13 +168,20 @@ impl<DB: Database> ContextPrecompiles<DB> {
     }
 }
 
-impl<DB: Database> Extend<(Address, ContextPrecompile<DB>)> for ContextPrecompiles<DB> {
-    fn extend<T: IntoIterator<Item = (Address, ContextPrecompile<DB>)>>(&mut self, iter: T) {
+impl<ChainSpecT: ChainSpec, DB: Database> Extend<(Address, ContextPrecompile<ChainSpecT, DB>)>
+    for ContextPrecompiles<ChainSpecT, DB>
+{
+    fn extend<T: IntoIterator<Item = (Address, ContextPrecompile<ChainSpecT, DB>)>>(
+        &mut self,
+        iter: T,
+    ) {
         self.to_mut().extend(iter.into_iter().map(Into::into))
     }
 }
 
-impl<DB: Database> Extend<PrecompileWithAddress> for ContextPrecompiles<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> Extend<PrecompileWithAddress>
+    for ContextPrecompiles<ChainSpecT, DB>
+{
     fn extend<T: IntoIterator<Item = PrecompileWithAddress>>(&mut self, iter: T) {
         self.to_mut().extend(iter.into_iter().map(|precompile| {
             let (address, precompile) = precompile.into();
@@ -179,7 +190,7 @@ impl<DB: Database> Extend<PrecompileWithAddress> for ContextPrecompiles<DB> {
     }
 }
 
-impl<DB: Database> Default for ContextPrecompiles<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> Default for ContextPrecompiles<ChainSpecT, DB> {
     fn default() -> Self {
         Self {
             inner: Default::default(),
@@ -187,7 +198,7 @@ impl<DB: Database> Default for ContextPrecompiles<DB> {
     }
 }
 
-impl<DB: Database> Default for PrecompilesCow<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> Default for PrecompilesCow<ChainSpecT, DB> {
     fn default() -> Self {
         Self::Owned(Default::default())
     }
@@ -195,35 +206,39 @@ impl<DB: Database> Default for PrecompilesCow<DB> {
 
 /// Context aware stateful precompile trait. It is used to create
 /// a arc precompile in [`ContextPrecompile`].
-pub trait ContextStatefulPrecompile<DB: Database>: Sync + Send {
+pub trait ContextStatefulPrecompile<ChainSpecT: ChainSpec, DB: Database>: Sync + Send {
     fn call(
         &self,
         bytes: &Bytes,
         gas_limit: u64,
-        evmctx: &mut InnerEvmContext<DB>,
+        evmctx: &mut InnerEvmContext<ChainSpecT, DB>,
     ) -> PrecompileResult;
 }
 
 /// Context aware mutable stateful precompile trait. It is used to create
 /// a boxed precompile in [`ContextPrecompile`].
-pub trait ContextStatefulPrecompileMut<DB: Database>: DynClone + Send + Sync {
+pub trait ContextStatefulPrecompileMut<ChainSpecT: ChainSpec, DB: Database>:
+    DynClone + Send + Sync
+{
     fn call_mut(
         &mut self,
         bytes: &Bytes,
         gas_limit: u64,
-        evmctx: &mut InnerEvmContext<DB>,
+        evmctx: &mut InnerEvmContext<ChainSpecT, DB>,
     ) -> PrecompileResult;
 }
 
-dyn_clone::clone_trait_object!(<DB> ContextStatefulPrecompileMut<DB>);
+dyn_clone::clone_trait_object!(<ChainSpecT, DB> ContextStatefulPrecompileMut<ChainSpecT, DB>);
 
 /// Arc over context stateful precompile.
-pub type ContextStatefulPrecompileArc<DB> = Arc<dyn ContextStatefulPrecompile<DB>>;
+pub type ContextStatefulPrecompileArc<ChainSpecT, DB> =
+    Arc<dyn ContextStatefulPrecompile<ChainSpecT, DB>>;
 
 /// Box over context mutable stateful precompile
-pub type ContextStatefulPrecompileBox<DB> = Box<dyn ContextStatefulPrecompileMut<DB>>;
+pub type ContextStatefulPrecompileBox<ChainSpecT, DB> =
+    Box<dyn ContextStatefulPrecompileMut<ChainSpecT, DB>>;
 
-impl<DB: Database> From<Precompile> for ContextPrecompile<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> From<Precompile> for ContextPrecompile<ChainSpecT, DB> {
     fn from(p: Precompile) -> Self {
         ContextPrecompile::Ordinary(p)
     }
@@ -232,13 +247,14 @@ impl<DB: Database> From<Precompile> for ContextPrecompile<DB> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::EmptyDB;
+    use crate::{db::EmptyDB, primitives::EthChainSpec};
 
     #[test]
     fn test_precompiles_context() {
         let custom_address = Address::with_last_byte(0xff);
 
-        let mut precompiles = ContextPrecompiles::<EmptyDB>::new(PrecompileSpecId::HOMESTEAD);
+        let mut precompiles =
+            ContextPrecompiles::<EthChainSpec, EmptyDB>::new(PrecompileSpecId::HOMESTEAD);
         assert_eq!(precompiles.addresses().count(), 4);
         assert!(matches!(precompiles.inner, PrecompilesCow::StaticRef(_)));
         assert!(!precompiles.contains(&custom_address));

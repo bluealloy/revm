@@ -1,18 +1,20 @@
-use crate::{Address, Bytes, EvmState, Log, U256};
+use crate::{Address, Bytes, ChainSpec, EthChainSpec, EvmState, Log, Transaction, U256};
 use core::fmt;
 use std::{boxed::Box, string::String, vec::Vec};
 
 /// Result of EVM execution.
-pub type EVMResult<DBError> = EVMResultGeneric<ResultAndState, DBError>;
+pub type EVMResult<ChainSpecT, DBError> =
+    EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, DBError>;
 
 /// Generic result of EVM execution. Used to represent error and generic output.
-pub type EVMResultGeneric<T, DBError> = core::result::Result<T, EVMError<DBError>>;
+pub type EVMResultGeneric<T, ChainSpecT, DBError> =
+    core::result::Result<T, EVMError<ChainSpecT, DBError>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ResultAndState {
+pub struct ResultAndState<ChainSpecT: ChainSpec> {
     /// Status of execution
-    pub result: ExecutionResult,
+    pub result: ExecutionResult<ChainSpecT>,
     /// State that got updated
     pub state: EvmState,
 }
@@ -20,7 +22,7 @@ pub struct ResultAndState {
 /// Result of a transaction execution.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ExecutionResult {
+pub enum ExecutionResult<ChainSpecT: ChainSpec> {
     /// Returned successfully
     Success {
         reason: SuccessReason,
@@ -33,13 +35,13 @@ pub enum ExecutionResult {
     Revert { gas_used: u64, output: Bytes },
     /// Reverted for various reasons and spend all gas.
     Halt {
-        reason: HaltReason,
+        reason: ChainSpecT::HaltReason,
         /// Halting will spend all the gas, and will be equal to gas_limit.
         gas_used: u64,
     },
 }
 
-impl ExecutionResult {
+impl<ChainSpecT: ChainSpec> ExecutionResult<ChainSpecT> {
     /// Returns if transaction execution is successful.
     /// 1 indicates success, 0 indicates revert.
     /// <https://eips.ethereum.org/EIPS/eip-658>
@@ -135,11 +137,11 @@ impl Output {
 }
 
 /// Main EVM error.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum EVMError<DBError> {
+pub enum EVMError<ChainSpecT: ChainSpec, DBError> {
     /// Transaction validation error.
-    Transaction(InvalidTransaction),
+    Transaction(<ChainSpecT::Transaction as Transaction>::TransactionValidationError),
     /// Header validation error.
     Header(InvalidHeader),
     /// Database error.
@@ -152,9 +154,9 @@ pub enum EVMError<DBError> {
     Precompile(String),
 }
 
-impl<DBError> EVMError<DBError> {
+impl<ChainSpecT: ChainSpec, DBError> EVMError<ChainSpecT, DBError> {
     /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
-    pub fn map_db_err<F, E>(self, op: F) -> EVMError<E>
+    pub fn map_db_err<F, E>(self, op: F) -> EVMError<ChainSpecT, E>
     where
         F: FnOnce(DBError) -> E,
     {
@@ -169,7 +171,13 @@ impl<DBError> EVMError<DBError> {
 }
 
 #[cfg(feature = "std")]
-impl<DBError: std::error::Error + 'static> std::error::Error for EVMError<DBError> {
+impl<ChainSpecT, DBError: std::error::Error + 'static> std::error::Error
+    for EVMError<ChainSpecT, DBError>
+where
+    ChainSpecT: ChainSpec,
+    <ChainSpecT::Transaction as Transaction>::TransactionValidationError:
+        std::error::Error + 'static,
+{
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Transaction(e) => Some(e),
@@ -180,7 +188,7 @@ impl<DBError: std::error::Error + 'static> std::error::Error for EVMError<DBErro
     }
 }
 
-impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
+impl<ChainSpecT: ChainSpec, DBError: fmt::Display> fmt::Display for EVMError<ChainSpecT, DBError> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Transaction(e) => write!(f, "transaction validation error: {e}"),
@@ -191,13 +199,13 @@ impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
     }
 }
 
-impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
+impl<DBError> From<InvalidTransaction> for EVMError<EthChainSpec, DBError> {
     fn from(value: InvalidTransaction) -> Self {
         Self::Transaction(value)
     }
 }
 
-impl<DBError> From<InvalidHeader> for EVMError<DBError> {
+impl<ChainSpecT: ChainSpec, DBError> From<InvalidHeader> for EVMError<ChainSpecT, DBError> {
     fn from(value: InvalidHeader) -> Self {
         Self::Header(value)
     }
@@ -311,9 +319,6 @@ pub enum InvalidTransaction {
     AuthorizationListNotSupported,
     /// EIP-7702 transaction has invalid fields set.
     AuthorizationListInvalidFields,
-    /// Optimism-specific transaction validation error.
-    #[cfg(feature = "optimism")]
-    OptimismError(OptimismInvalidTransaction),
 }
 
 #[cfg(feature = "std")]
@@ -393,8 +398,6 @@ impl fmt::Display for InvalidTransaction {
             Self::AuthorizationListInvalidFields => {
                 write!(f, "authorization list tx has invalid fields")
             }
-            #[cfg(feature = "optimism")]
-            Self::OptimismError(op_error) => op_error.fmt(f),
         }
     }
 }
@@ -467,10 +470,6 @@ pub enum HaltReason {
     EofAuxDataTooSmall,
     /// EOF Subroutine stack overflow
     EOFFunctionStackOverflow,
-
-    /* Optimism errors */
-    #[cfg(feature = "optimism")]
-    FailedDeposit,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

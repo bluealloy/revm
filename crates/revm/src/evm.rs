@@ -1,15 +1,15 @@
+use revm_interpreter::Host as _;
+
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
-    handler::Handler,
-    interpreter::{
-        CallInputs, CreateInputs, EOFCreateInputs, Host, InterpreterAction, SharedMemory,
-    },
+    handler::{EnvWithChainSpec, Handler},
+    interpreter::{CallInputs, CreateInputs, EOFCreateInputs, InterpreterAction, SharedMemory},
     primitives::{
-        specification::SpecId, BlockEnv, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
-        ExecutionResult, HandlerCfg, ResultAndState, TxEnv, TxKind, EOF_MAGIC_BYTES,
+        CfgEnv, ChainSpec, EVMError, EVMResult, EthChainSpec, ExecutionResult, ResultAndState,
+        SpecId, Transaction as _, TxKind, EOF_MAGIC_BYTES,
     },
-    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
+    Context, ContextWithChainSpec, Frame, FrameOrResult, FrameResult,
 };
 use core::fmt;
 use std::{boxed::Box, vec::Vec};
@@ -19,16 +19,17 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 
 /// EVM instance containing both internal EVM context and external context
 /// and the handler that dictates the logic of EVM (or hardfork specification).
-pub struct Evm<'a, EXT, DB: Database> {
+pub struct Evm<'a, ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
-    pub context: Context<EXT, DB>,
+    pub context: Context<ChainSpecT, EXT, DB>,
     /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
     /// and it different depending on the specified fork.
-    pub handler: Handler<'a, Context<EXT, DB>, EXT, DB>,
+    pub handler: Handler<'a, ChainSpecT, Context<ChainSpecT, EXT, DB>, EXT, DB>,
 }
 
-impl<EXT, DB> fmt::Debug for Evm<'_, EXT, DB>
+impl<ChainSpecT, EXT, DB> fmt::Debug for Evm<'_, ChainSpecT, EXT, DB>
 where
+    ChainSpecT: ChainSpec,
     EXT: fmt::Debug,
     DB: Database + fmt::Debug,
     DB::Error: fmt::Debug,
@@ -40,41 +41,49 @@ where
     }
 }
 
-impl<EXT, DB: Database + DatabaseCommit> Evm<'_, EXT, DB> {
+impl<EXT, ChainSpecT: ChainSpec, DB: Database + DatabaseCommit> Evm<'_, ChainSpecT, EXT, DB> {
     /// Commit the changes to the database.
-    pub fn transact_commit(&mut self) -> Result<ExecutionResult, EVMError<DB::Error>> {
+    pub fn transact_commit(
+        &mut self,
+    ) -> Result<ExecutionResult<ChainSpecT>, EVMError<ChainSpecT, DB::Error>> {
         let ResultAndState { result, state } = self.transact()?;
         self.context.evm.db.commit(state);
         Ok(result)
     }
 }
 
-impl<'a> Evm<'a, (), EmptyDB> {
-    /// Returns evm builder with empty database and empty external context.
-    pub fn builder() -> EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
+impl<'a> Evm<'a, EthChainSpec, (), EmptyDB> {
+    /// Returns evm builder with the mainnet chain spec, empty database, and empty external context.
+    pub fn builder() -> EvmBuilder<'a, SetGenericStage, EthChainSpec, (), EmptyDB> {
         EvmBuilder::default()
     }
 }
 
-impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
+impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'a, ChainSpecT, EXT, DB> {
     /// Create new EVM.
     pub fn new(
-        mut context: Context<EXT, DB>,
-        handler: Handler<'a, Context<EXT, DB>, EXT, DB>,
-    ) -> Evm<'a, EXT, DB> {
-        context.evm.journaled_state.set_spec_id(handler.cfg.spec_id);
+        mut context: Context<ChainSpecT, EXT, DB>,
+        handler: Handler<'a, ChainSpecT, Context<ChainSpecT, EXT, DB>, EXT, DB>,
+    ) -> Evm<'a, ChainSpecT, EXT, DB> {
+        context
+            .evm
+            .journaled_state
+            .set_spec_id(handler.spec_id.into());
         Evm { context, handler }
     }
 
     /// Allow for evm setting to be modified by feeding current evm
     /// into the builder for modifications.
-    pub fn modify(self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+    pub fn modify(self) -> EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB> {
         EvmBuilder::new(self)
     }
 
     /// Runs main call loop.
     #[inline]
-    pub fn run_the_loop(&mut self, first_frame: Frame) -> Result<FrameResult, EVMError<DB::Error>> {
+    pub fn run_the_loop(
+        &mut self,
+        first_frame: Frame,
+    ) -> Result<FrameResult, EVMError<ChainSpecT, DB::Error>> {
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
 
@@ -97,7 +106,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
 
             // Take error and break the loop, if any.
             // This error can be set in the Interpreter when it interacts with the context.
-            self.context.evm.take_error()?;
+            self.context.evm.take_error().map_err(EVMError::Database)?;
 
             let exec = &mut self.handler.execution;
             let frame_or_result = match next_action {
@@ -168,18 +177,18 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     }
 }
 
-impl<EXT, DB: Database> Evm<'_, EXT, DB> {
+impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
     /// Returns specification (hardfork) that the EVM is instanced with.
     ///
     /// SpecId depends on the handler.
-    pub fn spec_id(&self) -> SpecId {
-        self.handler.cfg.spec_id
+    pub fn spec_id(&self) -> ChainSpecT::Hardfork {
+        self.handler.spec_id
     }
 
     /// Pre verify transaction by checking Environment, initial gas spend and if caller
     /// has enough balance to pay for the gas.
     #[inline]
-    pub fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
+    pub fn preverify_transaction(&mut self) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
         let output = self.preverify_transaction_inner().map(|_| ());
         self.clear();
         output
@@ -194,7 +203,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     ///
     /// This function will not validate the transaction.
     #[inline]
-    pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
+    pub fn transact_preverified(&mut self) -> EVMResult<ChainSpecT, DB::Error> {
         let initial_gas_spend = self
             .handler
             .validation()
@@ -211,7 +220,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
     /// Pre verify transaction inner.
     #[inline]
-    fn preverify_transaction_inner(&mut self) -> Result<u64, EVMError<DB::Error>> {
+    fn preverify_transaction_inner(&mut self) -> Result<u64, EVMError<ChainSpecT, DB::Error>> {
         self.handler.validation().env(&self.context.evm.env)?;
         let initial_gas_spend = self
             .handler
@@ -227,7 +236,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     ///
     /// This function will validate the transaction.
     #[inline]
-    pub fn transact(&mut self) -> EVMResult<DB::Error> {
+    pub fn transact(&mut self) -> EVMResult<ChainSpecT, DB::Error> {
         let initial_gas_spend = self.preverify_transaction_inner().map_err(|e| {
             self.clear();
             e
@@ -237,12 +246,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let output = self.handler.post_execution().end(&mut self.context, output);
         self.clear();
         output
-    }
-
-    /// Returns the reference of handler configuration
-    #[inline]
-    pub fn handler_cfg(&self) -> &HandlerCfg {
-        &self.handler.cfg
     }
 
     /// Returns the reference of Env configuration
@@ -259,13 +262,13 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
     /// Returns the reference of transaction
     #[inline]
-    pub fn tx(&self) -> &TxEnv {
+    pub fn tx(&self) -> &ChainSpecT::Transaction {
         &self.context.evm.env.tx
     }
 
     /// Returns the mutable reference of transaction
     #[inline]
-    pub fn tx_mut(&mut self) -> &mut TxEnv {
+    pub fn tx_mut(&mut self) -> &mut ChainSpecT::Transaction {
         &mut self.context.evm.env.tx
     }
 
@@ -283,47 +286,45 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
     /// Returns the reference of block
     #[inline]
-    pub fn block(&self) -> &BlockEnv {
+    pub fn block(&self) -> &ChainSpecT::Block {
         &self.context.evm.env.block
     }
 
     /// Returns the mutable reference of block
     #[inline]
-    pub fn block_mut(&mut self) -> &mut BlockEnv {
+    pub fn block_mut(&mut self) -> &mut ChainSpecT::Block {
         &mut self.context.evm.env.block
-    }
-
-    /// Modify spec id, this will create new EVM that matches this spec id.
-    pub fn modify_spec_id(&mut self, spec_id: SpecId) {
-        self.handler.modify_spec_id(spec_id);
     }
 
     /// Returns internal database and external struct.
     #[inline]
-    pub fn into_context(self) -> Context<EXT, DB> {
+    pub fn into_context(self) -> Context<ChainSpecT, EXT, DB> {
         self.context
     }
 
-    /// Returns database and [`EnvWithHandlerCfg`].
+    /// Returns database and [`EnvWithChainSpec`].
     #[inline]
-    pub fn into_db_and_env_with_handler_cfg(self) -> (DB, EnvWithHandlerCfg) {
+    pub fn into_db_and_env_with_handler_cfg(self) -> (DB, EnvWithChainSpec<ChainSpecT>) {
         (
             self.context.evm.inner.db,
-            EnvWithHandlerCfg {
+            EnvWithChainSpec {
                 env: self.context.evm.inner.env,
-                handler_cfg: self.handler.cfg,
+                spec_id: self.handler.spec_id,
             },
         )
     }
 
-    /// Returns [Context] and [HandlerCfg].
+    /// Returns [Context] and hardfork.
     #[inline]
-    pub fn into_context_with_handler_cfg(self) -> ContextWithHandlerCfg<EXT, DB> {
-        ContextWithHandlerCfg::new(self.context, self.handler.cfg)
+    pub fn into_context_with_spec_id(self) -> ContextWithChainSpec<ChainSpecT, EXT, DB> {
+        ContextWithChainSpec::new(self.context, self.handler.spec_id)
     }
 
     /// Transact pre-verified transaction.
-    fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
+    fn transact_preverified_inner(
+        &mut self,
+        initial_gas_spend: u64,
+    ) -> EVMResult<ChainSpecT, DB::Error> {
         let spec_id = self.spec_id();
         let ctx = &mut self.context;
         let pre_exec = self.handler.pre_execution();
@@ -338,23 +339,26 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         // deduce caller balance with its limit.
         pre_exec.deduct_caller(ctx)?;
 
-        let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
+        let gas_limit = ctx.evm.env.tx.gas_limit() - initial_gas_spend;
 
         let exec = self.handler.execution();
         // call inner handling of call/create
-        let first_frame_or_result = match ctx.evm.env.tx.transact_to {
+        let first_frame_or_result = match ctx.evm.env.tx.transact_to() {
             TxKind::Call(_) => exec.call(
                 ctx,
                 CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
             )?,
             TxKind::Create => {
                 // if first byte of data is magic 0xEF00, then it is EOFCreate.
-                if spec_id.is_enabled_in(SpecId::PRAGUE_EOF)
-                    && ctx.env().tx.data.starts_with(&EOF_MAGIC_BYTES)
+                if Into::<SpecId>::into(spec_id).is_enabled_in(SpecId::PRAGUE_EOF)
+                    && ctx.env().tx.data().starts_with(&EOF_MAGIC_BYTES)
                 {
                     exec.eofcreate(
                         ctx,
-                        Box::new(EOFCreateInputs::new_tx(&ctx.evm.env.tx, gas_limit)),
+                        Box::new(EOFCreateInputs::new_tx::<ChainSpecT>(
+                            &ctx.evm.env.tx,
+                            gas_limit,
+                        )),
                     )?
                 } else {
                     // Safe to unwrap because we are sure that it is create tx.

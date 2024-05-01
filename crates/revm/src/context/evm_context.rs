@@ -9,9 +9,9 @@ use crate::{
         EOFCreateKind, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
     primitives::{
-        keccak256, Address, Bytecode, Bytes, CreateScheme, EVMError, Env, Eof,
+        keccak256, Address, Bytecode, Bytes, ChainSpec, CreateScheme, EVMError, Env, Eof,
         SpecId::{self, *},
-        B256, EOF_MAGIC_BYTES,
+        Transaction as _, B256, EOF_MAGIC_BYTES,
     },
     ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
@@ -22,15 +22,16 @@ use core::{
 use std::{boxed::Box, sync::Arc};
 
 /// EVM context that contains the inner EVM context and precompiles.
-pub struct EvmContext<DB: Database> {
+pub struct EvmContext<ChainSpecT: ChainSpec, DB: Database> {
     /// Inner EVM context.
-    pub inner: InnerEvmContext<DB>,
+    pub inner: InnerEvmContext<ChainSpecT, DB>,
     /// Precompiles that are available for evm.
-    pub precompiles: ContextPrecompiles<DB>,
+    pub precompiles: ContextPrecompiles<ChainSpecT, DB>,
 }
 
-impl<DB: Database + Clone> Clone for EvmContext<DB>
+impl<ChainSpecT, DB: Database + Clone> Clone for EvmContext<ChainSpecT, DB>
 where
+    ChainSpecT: ChainSpec,
     DB::Error: Clone,
 {
     fn clone(&self) -> Self {
@@ -41,8 +42,9 @@ where
     }
 }
 
-impl<DB> fmt::Debug for EvmContext<DB>
+impl<ChainSpecT, DB> fmt::Debug for EvmContext<ChainSpecT, DB>
 where
+    ChainSpecT: ChainSpec,
     DB: Database + fmt::Debug,
     DB::Error: fmt::Debug,
 {
@@ -54,21 +56,21 @@ where
     }
 }
 
-impl<DB: Database> Deref for EvmContext<DB> {
-    type Target = InnerEvmContext<DB>;
+impl<ChainSpecT: ChainSpec, DB: Database> Deref for EvmContext<ChainSpecT, DB> {
+    type Target = InnerEvmContext<ChainSpecT, DB>;
 
     fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }
 
-impl<DB: Database> DerefMut for EvmContext<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> DerefMut for EvmContext<ChainSpecT, DB> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.inner
     }
 }
 
-impl<DB: Database> EvmContext<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
     /// Create new context with database.
     pub fn new(db: DB) -> Self {
         Self {
@@ -79,7 +81,7 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Creates a new context with the given environment and database.
     #[inline]
-    pub fn new_with_env(db: DB, env: Box<Env>) -> Self {
+    pub fn new_with_env(db: DB, env: Box<Env<ChainSpecT>>) -> Self {
         Self {
             inner: InnerEvmContext::new_with_env(db, env),
             precompiles: ContextPrecompiles::default(),
@@ -90,7 +92,7 @@ impl<DB: Database> EvmContext<DB> {
     ///
     /// Note that this will ignore the previous `error` if set.
     #[inline]
-    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmContext<ODB> {
+    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmContext<ChainSpecT, ODB> {
         EvmContext {
             inner: self.inner.with_db(db),
             precompiles: ContextPrecompiles::default(),
@@ -99,7 +101,7 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Sets precompiles
     #[inline]
-    pub fn set_precompiles(&mut self, precompiles: ContextPrecompiles<DB>) {
+    pub fn set_precompiles(&mut self, precompiles: ContextPrecompiles<ChainSpecT, DB>) {
         // set warm loaded addresses.
         self.journaled_state
             .warm_preloaded_addresses
@@ -114,7 +116,7 @@ impl<DB: Database> EvmContext<DB> {
         address: &Address,
         input_data: &Bytes,
         gas: Gas,
-    ) -> Result<Option<InterpreterResult>, EVMError<DB::Error>> {
+    ) -> Result<Option<InterpreterResult>, EVMError<ChainSpecT, DB::Error>> {
         let Some(outcome) =
             self.precompiles
                 .call(address, input_data, gas.limit(), &mut self.inner)
@@ -154,7 +156,7 @@ impl<DB: Database> EvmContext<DB> {
     pub fn make_call_frame(
         &mut self,
         inputs: &CallInputs,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    ) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {
@@ -177,7 +179,8 @@ impl<DB: Database> EvmContext<DB> {
         let _ = self
             .inner
             .journaled_state
-            .load_account(inputs.bytecode_address, &mut self.inner.db)?;
+            .load_account(inputs.bytecode_address, &mut self.inner.db)
+            .map_err(EVMError::Database)?;
 
         // Create subroutine checkpoint
         let checkpoint = self.journaled_state.checkpoint();
@@ -186,18 +189,24 @@ impl<DB: Database> EvmContext<DB> {
         match inputs.value {
             // if transfer value is zero, load account and force the touch.
             CallValue::Transfer(value) if value.is_zero() => {
-                self.load_account(inputs.target_address)?;
+                self.load_account(inputs.target_address)
+                    .map_err(EVMError::Database)?;
                 self.journaled_state.touch(&inputs.target_address);
             }
             CallValue::Transfer(value) => {
                 // Transfer value from caller to called account. As value get transferred
                 // target gets touched.
-                if let Some(result) = self.inner.journaled_state.transfer(
-                    &inputs.caller,
-                    &inputs.target_address,
-                    value,
-                    &mut self.inner.db,
-                )? {
+                if let Some(result) = self
+                    .inner
+                    .journaled_state
+                    .transfer(
+                        &inputs.caller,
+                        &inputs.target_address,
+                        value,
+                        &mut self.inner.db,
+                    )
+                    .map_err(EVMError::Database)?
+                {
                     self.journaled_state.checkpoint_revert(checkpoint);
                     return return_result(result);
                 }
@@ -219,7 +228,8 @@ impl<DB: Database> EvmContext<DB> {
             let (account, _) = self
                 .inner
                 .journaled_state
-                .load_code(inputs.bytecode_address, &mut self.inner.db)?;
+                .load_code(inputs.bytecode_address, &mut self.inner.db)
+                .map_err(EVMError::Database)?;
 
             let code_hash = account.info.code_hash();
             let bytecode = account.info.code.clone().unwrap_or_default();
@@ -253,7 +263,7 @@ impl<DB: Database> EvmContext<DB> {
         &mut self,
         spec_id: SpecId,
         inputs: &CreateInputs,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    ) -> Result<FrameOrResult, DB::Error> {
         let return_error = |e| {
             Ok(FrameOrResult::new_create_result(
                 InterpreterResult {
@@ -347,7 +357,7 @@ impl<DB: Database> EvmContext<DB> {
         &mut self,
         spec_id: SpecId,
         inputs: &EOFCreateInputs,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    ) -> Result<FrameOrResult, DB::Error> {
         let return_error = |e| {
             Ok(FrameOrResult::new_eofcreate_result(
                 InterpreterResult {
@@ -381,8 +391,8 @@ impl<DB: Database> EvmContext<DB> {
                 let nonce = self
                     .env
                     .tx
-                    .nonce
-                    .map(|nonce| self.env.tx.caller.create(nonce));
+                    .nonce()
+                    .map(|nonce| self.env.tx.caller().create(nonce));
 
                 (input, eof, nonce)
             }
@@ -487,11 +497,11 @@ pub(crate) mod test_utils {
     /// Creates an evm context with a cache db backend.
     /// Additionally loads the mock caller account into the db,
     /// and sets the balance to the provided U256 value.
-    pub fn create_cache_db_evm_context_with_balance(
-        env: Box<Env>,
+    pub fn create_cache_db_evm_context_with_balance<ChainSpecT: ChainSpec>(
+        env: Box<Env<ChainSpecT>>,
         mut db: CacheDB<EmptyDB>,
         balance: U256,
-    ) -> EvmContext<CacheDB<EmptyDB>> {
+    ) -> EvmContext<ChainSpecT, CacheDB<EmptyDB>> {
         db.insert_account_info(
             test_utils::MOCK_CALLER,
             crate::primitives::AccountInfo {
@@ -505,10 +515,10 @@ pub(crate) mod test_utils {
     }
 
     /// Creates a cached db evm context.
-    pub fn create_cache_db_evm_context(
-        env: Box<Env>,
+    pub fn create_cache_db_evm_context<ChainSpecT: ChainSpec>(
+        env: Box<Env<ChainSpecT>>,
         db: CacheDB<EmptyDB>,
-    ) -> EvmContext<CacheDB<EmptyDB>> {
+    ) -> EvmContext<ChainSpecT, CacheDB<EmptyDB>> {
         EvmContext {
             inner: InnerEvmContext {
                 env,
@@ -516,15 +526,16 @@ pub(crate) mod test_utils {
                 db,
                 error: Ok(()),
                 valid_authorizations: Vec::new(),
-                #[cfg(feature = "optimism")]
-                l1_block_info: None,
             },
             precompiles: ContextPrecompiles::default(),
         }
     }
 
     /// Returns a new `EvmContext` with an empty journaled state.
-    pub fn create_empty_evm_context(env: Box<Env>, db: EmptyDB) -> EvmContext<EmptyDB> {
+    pub fn create_empty_evm_context<ChainSpecT: ChainSpec>(
+        env: Box<Env<ChainSpecT>>,
+        db: EmptyDB,
+    ) -> EvmContext<ChainSpecT, EmptyDB> {
         EvmContext {
             inner: InnerEvmContext {
                 env,
@@ -532,8 +543,6 @@ pub(crate) mod test_utils {
                 db,
                 error: Ok(()),
                 valid_authorizations: Default::default(),
-                #[cfg(feature = "optimism")]
-                l1_block_info: None,
             },
             precompiles: ContextPrecompiles::default(),
         }
@@ -546,7 +555,7 @@ mod tests {
     use crate::primitives::U256;
     use crate::{
         db::{CacheDB, EmptyDB},
-        primitives::{address, Bytecode},
+        primitives::{address, Bytecode, EthChainSpec},
         Frame, JournalEntry,
     };
     use std::boxed::Box;
@@ -556,7 +565,7 @@ mod tests {
     // call stack is too deep.
     #[test]
     fn test_make_call_frame_stack_too_deep() {
-        let env = Env::default();
+        let env = Env::<EthChainSpec>::default();
         let db = EmptyDB::default();
         let mut context = test_utils::create_empty_evm_context(Box::new(env), db);
         context.journaled_state.depth = CALL_STACK_LIMIT as usize + 1;
@@ -577,7 +586,7 @@ mod tests {
     // checkpointed on the journaled state correctly.
     #[test]
     fn test_make_call_frame_transfer_revert() {
-        let env = Env::default();
+        let env = Env::<EthChainSpec>::default();
         let db = EmptyDB::default();
         let mut evm_context = test_utils::create_empty_evm_context(Box::new(env), db);
         let contract = address!("dead10000000000000000000000000000001dead");
@@ -598,7 +607,7 @@ mod tests {
 
     #[test]
     fn test_make_call_frame_missing_code_context() {
-        let env = Env::default();
+        let env = Env::<EthChainSpec>::default();
         let cdb = CacheDB::new(EmptyDB::default());
         let bal = U256::from(3_000_000_000_u128);
         let mut context = create_cache_db_evm_context_with_balance(Box::new(env), cdb, bal);
@@ -613,7 +622,7 @@ mod tests {
 
     #[test]
     fn test_make_call_frame_succeeds() {
-        let env = Env::default();
+        let env = Env::<EthChainSpec>::default();
         let mut cdb = CacheDB::new(EmptyDB::default());
         let bal = U256::from(3_000_000_000_u128);
         let by = Bytecode::new_raw(Bytes::from(vec![0x60, 0x00, 0x60, 0x00]));
