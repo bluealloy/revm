@@ -88,14 +88,14 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// has enough balance to pay for the gas.
     #[inline]
     pub fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
-        self.handler.validation().env(&self.context.evm.env)?;
-        self.handler
-            .validation()
-            .initial_tx_gas(&self.context.evm.env)?;
-        self.handler
-            .validation()
-            .tx_against_state(&mut self.context)?;
-        Ok(())
+        let output = self.preverify_transaction_inner().map(|_| ());
+        self.clear();
+        output
+    }
+
+    /// Calls clear handle of post execution to clear the state for next execution.
+    fn clear(&mut self) {
+        self.handler.post_execution().clear(&mut self.context);
     }
 
     /// Transact pre-verified transaction
@@ -106,9 +106,45 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let initial_gas_spend = self
             .handler
             .validation()
-            .initial_tx_gas(&self.context.evm.env)?;
+            .initial_tx_gas(&self.context.evm.env)
+            .map_err(|e| {
+                self.clear();
+                e
+            })?;
         let output = self.transact_preverified_inner(initial_gas_spend);
-        self.handler.post_execution().end(&mut self.context, output)
+        let output = self.handler.post_execution().end(&mut self.context, output);
+        self.clear();
+        output
+    }
+
+    /// Pre verify transaction inner.
+    #[inline]
+    fn preverify_transaction_inner(&mut self) -> Result<u64, EVMError<DB::Error>> {
+        self.handler.validation().env(&self.context.evm.env)?;
+        let initial_gas_spend = self
+            .handler
+            .validation()
+            .initial_tx_gas(&self.context.evm.env)?;
+        self.handler
+            .validation()
+            .tx_against_state(&mut self.context)?;
+        Ok(initial_gas_spend)
+    }
+
+    /// Transact transaction
+    ///
+    /// This function will validate the transaction.
+    #[inline]
+    pub fn transact(&mut self) -> EVMResult<DB::Error> {
+        let initial_gas_spend = self.preverify_transaction_inner().map_err(|e| {
+            self.clear();
+            e
+        })?;
+
+        let output = self.transact_preverified_inner(initial_gas_spend);
+        let output = self.handler.post_execution().end(&mut self.context, output);
+        self.clear();
+        output
     }
 
     /// Returns the reference of handler configuration
@@ -163,24 +199,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     #[inline]
     pub fn block_mut(&mut self) -> &mut BlockEnv {
         &mut self.context.evm.env.block
-    }
-
-    /// Transact transaction
-    ///
-    /// This function will validate the transaction.
-    #[inline]
-    pub fn transact(&mut self) -> EVMResult<DB::Error> {
-        self.handler.validation().env(&self.context.evm.env)?;
-        let initial_gas_spend = self
-            .handler
-            .validation()
-            .initial_tx_gas(&self.context.evm.env)?;
-        self.handler
-            .validation()
-            .tx_against_state(&mut self.context)?;
-
-        let output = self.transact_preverified_inner(initial_gas_spend);
-        self.handler.post_execution().end(&mut self.context, output)
     }
 
     /// Modify spec id, this will create new EVM that matches this spec id.

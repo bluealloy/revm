@@ -36,7 +36,7 @@ pub struct CallInputs {
     ///
     /// Previously `context.scheme`.
     pub scheme: CallScheme,
-    /// Whether the call is initiated inside a static call.
+    /// Whether the call is a static call, or is initiated inside a static call.
     pub is_static: bool,
     /// Whether the call is initiated from EOF bytecode.
     pub is_eof: bool,

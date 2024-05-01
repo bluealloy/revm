@@ -15,6 +15,14 @@ pub fn end<EXT, DB: Database>(
     evm_output
 }
 
+/// Clear handle clears error and journal state.
+#[inline]
+pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
+    // clear error and journaled state.
+    let _ = context.evm.take_error();
+    context.evm.inner.journaled_state.clear();
+}
+
 /// Reward beneficiary with gas fee.
 #[inline]
 pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(

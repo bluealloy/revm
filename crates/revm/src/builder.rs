@@ -448,7 +448,7 @@ mod test {
         },
         Context, ContextPrecompile, ContextStatefulPrecompile, Evm, InMemoryDB, InnerEvmContext,
     };
-    use revm_interpreter::{Host, Interpreter};
+    use revm_interpreter::{gas, Host, Interpreter};
     use std::{cell::RefCell, rc::Rc, sync::Arc};
 
     /// Custom evm context
@@ -511,9 +511,10 @@ mod test {
         const CUSTOM_INSTRUCTION_COST: u64 = 133;
         const INITIAL_TX_GAS: u64 = 21000;
         const EXPECTED_RESULT_GAS: u64 = INITIAL_TX_GAS + CUSTOM_INSTRUCTION_COST;
+
         fn custom_instruction(interp: &mut Interpreter, _host: &mut impl Host) {
             // just spend some gas
-            interp.gas.record_cost(CUSTOM_INSTRUCTION_COST);
+            gas!(interp, CUSTOM_INSTRUCTION_COST);
         }
 
         let code = Bytecode::new_raw([0xEF, 0x00].into());

@@ -20,9 +20,9 @@ pub struct TypesSection {
 }
 
 impl TypesSection {
-    /// Return the difference between inputs and outputs.
+    /// Calculates the difference between the number of input and output stack elements.
     #[inline]
-    pub fn io_diff(&self) -> i32 {
+    pub const fn io_diff(&self) -> i32 {
         self.outputs as i32 - self.inputs as i32
     }
 
