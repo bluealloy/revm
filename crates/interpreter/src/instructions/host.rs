@@ -5,7 +5,7 @@ use crate::{
     Host, InstructionResult, SStoreResult,
 };
 use core::cmp::min;
-use revm_primitives::{BLOCK_HASH_HISTORY, HISTORY_SERVE_WINDOW, HISTORY_STORAGE_ADDRESS};
+use revm_primitives::{BLOCKHASH_SERVE_WINDOW, BLOCKHASH_STORAGE_ADDRESS, BLOCK_HASH_HISTORY};
 use std::vec::Vec;
 
 pub fn balance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
@@ -114,12 +114,12 @@ pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
             let diff = as_usize_saturated!(diff);
 
             // blockhash should push zero if number is same as current block number.
-            if SPEC::enabled(PRAGUE) && diff <= HISTORY_SERVE_WINDOW {
+            if SPEC::enabled(PRAGUE) && diff <= BLOCKHASH_SERVE_WINDOW {
                 let value = sload!(
                     interpreter,
                     host,
-                    HISTORY_STORAGE_ADDRESS,
-                    number.wrapping_rem(U256::from(HISTORY_SERVE_WINDOW))
+                    BLOCKHASH_STORAGE_ADDRESS,
+                    number.wrapping_rem(U256::from(BLOCKHASH_SERVE_WINDOW))
                 );
                 *number = value;
                 return;
