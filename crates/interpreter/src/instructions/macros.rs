@@ -300,14 +300,17 @@ macro_rules! push {
 /// Converts a `U256` value to a `u64`, saturating to `MAX` if the value is too large.
 #[macro_export]
 macro_rules! as_u64_saturated {
-    ($v:expr) => {{
-        let x: &[u64; 4] = $v.as_limbs();
-        if x[1] == 0 && x[2] == 0 && x[3] == 0 {
-            x[0]
-        } else {
-            u64::MAX
+    ($v:expr) => {
+        match $v.as_limbs() {
+            x => {
+                if (x[1] == 0) & (x[2] == 0) & (x[3] == 0) {
+                    x[0]
+                } else {
+                    u64::MAX
+                }
+            }
         }
-    }};
+    };
 }
 
 /// Converts a `U256` value to a `usize`, saturating to `MAX` if the value is too large.
@@ -352,16 +355,15 @@ macro_rules! as_usize_or_fail_ret {
         )
     };
 
-    ($interp:expr, $v:expr, $reason:expr, $ret:expr) => {{
-        let x = $v.as_limbs();
-        if x[1] != 0 || x[2] != 0 || x[3] != 0 {
-            $interp.instruction_result = $reason;
-            return $ret;
+    ($interp:expr, $v:expr, $reason:expr, $ret:expr) => {
+        match $v.as_limbs() {
+            x => {
+                if (x[0] > usize::MAX as u64) | (x[1] != 0) | (x[2] != 0) | (x[3] != 0) {
+                    $interp.instruction_result = $reason;
+                    return $ret;
+                }
+                x[0] as usize
+            }
         }
-        let Ok(val) = usize::try_from(x[0]) else {
-            $interp.instruction_result = $reason;
-            return $ret;
-        };
-        val
-    }};
+    };
 }
