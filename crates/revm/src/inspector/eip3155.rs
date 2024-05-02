@@ -191,7 +191,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         self.gas_inspector.step(interp, context);
-        self.stack = interp.stack.data().clone();
+        self.stack.clone_from(interp.stack.data());
         self.memory = if self.include_memory {
             Some(hex::encode_prefixed(interp.shared_memory.context_memory()))
         } else {
