@@ -45,6 +45,30 @@ macro_rules! check {
     };
 }
 
+/// Performs an `SLOAD` on the target account and storage index.
+///
+/// If the slot could not be loaded, or if the gas cost could not be charged, the expanded code
+/// sets the instruction result and returns accordingly.
+///
+/// # Note
+///
+/// This macro charges gas.
+///
+/// # Returns
+///
+/// Expands to the value of the storage slot.
+#[macro_export]
+macro_rules! sload {
+    ($interp:expr, $host:expr, $address:expr, $index:expr) => {{
+        let Some((value, is_cold)) = $host.sload($address, $index) else {
+            $interp.instruction_result = $crate::InstructionResult::FatalExternalError;
+            return;
+        };
+        $crate::gas!($interp, $crate::gas::sload_cost(SPEC::SPEC_ID, is_cold));
+        value
+    }};
+}
+
 /// Records a `gas` cost and fails the instruction if it would exceed the available gas.
 #[macro_export]
 macro_rules! gas {

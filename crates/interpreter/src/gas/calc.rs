@@ -1,12 +1,7 @@
-use revm_primitives::Bytes;
-
 use super::constants::*;
 use crate::{
-    primitives::{
-        Address, SpecId,
-        SpecId::{BERLIN, SPURIOUS_DRAGON, TANGERINE},
-        U256,
-    },
+    num_words,
+    primitives::{Address, Bytes, SpecId, U256},
     SelfDestructResult,
 };
 use std::vec::Vec;
@@ -155,7 +150,7 @@ pub const fn keccak256_cost(len: u64) -> Option<u64> {
 /// Calculate the cost of buffer per word.
 #[inline]
 pub const fn cost_per_word(len: u64, multiple: u64) -> Option<u64> {
-    multiple.checked_mul(len.div_ceil(32))
+    multiple.checked_mul(num_words(len))
 }
 
 /// EIP-3860: Limit and meter initcode
@@ -302,9 +297,9 @@ pub const fn call_cost(
     new_account_accounting: bool,
 ) -> u64 {
     // Account access.
-    let mut gas = if spec_id.is_enabled_in(BERLIN) {
+    let mut gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
         warm_cold_cost(is_cold)
-    } else if spec_id.is_enabled_in(TANGERINE) {
+    } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         700
     } else {
@@ -319,7 +314,7 @@ pub const fn call_cost(
     // new account cost
     if new_account_accounting {
         // EIP-161: State trie clearing (invariant-preserving alternative)
-        if spec_id.is_enabled_in(SPURIOUS_DRAGON) {
+        if spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
             // account only if there is value transferred.
             if transfers_value {
                 gas += NEWACCOUNT;
