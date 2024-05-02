@@ -33,7 +33,7 @@ pub fn i256_sign(val: &U256) -> Sign {
         Sign::Minus
     } else {
         // SAFETY: false == 0 == Zero, true == 1 == Plus
-        unsafe { core::mem::transmute(*val != U256::ZERO) }
+        unsafe { core::mem::transmute::<bool, Sign>(*val != U256::ZERO) }
     }
 }
 
