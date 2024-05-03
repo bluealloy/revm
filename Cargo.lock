@@ -2350,7 +2350,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "7.2.0"
+version = "8.0.0"
 dependencies = [
  "anyhow",
  "auto_impl",
@@ -2370,7 +2370,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "3.4.0"
+version = "4.0.0"
 dependencies = [
  "revm-primitives",
  "serde",
@@ -2378,13 +2378,14 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "5.1.0"
+version = "6.0.0"
 dependencies = [
  "aurora-engine-modexp",
  "c-kzg",
  "criterion",
  "k256",
  "once_cell",
+ "rand",
  "revm-primitives",
  "ripemd",
  "secp256k1",
@@ -2395,7 +2396,7 @@ dependencies = [
 
 [[package]]
 name = "revm-primitives"
-version = "3.1.0"
+version = "3.1.1"
 dependencies = [
  "alloy-primitives",
  "auto_impl",
@@ -2428,7 +2429,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "alloy-rlp",
  "hash-db",
@@ -3189,9 +3190,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.36.0"
+version = "1.37.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61285f6515fa018fb2d1e46eb21223fff441ee8db5d0f1435e8ab4f5cdb80931"
+checksum = "1adbebffeca75fcfd058afa480fb6c0b81e165a0323f9c9d39c9697e37c46787"
 dependencies = [
  "backtrace",
  "bytes",

@@ -6,6 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.0](https://github.com/bluealloy/revm/compare/revm-v7.2.0...revm-v8.0.0) - 2024-04-02
+
+### Added
+- [**breaking**] TracerEip3155 optionally traces memory ([#1234](https://github.com/bluealloy/revm/pull/1234))
+
+### Fixed
+- *(TracerEip3155)* clear Inspector data after transaction. ([#1230](https://github.com/bluealloy/revm/pull/1230))
+- *(GasInspector)* calculate correct remaining gas after call return ([#1236](https://github.com/bluealloy/revm/pull/1236))
+- fix eip3155 summary gas_used bug and add fork name ([#1216](https://github.com/bluealloy/revm/pull/1216))
+
+### Other
+- use uint macro & fix various small things ([#1253](https://github.com/bluealloy/revm/pull/1253))
+- *(deps)* bump tokio from 1.36.0 to 1.37.0 ([#1244](https://github.com/bluealloy/revm/pull/1244))
+- *(interpreter)* unbox contract field ([#1228](https://github.com/bluealloy/revm/pull/1228))
+- *(primitives)* kzg intro ([#1209](https://github.com/bluealloy/revm/pull/1209))
+- *(interpreter)* keep track of remaining gas rather than spent ([#1221](https://github.com/bluealloy/revm/pull/1221))
+- Improve `EthersDB` ([#1208](https://github.com/bluealloy/revm/pull/1208))
+
 ## [7.2.0](https://github.com/bluealloy/revm/compare/revm-v7.1.0...revm-v7.2.0) - 2024-03-19
 
 ### Added

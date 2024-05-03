@@ -133,7 +133,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
     let call_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
     let create_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
 
-    // Create handle
+    // Create handler
     let create_input_stack_inner = create_input_stack.clone();
     let old_handle = handler.execution.create.clone();
     handler.execution.create = Arc::new(

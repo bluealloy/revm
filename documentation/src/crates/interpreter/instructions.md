@@ -10,6 +10,6 @@ The `Opcode` enum represents the opcodes that are available in the Ethereum Virt
 
 The `Instruction` struct represents a single instruction in the EVM. It contains the opcode, which is the operation to be performed, and a list of bytes representing the operands for the instruction.
 
-## `execute` Function
+## `step` Function
 
-The `execute` function interprets an instruction. It uses the opcode to determine what operation to perform and then performs the operation using the operands in the instruction.
+The `step` function interprets an instruction. It uses the opcode to determine what operation to perform and then performs the operation using the operands in the instruction.
