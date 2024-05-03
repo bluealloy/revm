@@ -243,9 +243,9 @@ pub enum InvalidTransaction {
     BlobCreateTransaction,
     /// Transaction has more then [`crate::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
     TooManyBlobs {
-         max: usize,
-         have: usize,
-     },
+        max: usize,
+        have: usize,
+    },
     /// Blob transaction contains a versioned hash with an incorrect version
     BlobVersionNotSupported,
     /// EOF TxCreate transaction is not supported before Prague hardfork.
@@ -342,8 +342,8 @@ impl fmt::Display for InvalidTransaction {
             }
             Self::EmptyBlobs => write!(f, "empty blobs"),
             Self::BlobCreateTransaction => write!(f, "blob create transaction"),
-            Self::TooManyBlobs(num_blobs, max) => {
-                write!(f, "too many blobs, have {num_blobs}, max {max}")
+            Self::TooManyBlobs { max, have } => {
+                write!(f, "too many blobs, have {have}, max {max}")
             }
             Self::BlobVersionNotSupported => write!(f, "blob version not supported"),
             Self::EofInitcodesNotSupported => write!(f, "EOF initcodes not supported"),
