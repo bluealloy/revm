@@ -1,17 +1,18 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, EVMError, EthSpecId::LONDON, ExecutionResult, ResultAndState, Spec, U256,
+        db::Database, ChainSpec, EVMError, EthSpecId::LONDON, ExecutionResult, ResultAndState,
+        Spec, U256,
     },
     Context, FrameResult,
 };
 
 /// Mainnet end handle does not change the output.
 #[inline]
-pub fn end<EXT, DB: Database>(
+pub fn end<ChainSpecT: ChainSpec, EXT, DB: Database>(
     _context: &mut Context<EXT, DB>,
-    evm_output: Result<ResultAndState, EVMError<DB::Error>>,
-) -> Result<ResultAndState, EVMError<DB::Error>> {
+    evm_output: Result<ResultAndState<ChainSpecT>, EVMError<DB::Error>>,
+) -> Result<ResultAndState<ChainSpecT>, EVMError<DB::Error>> {
     evm_output
 }
 
@@ -56,7 +57,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
 }
 
 #[inline]
-pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
+pub fn reimburse_caller<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
@@ -80,10 +81,10 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
-pub fn output<EXT, DB: Database>(
+pub fn output<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     result: FrameResult,
-) -> Result<ResultAndState, EVMError<DB::Error>> {
+) -> Result<ResultAndState<ChainSpecT>, EVMError<DB::Error>> {
     context.evm.take_error()?;
     // used gas with refund calculated.
     let gas_refunded = result.gas().refunded() as u64;
@@ -94,7 +95,7 @@ pub fn output<EXT, DB: Database>(
     // reset journal and return present state.
     let (state, logs) = context.evm.journaled_state.finalize();
 
-    let result = match instruction_result.result.into() {
+    let result = match SuccessOrHalt::<ChainSpecT>::from(instruction_result.result) {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {
             reason,
             gas_used: final_gas_used,

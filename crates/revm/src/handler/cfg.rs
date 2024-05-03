@@ -1,107 +1,31 @@
 use core::ops::{Deref, DerefMut};
 use std::boxed::Box;
 
-use crate::{
-    primitives::{BlockEnv, CfgEnv, Env, TxEnv},
-    SpecId,
-};
-
-/// Handler configuration fields. It is used to configure the handler.
-/// It contains specification id and the Optimism related field if
-/// optimism feature is enabled.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
-pub struct HandlerCfg {
-    /// Specification identification.
-    pub spec_id: SpecId,
-    /// Optimism related field, it will append the Optimism handle register to the EVM.
-    #[cfg(feature = "optimism")]
-    pub is_optimism: bool,
-}
-
-impl Default for HandlerCfg {
-    fn default() -> Self {
-        Self::new(SpecId::default())
-    }
-}
-
-impl HandlerCfg {
-    /// Creates new `HandlerCfg` instance.
-    pub fn new(spec_id: SpecId) -> Self {
-        cfg_if::cfg_if! {
-            if #[cfg(all(feature = "optimism-default-handler",
-                not(feature = "negate-optimism-default-handler")))] {
-                    let is_optimism = true;
-            } else if #[cfg(feature = "optimism")] {
-                let is_optimism = false;
-            }
-        }
-        Self {
-            spec_id,
-            #[cfg(feature = "optimism")]
-            is_optimism,
-        }
-    }
-
-    /// Creates new `HandlerCfg` instance with the optimism feature.
-    #[cfg(feature = "optimism")]
-    pub fn new_with_optimism(spec_id: SpecId, is_optimism: bool) -> Self {
-        Self {
-            spec_id,
-            is_optimism,
-        }
-    }
-
-    /// Returns `true` if the optimism feature is enabled and flag is set to `true`.
-    pub fn is_optimism(&self) -> bool {
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "optimism")] {
-                self.is_optimism
-            } else {
-                false
-            }
-        }
-    }
-}
+use crate::primitives::{BlockEnv, CfgEnv, ChainSpec, Env, TxEnv};
 
 /// Configuration environment with the chain spec id.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CfgEnvWithHandlerCfg {
+pub struct CfgEnvWithChainSpec<ChainSpecT: ChainSpec> {
     /// Configuration environment.
     pub cfg_env: CfgEnv,
     /// Handler configuration fields.
-    pub handler_cfg: HandlerCfg,
+    pub spec_id: ChainSpecT::Hardfork,
 }
 
-impl CfgEnvWithHandlerCfg {
-    /// Returns new instance of `CfgEnvWithHandlerCfg` with the handler configuration.
-    pub fn new(cfg_env: CfgEnv, handler_cfg: HandlerCfg) -> Self {
-        Self {
-            cfg_env,
-            handler_cfg,
-        }
-    }
-
-    /// Returns new `CfgEnvWithHandlerCfg` instance with the chain spec id.
-    ///
-    /// is_optimism will be set to default value depending on `optimism-default-handler` feature.
-    pub fn new_with_spec_id(cfg_env: CfgEnv, spec_id: SpecId) -> Self {
-        Self::new(cfg_env, HandlerCfg::new(spec_id))
-    }
-
-    /// Enables the optimism feature.
-    #[cfg(feature = "optimism")]
-    pub fn enable_optimism(&mut self) {
-        self.handler_cfg.is_optimism = true;
+impl<ChainSpecT: ChainSpec> CfgEnvWithChainSpec<ChainSpecT> {
+    /// Returns new instance of `CfgEnvWithHandlerCfg`.
+    pub fn new(cfg_env: CfgEnv, spec_id: ChainSpecT::Hardfork) -> Self {
+        Self { cfg_env, spec_id }
     }
 }
 
-impl DerefMut for CfgEnvWithHandlerCfg {
+impl<ChainSpecT: ChainSpec> DerefMut for CfgEnvWithChainSpec<ChainSpecT> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.cfg_env
     }
 }
 
-impl Deref for CfgEnvWithHandlerCfg {
+impl<ChainSpecT: ChainSpec> Deref for CfgEnvWithChainSpec<ChainSpecT> {
     type Target = CfgEnv;
 
     fn deref(&self) -> &Self::Target {
@@ -111,50 +35,41 @@ impl Deref for CfgEnvWithHandlerCfg {
 
 /// Evm environment with the chain spec id.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub struct EnvWithHandlerCfg {
+pub struct EnvWithChainSpec<ChainSpecT: ChainSpec> {
     /// Evm enironment.
     pub env: Box<Env>,
     /// Handler configuration fields.
-    pub handler_cfg: HandlerCfg,
+    pub spec_id: ChainSpecT::Hardfork,
 }
 
-impl EnvWithHandlerCfg {
+impl<ChainSpecT: ChainSpec> EnvWithChainSpec<ChainSpecT> {
     /// Returns new `EnvWithHandlerCfg` instance.
-    pub fn new(env: Box<Env>, handler_cfg: HandlerCfg) -> Self {
-        Self { env, handler_cfg }
-    }
-
-    /// Returns new `EnvWithHandlerCfg` instance with the chain spec id.
-    ///
-    /// is_optimism will be set to default value depending on `optimism-default-handler` feature.
-    pub fn new_with_spec_id(env: Box<Env>, spec_id: SpecId) -> Self {
-        Self::new(env, HandlerCfg::new(spec_id))
+    pub fn new(env: Box<Env>, spec_id: ChainSpecT::Hardfork) -> Self {
+        Self { env, spec_id }
     }
 
     /// Takes `CfgEnvWithHandlerCfg` and returns new `EnvWithHandlerCfg` instance.
-    pub fn new_with_cfg_env(cfg: CfgEnvWithHandlerCfg, block: BlockEnv, tx: TxEnv) -> Self {
-        Self::new(Env::boxed(cfg.cfg_env, block, tx), cfg.handler_cfg)
+    pub fn new_with_cfg_env(
+        cfg: CfgEnvWithChainSpec<ChainSpecT>,
+        block: BlockEnv,
+        tx: TxEnv,
+    ) -> Self {
+        Self::new(Env::boxed(cfg.cfg_env, block, tx), cfg.spec_id)
     }
 
     /// Returns the specification id.
-    pub const fn spec_id(&self) -> SpecId {
-        self.handler_cfg.spec_id
-    }
-
-    /// Enables the optimism handle register.
-    #[cfg(feature = "optimism")]
-    pub fn enable_optimism(&mut self) {
-        self.handler_cfg.is_optimism = true;
+    pub const fn spec_id(&self) -> ChainSpecT::Hardfork {
+        self.spec_id
     }
 }
 
-impl DerefMut for EnvWithHandlerCfg {
+impl<ChainSpecT: ChainSpec> DerefMut for EnvWithChainSpec<ChainSpecT> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.env
     }
 }
 
-impl Deref for EnvWithHandlerCfg {
+impl<ChainSpecT: ChainSpec> Deref for EnvWithChainSpec<ChainSpecT> {
     type Target = Env;
 
     fn deref(&self) -> &Self::Target {

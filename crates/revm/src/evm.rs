@@ -1,17 +1,16 @@
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
-    chain_spec::{ChainSpec, MainnetChainSpec},
     db::{Database, DatabaseCommit, EmptyDB},
-    handler::{EnvWithHandlerCfg, Handler, HandlerCfg},
+    handler::{EnvWithChainSpec, Handler},
     interpreter::{
         opcode::InstructionTables, Host, Interpreter, InterpreterAction, LoadAccountResult,
         SStoreResult, SelfDestructResult, SharedMemory,
     },
     primitives::{
-        Address, BlockEnv, Bytecode, CfgEnv, EVMError, EVMResult, Env, ExecutionResult, Log,
-        ResultAndState, TransactTo, TxEnv, B256, U256,
+        Address, BlockEnv, Bytecode, CfgEnv, ChainSpec, EVMError, EVMResult, Env, ExecutionResult,
+        Log, MainnetChainSpec, ResultAndState, TransactTo, TxEnv, B256, U256,
     },
-    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult, SpecId,
+    Context, ContextWithChainSpec, Frame, FrameOrResult, FrameResult,
 };
 use core::fmt;
 use revm_interpreter::{CallInputs, CreateInputs};
@@ -46,7 +45,7 @@ where
 
 impl<EXT, ChainSpecT: ChainSpec, DB: Database + DatabaseCommit> Evm<'_, ChainSpecT, EXT, DB> {
     /// Commit the changes to the database.
-    pub fn transact_commit(&mut self) -> Result<ExecutionResult, EVMError<DB::Error>> {
+    pub fn transact_commit(&mut self) -> Result<ExecutionResult<ChainSpecT>, EVMError<DB::Error>> {
         let ResultAndState { result, state } = self.transact()?;
         self.context.evm.db.commit(state);
         Ok(result)
@@ -54,7 +53,7 @@ impl<EXT, ChainSpecT: ChainSpec, DB: Database + DatabaseCommit> Evm<'_, ChainSpe
 }
 
 impl<'a> Evm<'a, MainnetChainSpec, (), EmptyDB> {
-    /// Returns evm builder with empty database and empty external context.
+    /// Returns evm builder with the mainnet chain spec, empty database, and empty external context.
     pub fn builder() -> EvmBuilder<'a, SetGenericStage, MainnetChainSpec, (), EmptyDB> {
         EvmBuilder::default()
     }
@@ -69,7 +68,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'a, ChainSpecT, EXT, DB> 
         context
             .evm
             .journaled_state
-            .set_spec_id(handler.spec_id.spec_id.into());
+            .set_spec_id(handler.spec_id.into());
         Evm { context, handler }
     }
 
@@ -84,7 +83,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
     /// Returns specification (hardfork) that the EVM is instanced with.
     ///
     /// SpecId depends on the handler.
-    pub fn spec_id(&self) -> SpecId {
+    pub fn spec_id(&self) -> ChainSpecT::Hardfork {
         self.handler.spec_id
     }
 
@@ -106,7 +105,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
     ///
     /// This function will not validate the transaction.
     #[inline]
-    pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
+    pub fn transact_preverified(&mut self) -> EVMResult<ChainSpecT, DB::Error> {
         let initial_gas_spend = self
             .handler
             .validation()
@@ -139,7 +138,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
     ///
     /// This function will validate the transaction.
     #[inline]
-    pub fn transact(&mut self) -> EVMResult<DB::Error> {
+    pub fn transact(&mut self) -> EVMResult<ChainSpecT, DB::Error> {
         let initial_gas_spend = self.preverify_transaction_inner().map_err(|e| {
             self.clear();
             e
@@ -149,12 +148,6 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
         let output = self.handler.post_execution().end(&mut self.context, output);
         self.clear();
         output
-    }
-
-    /// Returns the reference of handler configuration
-    #[inline]
-    pub fn handler_cfg(&self) -> &HandlerCfg {
-        &self.handler.spec_id
     }
 
     /// Returns the reference of Env configuration
@@ -206,7 +199,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
     }
 
     /// Modify spec id, this will create new EVM that matches this spec id.
-    pub fn modify_spec_id(&mut self, spec_id: SpecId) {
+    pub fn modify_spec_id(&mut self, spec_id: ChainSpecT::Hardfork) {
         self.handler.modify_spec_id(spec_id);
     }
 
@@ -218,20 +211,20 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
 
     /// Returns database and [`EnvWithHandlerCfg`].
     #[inline]
-    pub fn into_db_and_env_with_handler_cfg(self) -> (DB, EnvWithHandlerCfg) {
+    pub fn into_db_and_env_with_handler_cfg(self) -> (DB, EnvWithChainSpec<ChainSpecT>) {
         (
             self.context.evm.inner.db,
-            EnvWithHandlerCfg {
+            EnvWithChainSpec {
                 env: self.context.evm.inner.env,
-                handler_cfg: self.handler.spec_id,
+                spec_id: self.handler.spec_id,
             },
         )
     }
 
     /// Returns [Context] and [HandlerCfg].
     #[inline]
-    pub fn into_context_with_handler_cfg(self) -> ContextWithHandlerCfg<EXT, DB> {
-        ContextWithHandlerCfg::new(self.context, self.handler.spec_id)
+    pub fn into_context_with_handler_cfg(self) -> ContextWithChainSpec<ChainSpecT, EXT, DB> {
+        ContextWithChainSpec::new(self.context, self.handler.spec_id)
     }
 
     /// Starts the main loop and returns outcome of the execution.
@@ -362,7 +355,10 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
     }
 
     /// Transact pre-verified transaction.
-    fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
+    fn transact_preverified_inner(
+        &mut self,
+        initial_gas_spend: u64,
+    ) -> EVMResult<ChainSpecT, DB::Error> {
         let ctx = &mut self.context;
         let pre_exec = self.handler.pre_execution();
 

@@ -1,9 +1,14 @@
+use crate::primitives::HaltReason;
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OptimismHaltReason {
+    Base(HaltReason),
     FailedDeposit,
 }
 
-impl From<OptimismHaltReason> for crate::primitives::HaltReason<OptimismHaltReason> {
-    fn from(value: OptimismHaltReason) -> Self {
-        Self::Custom(value)
+impl From<HaltReason> for OptimismHaltReason {
+    fn from(value: HaltReason) -> Self {
+        Self::Base(value)
     }
 }

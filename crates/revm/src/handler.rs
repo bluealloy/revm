@@ -5,15 +5,14 @@ pub mod mainnet;
 pub mod register;
 
 // Exports.
-pub use cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
+pub use cfg::{CfgEnvWithChainSpec, EnvWithChainSpec};
 pub use handle_types::*;
 
 // Includes.
 use crate::{
-    chain_spec::{ChainSpec, MainnetChainSpec},
     interpreter::{opcode::InstructionTables, Host},
-    primitives::{db::Database, spec_to_generic, EthSpecId, Spec},
-    Evm, SpecId,
+    primitives::{db::Database, spec_to_generic, ChainSpec},
+    Evm,
 };
 use register::{EvmHandler, HandleRegisters};
 use std::vec::Vec;
@@ -40,16 +39,9 @@ pub struct Handler<'a, ChainSpecT: ChainSpec, H: Host + 'a, EXT, DB: Database> {
     pub execution: ExecutionHandler<'a, EXT, DB>,
 }
 
-impl<EXT, DB: Database> EvmHandler<'_, MainnetChainSpec, EXT, DB> {
-    /// Creates handler with variable spec id, inside it will call `mainnet::<SPEC>` for
-    /// appropriate spec.
-    pub fn mainnet_with_spec(spec_id: EthSpecId) -> Self {
-        Self::base_with_spec(spec_id)
-    }
-}
-
 impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EXT, DB> {
-    fn base_with_spec(spec_id: ChainSpecT::Hardfork) -> Self {
+    /// Creates a base/vanilla Ethereum handler with the provided spec id.
+    pub fn mainnet_with_spec(spec_id: ChainSpecT::Hardfork) -> Self {
         spec_to_generic!(
             spec_id.into(),
             Self {
@@ -58,7 +50,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EX
                 registers: Vec::new(),
                 validation: ValidationHandler::new::<SPEC>(),
                 pre_execution: PreExecutionHandler::new::<SPEC>(),
-                post_execution: PostExecutionHandler::new::<SPEC>(),
+                post_execution: PostExecutionHandler::mainnet::<SPEC>(),
                 execution: ExecutionHandler::new::<SPEC>(),
             }
         )
@@ -140,17 +132,6 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EX
         out
     }
 
-    /// Creates the Handler with Generic Spec.
-    pub fn create_handle_generic<SPEC: Spec>(&mut self) -> EvmHandler<'a, ChainSpecT, EXT, DB> {
-        let registers = core::mem::take(&mut self.registers);
-        let mut base_handler = Handler::mainnet::<SPEC>();
-        // apply all registers to default handeler and raw mainnet instruction table.
-        for register in registers {
-            base_handler.append_handler_register(register)
-        }
-        base_handler
-    }
-
     /// Creates the Handler with variable SpecId, inside it will call function with Generic Spec.
     pub fn modify_spec_id(&mut self, spec_id: ChainSpecT::Hardfork) {
         if self.spec_id == spec_id {
@@ -159,7 +140,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EX
 
         let registers = core::mem::take(&mut self.registers);
         // register for optimism is added as a register, so we need to create mainnet handler here.
-        let mut handler = Handler::mainnet_with_spec(eth_spec_id);
+        let mut handler = Handler::mainnet_with_spec(spec_id);
         // apply all registers to default handler and raw mainnet instruction table.
         for register in registers {
             handler.append_handler_register(register)
@@ -178,9 +159,14 @@ mod test {
 
     use super::*;
 
+    #[cfg(feature = "optimism")]
+    type TestChainSpec = crate::optimism::OptimismChainSpec;
+    #[cfg(not(feature = "optimism"))]
+    type TestChainSpec = crate::primitives::MainnetChainSpec;
+
     #[test]
     fn test_handler_register_pop() {
-        let register = |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<(), EmptyDB> {
+        let register = |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<TestChainSpec, (), EmptyDB> {
             let inner = inner.clone();
             Box::new(move |h| {
                 *inner.borrow_mut() += 1;
@@ -188,12 +174,9 @@ mod test {
             })
         };
 
-        #[cfg(not(feature = "optimism"))]
-        let spec_id = SpecId::LATEST;
-        #[cfg(feature = "optimism")]
-        let spec_id = crate::optimism::OptimismSpecId::LATEST;
-
-        let mut handler = EvmHandler::<(), EmptyDB>::new(HandlerCfg::new(spec_id));
+        let mut handler = EvmHandler::<'_, TestChainSpec, (), EmptyDB>::mainnet_with_spec(
+            <TestChainSpec as ChainSpec>::Hardfork::default(),
+        );
         let test = Rc::new(RefCell::new(0));
 
         handler.append_handler_register_box(register(&test));

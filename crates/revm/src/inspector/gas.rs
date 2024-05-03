@@ -86,13 +86,17 @@ mod tests {
     use revm_interpreter::CallOutcome;
     use revm_interpreter::CreateOutcome;
 
-    use crate::chain_spec::MainnetChainSpec;
     use crate::{
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter},
         primitives::Log,
         Database, EvmContext, Inspector,
     };
+
+    #[cfg(feature = "optimism")]
+    type TestChainSpec = crate::optimism::OptimismChainSpec;
+    #[cfg(not(feature = "optimism"))]
+    type TestChainSpec = crate::primitives::MainnetChainSpec;
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -184,7 +188,8 @@ mod tests {
         ]);
         let bytecode = Bytecode::new_raw(contract_data);
 
-        let mut evm: Evm<'_, MainnetChainSpec, StackInspector, BenchmarkDB> = Evm::builder()
+        let mut evm = Evm::builder()
+            .with_chain_spec::<TestChainSpec>()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
             .with_external_context(StackInspector::default())
             .modify_tx_env(|tx| {

@@ -1,26 +1,39 @@
-use crate::{Address, Bytes, Log, State, U256};
+use crate::{Address, Bytes, ChainSpec, Log, State, U256};
 use core::fmt;
 use std::{boxed::Box, string::String, vec::Vec};
 
 /// Result of EVM execution.
-pub type EVMResult<DBError> = EVMResultGeneric<ResultAndState, DBError>;
+pub type EVMResult<ChainSpecT, DBError> = EVMResultGeneric<ResultAndState<ChainSpecT>, DBError>;
 
 /// Generic result of EVM execution. Used to represent error and generic output.
 pub type EVMResultGeneric<T, DBError> = core::result::Result<T, EVMError<DBError>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ResultAndState<CustomHaltReasonT: 'static = ()> {
+pub struct ResultAndState<ChainSpecT: ChainSpec> {
     /// Status of execution
-    pub result: ExecutionResult<CustomHaltReasonT>,
+    pub result: ExecutionResult<ChainSpecT>,
     /// State that got updated
     pub state: State,
 }
 
+// impl<ChainSpecT: ChainSpec> ResultAndState<ChainSpecT> {
+//     /// Casts the result to a new chain spec.
+//     pub fn cast<NewChainSpecT: ChainSpec>(self) -> ResultAndState<NewChainSpecT>
+//     where
+//         NewChainSpecT::HaltReason: From<ChainSpecT::HaltReason>,
+//     {
+//         ResultAndState {
+//             result: self.result.cast(),
+//             state: self.state,
+//         }
+//     }
+// }
+
 /// Result of a transaction execution.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ExecutionResult<CustomHaltReasonT: 'static = ()> {
+pub enum ExecutionResult<ChainSpecT: ChainSpec> {
     /// Returned successfully
     Success {
         reason: SuccessReason,
@@ -33,13 +46,40 @@ pub enum ExecutionResult<CustomHaltReasonT: 'static = ()> {
     Revert { gas_used: u64, output: Bytes },
     /// Reverted for various reasons and spend all gas.
     Halt {
-        reason: HaltReason<CustomHaltReasonT>,
+        reason: ChainSpecT::HaltReason,
         /// Halting will spend all the gas, and will be equal to gas_limit.
         gas_used: u64,
     },
 }
 
-impl ExecutionResult {
+impl<ChainSpecT: ChainSpec> ExecutionResult<ChainSpecT> {
+    // /// Casts the result to a new chain spec.
+    // pub fn cast<NewChainSpecT: ChainSpec>(self) -> ExecutionResult<NewChainSpecT>
+    // where
+    //     NewChainSpecT::HaltReason: From<ChainSpecT::HaltReason>,
+    // {
+    //     match self {
+    //         Self::Success {
+    //             reason,
+    //             gas_used,
+    //             gas_refunded,
+    //             logs,
+    //             output,
+    //         } => ExecutionResult::Success {
+    //             reason,
+    //             gas_used,
+    //             gas_refunded,
+    //             logs,
+    //             output,
+    //         },
+    //         Self::Revert { gas_used, output } => ExecutionResult::Revert { gas_used, output },
+    //         Self::Halt { reason, gas_used } => ExecutionResult::Halt {
+    //             reason: reason.into(),
+    //             gas_used,
+    //         },
+    //     }
+    // }
+
     /// Returns if transaction execution is successful.
     /// 1 indicates success, 0 indicates revert.
     /// <https://eips.ethereum.org/EIPS/eip-658>
@@ -398,7 +438,7 @@ pub enum SuccessReason {
 /// immediately end with all gas being consumed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum HaltReason<CustomReasonT: 'static = ()> {
+pub enum HaltReason {
     OutOfGas(OutOfGasError),
     OpcodeNotFound,
     InvalidFEOpcode,
@@ -423,8 +463,6 @@ pub enum HaltReason<CustomReasonT: 'static = ()> {
     CallNotAllowedInsideStatic,
     OutOfFunds,
     CallTooDeep,
-
-    Custom(CustomReasonT),
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

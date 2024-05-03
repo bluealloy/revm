@@ -17,7 +17,6 @@ mod context;
 #[cfg(any(test, feature = "test-utils"))]
 pub mod test_utils;
 
-mod chain_spec;
 pub mod db;
 mod evm;
 mod frame;
@@ -33,7 +32,7 @@ pub use builder::EvmBuilder;
 pub use context::{
     Context, ContextPrecompile, ContextPrecompiles, ContextStatefulPrecompile,
     ContextStatefulPrecompileArc, ContextStatefulPrecompileBox, ContextStatefulPrecompileMut,
-    ContextWithHandlerCfg, EvmContext, InnerEvmContext,
+    ContextWithChainSpec, EvmContext, InnerEvmContext,
 };
 pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
@@ -58,8 +57,3 @@ pub use revm_interpreter as interpreter;
 pub use revm_interpreter::primitives;
 #[doc(inline)]
 pub use revm_precompile as precompile;
-
-#[cfg(not(feature = "optimism"))]
-pub type SpecId = crate::primitives::EthSpecId;
-#[cfg(feature = "optimism")]
-pub type SpecId = crate::optimism::OptimismSpecId;

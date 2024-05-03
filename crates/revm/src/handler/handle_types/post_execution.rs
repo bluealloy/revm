@@ -1,9 +1,8 @@
 // Includes.
 use crate::{
-    chain_spec::ChainSpec,
     handler::mainnet,
     interpreter::Gas,
-    primitives::{db::Database, EVMError, EVMResultGeneric, ResultAndState, Spec},
+    primitives::{db::Database, ChainSpec, EVMError, EVMResultGeneric, ResultAndState, Spec},
     Context, FrameResult,
 };
 use std::sync::Arc;
@@ -16,11 +15,11 @@ pub type ReimburseCallerHandle<'a, EXT, DB> =
 pub type RewardBeneficiaryHandle<'a, EXT, DB> = ReimburseCallerHandle<'a, EXT, DB>;
 
 /// Main return handle, takes state from journal and transforms internal result to external.
-pub type OutputHandle<'a, EXT, DB> = Arc<
+pub type OutputHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<EXT, DB>,
             FrameResult,
-        ) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>
+        ) -> Result<ResultAndState<ChainSpecT>, EVMError<<DB as Database>::Error>>
         + 'a,
 >;
 
@@ -28,12 +27,11 @@ pub type OutputHandle<'a, EXT, DB> = Arc<
 /// This will be called after all the other handlers.
 ///
 /// It is useful for catching errors and returning them in a different way.
-pub type EndHandle<'a, ChainSpecT: ChainSpec, EXT, DB> = Arc<
+pub type EndHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<EXT, DB>,
-            Result<ResultAndState<ChainSpecT::HaltReason>, EVMError<<DB as Database>::Error>>,
-        )
-            -> Result<ResultAndState<ChainSpecT::HaltReason>, EVMError<<DB as Database>::Error>>
+            Result<ResultAndState<ChainSpecT>, EVMError<<DB as Database>::Error>>,
+        ) -> Result<ResultAndState<ChainSpecT>, EVMError<<DB as Database>::Error>>
         + 'a,
 >;
 
@@ -48,7 +46,7 @@ pub struct PostExecutionHandler<'a, ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Reward the beneficiary with caller fee.
     pub reward_beneficiary: RewardBeneficiaryHandle<'a, EXT, DB>,
     /// Main return handle, returns the output of the transact.
-    pub output: OutputHandle<'a, EXT, DB>,
+    pub output: OutputHandle<'a, ChainSpecT, EXT, DB>,
     /// End handle. Called when execution ends.
     /// End in comparison to output will be called every time after execution.
     /// Output in case of error will not be called.
@@ -62,12 +60,12 @@ impl<'a, ChainSpecT: ChainSpec, EXT: 'a, DB: Database + 'a>
     PostExecutionHandler<'a, ChainSpecT, EXT, DB>
 {
     /// Creates mainnet MainHandles.
-    pub fn new<SPEC: Spec + 'a>() -> Self {
+    pub fn mainnet<SPEC: Spec + 'a>() -> Self {
         Self {
-            reimburse_caller: Arc::new(mainnet::reimburse_caller::<SPEC, EXT, DB>),
+            reimburse_caller: Arc::new(mainnet::reimburse_caller::<EXT, DB>),
             reward_beneficiary: Arc::new(mainnet::reward_beneficiary::<SPEC, EXT, DB>),
-            output: Arc::new(mainnet::output::<EXT, DB>),
-            end: Arc::new(mainnet::end::<EXT, DB>),
+            output: Arc::new(mainnet::output::<ChainSpecT, EXT, DB>),
+            end: Arc::new(mainnet::end::<ChainSpecT, EXT, DB>),
             clear: Arc::new(mainnet::clear::<EXT, DB>),
         }
     }
@@ -96,7 +94,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
         &self,
         context: &mut Context<EXT, DB>,
         result: FrameResult,
-    ) -> Result<ResultAndState, EVMError<DB::Error>> {
+    ) -> Result<ResultAndState<ChainSpecT>, EVMError<DB::Error>> {
         (self.output)(context, result)
     }
 
@@ -104,8 +102,8 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
     pub fn end(
         &self,
         context: &mut Context<EXT, DB>,
-        end_output: Result<ResultAndState<ChainSpecT::HaltReason>, EVMError<DB::Error>>,
-    ) -> Result<ResultAndState<ChainSpecT::HaltReason>, EVMError<DB::Error>> {
+        end_output: Result<ResultAndState<ChainSpecT>, EVMError<DB::Error>>,
+    ) -> Result<ResultAndState<ChainSpecT>, EVMError<DB::Error>> {
         (self.end)(context, end_output)
     }
 

@@ -9,10 +9,10 @@ use revm::{
     inspector_handle_register,
     inspectors::TracerEip3155,
     primitives::{
-        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, ExecutionResult,
-        TransactTo, B256, U256,
+        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, EthSpecId,
+        ExecutionResult, TransactTo, B256, U256,
     },
-    Evm, SpecId, State,
+    Evm, State,
 };
 use serde_json::json;
 use std::{
@@ -27,6 +27,11 @@ use std::{
 };
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
+
+#[cfg(feature = "optimism")]
+type TestChainSpec = revm::optimism::OptimismChainSpec;
+#[cfg(not(feature = "optimism"))]
+type TestChainSpec = revm::primitives::MainnetChainSpec;
 
 #[derive(Debug, Error)]
 #[error("Test {name} failed: {kind}")]
@@ -118,8 +123,8 @@ fn check_evm_execution<EXT>(
     test: &Test,
     expected_output: Option<&Bytes>,
     test_name: &str,
-    exec_result: &EVMResultGeneric<ExecutionResult, Infallible>,
-    evm: &Evm<'_, EXT, &mut State<EmptyDB>>,
+    exec_result: &EVMResultGeneric<ExecutionResult<TestChainSpec>, Infallible>,
+    evm: &Evm<'_, TestChainSpec, EXT, &mut State<EmptyDB>>,
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
@@ -143,7 +148,7 @@ fn check_evm_execution<EXT>(
                     Err(e) => e.to_string(),
                 },
                 "postLogsHash": logs_root,
-                "fork": evm.handler.spec_id().spec_id,
+                "fork": evm.handler.spec_id(),
                 "test": test_name,
                 "d": test.indexes.data,
                 "g": test.indexes.gas,
@@ -351,7 +356,7 @@ pub fn execute_test_suite(
                 env.tx.transact_to = to;
 
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
+                cache.set_state_clear_flag(EthSpecId::enabled(spec_id, EthSpecId::SPURIOUS_DRAGON));
                 let mut state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
@@ -417,7 +422,7 @@ pub fn execute_test_suite(
 
                 // re build to run with tracing
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
+                cache.set_state_clear_flag(EthSpecId::enabled(spec_id, EthSpecId::SPURIOUS_DRAGON));
                 let state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()

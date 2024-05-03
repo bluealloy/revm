@@ -14,6 +14,7 @@ mod constants;
 pub mod db;
 pub mod env;
 
+mod chain_spec;
 #[cfg(feature = "c-kzg")]
 pub mod kzg;
 pub mod precompile;
@@ -27,6 +28,7 @@ pub use alloy_primitives::{
 };
 pub use bitvec;
 pub use bytecode::*;
+pub use chain_spec::*;
 pub use constants::*;
 pub use env::*;
 

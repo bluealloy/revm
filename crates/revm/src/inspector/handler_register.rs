@@ -1,12 +1,11 @@
 use crate::{
-    chain_spec::ChainSpec,
     db::Database,
     handler::register::EvmHandler,
     interpreter::{
         opcode::{self, BoxedInstruction},
         InstructionResult, Interpreter,
     },
-    primitives::EVMError,
+    primitives::{ChainSpec, EVMError},
     Evm, FrameOrResult, FrameResult, Inspector, JournalEntry,
 };
 use core::cell::RefCell;
@@ -277,7 +276,6 @@ pub fn inspector_instruction<
 mod tests {
     use super::*;
     use crate::{
-        chain_spec::MainnetChainSpec,
         db::EmptyDB,
         inspectors::NoOpInspector,
         interpreter::{opcode::*, CallInputs, CallOutcome, CreateInputs, CreateOutcome},
@@ -285,10 +283,15 @@ mod tests {
         EvmContext,
     };
 
+    #[cfg(feature = "optimism")]
+    type TestChainSpec = crate::optimism::OptimismChainSpec;
+    #[cfg(not(feature = "optimism"))]
+    type TestChainSpec = crate::primitives::MainnetChainSpec;
+
     // Test that this pattern builds.
     #[test]
     fn test_make_boxed_instruction_table() {
-        type MyEvm<'a> = Evm<'a, MainnetChainSpec, NoOpInspector, EmptyDB>;
+        type MyEvm<'a> = Evm<'a, TestChainSpec, NoOpInspector, EmptyDB>;
         let table: InstructionTable<MyEvm<'_>> = make_instruction_table::<MyEvm<'_>, BerlinSpec>();
         let _boxed_table: BoxedInstructionTable<'_, MyEvm<'_>> =
             make_boxed_instruction_table::<'_, MyEvm<'_>, BerlinSpec, _>(
@@ -395,7 +398,8 @@ mod tests {
         ]);
         let bytecode = Bytecode::new_raw(contract_data);
 
-        let mut evm: Evm<'_, MainnetChainSpec, StackInspector, BenchmarkDB> = Evm::builder()
+        let mut evm = Evm::builder()
+            .with_chain_spec::<TestChainSpec>()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
             .with_external_context(StackInspector::default())
             .modify_tx_env(|tx| {

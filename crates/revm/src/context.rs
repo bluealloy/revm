@@ -11,7 +11,7 @@ pub use inner_evm_context::InnerEvmContext;
 
 use crate::{
     db::{Database, EmptyDB},
-    handler::HandlerCfg,
+    primitives::ChainSpec,
 };
 use std::boxed::Box;
 
@@ -69,28 +69,29 @@ impl<EXT, DB: Database> Context<EXT, DB> {
 }
 
 /// Context with handler configuration.
-pub struct ContextWithHandlerCfg<EXT, DB: Database> {
+pub struct ContextWithChainSpec<ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Context of execution.
     pub context: Context<EXT, DB>,
     /// Handler configuration.
-    pub cfg: HandlerCfg,
+    pub spec_id: ChainSpecT::Hardfork,
 }
 
-impl<EXT, DB: Database> ContextWithHandlerCfg<EXT, DB> {
+impl<ChainSpecT: ChainSpec, EXT, DB: Database> ContextWithChainSpec<ChainSpecT, EXT, DB> {
     /// Creates new context with handler configuration.
-    pub fn new(context: Context<EXT, DB>, cfg: HandlerCfg) -> Self {
-        Self { cfg, context }
+    pub fn new(context: Context<EXT, DB>, spec_id: ChainSpecT::Hardfork) -> Self {
+        Self { spec_id, context }
     }
 }
 
-impl<EXT: Clone, DB: Database + Clone> Clone for ContextWithHandlerCfg<EXT, DB>
+impl<ChainSpecT: ChainSpec, EXT: Clone, DB: Database + Clone> Clone
+    for ContextWithChainSpec<ChainSpecT, EXT, DB>
 where
     DB::Error: Clone,
 {
     fn clone(&self) -> Self {
         Self {
             context: self.context.clone(),
-            cfg: self.cfg,
+            spec_id: self.spec_id,
         }
     }
 }

@@ -290,8 +290,8 @@ pub fn reward_beneficiary<SPEC: OptimismSpec, EXT, DB: Database>(
 pub fn output<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame_result: FrameResult,
-) -> Result<ResultAndState, EVMError<DB::Error>> {
-    let result = mainnet::output::<EXT, DB>(context, frame_result)?;
+) -> Result<ResultAndState<OptimismChainSpec>, EVMError<DB::Error>> {
+    let result = mainnet::output::<OptimismChainSpec, EXT, DB>(context, frame_result)?;
 
     if result.result.is_halt() {
         // Post-regolith, if the transaction is a deposit transaction and it halts,
@@ -311,8 +311,8 @@ pub fn output<SPEC: OptimismSpec, EXT, DB: Database>(
 #[inline]
 pub fn end<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-    evm_output: Result<ResultAndState<OptimismHaltReason>, EVMError<DB::Error>>,
-) -> Result<ResultAndState<OptimismHaltReason>, EVMError<DB::Error>> {
+    evm_output: Result<ResultAndState<OptimismChainSpec>, EVMError<DB::Error>>,
+) -> Result<ResultAndState<OptimismChainSpec>, EVMError<DB::Error>> {
     evm_output.or_else(|err| {
         if matches!(err, EVMError::Transaction(_))
             && context.evm.inner.env().tx.optimism.source_hash.is_some()

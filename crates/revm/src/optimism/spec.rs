@@ -1,12 +1,10 @@
 use revm_precompile::PrecompileSpecId;
 
-use crate::{
-    chain_spec::ChainSpec,
-    primitives::{EthSpecId, Spec},
-};
+use crate::primitives::{ChainSpec, EthSpecId, Spec};
 
 use super::OptimismHaltReason;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct OptimismChainSpec;
 
 impl ChainSpec for OptimismChainSpec {

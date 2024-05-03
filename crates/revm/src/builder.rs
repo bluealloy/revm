@@ -1,10 +1,11 @@
 use crate::{
-    chain_spec::{ChainSpec, MainnetChainSpec},
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
-    handler::{register, CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg},
-    optimism::OptimismChainSpec,
-    primitives::{BlockEnv, CfgEnv, Env, TxEnv},
-    Context, ContextWithHandlerCfg, Evm, Handler, SpecId,
+    handler::{
+        register::{self, EvmHandler},
+        CfgEnvWithChainSpec, EnvWithChainSpec,
+    },
+    primitives::{BlockEnv, CfgEnv, ChainSpec, Env, TxEnv},
+    Context, ContextWithChainSpec, Evm, Handler,
 };
 use core::marker::PhantomData;
 use std::boxed::Box;
@@ -28,43 +29,15 @@ pub struct SetGenericStage;
 /// Requires the database and external context to be set.
 pub struct HandlerStage;
 
-#[cfg(all(
-    feature = "optimism-default-handler",
-    not(feature = "negate-optimism-default-handler")
-))]
-impl<'a> Default for EvmBuilder<'a, SetGenericStage, OptimismChainSpec, (), EmptyDB> {
+impl<'a, ChainSpecT: ChainSpec> Default
+    for EvmBuilder<'a, SetGenericStage, ChainSpecT, (), EmptyDB>
+{
     fn default() -> Self {
-        cfg_if::cfg_if! {
-            if #[cfg(all(feature = "optimism-default-handler",
-                not(feature = "negate-optimism-default-handler")))] {
-                    let mut handler_cfg = HandlerCfg::new(SpecId::LATEST);
-                    // set is_optimism to true by default.
-                    handler_cfg.is_optimism = true;
-
-            } else {
-                let handler_cfg = HandlerCfg::new(SpecId::LATEST);
-            }
-        }
-
         Self {
             context: Context::default(),
-            handler: EvmBuilder::<'a, SetGenericStage, (), EmptyDB>::handler(
-                OptimismChainSpec::Hardfork::default(),
+            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(
+                ChainSpecT::Hardfork::default(),
             ),
-            phantom: PhantomData,
-        }
-    }
-}
-
-#[cfg(any(
-    feature = "negate-optimism-default-handler",
-    not(feature = "optimism-default-handler")
-))]
-impl<'a> Default for EvmBuilder<'a, SetGenericStage, MainnetChainSpec, (), EmptyDB> {
-    fn default() -> Self {
-        Self {
-            context: Context::default(),
-            handler: EvmBuilder::handler(MainnetChainSpec::Hardfork::default()),
             phantom: PhantomData,
         }
     }
@@ -78,7 +51,9 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
     ) -> EvmBuilder<'a, SetGenericStage, NewChainSpecT, EXT, DB> {
         EvmBuilder {
             context: self.context,
-            handler: Self::handler(NewChainSpecT::Hardfork::default()),
+            handler: EvmBuilder::<'_, SetGenericStage, NewChainSpecT, _, _>::handler(
+                NewChainSpecT::Hardfork::default(),
+            ),
             phantom: PhantomData,
         }
     }
@@ -90,7 +65,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
                 self.context.evm.with_db(EmptyDB::default()),
                 self.context.external,
             ),
-            handler: Self::handler(self.handler.spec_id()),
+            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -101,7 +76,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
     ) -> EvmBuilder<'a, SetGenericStage, ChainSpecT, EXT, ODB> {
         EvmBuilder {
             context: Context::new(self.context.evm.with_db(db), self.context.external),
-            handler: Self::handler(self.handler.spec_id()),
+            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -115,7 +90,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
                 self.context.evm.with_db(WrapDatabaseRef(db)),
                 self.context.external,
             ),
-            handler: Self::handler(self.handle.spec_id()),
+            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -127,7 +102,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
     ) -> EvmBuilder<'a, SetGenericStage, ChainSpecT, OEXT, DB> {
         EvmBuilder {
             context: Context::new(self.context.evm, external),
-            handler: EvmBuilder::<'a, SetGenericStage, OEXT, DB>::handler(self.handle.spec_id()),
+            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -135,13 +110,13 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
     /// Sets Builder with [`EnvWithHandlerCfg`].
     pub fn with_env_with_handler_cfg(
         mut self,
-        env_with_handler_cfg: EnvWithHandlerCfg,
+        env_with_handler_cfg: EnvWithChainSpec<ChainSpecT>,
     ) -> EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB> {
-        let EnvWithHandlerCfg { env, handler_cfg } = env_with_handler_cfg;
+        let EnvWithChainSpec { env, spec_id } = env_with_handler_cfg;
         self.context.evm.env = env;
         EvmBuilder {
             context: self.context,
-            handler: EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(handler_cfg),
+            handler: EvmBuilder::<'_, HandlerStage, _, _, _>::handler(spec_id),
             phantom: PhantomData,
         }
     }
@@ -149,12 +124,12 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
     /// Sets Builder with [`ContextWithHandlerCfg`].
     pub fn with_context_with_handler_cfg<OEXT, ODB: Database>(
         self,
-        context_with_handler_cfg: ContextWithHandlerCfg<OEXT, ODB>,
+        context_with_handler_cfg: ContextWithChainSpec<ChainSpecT, OEXT, ODB>,
     ) -> EvmBuilder<'a, HandlerStage, ChainSpecT, OEXT, ODB> {
         EvmBuilder {
             context: context_with_handler_cfg.context,
-            handler: EvmBuilder::<'a, HandlerStage, OEXT, ODB>::handler(
-                context_with_handler_cfg.cfg,
+            handler: EvmBuilder::<'_, HandlerStage, _, _, _>::handler(
+                context_with_handler_cfg.spec_id,
             ),
             phantom: PhantomData,
         }
@@ -163,53 +138,13 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
     /// Sets Builder with [`CfgEnvWithHandlerCfg`].
     pub fn with_cfg_env_with_handler_cfg(
         mut self,
-        cfg_env_and_spec_id: CfgEnvWithHandlerCfg,
+        cfg_env_and_spec_id: CfgEnvWithChainSpec<ChainSpecT>,
     ) -> EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB> {
         self.context.evm.env.cfg = cfg_env_and_spec_id.cfg_env;
 
         EvmBuilder {
             context: self.context,
-            handler: EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(
-                cfg_env_and_spec_id.handler_cfg,
-            ),
-            phantom: PhantomData,
-        }
-    }
-
-    /// Sets Builder with [`HandlerCfg`]
-    pub fn with_handler_cfg(
-        self,
-        handler_cfg: HandlerCfg,
-    ) -> EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB> {
-        EvmBuilder {
-            context: self.context,
-            handler: EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(handler_cfg),
-            phantom: PhantomData,
-        }
-    }
-
-    /// Sets the Optimism handler with latest spec.
-    ///
-    /// If `optimism-default-handler` feature is enabled this is not needed.
-    #[cfg(feature = "optimism")]
-    pub fn optimism(mut self) -> EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB> {
-        self.handler = Handler::with_spec(self.handler.spec_id.spec_id);
-        EvmBuilder {
-            context: self.context,
-            handler: self.handler,
-            phantom: PhantomData,
-        }
-    }
-
-    /// Sets the mainnet handler with latest spec.
-    ///
-    /// Enabled only with `optimism-default-handler` feature.
-    #[cfg(feature = "optimism-default-handler")]
-    pub fn mainnet(mut self) -> EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB> {
-        self.handler = Handler::with_spec(self.handler.spec_id.spec_id);
-        EvmBuilder {
-            context: self.context,
-            handler: self.handler,
+            handler: EvmBuilder::<'_, HandlerStage, _, _, _>::handler(cfg_env_and_spec_id.spec_id),
             phantom: PhantomData,
         }
     }
@@ -239,22 +174,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
                 self.context.evm.with_db(EmptyDB::default()),
                 self.context.external,
             ),
-            handler: EvmBuilder::<'a, HandlerStage, EXT, EmptyDB>::handler(self.handle.spec_id()),
-            phantom: PhantomData,
-        }
-    }
-
-    /// Resets the [`Handler`] and sets base mainnet handler.
-    ///
-    /// Enabled only with `optimism-default-handler` feature.
-    #[cfg(feature = "optimism-default-handler")]
-    pub fn reset_handler_with_mainnet(
-        mut self,
-    ) -> EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB> {
-        self.handler = Handler::with_spec(self.handler.spec_id.spec_id);
-        EvmBuilder {
-            context: self.context,
-            handler: self.handler,
+            handler: EvmBuilder::<'_, HandlerStage, _, _, _>::handler(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -267,7 +187,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
     ) -> EvmBuilder<'a, SetGenericStage, ChainSpecT, EXT, ODB> {
         EvmBuilder {
             context: Context::new(self.context.evm.with_db(db), self.context.external),
-            handler: Self::handler(self.handler.spec_id()),
+            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -283,9 +203,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
                 self.context.evm.with_db(WrapDatabaseRef(db)),
                 self.context.external,
             ),
-            handler: EvmBuilder::<'a, SetGenericStage, EXT, WrapDatabaseRef<ODB>>::handler(
-                self.handle.spec_id(),
-            ),
+            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -298,7 +216,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
     ) -> EvmBuilder<'a, SetGenericStage, ChainSpecT, OEXT, DB> {
         EvmBuilder {
             context: Context::new(self.context.evm, external),
-            handler: EvmBuilder::<'a, SetGenericStage, OEXT, DB>::handler(self.handle.spec_id()),
+            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -310,10 +228,8 @@ impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
     /// Creates the default handler.
     ///
     /// This is useful for adding optimism handle register.
-    fn handler(
-        hardfork: ChainSpecT::Hardfork,
-    ) -> Handler<'a, ChainSpecT, Evm<'a, ChainSpecT, EXT, DB>, EXT, DB> {
-        Handler::new(hardfork)
+    fn handler(spec_id: ChainSpecT::Hardfork) -> EvmHandler<'a, ChainSpecT, EXT, DB> {
+        Handler::mainnet_with_spec(spec_id)
     }
 
     /// This modifies the [EvmBuilder] to make it easy to construct an [`Evm`] with a _specific_
@@ -391,7 +307,7 @@ impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
     ///
     /// When changed it will reapply all handle registers, this can be
     /// expensive operation depending on registers.
-    pub fn with_spec_id(mut self, spec_id: SpecId) -> Self {
+    pub fn with_spec_id(mut self, spec_id: ChainSpecT::Hardfork) -> Self {
         self.handler.modify_spec_id(spec_id);
         EvmBuilder {
             context: self.context,
@@ -481,18 +397,23 @@ impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
 
 #[cfg(test)]
 mod test {
-    use super::SpecId;
     use crate::{
         db::EmptyDB,
         inspector::inspector_handle_register,
         inspectors::NoOpInspector,
         primitives::{
-            address, AccountInfo, Address, Bytecode, Bytes, PrecompileResult, TransactTo, U256,
+            address, AccountInfo, Address, Bytecode, Bytes, EthSpecId, PrecompileResult,
+            TransactTo, U256,
         },
         Context, ContextPrecompile, ContextStatefulPrecompile, Evm, InMemoryDB, InnerEvmContext,
     };
     use revm_interpreter::{gas, Host, Interpreter};
     use std::{cell::RefCell, rc::Rc, sync::Arc};
+
+    #[cfg(feature = "optimism")]
+    type TestChainSpec = crate::optimism::OptimismChainSpec;
+    #[cfg(not(feature = "optimism"))]
+    type TestChainSpec = crate::primitives::MainnetChainSpec;
 
     /// Custom evm context
     #[derive(Default, Clone, Debug)]
@@ -512,6 +433,7 @@ mod test {
 
         let to_capture = custom_context.clone();
         let mut evm = Evm::builder()
+            .with_chain_spec::<TestChainSpec>()
             .with_db(InMemoryDB::default())
             .modify_db(|db| {
                 db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
@@ -524,7 +446,8 @@ mod test {
 
                 // we need to use a box to capture the custom context in the instruction
                 let custom_instruction = Box::new(
-                    move |_interp: &mut Interpreter, _host: &mut Evm<'_, (), InMemoryDB>| {
+                    move |_interp: &mut Interpreter,
+                          _host: &mut Evm<'_, TestChainSpec, (), InMemoryDB>| {
                         // modify the value
                         let mut inner = custom_context.inner.borrow_mut();
                         *inner += 1;
@@ -565,6 +488,7 @@ mod test {
         let to_addr = address!("ffffffffffffffffffffffffffffffffffffffff");
 
         let mut evm = Evm::builder()
+            .with_chain_spec::<TestChainSpec>()
             .with_db(InMemoryDB::default())
             .modify_db(|db| {
                 db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
@@ -584,41 +508,58 @@ mod test {
     #[test]
     fn simple_build() {
         // build without external with latest spec
-        Evm::builder().build();
+        Evm::builder().with_chain_spec::<TestChainSpec>().build();
         // build with empty db
-        Evm::builder().with_empty_db().build();
+        Evm::builder()
+            .with_chain_spec::<TestChainSpec>()
+            .with_empty_db()
+            .build();
         // build with_db
-        Evm::builder().with_db(EmptyDB::default()).build();
+        Evm::builder()
+            .with_chain_spec::<TestChainSpec>()
+            .with_db(EmptyDB::default())
+            .build();
         // build with empty external
-        Evm::builder().with_empty_db().build();
+        Evm::builder()
+            .with_chain_spec::<TestChainSpec>()
+            .with_empty_db()
+            .build();
         // build with some external
         Evm::builder()
+            .with_chain_spec::<TestChainSpec>()
             .with_empty_db()
             .with_external_context(())
             .build();
         // build with spec
         Evm::builder()
             .with_empty_db()
-            .with_spec_id(SpecId::HOMESTEAD)
+            .with_spec_id(EthSpecId::HOMESTEAD)
             .build();
 
         // with with Env change in multiple places
         Evm::builder()
-            .with_empty_db()
-            .modify_tx_env(|tx| tx.gas_limit = 10)
-            .build();
-        Evm::builder().modify_tx_env(|tx| tx.gas_limit = 10).build();
-        Evm::builder()
+            .with_chain_spec::<TestChainSpec>()
             .with_empty_db()
             .modify_tx_env(|tx| tx.gas_limit = 10)
             .build();
         Evm::builder()
+            .with_chain_spec::<TestChainSpec>()
+            .modify_tx_env(|tx| tx.gas_limit = 10)
+            .build();
+        Evm::builder()
+            .with_chain_spec::<TestChainSpec>()
+            .with_empty_db()
+            .modify_tx_env(|tx| tx.gas_limit = 10)
+            .build();
+        Evm::builder()
+            .with_chain_spec::<TestChainSpec>()
             .with_empty_db()
             .modify_tx_env(|tx| tx.gas_limit = 10)
             .build();
 
         // with inspector handle
         Evm::builder()
+            .with_chain_spec::<TestChainSpec>()
             .with_empty_db()
             .with_external_context(NoOpInspector)
             .append_handler_register(inspector_handle_register)
@@ -627,6 +568,7 @@ mod test {
         // create the builder
         let evm = Evm::builder()
             .with_db(EmptyDB::default())
+            .with_chain_spec::<TestChainSpec>()
             .with_external_context(NoOpInspector)
             .append_handler_register(inspector_handle_register)
             // this would not compile
@@ -641,11 +583,11 @@ mod test {
         // build evm
         let evm = Evm::builder()
             .with_empty_db()
-            .with_spec_id(SpecId::HOMESTEAD)
+            .with_spec_id(EthSpecId::HOMESTEAD)
             .build();
 
         // modify evm
-        let evm = evm.modify().with_spec_id(SpecId::FRONTIER).build();
+        let evm = evm.modify().with_spec_id(EthSpecId::FRONTIER).build();
         let _ = evm
             .modify()
             .modify_tx_env(|tx| tx.chain_id = Some(2))
@@ -669,7 +611,7 @@ mod test {
 
         let mut evm = Evm::builder()
             .with_empty_db()
-            .with_spec_id(SpecId::HOMESTEAD)
+            .with_spec_id(EthSpecId::HOMESTEAD)
             .append_handler_register(|handler| {
                 let precompiles = handler.pre_execution.load_precompiles();
                 handler.pre_execution.load_precompiles = Arc::new(move || {
