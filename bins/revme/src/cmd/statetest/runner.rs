@@ -509,8 +509,12 @@ pub fn run(
                 (prev_idx, test_path)
             };
 
+            let result = execute_test_suite(&test_path, &elapsed, trace, print_outcome);
+
+            // Increment after the test is done.
             console_bar.inc(1);
-            if let Err(err) = execute_test_suite(&test_path, &elapsed, trace, print_outcome) {
+
+            if let Err(err) = result {
                 n_errors.fetch_add(1, Ordering::SeqCst);
                 if !keep_going {
                     return Err(err);
