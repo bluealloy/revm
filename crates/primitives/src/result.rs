@@ -242,7 +242,10 @@ pub enum InvalidTransaction {
     /// `to` must be present
     BlobCreateTransaction,
     /// Transaction has more then [`crate::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
-    TooManyBlobs(usize, usize),
+    TooManyBlobs {
+         max: usize,
+         have: usize,
+     },
     /// Blob transaction contains a versioned hash with an incorrect version
     BlobVersionNotSupported,
     /// EOF TxCreate transaction is not supported before Prague hardfork.
