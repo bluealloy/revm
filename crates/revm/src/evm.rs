@@ -1,5 +1,6 @@
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
+    chain_spec::{ChainSpec, MainnetChainSpec},
     db::{Database, DatabaseCommit, EmptyDB},
     handler::{EnvWithHandlerCfg, Handler, HandlerCfg},
     interpreter::{
@@ -21,16 +22,17 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 
 /// EVM instance containing both internal EVM context and external context
 /// and the handler that dictates the logic of EVM (or hardfork specification).
-pub struct Evm<'a, EXT, DB: Database> {
+pub struct Evm<'a, ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
     /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
     /// and it different depending on the specified fork.
-    pub handler: Handler<'a, Self, EXT, DB>,
+    pub handler: Handler<'a, ChainSpecT, Self, EXT, DB>,
 }
 
-impl<EXT, DB> fmt::Debug for Evm<'_, EXT, DB>
+impl<ChainSpecT, EXT, DB> fmt::Debug for Evm<'_, ChainSpecT, EXT, DB>
 where
+    ChainSpecT: ChainSpec,
     EXT: fmt::Debug,
     DB: Database + fmt::Debug,
     DB::Error: fmt::Debug,
@@ -42,7 +44,7 @@ where
     }
 }
 
-impl<EXT, DB: Database + DatabaseCommit> Evm<'_, EXT, DB> {
+impl<EXT, ChainSpecT: ChainSpec, DB: Database + DatabaseCommit> Evm<'_, ChainSpecT, EXT, DB> {
     /// Commit the changes to the database.
     pub fn transact_commit(&mut self) -> Result<ExecutionResult, EVMError<DB::Error>> {
         let ResultAndState { result, state } = self.transact()?;
@@ -51,39 +53,39 @@ impl<EXT, DB: Database + DatabaseCommit> Evm<'_, EXT, DB> {
     }
 }
 
-impl<'a> Evm<'a, (), EmptyDB> {
+impl<'a> Evm<'a, MainnetChainSpec, (), EmptyDB> {
     /// Returns evm builder with empty database and empty external context.
-    pub fn builder() -> EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
+    pub fn builder() -> EvmBuilder<'a, SetGenericStage, MainnetChainSpec, (), EmptyDB> {
         EvmBuilder::default()
     }
 }
 
-impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
+impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'a, ChainSpecT, EXT, DB> {
     /// Create new EVM.
     pub fn new(
         mut context: Context<EXT, DB>,
-        handler: Handler<'a, Self, EXT, DB>,
-    ) -> Evm<'a, EXT, DB> {
+        handler: Handler<'a, ChainSpecT, Self, EXT, DB>,
+    ) -> Evm<'a, ChainSpecT, EXT, DB> {
         context
             .evm
             .journaled_state
-            .set_spec_id(handler.cfg.spec_id.into());
+            .set_spec_id(handler.spec_id.spec_id.into());
         Evm { context, handler }
     }
 
     /// Allow for evm setting to be modified by feeding current evm
     /// into the builder for modifications.
-    pub fn modify(self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+    pub fn modify(self) -> EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB> {
         EvmBuilder::new(self)
     }
 }
 
-impl<EXT, DB: Database> Evm<'_, EXT, DB> {
+impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
     /// Returns specification (hardfork) that the EVM is instanced with.
     ///
     /// SpecId depends on the handler.
     pub fn spec_id(&self) -> SpecId {
-        self.handler.cfg.spec_id
+        self.handler.spec_id
     }
 
     /// Pre verify transaction by checking Environment, initial gas spend and if caller
@@ -152,7 +154,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// Returns the reference of handler configuration
     #[inline]
     pub fn handler_cfg(&self) -> &HandlerCfg {
-        &self.handler.cfg
+        &self.handler.spec_id
     }
 
     /// Returns the reference of Env configuration
@@ -221,7 +223,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             self.context.evm.inner.db,
             EnvWithHandlerCfg {
                 env: self.context.evm.inner.env,
-                handler_cfg: self.handler.cfg,
+                handler_cfg: self.handler.spec_id,
             },
         )
     }
@@ -229,7 +231,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// Returns [Context] and [HandlerCfg].
     #[inline]
     pub fn into_context_with_handler_cfg(self) -> ContextWithHandlerCfg<EXT, DB> {
-        ContextWithHandlerCfg::new(self.context, self.handler.cfg)
+        ContextWithHandlerCfg::new(self.context, self.handler.spec_id)
     }
 
     /// Starts the main loop and returns outcome of the execution.
@@ -412,7 +414,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 }
 
-impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
+impl<ChainSpecT: ChainSpec, EXT, DB: Database> Host for Evm<'_, ChainSpecT, EXT, DB> {
     fn env(&self) -> &Env {
         &self.context.evm.env
     }

@@ -10,9 +10,9 @@ pub type EVMResultGeneric<T, DBError> = core::result::Result<T, EVMError<DBError
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ResultAndState {
+pub struct ResultAndState<CustomHaltReasonT: 'static = ()> {
     /// Status of execution
-    pub result: ExecutionResult,
+    pub result: ExecutionResult<CustomHaltReasonT>,
     /// State that got updated
     pub state: State,
 }
@@ -20,7 +20,7 @@ pub struct ResultAndState {
 /// Result of a transaction execution.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ExecutionResult {
+pub enum ExecutionResult<CustomHaltReasonT: 'static = ()> {
     /// Returned successfully
     Success {
         reason: SuccessReason,
@@ -33,7 +33,7 @@ pub enum ExecutionResult {
     Revert { gas_used: u64, output: Bytes },
     /// Reverted for various reasons and spend all gas.
     Halt {
-        reason: HaltReason,
+        reason: HaltReason<CustomHaltReasonT>,
         /// Halting will spend all the gas, and will be equal to gas_limit.
         gas_used: u64,
     },
@@ -398,7 +398,7 @@ pub enum SuccessReason {
 /// immediately end with all gas being consumed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum HaltReason {
+pub enum HaltReason<CustomReasonT: 'static = ()> {
     OutOfGas(OutOfGasError),
     OpcodeNotFound,
     InvalidFEOpcode,
@@ -424,9 +424,7 @@ pub enum HaltReason {
     OutOfFunds,
     CallTooDeep,
 
-    /* Optimism errors */
-    #[cfg(feature = "optimism")]
-    FailedDeposit,
+    Custom(CustomReasonT),
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

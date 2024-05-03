@@ -8,8 +8,8 @@ use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
     optimism, optimism_spec_to_generic,
     primitives::{
-        db::Database, Account, EVMError, Env, ExecutionResult, HaltReason, HashMap,
-        InvalidTransaction, ResultAndState, U256,
+        db::Database, Account, EVMError, Env, ExecutionResult, HashMap, InvalidTransaction,
+        ResultAndState, U256,
     },
     Context, FrameResult,
 };
@@ -17,10 +17,12 @@ use core::ops::Mul;
 use std::string::ToString;
 use std::sync::Arc;
 
-use super::{OptimismSpec, OptimismSpecId};
+use super::{OptimismChainSpec, OptimismHaltReason, OptimismSpec, OptimismSpecId};
 
-pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {
-    optimism_spec_to_generic!(handler.cfg.spec_id, {
+pub fn optimism_handle_register<DB: Database, EXT>(
+    handler: &mut EvmHandler<'_, OptimismChainSpec, EXT, DB>,
+) {
+    optimism_spec_to_generic!(handler.spec_id, {
         // validate environment
         handler.validation.env = Arc::new(validate_env::<SPEC, DB>);
         // Validate transaction against state.
@@ -309,8 +311,8 @@ pub fn output<SPEC: OptimismSpec, EXT, DB: Database>(
 #[inline]
 pub fn end<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-    evm_output: Result<ResultAndState, EVMError<DB::Error>>,
-) -> Result<ResultAndState, EVMError<DB::Error>> {
+    evm_output: Result<ResultAndState<OptimismHaltReason>, EVMError<DB::Error>>,
+) -> Result<ResultAndState<OptimismHaltReason>, EVMError<DB::Error>> {
     evm_output.or_else(|err| {
         if matches!(err, EVMError::Transaction(_))
             && context.evm.inner.env().tx.optimism.source_hash.is_some()
@@ -362,7 +364,7 @@ pub fn end<SPEC: OptimismSpec, EXT, DB: Database>(
 
             Ok(ResultAndState {
                 result: ExecutionResult::Halt {
-                    reason: HaltReason::FailedDeposit,
+                    reason: OptimismHaltReason::FailedDeposit.into(),
                     gas_used,
                 },
                 state,

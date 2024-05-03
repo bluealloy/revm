@@ -1,25 +1,28 @@
-use crate::{db::Database, handler::Handler, Evm};
+use crate::{chain_spec::ChainSpec, db::Database, handler::Handler, Evm};
 use std::boxed::Box;
 
 /// EVM Handler
-pub type EvmHandler<'a, EXT, DB> = Handler<'a, Evm<'a, EXT, DB>, EXT, DB>;
+pub type EvmHandler<'a, ChainSpecT: ChainSpec, EXT, DB> =
+    Handler<'a, ChainSpecT, Evm<'a, ChainSpecT, EXT, DB>, EXT, DB>;
 
 // Handle register
-pub type HandleRegister<EXT, DB> = for<'a> fn(&mut EvmHandler<'a, EXT, DB>);
+pub type HandleRegister<ChainSpecT: ChainSpec, EXT, DB> =
+    for<'a> fn(&mut EvmHandler<'a, ChainSpecT, EXT, DB>);
 
 // Boxed handle register
-pub type HandleRegisterBox<EXT, DB> = Box<dyn for<'a> Fn(&mut EvmHandler<'a, EXT, DB>)>;
+pub type HandleRegisterBox<ChainSpecT, EXT, DB> =
+    Box<dyn for<'a> Fn(&mut EvmHandler<'a, ChainSpecT, EXT, DB>)>;
 
-pub enum HandleRegisters<EXT, DB: Database> {
+pub enum HandleRegisters<ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Plain function register
-    Plain(HandleRegister<EXT, DB>),
+    Plain(HandleRegister<ChainSpecT, EXT, DB>),
     /// Boxed function register.
-    Box(HandleRegisterBox<EXT, DB>),
+    Box(HandleRegisterBox<ChainSpecT, EXT, DB>),
 }
 
-impl<EXT, DB: Database> HandleRegisters<EXT, DB> {
+impl<ChainSpecT: ChainSpec, EXT, DB: Database> HandleRegisters<ChainSpecT, EXT, DB> {
     /// Call register function to modify EvmHandler.
-    pub fn register(&self, handler: &mut EvmHandler<'_, EXT, DB>) {
+    pub fn register(&self, handler: &mut EvmHandler<'_, ChainSpecT, EXT, DB>) {
         match self {
             HandleRegisters::Plain(f) => f(handler),
             HandleRegisters::Box(f) => f(handler),

@@ -17,6 +17,7 @@ mod context;
 #[cfg(any(test, feature = "test-utils"))]
 pub mod test_utils;
 
+mod chain_spec;
 pub mod db;
 mod evm;
 mod frame;

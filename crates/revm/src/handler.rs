@@ -10,8 +10,9 @@ pub use handle_types::*;
 
 // Includes.
 use crate::{
+    chain_spec::{ChainSpec, MainnetChainSpec},
     interpreter::{opcode::InstructionTables, Host},
-    primitives::{db::Database, spec_to_generic, Spec},
+    primitives::{db::Database, spec_to_generic, EthSpecId, Spec},
     Evm, SpecId,
 };
 use register::{EvmHandler, HandleRegisters};
@@ -22,102 +23,64 @@ use self::register::{HandleRegister, HandleRegisterBox};
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
-pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
-    /// Handler configuration.
-    pub cfg: HandlerCfg,
+pub struct Handler<'a, ChainSpecT: ChainSpec, H: Host + 'a, EXT, DB: Database> {
+    /// Handler hardfork
+    pub spec_id: ChainSpecT::Hardfork,
     /// Instruction table type.
     pub instruction_table: Option<InstructionTables<'a, H>>,
     /// Registers that will be called on initialization.
-    pub registers: Vec<HandleRegisters<EXT, DB>>,
+    pub registers: Vec<HandleRegisters<ChainSpecT, EXT, DB>>,
     /// Validity handles.
     pub validation: ValidationHandler<'a, EXT, DB>,
     /// Pre execution handle.
     pub pre_execution: PreExecutionHandler<'a, EXT, DB>,
     /// Post Execution handle.
-    pub post_execution: PostExecutionHandler<'a, EXT, DB>,
+    pub post_execution: PostExecutionHandler<'a, ChainSpecT, EXT, DB>,
     /// Execution loop that handles frames.
     pub execution: ExecutionHandler<'a, EXT, DB>,
 }
 
-impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
-    /// Created new Handler with given configuration.
-    ///
-    /// Internally it calls `mainnet_with_spec` with the given spec id.
-    /// Or `optimism_with_spec` if the optimism feature is enabled and `cfg.is_optimism` is set.
-    pub fn new(cfg: HandlerCfg) -> Self {
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "optimism")] {
-                if cfg.is_optimism {
-                    Handler::optimism_with_spec(cfg.spec_id)
-                } else {
-                    Handler::mainnet_with_spec(cfg.spec_id)
-                }
-            } else {
-                Handler::mainnet_with_spec(cfg.spec_id)
-            }
-        }
-    }
-
-    /// Default handler for Ethereum mainnet.
-    pub fn mainnet<SPEC: Spec>() -> Self {
-        let spec_id = SPEC::SPEC_ID;
-
-        #[cfg(feature = "optimism")]
-        let spec_id = spec_id.into();
-
-        Self {
-            cfg: HandlerCfg::new(spec_id),
-            instruction_table: Some(InstructionTables::new_plain::<SPEC>()),
-            registers: Vec::new(),
-            validation: ValidationHandler::new::<SPEC>(),
-            pre_execution: PreExecutionHandler::new::<SPEC>(),
-            post_execution: PostExecutionHandler::new::<SPEC>(),
-            execution: ExecutionHandler::new::<SPEC>(),
-        }
-    }
-
-    /// Returns `true` if the optimism feature is enabled and flag is set to `true`.
-    pub fn is_optimism(&self) -> bool {
-        self.cfg.is_optimism()
-    }
-
-    /// Handler for optimism
-    #[cfg(feature = "optimism")]
-    pub fn optimism<SPEC: Spec>() -> Self {
-        let mut handler = Self::mainnet::<SPEC>();
-        handler.cfg.is_optimism = true;
-        handler.append_handler_register(HandleRegisters::Plain(
-            crate::optimism::optimism_handle_register::<DB, EXT>,
-        ));
-        handler
-    }
-
-    /// Optimism with spec. Similar to [`Self::mainnet_with_spec`].
-    #[cfg(feature = "optimism")]
-    pub fn optimism_with_spec(spec_id: crate::optimism::OptimismSpecId) -> Self {
-        crate::optimism_spec_to_generic!(spec_id, Self::optimism::<SPEC>())
-    }
+impl<EXT, DB: Database> EvmHandler<'_, MainnetChainSpec, EXT, DB> {
     /// Creates handler with variable spec id, inside it will call `mainnet::<SPEC>` for
     /// appropriate spec.
-    pub fn mainnet_with_spec(spec_id: SpecId) -> Self {
-        #[cfg(feature = "optimism")]
-        let spec_id = spec_id.into();
+    pub fn mainnet_with_spec(spec_id: EthSpecId) -> Self {
+        Self::base_with_spec(spec_id)
+    }
+}
 
-        spec_to_generic!(spec_id, Self::mainnet::<SPEC>())
+impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EXT, DB> {
+    fn base_with_spec(spec_id: ChainSpecT::Hardfork) -> Self {
+        spec_to_generic!(
+            spec_id.into(),
+            Self {
+                spec_id,
+                instruction_table: Some(InstructionTables::new_plain::<SPEC>()),
+                registers: Vec::new(),
+                validation: ValidationHandler::new::<SPEC>(),
+                pre_execution: PreExecutionHandler::new::<SPEC>(),
+                post_execution: PostExecutionHandler::new::<SPEC>(),
+                execution: ExecutionHandler::new::<SPEC>(),
+            }
+        )
     }
 
     /// Specification ID.
-    pub fn cfg(&self) -> HandlerCfg {
-        self.cfg
+    pub fn spec_id(&self) -> ChainSpecT::Hardfork {
+        self.spec_id
     }
 
     /// Take instruction table.
-    pub fn take_instruction_table(&mut self) -> Option<InstructionTables<'a, Evm<'a, EXT, DB>>> {
+    pub fn take_instruction_table(
+        &mut self,
+    ) -> Option<InstructionTables<'a, Evm<'a, ChainSpecT, EXT, DB>>> {
         self.instruction_table.take()
     }
 
     /// Set instruction table.
-    pub fn set_instruction_table(&mut self, table: InstructionTables<'a, Evm<'a, EXT, DB>>) {
+    pub fn set_instruction_table(
+        &mut self,
+        table: InstructionTables<'a, Evm<'a, ChainSpecT, EXT, DB>>,
+    ) {
         self.instruction_table = Some(table);
     }
 
@@ -127,7 +90,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Returns reference to pre execution handler.
-    pub fn post_execution(&self) -> &PostExecutionHandler<'a, EXT, DB> {
+    pub fn post_execution(&self) -> &PostExecutionHandler<'a, ChainSpecT, EXT, DB> {
         &self.post_execution
     }
 
@@ -142,30 +105,33 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Append handle register.
-    pub fn append_handler_register(&mut self, register: HandleRegisters<EXT, DB>) {
+    pub fn append_handler_register(&mut self, register: HandleRegisters<ChainSpecT, EXT, DB>) {
         register.register(self);
         self.registers.push(register);
     }
 
     /// Append plain handle register.
-    pub fn append_handler_register_plain(&mut self, register: HandleRegister<EXT, DB>) {
+    pub fn append_handler_register_plain(&mut self, register: HandleRegister<ChainSpecT, EXT, DB>) {
         register(self);
         self.registers.push(HandleRegisters::Plain(register));
     }
 
     /// Append boxed handle register.
-    pub fn append_handler_register_box(&mut self, register: HandleRegisterBox<EXT, DB>) {
+    pub fn append_handler_register_box(
+        &mut self,
+        register: HandleRegisterBox<ChainSpecT, EXT, DB>,
+    ) {
         register(self);
         self.registers.push(HandleRegisters::Box(register));
     }
 
     /// Pop last handle register and reapply all registers that are left.
-    pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<EXT, DB>> {
+    pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<ChainSpecT, EXT, DB>> {
         let out = self.registers.pop();
         if out.is_some() {
             let registers = core::mem::take(&mut self.registers);
-            let mut base_handler = Handler::mainnet_with_spec(self.cfg.spec_id);
-            // apply all registers to default handeler and raw mainnet instruction table.
+            let mut base_handler = Handler::mainnet_with_spec(self.spec_id);
+            // apply all registers to default handler and raw mainnet instruction table.
             for register in registers {
                 base_handler.append_handler_register(register)
             }
@@ -175,7 +141,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Creates the Handler with Generic Spec.
-    pub fn create_handle_generic<SPEC: Spec>(&mut self) -> EvmHandler<'a, EXT, DB> {
+    pub fn create_handle_generic<SPEC: Spec>(&mut self) -> EvmHandler<'a, ChainSpecT, EXT, DB> {
         let registers = core::mem::take(&mut self.registers);
         let mut base_handler = Handler::mainnet::<SPEC>();
         // apply all registers to default handeler and raw mainnet instruction table.
@@ -186,14 +152,10 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Creates the Handler with variable SpecId, inside it will call function with Generic Spec.
-    pub fn modify_spec_id(&mut self, spec_id: SpecId) {
-        if self.cfg.spec_id == spec_id {
+    pub fn modify_spec_id(&mut self, spec_id: ChainSpecT::Hardfork) {
+        if self.spec_id == spec_id {
             return;
         }
-
-        let eth_spec_id = spec_id;
-        #[cfg(feature = "optimism")]
-        let eth_spec_id = eth_spec_id.into();
 
         let registers = core::mem::take(&mut self.registers);
         // register for optimism is added as a register, so we need to create mainnet handler here.
@@ -202,8 +164,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
         for register in registers {
             handler.append_handler_register(register)
         }
-        handler.cfg = self.cfg();
-        handler.cfg.spec_id = spec_id;
+        handler.spec_id = spec_id;
         *self = handler;
     }
 }

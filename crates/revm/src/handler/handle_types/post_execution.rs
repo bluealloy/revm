@@ -1,5 +1,6 @@
 // Includes.
 use crate::{
+    chain_spec::ChainSpec,
     handler::mainnet,
     interpreter::Gas,
     primitives::{db::Database, EVMError, EVMResultGeneric, ResultAndState, Spec},
@@ -27,11 +28,12 @@ pub type OutputHandle<'a, EXT, DB> = Arc<
 /// This will be called after all the other handlers.
 ///
 /// It is useful for catching errors and returning them in a different way.
-pub type EndHandle<'a, EXT, DB> = Arc<
+pub type EndHandle<'a, ChainSpecT: ChainSpec, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<EXT, DB>,
-            Result<ResultAndState, EVMError<<DB as Database>::Error>>,
-        ) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>
+            Result<ResultAndState<ChainSpecT::HaltReason>, EVMError<<DB as Database>::Error>>,
+        )
+            -> Result<ResultAndState<ChainSpecT::HaltReason>, EVMError<<DB as Database>::Error>>
         + 'a,
 >;
 
@@ -40,7 +42,7 @@ pub type EndHandle<'a, EXT, DB> = Arc<
 pub type ClearHandle<'a, EXT, DB> = Arc<dyn Fn(&mut Context<EXT, DB>) + 'a>;
 
 /// Handles related to post execution after the stack loop is finished.
-pub struct PostExecutionHandler<'a, EXT, DB: Database> {
+pub struct PostExecutionHandler<'a, ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Reimburse the caller with ethereum it didn't spent.
     pub reimburse_caller: ReimburseCallerHandle<'a, EXT, DB>,
     /// Reward the beneficiary with caller fee.
@@ -50,13 +52,15 @@ pub struct PostExecutionHandler<'a, EXT, DB: Database> {
     /// End handle. Called when execution ends.
     /// End in comparison to output will be called every time after execution.
     /// Output in case of error will not be called.
-    pub end: EndHandle<'a, EXT, DB>,
+    pub end: EndHandle<'a, ChainSpecT, EXT, DB>,
     /// Clear handle will be called always. In comparison to end that
     /// is called only on execution end, clear handle is called even if validation fails.
     pub clear: ClearHandle<'a, EXT, DB>,
 }
 
-impl<'a, EXT: 'a, DB: Database + 'a> PostExecutionHandler<'a, EXT, DB> {
+impl<'a, ChainSpecT: ChainSpec, EXT: 'a, DB: Database + 'a>
+    PostExecutionHandler<'a, ChainSpecT, EXT, DB>
+{
     /// Creates mainnet MainHandles.
     pub fn new<SPEC: Spec + 'a>() -> Self {
         Self {
@@ -69,7 +73,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> PostExecutionHandler<'a, EXT, DB> {
     }
 }
 
-impl<'a, EXT, DB: Database> PostExecutionHandler<'a, EXT, DB> {
+impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, ChainSpecT, EXT, DB> {
     /// Reimburse the caller with gas that were not spend.
     pub fn reimburse_caller(
         &self,
@@ -100,8 +104,8 @@ impl<'a, EXT, DB: Database> PostExecutionHandler<'a, EXT, DB> {
     pub fn end(
         &self,
         context: &mut Context<EXT, DB>,
-        end_output: Result<ResultAndState, EVMError<DB::Error>>,
-    ) -> Result<ResultAndState, EVMError<DB::Error>> {
+        end_output: Result<ResultAndState<ChainSpecT::HaltReason>, EVMError<DB::Error>>,
+    ) -> Result<ResultAndState<ChainSpecT::HaltReason>, EVMError<DB::Error>> {
         (self.end)(context, end_output)
     }
 

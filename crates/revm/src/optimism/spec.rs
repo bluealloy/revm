@@ -1,6 +1,18 @@
 use revm_precompile::PrecompileSpecId;
 
-use crate::primitives::{EthSpecId, Spec};
+use crate::{
+    chain_spec::ChainSpec,
+    primitives::{EthSpecId, Spec},
+};
+
+use super::OptimismHaltReason;
+
+pub struct OptimismChainSpec;
+
+impl ChainSpec for OptimismChainSpec {
+    type Hardfork = OptimismSpecId;
+    type HaltReason = OptimismHaltReason;
+}
 
 /// Specification IDs for the optimism blockchain.
 #[repr(u8)]

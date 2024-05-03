@@ -143,7 +143,7 @@ fn check_evm_execution<EXT>(
                     Err(e) => e.to_string(),
                 },
                 "postLogsHash": logs_root,
-                "fork": evm.handler.cfg().spec_id,
+                "fork": evm.handler.spec_id().spec_id,
                 "test": test_name,
                 "d": test.indexes.data,
                 "g": test.indexes.gas,
