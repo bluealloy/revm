@@ -1,6 +1,6 @@
 use alloy_provider::{network::Ethereum, ProviderBuilder, RootProvider};
-use alloy_sol_types::{sol, SolCall, SolValue};
 use alloy_rpc_types::BlockId;
+use alloy_sol_types::{sol, SolCall, SolValue};
 use alloy_transport_http::Http;
 use anyhow::{anyhow, Result};
 use reqwest::Client;
@@ -18,12 +18,11 @@ type AlloyCacheDB = CacheDB<AlloyDB<Http<Client>, Ethereum, Arc<RootProvider<Htt
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let client = ProviderBuilder::new()
-        .on_http(
-            "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27"
-                .parse()
-                .unwrap(),
-        );
+    let client = ProviderBuilder::new().on_http(
+        "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27"
+            .parse()
+            .unwrap(),
+    );
     let client = Arc::new(client);
     let mut cache_db = CacheDB::new(AlloyDB::new(client, BlockId::default()));
 
