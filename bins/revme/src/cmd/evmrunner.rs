@@ -2,7 +2,7 @@ use revm::{
     db::BenchmarkDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
-    primitives::{Address, Bytecode, Bytes, TransactTo},
+    primitives::{Address, Bytecode, TransactTo},
     Evm,
 };
 use std::io::Error as IoError;
@@ -72,14 +72,14 @@ impl Cmd {
         };
 
         let bytecode = hex::decode(bytecode_str.trim()).map_err(|_| Errors::InvalidBytecode)?;
-        let input: Bytes = hex::decode(self.input.trim())
+        let input = hex::decode(self.input.trim())
             .map_err(|_| Errors::InvalidInput)?
             .into();
         // BenchmarkDB is dummy state that implements Database trait.
         // the bytecode is deployed at zero address.
         let mut evm = Evm::builder()
             .with_db(BenchmarkDB::new_bytecode(Bytecode::new_raw(
-                bytecode.clone().into(),
+                bytecode.into(),
             )))
             .modify_tx_env(|tx| {
                 // execution globals block hash/gas_limit/coinbase/timestamp..
@@ -87,7 +87,7 @@ impl Cmd {
                     .parse()
                     .unwrap();
                 tx.transact_to = TransactTo::Call(Address::ZERO);
-                tx.data = input.clone();
+                tx.data = input;
             })
             .build();
 
@@ -101,27 +101,19 @@ impl Cmd {
         } else {
             let out = evm.transact().map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);
-            if self.state {
-                println!("State: {:#?}", out.state);
-            }
             if self.trace {
                 println!("Traces:");
-                let mut evm = Evm::builder()
-                    .with_db(BenchmarkDB::new_bytecode(Bytecode::new_raw(
-                        bytecode.into(),
+                let mut evm = evm
+                    .modify()
+                    .reset_handler_with_external_context(TracerEip3155::new(Box::new(
+                        std::io::stdout(),
                     )))
-                    .modify_tx_env(|tx| {
-                        // execution globals block hash/gas_limit/coinbase/timestamp..
-                        tx.caller = "0x0000000000000000000000000000000000000001"
-                            .parse()
-                            .unwrap();
-                        tx.transact_to = TransactTo::Call(Address::ZERO);
-                        tx.data = input;
-                    })
-                    .with_external_context(TracerEip3155::new(Box::new(std::io::stdout())))
                     .append_handler_register(inspector_handle_register)
                     .build();
                 let _ = evm.transact();
+            }
+            if self.state {
+                println!("State: {:#?}", out.state);
             }
         }
         Ok(())
