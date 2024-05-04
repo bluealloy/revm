@@ -172,8 +172,12 @@ impl Env {
 
                 // ensure the total blob gas spent is at most equal to the limit
                 // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
-                if self.tx.blob_hashes.len() > MAX_BLOB_NUMBER_PER_BLOCK as usize {
-                    return Err(InvalidTransaction::TooManyBlobs);
+                let num_blobs = self.tx.blob_hashes.len();
+                if num_blobs > MAX_BLOB_NUMBER_PER_BLOCK as usize {
+                    return Err(InvalidTransaction::TooManyBlobs {
+                        have: num_blobs,
+                        max: MAX_BLOB_NUMBER_PER_BLOCK as usize,
+                    });
                 }
             }
         } else {
