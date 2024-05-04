@@ -41,9 +41,9 @@ ethers-providers = { version = "2.0", optional = true }
 ethers-core = { version = "2.0", optional = true }
 
 # alloydb
-alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", optional = true, default-features = false }
-alloy-rpc-types = {git = "https://github.com/alloy-rs/alloy.git", optional = true, default-features = false }
-alloy-transport = {git = "https://github.com/alloy-rs/alloy.git", optional = true, default-features = false }
+alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
+alloy-rpc-types = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
+alloy-transport = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
 
 [dev-dependencies]
 alloy-sol-types = { version = "0.7.0", default-features = false, features = ["std"] }
@@ -53,9 +53,9 @@ criterion = "0.5"
 indicatif = "0.17"
 reqwest = { version = "0.12" }
 
-alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", default-features = false, features = ["reqwest"] }
+alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", default-features = false, features = ["reqwest"] }
 # needed for enabling TLS to use HTTPS connections when testing alloy DB
-alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git" }
+alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git" , rev = "44b8a6d" }
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable"]
