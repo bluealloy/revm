@@ -98,20 +98,22 @@ impl Cmd {
             microbench::bench(&bench_options, "Run bytecode", || {
                 let _ = evm.transact().unwrap();
             });
+        } else if self.trace {
+            println!("Traces:");
+            let mut evm = evm
+                .modify()
+                .reset_handler_with_external_context(TracerEip3155::new(
+                    Box::new(std::io::stdout()),
+                ))
+                .append_handler_register(inspector_handle_register)
+                .build();
+
+            let out = evm.transact().map_err(|_| Errors::EVMError)?;
+            println!("Result: {:#?}", out.result);
         } else {
             let out = evm.transact().map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);
-            if self.trace {
-                println!("Traces:");
-                let mut evm = evm
-                    .modify()
-                    .reset_handler_with_external_context(TracerEip3155::new(Box::new(
-                        std::io::stdout(),
-                    )))
-                    .append_handler_register(inspector_handle_register)
-                    .build();
-                let _ = evm.transact();
-            }
+
             if self.state {
                 println!("State: {:#?}", out.state);
             }
