@@ -64,7 +64,7 @@ impl OptimismSpecId {
         our as u8 >= other as u8
     }
 
-    /// Converts the `OptimismSpecId` into a `SpecId`.
+    /// Converts the `OptimismSpecId` into a `EthSpecId`.
     const fn into_eth_spec_id(self) -> EthSpecId {
         match self {
             OptimismSpecId::FRONTIER => EthSpecId::FRONTIER,
