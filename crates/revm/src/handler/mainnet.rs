@@ -6,7 +6,7 @@ mod pre_execution;
 mod validation;
 
 pub use execution::{
-    call, call_return, create, create_return, eofcreate, eofcreate_return,
+    call, call_return, create, create_return, eofcreate, eofcreate_return, execute_frame,
     frame_return_with_refund_flag, insert_call_outcome, insert_create_outcome,
     insert_eofcreate_outcome, last_frame_return,
 };

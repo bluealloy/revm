@@ -3,11 +3,11 @@ use crate::{
     handler::mainnet,
     interpreter::{CallInputs, CreateInputs, SharedMemory},
     primitives::{db::Database, EVMError, Spec},
-    CallFrame, Context, CreateFrame, Evm, Frame, FrameOrResult, FrameResult,
+    CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use revm_interpreter::{
-    CallOutcome, CreateOutcome, EOFCreateInput, EOFCreateOutcome, InterpreterAction,
-    InterpreterResult,
+    opcode::InstructionTables, CallOutcome, CreateOutcome, EOFCreateInput, EOFCreateOutcome,
+    InterpreterAction, InterpreterResult,
 };
 use std::{boxed::Box, sync::Arc};
 
@@ -20,7 +20,13 @@ pub type LastFrameReturnHandle<'a, EXT, DB> = Arc<
 /// Executes a single frame. Errors can be returned in the EVM context.
 /// If `None` is returned, the frame is instead executed normally through the interpreter.
 pub type ExecuteFrameHandle<'a, EXT, DB> = Arc<
-    dyn Fn(&mut Frame, &mut SharedMemory, &mut Evm<'a, EXT, DB>) -> Option<InterpreterAction> + 'a,
+    dyn Fn(
+            &mut Frame,
+            &mut SharedMemory,
+            &InstructionTables<'_, Context<EXT, DB>>,
+            &mut Context<EXT, DB>,
+        ) -> InterpreterAction
+        + 'a,
 >;
 
 /// Handle sub call.
@@ -117,7 +123,7 @@ pub struct ExecutionHandler<'a, EXT, DB: Database> {
     /// sets tx gas limit.
     pub last_frame_return: LastFrameReturnHandle<'a, EXT, DB>,
     /// Executes a single frame.
-    pub execute_frame: Option<ExecuteFrameHandle<'a, EXT, DB>>,
+    pub execute_frame: ExecuteFrameHandle<'a, EXT, DB>,
     /// Frame call
     pub call: FrameCallHandle<'a, EXT, DB>,
     /// Call return
@@ -143,7 +149,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
     pub fn new<SPEC: Spec + 'a>() -> Self {
         Self {
             last_frame_return: Arc::new(mainnet::last_frame_return::<SPEC, EXT, DB>),
-            execute_frame: None,
+            execute_frame: Arc::new(mainnet::execute_frame::<SPEC, EXT, DB>),
             call: Arc::new(mainnet::call::<SPEC, EXT, DB>),
             call_return: Arc::new(mainnet::call_return::<EXT, DB>),
             insert_call_outcome: Arc::new(mainnet::insert_call_outcome),
@@ -158,6 +164,17 @@ impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
 }
 
 impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
+    #[inline]
+    pub fn execute_frame(
+        &self,
+        frame: &mut Frame,
+        shared_memory: &mut SharedMemory,
+        instruction_tables: &InstructionTables<'_, Context<EXT, DB>>,
+        context: &mut Context<EXT, DB>,
+    ) -> InterpreterAction {
+        (self.execute_frame)(frame, shared_memory, instruction_tables, context)
+    }
+
     /// Handle call return, depending on instruction result gas will be reimbursed or not.
     #[inline]
     pub fn last_frame_return(
