@@ -18,14 +18,13 @@ pub type LastFrameReturnHandle<'a, EXT, DB> = Arc<
 >;
 
 /// Executes a single frame. Errors can be returned in the EVM context.
-/// If `None` is returned, the frame is instead executed normally through the interpreter.
 pub type ExecuteFrameHandle<'a, EXT, DB> = Arc<
     dyn Fn(
             &mut Frame,
             &mut SharedMemory,
             &InstructionTables<'_, Context<EXT, DB>>,
             &mut Context<EXT, DB>,
-        ) -> InterpreterAction
+        ) -> Result<InterpreterAction, EVMError<<DB as Database>::Error>>
         + 'a,
 >;
 
@@ -164,6 +163,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
 }
 
 impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
+    /// Executes single frame.
     #[inline]
     pub fn execute_frame(
         &self,
@@ -171,7 +171,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         shared_memory: &mut SharedMemory,
         instruction_tables: &InstructionTables<'_, Context<EXT, DB>>,
         context: &mut Context<EXT, DB>,
-    ) -> InterpreterAction {
+    ) -> Result<InterpreterAction, EVMError<DB::Error>> {
         (self.execute_frame)(frame, shared_memory, instruction_tables, context)
     }
 

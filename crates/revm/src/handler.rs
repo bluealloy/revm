@@ -5,12 +5,11 @@ pub mod register;
 
 // Exports.
 pub use handle_types::*;
-use revm_interpreter::{InterpreterAction, SharedMemory};
 
 // Includes.
 use crate::{
-    interpreter::{opcode::InstructionTables, Host},
-    primitives::{db::Database, spec_to_generic, HandlerCfg, Spec, SpecId},
+    interpreter::{opcode::InstructionTables, Host, InterpreterAction, SharedMemory},
+    primitives::{db::Database, spec_to_generic, EVMError, HandlerCfg, Spec, SpecId},
     Context, Frame,
 };
 use core::mem;
@@ -115,7 +114,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
         frame: &mut Frame,
         shared_memory: &mut SharedMemory,
         context: &mut Context<EXT, DB>,
-    ) -> InterpreterAction {
+    ) -> Result<InterpreterAction, EVMError<DB::Error>> {
         self.execution
             .execute_frame(frame, shared_memory, &self.instruction_table, context)
     }

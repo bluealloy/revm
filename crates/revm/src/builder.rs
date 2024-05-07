@@ -488,7 +488,7 @@ mod test {
                     },
                 );
 
-                // need to make ensure the instruction table is a boxed instruction table so that we
+                // need to  ensure the instruction table is a boxed instruction table so that we
                 // can insert the custom instruction as a boxed instruction
                 handler
                     .instruction_table

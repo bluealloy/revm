@@ -92,10 +92,10 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
             // Execute the frame.
             let next_action =
                 self.handler
-                    .execute_frame(stack_frame, &mut shared_memory, &mut self.context);
+                    .execute_frame(stack_frame, &mut shared_memory, &mut self.context)?;
 
             // Take error and break the loop, if any.
-            // This error can be set in the Interpreter when it's interacting with the host (Self).
+            // This error can be set in the Interpreter when it interacts with the context.
             self.context.evm.take_error()?;
 
             let exec = &mut self.handler.execution;

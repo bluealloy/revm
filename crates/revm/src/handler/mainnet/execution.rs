@@ -22,7 +22,7 @@ pub fn execute_frame<SPEC: Spec, EXT, DB: Database>(
     shared_memory: &mut SharedMemory,
     instruction_tables: &InstructionTables<'_, Context<EXT, DB>>,
     context: &mut Context<EXT, DB>,
-) -> InterpreterAction {
+) -> Result<InterpreterAction, EVMError<DB::Error>> {
     let interpreter = frame.interpreter_mut();
     let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
     let next_action = match instruction_tables {
@@ -32,7 +32,7 @@ pub fn execute_frame<SPEC: Spec, EXT, DB: Database>(
     // Take the shared memory back.
     *shared_memory = interpreter.take_memory();
 
-    next_action
+    Ok(next_action)
 }
 
 /// Helper function called inside [`last_frame_return`]
