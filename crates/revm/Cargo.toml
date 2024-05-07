@@ -13,6 +13,14 @@ readme = "../../README.md"
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
 [dependencies]
 # revm
 revm-interpreter = { path = "../interpreter", version = "4.0.0", default-features = false }
@@ -46,16 +54,20 @@ alloy-rpc-types = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6
 alloy-transport = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
 
 [dev-dependencies]
-alloy-sol-types = { version = "0.7.0", default-features = false, features = ["std"] }
+alloy-sol-types = { version = "0.7.0", default-features = false, features = [
+    "std",
+] }
 ethers-contract = { version = "2.0.14", default-features = false }
 anyhow = "1.0.82"
 criterion = "0.5"
 indicatif = "0.17"
 reqwest = { version = "0.12" }
 
-alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", default-features = false, features = ["reqwest"] }
+alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", default-features = false, features = [
+    "reqwest",
+] }
 # needed for enabling TLS to use HTTPS connections when testing alloy DB
-alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git" , rev = "44b8a6d" }
+alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d" }
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable"]

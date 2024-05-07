@@ -13,6 +13,14 @@ readme = "../../README.md"
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
 [dependencies]
 revm-primitives = { path = "../primitives", version = "3.1.1", default-features = false }
 

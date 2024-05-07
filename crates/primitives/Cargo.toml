@@ -9,12 +9,17 @@ repository = "https://github.com/bluealloy/revm"
 version = "3.1.1"
 readme = "../../README.md"
 
-# Don't need to run build script outside of this repo
-exclude = ["build.rs", "src/kzg/*.txt"]
-
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
 
 [dependencies]
 alloy-primitives = { version = "0.7.2", default-features = false, features = [
