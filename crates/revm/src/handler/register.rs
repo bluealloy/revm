@@ -1,8 +1,8 @@
-use crate::{db::Database, handler::Handler, Evm};
+use crate::{db::Database, handler::Handler, Context};
 use std::boxed::Box;
 
 /// EVM Handler
-pub type EvmHandler<'a, EXT, DB> = Handler<'a, Evm<'a, EXT, DB>, EXT, DB>;
+pub type EvmHandler<'a, EXT, DB> = Handler<'a, Context<EXT, DB>, EXT, DB>;
 
 // Handle register
 pub type HandleRegister<EXT, DB> = for<'a> fn(&mut EvmHandler<'a, EXT, DB>);

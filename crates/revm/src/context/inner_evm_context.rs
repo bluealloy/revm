@@ -114,6 +114,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     }
 
     /// Returns the error by replacing it with `Ok(())`, if any.
+    #[inline]
     pub fn take_error(&mut self) -> Result<(), EVMError<DB::Error>> {
         core::mem::replace(&mut self.error, Ok(()))
     }

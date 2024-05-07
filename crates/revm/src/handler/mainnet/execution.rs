@@ -8,8 +8,32 @@ use crate::{
     primitives::{EVMError, Env, Spec, SpecId},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
-use revm_interpreter::{CallOutcome, EOFCreateInput, EOFCreateOutcome, InterpreterResult};
+use core::mem;
+use revm_interpreter::{
+    opcode::InstructionTables, CallOutcome, EOFCreateInput, EOFCreateOutcome, InterpreterAction,
+    InterpreterResult, EMPTY_SHARED_MEMORY,
+};
 use std::boxed::Box;
+
+/// Execute frame
+#[inline]
+pub fn execute_frame<SPEC: Spec, EXT, DB: Database>(
+    frame: &mut Frame,
+    shared_memory: &mut SharedMemory,
+    instruction_tables: &InstructionTables<'_, Context<EXT, DB>>,
+    context: &mut Context<EXT, DB>,
+) -> Result<InterpreterAction, EVMError<DB::Error>> {
+    let interpreter = frame.interpreter_mut();
+    let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
+    let next_action = match instruction_tables {
+        InstructionTables::Plain(table) => interpreter.run(memory, table, context),
+        InstructionTables::Boxed(table) => interpreter.run(memory, table, context),
+    };
+    // Take the shared memory back.
+    *shared_memory = interpreter.take_memory();
+
+    Ok(next_action)
+}
 
 /// Helper function called inside [`last_frame_return`]
 #[inline]

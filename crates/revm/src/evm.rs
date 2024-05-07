@@ -2,14 +2,10 @@ use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
-    interpreter::{
-        opcode::InstructionTables, Host, Interpreter, InterpreterAction, LoadAccountResult,
-        SStoreResult, SelfDestructResult, SharedMemory,
-    },
+    interpreter::{Host, InterpreterAction, SharedMemory},
     primitives::{
-        specification::SpecId, Address, BlockEnv, Bytecode, CfgEnv, EVMError, EVMResult, Env,
-        EnvWithHandlerCfg, ExecutionResult, HandlerCfg, Log, ResultAndState, TransactTo, TxEnv,
-        B256, U256,
+        specification::SpecId, BlockEnv, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
+        ExecutionResult, HandlerCfg, ResultAndState, TransactTo, TxEnv,
     },
     Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
@@ -27,7 +23,7 @@ pub struct Evm<'a, EXT, DB: Database> {
     pub context: Context<EXT, DB>,
     /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
     /// and it different depending on the specified fork.
-    pub handler: Handler<'a, Self, EXT, DB>,
+    pub handler: Handler<'a, Context<EXT, DB>, EXT, DB>,
 }
 
 impl<EXT, DB> fmt::Debug for Evm<'_, EXT, DB>
@@ -63,7 +59,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     /// Create new EVM.
     pub fn new(
         mut context: Context<EXT, DB>,
-        handler: Handler<'a, Self, EXT, DB>,
+        handler: Handler<'a, Context<EXT, DB>, EXT, DB>,
     ) -> Evm<'a, EXT, DB> {
         context.evm.journaled_state.set_spec_id(handler.cfg.spec_id);
         Evm { context, handler }
@@ -73,6 +69,102 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     /// into the builder for modifications.
     pub fn modify(self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
         EvmBuilder::new(self)
+    }
+
+    /// Runs main call loop.
+    #[inline]
+    pub fn run_the_loop(&mut self, first_frame: Frame) -> Result<FrameResult, EVMError<DB::Error>> {
+        let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
+        call_stack.push(first_frame);
+
+        #[cfg(feature = "memory_limit")]
+        let mut shared_memory =
+            SharedMemory::new_with_memory_limit(self.context.evm.env.cfg.memory_limit);
+        #[cfg(not(feature = "memory_limit"))]
+        let mut shared_memory = SharedMemory::new();
+
+        shared_memory.new_context();
+
+        // Peek the last stack frame.
+        let mut stack_frame = call_stack.last_mut().unwrap();
+
+        loop {
+            // Execute the frame.
+            let next_action =
+                self.handler
+                    .execute_frame(stack_frame, &mut shared_memory, &mut self.context)?;
+
+            // Take error and break the loop, if any.
+            // This error can be set in the Interpreter when it interacts with the context.
+            self.context.evm.take_error()?;
+
+            let exec = &mut self.handler.execution;
+            let frame_or_result = match next_action {
+                InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs)?,
+                InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs)?,
+                InterpreterAction::EOFCreate { inputs } => {
+                    exec.eofcreate(&mut self.context, inputs)?
+                }
+                InterpreterAction::Return { result } => {
+                    // free memory context.
+                    shared_memory.free_context();
+
+                    // pop last frame from the stack and consume it to create FrameResult.
+                    let returned_frame = call_stack
+                        .pop()
+                        .expect("We just returned from Interpreter frame");
+
+                    let ctx = &mut self.context;
+                    FrameOrResult::Result(match returned_frame {
+                        Frame::Call(frame) => {
+                            // return_call
+                            FrameResult::Call(exec.call_return(ctx, frame, result)?)
+                        }
+                        Frame::Create(frame) => {
+                            // return_create
+                            FrameResult::Create(exec.create_return(ctx, frame, result)?)
+                        }
+                        Frame::EOFCreate(frame) => {
+                            // return_eofcreate
+                            FrameResult::EOFCreate(exec.eofcreate_return(ctx, frame, result)?)
+                        }
+                    })
+                }
+                InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
+            };
+
+            // handle result
+            match frame_or_result {
+                FrameOrResult::Frame(frame) => {
+                    shared_memory.new_context();
+                    call_stack.push(frame);
+                    stack_frame = call_stack.last_mut().unwrap();
+                }
+                FrameOrResult::Result(result) => {
+                    let Some(top_frame) = call_stack.last_mut() else {
+                        // Break the loop if there are no more frames.
+                        return Ok(result);
+                    };
+                    stack_frame = top_frame;
+                    let ctx = &mut self.context;
+                    // Insert result to the top frame.
+                    match result {
+                        FrameResult::Call(outcome) => {
+                            // return_call
+                            exec.insert_call_outcome(ctx, stack_frame, &mut shared_memory, outcome)?
+                        }
+                        FrameResult::Create(outcome) => {
+                            // return_create
+                            exec.insert_create_outcome(ctx, stack_frame, outcome)?
+                        }
+                        FrameResult::EOFCreate(outcome) => {
+                            // return_eofcreate
+                            exec.insert_eofcreate_outcome(ctx, stack_frame, outcome)?
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -156,7 +248,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// Returns the reference of Env configuration
     #[inline]
     pub fn cfg(&self) -> &CfgEnv {
-        &self.env().cfg
+        &self.context.env().cfg
     }
 
     /// Returns the mutable reference of Env configuration
@@ -230,133 +322,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         ContextWithHandlerCfg::new(self.context, self.handler.cfg)
     }
 
-    /// Starts the main loop and returns outcome of the execution.
-    pub fn start_the_loop(
-        &mut self,
-        first_frame: Frame,
-    ) -> Result<FrameResult, EVMError<DB::Error>> {
-        // take instruction table
-        let table = self
-            .handler
-            .take_instruction_table()
-            .expect("Instruction table should be present");
-
-        // run main loop
-        let frame_result = match &table {
-            InstructionTables::Plain(table) => self.run_the_loop(table, first_frame),
-            InstructionTables::Boxed(table) => self.run_the_loop(table, first_frame),
-        };
-
-        // return back instruction table
-        self.handler.set_instruction_table(table);
-
-        frame_result
-    }
-
-    /// Runs main call loop.
-    #[inline]
-    pub fn run_the_loop<FN>(
-        &mut self,
-        instruction_table: &[FN; 256],
-        first_frame: Frame,
-    ) -> Result<FrameResult, EVMError<DB::Error>>
-    where
-        FN: Fn(&mut Interpreter, &mut Self),
-    {
-        let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
-        call_stack.push(first_frame);
-
-        #[cfg(feature = "memory_limit")]
-        let mut shared_memory =
-            SharedMemory::new_with_memory_limit(self.context.evm.env.cfg.memory_limit);
-        #[cfg(not(feature = "memory_limit"))]
-        let mut shared_memory = SharedMemory::new();
-
-        shared_memory.new_context();
-
-        // peek last stack frame.
-        let mut stack_frame = call_stack.last_mut().unwrap();
-
-        loop {
-            // run interpreter
-            let interpreter = &mut stack_frame.frame_data_mut().interpreter;
-            let next_action = interpreter.run(shared_memory, instruction_table, self);
-
-            // take error and break the loop if there is any.
-            // This error is set From Interpreter when it's interacting with Host.
-            self.context.evm.take_error()?;
-            // take shared memory back.
-            shared_memory = interpreter.take_memory();
-
-            let exec = &mut self.handler.execution;
-            let frame_or_result = match next_action {
-                InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs)?,
-                InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs)?,
-                InterpreterAction::EOFCreate { inputs } => {
-                    exec.eofcreate(&mut self.context, inputs)?
-                }
-                InterpreterAction::Return { result } => {
-                    // free memory context.
-                    shared_memory.free_context();
-
-                    // pop last frame from the stack and consume it to create FrameResult.
-                    let returned_frame = call_stack
-                        .pop()
-                        .expect("We just returned from Interpreter frame");
-
-                    let ctx = &mut self.context;
-                    FrameOrResult::Result(match returned_frame {
-                        Frame::Call(frame) => {
-                            // return_call
-                            FrameResult::Call(exec.call_return(ctx, frame, result)?)
-                        }
-                        Frame::Create(frame) => {
-                            // return_create
-                            FrameResult::Create(exec.create_return(ctx, frame, result)?)
-                        }
-                        Frame::EOFCreate(frame) => {
-                            // return_eofcreate
-                            FrameResult::EOFCreate(exec.eofcreate_return(ctx, frame, result)?)
-                        }
-                    })
-                }
-                InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
-            };
-
-            // handle result
-            match frame_or_result {
-                FrameOrResult::Frame(frame) => {
-                    shared_memory.new_context();
-                    call_stack.push(frame);
-                    stack_frame = call_stack.last_mut().unwrap();
-                }
-                FrameOrResult::Result(result) => {
-                    let Some(top_frame) = call_stack.last_mut() else {
-                        // Break the look if there are no more frames.
-                        return Ok(result);
-                    };
-                    stack_frame = top_frame;
-                    let ctx = &mut self.context;
-                    // Insert result to the top frame.
-                    match result {
-                        FrameResult::Call(outcome) => {
-                            // return_call
-                            exec.insert_call_outcome(ctx, stack_frame, &mut shared_memory, outcome)?
-                        }
-                        FrameResult::Create(outcome) => {
-                            // return_create
-                            exec.insert_create_outcome(ctx, stack_frame, outcome)?
-                        }
-                        FrameResult::EOFCreate(outcome) => {
-                            // return_eofcreate
-                            exec.insert_eofcreate_outcome(ctx, stack_frame, outcome)?
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     /// Transact pre-verified transaction.
     fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
         let ctx = &mut self.context;
@@ -389,7 +354,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         // Starts the main running loop.
         let mut result = match first_frame_or_result {
-            FrameOrResult::Frame(first_frame) => self.start_the_loop(first_frame)?,
+            FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
             FrameOrResult::Result(result) => result,
         };
 
@@ -407,93 +372,5 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         post_exec.reward_beneficiary(ctx, result.gas())?;
         // Returns output of transaction.
         post_exec.output(ctx, result)
-    }
-}
-
-impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
-    fn env(&self) -> &Env {
-        &self.context.evm.env
-    }
-
-    fn env_mut(&mut self) -> &mut Env {
-        &mut self.context.evm.env
-    }
-
-    fn block_hash(&mut self, number: U256) -> Option<B256> {
-        self.context
-            .evm
-            .block_hash(number)
-            .map_err(|e| self.context.evm.error = Err(e))
-            .ok()
-    }
-
-    fn load_account(&mut self, address: Address) -> Option<LoadAccountResult> {
-        self.context
-            .evm
-            .load_account_exist(address)
-            .map_err(|e| self.context.evm.error = Err(e))
-            .ok()
-    }
-
-    fn balance(&mut self, address: Address) -> Option<(U256, bool)> {
-        self.context
-            .evm
-            .balance(address)
-            .map_err(|e| self.context.evm.error = Err(e))
-            .ok()
-    }
-
-    fn code(&mut self, address: Address) -> Option<(Bytecode, bool)> {
-        self.context
-            .evm
-            .code(address)
-            .map_err(|e| self.context.evm.error = Err(e))
-            .ok()
-    }
-
-    fn code_hash(&mut self, address: Address) -> Option<(B256, bool)> {
-        self.context
-            .evm
-            .code_hash(address)
-            .map_err(|e| self.context.evm.error = Err(e))
-            .ok()
-    }
-
-    fn sload(&mut self, address: Address, index: U256) -> Option<(U256, bool)> {
-        self.context
-            .evm
-            .sload(address, index)
-            .map_err(|e| self.context.evm.error = Err(e))
-            .ok()
-    }
-
-    fn sstore(&mut self, address: Address, index: U256, value: U256) -> Option<SStoreResult> {
-        self.context
-            .evm
-            .sstore(address, index, value)
-            .map_err(|e| self.context.evm.error = Err(e))
-            .ok()
-    }
-
-    fn tload(&mut self, address: Address, index: U256) -> U256 {
-        self.context.evm.tload(address, index)
-    }
-
-    fn tstore(&mut self, address: Address, index: U256, value: U256) {
-        self.context.evm.tstore(address, index, value)
-    }
-
-    fn log(&mut self, log: Log) {
-        self.context.evm.journaled_state.log(log);
-    }
-
-    fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult> {
-        self.context
-            .evm
-            .inner
-            .journaled_state
-            .selfdestruct(address, target, &mut self.context.evm.inner.db)
-            .map_err(|e| self.context.evm.error = Err(e))
-            .ok()
     }
 }

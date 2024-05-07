@@ -11,7 +11,8 @@ pub use inner_evm_context::InnerEvmContext;
 
 use crate::{
     db::{Database, EmptyDB},
-    primitives::HandlerCfg,
+    interpreter::{Host, LoadAccountResult, SStoreResult, SelfDestructResult},
+    primitives::{Address, Bytecode, Env, HandlerCfg, Log, B256, U256},
 };
 use std::boxed::Box;
 
@@ -92,5 +93,85 @@ where
             context: self.context.clone(),
             cfg: self.cfg,
         }
+    }
+}
+
+impl<EXT, DB: Database> Host for Context<EXT, DB> {
+    fn env(&self) -> &Env {
+        &self.evm.env
+    }
+
+    fn env_mut(&mut self) -> &mut Env {
+        &mut self.evm.env
+    }
+
+    fn block_hash(&mut self, number: U256) -> Option<B256> {
+        self.evm
+            .block_hash(number)
+            .map_err(|e| self.evm.error = Err(e))
+            .ok()
+    }
+
+    fn load_account(&mut self, address: Address) -> Option<LoadAccountResult> {
+        self.evm
+            .load_account_exist(address)
+            .map_err(|e| self.evm.error = Err(e))
+            .ok()
+    }
+
+    fn balance(&mut self, address: Address) -> Option<(U256, bool)> {
+        self.evm
+            .balance(address)
+            .map_err(|e| self.evm.error = Err(e))
+            .ok()
+    }
+
+    fn code(&mut self, address: Address) -> Option<(Bytecode, bool)> {
+        self.evm
+            .code(address)
+            .map_err(|e| self.evm.error = Err(e))
+            .ok()
+    }
+
+    fn code_hash(&mut self, address: Address) -> Option<(B256, bool)> {
+        self.evm
+            .code_hash(address)
+            .map_err(|e| self.evm.error = Err(e))
+            .ok()
+    }
+
+    fn sload(&mut self, address: Address, index: U256) -> Option<(U256, bool)> {
+        self.evm
+            .sload(address, index)
+            .map_err(|e| self.evm.error = Err(e))
+            .ok()
+    }
+
+    fn sstore(&mut self, address: Address, index: U256, value: U256) -> Option<SStoreResult> {
+        self.evm
+            .sstore(address, index, value)
+            .map_err(|e| self.evm.error = Err(e))
+            .ok()
+    }
+
+    fn tload(&mut self, address: Address, index: U256) -> U256 {
+        self.evm.tload(address, index)
+    }
+
+    fn tstore(&mut self, address: Address, index: U256, value: U256) {
+        self.evm.tstore(address, index, value)
+    }
+
+    fn log(&mut self, log: Log) {
+        self.evm.journaled_state.log(log);
+    }
+
+    fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult> {
+        self.evm
+            .inner
+            .journaled_state
+            .selfdestruct(address, target, &mut self.evm.inner.db)
+            .map_err(|e| self.evm.error = Err(e))
+            .ok()
     }
 }
