@@ -2,8 +2,6 @@
 //!
 //! REVM Interpreter.
 #![warn(rustdoc::all)]
-#![warn(unreachable_pub, unused_crate_dependencies)]
-#![deny(unused_must_use, rust_2018_idioms)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(not(feature = "std"))]
