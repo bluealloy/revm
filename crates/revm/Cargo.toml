@@ -18,6 +18,9 @@ unreachable_pub = "warn"
 unused_must_use = "deny"
 rust_2018_idioms = "deny"
 
+[lints.rustdoc]
+all = "warn"
+
 [dependencies]
 # revm
 revm-interpreter = { path = "../interpreter", version = "4.0.0", default-features = false }
