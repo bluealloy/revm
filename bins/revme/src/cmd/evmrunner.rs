@@ -118,7 +118,6 @@ impl Cmd {
             out
         };
 
-        println!("Result: {:#?}", out.result);
         if self.state {
             println!("State: {:#?}", out.state);
         }
