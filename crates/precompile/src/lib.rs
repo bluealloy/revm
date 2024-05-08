@@ -159,20 +159,10 @@ impl Precompiles {
     pub fn prague() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::cancun().clone();
-            precompiles.extend([
-                // EIP-2537: Precompile for BLS12-381 curve operations
-                // TODO(alexey): add BLS12-381 precompiles
-                // bls12_381::G1ADD,
-                // bls12_381::G1MUL,
-                // bls12_381::G1MSM,
-                // bls12_381::G2ADD,
-                // bls12_381::G2MUL,
-                // bls12_381::G2MSM,
-                // bls12_381::PAIRING,
-                // bls12_381::MAP_FP_TO_G1,
-                // bls12_381::MAP_FP2_TO_G2,
-            ]);
+            let precompiles = Self::cancun().clone();
+            // EIP-2537: Precompile for BLS12-381 curve operations
+            // TODO(alexey): add BLS12-381 precompiles
+            // precompiles.extend(bls12_381::precompiles());
             Box::new(precompiles)
         })
     }
