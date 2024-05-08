@@ -6,6 +6,8 @@ use crate::{
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 
 pub mod add {
+    use revm_primitives::Bytes;
+
     use super::*;
 
     const ADDRESS: Address = crate::u64_to_address(6);
@@ -23,7 +25,7 @@ pub mod add {
                     return Ok::<(u64, Bytes), Error>((150, out))
                 }
             }
-            Ok((150, super::run_add(input)?))
+            super::run_add(input, ISTANBUL_ADD_GAS_COST, gas_limit)
         }),
     );
 
@@ -40,12 +42,14 @@ pub mod add {
                     return Ok::<(u64, Bytes), Error>((150, out))
                 }
             }
-            Ok((150, super::run_add(input)?))
+            super::run_add(input, BYZANTIUM_ADD_GAS_COST, gas_limit)
         }),
     );
 }
 
 pub mod mul {
+    use revm_primitives::Bytes;
+
     use super::*;
 
     const ADDRESS: Address = crate::u64_to_address(7);
@@ -63,7 +67,7 @@ pub mod mul {
                     return Ok::<(u64, Bytes), Error>((6_000, out))
                 }
             }
-            Ok((6_000, super::run_mul(input)?))
+            super::run_mul(input, ISTANBUL_MUL_GAS_COST, gas_limit)
         }),
     );
 
@@ -80,12 +84,14 @@ pub mod mul {
                     return Ok::<(u64, Bytes), Error>((40_000, out))
                 }
             }
-            Ok((40_000, super::run_mul(input)?))
+            super::run_mul(input, BYZANTIUM_MUL_GAS_COST, gas_limit)
         }),
     );
 }
 
 pub mod pair {
+    use revm_primitives::Bytes;
+
     use super::*;
 
     const ADDRESS: Address = crate::u64_to_address(8);
@@ -189,13 +195,10 @@ pub fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
     }
 }
 
-pub fn run_add_zk(input: &[u8]) -> Result<Bytes, Error> {
+pub fn run_add_zk(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult{
     unimplemented!()
 }
 
-pub fn run_add_zk(input: &[u8]) -> Result<Bytes, Error> {
-    unimplemented!()
-}
 
 pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {

@@ -93,7 +93,7 @@ impl Precompiles {
                 // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
                 // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
                 bn128::add::BYZANTIUM,
-                bn128::mul::BYZANTIUM,
+                // bn128::mul::BYZANTIUM,
                 bn128::pair::BYZANTIUM,
                 // EIP-198: Big integer modular exponentiation.
                 modexp::BYZANTIUM,
@@ -112,7 +112,7 @@ impl Precompiles {
                 blake2::FUN,
                 // EIP-1108: Reduce alt_bn128 precompile gas costs.
                 bn128::add::ISTANBUL,
-                bn128::mul::ISTANBUL,
+                // bn128::mul::ISTANBUL,
                 bn128::pair::ISTANBUL,
             ]);
             Box::new(precompiles)
