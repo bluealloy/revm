@@ -113,7 +113,9 @@ impl Cmd {
 
             evm.transact().map_err(|_| Errors::EVMError)?
         } else {
-            evm.transact().map_err(|_| Errors::EVMError)?
+            let out = evm.transact().map_err(|_| Errors::EVMError)?;
+            println!("Result: {:#?}", out.result);
+            out
         };
 
         println!("Result: {:#?}", out.result);
