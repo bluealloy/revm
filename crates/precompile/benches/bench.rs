@@ -9,7 +9,7 @@ use revm_precompile::{
     Bytes,
 };
 use revm_primitives::{hex, keccak256, Env, U256, VERSIONED_HASH_VERSION_KZG};
-use secp256k1::{rand, Message, SecretKey, SECP256K1};
+use secp256k1::{Message, SecretKey, SECP256K1};
 use sha2::{Digest, Sha256};
 
 /// Benchmarks different cryptography-related precompiles.

@@ -25,7 +25,7 @@ fn main() {
         .with_db(BenchmarkDB::new_bytecode(bytecode_raw))
         .build();
 
-    // just to spead up processor.
+    // Just to warm up the processor.
     for _ in 0..10000 {
         let _ = evm.transact().unwrap();
     }

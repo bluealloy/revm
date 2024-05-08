@@ -303,7 +303,8 @@ impl SharedMemory {
     }
 }
 
-/// Rounds up `x` to the closest multiple of 32. If `x % 32 == 0` then `x` is returned.
+/// Rounds up `x` to the closest multiple of 32. If `x % 32 == 0` then `x` is returned. Note, if `x`
+/// is greater than `usize::MAX - 31` this will return `usize::MAX` which isn't a multiple of 32.
 #[inline]
 pub fn next_multiple_of_32(x: usize) -> usize {
     let r = x.bitand(31).not().wrapping_add(1).bitand(31);
@@ -330,6 +331,9 @@ mod tests {
             let next_multiple = x + 32 - (x % 32);
             assert_eq!(next_multiple, next_multiple_of_32(x));
         }
+
+        // We expect large values to saturate and not overflow.
+        assert_eq!(usize::MAX, next_multiple_of_32(usize::MAX));
     }
 
     #[test]
