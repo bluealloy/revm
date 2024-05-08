@@ -163,7 +163,7 @@ impl Precompiles {
         INSTANCE.get_or_init(|| {
             let precompiles = Self::berlin().clone();
 
-            // Don't include KZG point evaluation precompile in no_std builds.
+            // Don't include BLS12-381 precompiles in no_std builds.
             #[cfg(feature = "blst")]
             let precompiles = {
                 let mut precompiles = precompiles;

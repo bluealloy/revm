@@ -10,7 +10,7 @@ use super::g1::{encode_g1_point, extract_g1_input, G1_INPUT_ITEM_LENGTH, G1_OUTP
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1ADD precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
     PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(g1_add));
-// BLS12_G1ADD precompile address.
+/// BLS12_G1ADD precompile address.
 pub const ADDRESS: u64 = 0x0b;
 /// Base gas fee for BLS12-381 g1_add operation.
 const BASE_GAS_FEE: u64 = 500;
