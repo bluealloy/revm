@@ -70,7 +70,7 @@ alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d
 alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d" }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
     "serde?/std",
     "serde_json?/std",
@@ -134,6 +134,7 @@ optional_beneficiary_reward = ["revm-interpreter/optional_beneficiary_reward"]
 # See comments in `revm-precompile`
 secp256k1 = ["revm-precompile/secp256k1"]
 c-kzg = ["revm-precompile/c-kzg"]
+blst = ["revm-precompile/blst"]
 
 [[example]]
 name = "fork_ref_transact"
