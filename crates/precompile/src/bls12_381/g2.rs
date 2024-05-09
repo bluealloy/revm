@@ -31,7 +31,7 @@ pub(super) fn encode_g2_point(input: *const blst_p2_affine) -> Bytes {
 }
 
 /// Extracts a G2 point in Affine format from a 256 byte slice representation.
-pub(super) fn extract_g2_input(input: &[u8]) -> Result<*mut blst_p2_affine, PrecompileError> {
+pub(super) fn extract_g2_input(input: &[u8]) -> Result<*const blst_p2_affine, PrecompileError> {
     if input.len() != G2_INPUT_ITEM_LENGTH {
         return Err(PrecompileError::Other(format!(
             "Input should be {G2_INPUT_ITEM_LENGTH} bits, was {}",
@@ -44,21 +44,21 @@ pub(super) fn extract_g2_input(input: &[u8]) -> Result<*mut blst_p2_affine, Prec
         input_fps[i] = remove_padding(&input[i * PADDED_FP_LENGTH..(i + 1) * PADDED_FP_LENGTH])?;
     }
 
-    let out = &mut blst_p2_affine::default() as *mut blst_p2_affine;
+    let mut out = blst_p2_affine::default();
     // SAFETY: items in fps have fixed length, out is a blst value.
     unsafe {
-        blst_fp_from_bendian(&mut (*out).x.fp[0], input_fps[0].as_ptr());
-        blst_fp_from_bendian(&mut (*out).x.fp[1], input_fps[1].as_ptr());
-        blst_fp_from_bendian(&mut (*out).y.fp[0], input_fps[2].as_ptr());
-        blst_fp_from_bendian(&mut (*out).y.fp[1], input_fps[3].as_ptr());
+        blst_fp_from_bendian(&mut out.x.fp[0], input_fps[0].as_ptr());
+        blst_fp_from_bendian(&mut out.x.fp[1], input_fps[1].as_ptr());
+        blst_fp_from_bendian(&mut out.y.fp[0], input_fps[2].as_ptr());
+        blst_fp_from_bendian(&mut out.y.fp[1], input_fps[3].as_ptr());
     }
 
     // SAFETY: out is a blst value.
     unsafe {
-        if !blst_p2_affine_in_g2(out) {
+        if !blst_p2_affine_in_g2(&out) {
             return Err(PrecompileError::Other("Element not in G2".to_string()));
         }
     }
 
-    Ok(out)
+    Ok(&mut out as *const _)
 }

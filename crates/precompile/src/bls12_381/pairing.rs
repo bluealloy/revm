@@ -1,7 +1,4 @@
-use blst::{
-    blst_final_exp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_miller_loop, blst_p1_affine,
-    blst_p2_affine,
-};
+use blst::{blst_final_exp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_miller_loop};
 use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult, B256};
 
 use crate::{u64_to_address, PrecompileWithAddress};

@@ -20,7 +20,7 @@ pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> Bytes {
 }
 
 /// Extracts a G1 point in Affine format from a 128 byte slice representation.
-pub(super) fn extract_g1_input(input: &[u8]) -> Result<*mut blst_p1_affine, PrecompileError> {
+pub(super) fn extract_g1_input(input: &[u8]) -> Result<*const blst_p1_affine, PrecompileError> {
     if input.len() != G1_INPUT_ITEM_LENGTH {
         return Err(PrecompileError::Other(format!(
             "Input should be {G1_INPUT_ITEM_LENGTH} bits, was {}",
@@ -31,18 +31,18 @@ pub(super) fn extract_g1_input(input: &[u8]) -> Result<*mut blst_p1_affine, Prec
     let input_p0_x = remove_padding(&input[..PADDED_FP_LENGTH])?;
     let input_p0_y = remove_padding(&input[PADDED_FP_LENGTH..G1_INPUT_ITEM_LENGTH])?;
 
-    let out = &mut blst_p1_affine::default() as *mut blst_p1_affine;
+    let mut out = blst_p1_affine::default();
     // SAFETY: input_p0_x and input_p0_y have fixed length, out is a blst value.
     unsafe {
-        blst_fp_from_bendian(&mut (*out).x, input_p0_x.as_ptr());
-        blst_fp_from_bendian(&mut (*out).y, input_p0_y.as_ptr());
+        blst_fp_from_bendian(&mut out.x, input_p0_x.as_ptr());
+        blst_fp_from_bendian(&mut out.y, input_p0_y.as_ptr());
     }
 
     // SAFETY: out is a blst value.
     unsafe {
-        if !blst_p1_affine_in_g1(out) {
+        if !blst_p1_affine_in_g1(&out) {
             return Err(PrecompileError::Other("Element not in G1".to_string()));
         }
     }
-    Ok(out)
+    Ok(&mut out as *const _)
 }
