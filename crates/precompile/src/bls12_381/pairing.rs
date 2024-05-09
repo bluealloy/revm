@@ -48,41 +48,48 @@ fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::OutOfGas);
     }
 
-    let mut ret = blst_fp12::default();
+    // accumulator for the fp12 multiplications of the miller loops.
+    let mut acc = blst_fp12::default();
     for i in 0..k {
         let mut p1_aff = blst_p1_affine::default();
         let p1_aff = extract_g1_input(
             &mut p1_aff,
             &input[i * INPUT_LENGTH..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH],
         )? as *const blst_p1_affine;
+
         let mut p2_aff = blst_p2_affine::default();
         let p2_aff = extract_g2_input(
             &mut p2_aff,
             &input[i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
                 ..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + G2_INPUT_ITEM_LENGTH],
         )? as *const blst_p2_affine;
+
         if i > 0 {
             // after the first slice (i>0) we use cur_ml to store the current
             // miller loop and accumulate with the previous results using a fp12
             // multiplication.
             let mut cur_ml = blst_fp12::default();
-            // SAFETY: ret, cur_ml, p1_aff and p2_aff are blst values.
+            let mut res = blst_fp12::default();
+            // SAFETY: res, acc, cur_ml, p1_aff and p2_aff are blst values.
             unsafe {
                 blst_miller_loop(&mut cur_ml, p2_aff, p1_aff);
-                blst_fp12_mul(&mut ret, &ret, &cur_ml);
+                blst_fp12_mul(&mut res, &acc, &cur_ml);
             }
+            acc = res;
         } else {
             // on the first slice (i==0) there is no previous results and no need
             // to accumulate.
-            // SAFETY: ret, p1_aff and p2_aff are blst values.
+            // SAFETY: acc, p1_aff and p2_aff are blst values.
             unsafe {
-                blst_miller_loop(&mut ret, p2_aff, p1_aff);
+                blst_miller_loop(&mut acc, p2_aff, p1_aff);
             }
         }
     }
-    // SAFETY: ret is a blst value.
+
+    // SAFETY: ret and acc are blst values.
+    let mut ret = blst_fp12::default();
     unsafe {
-        blst_final_exp(&mut ret, &ret);
+        blst_final_exp(&mut ret, &acc);
     }
 
     let mut result: u8 = 0;
