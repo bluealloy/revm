@@ -4,7 +4,7 @@ use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 use crate::{u64_to_address, PrecompileWithAddress};
 
 use super::{
-    g2::{encode_g2_point, extract_g2_input, G2_INPUT_ITEM_LENGTH, G2_OUTPUT_LENGTH},
+    g2::{encode_g2_point, extract_g2_input, G2_INPUT_ITEM_LENGTH},
     g2_mul,
     msm::msm_required_gas,
     utils::{extract_scalar_input, NBITS, SCALAR_LENGTH},
@@ -43,9 +43,7 @@ fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut g2_points: Vec<blst_p2> = Vec::with_capacity(k);
     let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
-        let mut p0_aff = blst_p2_affine::default();
         let p0_aff = extract_g2_input(
-            &mut p0_aff,
             &input[i * g2_mul::INPUT_LENGTH..i * g2_mul::INPUT_LENGTH + G2_INPUT_ITEM_LENGTH],
         )?;
         let mut p0 = blst_p2::default();
@@ -74,8 +72,6 @@ fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         blst_p2_to_affine(&mut multiexp_aff, &multiexp);
     }
 
-    let mut out = vec![0u8; G2_OUTPUT_LENGTH];
-    encode_g2_point(&mut out, &multiexp_aff);
-
-    Ok((required_gas, out.into()))
+    let out = encode_g2_point(&multiexp_aff);
+    Ok((required_gas, out))
 }

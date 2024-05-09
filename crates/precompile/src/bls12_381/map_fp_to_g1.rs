@@ -6,7 +6,7 @@ use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 use crate::{u64_to_address, PrecompileWithAddress};
 
 use super::{
-    g1::{encode_g1_point, G1_OUTPUT_LENGTH},
+    g1::encode_g1_point,
     utils::{remove_padding, PADDED_FP_LENGTH},
 };
 
@@ -55,8 +55,6 @@ fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         blst_p1_to_affine(&mut p_aff, &p);
     }
 
-    let mut out = vec![0u8; G1_OUTPUT_LENGTH];
-    encode_g1_point(&mut out, &p_aff);
-
-    Ok((MAP_FP_TO_G1_BASE, out.into()))
+    let out = encode_g1_point(&p_aff);
+    Ok((MAP_FP_TO_G1_BASE, out))
 }

@@ -4,7 +4,7 @@ use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 use crate::{u64_to_address, PrecompileWithAddress};
 
 use super::{
-    g2::{encode_g2_point, extract_g2_input, G2_INPUT_ITEM_LENGTH, G2_OUTPUT_LENGTH},
+    g2::{encode_g2_point, extract_g2_input, G2_INPUT_ITEM_LENGTH},
     utils::{extract_scalar_input, NBITS},
 };
 
@@ -36,8 +36,7 @@ fn g2_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
-    let mut p0_aff = blst_p2_affine::default();
-    let p0_aff = extract_g2_input(&mut p0_aff, &input[..G2_INPUT_ITEM_LENGTH])?;
+    let p0_aff = extract_g2_input(&input[..G2_INPUT_ITEM_LENGTH])?;
     let mut p0 = blst_p2::default();
     // SAFETY: p0 and p0_aff are blst values.
     unsafe {
@@ -57,8 +56,6 @@ fn g2_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         blst_p2_to_affine(&mut p_aff, &p);
     }
 
-    let mut out = vec![0u8; G2_OUTPUT_LENGTH];
-    encode_g2_point(&mut out, &p_aff);
-
-    Ok((BASE_GAS_FEE, out.into()))
+    let out = encode_g2_point(&p_aff);
+    Ok((BASE_GAS_FEE, out))
 }

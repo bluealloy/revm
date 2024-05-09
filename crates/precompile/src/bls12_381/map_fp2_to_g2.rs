@@ -7,7 +7,7 @@ use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 use crate::{u64_to_address, PrecompileWithAddress};
 
 use super::{
-    g2::{encode_g2_point, G2_OUTPUT_LENGTH},
+    g2::encode_g2_point,
     utils::{remove_padding, PADDED_FP2_LENGTH, PADDED_FP_LENGTH},
 };
 
@@ -65,8 +65,6 @@ fn map_fp2_to_g2(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         blst_p2_to_affine(&mut p_aff, &p);
     }
 
-    let mut out = vec![0u8; G2_OUTPUT_LENGTH];
-    encode_g2_point(&mut out, &p_aff);
-
-    Ok((BASE_GAS_FEE, out.into()))
+    let out = encode_g2_point(&p_aff);
+    Ok((BASE_GAS_FEE, out))
 }

@@ -5,7 +5,7 @@ use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 
 use crate::{u64_to_address, PrecompileWithAddress};
 
-use super::g2::{encode_g2_point, extract_g2_input, G2_INPUT_ITEM_LENGTH, G2_OUTPUT_LENGTH};
+use super::g2::{encode_g2_point, extract_g2_input, G2_INPUT_ITEM_LENGTH};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2ADD precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -36,11 +36,8 @@ fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
-    let mut a_aff = blst_p2_affine::default();
-    let a_aff = extract_g2_input(&mut a_aff, &input[..G2_INPUT_ITEM_LENGTH])?;
-
-    let mut b_aff = blst_p2_affine::default();
-    let b_aff = extract_g2_input(&mut b_aff, &input[G2_INPUT_ITEM_LENGTH..])?;
+    let a_aff = extract_g2_input(&input[..G2_INPUT_ITEM_LENGTH])?;
+    let b_aff = extract_g2_input(&input[G2_INPUT_ITEM_LENGTH..])?;
 
     let mut b = blst_p2::default();
     // SAFETY: b and b_aff are blst values.
@@ -60,8 +57,6 @@ fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         blst_p2_to_affine(&mut p_aff, &p);
     }
 
-    let mut out = vec![0u8; G2_OUTPUT_LENGTH];
-    encode_g2_point(&mut out, &p_aff);
-
-    Ok((BASE_GAS_FEE, out.into()))
+    let out = encode_g2_point(&p_aff);
+    Ok((BASE_GAS_FEE, out))
 }

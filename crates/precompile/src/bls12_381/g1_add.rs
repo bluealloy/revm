@@ -5,7 +5,7 @@ use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 
 use crate::{u64_to_address, PrecompileWithAddress};
 
-use super::g1::{encode_g1_point, extract_g1_input, G1_INPUT_ITEM_LENGTH, G1_OUTPUT_LENGTH};
+use super::g1::{encode_g1_point, extract_g1_input, G1_INPUT_ITEM_LENGTH};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1ADD precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -35,11 +35,8 @@ fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
-    let mut a_aff = blst_p1_affine::default();
-    let a_aff = extract_g1_input(&mut a_aff, &input[..G1_INPUT_ITEM_LENGTH])?;
-
-    let mut b_aff = blst_p1_affine::default();
-    let b_aff = extract_g1_input(&mut b_aff, &input[G1_INPUT_ITEM_LENGTH..])?;
+    let a_aff = extract_g1_input(&input[..G1_INPUT_ITEM_LENGTH])?;
+    let b_aff = extract_g1_input(&input[G1_INPUT_ITEM_LENGTH..])?;
 
     let mut b = blst_p1::default();
     // SAFETY: b and b_aff are blst values.
@@ -59,8 +56,6 @@ fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         blst_p1_to_affine(&mut p_aff, &p);
     }
 
-    let mut out = vec![0u8; G1_OUTPUT_LENGTH];
-    encode_g1_point(&mut out, &p_aff);
-
-    Ok((BASE_GAS_FEE, out.into()))
+    let out = encode_g1_point(&p_aff);
+    Ok((BASE_GAS_FEE, out))
 }
