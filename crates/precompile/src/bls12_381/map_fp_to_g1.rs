@@ -33,32 +33,29 @@ fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
-    let input_p0 = match remove_padding(input) {
-        Ok(input_p0) => input_p0,
-        Err(e) => return Err(e),
-    };
+    let input_p0 = remove_padding(input)?;
 
-    let mut fp: blst_fp = Default::default();
+    let mut fp = blst_fp::default();
 
     // SAFETY: input_p0 has fixed length, fp is a blst value.
     unsafe {
         blst_fp_from_bendian(&mut fp, input_p0.as_ptr());
     }
 
-    let mut p: blst_p1 = Default::default();
+    let mut p = blst_p1::default();
     // SAFETY: p and fp are blst values.
     unsafe {
         // third argument is unused if null.
         blst_map_to_g1(&mut p, &fp, std::ptr::null());
     }
 
-    let mut p_aff: blst_p1_affine = Default::default();
+    let mut p_aff = blst_p1_affine::default();
     // SAFETY: p_aff and p are blst values.
     unsafe {
         blst_p1_to_affine(&mut p_aff, &p);
     }
 
-    let mut out = [0u8; G1_OUTPUT_LENGTH];
+    let mut out = vec![0u8; G1_OUTPUT_LENGTH];
     encode_g1_point(&mut out, &p_aff);
 
     Ok((MAP_FP_TO_G1_BASE, out.into()))

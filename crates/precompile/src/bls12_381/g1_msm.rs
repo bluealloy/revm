@@ -43,12 +43,12 @@ fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut g1_points: Vec<blst_p1> = Vec::with_capacity(k);
     let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
-        let mut p0_aff: blst_p1_affine = Default::default();
+        let mut p0_aff = blst_p1_affine::default();
         let p0_aff = extract_g1_input(
             &mut p0_aff,
             &input[i * g1_mul::INPUT_LENGTH..i * g1_mul::INPUT_LENGTH + G1_INPUT_ITEM_LENGTH],
         )?;
-        let mut p0: blst_p1 = Default::default();
+        let mut p0 = blst_p1::default();
         // SAFETY: p0 and p0_aff are blst values.
         unsafe {
             blst_p1_from_affine(&mut p0, p0_aff);
@@ -68,13 +68,13 @@ fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let points = p1_affines::from(&g1_points);
     let multiexp = points.mult(&scalars, NBITS);
 
-    let mut multiexp_aff: blst_p1_affine = Default::default();
+    let mut multiexp_aff = blst_p1_affine::default();
     // SAFETY: multiexp_aff and multiexp are blst values.
     unsafe {
         blst_p1_to_affine(&mut multiexp_aff, &multiexp);
     }
 
-    let mut out = [0u8; G1_OUTPUT_LENGTH];
+    let mut out = vec![0u8; G1_OUTPUT_LENGTH];
     encode_g1_point(&mut out, &multiexp_aff);
 
     Ok((required_gas, out.into()))

@@ -35,18 +35,12 @@ fn map_fp2_to_g2(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
-    let input_p0_x = match remove_padding(&input[..PADDED_FP_LENGTH]) {
-        Ok(input_p0_x) => input_p0_x,
-        Err(e) => return Err(e),
-    };
-    let input_p0_y = match remove_padding(&input[PADDED_FP_LENGTH..PADDED_FP2_LENGTH]) {
-        Ok(input_p0_y) => input_p0_y,
-        Err(e) => return Err(e),
-    };
+    let input_p0_x = remove_padding(&input[..PADDED_FP_LENGTH])?;
+    let input_p0_y = remove_padding(&input[PADDED_FP_LENGTH..PADDED_FP2_LENGTH])?;
 
-    let mut fp2: blst_fp2 = Default::default();
-    let mut fp_x: blst_fp = Default::default();
-    let mut fp_y: blst_fp = Default::default();
+    let mut fp2 = blst_fp2::default();
+    let mut fp_x = blst_fp::default();
+    let mut fp_y = blst_fp::default();
     // SAFETY: input_p0_x has fixed length, fp_x is a blst value.
     unsafe {
         blst_fp_from_bendian(&mut fp_x, input_p0_x.as_ptr());
@@ -58,20 +52,20 @@ fn map_fp2_to_g2(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     fp2.fp[0] = fp_x;
     fp2.fp[1] = fp_y;
 
-    let mut p: blst_p2 = Default::default();
+    let mut p = blst_p2::default();
     // SAFETY: p and fp2 are blst values.
     unsafe {
         // third argument is unused if null.
         blst_map_to_g2(&mut p, &fp2, std::ptr::null());
     }
 
-    let mut p_aff: blst_p2_affine = Default::default();
+    let mut p_aff = blst_p2_affine::default();
     // SAFETY: p_aff and p are blst values.
     unsafe {
         blst_p2_to_affine(&mut p_aff, &p);
     }
 
-    let mut out = [0u8; G2_OUTPUT_LENGTH];
+    let mut out = vec![0u8; G2_OUTPUT_LENGTH];
     encode_g2_point(&mut out, &p_aff);
 
     Ok((BASE_GAS_FEE, out.into()))

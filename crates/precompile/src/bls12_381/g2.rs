@@ -42,11 +42,7 @@ pub(super) fn extract_g2_input(
 
     let mut input_fps: [[u8; FP_LENGTH]; 4] = [[0; FP_LENGTH]; 4];
     for i in 0..4 {
-        input_fps[i] =
-            match remove_padding(&input[i * PADDED_FP_LENGTH..(i + 1) * PADDED_FP_LENGTH]) {
-                Ok(fp_0) => fp_0,
-                Err(e) => return Err(e),
-            };
+        input_fps[i] = remove_padding(&input[i * PADDED_FP_LENGTH..(i + 1) * PADDED_FP_LENGTH])?;
     }
 
     // SAFETY: items in fps have fixed length, out is a blst value.

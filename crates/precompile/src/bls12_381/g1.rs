@@ -29,14 +29,8 @@ pub(super) fn extract_g1_input(
         )));
     }
 
-    let input_p0_x = match remove_padding(&input[..PADDED_FP_LENGTH]) {
-        Ok(input_p0_x) => input_p0_x,
-        Err(e) => return Err(e),
-    };
-    let input_p0_y = match remove_padding(&input[PADDED_FP_LENGTH..G1_INPUT_ITEM_LENGTH]) {
-        Ok(input_p0_y) => input_p0_y,
-        Err(e) => return Err(e),
-    };
+    let input_p0_x = remove_padding(&input[..PADDED_FP_LENGTH])?;
+    let input_p0_y = remove_padding(&input[PADDED_FP_LENGTH..G1_INPUT_ITEM_LENGTH])?;
 
     // SAFETY: input_p0_x and input_p0_y have fixed length, x and y are blst values.
     unsafe {

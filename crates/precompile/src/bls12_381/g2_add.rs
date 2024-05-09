@@ -36,31 +36,31 @@ fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
-    let mut a_aff: blst_p2_affine = Default::default();
+    let mut a_aff = blst_p2_affine::default();
     let a_aff = extract_g2_input(&mut a_aff, &input[..G2_INPUT_ITEM_LENGTH])?;
 
-    let mut b_aff: blst_p2_affine = Default::default();
+    let mut b_aff = blst_p2_affine::default();
     let b_aff = extract_g2_input(&mut b_aff, &input[G2_INPUT_ITEM_LENGTH..])?;
 
-    let mut b: blst_p2 = Default::default();
+    let mut b = blst_p2::default();
     // SAFETY: b and b_aff are blst values.
     unsafe {
         blst_p2_from_affine(&mut b, b_aff);
     }
 
-    let mut p: blst_p2 = Default::default();
+    let mut p = blst_p2::default();
     // SAFETY: p, b and a_aff are blst values.
     unsafe {
         blst_p2_add_or_double_affine(&mut p, &b, a_aff);
     }
 
-    let mut p_aff: blst_p2_affine = Default::default();
+    let mut p_aff = blst_p2_affine::default();
     // SAFETY: p_aff and p are blst values.
     unsafe {
         blst_p2_to_affine(&mut p_aff, &p);
     }
 
-    let mut out = [0u8; G2_OUTPUT_LENGTH];
+    let mut out = vec![0u8; G2_OUTPUT_LENGTH];
     encode_g2_point(&mut out, &p_aff);
 
     Ok((BASE_GAS_FEE, out.into()))

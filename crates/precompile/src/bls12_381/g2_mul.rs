@@ -36,9 +36,9 @@ fn g2_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
-    let mut p0_aff: blst_p2_affine = Default::default();
+    let mut p0_aff = blst_p2_affine::default();
     let p0_aff = extract_g2_input(&mut p0_aff, &input[..G2_INPUT_ITEM_LENGTH])?;
-    let mut p0: blst_p2 = Default::default();
+    let mut p0 = blst_p2::default();
     // SAFETY: p0 and p0_aff are blst values.
     unsafe {
         blst_p2_from_affine(&mut p0, p0_aff);
@@ -46,18 +46,18 @@ fn g2_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
     let input_scalar0 = extract_scalar_input(&input[G2_INPUT_ITEM_LENGTH..])?;
 
-    let mut p: blst_p2 = Default::default();
+    let mut p = blst_p2::default();
     // SAFETY: input_scalar0.b has fixed size, p and p0 are blst values.
     unsafe {
         blst_p2_mult(&mut p, &p0, input_scalar0.b.as_ptr(), NBITS);
     }
-    let mut p_aff: blst_p2_affine = Default::default();
+    let mut p_aff = blst_p2_affine::default();
     // SAFETY: p_aff and p are blst values.
     unsafe {
         blst_p2_to_affine(&mut p_aff, &p);
     }
 
-    let mut out = [0u8; G2_OUTPUT_LENGTH];
+    let mut out = vec![0u8; G2_OUTPUT_LENGTH];
     encode_g2_point(&mut out, &p_aff);
 
     Ok((BASE_GAS_FEE, out.into()))

@@ -55,7 +55,7 @@ pub(super) fn extract_scalar_input(input: &[u8]) -> Result<blst_scalar, Precompi
         )));
     }
 
-    let mut out: blst_scalar = Default::default();
+    let mut out = blst_scalar::default();
     // SAFETY: input length is checked previously, out is a blst value.
     unsafe {
         blst_scalar_from_bendian(&mut out, input.as_ptr());
