@@ -47,3 +47,5 @@ jobs:
             ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
             ethtests/EIPTests/StateTests/stEIP1153-transientStorage/ \
             ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/ \
+            ethtests/EIPTests/StateTests/stEIP2537/ \
+

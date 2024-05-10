@@ -9,6 +9,8 @@
 extern crate alloc as std;
 
 pub mod blake2;
+#[cfg(feature = "blst")]
+pub mod bls12_381;
 pub mod bn128;
 pub mod hash;
 pub mod identity;
@@ -159,10 +161,16 @@ impl Precompiles {
     pub fn prague() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let precompiles = Self::cancun().clone();
-            // EIP-2537: Precompile for BLS12-381 curve operations
-            // TODO(alexey): add BLS12-381 precompiles
-            // precompiles.extend(bls12_381::precompiles());
+            let precompiles = Self::berlin().clone();
+
+            // Don't include BLS12-381 precompiles in no_std builds.
+            #[cfg(feature = "blst")]
+            let precompiles = {
+                let mut precompiles = precompiles;
+                precompiles.extend(bls12_381::precompiles());
+                precompiles
+            };
+
             Box::new(precompiles)
         })
     }

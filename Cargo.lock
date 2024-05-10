@@ -2963,6 +2963,7 @@ name = "revm-precompile"
 version = "6.0.0"
 dependencies = [
  "aurora-engine-modexp",
+ "blst",
  "c-kzg",
  "criterion",
  "k256",

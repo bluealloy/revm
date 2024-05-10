@@ -41,12 +41,15 @@ secp256k1 = { version = "0.29.0", default-features = false, features = [
     "global-context",
 ], optional = true }
 
+# BLS12-381 precompiles
+blst = { version = "0.3.11", optional = true }
+
 [dev-dependencies]
 criterion = { version = "0.5" }
 rand = { version = "0.8", features = ["std"] }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
     "revm-primitives/std",
     "k256/std",
@@ -79,6 +82,9 @@ portable = ["revm-primitives/portable", "c-kzg?/portable"]
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
 # In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
 secp256k1 = ["dep:secp256k1"]
+
+# Enables the BLS12-381 precompiles.
+blst = ["dep:blst"]
 
 [[bench]]
 name = "bench"
