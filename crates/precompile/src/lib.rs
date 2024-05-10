@@ -161,7 +161,7 @@ impl Precompiles {
     pub fn prague() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let precompiles = Self::berlin().clone();
+            let precompiles = Self::cancun().clone();
 
             // Don't include BLS12-381 precompiles in no_std builds.
             #[cfg(feature = "blst")]
