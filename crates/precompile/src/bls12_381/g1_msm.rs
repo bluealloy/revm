@@ -1,14 +1,12 @@
-use blst::{blst_p1, blst_p1_affine, blst_p1_from_affine, blst_p1_to_affine, p1_affines};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
-
-use crate::{u64_to_address, PrecompileWithAddress};
-
 use super::{
     g1::{encode_g1_point, extract_g1_input, G1_INPUT_ITEM_LENGTH},
     g1_mul,
     msm::msm_required_gas,
     utils::{extract_scalar_input, NBITS, SCALAR_LENGTH},
 };
+use crate::{u64_to_address, PrecompileWithAddress};
+use blst::{blst_p1, blst_p1_affine, blst_p1_from_affine, blst_p1_to_affine, p1_affines};
+use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -43,15 +41,12 @@ fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut g1_points: Vec<blst_p1> = Vec::with_capacity(k);
     let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
-        let p0_aff = extract_g1_input(
+        let p0_aff = &extract_g1_input(
             &input[i * g1_mul::INPUT_LENGTH..i * g1_mul::INPUT_LENGTH + G1_INPUT_ITEM_LENGTH],
         )?;
         let mut p0 = blst_p1::default();
         // SAFETY: p0 and p0_aff are blst values.
-        unsafe {
-            blst_p1_from_affine(&mut p0, p0_aff);
-        }
-
+        unsafe { blst_p1_from_affine(&mut p0, p0_aff) };
         g1_points.push(p0);
 
         scalars.extend_from_slice(
@@ -68,9 +63,7 @@ fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
     let mut multiexp_aff = blst_p1_affine::default();
     // SAFETY: multiexp_aff and multiexp are blst values.
-    unsafe {
-        blst_p1_to_affine(&mut multiexp_aff, &multiexp);
-    }
+    unsafe { blst_p1_to_affine(&mut multiexp_aff, &multiexp) };
 
     let out = encode_g1_point(&multiexp_aff);
     Ok((required_gas, out))
