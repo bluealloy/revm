@@ -1,7 +1,8 @@
 /// Amount used to calculate the multi-scalar-multiplication discount.
 const MSM_MULTIPLIER: u64 = 1000;
+
 /// Table of gas discounts for multi-scalar-multiplication operations.
-const MSM_DISCOUNT_TABLE: [u64; 128] = [
+static MSM_DISCOUNT_TABLE: [u16; 128] = [
     1200, 888, 764, 641, 594, 547, 500, 453, 438, 423, 408, 394, 379, 364, 349, 334, 330, 326, 322,
     318, 314, 310, 306, 302, 298, 294, 289, 285, 281, 277, 273, 269, 268, 266, 265, 263, 262, 260,
     259, 257, 256, 254, 253, 251, 250, 248, 247, 245, 244, 242, 241, 239, 238, 236, 235, 233, 232,
@@ -18,11 +19,8 @@ pub(super) fn msm_required_gas(k: usize, multiplication_cost: u64) -> u64 {
         return 0;
     }
 
-    let discount = if k < MSM_DISCOUNT_TABLE.len() {
-        MSM_DISCOUNT_TABLE[k - 1]
-    } else {
-        MSM_DISCOUNT_TABLE[MSM_DISCOUNT_TABLE.len() - 1]
-    };
+    let index = core::cmp::min(k - 1, MSM_DISCOUNT_TABLE.len() - 1);
+    let discount = MSM_DISCOUNT_TABLE[index] as u64;
 
     (k as u64 * discount * multiplication_cost) / MSM_MULTIPLIER
 }

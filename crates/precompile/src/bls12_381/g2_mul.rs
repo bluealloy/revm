@@ -1,12 +1,10 @@
-use blst::{blst_p2, blst_p2_affine, blst_p2_from_affine, blst_p2_mult, blst_p2_to_affine};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
-
-use crate::{u64_to_address, PrecompileWithAddress};
-
 use super::{
     g2::{encode_g2_point, extract_g2_input, G2_INPUT_ITEM_LENGTH},
     utils::{extract_scalar_input, NBITS},
 };
+use crate::{u64_to_address, PrecompileWithAddress};
+use blst::{blst_p2, blst_p2_affine, blst_p2_from_affine, blst_p2_mult, blst_p2_to_affine};
+use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MUL precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -31,30 +29,24 @@ fn g2_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
     if input.len() != INPUT_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "G2MUL Input should be {INPUT_LENGTH} bits, was {}",
+            "G2MUL input should be {INPUT_LENGTH} bytes, was {}",
             input.len()
         )));
     }
 
-    let p0_aff = extract_g2_input(&input[..G2_INPUT_ITEM_LENGTH])?;
+    let p0_aff = &extract_g2_input(&input[..G2_INPUT_ITEM_LENGTH])?;
     let mut p0 = blst_p2::default();
     // SAFETY: p0 and p0_aff are blst values.
-    unsafe {
-        blst_p2_from_affine(&mut p0, p0_aff);
-    }
+    unsafe { blst_p2_from_affine(&mut p0, p0_aff) };
 
     let input_scalar0 = extract_scalar_input(&input[G2_INPUT_ITEM_LENGTH..])?;
 
     let mut p = blst_p2::default();
     // SAFETY: input_scalar0.b has fixed size, p and p0 are blst values.
-    unsafe {
-        blst_p2_mult(&mut p, &p0, input_scalar0.b.as_ptr(), NBITS);
-    }
+    unsafe { blst_p2_mult(&mut p, &p0, input_scalar0.b.as_ptr(), NBITS) };
     let mut p_aff = blst_p2_affine::default();
     // SAFETY: p_aff and p are blst values.
-    unsafe {
-        blst_p2_to_affine(&mut p_aff, &p);
-    }
+    unsafe { blst_p2_to_affine(&mut p_aff, &p) };
 
     let out = encode_g2_point(&p_aff);
     Ok((BASE_GAS_FEE, out))

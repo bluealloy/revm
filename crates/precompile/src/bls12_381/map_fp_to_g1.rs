@@ -1,14 +1,12 @@
-use blst::{
-    blst_fp, blst_fp_from_bendian, blst_map_to_g1, blst_p1, blst_p1_affine, blst_p1_to_affine,
-};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
-
-use crate::{u64_to_address, PrecompileWithAddress};
-
 use super::{
     g1::encode_g1_point,
     utils::{remove_padding, PADDED_FP_LENGTH},
 };
+use crate::{u64_to_address, PrecompileWithAddress};
+use blst::{
+    blst_fp, blst_fp_from_bendian, blst_map_to_g1, blst_p1, blst_p1_affine, blst_p1_to_affine,
+};
+use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_MAP_FP_TO_G1 precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -28,7 +26,7 @@ fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
     if input.len() != PADDED_FP_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "MAP_FP_TO_G1 Input should be {PADDED_FP_LENGTH} bits, was {}",
+            "MAP_FP_TO_G1 input should be {PADDED_FP_LENGTH} bytes, was {}",
             input.len()
         )));
     }
@@ -38,22 +36,16 @@ fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut fp = blst_fp::default();
 
     // SAFETY: input_p0 has fixed length, fp is a blst value.
-    unsafe {
-        blst_fp_from_bendian(&mut fp, input_p0.as_ptr());
-    }
+    unsafe { blst_fp_from_bendian(&mut fp, input_p0.as_ptr()) };
 
     let mut p = blst_p1::default();
     // SAFETY: p and fp are blst values.
-    unsafe {
-        // third argument is unused if null.
-        blst_map_to_g1(&mut p, &fp, std::ptr::null());
-    }
+    // third argument is unused if null.
+    unsafe { blst_map_to_g1(&mut p, &fp, core::ptr::null()) };
 
     let mut p_aff = blst_p1_affine::default();
     // SAFETY: p_aff and p are blst values.
-    unsafe {
-        blst_p1_to_affine(&mut p_aff, &p);
-    }
+    unsafe { blst_p1_to_affine(&mut p_aff, &p) };
 
     let out = encode_g1_point(&p_aff);
     Ok((MAP_FP_TO_G1_BASE, out))

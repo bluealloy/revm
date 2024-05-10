@@ -1,12 +1,10 @@
-use blst::{blst_final_exp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_miller_loop};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult, B256};
-
-use crate::{u64_to_address, PrecompileWithAddress};
-
 use super::{
     g1::{extract_g1_input, G1_INPUT_ITEM_LENGTH},
     g2::{extract_g2_input, G2_INPUT_ITEM_LENGTH},
 };
+use crate::{u64_to_address, PrecompileWithAddress};
+use blst::{blst_final_exp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_miller_loop};
+use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult, B256};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -49,9 +47,9 @@ fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut acc = blst_fp12::default();
     for i in 0..k {
         let p1_aff =
-            extract_g1_input(&input[i * INPUT_LENGTH..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH])?;
+            &extract_g1_input(&input[i * INPUT_LENGTH..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH])?;
 
-        let p2_aff = extract_g2_input(
+        let p2_aff = &extract_g2_input(
             &input[i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
                 ..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + G2_INPUT_ITEM_LENGTH],
         )?;
