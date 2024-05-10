@@ -29,7 +29,7 @@ pub(super) fn fp_to_bytes(out: &mut [u8], input: *const blst_fp) {
 pub(super) fn remove_padding(input: &[u8]) -> Result<&[u8; FP_LENGTH], PrecompileError> {
     if input.len() != PADDED_FP_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "Padded Input should be {PADDED_FP_LENGTH} bits, was {}",
+            "Padded input should be {PADDED_FP_LENGTH} bytes, was {}",
             input.len()
         )));
     }
@@ -46,7 +46,7 @@ pub(super) fn remove_padding(input: &[u8]) -> Result<&[u8; FP_LENGTH], Precompil
 pub(super) fn extract_scalar_input(input: &[u8]) -> Result<blst_scalar, PrecompileError> {
     if input.len() != SCALAR_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "Input should be {SCALAR_LENGTH} bits, was {}",
+            "Input should be {SCALAR_LENGTH} bytes, was {}",
             input.len()
         )));
     }

@@ -29,7 +29,7 @@ fn g2_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
     if input.len() != INPUT_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "G2MUL Input should be {INPUT_LENGTH} bits, was {}",
+            "G2MUL input should be {INPUT_LENGTH} bytes, was {}",
             input.len()
         )));
     }

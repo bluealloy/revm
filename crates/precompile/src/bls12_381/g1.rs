@@ -22,7 +22,7 @@ pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> Bytes {
 pub(super) fn extract_g1_input(input: &[u8]) -> Result<blst_p1_affine, PrecompileError> {
     if input.len() != G1_INPUT_ITEM_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "Input should be {G1_INPUT_ITEM_LENGTH} bits, was {}",
+            "Input should be {G1_INPUT_ITEM_LENGTH} bytes, was {}",
             input.len()
         )));
     }

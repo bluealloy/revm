@@ -30,7 +30,7 @@ pub(super) fn encode_g2_point(input: &blst_p2_affine) -> Bytes {
 pub(super) fn extract_g2_input(input: &[u8]) -> Result<blst_p2_affine, PrecompileError> {
     if input.len() != G2_INPUT_ITEM_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "Input should be {G2_INPUT_ITEM_LENGTH} bits, was {}",
+            "Input should be {G2_INPUT_ITEM_LENGTH} bytes, was {}",
             input.len()
         )));
     }

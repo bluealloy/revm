@@ -26,7 +26,7 @@ fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
     if input.len() != PADDED_FP_LENGTH {
         return Err(PrecompileError::Other(format!(
-            "MAP_FP_TO_G1 Input should be {PADDED_FP_LENGTH} bits, was {}",
+            "MAP_FP_TO_G1 input should be {PADDED_FP_LENGTH} bytes, was {}",
             input.len()
         )));
     }
