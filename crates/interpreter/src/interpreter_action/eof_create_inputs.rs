@@ -5,18 +5,17 @@ use core::ops::Range;
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EOFCreateInput {
-    /// Caller of Eof Craate
+    /// Caller of Eof Create
     pub caller: Address,
     /// New contract address.
     pub created_address: Address,
-    /// Values of ether transfered
+    /// Values of ether transferred
     pub value: U256,
     /// Init eof code that is going to be executed.
     pub eof_init_code: Eof,
     /// Gas limit for the create call.
     pub gas_limit: u64,
-    /// Return memory range. If EOF creation Reverts it can return the
-    /// the memory range.
+    /// Return memory range. If EOF creation Reverts it can return the memory range.
     pub return_memory_range: Range<usize>,
 }
 

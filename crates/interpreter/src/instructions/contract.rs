@@ -19,7 +19,7 @@ use std::boxed::Box;
 
 /// Resize memory and return memory range if successful.
 /// Return `None` if there is not enough gas. And if `len`
-/// is zero return `Some(usize::MAX..usize::MAX)`.
+/// is zero return `Some(usize::MAX.usize::MAX)`.
 pub fn resize_memory(
     interpreter: &mut Interpreter,
     offset: U256,

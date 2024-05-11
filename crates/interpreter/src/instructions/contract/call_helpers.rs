@@ -24,7 +24,7 @@ pub fn get_memory_input_and_out_ranges(
 }
 
 /// Resize memory and return range of memory.
-/// If `len` is 0 dont touch memory and return `usize::MAX` as offset and 0 as length.
+/// If `len` is 0 don't touch memory and return `usize::MAX` as offset and 0 as length.
 #[inline]
 pub fn resize_memory_and_return_range(
     interpreter: &mut Interpreter,
