@@ -20,6 +20,7 @@ pub mod result;
 pub mod specification;
 pub mod state;
 pub mod utilities;
+
 pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, ruint, uint, Address, Bytes,
     FixedBytes, Log, LogData, B256, I256, U256,
@@ -28,8 +29,7 @@ pub use bitvec;
 pub use bytecode::*;
 pub use constants::*;
 pub use env::*;
-// Use hashbrown for everything to avoid dep collision on std::collections.
-pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
+pub use std::collections::{hash_map, hash_set, HashMap, HashSet};
 
 #[cfg(feature = "c-kzg")]
 pub use kzg::{EnvKzgSettings, KzgSettings};
