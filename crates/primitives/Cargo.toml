@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm", "types"]
 license = "MIT"
 name = "revm-primitives"
 repository = "https://github.com/bluealloy/revm"
-version = "3.1.1"
+version = "4.0.0"
 readme = "../../README.md"
 
 [package.metadata.docs.rs]
