@@ -110,6 +110,26 @@ impl Bytecode {
         !matches!(self, Self::LegacyRaw(_))
     }
 
+    /// Returns bytes
+    #[inline]
+    pub fn bytes(&self) -> Bytes {
+        match self {
+            Self::LegacyRaw(bytes) => bytes.clone(),
+            Self::LegacyAnalyzed(analyzed) => analyzed.bytecode().clone(),
+            Self::Eof(eof) => eof.raw().clone(),
+        }
+    }
+
+    /// Returns bytes slice
+    #[inline]
+    pub fn bytes_slice(&self) -> &[u8] {
+        match self {
+            Self::LegacyRaw(bytes) => bytes,
+            Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
+            Self::Eof(eof) => eof.raw(),
+        }
+    }
+
     /// Returns a reference to the original bytecode.
     #[inline]
     pub fn original_bytes(&self) -> Bytes {
