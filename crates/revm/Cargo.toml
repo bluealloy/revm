@@ -49,9 +49,9 @@ ethers-providers = { version = "2.0", optional = true }
 ethers-core = { version = "2.0", optional = true }
 
 # alloydb
-alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
-alloy-rpc-types = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
-alloy-transport = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
+# alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
+# alloy-rpc-types = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
+# alloy-transport = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
 
 [dev-dependencies]
 alloy-sol-types = { version = "0.7.0", default-features = false, features = [
@@ -106,13 +106,14 @@ ethersdb = [
     "ethers-core",
 ] # Negate optimism default handler
 
-alloydb = [
-    "std",
-    "tokio",
-    "alloy-provider",
-    "alloy-rpc-types",
-    "alloy-transport",
-]
+# 
+# alloydb = [
+#     "std",
+#     "tokio",
+#     "alloy-provider",
+#     "alloy-rpc-types",
+#     "alloy-transport",
+# ]
 
 dev = [
     "memory_limit",
@@ -151,10 +152,10 @@ name = "db_by_ref"
 path = "../../examples/db_by_ref.rs"
 required-features = ["std", "serde-json"]
 
-[[example]]
-name = "uniswap_v2_usdc_swap"
-path = "../../examples/uniswap_v2_usdc_swap.rs"
-required-features = ["alloydb"]
+#[[example]]
+#name = "uniswap_v2_usdc_swap"
+#path = "../../examples/uniswap_v2_usdc_swap.rs"
+#required-features = ["alloydb"]
 
 [[bench]]
 name = "bench"
