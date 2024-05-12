@@ -2924,9 +2924,7 @@ name = "revm"
 version = "9.0.0"
 dependencies = [
  "alloy-provider",
- "alloy-rpc-types",
  "alloy-sol-types",
- "alloy-transport",
  "alloy-transport-http",
  "anyhow",
  "auto_impl",
