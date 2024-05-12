@@ -6,6 +6,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v3.1.1...revm-primitives-v4.0.0) - 2024-05-12
+
+### Added
+- Add bytes to Bytecode ([#1396](https://github.com/bluealloy/revm/pull/1396))
+- implement EIP-2935 ([#1354](https://github.com/bluealloy/revm/pull/1354))
+- add `Bytecode::original_bytecode_slice` to match `BytecodeLocked` ([#1286](https://github.com/bluealloy/revm/pull/1286))
+- add flag to force hashbrown usage ([#1284](https://github.com/bluealloy/revm/pull/1284))
+- EOF (Ethereum Object Format) ([#1143](https://github.com/bluealloy/revm/pull/1143))
+- pass rand feature to alloy_primitives ([#1276](https://github.com/bluealloy/revm/pull/1276))
+- *(interpreter)* remove SPEC generic from gas calculation functions ([#1243](https://github.com/bluealloy/revm/pull/1243))
+
+### Other
+- add Trin to used by list ([#1393](https://github.com/bluealloy/revm/pull/1393))
+- bump c-kzg to 1.0.2 ([#1390](https://github.com/bluealloy/revm/pull/1390))
+- refactor lints ([#1386](https://github.com/bluealloy/revm/pull/1386))
+- add blob_count and max_blobs to `TooManyBlobs` err enum ([#1375](https://github.com/bluealloy/revm/pull/1375))
+- bump alloy & specify dep rev ([#1380](https://github.com/bluealloy/revm/pull/1380))
+- don't clone bytes in `Bytecode::bytes` ([#1344](https://github.com/bluealloy/revm/pull/1344))
+- shrink OpCodeInfo and add more methods ([#1307](https://github.com/bluealloy/revm/pull/1307))
+- Implement `with_chain_id` for `CfgEnv` ([#1327](https://github.com/bluealloy/revm/pull/1327))
+- *(interpreter)* remove EOF branch in CODE{SIZE,COPY} ([#1308](https://github.com/bluealloy/revm/pull/1308))
+- Update documentation ([#1275](https://github.com/bluealloy/revm/pull/1275))
+
 ## [3.1.1](https://github.com/bluealloy/revm/compare/revm-primitives-v3.1.0...revm-primitives-v3.1.1) - 2024-04-02
 
 ### Fixed
