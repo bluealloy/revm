@@ -1,5 +1,22 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v36 tag
+date: 12.05.2024
+
+Support for prague EIPs.
+* EOF not fully tested but most of implementation is there.
+* EIP-2537: BLS12-381 curve operations
+* EIP-2935: Serve historical block hashes from state
+
+EOF removed BytecodeLocked, OpCode table got changed, and CallInputs got refactored.
+
+revme: 0.4.0 -> 0.5.0 (⚠️ API breaking changes)
+revm: 8.0.0 -> 9.0.0 (⚠️ API breaking changes)
+revm-interpreter: 4.0.0 -> 5.0.0 (⚠️ API breaking changes)
+revm-primitives: 3.1.1 -> 4.0.0 (⚠️ API breaking changes)
+revm-precompile: 6.0.0 -> 7.0.0 (⚠️ API breaking changes)
+revm-test: 0.1.0
+
 # v35 tag
 date: 02.04.2024
 
