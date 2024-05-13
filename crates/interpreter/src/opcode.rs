@@ -759,7 +759,7 @@ opcodes! {
     // 0xEA
     // 0xEB
     0xEC => EOFCREATE       => contract::eofcreate            => stack_io(4, 1), immediate_size(1);
-    0xED => TXCREATE        => contract::txcreate             => stack_io(5, 1);
+    // 0xED
     0xEE => RETURNCONTRACT  => contract::return_contract      => stack_io(2, 0), immediate_size(1), terminating;
     // 0xEF
     0xF0 => CREATE       => contract::create::<false, H, SPEC> => stack_io(3, 1), not_eof;
