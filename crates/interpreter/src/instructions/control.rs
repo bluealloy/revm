@@ -131,7 +131,17 @@ pub fn jumpf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 
     let idx = unsafe { read_u16(interpreter.instruction_pointer) } as usize;
 
-    // TODO(EOF) do types stack checks
+    // get target types
+    let Some(types) = interpreter.eof().unwrap().body.types_section.get(idx) else {
+        panic!("Invalid EOF in execution, expecting correct intermediate in jumpf")
+    };
+
+    // Check max stack height for target code section.
+    // safe to subtract as max_stack_height is always more than inputs.
+    if interpreter.stack.len() + (types.max_stack_size - types.inputs as u16) as usize > 1024 {
+        interpreter.instruction_result = InstructionResult::StackOverflow;
+        return;
+    }
 
     interpreter.function_stack.set_current_code_idx(idx);
     interpreter.load_eof_code(idx, 0)
@@ -408,5 +418,22 @@ mod test {
         // STOP
         interp.step(&table, &mut host);
         assert_eq!(interp.instruction_result, InstructionResult::Stop);
+    }
+
+    #[test]
+    fn jumpf_stack_overflow() {
+        let table = make_instruction_table::<_, PragueSpec>();
+        let mut host = DummyHost::default();
+
+        let bytes1 = Bytes::from([JUMPF, 0x00, 0x01]);
+        let bytes2 = Bytes::from([STOP]);
+        let mut interp =
+            eof_setup_with_types(bytes1, bytes2.clone(), TypesSection::new(0, 0, 1025));
+
+        // JUMPF
+        interp.step(&table, &mut host);
+
+        // stack overflow
+        assert_eq!(interp.instruction_result, InstructionResult::StackOverflow);
     }
 }
