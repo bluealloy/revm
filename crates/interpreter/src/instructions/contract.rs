@@ -234,7 +234,7 @@ pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn extdcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extdelegatecall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     require_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
@@ -267,7 +267,7 @@ pub fn extdcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, hos
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn extscall<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extstaticcall<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     require_eof!(interpreter);
     pop_address!(interpreter, target_address);
 

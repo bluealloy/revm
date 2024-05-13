@@ -769,11 +769,11 @@ opcodes! {
     0xF4 => DELEGATECALL => contract::delegate_call::<H, SPEC> => stack_io(6, 1), not_eof;
     0xF5 => CREATE2      => contract::create::<true, H, SPEC>  => stack_io(4, 1), not_eof;
     // 0xF6
-    0xF7 => RETURNDATALOAD => system::returndataload           => stack_io(1, 1);
-    0xF8 => EXTCALL        => contract::extcall::<H, SPEC>     => stack_io(4, 1);
-    0xF9 => EXFCALL        => contract::extdcall::<H, SPEC>    => stack_io(3, 1);
-    0xFA => STATICCALL     => contract::static_call::<H, SPEC> => stack_io(6, 1), not_eof;
-    0xFB => EXTSCALL       => contract::extscall               => stack_io(3, 1);
+    0xF7 => RETURNDATALOAD  => system::returndataload                => stack_io(1, 1);
+    0xF8 => EXTCALL         => contract::extcall::<H, SPEC>          => stack_io(4, 1);
+    0xF9 => EXTDELEGATECALL => contract::extdelegatecall::<H, SPEC>  => stack_io(3, 1);
+    0xFA => STATICCALL      => contract::static_call::<H, SPEC>      => stack_io(6, 1), not_eof;
+    0xFB => EXTSTATICCALL   => contract::extstaticcall               => stack_io(3, 1);
     // 0xFC
     0xFD => REVERT       => control::revert::<H, SPEC>    => stack_io(2, 0), terminating;
     0xFE => INVALID      => control::invalid              => stack_io(0, 0), terminating;
