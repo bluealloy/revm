@@ -2921,7 +2921,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "9.0.0"
+version = "9.0.1"
 dependencies = [
  "alloy-provider",
  "alloy-sol-types",
@@ -2945,7 +2945,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "5.0.0"
+version = "5.0.1"
 dependencies = [
  "bincode",
  "paste",
@@ -3009,7 +3009,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "alloy-rlp",
  "hash-db",
