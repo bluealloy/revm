@@ -93,6 +93,7 @@ pub fn callf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
         return;
     }
 
+    // get target types
     let Some(types) = interpreter.eof().unwrap().body.types_section.get(idx) else {
         panic!("Invalid EOF in execution, expecting correct intermediate in callf")
     };
@@ -193,7 +194,7 @@ pub fn unknown<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 
 #[cfg(test)]
 mod test {
-    use revm_primitives::{bytes, Bytecode, Eof, PragueSpec};
+    use revm_primitives::{bytes, eof::TypesSection, Bytecode, Eof, PragueSpec};
 
     use super::*;
     use crate::{
@@ -291,27 +292,70 @@ mod test {
         Eof::decode(bytes).unwrap()
     }
 
-    #[test]
-    fn callf_retf_jumpf() {
-        let table = make_instruction_table::<_, PragueSpec>();
-        let mut host = DummyHost::default();
+    fn eof_setup(bytes1: Bytes, bytes2: Bytes) -> Interpreter {
+        eof_setup_with_types(bytes1, bytes2, TypesSection::default())
+    }
+
+    /// Two code section and types section is for last code.
+    fn eof_setup_with_types(bytes1: Bytes, bytes2: Bytes, types: TypesSection) -> Interpreter {
         let mut eof = dummy_eof();
 
         eof.body.code_section.clear();
+        eof.body.types_section.clear();
         eof.header.code_sizes.clear();
 
-        let bytes1 = Bytes::from([CALLF, 0x00, 0x01, JUMPF, 0x00, 0x01]);
         eof.header.code_sizes.push(bytes1.len() as u16);
         eof.body.code_section.push(bytes1.clone());
-        let bytes2 = Bytes::from([STOP, RETF]);
+        eof.body.types_section.push(TypesSection::new(0, 0, 11));
+
         eof.header.code_sizes.push(bytes2.len() as u16);
         eof.body.code_section.push(bytes2.clone());
+        eof.body.types_section.push(types);
 
         let mut interp = Interpreter::new_bytecode(Bytecode::Eof(eof));
         interp.gas = Gas::new(10000);
+        interp
+    }
+
+    #[test]
+    fn callf_retf_stop() {
+        let table = make_instruction_table::<_, PragueSpec>();
+        let mut host = DummyHost::default();
+
+        let bytes1 = Bytes::from([CALLF, 0x00, 0x01, STOP]);
+        let bytes2 = Bytes::from([RETF]);
+        let mut interp = eof_setup(bytes1, bytes2.clone());
+
+        // CALLF
+        interp.step(&table, &mut host);
+
+        assert_eq!(interp.function_stack.current_code_idx, 1);
+        assert_eq!(
+            interp.function_stack.return_stack[0],
+            FunctionReturnFrame::new(0, 3)
+        );
+        assert_eq!(interp.instruction_pointer, bytes2.as_ptr());
+
+        // RETF
+        interp.step(&table, &mut host);
 
         assert_eq!(interp.function_stack.current_code_idx, 0);
-        assert!(interp.function_stack.return_stack.is_empty());
+        assert_eq!(interp.function_stack.return_stack, Vec::new());
+        assert_eq!(interp.program_counter(), 3);
+
+        // STOP
+        interp.step(&table, &mut host);
+        assert_eq!(interp.instruction_result, InstructionResult::Stop);
+    }
+
+    #[test]
+    fn callf_stop() {
+        let table = make_instruction_table::<_, PragueSpec>();
+        let mut host = DummyHost::default();
+
+        let bytes1 = Bytes::from([CALLF, 0x00, 0x01]);
+        let bytes2 = Bytes::from([STOP]);
+        let mut interp = eof_setup(bytes1, bytes2.clone());
 
         // CALLF
         interp.step(&table, &mut host);
@@ -325,17 +369,44 @@ mod test {
 
         // STOP
         interp.step(&table, &mut host);
-        // RETF
+        assert_eq!(interp.instruction_result, InstructionResult::Stop);
+    }
+
+    #[test]
+    fn callf_stack_overflow() {
+        let table = make_instruction_table::<_, PragueSpec>();
+        let mut host = DummyHost::default();
+
+        let bytes1 = Bytes::from([CALLF, 0x00, 0x01]);
+        let bytes2 = Bytes::from([STOP]);
+        let mut interp =
+            eof_setup_with_types(bytes1, bytes2.clone(), TypesSection::new(0, 0, 1025));
+
+        // CALLF
         interp.step(&table, &mut host);
 
-        assert_eq!(interp.function_stack.current_code_idx, 0);
-        assert_eq!(interp.function_stack.return_stack, Vec::new());
-        assert_eq!(interp.program_counter(), 3);
+        // stack overflow
+        assert_eq!(interp.instruction_result, InstructionResult::StackOverflow);
+    }
+
+    #[test]
+    fn jumpf_stop() {
+        let table = make_instruction_table::<_, PragueSpec>();
+        let mut host = DummyHost::default();
+
+        let bytes1 = Bytes::from([JUMPF, 0x00, 0x01]);
+        let bytes2 = Bytes::from([STOP]);
+        let mut interp = eof_setup(bytes1, bytes2.clone());
 
         // JUMPF
         interp.step(&table, &mut host);
+
         assert_eq!(interp.function_stack.current_code_idx, 1);
-        assert_eq!(interp.function_stack.return_stack, Vec::new());
+        assert!(interp.function_stack.return_stack.is_empty());
         assert_eq!(interp.instruction_pointer, bytes2.as_ptr());
+
+        // STOP
+        interp.step(&table, &mut host);
+        assert_eq!(interp.instruction_result, InstructionResult::Stop);
     }
 }
