@@ -2,7 +2,6 @@ use crate::{
     gas,
     interpreter::Interpreter,
     primitives::{Bytes, Spec, SpecId::*, U256},
-    Host,
 };
 use core::{cmp::min, ops::Range};
 
@@ -43,7 +42,7 @@ pub fn resize_memory_and_return_range(
 }
 
 #[inline]
-pub fn calc_call_gas<H: Host + ?Sized, SPEC: Spec>(
+pub fn calc_call_gas<SPEC: Spec>(
     interpreter: &mut Interpreter,
     is_cold: bool,
     has_transfer: bool,

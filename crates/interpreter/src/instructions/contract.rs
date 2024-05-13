@@ -469,7 +469,7 @@ pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-    let Some(mut gas_limit) = calc_call_gas::<H, SPEC>(
+    let Some(mut gas_limit) = calc_call_gas::<SPEC>(
         interpreter,
         is_cold,
         has_transfer,
@@ -520,7 +520,7 @@ pub fn call_code<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
         return;
     };
 
-    let Some(mut gas_limit) = calc_call_gas::<H, SPEC>(
+    let Some(mut gas_limit) = calc_call_gas::<SPEC>(
         interpreter,
         is_cold,
         value != U256::ZERO,
@@ -571,7 +571,7 @@ pub fn delegate_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter
         return;
     };
     let Some(gas_limit) =
-        calc_call_gas::<H, SPEC>(interpreter, is_cold, false, false, local_gas_limit)
+        calc_call_gas::<SPEC>(interpreter, is_cold, false, false, local_gas_limit)
     else {
         return;
     };
@@ -613,7 +613,7 @@ pub fn static_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
     };
 
     let Some(gas_limit) =
-        calc_call_gas::<H, SPEC>(interpreter, is_cold, false, false, local_gas_limit)
+        calc_call_gas::<SPEC>(interpreter, is_cold, false, false, local_gas_limit)
     else {
         return;
     };
