@@ -1,7 +1,7 @@
 use super::constants::*;
 use crate::{
     num_words,
-    primitives::{Address, Bytes, SpecId, U256},
+    primitives::{Address, SpecId, U256},
     SelfDestructResult,
 };
 use std::vec::Vec;
@@ -358,18 +358,10 @@ pub fn validate_initial_tx_gas(
     input: &[u8],
     is_create: bool,
     access_list: &[(Address, Vec<U256>)],
-    initcodes: &[Bytes],
 ) -> u64 {
     let mut initial_gas = 0;
-    let mut zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
-    let mut non_zero_data_len = input.len() as u64 - zero_data_len;
-
-    // Enabling of initcode is checked in `validate_env` handler.
-    for initcode in initcodes {
-        let zeros = initcode.iter().filter(|v| **v == 0).count() as u64;
-        zero_data_len += zeros;
-        non_zero_data_len += initcode.len() as u64 - zeros;
-    }
+    let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
+    let non_zero_data_len = input.len() as u64 - zero_data_len;
 
     // initdate stipend
     initial_gas += zero_data_len * TRANSACTION_ZERO_DATA;
@@ -403,7 +395,7 @@ pub fn validate_initial_tx_gas(
     };
 
     // EIP-3860: Limit and meter initcode
-    // Initcode stipend for bytecode analysis
+    // Init code stipend for bytecode analysis
     if spec_id.is_enabled_in(SpecId::SHANGHAI) && is_create {
         initial_gas += initcode_cost(input.len() as u64)
     }
