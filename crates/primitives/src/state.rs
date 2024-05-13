@@ -209,9 +209,9 @@ impl Default for AccountInfo {
             code_hash: KECCAK_EMPTY,
             #[cfg(feature = "rwasm")]
             rwasm_code_hash: crate::POSEIDON_EMPTY,
-            code: None,
+            code: Some(Bytecode::new()),
             #[cfg(feature = "rwasm")]
-            rwasm_code: None,
+            rwasm_code: Some(Bytecode::new()),
         }
     }
 }
