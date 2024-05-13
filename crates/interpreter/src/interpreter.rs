@@ -137,7 +137,7 @@ impl Interpreter {
     pub(crate) fn load_eof_code(&mut self, idx: usize, pc: usize) {
         // SAFETY: eof flag is true only if bytecode is Eof.
         let Bytecode::Eof(eof) = &self.contract.bytecode else {
-            panic!("Expected EOF bytecode")
+            panic!("Expected EOF code section")
         };
         let Some(code) = eof.body.code(idx) else {
             panic!("Code not found")

@@ -87,10 +87,20 @@ pub fn callf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::LOW);
 
     let idx = unsafe { read_u16(interpreter.instruction_pointer) } as usize;
-    // TODO Check stack with EOF types.
 
-    if interpreter.function_stack.return_stack_len() == 1024 {
+    if interpreter.function_stack.return_stack_len() >= 1024 {
         interpreter.instruction_result = InstructionResult::EOFFunctionStackOverflow;
+        return;
+    }
+
+    let Some(types) = interpreter.eof().unwrap().body.types_section.get(idx) else {
+        panic!("Invalid EOF in execution, expecting correct intermediate in callf")
+    };
+
+    // Check max stack height for target code section.
+    // safe to subtract as max_stack_height is always more than inputs.
+    if interpreter.stack.len() + (types.max_stack_size - types.inputs as u16) as usize > 1024 {
+        interpreter.instruction_result = InstructionResult::StackOverflow;
         return;
     }
 
