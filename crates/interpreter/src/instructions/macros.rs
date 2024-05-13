@@ -138,10 +138,10 @@ macro_rules! resize_memory {
 #[macro_export]
 macro_rules! pop_address {
     ($interp:expr, $x1:ident) => {
-        pop_address_ret!($interp, $x1, ())
+        $crate::pop_address_ret!($interp, $x1, ())
     };
     ($interp:expr, $x1:ident, $x2:ident) => {
-        pop_address_ret!($interp, $x1, $x2, ())
+        $crate::pop_address_ret!($interp, $x1, $x2, ())
     };
 }
 
