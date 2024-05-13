@@ -44,3 +44,7 @@ pub use primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 
 #[doc(hidden)]
 pub use revm_primitives as primitives;
+
+pub fn make_me_a_table() -> opcode::InstructionTable<DummyHost> {
+    core::hint::black_box(opcode::make_instruction_table::<_, primitives::CancunSpec>())
+}
