@@ -69,7 +69,7 @@ pub fn not<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 pub fn byte<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
-
+    // `31 - o1` because `byte` returns LE, while we want BE
     let o1 = as_usize_saturated!(op1) % 32;
     let byte_value = op2.byte(31 - o1);
     *op2 = U256::from(byte_value);
