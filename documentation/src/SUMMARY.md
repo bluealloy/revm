@@ -12,7 +12,7 @@
   - [gas](./crates/interpreter/gas.md)
   - [memory](./crates/interpreter/memory.md)
   - [host](./crates/interpreter/host.md)
-  - [inner_models](./crates/interpreter/inner_models.md)
+  - [interpreter_action](./crates/interpreter/interpreter_action.md)
   - [instruction_result](./crates/interpreter/instruction_result.md)
   - [instructions](./crates/interpreter/instructions.md)
 - [Primitives](./crates/primitives.md)
