@@ -4,7 +4,8 @@ const MAX_L1_DISTANCE: u16 = 8192;
 /// Returns the length of the data after compression through FastLZ, based on
 // https://github.com/Vectorized/solady/blob/5315d937d79b335c668896d7533ac603adac5315/js/solady.js
 pub(crate) fn flz_compress_len(input: &[u8]) -> u32 {
-    let mut idx: u32 = 0;
+    let mut idx: u32 = 2;
+
     let idx_limit: u32 = if input.len() < 13 {
         0
     } else {
@@ -12,8 +13,6 @@ pub(crate) fn flz_compress_len(input: &[u8]) -> u32 {
     };
 
     let mut anchor = 0;
-
-    idx += 2;
 
     let mut size = 0;
 
@@ -33,7 +32,7 @@ pub(crate) fn flz_compress_len(input: &[u8]) -> u32 {
                 break;
             }
             idx += 1;
-            if distance <= MAX_L1_DISTANCE as u32 && seq == u24(input, r) {
+            if distance < MAX_L1_DISTANCE as u32 && seq == u24(input, r) {
                 break;
             }
         }
@@ -130,7 +129,7 @@ fn solady_flz_compress(ib: &[u8]) -> u32 {
 
     fn hash(x: u32) -> u32 {
         (((2654435769 * x as u64) >> 19) & 8191) as u32
-    };
+    }
 
     fn literals(mut r: u32, mut s: u32, ib: &[u8], ob: &mut Vec<u8>) {
         while r >= 32 {
@@ -151,7 +150,7 @@ fn solady_flz_compress(ib: &[u8]) -> u32 {
                 r -= 1;
             }
         };
-    };
+    }
 
     while i < b - 9 {
         loop {
@@ -248,10 +247,15 @@ mod tests {
 
     #[test]
     fn test_flz_solady_parity() {
-        for _ in 0..1000 {
-            let mut input = [0; 4096];
+        for _ in 0..100 {
+            let mut input = [0; 1000000];
             rand::thread_rng().fill_bytes(&mut input);
-            assert_eq!(flz_compress_len(&input), solady_flz_compress(&input));
+            assert_eq!(
+                flz_compress_len(&input),
+                solady_flz_compress(&input),
+                "{:?}",
+                input
+            );
         }
     }
 }
