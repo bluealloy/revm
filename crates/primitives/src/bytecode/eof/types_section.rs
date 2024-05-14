@@ -20,6 +20,14 @@ pub struct TypesSection {
 }
 
 impl TypesSection {
+    /// Returns new `TypesSection` with the given inputs, outputs, and max_stack_size.
+    pub fn new(inputs: u8, outputs: u8, max_stack_size: u16) -> Self {
+        Self {
+            inputs,
+            outputs,
+            max_stack_size,
+        }
+    }
     /// Calculates the difference between the number of input and output stack elements.
     #[inline]
     pub const fn io_diff(&self) -> i32 {
