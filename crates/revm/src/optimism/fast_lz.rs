@@ -1,6 +1,3 @@
-const HASH_LOG: u16 = 13;
-const MAX_L1_DISTANCE: u16 = 8192;
-
 /// Returns the length of the data after compression through FastLZ, based on
 // https://github.com/Vectorized/solady/blob/5315d937d79b335c668896d7533ac603adac5315/js/solady.js
 pub(crate) fn flz_compress_len(input: &[u8]) -> u32 {
@@ -32,7 +29,7 @@ pub(crate) fn flz_compress_len(input: &[u8]) -> u32 {
                 break;
             }
             idx += 1;
-            if distance < MAX_L1_DISTANCE as u32 && seq == u24(input, r) {
+            if distance < 8192 && seq == u24(input, r) {
                 break;
             }
         }
@@ -96,7 +93,7 @@ fn set_next_hash(htab: &mut [u32; 8192], input: &[u8], idx: u32) -> u32 {
 }
 
 fn hash(v: u32) -> u16 {
-    let hash = (v as u64 * 2654435769) >> (32 - HASH_LOG);
+    let hash = (v as u64 * 2654435769) >> 19;
     hash as u16 & 0x1fff
 }
 
