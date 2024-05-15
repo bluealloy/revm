@@ -69,10 +69,14 @@ pub fn not<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 pub fn byte<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
-    // `31 - o1` because `byte` returns LE, while we want BE
-    let o1 = as_usize_saturated!(op1) % 32;
-    let byte_value = op2.byte(31 - o1);
-    *op2 = U256::from(byte_value);
+
+    let o1 = as_usize_saturated!(op1);
+    *op2 = if o1 < 32 {
+        // `31 - o1` because `byte` returns LE, while we want BE
+        U256::from(op2.byte(31 - o1))
+    } else {
+        U256::ZERO
+    };
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
@@ -107,17 +111,17 @@ pub fn sar<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
 
-    let shift = usize::try_from(op1).unwrap_or(256); // If op1 is greater than the maximum for usize, consider the shift complete.
-    if shift >= 256 {
+    let shift = as_usize_saturated!(op1);
+    *op2 = if shift >= 256 {
         // If the shift is 256 or more, the result depends on the sign of the last bit.
-        *op2 = if op2.bit(255) {
+        if op2.bit(255) {
             U256::MAX // Negative number, all bits set to one.
         } else {
             U256::ZERO // Non-negative number, all bits set to zero.
-        };
+        }
     } else {
         // Normal shift
-        *op2 = if op2.bit(255) {
+        if op2.bit(255) {
             // Check the most significant bit.
             // Arithmetic right shift for negative numbers.
             let shifted_value = *op2 >> shift;
@@ -126,8 +130,8 @@ pub fn sar<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
         } else {
             // Logical right shift for non-negative numbers.
             *op2 >> shift
-        };
-    }
+        }
+    };
 }
 
 #[cfg(test)]
