@@ -153,7 +153,7 @@ impl L1BlockInfo {
     // This value is computed based on the following formula:
     // max(minTransactionSize, intercept + fastlzCoef*fastlzSize)
     fn tx_estimated_size_fjord(&self, input: &[u8]) -> U256 {
-        let fastlz_size = U256::from(flz_compress_len(&input));
+        let fastlz_size = U256::from(flz_compress_len(input));
 
         fastlz_size
             .saturating_mul(U256::from(836_500))
@@ -169,7 +169,7 @@ impl L1BlockInfo {
         }
 
         if spec_id.is_enabled_in(SpecId::FJORD) {
-            return self.calculate_tx_l1_cost_fjord(input);
+            self.calculate_tx_l1_cost_fjord(input)
         } else if spec_id.is_enabled_in(SpecId::ECOTONE) {
             self.calculate_tx_l1_cost_ecotone(input, spec_id)
         } else {

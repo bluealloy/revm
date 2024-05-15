@@ -106,6 +106,7 @@ fn u24(input: &[u8], idx: u32) -> u32 {
 /// This is a more faithful adaptation of the solady implementation of FastLZ, returning only the compressed size.
 /// Unfortunately this is even harder to read due to the use of nearly-minified javascript.
 // https://github.com/Vectorized/solady/blob/5315d937d79b335c668896d7533ac603adac5315/js/solady.js
+#[allow(dead_code)]
 fn solady_flz_compress(ib: &[u8]) -> u32 {
     let b: u32 = (ib.len() - 4) as u32;
     let mut ht = [0; 8192];
@@ -210,7 +211,7 @@ fn solady_flz_compress(ib: &[u8]) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use rand::RngCore;
+    use ethers_core::rand::RngCore;
 
     use super::*;
     use crate::primitives::bytes;
@@ -246,7 +247,7 @@ mod tests {
     fn test_flz_solady_parity() {
         for _ in 0..100 {
             let mut input = [0; 1000000];
-            rand::thread_rng().fill_bytes(&mut input);
+            ethers_core::rand::thread_rng().fill_bytes(&mut input);
             assert_eq!(
                 flz_compress_len(&input),
                 solady_flz_compress(&input),

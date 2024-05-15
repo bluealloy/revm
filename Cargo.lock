@@ -2940,7 +2940,6 @@ dependencies = [
  "ethers-core",
  "ethers-providers",
  "indicatif",
- "rand",
  "reqwest 0.12.4",
  "revm-interpreter",
  "revm-precompile",
