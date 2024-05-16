@@ -110,17 +110,16 @@ pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
     let block_number = host.env().block.number;
 
     match block_number.checked_sub(*number) {
+        // blockhash should push zero if number is same as current block number.
         Some(diff) if !diff.is_zero() => {
             let diff = as_usize_saturated!(diff);
 
-            // blockhash should push zero if number is same as current block number.
             if SPEC::enabled(PRAGUE) && diff <= BLOCKHASH_SERVE_WINDOW {
-                let value = sload!(
-                    interpreter,
-                    host,
-                    BLOCKHASH_STORAGE_ADDRESS,
-                    number.wrapping_rem(U256::from(BLOCKHASH_SERVE_WINDOW))
-                );
+                let index = number.wrapping_rem(U256::from(BLOCKHASH_SERVE_WINDOW));
+                let Some((value, _)) = host.sload(BLOCKHASH_STORAGE_ADDRESS, index) else {
+                    interpreter.instruction_result = InstructionResult::FatalExternalError;
+                    return;
+                };
                 *number = value;
                 return;
             } else if diff <= BLOCK_HASH_HISTORY {
@@ -143,12 +142,11 @@ pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
 
 pub fn sload<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     pop_top!(interpreter, index);
-    let value = sload!(
-        interpreter,
-        host,
-        interpreter.contract.target_address,
-        *index
-    );
+    let Some((value, is_cold)) = host.sload(interpreter.contract.target_address, *index) else {
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
+        return;
+    };
+    gas!(interpreter, gas::sload_cost(SPEC::SPEC_ID, is_cold));
     *index = value;
 }
 
