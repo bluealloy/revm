@@ -8,11 +8,15 @@ pub use context_precompiles::{
 };
 pub use evm_context::EvmContext;
 pub use inner_evm_context::InnerEvmContext;
+use revm_interpreter::as_usize_saturated;
 
 use crate::{
     db::{Database, EmptyDB},
     interpreter::{Host, LoadAccountResult, SStoreResult, SelfDestructResult},
-    primitives::{Address, Bytecode, Env, HandlerCfg, Log, B256, U256},
+    primitives::{
+        Address, Bytecode, EVMError, Env, HandlerCfg, Log, B256, BLOCKHASH_SERVE_WINDOW,
+        BLOCKHASH_STORAGE_ADDRESS, BLOCK_HASH_HISTORY, PRAGUE, U256,
+    },
 };
 use std::boxed::Box;
 
@@ -106,10 +110,40 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
     }
 
     fn block_hash(&mut self, number: U256) -> Option<B256> {
-        self.evm
-            .block_hash(number)
-            .map_err(|e| self.evm.error = Err(e))
-            .ok()
+        let block_number = self.env().block.number;
+
+        match block_number.checked_sub(number) {
+            // blockhash should push zero if number is same as current block number.
+            Some(diff) if !diff.is_zero() => {
+                let diff = as_usize_saturated!(diff);
+
+                if diff <= BLOCK_HASH_HISTORY {
+                    return self
+                        .evm
+                        .block_hash(number)
+                        .map_err(|e| self.evm.error = Err(e))
+                        .ok();
+                }
+
+                if self.evm.journaled_state.spec.is_enabled_in(PRAGUE)
+                    && diff <= BLOCKHASH_SERVE_WINDOW
+                {
+                    let index = number.wrapping_rem(U256::from(BLOCKHASH_SERVE_WINDOW));
+                    return self
+                        .evm
+                        .db
+                        .storage(BLOCKHASH_STORAGE_ADDRESS, index)
+                        .map_err(|e| self.evm.error = Err(EVMError::Database(e)))
+                        .ok()
+                        .map(|v| v.into());
+                }
+            }
+            _ => {
+                // If blockhash is requested for the current block, the hash should be 0, so we fall
+                // through.
+            }
+        }
+        Some(B256::ZERO)
     }
 
     fn load_account(&mut self, address: Address) -> Option<LoadAccountResult> {
