@@ -7,8 +7,8 @@ use crate::{
     primitives::{
         db::Database,
         Account, EVMError, Env, Spec,
-        SpecId::{CANCUN, SHANGHAI},
-        TransactTo, U256,
+        SpecId::{CANCUN, PRAGUE, SHANGHAI},
+        TransactTo, BLOCKHASH_STORAGE_ADDRESS, U256,
     },
     Context, ContextPrecompiles,
 };
@@ -34,6 +34,16 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
     if SPEC::enabled(SHANGHAI) {
         context.evm.inner.journaled_state.initial_account_load(
             context.evm.inner.env.block.coinbase,
+            &[],
+            &mut context.evm.inner.db,
+        )?;
+    }
+
+    // Load blockhash storage address
+    // EIP-2935: Serve historical block hashes from state
+    if SPEC::enabled(PRAGUE) {
+        context.evm.inner.journaled_state.initial_account_load(
+            BLOCKHASH_STORAGE_ADDRESS,
             &[],
             &mut context.evm.inner.db,
         )?;
