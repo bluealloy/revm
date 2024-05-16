@@ -5,7 +5,6 @@ use crate::{
     Host, InstructionResult, SStoreResult,
 };
 use core::cmp::min;
-use revm_primitives::{BLOCKHASH_SERVE_WINDOW, BLOCKHASH_STORAGE_ADDRESS, BLOCK_HASH_HISTORY};
 use std::vec::Vec;
 
 pub fn balance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
@@ -108,36 +107,11 @@ pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
     pop_top!(interpreter, number);
 
     let block_number = host.env().block.number;
-
-    match block_number.checked_sub(*number) {
-        // blockhash should push zero if number is same as current block number.
-        Some(diff) if !diff.is_zero() => {
-            let diff = as_usize_saturated!(diff);
-
-            if SPEC::enabled(PRAGUE) && diff <= BLOCKHASH_SERVE_WINDOW {
-                let index = number.wrapping_rem(U256::from(BLOCKHASH_SERVE_WINDOW));
-                let Some((value, _)) = host.sload(BLOCKHASH_STORAGE_ADDRESS, index) else {
-                    interpreter.instruction_result = InstructionResult::FatalExternalError;
-                    return;
-                };
-                *number = value;
-                return;
-            } else if diff <= BLOCK_HASH_HISTORY {
-                let Some(hash) = host.block_hash(*number) else {
-                    interpreter.instruction_result = InstructionResult::FatalExternalError;
-                    return;
-                };
-                *number = U256::from_be_bytes(hash.0);
-                return;
-            }
-        }
-        _ => {
-            // If blockhash is requested for the current block, the hash should be 0, so we fall
-            // through.
-        }
-    }
-
-    *number = U256::ZERO;
+    let Some(hash) = host.block_hash(block_number) else {
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
+        return;
+    };
+    *number = U256::from_be_bytes(hash.0);
 }
 
 pub fn sload<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
