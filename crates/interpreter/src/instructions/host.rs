@@ -114,6 +114,15 @@ pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
         Some(diff) if !diff.is_zero() => {
             let diff = as_usize_saturated!(diff);
 
+            if diff <= BLOCK_HASH_HISTORY {
+                let Some(hash) = host.block_hash(*number) else {
+                    interpreter.instruction_result = InstructionResult::FatalExternalError;
+                    return;
+                };
+                *number = U256::from_be_bytes(hash.0);
+                return;
+            }
+
             if SPEC::enabled(PRAGUE) && diff <= BLOCKHASH_SERVE_WINDOW {
                 let index = number.wrapping_rem(U256::from(BLOCKHASH_SERVE_WINDOW));
                 let Some((value, _)) = host.sload(BLOCKHASH_STORAGE_ADDRESS, index) else {
@@ -121,13 +130,6 @@ pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
                     return;
                 };
                 *number = value;
-                return;
-            } else if diff <= BLOCK_HASH_HISTORY {
-                let Some(hash) = host.block_hash(*number) else {
-                    interpreter.instruction_result = InstructionResult::FatalExternalError;
-                    return;
-                };
-                *number = U256::from_be_bytes(hash.0);
                 return;
             }
         }
