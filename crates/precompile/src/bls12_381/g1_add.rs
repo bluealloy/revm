@@ -21,7 +21,7 @@ const INPUT_LENGTH: usize = 256;
 /// Output is an encoding of addition operation result - single G1 point (`128`
 /// bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-addition>
-fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub(super) fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if BASE_GAS_FEE > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }

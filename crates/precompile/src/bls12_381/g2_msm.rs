@@ -22,7 +22,7 @@ pub const ADDRESS: u64 = 0x10;
 /// Output is an encoding of multi-scalar-multiplication operation result - single G2
 /// point (`256` bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-multiexponentiation>
-fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % g2_mul::INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(

@@ -47,6 +47,11 @@ blst = { version = "0.3.11", optional = true }
 [dev-dependencies]
 criterion = { version = "0.5" }
 rand = { version = "0.8", features = ["std"] }
+eyre = "0.6.12"
+rstest = "0.19.0"
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]

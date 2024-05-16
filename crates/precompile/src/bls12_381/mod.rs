@@ -29,3 +29,105 @@ pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
     ]
     .into_iter()
 }
+
+#[cfg(test)]
+mod test {
+    use super::g1_add::g1_add;
+    use super::g1_msm::g1_msm;
+    use super::g1_mul::g1_mul;
+    use super::g2_add::g2_add;
+    use super::g2_msm::g2_msm;
+    use super::g2_mul::g2_mul;
+    use super::map_fp2_to_g2::map_fp2_to_g2;
+    use super::map_fp_to_g1::map_fp_to_g1;
+    use super::pairing::pairing;
+    use eyre::Result;
+    use revm_primitives::{hex::FromHex, Bytes, PrecompileResult};
+    use rstest::rstest;
+    use serde_derive::{Deserialize, Serialize};
+    use std::{fs, path::Path};
+
+    #[derive(Serialize, Deserialize, Debug)]
+    #[serde(rename_all = "PascalCase")]
+    struct TestVector {
+        input: String,
+        expected: String,
+        name: String,
+        gas: u64,
+        error: Option<bool>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    struct TestVectors(Vec<TestVector>);
+
+    fn load_test_vectors<P: AsRef<Path>>(path: P) -> Result<TestVectors> {
+        let file_contents = fs::read_to_string(path)?;
+        Ok(serde_json::from_str(&file_contents)?)
+    }
+
+    #[rstest]
+    #[case::g1_add(g1_add, "blsG1Add.json")]
+    #[case::g1_mul(g1_mul, "blsG1Mul.json")]
+    #[case::g1_msm(g1_msm, "blsG1MultiExp.json")]
+    #[case::g2_add(g2_add, "blsG2Add.json")]
+    #[case::g2_mul(g2_mul, "blsG2Mul.json")]
+    #[case::g2_msm(g2_msm, "blsG2MultiExp.json")]
+    #[case::pairing(pairing, "blsPairing.json")]
+    #[case::map_fp_to_g1(map_fp_to_g1, "blsMapG1.json")]
+    #[case::map_fp2_to_g2(map_fp2_to_g2, "blsMapG2.json")]
+    fn test_bls(
+        #[case] precompile: fn(input: &Bytes, gas_limit: u64) -> PrecompileResult,
+        #[case] file_name: &str,
+    ) {
+        let test_vectors = load_test_vectors(format!("test-vectors/{file_name}"))
+            .unwrap_or_else(|e| panic!("Failed to load test vectors from {file_name}: {e}"));
+
+        for vector in test_vectors.0 {
+            let test_name = format!("{file_name}/{}", vector.name);
+            let input = Bytes::from_hex(vector.input.clone()).unwrap_or_else(|e| {
+                panic!(
+                    "could not deserialize input {} as hex in {test_name}: {e}",
+                    &vector.input
+                )
+            });
+            let target_gas: u64 = 30_000_000;
+            let res = precompile(&input, target_gas);
+            if vector.error.unwrap_or_default() {
+                assert!(res.is_err(), "expected error didn't happen in {test_name}");
+            } else {
+                let (actual_gas, actual_output) =
+                    res.unwrap_or_else(|e| panic!("precompile call failed for {test_name}: {e}"));
+                assert_eq!(
+                    vector.gas, actual_gas,
+                    "expected gas: {}, actual gas: {} in {test_name}",
+                    vector.gas, actual_gas
+                );
+                let expected_output = Bytes::from_hex(vector.expected).unwrap();
+                assert_eq!(
+                    expected_output, actual_output,
+                    "expected output: {expected_output}, actual output: {actual_output} in {test_name}");
+            }
+        }
+    }
+    //
+    // #[rstest]
+    // #[case::g1_empty(0, G1MUL_BASE, 0)]
+    // #[case::g1_one_item(160, G1MUL_BASE, 14400)]
+    // #[case::g1_two_items(320, G1MUL_BASE, 21312)]
+    // #[case::g1_ten_items(1600, G1MUL_BASE, 50760)]
+    // #[case::g1_sixty_four_items(10240, G1MUL_BASE, 170496)]
+    // #[case::g1_one_hundred_twenty_eight_items(20480, G1MUL_BASE, 267264)]
+    // #[case::g1_one_hundred_twenty_nine_items(20640, G1MUL_BASE, 269352)]
+    // #[case::g1_two_hundred_fifty_six_items(40960, G1MUL_BASE, 534528)]
+    // fn test_g1_multiexp_required_gas(
+    //     #[case] input_len: usize,
+    //     #[case] multiplication_cost: u64,
+    //     #[case] expected_output: u64,
+    // ) {
+    //     let k = input_len / G1MUL_INPUT_LENGTH;
+    //
+    //     let actual_output = msm_required_gas(k, multiplication_cost);
+    //
+    //     assert_eq!(expected_output, actual_output);
+    // }
+}
