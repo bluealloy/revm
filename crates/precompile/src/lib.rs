@@ -18,6 +18,7 @@ pub mod identity;
 pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
+pub mod secp256r1;
 pub mod utilities;
 
 use core::hash::Hash;
@@ -65,6 +66,8 @@ impl Precompiles {
             PrecompileSpecId::ISTANBUL => Self::istanbul(),
             PrecompileSpecId::BERLIN => Self::berlin(),
             PrecompileSpecId::CANCUN => Self::cancun(),
+            #[cfg(feature = "optimism")]
+            PrecompileSpecId::FJORD => Self::fjord(),
             PrecompileSpecId::PRAGUE => Self::prague(),
             PrecompileSpecId::LATEST => Self::latest(),
         }
@@ -153,6 +156,19 @@ impl Precompiles {
                 precompiles
             };
 
+            Box::new(precompiles)
+        })
+    }
+
+    /// Returns precompiles for Fjord spec.
+    pub fn fjord() -> &'static Self {
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        INSTANCE.get_or_init(|| {
+            let mut precompiles = Self::cancun().clone();
+            precompiles.extend([
+                // EIP-7212: secp256r1 P256verify
+                secp256r1::P256VERIFY,
+            ]);
             Box::new(precompiles)
         })
     }
@@ -250,6 +266,8 @@ pub enum PrecompileSpecId {
     ISTANBUL,
     BERLIN,
     CANCUN,
+    #[cfg(feature = "optimism")]
+    FJORD,
     PRAGUE,
     LATEST,
 }
@@ -272,6 +290,8 @@ impl PrecompileSpecId {
             BEDROCK | REGOLITH | CANYON => Self::BERLIN,
             #[cfg(feature = "optimism")]
             ECOTONE => Self::CANCUN,
+            #[cfg(feature = "optimism")]
+            FJORD => Self::FJORD,
         }
     }
 }

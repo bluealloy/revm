@@ -482,7 +482,7 @@ mod tests {
         let serialized = serde_json::to_string(&init_state).unwrap();
         let deserialized: CacheDB<EmptyDB> = serde_json::from_str(&serialized).unwrap();
 
-        assert!(deserialized.accounts.get(&account).is_some());
+        assert!(deserialized.accounts.contains_key(&account));
         assert_eq!(
             deserialized.accounts.get(&account).unwrap().info.nonce,
             nonce
