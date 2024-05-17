@@ -4,8 +4,8 @@
 //! secp256r1 curve support.
 //!
 //! The main purpose of this precompile is to verify ECDSA signatures that use the secp256r1, or
-//! P256 elliptic curve. The [`P256VERIFY`](crate::secp256r1::P256VERIFY) const represents the
-//! implementation of this precompile, with the address that it is currently deployed at.
+//! P256 elliptic curve. The [`P256VERIFY`] const represents the implementation of this precompile,
+//! with the address that it is currently deployed at.
 use crate::{u64_to_address, Precompile, PrecompileWithAddress};
 use p256::ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey};
 use revm_primitives::{Bytes, PrecompileError, PrecompileResult, B256};
