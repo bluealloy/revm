@@ -45,7 +45,7 @@ secp256k1 = { version = "0.29.0", default-features = false, features = [
 blst = { version = "0.3.11", optional = true }
 
 # p256verify precompile
-p256 = { version = "0.13.2", features = ["ecdsa"] }
+p256 = { version = "0.13.2", default-features = false, features = ["ecdsa"] }
 
 [dev-dependencies]
 criterion = { version = "0.5" }
