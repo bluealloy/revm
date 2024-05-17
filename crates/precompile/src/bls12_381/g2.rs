@@ -1,5 +1,5 @@
 use super::utils::{fp_to_bytes, remove_padding, FP_LENGTH, PADDED_FP_LENGTH};
-use blst::{blst_fp_from_bendian, blst_p2_affine, blst_p2_affine_in_g2};
+use blst::{blst_fp_from_bendian, blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_on_curve};
 use revm_primitives::{Bytes, PrecompileError};
 
 /// Length of each of the elements in a g2 operation input.
@@ -27,7 +27,12 @@ pub(super) fn encode_g2_point(input: &blst_p2_affine) -> Bytes {
 }
 
 /// Extracts a G2 point in Affine format from a 256 byte slice representation.
-pub(super) fn extract_g2_input(input: &[u8]) -> Result<blst_p2_affine, PrecompileError> {
+///
+/// NOTE: This function will perform a G2 subgroup check if `subgroup_check` is set to `true`.
+pub(super) fn extract_g2_input(
+    input: &[u8],
+    subgroup_check: bool,
+) -> Result<blst_p2_affine, PrecompileError> {
     if input.len() != G2_INPUT_ITEM_LENGTH {
         return Err(PrecompileError::Other(format!(
             "Input should be {G2_INPUT_ITEM_LENGTH} bytes, was {}",
@@ -49,9 +54,40 @@ pub(super) fn extract_g2_input(input: &[u8]) -> Result<blst_p2_affine, Precompil
         blst_fp_from_bendian(&mut out.y.fp[1], input_fps[3].as_ptr());
     }
 
-    // SAFETY: out is a blst value.
-    if unsafe { !blst_p2_affine_in_g2(&out) } {
-        return Err(PrecompileError::Other("Element not in G2".to_string()));
+    if subgroup_check {
+        // NB: Subgroup checks
+        //
+        // Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
+        //
+        // Implementations SHOULD use the optimized subgroup check method:
+        //
+        // https://eips.ethereum.org/assets/eip-2537/fast_subgroup_checks
+        //
+        // On any input that fail the subgroup check, the precompile MUST return an error.
+        //
+        // As endomorphism acceleration requires input on the correct subgroup, implementers MAY
+        // use endomorphism acceleration.
+        if unsafe { !blst_p2_affine_in_g2(&out) } {
+            return Err(PrecompileError::Other("Element not in G2".to_string()));
+        }
+    } else {
+        // From EIP-2537:
+        //
+        // Error cases:
+        //
+        // * An input is neither a point on the G2 elliptic curve nor the infinity point
+        //
+        // NB: There is no subgroup check for the G2 addition precompile.
+        //
+        // We use blst_p2_affine_on_curve instead of blst_p2_affine_in_g2 because the latter performs
+        // the subgroup check.
+        //
+        // SAFETY: out is a blst value.
+        if unsafe { !blst_p2_affine_on_curve(&out) } {
+            return Err(PrecompileError::Other(
+                "Element not on G2 curve".to_string(),
+            ));
+        }
     }
 
     Ok(out)

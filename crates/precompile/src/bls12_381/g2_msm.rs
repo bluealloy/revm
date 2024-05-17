@@ -22,7 +22,7 @@ pub const ADDRESS: u64 = 0x10;
 /// Output is an encoding of multi-scalar-multiplication operation result - single G2
 /// point (`256` bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-multiexponentiation>
-fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % g2_mul::INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
@@ -41,9 +41,19 @@ fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut g2_points: Vec<blst_p2> = Vec::with_capacity(k);
     let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
-        let p0_aff = &extract_g2_input(
-            &input[i * g2_mul::INPUT_LENGTH..i * g2_mul::INPUT_LENGTH + G2_INPUT_ITEM_LENGTH],
-        )?;
+        let slice =
+            &input[i * g2_mul::INPUT_LENGTH..i * g2_mul::INPUT_LENGTH + G2_INPUT_ITEM_LENGTH];
+        // BLST batch API for p2_affines blows up when you pass it a point at infinity and returns point at infinity
+        // so we just skip the element, and return 256 bytes in the response
+        if slice.iter().all(|i| *i == 0) {
+            continue;
+        }
+
+        // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
+        //
+        // So we set the subgroup_check flag to `true`
+        let p0_aff = &extract_g2_input(slice, true)?;
+
         let mut p0 = blst_p2::default();
         // SAFETY: p0 and p0_aff are blst values.
         unsafe { blst_p2_from_affine(&mut p0, p0_aff) };
@@ -57,6 +67,11 @@ fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             )?
             .b,
         );
+    }
+
+    // return infinity point if all points are infinity
+    if g2_points.is_empty() {
+        return Ok((required_gas, vec![0; 256].into()));
     }
 
     let points = p2_affines::from(&g2_points);

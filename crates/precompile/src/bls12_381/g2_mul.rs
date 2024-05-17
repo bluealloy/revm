@@ -23,7 +23,7 @@ pub(super) const INPUT_LENGTH: usize = 288;
 /// Output is an encoding of multiplication operation result - single G2 point
 /// (`256` bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-multiplication>
-fn g2_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub(super) fn g2_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if BASE_GAS_FEE > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }
@@ -34,7 +34,10 @@ fn g2_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
-    let p0_aff = &extract_g2_input(&input[..G2_INPUT_ITEM_LENGTH])?;
+    // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
+    //
+    // So we set the subgroup_check flag to `true`
+    let p0_aff = &extract_g2_input(&input[..G2_INPUT_ITEM_LENGTH], true)?;
     let mut p0 = blst_p2::default();
     // SAFETY: p0 and p0_aff are blst values.
     unsafe { blst_p2_from_affine(&mut p0, p0_aff) };

@@ -22,7 +22,7 @@ pub const ADDRESS: u64 = 0x0d;
 /// Output is an encoding of multi-scalar-multiplication operation result - single G1
 /// point (`128` bytes).
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-multiexponentiation>
-fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % g1_mul::INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
@@ -41,8 +41,12 @@ fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut g1_points: Vec<blst_p1> = Vec::with_capacity(k);
     let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
+        // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
+        //
+        // So we set the subgroup_check flag to `true`
         let p0_aff = &extract_g1_input(
             &input[i * g1_mul::INPUT_LENGTH..i * g1_mul::INPUT_LENGTH + G1_INPUT_ITEM_LENGTH],
+            true,
         )?;
         let mut p0 = blst_p1::default();
         // SAFETY: p0 and p0_aff are blst values.

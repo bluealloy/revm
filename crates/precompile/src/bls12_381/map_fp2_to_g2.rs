@@ -21,7 +21,7 @@ const BASE_GAS_FEE: u64 = 75000;
 /// an element of Fp2. Output of this call is 256 bytes and is an encoded G2
 /// point.
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-mapping-fp2-element-to-g2-point>
-fn map_fp2_to_g2(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub(super) fn map_fp2_to_g2(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if BASE_GAS_FEE > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }

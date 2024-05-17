@@ -19,7 +19,7 @@ const MAP_FP_TO_G1_BASE: u64 = 5500;
 /// Field-to-curve call expects 64 bytes as an input that is interpreted as an
 /// element of Fp. Output of this call is 128 bytes and is an encoded G1 point.
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-mapping-fp-element-to-g1-point>
-fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if MAP_FP_TO_G1_BASE > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }
