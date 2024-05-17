@@ -1,0 +1,65 @@
+{
+    "tests/prague/eip3074_auth_authcall/test_auth.py::test_expand_memory[fork_Prague-state_test]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x6001615dc06000f615600155",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0xea60"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xb06f189fb4036a85808ac1d5bba5a5e3519999d8e15bffb67196efd30c0ebaf9",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf85f800a82ea60940000000000000000000000000000000000000100808025a033b869e7e2f43ba8c68c08e8b0b2fe9b2aa55fe1a3f69697186cd342634775e3a03341e32c3a2c7d83ee87602570a7b9c486d23dbf9a694a27484b1f5ab2654a81",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x9c4117443f119c770d9c2bef3721892e8b94d5d85c628776e725b2e7a72048b9",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.4-unstable-abee40f2-20240516",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3074.md",
+            "reference-spec-version": "3b5fcad6b35782f8aaeba7d4ac26004e8fbd720f"
+        }
+    }
+}
