@@ -1,17 +1,19 @@
 use super::{
-    g2::check_canonical_fp2, g2::encode_g2_point, utils::{remove_padding, PADDED_FP2_LENGTH, PADDED_FP_LENGTH}
+    g2::check_canonical_fp2,
+    g2::encode_g2_point,
+    utils::{remove_padding, PADDED_FP2_LENGTH, PADDED_FP_LENGTH},
 };
 use crate::{u64_to_address, PrecompileWithAddress};
-use blst::{
-    blst_map_to_g2, blst_p2, blst_p2_affine, blst_p2_to_affine,
-};
+use blst::{blst_map_to_g2, blst_p2, blst_p2_affine, blst_p2_to_affine};
 use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_MAP_FP2_TO_G2 precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
     PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(map_fp2_to_g2));
+
 /// BLS12_MAP_FP2_TO_G2 precompile address.
 pub const ADDRESS: u64 = 0x13;
+
 /// Base gas fee for BLS12-381 map_fp2_to_g2 operation.
 const BASE_GAS_FEE: u64 = 75000;
 
