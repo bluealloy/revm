@@ -110,39 +110,37 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
     }
 
     fn block_hash(&mut self, number: U256) -> Option<B256> {
-        let block_number = self.env().block.number;
+        let block_number = as_usize_saturated!(self.env().block.number);
+        let requested_number = as_usize_saturated!(number);
 
-        match block_number.checked_sub(number) {
-            // blockhash should push zero if number is same as current block number.
-            Some(diff) if !diff.is_zero() => {
-                let diff = as_usize_saturated!(diff);
+        let Some(diff) = block_number.checked_sub(requested_number) else {
+            return Some(B256::ZERO);
+        };
 
-                if diff <= BLOCK_HASH_HISTORY {
-                    return self
-                        .evm
-                        .block_hash(number)
-                        .map_err(|e| self.evm.error = Err(e))
-                        .ok();
-                }
-
-                if self.evm.journaled_state.spec.is_enabled_in(PRAGUE)
-                    && diff <= BLOCKHASH_SERVE_WINDOW
-                {
-                    let index = number.wrapping_rem(U256::from(BLOCKHASH_SERVE_WINDOW));
-                    return self
-                        .evm
-                        .db
-                        .storage(BLOCKHASH_STORAGE_ADDRESS, index)
-                        .map_err(|e| self.evm.error = Err(EVMError::Database(e)))
-                        .ok()
-                        .map(|v| v.into());
-                }
-            }
-            _ => {
-                // If blockhash is requested for the current block, the hash should be 0, so we fall
-                // through.
-            }
+        // blockhash should push zero if number is same as current block number.
+        if diff == 0 {
+            return Some(B256::ZERO);
         }
+
+        if diff <= BLOCK_HASH_HISTORY {
+            return self
+                .evm
+                .block_hash(number)
+                .map_err(|e| self.evm.error = Err(e))
+                .ok();
+        }
+
+        if self.evm.journaled_state.spec.is_enabled_in(PRAGUE) && diff <= BLOCKHASH_SERVE_WINDOW {
+            let index = number.wrapping_rem(U256::from(BLOCKHASH_SERVE_WINDOW));
+            return self
+                .evm
+                .db
+                .storage(BLOCKHASH_STORAGE_ADDRESS, index)
+                .map_err(|e| self.evm.error = Err(EVMError::Database(e)))
+                .ok()
+                .map(|v| v.into());
+        }
+
         Some(B256::ZERO)
     }
 
