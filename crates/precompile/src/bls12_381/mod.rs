@@ -32,15 +32,16 @@ pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
 
 #[cfg(test)]
 mod test {
-    use super::g1_add::g1_add;
-    use super::g1_msm::g1_msm;
-    use super::g1_mul::g1_mul;
-    use super::g2_add::g2_add;
-    use super::g2_msm::g2_msm;
-    use super::g2_mul::g2_mul;
-    use super::map_fp2_to_g2::map_fp2_to_g2;
-    use super::map_fp_to_g1::map_fp_to_g1;
-    use super::pairing::pairing;
+    use super::g1_add;
+    use super::g1_msm;
+    use super::g1_mul;
+    use super::g2_add;
+    use super::g2_msm;
+    use super::g2_mul;
+    use super::map_fp2_to_g2;
+    use super::map_fp_to_g1;
+    use super::msm::msm_required_gas;
+    use super::pairing;
     use eyre::Result;
     use revm_primitives::{hex::FromHex, Bytes, PrecompileResult};
     use rstest::rstest;
@@ -66,15 +67,15 @@ mod test {
     }
 
     #[rstest]
-    #[case::g1_add(g1_add, "blsG1Add.json")]
-    #[case::g1_mul(g1_mul, "blsG1Mul.json")]
-    #[case::g1_msm(g1_msm, "blsG1MultiExp.json")]
-    #[case::g2_add(g2_add, "blsG2Add.json")]
-    #[case::g2_mul(g2_mul, "blsG2Mul.json")]
-    #[case::g2_msm(g2_msm, "blsG2MultiExp.json")]
-    #[case::pairing(pairing, "blsPairing.json")]
-    #[case::map_fp_to_g1(map_fp_to_g1, "blsMapG1.json")]
-    #[case::map_fp2_to_g2(map_fp2_to_g2, "blsMapG2.json")]
+    #[case::g1_add(g1_add::g1_add, "blsG1Add.json")]
+    #[case::g1_mul(g1_mul::g1_mul, "blsG1Mul.json")]
+    #[case::g1_msm(g1_msm::g1_msm, "blsG1MultiExp.json")]
+    #[case::g2_add(g2_add::g2_add, "blsG2Add.json")]
+    #[case::g2_mul(g2_mul::g2_mul, "blsG2Mul.json")]
+    #[case::g2_msm(g2_msm::g2_msm, "blsG2MultiExp.json")]
+    #[case::pairing(pairing::pairing, "blsPairing.json")]
+    #[case::map_fp_to_g1(map_fp_to_g1::map_fp_to_g1, "blsMapG1.json")]
+    #[case::map_fp2_to_g2(map_fp2_to_g2::map_fp2_to_g2, "blsMapG2.json")]
     fn test_bls(
         #[case] precompile: fn(input: &Bytes, gas_limit: u64) -> PrecompileResult,
         #[case] file_name: &str,
@@ -109,25 +110,25 @@ mod test {
             }
         }
     }
-    //
-    // #[rstest]
-    // #[case::g1_empty(0, G1MUL_BASE, 0)]
-    // #[case::g1_one_item(160, G1MUL_BASE, 14400)]
-    // #[case::g1_two_items(320, G1MUL_BASE, 21312)]
-    // #[case::g1_ten_items(1600, G1MUL_BASE, 50760)]
-    // #[case::g1_sixty_four_items(10240, G1MUL_BASE, 170496)]
-    // #[case::g1_one_hundred_twenty_eight_items(20480, G1MUL_BASE, 267264)]
-    // #[case::g1_one_hundred_twenty_nine_items(20640, G1MUL_BASE, 269352)]
-    // #[case::g1_two_hundred_fifty_six_items(40960, G1MUL_BASE, 534528)]
-    // fn test_g1_multiexp_required_gas(
-    //     #[case] input_len: usize,
-    //     #[case] multiplication_cost: u64,
-    //     #[case] expected_output: u64,
-    // ) {
-    //     let k = input_len / G1MUL_INPUT_LENGTH;
-    //
-    //     let actual_output = msm_required_gas(k, multiplication_cost);
-    //
-    //     assert_eq!(expected_output, actual_output);
-    // }
+
+    #[rstest]
+    #[case::g1_empty(0, g1_mul::BASE_GAS_FEE, 0)]
+    #[case::g1_one_item(160, g1_mul::BASE_GAS_FEE, 14400)]
+    #[case::g1_two_items(320, g1_mul::BASE_GAS_FEE, 21312)]
+    #[case::g1_ten_items(1600, g1_mul::BASE_GAS_FEE, 50760)]
+    #[case::g1_sixty_four_items(10240, g1_mul::BASE_GAS_FEE, 170496)]
+    #[case::g1_one_hundred_twenty_eight_items(20480, g1_mul::BASE_GAS_FEE, 267264)]
+    #[case::g1_one_hundred_twenty_nine_items(20640, g1_mul::BASE_GAS_FEE, 269352)]
+    #[case::g1_two_hundred_fifty_six_items(40960, g1_mul::BASE_GAS_FEE, 534528)]
+    fn test_g1_msm_required_gas(
+        #[case] input_len: usize,
+        #[case] multiplication_cost: u64,
+        #[case] expected_output: u64,
+    ) {
+        let k = input_len / g1_mul::INPUT_LENGTH;
+
+        let actual_output = msm_required_gas(k, multiplication_cost);
+
+        assert_eq!(expected_output, actual_output);
+    }
 }
