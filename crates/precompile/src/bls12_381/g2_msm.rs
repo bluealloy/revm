@@ -49,7 +49,10 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             continue;
         }
 
-        let p0_aff = &extract_g2_input(slice)?;
+        // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
+        //
+        // So we set the subgroup_check flag to `true`
+        let p0_aff = &extract_g2_input(slice, true)?;
 
         let mut p0 = blst_p2::default();
         // SAFETY: p0 and p0_aff are blst values.

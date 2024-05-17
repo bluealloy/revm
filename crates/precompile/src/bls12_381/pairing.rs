@@ -46,12 +46,21 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     // accumulator for the fp12 multiplications of the miller loops.
     let mut acc = blst_fp12::default();
     for i in 0..k {
-        let p1_aff =
-            &extract_g1_input(&input[i * INPUT_LENGTH..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH])?;
+        // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
+        //
+        // So we set the subgroup_check flag to `true`
+        let p1_aff = &extract_g1_input(
+            &input[i * INPUT_LENGTH..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH],
+            true,
+        )?;
 
+        // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
+        //
+        // So we set the subgroup_check flag to `true`
         let p2_aff = &extract_g2_input(
             &input[i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
                 ..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + G2_INPUT_ITEM_LENGTH],
+            true,
         )?;
 
         if i > 0 {

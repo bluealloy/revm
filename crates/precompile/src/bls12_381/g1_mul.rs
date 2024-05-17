@@ -34,7 +34,10 @@ pub(super) fn g1_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
-    let p0_aff = &extract_g1_input(&input[..G1_INPUT_ITEM_LENGTH])?;
+    // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
+    //
+    // So we set the subgroup_check flag to `true`
+    let p0_aff = &extract_g1_input(&input[..G1_INPUT_ITEM_LENGTH], true)?;
     let mut p0 = blst_p1::default();
     // SAFETY: p0 and p0_aff are blst values.
     unsafe { blst_p1_from_affine(&mut p0, p0_aff) };
