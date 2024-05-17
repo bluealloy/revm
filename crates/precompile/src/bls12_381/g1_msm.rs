@@ -41,13 +41,20 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut g1_points: Vec<blst_p1> = Vec::with_capacity(k);
     let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
+        let slice =
+            &input[i * g1_mul::INPUT_LENGTH..i * g1_mul::INPUT_LENGTH + G1_INPUT_ITEM_LENGTH];
+
+        // BLST batch API for p1_affines blows up when you pass it a point at infinity and returns
+        // point at infinity so we just skip the element, and return 128 bytes in the response
+        if slice.iter().all(|i| *i == 0) {
+            continue;
+        }
+
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         //
         // So we set the subgroup_check flag to `true`
-        let p0_aff = &extract_g1_input(
-            &input[i * g1_mul::INPUT_LENGTH..i * g1_mul::INPUT_LENGTH + G1_INPUT_ITEM_LENGTH],
-            true,
-        )?;
+        let p0_aff = &extract_g1_input(slice, true)?;
+
         let mut p0 = blst_p1::default();
         // SAFETY: p0 and p0_aff are blst values.
         unsafe { blst_p1_from_affine(&mut p0, p0_aff) };
@@ -60,6 +67,11 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             )?
             .b,
         );
+    }
+
+    // return infinity point if all points are infinity
+    if g1_points.is_empty() {
+        return Ok((required_gas, [0; 128].into()));
     }
 
     let points = p1_affines::from(&g1_points);
