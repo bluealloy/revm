@@ -41,9 +41,15 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut g2_points: Vec<blst_p2> = Vec::with_capacity(k);
     let mut scalars: Vec<u8> = Vec::with_capacity(k * SCALAR_LENGTH);
     for i in 0..k {
-        let p0_aff = &extract_g2_input(
-            &input[i * g2_mul::INPUT_LENGTH..i * g2_mul::INPUT_LENGTH + G2_INPUT_ITEM_LENGTH],
-        )?;
+        // BLST batch API for p2_affines blows up when you pass it a point at infinity and returns point at infinity
+        // so we just skip the element, and return 256 bytes in the response
+        let slice =
+            &input[i * g2_mul::INPUT_LENGTH..i * g2_mul::INPUT_LENGTH + G2_INPUT_ITEM_LENGTH];
+        if is_zero(slice) {
+            continue;
+        }
+
+        let p0_aff = &extract_g2_input(slice)?;
         let mut p0 = blst_p2::default();
         // SAFETY: p0 and p0_aff are blst values.
         unsafe { blst_p2_from_affine(&mut p0, p0_aff) };
@@ -59,13 +65,26 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         );
     }
 
-    let points = p2_affines::from(&g2_points);
-    let multiexp = points.mult(&scalars, NBITS);
+    let out = if !g2_points.is_empty() {
+        let points = p2_affines::from(&g2_points);
+        let multiexp = points.mult(&scalars, NBITS);
 
-    let mut multiexp_aff = blst_p2_affine::default();
-    // SAFETY: multiexp_aff and multiexp are blst values.
-    unsafe { blst_p2_to_affine(&mut multiexp_aff, &multiexp) };
+        let mut multiexp_aff = blst_p2_affine::default();
+        // SAFETY: multiexp_aff and multiexp are blst values.
+        unsafe { blst_p2_to_affine(&mut multiexp_aff, &multiexp) };
 
-    let out = encode_g2_point(&multiexp_aff);
+        encode_g2_point(&multiexp_aff)
+    } else {
+        // default return size for empty msm
+        vec![0; 256].into()
+    };
     Ok((required_gas, out))
+}
+
+fn is_zero(buf: &[u8]) -> bool {
+    let (prefix, aligned, suffix) = unsafe { buf.align_to::<u128>() };
+
+    prefix.iter().all(|&x| x == 0)
+        && suffix.iter().all(|&x| x == 0)
+        && aligned.iter().all(|&x| x == 0)
 }
