@@ -33,7 +33,7 @@ pub(super) fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
-    // NB: There is no subgroup check for the G2 addition precompile.
+    // NB: There is no subgroup check for the G1 addition precompile.
     //
     // So we set the subgroup checks here to `false`
     let a_aff = &extract_g1_input(&input[..G1_INPUT_ITEM_LENGTH], false)?;
