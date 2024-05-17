@@ -67,15 +67,15 @@ mod test {
     }
 
     #[rstest]
-    #[case::g1_add(g1_add::g1_add, "blsG1Add.json")]
-    #[case::g1_mul(g1_mul::g1_mul, "blsG1Mul.json")]
-    #[case::g1_msm(g1_msm::g1_msm, "blsG1MultiExp.json")]
-    #[case::g2_add(g2_add::g2_add, "blsG2Add.json")]
-    #[case::g2_mul(g2_mul::g2_mul, "blsG2Mul.json")]
-    #[case::g2_msm(g2_msm::g2_msm, "blsG2MultiExp.json")]
-    #[case::pairing(pairing::pairing, "blsPairing.json")]
-    #[case::map_fp_to_g1(map_fp_to_g1::map_fp_to_g1, "blsMapG1.json")]
-    #[case::map_fp2_to_g2(map_fp2_to_g2::map_fp2_to_g2, "blsMapG2.json")]
+    #[case::g1_add(g1_add::g1_add, "add_G1_bls.json")]
+    #[case::g1_mul(g1_mul::g1_mul, "mul_G1_bls.json")]
+    #[case::g1_msm(g1_msm::g1_msm, "multiexp_G1_bls.json")]
+    #[case::g2_add(g2_add::g2_add, "add_G2_bls.json")]
+    #[case::g2_mul(g2_mul::g2_mul, "mul_G2_bls.json")]
+    #[case::g2_msm(g2_msm::g2_msm, "multiexp_G2_bls.json")]
+    #[case::pairing(pairing::pairing, "pairing_check_bls.json")]
+    #[case::map_fp_to_g1(map_fp_to_g1::map_fp_to_g1, "map_fp_to_G1_bls.json")]
+    #[case::map_fp2_to_g2(map_fp2_to_g2::map_fp2_to_g2, "map_fp2_to_G2_bls.json")]
     fn test_bls(
         #[case] precompile: fn(input: &Bytes, gas_limit: u64) -> PrecompileResult,
         #[case] file_name: &str,
