@@ -11,7 +11,7 @@ pub(super) const G1_INPUT_ITEM_LENGTH: usize = 128;
 /// Output length of a g1 operation.
 const G1_OUTPUT_LENGTH: usize = 128;
 
-/// Encodes a G1 point in affine format into a byte slice with padded elements.
+/// Encodes a G1 point in affine format into byte slice with padded elements.
 pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> Bytes {
     let mut out = vec![0u8; G1_OUTPUT_LENGTH];
     // SAFETY: out comes from fixed length array, input is a blst value.
@@ -56,7 +56,7 @@ pub(super) fn check_canonical_fp(input: &[u8; 48]) -> Result<blst_fp, Precompile
     }
 
     if *input != out {
-        return Err(PrecompileError::Other("non-canonical G1 value".to_string()));
+        return Err(PrecompileError::Other("non-canonical fp value".to_string()));
     }
 
     Ok(fp)

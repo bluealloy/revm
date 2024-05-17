@@ -2971,7 +2971,6 @@ dependencies = [
  "c-kzg",
  "criterion",
  "eyre",
- "hex",
  "k256",
  "once_cell",
  "rand",

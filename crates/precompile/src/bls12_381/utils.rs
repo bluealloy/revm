@@ -14,7 +14,7 @@ pub(super) const PADDING_LENGTH: usize = 16;
 /// Scalar length.
 pub(super) const SCALAR_LENGTH: usize = 32;
 
-/// Encodes a single finite field element into a byte slice with padding.
+/// Encodes a single finite field element into byte slice with padding.
 pub(super) fn fp_to_bytes(out: &mut [u8], input: *const blst_fp) {
     if out.len() != PADDED_FP_LENGTH {
         return;

@@ -11,7 +11,7 @@ pub(super) const G2_INPUT_ITEM_LENGTH: usize = 256;
 /// Output length of a g2 operation.
 const G2_OUTPUT_LENGTH: usize = 256;
 
-/// Encodes a G2 point in affine format into a byte slice with padded elements.
+/// Encodes a G2 point in affine format into byte slice with padded elements.
 pub(super) fn encode_g2_point(input: &blst_p2_affine) -> Bytes {
     let mut out = vec![0u8; G2_OUTPUT_LENGTH];
     fp_to_bytes(&mut out[..PADDED_FP_LENGTH], &input.x.fp[0]);
@@ -30,7 +30,7 @@ pub(super) fn encode_g2_point(input: &blst_p2_affine) -> Bytes {
     out.into()
 }
 
-/// Convert the following field elements from a byte slices into a `blst_p2_affine` point.
+/// Convert the following field elements from byte slices into a `blst_p2_affine` point.
 pub(super) fn decode_and_check_g2(
     x1: &[u8; 48],
     x2: &[u8; 48],
