@@ -1,5 +1,5 @@
 use super::utils::{fp_to_bytes, remove_padding, PADDED_FP_LENGTH};
-use blst::{blst_fp_from_bendian, blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve};
+use blst::{blst_bendian_from_fp, blst_fp, blst_fp_from_bendian, blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve};
 use revm_primitives::{Bytes, PrecompileError};
 
 /// Length of each of the elements in a g1 operation input.
@@ -18,6 +18,36 @@ pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> Bytes {
     out.into()
 }
 
+/// docs todo.
+pub(super) fn decode_and_check_g1(p0_x: &[u8; 48], p0_y: &[u8; 48]) -> Result<blst_p1_affine, PrecompileError> {
+    // let mut out = blst_p1_affine::default();
+    let out = blst_p1_affine {
+        x: check_canonical_fp(p0_x)?,
+        y: check_canonical_fp(p0_y)?,
+    };
+
+    Ok(out)
+}
+
+
+/// docs todo
+pub(super) fn check_canonical_fp(input: &[u8; 48]) -> Result<blst_fp, PrecompileError> {
+    let mut fp = blst_fp::default();
+    let mut out = [0; 48];
+    // SAFETY: input has fixed length.
+    unsafe {
+        blst_fp_from_bendian(&mut fp, input.as_ptr());
+
+        blst_bendian_from_fp(out.as_mut_ptr(), &fp);
+    }
+
+    if *input != out {
+        return Err(PrecompileError::Other("non-canonical G1 value".to_string()));
+    }
+
+    Ok(fp)
+}
+
 /// Extracts a G1 point in Affine format from a 128 byte slice representation.
 ///
 /// NOTE: This function will perform a G1 subgroup check if `subgroup_check` is set to `true`.
@@ -33,14 +63,40 @@ pub(super) fn extract_g1_input(
     }
 
     let input_p0_x = remove_padding(&input[..PADDED_FP_LENGTH])?;
+    println!("input_p0_x: {:?}", hex::encode(input_p0_x));
     let input_p0_y = remove_padding(&input[PADDED_FP_LENGTH..G1_INPUT_ITEM_LENGTH])?;
+    println!("input_p0_y: {:?}", hex::encode(input_p0_y));
 
-    let mut out = blst_p1_affine::default();
-    // SAFETY: input_p0_x and input_p0_y have fixed length, out is a blst value.
-    unsafe {
-        blst_fp_from_bendian(&mut out.x, input_p0_x.as_ptr());
-        blst_fp_from_bendian(&mut out.y, input_p0_y.as_ptr());
-    }
+    // let mut out = blst_p1_affine::default();
+    // let mut out_2 = [0; 48];
+    // // SAFETY: input_p0_x and input_p0_y have fixed length, out is a blst value.
+    // unsafe {
+    //     blst_fp_from_bendian(&mut out.x, input_p0_x.as_ptr());
+
+    //     // roundtrip
+    //     blst_bendian_from_fp(out_2.as_mut_ptr(), &out.x);
+
+    //     if input_p0_x != out_2.as_slice() {
+    //         println!("==================");
+    //         println!("input_p0_x: {:?}", hex::encode(input_p0_x));
+    //         println!("out_2: {:?}", hex::encode(out_2.as_slice()));
+    //         println!("roundtrip failed");
+    //         return Err(PrecompileError::Other("non-canonical G1 X value".to_string()));
+    //     }
+
+    //     blst_fp_from_bendian(&mut out.y, input_p0_y.as_ptr());
+
+    //     // roundtrip
+    //     blst_bendian_from_fp(out_2.as_mut_ptr(), &out.y);
+
+    //     if input_p0_y != out_2.as_slice() {
+    //         println!("input_p0_y: {:?}", hex::encode(input_p0_y));
+    //         println!("out_2: {:?}", hex::encode(out_2.as_slice()));
+    //         return Err(PrecompileError::Other("non-canonical G1 Y value".to_string()));
+    //     }
+    // }
+
+    let out = decode_and_check_g1(&input_p0_x, &input_p0_y)?;
 
     if subgroup_check {
         // NB: Subgroup checks

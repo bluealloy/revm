@@ -1,5 +1,5 @@
-use super::utils::{fp_to_bytes, remove_padding, FP_LENGTH, PADDED_FP_LENGTH};
-use blst::{blst_fp_from_bendian, blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_on_curve};
+use super::{g1::check_canonical_fp, utils::{fp_to_bytes, remove_padding, FP_LENGTH, PADDED_FP_LENGTH}};
+use blst::{blst_bendian_from_fp, blst_fp2, blst_fp_from_bendian, blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_on_curve};
 use revm_primitives::{Bytes, PrecompileError};
 
 /// Length of each of the elements in a g2 operation input.
@@ -26,6 +26,29 @@ pub(super) fn encode_g2_point(input: &blst_p2_affine) -> Bytes {
     out.into()
 }
 
+
+/// docs todo.
+pub(super) fn decode_and_check_g2(x1: &[u8; 48], x2: &[u8; 48], y1: &[u8; 48], y2: &[u8; 48]) -> Result<blst_p2_affine, PrecompileError> {
+    Ok(blst_p2_affine {
+        x: check_canonical_fp2(x1, x2)?,
+        y: check_canonical_fp2(y1, y2)?,
+    })
+}
+
+/// docs todo
+pub(super) fn check_canonical_fp2(input_1: &[u8; 48], input_2: &[u8; 48]) -> Result<blst_fp2, PrecompileError> {
+    let fp_1 = check_canonical_fp(input_1)?;
+    let fp_2 = check_canonical_fp(input_2)?;
+
+    let fp2 = blst_fp2 {
+        fp: [fp_1, fp_2],
+    };
+
+    Ok(fp2)
+}
+
+
+
 /// Extracts a G2 point in Affine format from a 256 byte slice representation.
 ///
 /// NOTE: This function will perform a G2 subgroup check if `subgroup_check` is set to `true`.
@@ -40,19 +63,11 @@ pub(super) fn extract_g2_input(
         )));
     }
 
-    let mut input_fps: [&[u8; FP_LENGTH]; 4] = [&[0; FP_LENGTH]; 4];
-    for i in 0..4 {
+    let mut input_fps: [&[u8; FP_LENGTH]; 4] = [&[0; FP_LENGTH]; 4]; for i in 0..4 {
         input_fps[i] = remove_padding(&input[i * PADDED_FP_LENGTH..(i + 1) * PADDED_FP_LENGTH])?;
     }
 
-    let mut out = blst_p2_affine::default();
-    // SAFETY: items in fps have fixed length, out is a blst value.
-    unsafe {
-        blst_fp_from_bendian(&mut out.x.fp[0], input_fps[0].as_ptr());
-        blst_fp_from_bendian(&mut out.x.fp[1], input_fps[1].as_ptr());
-        blst_fp_from_bendian(&mut out.y.fp[0], input_fps[2].as_ptr());
-        blst_fp_from_bendian(&mut out.y.fp[1], input_fps[3].as_ptr());
-    }
+    let out = decode_and_check_g2(input_fps[0], input_fps[1], input_fps[2], input_fps[3])?;
 
     if subgroup_check {
         // NB: Subgroup checks

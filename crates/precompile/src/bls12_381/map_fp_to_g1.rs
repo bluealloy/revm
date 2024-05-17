@@ -1,10 +1,10 @@
 use super::{
-    g1::encode_g1_point,
+    g1::{check_canonical_fp, encode_g1_point},
     utils::{remove_padding, PADDED_FP_LENGTH},
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use blst::{
-    blst_fp, blst_fp_from_bendian, blst_map_to_g1, blst_p1, blst_p1_affine, blst_p1_to_affine,
+    blst_map_to_g1, blst_p1, blst_p1_affine, blst_p1_to_affine,
 };
 use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 
@@ -32,11 +32,7 @@ pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 
     let input_p0 = remove_padding(input)?;
-
-    let mut fp = blst_fp::default();
-
-    // SAFETY: input_p0 has fixed length, fp is a blst value.
-    unsafe { blst_fp_from_bendian(&mut fp, input_p0.as_ptr()) };
+    let fp = check_canonical_fp(input_p0)?;
 
     let mut p = blst_p1::default();
     // SAFETY: p and fp are blst values.
