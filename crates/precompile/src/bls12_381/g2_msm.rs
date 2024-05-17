@@ -43,8 +43,8 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     for i in 0..k {
         let slice =
             &input[i * g2_mul::INPUT_LENGTH..i * g2_mul::INPUT_LENGTH + G2_INPUT_ITEM_LENGTH];
-        // BLST batch API for p2_affines blows up when you pass it a point at infinity and returns point at infinity
-        // so we just skip the element, and return 256 bytes in the response
+        // BLST batch API for p2_affines blows up when you pass it a point at infinity and returns
+        // point at infinity so we just skip the element, and return 256 bytes in the response
         if slice.iter().all(|i| *i == 0) {
             continue;
         }
@@ -71,7 +71,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
     // return infinity point if all points are infinity
     if g2_points.is_empty() {
-        return Ok((required_gas, vec![0; 256].into()));
+        return Ok((required_gas, [0; 256].into()));
     }
 
     let points = p2_affines::from(&g2_points);
