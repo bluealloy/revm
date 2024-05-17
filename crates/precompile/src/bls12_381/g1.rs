@@ -47,7 +47,9 @@ pub(super) fn check_canonical_fp(input: &[u8; 48]) -> Result<blst_fp, Precompile
     let mut out = [0; 48];
     // SAFETY: input has fixed length, and fp is a blst value.
     unsafe {
-        // TODO: cursed and horrible, how to check for canonical field elements
+        // TODO: cursed and horrible, we need to ensure the input is canonical. It would be nice if
+        // `blst_fp_from_bendian` checked for canonical
+        //
         // This performs the check for canonical field elements
         blst_fp_from_bendian(&mut fp, input.as_ptr());
         blst_bendian_from_fp(out.as_mut_ptr(), &fp);
