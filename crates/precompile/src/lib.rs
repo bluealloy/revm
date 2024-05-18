@@ -21,6 +21,7 @@ pub mod secp256k1;
 pub mod utilities;
 pub mod zk_op;
 
+use once_cell::race::OnceBox;
 #[doc(hidden)]
 pub use revm_primitives as primitives;
 pub use revm_primitives::{
@@ -28,7 +29,6 @@ pub use revm_primitives::{
     Address, Bytes, HashMap, Log, B256,
 };
 use std::{boxed::Box, vec::Vec};
-use once_cell::race::OnceBox;
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
@@ -93,7 +93,7 @@ impl Precompiles {
                 // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
                 // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
                 bn128::add::BYZANTIUM,
-                // bn128::mul::BYZANTIUM,
+                bn128::mul::BYZANTIUM,
                 bn128::pair::BYZANTIUM,
                 // EIP-198: Big integer modular exponentiation.
                 modexp::BYZANTIUM,
@@ -112,7 +112,7 @@ impl Precompiles {
                 blake2::FUN,
                 // EIP-1108: Reduce alt_bn128 precompile gas costs.
                 bn128::add::ISTANBUL,
-                // bn128::mul::ISTANBUL,
+                bn128::mul::ISTANBUL,
                 bn128::pair::ISTANBUL,
             ]);
             Box::new(precompiles)
