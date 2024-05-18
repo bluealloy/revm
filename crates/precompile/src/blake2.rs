@@ -31,37 +31,33 @@ pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Err(Error::OutOfGas);
     }
 
-    let do_round = || -> [u8; 64] {
-        let mut h = [0u64; 8];
-        let mut m = [0u64; 16];
-
-        for (i, pos) in (4..68).step_by(8).enumerate() {
-            h[i] = u64::from_le_bytes(input[pos..pos + 8].try_into().unwrap());
-        }
-        for (i, pos) in (68..196).step_by(8).enumerate() {
-            m[i] = u64::from_le_bytes(input[pos..pos + 8].try_into().unwrap());
-        }
-        let t = [
-            u64::from_le_bytes(input[196..196 + 8].try_into().unwrap()),
-            u64::from_le_bytes(input[204..204 + 8].try_into().unwrap()),
-        ];
-
-        algo::compress(rounds, &mut h, m, t, f);
-
-        let mut out = [0u8; 64];
-        for (i, h) in (0..64).step_by(8).zip(h.iter()) {
-            out[i..i + 8].copy_from_slice(&h.to_le_bytes());
-        }
-        out
-    };
-
     let out = if zk_op::contains_operation(&ZkOperation::Blake2) {
-        zk_op::ZKVM_OPERATOR
-            .get()
-            .and_then(|operator| operator.blake2_run(input.as_ref()).ok())
-            .unwrap_or_else(do_round)
+        zk_op::ZKVM_OPERATOR.get().unwrap().blake2_run(input).unwrap()
     } else {
-        do_round()
+    // Not indented to keep the diff clean and make changes to the original code obvious
+
+    let mut h = [0u64; 8];
+    let mut m = [0u64; 16];
+
+    for (i, pos) in (4..68).step_by(8).enumerate() {
+        h[i] = u64::from_le_bytes(input[pos..pos + 8].try_into().unwrap());
+    }
+    for (i, pos) in (68..196).step_by(8).enumerate() {
+        m[i] = u64::from_le_bytes(input[pos..pos + 8].try_into().unwrap());
+    }
+    let t = [
+        u64::from_le_bytes(input[196..196 + 8].try_into().unwrap()),
+        u64::from_le_bytes(input[204..204 + 8].try_into().unwrap()),
+    ];
+
+    algo::compress(rounds, &mut h, m, t, f);
+
+    let mut out = [0u8; 64];
+    for (i, h) in (0..64).step_by(8).zip(h.iter()) {
+        out[i..i + 8].copy_from_slice(&h.to_le_bytes());
+    }
+
+    out
     };
 
     Ok((gas_used, out.into()))

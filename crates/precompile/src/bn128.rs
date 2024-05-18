@@ -13,17 +13,13 @@ pub mod add {
     pub const ISTANBUL_ADD_GAS_COST: u64 = 150;
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
-        Precompile::Standard(|input, gas_limit| {
-            super::run_add(input, ISTANBUL_ADD_GAS_COST, gas_limit)
-        }),
+        Precompile::Standard(|input, gas_limit| run_add(input, ISTANBUL_ADD_GAS_COST, gas_limit)),
     );
 
     pub const BYZANTIUM_ADD_GAS_COST: u64 = 500;
     pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
-        Precompile::Standard(|input, gas_limit| {
-            super::run_add(input, BYZANTIUM_ADD_GAS_COST, gas_limit)
-        }),
+        Precompile::Standard(|input, gas_limit| run_add(input, BYZANTIUM_ADD_GAS_COST, gas_limit)),
     );
 }
 
@@ -35,17 +31,13 @@ pub mod mul {
     pub const ISTANBUL_MUL_GAS_COST: u64 = 6_000;
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
-        Precompile::Standard(|input, gas_limit| {
-            super::run_mul(input, ISTANBUL_MUL_GAS_COST, gas_limit)
-        }),
+        Precompile::Standard(|input, gas_limit| run_mul(input, ISTANBUL_MUL_GAS_COST, gas_limit)),
     );
 
     pub const BYZANTIUM_MUL_GAS_COST: u64 = 40_000;
     pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
-        Precompile::Standard(|input, gas_limit| {
-            super::run_mul(input, BYZANTIUM_MUL_GAS_COST, gas_limit)
-        }),
+        Precompile::Standard(|input, gas_limit| run_mul(input, BYZANTIUM_MUL_GAS_COST, gas_limit)),
     );
 }
 
@@ -59,7 +51,7 @@ pub mod pair {
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
-            super::run_pair(
+            run_pair(
                 input,
                 ISTANBUL_PAIR_PER_POINT,
                 ISTANBUL_PAIR_BASE,
@@ -73,7 +65,7 @@ pub mod pair {
     pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
-            super::run_pair(
+            run_pair(
                 input,
                 BYZANTIUM_PAIR_PER_POINT,
                 BYZANTIUM_PAIR_BASE,
