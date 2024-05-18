@@ -128,7 +128,7 @@ pub enum PrecompileError {
     /// Catch-all variant for other errors.
     Other(String),
     /// Zkvm errors
-    ZkvmOperatrion(String),
+    ZkvmOperation(String),
 }
 
 impl PrecompileError {
@@ -156,7 +156,7 @@ impl fmt::Display for PrecompileError {
             Self::BlobMismatchedVersion => "mismatched blob version",
             Self::BlobVerifyKzgProofFailed => "verifying blob kzg proof failed",
             Self::Other(s) => s,
-            Self::ZkvmOperatrion(s) => s,
+            Self::ZkvmOperation(s) => s,
         };
         f.write_str(s)
     }

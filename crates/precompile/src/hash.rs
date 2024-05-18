@@ -20,12 +20,12 @@ pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if cost > gas_limit {
         Err(Error::OutOfGas)
     } else {
-        if zk_op::contains_operation(&ZkOperation::Sha256) {
-            if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
-                return op.sha256_run(input.as_ref()).map(|out| (cost, out.into()));
-            }
-        }
-        let output = sha2::Sha256::digest(input).to_vec();
+        let output = if zk_op::contains_operation(&ZkOperation::Sha256) {
+            zk_op::ZKVM_OPERATOR.get().unwrap().sha256_run(input.as_ref()).unwrap().into()
+        } else {
+            sha2::Sha256::digest(input).to_vec()
+        };
+
         Ok((cost, output.into()))
     }
 }
@@ -38,15 +38,19 @@ pub fn ripemd160_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if gas_used > gas_limit {
         Err(Error::OutOfGas)
     } else {
-        if zk_op::contains_operation(&zk_op::ZkOperation::Ripemd160) {
-            if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
-                return op.ripemd160_run(input.as_ref()).map(|out| (gas_used, out.into()));
-            }
-        }
+        let output = if zk_op::contains_operation(&ZkOperation::Ripemd160) {
+            zk_op::ZKVM_OPERATOR.get().unwrap().ripemd160_run(input.as_ref()).unwrap().into()
+        } else {
+        // Not indented to keep the diff clean and make changes to the original code obvious
+
         let mut hasher = ripemd::Ripemd160::new();
         hasher.update(input);
         let mut output = [0u8; 32];
         hasher.finalize_into((&mut output[12..]).into());
+        output
+
+        };
+
         Ok((gas_used, output.to_vec().into()))
     }
 }

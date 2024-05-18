@@ -1,6 +1,6 @@
+use crate::zk_op::{self, ZkOperation};
 use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress};
 use revm_primitives::Bytes;
-use crate::zk_op::{self, ZkOperation};
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
@@ -145,4 +145,3 @@ pub mod algo {
         }
     }
 }
-

@@ -111,15 +111,13 @@ where
     debug_assert_eq!(modulus.len(), mod_len);
 
     // Call the modexp.
-    if zk_op::contains_operation(&ZkOperation::Modexp) {
-        if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
-            return op.modexp_run(base, exponent, modulus).map(|out| {
-                let padded: Bytes = left_pad_vec(&out, mod_len).into_owned().into();
-                (gas_cost, padded)
-            });
-        }
-    }
+    let output = if zk_op::contains_operation(&ZkOperation::Modexp) {
+        zk_op::ZKVM_OPERATOR.get().unwrap().modexp_run(base, exponent, modulus).unwrap()
+    } else {
+    // Not indented to keep the diff clean and make changes to the original code obvious
     let output = modexp(base, exponent, modulus);
+    output
+    };
     // left pad the result to modulus length. bytes will always by less or equal to modulus length.
     Ok((gas_cost, left_pad_vec(&output, mod_len).into_owned().into()))
 }

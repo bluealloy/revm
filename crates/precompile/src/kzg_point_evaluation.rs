@@ -70,23 +70,7 @@ pub fn verify_kzg_proof(
     proof: &Bytes48,
     kzg_settings: &KzgSettings,
 ) -> bool {
-    let do_verify = || -> bool {
-        KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
-    };
-    // if zk_op::contains_operation(&Operation::VerifyKzg) {
-    //     let (g1_points, g2_points) = zk_op::kzg_setting_to_points(kzg_settings);
-    //     zk_op::ZKVM_OPERATOR
-    //         .get()
-    //         .and_then(|operator| {
-    //             operator
-    //                 .verify_kzg_proof(commitment, z, y, proof, &g1_points, &g2_points)
-    //                 .ok()
-    //         })
-    //         .unwrap_or_else(do_verify)
-    // } else {
-    //     do_verify()
-    // }
-    do_verify()
+    KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
 }
 
 #[inline]

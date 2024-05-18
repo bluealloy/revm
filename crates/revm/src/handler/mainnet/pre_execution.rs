@@ -45,7 +45,7 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
 
 /// Helper function that deducts the caller balance.
 #[inline]
-pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) {
+pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env, charge_gas: bool) {
     // Subtract gas costs from the caller's account.
     // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
     let mut gas_cost = U256::from(env.tx.gas_limit).saturating_mul(env.effective_gas_price());
@@ -56,8 +56,10 @@ pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) 
         gas_cost = gas_cost.saturating_add(data_fee);
     }
 
-    // set new caller account balance.
-    caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
+    if charge_gas {
+        // set new caller account balance.
+        caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
+    }
 
     // bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
     if matches!(env.tx.transact_to, TransactTo::Call(_)) {
@@ -82,7 +84,7 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
         .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)?;
 
     // deduct gas cost from caller's account.
-    deduct_caller_inner::<SPEC>(caller_account, &context.evm.inner.env);
+    deduct_caller_inner::<SPEC>(caller_account, &context.evm.inner.env, true);
 
     Ok(())
 }

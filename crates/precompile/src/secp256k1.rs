@@ -14,13 +14,14 @@ mod secp256k1_zk {
 
     pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, Error> {
         if zk_op::contains_operation(&ZkOperation::Secp256k1) {
-            if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
-                return op
-                    .secp256k1_ecrecover(sig, recid, msg)
-                    .map(Into::<B256>::into);
-            }
-        } 
-        super::secp256k1::ecrecover(sig, recid, msg).map_err(|e| Error::Other(e.to_string()))
+            zk_op::ZKVM_OPERATOR
+                .get()
+                .unwrap()
+                .secp256k1_ecrecover(sig, recid, msg)
+                .map(Into::<B256>::into)
+        } else {
+            super::secp256k1::ecrecover(sig, recid, msg).map_err(|e| Error::Other(e.to_string()))
+        }
     }
 }
 
@@ -100,9 +101,7 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let recid = input[63] - 27;
     let sig = <&B512>::try_from(&input[64..128]).unwrap();
 
-    let ecrecover = secp256k1_zk::ecrecover;
-
-    let out = ecrecover(sig, recid, msg)
+    let out = secp256k1_zk::ecrecover(sig, recid, msg)
         .map(|o| o.to_vec().into())
         .unwrap_or_default();
     Ok((ECRECOVER_BASE, out))

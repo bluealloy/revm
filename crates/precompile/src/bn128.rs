@@ -6,8 +6,6 @@ use crate::{
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 
 pub mod add {
-    use revm_primitives::Bytes;
-
     use super::*;
 
     const ADDRESS: Address = crate::u64_to_address(6);
@@ -16,15 +14,6 @@ pub mod add {
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
-            if 150 > gas_limit {
-                return Err(Error::OutOfGas);
-            }
-            if zk_op::contains_operation(&ZkOperation::Bn128Add) {
-                if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
-                    let out: Bytes = op.bn128_run_add(input)?.into();
-                    return Ok::<(u64, Bytes), Error>((150, out))
-                }
-            }
             super::run_add(input, ISTANBUL_ADD_GAS_COST, gas_limit)
         }),
     );
@@ -33,23 +22,12 @@ pub mod add {
     pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
-            if 500 > gas_limit {
-                return Err(Error::OutOfGas);
-            }
-            if zk_op::contains_operation(&ZkOperation::Bn128Add) {
-                if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
-                    let out: Bytes = op.bn128_run_add(input)?.into();
-                    return Ok::<(u64, Bytes), Error>((150, out))
-                }
-            }
             super::run_add(input, BYZANTIUM_ADD_GAS_COST, gas_limit)
         }),
     );
 }
 
 pub mod mul {
-    use revm_primitives::Bytes;
-
     use super::*;
 
     const ADDRESS: Address = crate::u64_to_address(7);
@@ -58,15 +36,6 @@ pub mod mul {
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
-            if 6_000 > gas_limit {
-                return Err(Error::OutOfGas);
-            }
-            if zk_op::contains_operation(&ZkOperation::Bn128Mul) {
-                if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
-                    let out: Bytes = op.bn128_run_mul(input)?.into();
-                    return Ok::<(u64, Bytes), Error>((6_000, out))
-                }
-            }
             super::run_mul(input, ISTANBUL_MUL_GAS_COST, gas_limit)
         }),
     );
@@ -75,23 +44,12 @@ pub mod mul {
     pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
-            if 40_000 > gas_limit {
-                return Err(Error::OutOfGas);
-            }
-            if zk_op::contains_operation(&ZkOperation::Bn128Mul) {
-                if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
-                    let out: Bytes = op.bn128_run_mul(input)?.into();
-                    return Ok::<(u64, Bytes), Error>((40_000, out))
-                }
-            }
             super::run_mul(input, BYZANTIUM_MUL_GAS_COST, gas_limit)
         }),
     );
 }
 
 pub mod pair {
-    use revm_primitives::Bytes;
-
     use super::*;
 
     const ADDRESS: Address = crate::u64_to_address(8);
@@ -101,18 +59,6 @@ pub mod pair {
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
-            if zk_op::contains_operation(&ZkOperation::Bn128Pairing) {
-                if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
-                    let success = op.bn128_run_pairing(input)?;
-                    let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64
-                        * ISTANBUL_PAIR_PER_POINT
-                        + ISTANBUL_PAIR_BASE;
-                    if gas_used > gas_limit {
-                        return Err(Error::OutOfGas);
-                    }
-                    return Ok::<(u64, Bytes), Error>((gas_used, bool_to_bytes32(success)))
-                }
-            }
             super::run_pair(
                 input,
                 ISTANBUL_PAIR_PER_POINT,
@@ -127,18 +73,6 @@ pub mod pair {
     pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input, gas_limit| {
-            if zk_op::contains_operation(&ZkOperation::Bn128Pairing) {
-                if let Some(op) = zk_op::ZKVM_OPERATOR.get() {
-                    let success = op.bn128_run_pairing(input)?;
-                    let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64
-                        * BYZANTIUM_PAIR_PER_POINT
-                        + BYZANTIUM_PAIR_BASE;
-                    if gas_used > gas_limit {
-                        return Err(Error::OutOfGas);
-                    }
-                    return Ok::<(u64, Bytes), Error>((gas_used, bool_to_bytes32(success)))
-                }
-            }
             super::run_pair(
                 input,
                 BYZANTIUM_PAIR_PER_POINT,
@@ -195,15 +129,15 @@ pub fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
     }
 }
 
-pub fn run_add_zk(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult{
-    unimplemented!()
-}
-
-
 pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
         return Err(Error::OutOfGas);
     }
+
+    let output = if zk_op::contains_operation(&ZkOperation::Bn128Add) {
+        zk_op::ZKVM_OPERATOR.get().unwrap().bn128_run_add(input).unwrap()
+    } else {
+    // Not indented to keep the diff clean and make changes to the original code obvious
 
     let input = right_pad::<ADD_INPUT_LEN>(input);
 
@@ -215,6 +149,10 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
         sum.x().to_big_endian(&mut output[..32]).unwrap();
         sum.y().to_big_endian(&mut output[32..]).unwrap();
     }
+    output
+
+    };
+
     Ok((gas_cost, output.into()))
 }
 
@@ -222,6 +160,11 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
     if gas_cost > gas_limit {
         return Err(Error::OutOfGas);
     }
+
+    let output = if zk_op::contains_operation(&ZkOperation::Bn128Mul) {
+        zk_op::ZKVM_OPERATOR.get().unwrap().bn128_run_mul(input).unwrap()
+    } else {
+    // Not indented to keep the diff clean and make changes to the original code obvious
 
     let input = right_pad::<MUL_INPUT_LEN>(input);
 
@@ -235,6 +178,10 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
         mul.x().to_big_endian(&mut output[..32]).unwrap();
         mul.y().to_big_endian(&mut output[32..]).unwrap();
     }
+    output
+
+    };
+
     Ok((gas_cost, output.into()))
 }
 
@@ -252,6 +199,11 @@ pub fn run_pair(
     if input.len() % PAIR_ELEMENT_LEN != 0 {
         return Err(Error::Bn128PairLength);
     }
+
+    let success = if zk_op::contains_operation(&ZkOperation::Bn128Pairing) {
+        zk_op::ZKVM_OPERATOR.get().unwrap().bn128_run_pairing(input).unwrap()
+    } else {
+    // Not indented to keep the diff clean and make changes to the original code obvious
 
     let success = if input.is_empty() {
         true
@@ -291,6 +243,10 @@ pub fn run_pair(
 
         mul == Gt::one()
     };
+
+    success
+    };
+
     Ok((gas_used, bool_to_bytes32(success)))
 }
 

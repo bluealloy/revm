@@ -178,7 +178,7 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
 
     // We deduct caller max balance after minting and before deducing the
     // l1 cost, max values is already checked in pre_validate but l1 cost wasn't.
-    deduct_caller_inner::<SPEC>(caller_account, &context.evm.inner.env);
+    deduct_caller_inner::<SPEC>(caller_account, &context.evm.inner.env, true);
 
     // If the transaction is not a deposit transaction, subtract the L1 data fee from the
     // caller's balance directly after minting the requested amount of ETH.
