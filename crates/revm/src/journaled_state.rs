@@ -15,6 +15,8 @@ use std::vec::Vec;
 pub struct JournaledState {
     /// Current state.
     pub state: State,
+    /// Reverted Lookups.
+    pub reverted_lookups: RevertedLookups,
     /// [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153) transient storage that is discarded after every transactions
     pub transient_storage: TransientStorage,
     /// logs
@@ -51,6 +53,7 @@ impl JournaledState {
     pub fn new(spec: SpecId, warm_preloaded_addresses: HashSet<Address>) -> JournaledState {
         Self {
             state: HashMap::new(),
+            reverted_lookups: RevertedLookups::default(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: vec![vec![]],
@@ -104,6 +107,7 @@ impl JournaledState {
     pub fn finalize(&mut self) -> (State, Vec<Log>) {
         let Self {
             state,
+            reverted_lookups,
             transient_storage,
             logs,
             depth,
@@ -116,8 +120,9 @@ impl JournaledState {
         *transient_storage = TransientStorage::default();
         *journal = vec![vec![]];
         *depth = 0;
-        let state = mem::take(state);
+        let mut state = mem::take(state);
         let logs = mem::take(logs);
+        reverted_lookups.finalize(&mut state);
 
         (state, logs)
     }
@@ -315,6 +320,7 @@ impl JournaledState {
     #[inline]
     fn journal_revert(
         state: &mut State,
+        reverted_lookups: &mut RevertedLookups,
         transient_storage: &mut TransientStorage,
         journal_entries: Vec<JournalEntry>,
         is_spurious_dragon_enabled: bool,
@@ -322,7 +328,10 @@ impl JournaledState {
         for entry in journal_entries.into_iter().rev() {
             match entry {
                 JournalEntry::AccountLoaded { address } => {
-                    state.remove(&address);
+                    reverted_lookups
+                        .accounts
+                        .entry(address)
+                        .or_insert(state.remove(&address).unwrap());
                 }
                 JournalEntry::AccountTouched { address } => {
                     if is_spurious_dragon_enabled && address == PRECOMPILE3 {
@@ -378,7 +387,10 @@ impl JournaledState {
                     if let Some(had_value) = had_value {
                         storage.get_mut(&key).unwrap().present_value = had_value;
                     } else {
-                        storage.remove(&key);
+                        reverted_lookups
+                            .storage_slots
+                            .entry((address, key))
+                            .or_insert(storage.remove(&key).unwrap());
                     }
                 }
                 JournalEntry::TransientStorageChange {
@@ -427,6 +439,7 @@ impl JournaledState {
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
         let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
         let state = &mut self.state;
+        let reverted_lookups = &mut self.reverted_lookups;
         let transient_storage = &mut self.transient_storage;
         self.depth -= 1;
         // iterate over last N journals sets and revert our global state
@@ -438,6 +451,7 @@ impl JournaledState {
             .for_each(|cs| {
                 Self::journal_revert(
                     state,
+                    reverted_lookups,
                     transient_storage,
                     mem::take(cs),
                     is_spurious_dragon_enabled,
@@ -846,4 +860,24 @@ pub enum JournalEntry {
 pub struct JournalCheckpoint {
     log_i: usize,
     journal_i: usize,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct RevertedLookups {
+    pub accounts: HashMap<Address, Account>,
+    pub storage_slots: HashMap<(Address, U256), StorageSlot>,
+}
+
+impl RevertedLookups {
+    pub fn finalize(&mut self, state: &mut State) {
+        for (address, account) in self.accounts.drain() {
+            state.entry(address).or_insert(account);
+        }
+
+        for ((address, key), slot) in self.storage_slots.drain() {
+            let account = state.get_mut(&address).unwrap();
+            account.storage.entry(key).or_insert(slot);
+        }
+    }
 }
