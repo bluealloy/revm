@@ -322,7 +322,7 @@ impl JournaledState {
         for entry in journal_entries.into_iter().rev() {
             match entry {
                 JournalEntry::AccountLoaded { address } => {
-                    state.remove(&address);
+                    state.get_mut(&address).unwrap().mark_cold();
                 }
                 JournalEntry::AccountTouched { address } => {
                     if is_spurious_dragon_enabled && address == PRECOMPILE3 {
@@ -378,7 +378,7 @@ impl JournaledState {
                     if let Some(had_value) = had_value {
                         storage.get_mut(&key).unwrap().present_value = had_value;
                     } else {
-                        storage.remove(&key);
+                        storage.get_mut(&key).unwrap().mark_cold();
                     }
                 }
                 JournalEntry::TransientStorageChange {
@@ -556,7 +556,11 @@ impl JournaledState {
         db: &mut DB,
     ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
         Ok(match self.state.entry(address) {
-            Entry::Occupied(entry) => (entry.into_mut(), false),
+            Entry::Occupied(entry) => {
+                let account = entry.into_mut();
+                let is_cold = account.mark_warm();
+                (account, is_cold)
+            }
             Entry::Vacant(vac) => {
                 let account =
                     if let Some(account) = db.basic(address).map_err(EVMError::Database)? {
@@ -642,7 +646,11 @@ impl JournaledState {
         // only if account is created in this tx we can assume that storage is empty.
         let is_newly_created = account.is_created();
         let load = match account.storage.entry(key) {
-            Entry::Occupied(occ) => (occ.get().present_value, false),
+            Entry::Occupied(occ) => {
+                let slot = occ.into_mut();
+                let is_cold = slot.mark_warm();
+                (slot.present_value, is_cold)
+            }
             Entry::Vacant(vac) => {
                 // if storage was cleared, we don't need to ping db.
                 let value = if is_newly_created {
