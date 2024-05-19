@@ -23,7 +23,10 @@ aurora-engine-modexp = { version = "1.0", default-features = false }
 cfg-if = "1"
 
 # Optional KZG point evaluation precompile
-c-kzg = { version = "1.0.0", default-features = false, optional = true }
+c-kzg = { package = "c-kzg-taiko", git = "https://github.com/smtmfft/c-kzg-4844", branch = "for-alpha7", default-features = false, optional = true, features = [
+    "preload-kzg-settings",
+    "no-threads",
+]}
 
 # ecRecover precompile
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }

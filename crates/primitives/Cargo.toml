@@ -26,7 +26,10 @@ bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.5.0", default-features = false }
 
 # For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
-c-kzg = { version = "1.0.0", default-features = false, optional = true }
+c-kzg = { package = "c-kzg-taiko", git = "https://github.com/smtmfft/c-kzg-4844", branch = "for-alpha7", default-features = false, optional = true, features = [
+    "preload-kzg-settings",
+    "no-threads",
+]}
 once_cell = { version = "1.19", default-features = false, optional = true }
 
 # utility
