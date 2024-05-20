@@ -1,4 +1,4 @@
-use blst::{blst_bendian_from_fp, blst_fp, blst_scalar, blst_scalar_from_bendian};
+use blst::{blst_bendian_from_fp, blst_fp, blst_scalar, blst_scalar_fr_check, blst_scalar_from_bendian};
 use revm_primitives::PrecompileError;
 
 /// Number of bits used in the BLS12-381 curve finite field elements.
@@ -53,7 +53,14 @@ pub(super) fn extract_scalar_input(input: &[u8]) -> Result<blst_scalar, Precompi
 
     let mut out = blst_scalar::default();
     // SAFETY: input length is checked previously, out is a blst value.
-    unsafe { blst_scalar_from_bendian(&mut out, input.as_ptr()) };
+    unsafe {
+        blst_scalar_from_bendian(&mut out, input.as_ptr());
+
+        // We need to reject scalar values that are not canonical field elements.
+        if !blst_scalar_fr_check(&out) {
+            return Err(PrecompileError::Other("non-canonical fr value".to_string()));
+        }
+    };
 
     Ok(out)
 }
