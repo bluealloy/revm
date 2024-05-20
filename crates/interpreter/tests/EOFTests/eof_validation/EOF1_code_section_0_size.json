@@ -1,0 +1,24 @@
+{
+  "EOF1_code_section_0_size": {
+    "vectors": {
+      "EOF1_code_section_0_size_0": {
+        "code": "0xef000101000402000000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ZeroSectionSize",
+            "result": false
+          }
+        }
+      },
+      "EOF1_code_section_0_size_1": {
+        "code": "0xef000101000402000004000100da",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ZeroSectionSize",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

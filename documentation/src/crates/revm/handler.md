@@ -8,7 +8,7 @@ Functions can be grouped in five categories and are marked in that way in the co
 * Pre-execution functions: [`PreExecutionHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/pre_execution.rs)
 * Execution functions: [`ExecutionHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/execution.rs)
 * Post-execution functions: [`PostExecutionHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/post_execution.rs)
-* Instruction table: [`InstructionTable`](https://github.com/bluealloy/revm/blob/main/crates/interpreter/src/instructions/opcode.rs)
+* Instruction table: [`InstructionTable`](https://github.com/bluealloy/revm/blob/main/crates/interpreter/src/opcode.rs)
 
 ### Handle Registers
 
@@ -33,7 +33,7 @@ They are called in the following order:
 * `validate_env`:
   Verifies if all data is set in `Environment` and if valid, for example if `gas_limit` is smaller than block `gas_limit`.
 * `validate_initial_tx_gas`:
-  Calculates initial gas needed for the transaction to be executed and checks if it is less them the transaction gas_limit.
+  Calculates initial gas needed for the transaction to be executed and checks if it is less than the transaction gas_limit.
   Note that this does not touch the `Database` or state.
 * `validate_tx_against_state`:
   Loads the caller account and checks their information.
@@ -105,4 +105,7 @@ Is a list of functions that are called after the execution. They are called in t
     Returns the state changes and the result of the execution.
 
 * `end`:
-    Always called as the last function of the handler.
+    Always called after transaction. End handler will not be called if validation fails.
+
+* `clear`:
+    Clears journal state and error and it is always called for the cleanup.

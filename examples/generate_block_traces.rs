@@ -13,6 +13,7 @@ use std::io::BufWriter;
 use std::io::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::time::Instant;
 
 macro_rules! local_fill {
     ($left:expr, $right:expr, $fun:expr) => {
@@ -76,7 +77,7 @@ async fn main() -> anyhow::Result<()> {
     let mut state = StateBuilder::new_with_database(cache_db).build();
     let mut evm = Evm::builder()
         .with_db(&mut state)
-        .with_external_context(TracerEip3155::new(Box::new(std::io::stdout()), true))
+        .with_external_context(TracerEip3155::new(Box::new(std::io::stdout())))
         .modify_block_env(|b| {
             if let Some(number) = block.number {
                 let nn = number.0[0];
@@ -100,7 +101,7 @@ async fn main() -> anyhow::Result<()> {
     println!("Found {txs} transactions.");
 
     let console_bar = Arc::new(ProgressBar::new(txs as u64));
-    let elapsed = std::time::Duration::ZERO;
+    let start = Instant::now();
 
     // Create the traces directory if it doesn't exist
     std::fs::create_dir_all("traces").expect("Failed to create traces directory");
@@ -176,6 +177,8 @@ async fn main() -> anyhow::Result<()> {
     }
 
     console_bar.finish_with_message("Finished all transactions.");
+
+    let elapsed = start.elapsed();
     println!(
         "Finished execution. Total CPU time: {:.6}s",
         elapsed.as_secs_f64()

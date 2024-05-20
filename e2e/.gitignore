@@ -1,5 +1,0 @@
-node_modules
-target
-hello_world
-Cargo.lock
-bin/*.wat

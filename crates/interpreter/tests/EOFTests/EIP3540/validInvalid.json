@@ -1,0 +1,489 @@
+{
+    "validInvalid" : {
+        "_info" : {
+            "comment" : "Test various examples to see if they are valid or invalid.\nImplements\n  EOF1V3540_0001 (Valid) Deployed code without data section - Data index: 0\n  EOF1V3540_0002 (Valid) Deployed code with data section - Data index: 1\n  EOF1V3540_0003 (Valid) No data section contents (valid according to relaxed stack validation) - Data index: 2\n  EOF1V3540_0004 (Valid) Data section contents incomplete (valid according to relaxed stack validation) - Data index: 3\n  EOF1I3540_0001 (Invalid) No magic - Data index: 4\n  EOF1I3540_0002 (Invalid) Invalid magic - Data index: 5\n  EOF1I3540_0003  - Data index: 6\n  EOF1I3540_0004  - Data index: 7\n  EOF1I3540_0005 (Invalid) No version - Data index: 8\n  EOF1I3540_0006 (Invalid) Invalid version - Data index: 9\n  EOF1I3540_0007  - Data index: 10\n  EOF1I3540_0008  - Data index: 11\n  EOF1I3540_0009 (Invalid) No header - Data index: 12\n  EOF1I3540_0010 (Invalid) No type section size - Data index: 13\n  EOF1I3540_0011 (Invalid) Type section size incomplete - Data index: 14\n  EOF1I3540_0012 (Invalid) Empty code section with non-empty data section - Data index: 15\n  EOF1I3540_0013 (Invalid) No total of code sections - Data index: 16\n  EOF1I3540_0014 (Invalid) Total of code sections incomplete - Data index: 17\n  EOF1I3540_0015 (Invalid) No code section size - Data index: 18\n  EOF1I3540_0016 (Invalid) Code section size incomplete - Data index: 19\n  EOF1I3540_0017 (Invalid) No data section after code section size - Data index: 20\n  EOF1I3540_0018 (Invalid) No data size - Data index: 21\n  EOF1I3540_0019 (Invalid) Data size incomplete - Data index: 22\n  EOF1I3540_0020 (Invalid) No section terminator after data section size - Data index: 23\n  EOF1I3540_0021 (Invalid) No type section contents - Data index: 24\n  EOF1I3540_0022 (Invalid) Type section contents (no outputs and max stack) - Data index: 25\n  EOF1I3540_0023 (Invalid) Type section contents (no max stack) - Data index: 26\n  EOF1I3540_0024 (Invalid) Type section contents (max stack incomplete) - Data index: 27\n  EOF1I3540_0025 (Invalid) No code section contents - Data index: 28\n  EOF1I3540_0026 (Invalid) Code section contents incomplete - Data index: 29\n  EOF1I3540_0027 (Invalid) Trailing bytes after code section - Data index: 30\n  EOF1I3540_0028 (Invalid) Empty code section - Data index: 31\n  EOF1I3540_0029 (Invalid) Empty code section with non-empty data section - Data index: 32\n  EOF1I3540_0030 (Invalid) Code section preceding type section - Data index: 33\n  EOF1I3540_0031 (Invalid) Data section preceding type section - Data index: 34\n  EOF1I3540_0032 (Invalid) Data section preceding code section - Data index: 35\n  EOF1I3540_0033 (Invalid) Data section without code section - Data index: 36\n  EOF1I3540_0034 (Invalid) No data section - Data index: 37\n  EOF1I3540_0035 (Invalid) Trailing bytes after data section - Data index: 38\n  EOF1I3540_0036 (Invalid) Multiple data sections - Data index: 39\n  EOF1I3540_0037 (Invalid) Multiple code and data sections - Data index: 40\n  EOF1I3540_0038 (Invalid) Unknown section IDs (at the beginning) - Data index: 41\n  EOF1I3540_0039  - Data index: 42\n  EOF1I3540_0040  - Data index: 43\n  EOF1I3540_0041 (Invalid)  Unknown section IDs (after types section) - Data index: 44\n  EOF1I3540_0042  - Data index: 45\n  EOF1I3540_0043  - Data index: 46\n  EOF1I3540_0044 (Invalid)  Unknown section IDs (after code section) - Data index: 47\n  EOF1I3540_0045  - Data index: 48\n  EOF1I3540_0046  - Data index: 49\n  EOF1I3540_0047 (Invalid)  Unknown section IDs (after data section) - Data index: 50\n  EOF1I3540_0048  - Data index: 51\n  EOF1I3540_0049  - Data index: 52\n",
+            "filling-rpc-server" : "evmone-t8n 0.12.0-dev+commit.14ba7529",
+            "filling-tool-version" : "retesteth-0.3.2-cancun+commit.9d793abd.Linux.g++",
+            "generatedTestHash" : "70f1c847a164c49063ecd1387e723bcecfdad88b8f833bc5be85c24c98c35b44",
+            "lllcversion" : "Version: 0.5.14-develop.2022.4.6+commit.401d5358.Linux.g++",
+            "solidity" : "Version: 0.8.18-develop.2023.1.16+commit.469d6d4d.Linux.g++",
+            "source" : "src/EOFTestsFiller/EIP3540/validInvalidFiller.yml",
+            "sourceHash" : "4625c63a66a8d034619df01985568a2e17850ed4100d04ab877c769ca9105f60"
+        },
+        "vectors" : {
+            "validInvalid_0" : {
+                "code" : "0xef00010100040200010004040000000080000160005000",
+                "results" : {
+                    "Prague" : {
+                        "result" : true
+                    }
+                }
+            },
+            "validInvalid_1" : {
+                "code" : "0xef00010100040200010004040004000080000160005000aabbccdd",
+                "results" : {
+                    "Prague" : {
+                        "result" : true
+                    }
+                }
+            },
+            "validInvalid_10" : {
+                "code" : "0xef000201000402000100010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_UnknownVersion",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_11" : {
+                "code" : "0xef00ff01000402000100010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_UnknownVersion",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_12" : {
+                "code" : "0xef0001",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_SectionHeadersNotTerminated",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_13" : {
+                "code" : "0xef000101",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_SectionHeadersNotTerminated",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_14" : {
+                "code" : "0xef00010100",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_IncompleteSectionSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_15" : {
+                "code" : "0xef000101000402000100000400020000000000aabb",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_ZeroSectionSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_16" : {
+                "code" : "0xef000101000402",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_IncompleteSectionNumber",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_17" : {
+                "code" : "0xef00010100040200",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_IncompleteSectionNumber",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_18" : {
+                "code" : "0xef0001010004020001",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_SectionHeadersNotTerminated",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_19" : {
+                "code" : "0xef000101000402000100",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_IncompleteSectionSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_2" : {
+                "code" : "0xef000101000402000100010400020000800000fe",
+                "results" : {
+                    "Prague" : {
+                        "result" : true
+                    }
+                }
+            },
+            "validInvalid_20" : {
+                "code" : "0xef00010100040200010001",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_SectionHeadersNotTerminated",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_21" : {
+                "code" : "0xef0001010004020001000104",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_SectionHeadersNotTerminated",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_22" : {
+                "code" : "0xef000101000402000100010400",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_IncompleteSectionSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_23" : {
+                "code" : "0xef00010100040200010001040002",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_SectionHeadersNotTerminated",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_24" : {
+                "code" : "0xef0001010004020001000104000200",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_InvalidSectionBodiesSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_25" : {
+                "code" : "0xef000101000402000100010400020000",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_InvalidSectionBodiesSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_26" : {
+                "code" : "0xef00010100040200010001040002000000",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_InvalidSectionBodiesSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_27" : {
+                "code" : "0xef0001010004020001000104000200000000",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_InvalidSectionBodiesSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_28" : {
+                "code" : "0xef000101000402000100010400020000000000",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_InvalidSectionBodiesSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_29" : {
+                "code" : "0xef0001010004020001002904000000000000027f",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_InvalidSectionBodiesSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_3" : {
+                "code" : "0xef000101000402000100010400020000800000feaa",
+                "results" : {
+                    "Prague" : {
+                        "result" : true
+                    }
+                }
+            },
+            "validInvalid_30" : {
+                "code" : "0xef000101000402000100010400000000000000feaabbcc",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_InvalidSectionBodiesSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_31" : {
+                "code" : "0xef000101000402000100000400000000000000",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_ZeroSectionSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_32" : {
+                "code" : "0xef000101000402000100000400020000000000aabb",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_ZeroSectionSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_33" : {
+                "code" : "0xef000102000100010100040400020000000000feaabb",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_TypeSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_34" : {
+                "code" : "0xef000104000201000402000100010000000000feaabb",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_TypeSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_35" : {
+                "code" : "0xef000101000404000202000100010000000000feaabb",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_CodeSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_36" : {
+                "code" : "0xef00010100040400020000000000aabb",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_CodeSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_37" : {
+                "code" : "0xef000101000402000100010000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_DataSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_38" : {
+                "code" : "0xef000101000402000100010400020000000000feaabbccdd",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_InvalidSectionBodiesSize",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_39" : {
+                "code" : "0xef000101000402000100010400020400020000000000feaabbaabb",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_HeaderTerminatorMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_4" : {
+                "code" : "0xef",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_InvalidPrefix",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_40" : {
+                "code" : "0xef000101000802000200010001040002040002000000000000000000fefeaabbaabb",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_HeaderTerminatorMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_41" : {
+                "code" : "0xef000105000101000402000100010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_TypeSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_42" : {
+                "code" : "0xef000106000101000402000100010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_TypeSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_43" : {
+                "code" : "0xef0001ff000101000402000100010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_TypeSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_44" : {
+                "code" : "0xef000101000405000102000100010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_CodeSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_45" : {
+                "code" : "0xef000101000406000102000100010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_CodeSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_46" : {
+                "code" : "0xef0001010004ff000102000100010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_CodeSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_47" : {
+                "code" : "0xef000101000402000100010500010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_DataSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_48" : {
+                "code" : "0xef000101000402000100010600010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_DataSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_49" : {
+                "code" : "0xef00010100040200010001ff00010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_DataSectionMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_5" : {
+                "code" : "0xef010101000402000100010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_InvalidPrefix",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_50" : {
+                "code" : "0xef000101000402000100010400000500010000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_HeaderTerminatorMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_51" : {
+                "code" : "0xef000101000402000100010400000600010000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_HeaderTerminatorMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_52" : {
+                "code" : "0xef00010100040200010001040000ff00010000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_HeaderTerminatorMissing",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_6" : {
+                "code" : "0xef020101000402000100010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_InvalidPrefix",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_7" : {
+                "code" : "0xefff0101000402000100010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_InvalidPrefix",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_8" : {
+                "code" : "0xef00",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_UnknownVersion",
+                        "result" : false
+                    }
+                }
+            },
+            "validInvalid_9" : {
+                "code" : "0xef000001000402000100010400000000000000fe",
+                "results" : {
+                    "Prague" : {
+                        "exception" : "EOF_UnknownVersion",
+                        "result" : false
+                    }
+                }
+            }
+        }
+    }
+}

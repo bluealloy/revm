@@ -1,5 +1,7 @@
 use revm::{
     db::BenchmarkDB,
+    inspector_handle_register,
+    inspectors::TracerEip3155,
     primitives::{Address, Bytecode, TransactTo},
     Evm,
 };
@@ -51,6 +53,9 @@ pub struct Cmd {
     /// Print the state.
     #[structopt(long)]
     state: bool,
+    /// Print the trace.
+    #[structopt(long)]
+    trace: bool,
 }
 
 impl Cmd {
@@ -93,13 +98,30 @@ impl Cmd {
             microbench::bench(&bench_options, "Run bytecode", || {
                 let _ = evm.transact().unwrap();
             });
+
+            return Ok(());
+        }
+
+        let out = if self.trace {
+            let mut evm = evm
+                .modify()
+                .reset_handler_with_external_context(TracerEip3155::new(
+                    Box::new(std::io::stdout()),
+                ))
+                .append_handler_register(inspector_handle_register)
+                .build();
+
+            evm.transact().map_err(|_| Errors::EVMError)?
         } else {
             let out = evm.transact().map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);
-            if self.state {
-                println!("State: {:#?}", out.state);
-            }
+            out
+        };
+
+        if self.state {
+            println!("State: {:#?}", out.state);
         }
+
         Ok(())
     }
 }

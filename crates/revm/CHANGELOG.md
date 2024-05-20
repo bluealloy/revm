@@ -6,6 +6,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.0](https://github.com/bluealloy/revm/compare/revm-v8.0.0...revm-v9.0.0) - 2024-05-12
+
+### Added
+- *(precompile)* Prague - EIP-2537 - BLS12-381 curve operations ([#1389](https://github.com/bluealloy/revm/pull/1389))
+- add a hook to execute individual frames ([#1369](https://github.com/bluealloy/revm/pull/1369))
+- *(Handler)* Add ClearHandle ([#1368](https://github.com/bluealloy/revm/pull/1368))
+- Add uniswap V2 WETH-USDC swap example ([#1353](https://github.com/bluealloy/revm/pull/1353))
+- *(interpreter)* add helpers for spending all gas ([#1360](https://github.com/bluealloy/revm/pull/1360))
+- add helper methods to CallInputs ([#1345](https://github.com/bluealloy/revm/pull/1345))
+- *(revm)* make `FrameOrResult` serializable ([#1282](https://github.com/bluealloy/revm/pull/1282))
+- add flag to force hashbrown usage ([#1284](https://github.com/bluealloy/revm/pull/1284))
+- EOF (Ethereum Object Format) ([#1143](https://github.com/bluealloy/revm/pull/1143))
+- *(`db`)* Introduce `alloydb` ([#1257](https://github.com/bluealloy/revm/pull/1257))
+- *(interpreter)* remove SPEC generic from gas calculation functions ([#1243](https://github.com/bluealloy/revm/pull/1243))
+- *(interpreter)* test Host object-safety, allow `dyn Host` in instructions ([#1245](https://github.com/bluealloy/revm/pull/1245))
+
+### Fixed
+- *(eip2935)* Preload blockchash storage address ([#1395](https://github.com/bluealloy/revm/pull/1395))
+- return the correct error in resize_memory ([#1359](https://github.com/bluealloy/revm/pull/1359))
+
+### Other
+- add Trin to used by list ([#1393](https://github.com/bluealloy/revm/pull/1393))
+- refactor lints ([#1386](https://github.com/bluealloy/revm/pull/1386))
+- bump alloy & specify dep rev ([#1380](https://github.com/bluealloy/revm/pull/1380))
+- *(interpreter)* branch less in as_usize_or_fail ([#1374](https://github.com/bluealloy/revm/pull/1374))
+- *(ci)* bump action/deploy ([#1372](https://github.com/bluealloy/revm/pull/1372))
+- shrink OpCodeInfo and add more methods ([#1307](https://github.com/bluealloy/revm/pull/1307))
+- *(deps)* bump anyhow from 1.0.81 to 1.0.82 ([#1293](https://github.com/bluealloy/revm/pull/1293))
+- fix some warnings ([#1305](https://github.com/bluealloy/revm/pull/1305))
+- Update documentation ([#1275](https://github.com/bluealloy/revm/pull/1275))
+- *(interpreter)* use `pop_top!` where possible ([#1267](https://github.com/bluealloy/revm/pull/1267))
+- add and use EvmContext::take_error ([#1264](https://github.com/bluealloy/revm/pull/1264))
+
+## [8.0.0](https://github.com/bluealloy/revm/compare/revm-v7.2.0...revm-v8.0.0) - 2024-04-02
+
+### Added
+- [**breaking**] TracerEip3155 optionally traces memory ([#1234](https://github.com/bluealloy/revm/pull/1234))
+
+### Fixed
+- *(TracerEip3155)* clear Inspector data after transaction. ([#1230](https://github.com/bluealloy/revm/pull/1230))
+- *(GasInspector)* calculate correct remaining gas after call return ([#1236](https://github.com/bluealloy/revm/pull/1236))
+- fix eip3155 summary gas_used bug and add fork name ([#1216](https://github.com/bluealloy/revm/pull/1216))
+
+### Other
+- use uint macro & fix various small things ([#1253](https://github.com/bluealloy/revm/pull/1253))
+- *(deps)* bump tokio from 1.36.0 to 1.37.0 ([#1244](https://github.com/bluealloy/revm/pull/1244))
+- *(interpreter)* unbox contract field ([#1228](https://github.com/bluealloy/revm/pull/1228))
+- *(primitives)* kzg intro ([#1209](https://github.com/bluealloy/revm/pull/1209))
+- *(interpreter)* keep track of remaining gas rather than spent ([#1221](https://github.com/bluealloy/revm/pull/1221))
+- Improve `EthersDB` ([#1208](https://github.com/bluealloy/revm/pull/1208))
+
 ## [7.2.0](https://github.com/bluealloy/revm/compare/revm-v7.1.0...revm-v7.2.0) - 2024-03-19
 
 ### Added

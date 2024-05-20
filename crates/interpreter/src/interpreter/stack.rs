@@ -2,7 +2,7 @@ use crate::{
     primitives::{B256, U256},
     InstructionResult,
 };
-use core::fmt;
+use core::{fmt, ptr};
 use std::vec::Vec;
 
 /// EVM interpreter stack limit.
@@ -58,13 +58,19 @@ impl Stack {
         self.data.is_empty()
     }
 
-    /// Returns the underlying data of the stack.
+    /// Returns a reference to the underlying data buffer.
     #[inline]
     pub fn data(&self) -> &Vec<U256> {
         &self.data
     }
 
-    /// Consumes the stack and returns the underlying data.
+    /// Returns a mutable reference to the underlying data buffer.
+    #[inline]
+    pub fn data_mut(&mut self) -> &mut Vec<U256> {
+        &mut self.data
+    }
+
+    /// Consumes the stack and returns the underlying data buffer.
     #[inline]
     pub fn into_data(self) -> Vec<U256> {
         self.data
@@ -165,6 +171,22 @@ impl Stack {
         (pop1, pop2, pop3, pop4)
     }
 
+    /// Pops 5 values from the stack.
+    ///
+    /// # Safety
+    ///
+    /// The caller is responsible for checking the length of the stack.
+    #[inline]
+    pub unsafe fn pop5_unsafe(&mut self) -> (U256, U256, U256, U256, U256) {
+        let pop1 = self.pop_unsafe();
+        let pop2 = self.pop_unsafe();
+        let pop3 = self.pop_unsafe();
+        let pop4 = self.pop_unsafe();
+        let pop5 = self.pop_unsafe();
+
+        (pop1, pop2, pop3, pop4, pop5)
+    }
+
     /// Push a new value into the stack. If it will exceed the stack limit,
     /// returns `StackOverflow` error and leaves the stack unchanged.
     #[inline]
@@ -178,7 +200,7 @@ impl Stack {
     /// unchanged.
     #[inline]
     pub fn push(&mut self, value: U256) -> Result<(), InstructionResult> {
-        // allows the compiler to optimize out the `Vec::push` capacity check
+        // Allows the compiler to optimize out the `Vec::push` capacity check.
         assume!(self.data.capacity() == STACK_LIMIT);
         if self.data.len() == STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);
@@ -200,18 +222,24 @@ impl Stack {
     }
 
     /// Duplicates the `N`th value from the top of the stack.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n` is 0.
     #[inline]
-    pub fn dup<const N: usize>(&mut self) -> Result<(), InstructionResult> {
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn dup(&mut self, n: usize) -> Result<(), InstructionResult> {
+        assume!(n > 0, "attempted to dup 0");
         let len = self.data.len();
-        if len < N {
+        if len < n {
             Err(InstructionResult::StackUnderflow)
         } else if len + 1 > STACK_LIMIT {
             Err(InstructionResult::StackOverflow)
         } else {
             // SAFETY: check for out of bounds is done above and it makes this safe to do.
             unsafe {
-                let data = self.data.as_mut_ptr();
-                core::ptr::copy_nonoverlapping(data.add(len - N), data.add(len), 1);
+                let ptr = self.data.as_mut_ptr().add(len);
+                ptr::copy_nonoverlapping(ptr.sub(n), ptr, 1);
                 self.data.set_len(len + 1);
             }
             Ok(())
@@ -219,14 +247,41 @@ impl Stack {
     }
 
     /// Swaps the topmost value with the `N`th value from the top.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n` is 0.
+    #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn swap(&mut self, n: usize) -> Result<(), InstructionResult> {
+        self.exchange(0, n)
+    }
+
+    /// Exchange two values on the stack.
+    ///
+    /// `n` is the first index, and the second index is calculated as `n + m`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `m` is zero.
     #[inline]
-    pub fn swap<const N: usize>(&mut self) -> Result<(), InstructionResult> {
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn exchange(&mut self, n: usize, m: usize) -> Result<(), InstructionResult> {
+        assume!(m > 0, "overlapping exchange");
         let len = self.data.len();
-        if len <= N {
+        let n_m_index = n + m;
+        if n_m_index >= len {
             return Err(InstructionResult::StackUnderflow);
         }
-        let last = len - 1;
-        self.data.swap(last, last - N);
+        // SAFETY: `n` and `n_m` are checked to be within bounds, and they don't overlap.
+        unsafe {
+            // NOTE: `ptr::swap_nonoverlapping` is more efficient than `slice::swap` or `ptr::swap`
+            // because it operates under the assumption that the pointers do not overlap,
+            // eliminating an intemediate copy,
+            // which is a condition we know to be true in this context.
+            let top = self.data.as_mut_ptr().add(len - 1);
+            core::ptr::swap_nonoverlapping(top.sub(n), top.sub(n_m_index), 1);
+        }
         Ok(())
     }
 

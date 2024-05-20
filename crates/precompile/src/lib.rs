@@ -1,9 +1,7 @@
 //! # revm-precompile
 //!
 //! Implementations of EVM precompiled contracts.
-#![warn(rustdoc::all)]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
-#![deny(unused_must_use, rust_2018_idioms)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[macro_use]
@@ -11,6 +9,8 @@
 extern crate alloc as std;
 
 pub mod blake2;
+#[cfg(feature = "blst")]
+pub mod bls12_381;
 pub mod bn128;
 pub mod hash;
 pub mod identity;
@@ -26,11 +26,7 @@ use once_cell::race::OnceBox;
 pub use revm_primitives as primitives;
 pub use revm_primitives::{
     precompile::{PrecompileError as Error, *},
-    Address,
-    Bytes,
-    HashMap,
-    Log,
-    B256,
+    Address, Bytes, HashMap, Log, B256,
 };
 use std::{boxed::Box, vec::Vec};
 
@@ -69,6 +65,7 @@ impl Precompiles {
             PrecompileSpecId::ISTANBUL => Self::istanbul(),
             PrecompileSpecId::BERLIN => Self::berlin(),
             PrecompileSpecId::CANCUN => Self::cancun(),
+            PrecompileSpecId::PRAGUE => Self::prague(),
             PrecompileSpecId::LATEST => Self::latest(),
         }
     }
@@ -94,9 +91,8 @@ impl Precompiles {
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::homestead().clone();
             precompiles.extend([
-                // EIP-196: Precompiled contracts for addition and scalar multiplication on the
-                // elliptic curve alt_bn128. EIP-197: Precompiled contracts for
-                // optimal ate pairing check on the elliptic curve alt_bn128.
+                // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
+                // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
                 bn128::add::BYZANTIUM,
                 bn128::mul::BYZANTIUM,
                 bn128::pair::BYZANTIUM,
@@ -161,9 +157,27 @@ impl Precompiles {
         })
     }
 
+    /// Returns precompiles for Prague spec.
+    pub fn prague() -> &'static Self {
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        INSTANCE.get_or_init(|| {
+            let precompiles = Self::cancun().clone();
+
+            // Don't include BLS12-381 precompiles in no_std builds.
+            #[cfg(feature = "blst")]
+            let precompiles = {
+                let mut precompiles = precompiles;
+                precompiles.extend(bls12_381::precompiles());
+                precompiles
+            };
+
+            Box::new(precompiles)
+        })
+    }
+
     /// Returns the precompiles for the latest spec.
     pub fn latest() -> &'static Self {
-        Self::cancun()
+        Self::prague()
     }
 
     /// Returns an iterator over the precompiles addresses.
@@ -236,6 +250,7 @@ pub enum PrecompileSpecId {
     ISTANBUL,
     BERLIN,
     CANCUN,
+    PRAGUE,
     LATEST,
 }
 
@@ -251,6 +266,7 @@ impl PrecompileSpecId {
             ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
             BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
             CANCUN => Self::CANCUN,
+            PRAGUE => Self::PRAGUE,
             LATEST => Self::LATEST,
             #[cfg(feature = "optimism")]
             BEDROCK | REGOLITH | CANYON => Self::BERLIN,

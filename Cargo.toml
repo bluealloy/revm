@@ -2,10 +2,10 @@
 members = [
     "bins/revme",
     "bins/revm-test",
+    "crates/revm",
+    "crates/primitives",
     "crates/interpreter",
     "crates/precompile",
-    "crates/primitives",
-    "crates/revm",
 ]
 resolver = "2"
 default-members = ["crates/revm"]

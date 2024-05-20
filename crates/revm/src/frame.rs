@@ -4,44 +4,62 @@ use crate::{
     JournalCheckpoint,
 };
 use core::ops::Range;
-use revm_interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
+use revm_interpreter::{
+    CallOutcome, CreateOutcome, EOFCreateOutcome, Gas, InstructionResult, InterpreterResult,
+};
 use std::boxed::Box;
 
 /// Call CallStackFrame.
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallFrame {
     /// Call frame has return memory range where output will be stored.
     pub return_memory_range: Range<usize>,
-    /// Frame data
+    /// Frame data.
     pub frame_data: FrameData,
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateFrame {
     /// Create frame has a created address.
     pub created_address: Address,
-    /// Frame data
+    /// Frame data.
+    pub frame_data: FrameData,
+}
+
+/// Eof Create Frame.
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct EOFCreateFrame {
+    pub created_address: Address,
+    pub return_memory_range: Range<usize>,
     pub frame_data: FrameData,
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FrameData {
-    /// Journal checkpoint
+    /// Journal checkpoint.
     pub checkpoint: JournalCheckpoint,
-    /// Interpreter
+    /// Interpreter.
     pub interpreter: Interpreter,
 }
 
 /// Call stack frame.
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Frame {
     Call(Box<CallFrame>),
     Create(Box<CreateFrame>),
+    EOFCreate(Box<EOFCreateFrame>),
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FrameResult {
     Call(CallOutcome),
     Create(CreateOutcome),
+    EOFCreate(EOFCreateOutcome),
 }
 
 impl FrameResult {
@@ -51,6 +69,7 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => outcome.result,
             FrameResult::Create(outcome) => outcome.result,
+            FrameResult::EOFCreate(outcome) => outcome.result,
         }
     }
 
@@ -62,6 +81,9 @@ impl FrameResult {
             FrameResult::Create(outcome) => {
                 Output::Create(outcome.result.output.clone(), outcome.address)
             }
+            FrameResult::EOFCreate(_) => {
+                panic!("EOFCreate can't be called from external world.");
+            }
         }
     }
 
@@ -71,6 +93,7 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => &outcome.result.gas,
             FrameResult::Create(outcome) => &outcome.result.gas,
+            FrameResult::EOFCreate(outcome) => &outcome.result.gas,
         }
     }
 
@@ -80,6 +103,7 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => &mut outcome.result.gas,
             FrameResult::Create(outcome) => &mut outcome.result.gas,
+            FrameResult::EOFCreate(outcome) => &mut outcome.result.gas,
         }
     }
 
@@ -89,6 +113,7 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => &outcome.result,
             FrameResult::Create(outcome) => &outcome.result,
+            FrameResult::EOFCreate(outcome) => &outcome.result,
         }
     }
 
@@ -98,6 +123,7 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => &mut outcome.result,
             FrameResult::Create(outcome) => &mut outcome.result,
+            FrameResult::EOFCreate(outcome) => &mut outcome.result,
         }
     }
 
@@ -109,6 +135,7 @@ impl FrameResult {
 }
 
 /// Contains either a frame or a result.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FrameOrResult {
     /// Boxed call or create frame.
     Frame(Frame),
@@ -168,6 +195,7 @@ impl Frame {
         match self {
             Frame::Call(call_frame) => call_frame.frame_data,
             Frame::Create(create_frame) => create_frame.frame_data,
+            Frame::EOFCreate(eof_create_frame) => eof_create_frame.frame_data,
         }
     }
 
@@ -176,6 +204,7 @@ impl Frame {
         match self {
             Self::Call(call_frame) => &call_frame.frame_data,
             Self::Create(create_frame) => &create_frame.frame_data,
+            Self::EOFCreate(eof_create_frame) => &eof_create_frame.frame_data,
         }
     }
 
@@ -184,6 +213,7 @@ impl Frame {
         match self {
             Self::Call(call_frame) => &mut call_frame.frame_data,
             Self::Create(create_frame) => &mut create_frame.frame_data,
+            Self::EOFCreate(eof_create_frame) => &mut eof_create_frame.frame_data,
         }
     }
 
@@ -208,6 +238,22 @@ impl FrameOrResult {
         Self::Frame(Frame::new_create(created_address, checkpoint, interpreter))
     }
 
+    pub fn new_eofcreate_frame(
+        created_address: Address,
+        return_memory_range: Range<usize>,
+        checkpoint: JournalCheckpoint,
+        interpreter: Interpreter,
+    ) -> Self {
+        Self::Frame(Frame::EOFCreate(Box::new(EOFCreateFrame {
+            created_address,
+            return_memory_range,
+            frame_data: FrameData {
+                checkpoint,
+                interpreter,
+            },
+        })))
+    }
+
     /// Creates new call frame.
     pub fn new_call_frame(
         return_memory_range: Range<usize>,
@@ -229,6 +275,18 @@ impl FrameOrResult {
         FrameOrResult::Result(FrameResult::Create(CreateOutcome {
             result: interpreter_result,
             address,
+        }))
+    }
+
+    pub fn new_eofcreate_result(
+        interpreter_result: InterpreterResult,
+        address: Address,
+        return_memory_range: Range<usize>,
+    ) -> Self {
+        FrameOrResult::Result(FrameResult::EOFCreate(EOFCreateOutcome {
+            result: interpreter_result,
+            address,
+            return_memory_range,
         }))
     }
 

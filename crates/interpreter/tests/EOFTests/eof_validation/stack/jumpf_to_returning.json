@@ -1,0 +1,101 @@
+{
+  "jumpf_to_returning": {
+    "vectors": {
+      "jumpf_to_returning_0": {
+        "code": "0xef000101000c02000300040003000304000000008000020002000000020002e3000100e500025f5fe4",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "jumpf_to_returning_1": {
+        "code": "0xef000101000c02000300040005000304000000008000020002000200020002e30001005f5fe500025f5fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNumberOfOutputs",
+            "result": false
+          }
+        }
+      },
+      "jumpf_to_returning_10": {
+        "code": "0xef000101000c02000300040006000304000000008000020002000303010003e30001005f5f5fe500025050e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "jumpf_to_returning_2": {
+        "code": "0xef000101000c02000300040006000204000000008000020002000303020003e30001005f5f5fe5000250e4",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "jumpf_to_returning_3": {
+        "code": "0xef000101000c02000300040007000204000000008000020002000403020003e30001005f5f5f5fe5000250e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNumberOfOutputs",
+            "result": false
+          }
+        }
+      },
+      "jumpf_to_returning_4": {
+        "code": "0xef000101000c02000300040005000204000000008000020002000203020003e30001005f5fe5000250e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "jumpf_to_returning_5": {
+        "code": "0xef000101000c02000300040004000204000000008000020002000100010001e30001005fe500025fe4",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "jumpf_to_returning_6": {
+        "code": "0xef000101000c02000300040006000204000000008000020002000300010001e30001005f5f5fe500025fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNumberOfOutputs",
+            "result": false
+          }
+        }
+      },
+      "jumpf_to_returning_7": {
+        "code": "0xef000101000c02000300040003000204000000008000020002000000010001e3000100e500025fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "jumpf_to_returning_8": {
+        "code": "0xef000101000c02000300040007000304000000008000020002000403010003e30001005f5f5f5fe500025050e4",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "jumpf_to_returning_9": {
+        "code": "0xef000101000c02000300040008000304000000008000020002000503010003e30001005f5f5f5f5fe500025050e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNumberOfOutputs",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

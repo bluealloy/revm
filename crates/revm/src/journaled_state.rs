@@ -5,7 +5,7 @@ use crate::primitives::{
 };
 use core::mem;
 use revm_interpreter::primitives::SpecId;
-use revm_interpreter::SStoreResult;
+use revm_interpreter::{LoadAccountResult, SStoreResult};
 use std::vec::Vec;
 
 /// JournalState is internal EVM state that is used to contain state and track changes to that state.
@@ -15,7 +15,7 @@ use std::vec::Vec;
 pub struct JournaledState {
     /// Current state.
     pub state: State,
-    /// [EIP-1153[(https://eips.ethereum.org/EIPS/eip-1153) transient storage that is discarded after every transactions
+    /// [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153) transient storage that is discarded after every transactions
     pub transient_storage: TransientStorage,
     /// logs
     pub logs: Vec<Log>,
@@ -89,6 +89,12 @@ impl JournaledState {
             journal.push(JournalEntry::AccountTouched { address: *address });
             account.mark_touch();
         }
+    }
+
+    /// Clears the JournaledState. Preserving only the spec.
+    pub fn clear(&mut self) {
+        let spec = self.spec;
+        *self = Self::new(spec, HashSet::new());
     }
 
     /// Does cleanup and returns modified state.
@@ -460,7 +466,7 @@ impl JournaledState {
         target: Address,
         db: &mut DB,
     ) -> Result<SelfDestructResult, EVMError<DB::Error>> {
-        let (is_cold, target_exists) = self.load_account_exist(target, db)?;
+        let load_result = self.load_account_exist(target, db)?;
 
         if address != target {
             // Both accounts are loaded before this point, `address` as we execute its contract.
@@ -508,8 +514,8 @@ impl JournaledState {
 
         Ok(SelfDestructResult {
             had_value: balance != U256::ZERO,
-            is_cold,
-            target_exists,
+            is_cold: load_result.is_cold,
+            target_exists: !load_result.is_empty,
             previously_destroyed,
         })
     }
@@ -581,19 +587,20 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<(bool, bool), EVMError<DB::Error>> {
+    ) -> Result<LoadAccountResult, EVMError<DB::Error>> {
         let spec = self.spec;
         let (acc, is_cold) = self.load_account(address, db)?;
 
         let is_spurious_dragon_enabled = SpecId::enabled(spec, SPURIOUS_DRAGON);
-        let exist = if is_spurious_dragon_enabled {
-            !acc.is_empty()
+        let is_empty = if is_spurious_dragon_enabled {
+            acc.is_empty()
         } else {
-            let is_existing = !acc.is_loaded_as_not_existing();
-            let is_touched = acc.is_touched();
-            is_existing || is_touched
+            let loaded_not_existing = acc.is_loaded_as_not_existing();
+            let is_not_touched = !acc.is_touched();
+            loaded_not_existing && is_not_touched
         };
-        Ok((is_cold, exist))
+
+        Ok(LoadAccountResult { is_empty, is_cold })
     }
 
     /// Loads code.
@@ -606,7 +613,7 @@ impl JournaledState {
         let (acc, is_cold) = self.load_account(address, db)?;
         if acc.info.code.is_none() {
             if acc.info.code_hash == KECCAK_EMPTY {
-                let empty = Bytecode::new();
+                let empty = Bytecode::default();
                 acc.info.code = Some(empty);
             } else {
                 let code = db
@@ -835,6 +842,7 @@ pub enum JournalEntry {
 
 /// SubRoutine checkpoint that will help us to go back from this
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournalCheckpoint {
     log_i: usize,
     journal_i: usize,

@@ -35,14 +35,22 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         self.gas_remaining = interp.gas.limit();
     }
 
+    fn step(
+        &mut self,
+        interp: &mut crate::interpreter::Interpreter,
+        _context: &mut EvmContext<DB>,
+    ) {
+        self.gas_remaining = interp.gas.remaining();
+    }
+
     fn step_end(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
         _context: &mut EvmContext<DB>,
     ) {
-        let last_gas_remaining =
-            core::mem::replace(&mut self.gas_remaining, interp.gas.remaining());
-        self.last_gas_cost = last_gas_remaining.saturating_sub(self.gas_remaining);
+        let remaining = interp.gas.remaining();
+        self.last_gas_cost = self.gas_remaining.saturating_sub(remaining);
+        self.gas_remaining = remaining;
     }
 
     fn call_end(
@@ -52,10 +60,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         mut outcome: CallOutcome,
     ) -> CallOutcome {
         if outcome.result.result.is_error() {
-            outcome
-                .result
-                .gas
-                .record_cost(outcome.result.gas.remaining());
+            outcome.result.gas.spend_all();
             self.gas_remaining = 0;
         }
         outcome
@@ -65,8 +70,12 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         &mut self,
         _context: &mut EvmContext<DB>,
         _inputs: &CreateInputs,
-        outcome: CreateOutcome,
+        mut outcome: CreateOutcome,
     ) -> CreateOutcome {
+        if outcome.result.result.is_error() {
+            outcome.result.gas.spend_all();
+            self.gas_remaining = 0;
+        }
         outcome
     }
 }

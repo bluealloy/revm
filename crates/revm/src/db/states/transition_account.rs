@@ -85,7 +85,7 @@ impl TransitionAccount {
     /// Update new values of transition. Don't override old values.
     /// Both account info and old storages need to be left intact.
     pub fn update(&mut self, other: Self) {
-        self.info = other.info.clone();
+        self.info.clone_from(&other.info);
         self.status = other.status;
 
         // if transition is from some to destroyed drop the storage.

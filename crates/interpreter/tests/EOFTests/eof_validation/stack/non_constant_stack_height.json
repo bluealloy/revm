@@ -1,0 +1,31 @@
+{
+  "non_constant_stack_height": {
+    "vectors": {
+      "non_constant_stack_height_0": {
+        "code": "0xef0001010004020001000e04000000008000045fe100075f5f5fe10001505f5ffd",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "non_constant_stack_height_1": {
+        "code": "0xef0001010004020001000f04000000008000055f5fe100075f5f5fe10001505f5ffd",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "non_constant_stack_height_2": {
+        "code": "0xef0001010004020001000f04000000008000045fe100075f5f5fe1000150505f5ffd",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

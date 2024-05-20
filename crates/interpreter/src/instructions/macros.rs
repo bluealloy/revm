@@ -1,8 +1,8 @@
-//! Utility macros to help implementementing opcode instruction functions.
+//! Utility macros to help implementing opcode instruction functions.
 
 /// Fails the instruction if the current call is static.
 #[macro_export]
-macro_rules! check_staticcall {
+macro_rules! require_non_staticcall {
     ($interp:expr) => {
         if $interp.is_static {
             $interp.instruction_result = $crate::InstructionResult::StateChangeDuringStaticCall;
@@ -11,7 +11,29 @@ macro_rules! check_staticcall {
     };
 }
 
-/// Fails the instruction if the `min` is not enabled in `SPEC`.
+/// Error if the current call is executing EOF.
+#[macro_export]
+macro_rules! require_eof {
+    ($interp:expr) => {
+        if !$interp.is_eof {
+            $interp.instruction_result = $crate::InstructionResult::EOFOpcodeDisabledInLegacy;
+            return;
+        }
+    };
+}
+
+/// Error if not init eof call.
+#[macro_export]
+macro_rules! require_init_eof {
+    ($interp:expr) => {
+        if !$interp.is_eof_init {
+            $interp.instruction_result = $crate::InstructionResult::ReturnContractInNotInitEOF;
+            return;
+        }
+    };
+}
+
+/// Check if the `SPEC` is enabled, and fail the instruction if it is not.
 #[macro_export]
 macro_rules! check {
     ($interp:expr, $min:ident) => {
@@ -21,6 +43,30 @@ macro_rules! check {
             return;
         }
     };
+}
+
+/// Performs an `SLOAD` on the target account and storage index.
+///
+/// If the slot could not be loaded, or if the gas cost could not be charged, the expanded code
+/// sets the instruction result and returns accordingly.
+///
+/// # Note
+///
+/// This macro charges gas.
+///
+/// # Returns
+///
+/// Expands to the value of the storage slot.
+#[macro_export]
+macro_rules! sload {
+    ($interp:expr, $host:expr, $address:expr, $index:expr) => {{
+        let Some((value, is_cold)) = $host.sload($address, $index) else {
+            $interp.instruction_result = $crate::InstructionResult::FatalExternalError;
+            return;
+        };
+        $crate::gas!($interp, $crate::gas::sload_cost(SPEC::SPEC_ID, is_cold));
+        value
+    }};
 }
 
 /// Records a `gas` cost and fails the instruction if it would exceed the available gas.
@@ -67,27 +113,23 @@ macro_rules! resize_memory {
         $crate::resize_memory!($interp, $offset, $len, ())
     };
     ($interp:expr, $offset:expr, $len:expr, $ret:expr) => {
-        let size = $offset.saturating_add($len);
-        if size > $interp.shared_memory.len() {
-            // We are fine with saturating to usize if size is close to MAX value.
-            let rounded_size = $crate::interpreter::next_multiple_of_32(size);
-
+        let new_size = $offset.saturating_add($len);
+        if new_size > $interp.shared_memory.len() {
             #[cfg(feature = "memory_limit")]
-            if $interp.shared_memory.limit_reached(size) {
+            if $interp.shared_memory.limit_reached(new_size) {
                 $interp.instruction_result = $crate::InstructionResult::MemoryLimitOOG;
                 return $ret;
             }
 
-            // Gas is calculated in evm words (256bits).
-            let words_num = rounded_size / 32;
-            if !$interp
-                .gas
-                .record_memory($crate::gas::memory_gas(words_num))
-            {
-                $interp.instruction_result = $crate::InstructionResult::MemoryLimitOOG;
+            // Note: we can't use `Interpreter` directly here because of potential double-borrows.
+            if !$crate::interpreter::resize_memory(
+                &mut $interp.shared_memory,
+                &mut $interp.gas,
+                new_size,
+            ) {
+                $interp.instruction_result = $crate::InstructionResult::MemoryOOG;
                 return $ret;
             }
-            $interp.shared_memory.resize(rounded_size);
         }
     };
 }
@@ -96,19 +138,30 @@ macro_rules! resize_memory {
 #[macro_export]
 macro_rules! pop_address {
     ($interp:expr, $x1:ident) => {
+        pop_address_ret!($interp, $x1, ())
+    };
+    ($interp:expr, $x1:ident, $x2:ident) => {
+        pop_address_ret!($interp, $x1, $x2, ())
+    };
+}
+
+/// Pop `Address` values from the stack, returns `ret` on stack underflow.
+#[macro_export]
+macro_rules! pop_address_ret {
+    ($interp:expr, $x1:ident, $ret:expr) => {
         if $interp.stack.len() < 1 {
             $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return;
+            return $ret;
         }
         // SAFETY: Length is checked above.
         let $x1 = $crate::primitives::Address::from_word($crate::primitives::B256::from(unsafe {
             $interp.stack.pop_unsafe()
         }));
     };
-    ($interp:expr, $x1:ident, $x2:ident) => {
+    ($interp:expr, $x1:ident, $x2:ident, $ret:expr) => {
         if $interp.stack.len() < 2 {
             $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return;
+            return $ret;
         }
         // SAFETY: Length is checked above.
         let $x1 = $crate::primitives::Address::from_word($crate::primitives::B256::from(unsafe {
@@ -134,6 +187,9 @@ macro_rules! pop {
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
         $crate::pop_ret!($interp, $x1, $x2, $x3, $x4, ())
+    };
+    ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $x5:ident) => {
+        pop_ret!($interp, $x1, $x2, $x3, $x4, $x5, ())
     };
 }
 
@@ -172,6 +228,14 @@ macro_rules! pop_ret {
         }
         // SAFETY: Length is checked above.
         let ($x1, $x2, $x3, $x4) = unsafe { $interp.stack.pop4_unsafe() };
+    };
+    ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $x5:ident, $ret:expr) => {
+        if $interp.stack.len() < 4 {
+            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
+            return $ret;
+        }
+        // SAFETY: Length is checked above.
+        let ($x1, $x2, $x3, $x4, $x5) = unsafe { $interp.stack.pop5_unsafe() };
     };
 }
 
@@ -236,14 +300,17 @@ macro_rules! push {
 /// Converts a `U256` value to a `u64`, saturating to `MAX` if the value is too large.
 #[macro_export]
 macro_rules! as_u64_saturated {
-    ($v:expr) => {{
-        let x: &[u64; 4] = $v.as_limbs();
-        if x[1] == 0 && x[2] == 0 && x[3] == 0 {
-            x[0]
-        } else {
-            u64::MAX
+    ($v:expr) => {
+        match $v.as_limbs() {
+            x => {
+                if (x[1] == 0) & (x[2] == 0) & (x[3] == 0) {
+                    x[0]
+                } else {
+                    u64::MAX
+                }
+            }
         }
-    }};
+    };
 }
 
 /// Converts a `U256` value to a `usize`, saturating to `MAX` if the value is too large.
@@ -251,6 +318,16 @@ macro_rules! as_u64_saturated {
 macro_rules! as_usize_saturated {
     ($v:expr) => {
         usize::try_from($crate::as_u64_saturated!($v)).unwrap_or(usize::MAX)
+    };
+}
+
+/// Converts a `U256` value to a `isize`, saturating to `isize::MAX` if the value is too large.
+#[macro_export]
+macro_rules! as_isize_saturated {
+    ($v:expr) => {
+        // `isize_try_from(u64::MAX)`` will fail and return isize::MAX
+        // this is expected behavior as we are saturating the value.
+        isize::try_from($crate::as_u64_saturated!($v)).unwrap_or(isize::MAX)
     };
 }
 
@@ -278,16 +355,15 @@ macro_rules! as_usize_or_fail_ret {
         )
     };
 
-    ($interp:expr, $v:expr, $reason:expr, $ret:expr) => {{
-        let x = $v.as_limbs();
-        if x[1] != 0 || x[2] != 0 || x[3] != 0 {
-            $interp.instruction_result = $reason;
-            return $ret;
+    ($interp:expr, $v:expr, $reason:expr, $ret:expr) => {
+        match $v.as_limbs() {
+            x => {
+                if (x[0] > usize::MAX as u64) | (x[1] != 0) | (x[2] != 0) | (x[3] != 0) {
+                    $interp.instruction_result = $reason;
+                    return $ret;
+                }
+                x[0] as usize
+            }
         }
-        let Ok(val) = usize::try_from(x[0]) else {
-            $interp.instruction_result = $reason;
-            return $ret;
-        };
-        val
-    }};
+    };
 }

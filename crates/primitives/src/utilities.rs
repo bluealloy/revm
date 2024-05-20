@@ -1,9 +1,5 @@
 use crate::{
-    b256,
-    B256,
-    BLOB_GASPRICE_UPDATE_FRACTION,
-    MIN_BLOB_GASPRICE,
-    TARGET_BLOB_GAS_PER_BLOCK,
+    b256, B256, BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK,
 };
 pub use alloy_primitives::keccak256;
 
@@ -133,8 +129,7 @@ mod tests {
             (2314057, 1),
             (2314058, 2),
             (10 * 1024 * 1024, 23),
-            // calc_blob_gasprice approximates `e ** (excess_blob_gas /
-            // BLOB_GASPRICE_UPDATE_FRACTION)` using Taylor expansion
+            // calc_blob_gasprice approximates `e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)` using Taylor expansion
             //
             // to roughly find where boundaries will be hit:
             // 2 ** bits = e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)

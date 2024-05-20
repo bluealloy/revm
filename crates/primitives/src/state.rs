@@ -195,7 +195,7 @@ pub struct AccountInfo {
     #[cfg(feature = "rwasm")]
     pub rwasm_code_hash: B256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
-    /// inside `revm`.
+    /// inside of `revm`.
     pub code: Option<Bytecode>,
     #[cfg(feature = "rwasm")]
     pub rwasm_code: Option<Bytecode>,
@@ -209,7 +209,7 @@ impl Default for AccountInfo {
             code_hash: KECCAK_EMPTY,
             #[cfg(feature = "rwasm")]
             rwasm_code_hash: crate::POSEIDON_EMPTY,
-            code: Some(Bytecode::new()),
+            code: Some(Bytecode::default()),
             #[cfg(feature = "rwasm")]
             rwasm_code: Some(Bytecode::new()),
         }

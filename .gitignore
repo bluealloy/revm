@@ -1,5 +1,6 @@
 /target/
 **/*.rs.bk
+**/.DS_Store
 
 target
 .vscode
@@ -18,5 +19,3 @@ burntpix/svgs
 
 # Rust bug report
 rustc-ice-*
-
-.DS_Store

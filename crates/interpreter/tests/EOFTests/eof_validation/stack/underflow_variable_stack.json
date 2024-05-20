@@ -1,0 +1,96 @@
+{
+  "underflow_variable_stack": {
+    "vectors": {
+      "underflow_variable_stack_0": {
+        "code": "0xef0001010004020001000a04000000008000035f6000e100025f5fa200",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "underflow_variable_stack_1": {
+        "code": "0xef0001010004020001000a04000000008000035f6000e100025f5f0100",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "underflow_variable_stack_2": {
+        "code": "0xef0001010008020002000c00020400000000800004040500055f6000e100025f5fe30001005fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "underflow_variable_stack_3": {
+        "code": "0xef0001010008020002000c00020400000000800004030400045f6000e100025f5fe30001005fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "underflow_variable_stack_4": {
+        "code": "0xef000101000c0200030004000b000304000000008000030003000305030003e30001005f6000e100025f5fe500025050e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "underflow_variable_stack_5": {
+        "code": "0xef000101000c0200030004000b000104000000008000030003000303030003e30001005f6000e100025f5fe50002e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "underflow_variable_stack_6": {
+        "code": "0xef0001010008020002000b00050400000000800000058000075f6000e100025f5fe5000160006000fd",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "underflow_variable_stack_7": {
+        "code": "0xef0001010008020002000b00050400000000800000038000055f6000e100025f5fe5000160006000fd",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "underflow_variable_stack_8": {
+        "code": "0xef000101000802000200040009040000000080000500050003e30001005f6000e100025f5fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "underflow_variable_stack_9": {
+        "code": "0xef000101000802000200040009040000000080000300030003e30001005f6000e100025f5fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

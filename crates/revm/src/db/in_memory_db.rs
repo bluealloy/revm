@@ -31,8 +31,8 @@ pub type InMemoryDB = CacheDB<EmptyDB>;
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CacheDB<ExtDB> {
-    /// Account info where None means it is not existing. Not existing state is needed for Pre
-    /// TANGERINE forks. `code` is always `None`, and bytecode can be found in `contracts`.
+    /// Account info where None means it is not existing. Not existing state is needed for Pre TANGERINE forks.
+    /// `code` is always `None`, and bytecode can be found in `contracts`.
     pub accounts: HashMap<Address, DbAccount>,
     /// Tracks all contracts by their code hash.
     pub contracts: HashMap<B256, Bytecode>,
@@ -55,8 +55,8 @@ impl<ExtDB: Default> Default for CacheDB<ExtDB> {
 impl<ExtDB> CacheDB<ExtDB> {
     pub fn new(db: ExtDB) -> Self {
         let mut contracts = HashMap::new();
-        contracts.insert(KECCAK_EMPTY, Bytecode::new());
-        contracts.insert(B256::ZERO, Bytecode::new());
+        contracts.insert(KECCAK_EMPTY, Bytecode::default());
+        contracts.insert(B256::ZERO, Bytecode::default());
         Self {
             accounts: HashMap::new(),
             contracts,
@@ -68,8 +68,7 @@ impl<ExtDB> CacheDB<ExtDB> {
 
     /// Inserts the account's code into the cache.
     ///
-    /// Accounts objects and code are stored separately in the cache, this will take the code from
-    /// the account and instead map it to the code hash.
+    /// Accounts objects and code are stored separately in the cache, this will take the code from the account and instead map it to the code hash.
     ///
     /// Note: This will not insert into the underlying external database.
     pub fn insert_contract(&mut self, account: &mut AccountInfo) {
@@ -351,11 +350,10 @@ pub enum AccountState {
     /// Before Spurious Dragon hardfork there was a difference between empty and not existing.
     /// And we are flagging it here.
     NotExisting,
-    /// EVM touched this account. For newer hardfork this means it can be cleared/removed from
-    /// state.
+    /// EVM touched this account. For newer hardfork this means it can be cleared/removed from state.
     Touched,
-    /// EVM cleared storage of this account, mostly by selfdestruct, we don't ask database for
-    /// storage slots and assume they are U256::ZERO
+    /// EVM cleared storage of this account, mostly by selfdestruct, we don't ask database for storage slots
+    /// and assume they are U256::ZERO
     StorageCleared,
     /// EVM didn't interacted with this account
     #[default]

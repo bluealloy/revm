@@ -15,6 +15,14 @@ pub fn end<EXT, DB: Database>(
     evm_output
 }
 
+/// Clear handle clears error and journal state.
+#[inline]
+pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
+    // clear error and journaled state.
+    let _ = context.evm.take_error();
+    context.evm.inner.journaled_state.clear();
+}
+
 /// Reward beneficiary with gas fee.
 #[inline]
 pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
@@ -42,7 +50,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
     coinbase_account.info.balance = coinbase_account
         .info
         .balance
-        .saturating_add(coinbase_gas_price * U256::from(gas.spend() - gas.refunded() as u64));
+        .saturating_add(coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64));
 
     Ok(())
 }
@@ -76,10 +84,10 @@ pub fn output<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     result: FrameResult,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
-    core::mem::replace(&mut context.evm.error, Ok(()))?;
+    context.evm.take_error()?;
     // used gas with refund calculated.
     let gas_refunded = result.gas().refunded() as u64;
-    let final_gas_used = result.gas().spend() - gas_refunded;
+    let final_gas_used = result.gas().spent() - gas_refunded;
     let output = result.output();
     let instruction_result = result.into_interpreter_result();
 

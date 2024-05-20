@@ -1,0 +1,24 @@
+{
+  "EOF1_trailing_bytes": {
+    "vectors": {
+      "EOF1_trailing_bytes_0": {
+        "code": "0xef000101000402000100010400000000800000fedeadbeef",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidSectionBodiesSize",
+            "result": false
+          }
+        }
+      },
+      "EOF1_trailing_bytes_1": {
+        "code": "0xef000101000402000100010400020000800000feaabbdeadbeef",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidSectionBodiesSize",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

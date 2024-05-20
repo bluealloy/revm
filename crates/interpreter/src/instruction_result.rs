@@ -10,6 +10,7 @@ pub enum InstructionResult {
     Stop,
     Return,
     SelfDestruct,
+    ReturnContract,
 
     // revert codes
     Revert = 0x10, // revert opcode
@@ -44,9 +45,14 @@ pub enum InstructionResult {
     CreateContractStartingWithEF,
     /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
     CreateInitCodeSizeLimit,
-
     /// Fatal external error. Returned by database.
     FatalExternalError,
+    /// RETURNCONTRACT called in not init eof code.
+    ReturnContractInNotInitEOF,
+    /// Legacy contract is calling opcode that is enabled only in EOF.
+    EOFOpcodeDisabledInLegacy,
+    /// EOF function stack overflow
+    EOFFunctionStackOverflow,
 }
 
 impl From<SuccessReason> for InstructionResult {
@@ -100,6 +106,7 @@ macro_rules! return_ok {
             | InstructionResult::Stop
             | InstructionResult::Return
             | InstructionResult::SelfDestruct
+            | InstructionResult::ReturnContract
     };
 }
 
@@ -135,6 +142,9 @@ macro_rules! return_error {
             | InstructionResult::CreateContractStartingWithEF
             | InstructionResult::CreateInitCodeSizeLimit
             | InstructionResult::FatalExternalError
+            | InstructionResult::ReturnContractInNotInitEOF
+            | InstructionResult::EOFOpcodeDisabledInLegacy
+            | InstructionResult::EOFFunctionStackOverflow
     };
 }
 
@@ -230,7 +240,9 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::InvalidOperandOOG => {
                 Self::Halt(HaltReason::OutOfGas(OutOfGasError::InvalidOperand))
             }
-            InstructionResult::OpcodeNotFound => Self::Halt(HaltReason::OpcodeNotFound),
+            InstructionResult::OpcodeNotFound | InstructionResult::ReturnContractInNotInitEOF => {
+                Self::Halt(HaltReason::OpcodeNotFound)
+            }
             InstructionResult::CallNotAllowedInsideStatic => {
                 Self::Halt(HaltReason::CallNotAllowedInsideStatic)
             } // first call is not static call
@@ -255,6 +267,11 @@ impl From<InstructionResult> for SuccessOrHalt {
                 Self::Halt(HaltReason::CreateInitCodeSizeLimit)
             }
             InstructionResult::FatalExternalError => Self::FatalExternalError,
+            InstructionResult::EOFOpcodeDisabledInLegacy => Self::Halt(HaltReason::OpcodeNotFound),
+            InstructionResult::EOFFunctionStackOverflow => Self::FatalExternalError,
+            InstructionResult::ReturnContract => {
+                panic!("Unexpected EOF internal Return Contract")
+            }
         }
     }
 }

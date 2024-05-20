@@ -1,9 +1,7 @@
 //! # revm-primitives
 //!
 //! EVM primitive types.
-#![warn(rustdoc::all)]
-#![warn(unreachable_pub, unused_crate_dependencies)]
-#![deny(unused_must_use, rust_2018_idioms)]
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(not(feature = "std"))]
@@ -22,33 +20,24 @@ pub mod result;
 pub mod specification;
 pub mod state;
 pub mod utilities;
-
 pub use alloy_primitives::{
-    self,
-    address,
-    b256,
-    bytes,
-    fixed_bytes,
-    hex,
-    hex_literal,
-    ruint,
-    uint,
-    Address,
-    Bytes,
-    FixedBytes,
-    Log,
-    LogData,
-    B256,
-    I256,
-    U256,
+    self, address, b256, bytes, fixed_bytes, hex, hex_literal, ruint, uint, Address, Bytes,
+    FixedBytes, Log, LogData, B256, I256, U256,
 };
 pub use bitvec;
 pub use bytecode::*;
 pub use constants::*;
 pub use env::*;
-pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
-#[cfg(not(feature = "std"))]
-pub use keccak256::keccak256;
+
+cfg_if::cfg_if! {
+    if #[cfg(all(not(feature = "hashbrown"), feature = "std"))] {
+        pub use std::collections::{hash_map, hash_set, HashMap, HashSet};
+        use hashbrown as _;
+    } else {
+        pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
+    }
+}
+
 #[cfg(feature = "c-kzg")]
 pub use kzg::{EnvKzgSettings, KzgSettings};
 pub use precompile::*;

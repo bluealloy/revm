@@ -82,8 +82,7 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
     let remaining = gas.remaining();
     let refunded = gas.refunded();
     // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-    *gas = Gas::new(tx_gas_limit);
-    gas.record_cost(tx_gas_limit);
+    *gas = Gas::new_spent(tx_gas_limit);
 
     match instruction_result {
         return_ok!() => {
@@ -133,7 +132,7 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
     // Prior to Regolith, deposit transactions did not receive gas refunds.
     let is_gas_refund_disabled = env.cfg.is_gas_refund_disabled() || (is_deposit && !is_regolith);
     if !is_gas_refund_disabled {
-        gas.set_final_refund::<SPEC>();
+        gas.set_final_refund(SPEC::SPEC_ID.is_enabled_in(SpecId::LONDON));
     }
     Ok(())
 }
@@ -272,7 +271,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
             .env
             .block
             .basefee
-            .mul(U256::from(gas.spend() - gas.refunded() as u64));
+            .mul(U256::from(gas.spent() - gas.refunded() as u64));
     }
     Ok(())
 }
@@ -410,7 +409,7 @@ mod tests {
         let gas =
             call_last_frame_return::<BedrockSpec>(env, InstructionResult::Revert, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
-        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.spent(), 10);
         assert_eq!(gas.refunded(), 0);
     }
 
@@ -423,7 +422,7 @@ mod tests {
         let gas =
             call_last_frame_return::<RegolithSpec>(env, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
-        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.spent(), 10);
         assert_eq!(gas.refunded(), 0);
     }
 
@@ -439,12 +438,12 @@ mod tests {
         let gas =
             call_last_frame_return::<RegolithSpec>(env.clone(), InstructionResult::Stop, ret_gas);
         assert_eq!(gas.remaining(), 90);
-        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.spent(), 10);
         assert_eq!(gas.refunded(), 2); // min(20, 10/5)
 
         let gas = call_last_frame_return::<RegolithSpec>(env, InstructionResult::Revert, ret_gas);
         assert_eq!(gas.remaining(), 90);
-        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.spent(), 10);
         assert_eq!(gas.refunded(), 0);
     }
 
@@ -456,7 +455,7 @@ mod tests {
 
         let gas = call_last_frame_return::<BedrockSpec>(env, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 0);
-        assert_eq!(gas.spend(), 100);
+        assert_eq!(gas.spent(), 100);
         assert_eq!(gas.refunded(), 0);
     }
 
