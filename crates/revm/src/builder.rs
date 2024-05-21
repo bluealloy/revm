@@ -46,6 +46,7 @@ impl<'a, ChainSpecT: ChainSpec> Default
 impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
     EvmBuilder<'a, SetGenericStage, ChainSpecT, EXT, DB>
 {
+    /// Sets the [`ChainSpec`] that will be used by [`Evm`].
     pub fn with_chain_spec<NewChainSpecT: ChainSpec>(
         self,
     ) -> EvmBuilder<'a, SetGenericStage, NewChainSpecT, EXT, DB> {
