@@ -7,8 +7,8 @@ use crate::{
         SStoreResult, SelfDestructResult, SharedMemory,
     },
     primitives::{
-        Address, BlockEnv, Bytecode, CfgEnv, ChainSpec, EVMError, EVMResult, Env, ExecutionResult,
-        Log, MainnetChainSpec, ResultAndState, TransactTo, TxEnv, B256, U256,
+        Address, BlockEnv, Bytecode, CfgEnv, ChainSpec, EVMError, EVMResult, Env, EthChainSpec,
+        ExecutionResult, Log, ResultAndState, TransactTo, TxEnv, B256, U256,
     },
     Context, ContextWithChainSpec, Frame, FrameOrResult, FrameResult,
 };
@@ -52,9 +52,9 @@ impl<EXT, ChainSpecT: ChainSpec, DB: Database + DatabaseCommit> Evm<'_, ChainSpe
     }
 }
 
-impl<'a> Evm<'a, MainnetChainSpec, (), EmptyDB> {
+impl<'a> Evm<'a, EthChainSpec, (), EmptyDB> {
     /// Returns evm builder with the mainnet chain spec, empty database, and empty external context.
-    pub fn builder() -> EvmBuilder<'a, SetGenericStage, MainnetChainSpec, (), EmptyDB> {
+    pub fn builder() -> EvmBuilder<'a, SetGenericStage, EthChainSpec, (), EmptyDB> {
         EvmBuilder::default()
     }
 }

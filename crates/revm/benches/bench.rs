@@ -13,7 +13,7 @@ use std::time::Duration;
 #[cfg(feature = "optimism")]
 type BenchChainSpec = revm::optimism::OptimismChainSpec;
 #[cfg(not(feature = "optimism"))]
-type BenchChainSpec = revm::MainnetChainSpec;
+type BenchChainSpec = revm::EthChainSpec;
 
 fn analysis(c: &mut Criterion) {
     let evm = Evm::builder()

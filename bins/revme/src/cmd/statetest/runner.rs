@@ -31,7 +31,7 @@ use walkdir::{DirEntry, WalkDir};
 #[cfg(feature = "optimism")]
 type TestChainSpec = revm::optimism::OptimismChainSpec;
 #[cfg(not(feature = "optimism"))]
-type TestChainSpec = revm::primitives::MainnetChainSpec;
+type TestChainSpec = revm::primitives::EthChainSpec;
 
 #[derive(Debug, Error)]
 #[error("Test {name} failed: {kind}")]

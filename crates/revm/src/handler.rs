@@ -162,7 +162,7 @@ mod test {
     #[cfg(feature = "optimism")]
     type TestChainSpec = crate::optimism::OptimismChainSpec;
     #[cfg(not(feature = "optimism"))]
-    type TestChainSpec = crate::primitives::MainnetChainSpec;
+    type TestChainSpec = crate::primitives::EthChainSpec;
 
     #[test]
     fn test_handler_register_pop() {

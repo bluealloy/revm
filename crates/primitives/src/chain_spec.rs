@@ -20,9 +20,9 @@ pub trait ChainSpec: Clone + Copy + Debug + Sized + 'static {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct MainnetChainSpec;
+pub struct EthChainSpec;
 
-impl ChainSpec for MainnetChainSpec {
+impl ChainSpec for EthChainSpec {
     type Hardfork = SpecId;
     type HaltReason = crate::HaltReason;
 }
