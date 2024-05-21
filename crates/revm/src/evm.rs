@@ -1,3 +1,4 @@
+use core::cell::RefCell;
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
@@ -10,8 +11,15 @@ use crate::{
     Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
 use core::fmt;
-use revm_interpreter::{CallInputs, CreateInputs};
+use core::str::from_utf8;
+use revm_interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome, Gas, InstructionResult, InterpreterResult};
 use std::vec::Vec;
+use fluentbase_core::loader::{_loader_call, _loader_create};
+use fluentbase_sdk::{EvmCallMethodInput, EvmCreateMethodInput};
+use fluentbase_types::consts::EVM_STORAGE_ADDRESS;
+use fluentbase_types::ExitCode;
+use crate::journal_db_wrapper::JournalDbWrapper;
+use crate::primitives::{Address, Bytes, hex, U256};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -72,6 +80,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     }
 
     /// Runs main call loop.
+    #[cfg(not(feature = "fluent_revm"))]
     #[inline]
     pub fn run_the_loop(&mut self, first_frame: Frame) -> Result<FrameResult, EVMError<DB::Error>> {
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
@@ -339,23 +348,47 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
 
-        let exec = self.handler.execution();
-        // call inner handling of call/create
-        let first_frame_or_result = match ctx.evm.env.tx.transact_to {
-            TransactTo::Call(_) => exec.call(
-                ctx,
-                CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-            )?,
-            TransactTo::Create => exec.create(
-                ctx,
-                CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-            )?,
-        };
+        let mut result = if cfg!(feature = "fluent_revm") {
+            // Load EVM storage account
+            let (evm_storage, _) = ctx.evm.load_account(EVM_STORAGE_ADDRESS)?;
+            evm_storage.info.nonce = 1;
+            ctx.evm.touch(&EVM_STORAGE_ADDRESS);
 
-        // Starts the main running loop.
-        let mut result = match first_frame_or_result {
-            FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
-            FrameOrResult::Result(result) => result,
+            match ctx.evm.env.tx.transact_to {
+                TransactTo::Call(address) => {
+                    let value = ctx.evm.env.tx.value;
+                    let caller = ctx.evm.env.tx.caller;
+                    let data = ctx.evm.env.tx.data.clone();
+                    let result = self.call_inner(caller, address, value, data, gas_limit);
+                    FrameResult::Call(result)
+                }
+                TransactTo::Create => {
+                    let value = ctx.evm.env.tx.value;
+                    let caller = ctx.evm.env.tx.caller;
+                    let data = ctx.evm.env.tx.data.clone();
+                    let result = self.create_inner(caller, value, data, gas_limit);
+                    FrameResult::Create(result)
+                }
+            }
+        } else {
+            let exec = self.handler.execution();
+            // call inner handling of call/create
+            let mut first_frame_or_result = match ctx.evm.env.tx.transact_to {
+                TransactTo::Call(_) => exec.call(
+                    ctx,
+                    CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
+                )?,
+                TransactTo::Create => exec.create(
+                    ctx,
+                    CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
+                )?,
+            };
+
+            // Starts the main running loop.
+            match first_frame_or_result {
+                FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
+                FrameOrResult::Result(result) => result,
+            }
         };
 
         let ctx = &mut self.context;
@@ -372,5 +405,200 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         post_exec.reward_beneficiary(ctx, result.gas())?;
         // Returns output of transaction.
         post_exec.output(ctx, result)
+    }
+
+    /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
+    fn create_inner(
+        &mut self,
+        caller_address: Address,
+        value: U256,
+        input: Bytes,
+        gas_limit: u64,
+        // salt: Option<U256>,
+    ) -> CreateOutcome {
+        let return_result = |instruction_result: InstructionResult, gas: Gas| CreateOutcome {
+            result: InterpreterResult {
+                result: instruction_result,
+                output: Default::default(),
+                gas,
+            },
+            address: None,
+        };
+
+        let mut gas = Gas::new(gas_limit);
+
+        if self.context.evm.journaled_state.depth as u64 > CALL_STACK_LIMIT {
+            return return_result(InstructionResult::CallDepthOverflow, gas);
+        }
+
+        let (caller_account, _) = self
+            .context
+            .evm
+            .load_account(caller_address)
+            .expect("external database error");
+        if caller_account.info.balance < value {
+            return return_result(ExitCode::InsufficientBalance, gas);
+        }
+
+        let method_data = EvmCreateMethodInput {
+            bytecode: input,
+            value,
+            gas_limit: gas.remaining(),
+            salt: None,
+            depth: 0,
+        };
+
+        let contract_input = self.input_from_env(
+            &mut gas,
+            caller_address,
+            Address::ZERO,
+            Default::default(),
+            value,
+        );
+        let am = JournalDbWrapper {
+            ctx: RefCell::new(&mut self.context.evm),
+        };
+        let create_output = _loader_create(&contract_input, &am, method_data);
+
+        // let (output_buffer, exit_code) = self.exec_rwasm_binary(
+        //     &mut gas,
+        //     caller_account,
+        //     &mut middleware_account,
+        //     None,
+        //     core_input.into(),
+        //     value,
+        // );
+
+        // let create_output = if exit_code == ExitCode::Ok {
+        //     let mut buffer_decoder = BufferDecoder::new(output_buffer.as_ref());
+        //     let mut create_output = EvmCreateMethodOutput::default();
+        //     EvmCreateMethodOutput::decode_body(&mut buffer_decoder, 0, &mut create_output);
+        //     create_output
+        // } else {
+        //     EvmCreateMethodOutput::from_exit_code(exit_code).with_gas(gas.remaining())
+        // };
+
+        // let created_address = if exit_code == ExitCode::Ok {
+        //     if output_buffer.len() != 20 {
+        //         return return_result(ExitCode::CreateError, gas);
+        //     }
+        //     assert_eq!(
+        //         output_buffer.len(),
+        //         20,
+        //         "output buffer is not 20 bytes after create/create2"
+        //     );
+        //     Some(Address::from_slice(output_buffer.as_ref()))
+        // } else {
+        //     None
+        // };
+
+        let mut gas = Gas::new(create_output.gas);
+        gas.record_refund(create_output.gas_refund);
+
+        CreateOutcome {
+            result: InterpreterResult {
+                result: ExitCode::from(create_output.exit_code),
+                output: Bytes::new(),
+                gas,
+            },
+            address: create_output.address,
+        }
+    }
+
+    /// Main contract call of the EVM.
+    fn call_inner(
+        &mut self,
+        caller_address: Address,
+        callee_address: Address,
+        value: U256,
+        input: Bytes,
+        gas_limit: u64,
+    ) -> CallOutcome {
+        let mut gas = Gas::new(gas_limit);
+
+        // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
+        if value == U256::ZERO {
+            self.context
+                .evm
+                .load_account(callee_address)
+                .expect("failed to load");
+            self.context.evm.journaled_state.touch(&callee_address);
+        }
+
+        let method_input = EvmCallMethodInput {
+            callee: callee_address,
+            value,
+            input,
+            gas_limit: gas.remaining(),
+            depth: 0,
+        };
+        let contract_input = self.input_from_env(
+            &mut gas,
+            caller_address,
+            callee_address,
+            Default::default(),
+            value,
+        );
+        let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
+        let call_output = _loader_call(&contract_input, &am, method_input);
+
+        // let core_input = CoreInput {
+        //     method_id,
+        //     method_data,
+        // }
+        // .encode_to_vec(0);
+        //
+        // let (output_buffer, exit_code) = self.exec_rwasm_binary(
+        //     &mut gas,
+        //     caller_account,
+        //     &mut middleware_account,
+        //     Some(callee_account.address),
+        //     core_input.into(),
+        //     value,
+        // );
+        //
+        // let call_output = if exit_code == ExitCode::Ok {
+        //     let mut buffer_decoder = BufferDecoder::new(output_buffer.as_ref());
+        //     let mut call_output = EvmCallMethodOutput::default();
+        //     EvmCallMethodOutput::decode_body(&mut buffer_decoder, 0, &mut call_output);
+        //     call_output
+        // } else {
+        //     EvmCallMethodOutput::from_exit_code(exit_code).with_gas(gas.remaining())
+        // };
+
+        {
+            println!("executed ECL call:");
+            println!(" - caller: 0x{}", hex::encode(caller_address));
+            println!(" - callee: 0x{}", hex::encode(callee_address));
+            println!(" - value: 0x{}", hex::encode(&value.to_be_bytes::<32>()));
+            println!(
+                " - fuel consumed: {}",
+                gas.remaining() as i64 - call_output.gas_remaining as i64
+            );
+            println!(" - exit code: {}", call_output.exit_code);
+            if call_output.output.iter().all(|c| c.is_ascii()) {
+                println!(
+                    " - output message: {}",
+                    from_utf8(&call_output.output).unwrap()
+                );
+            } else {
+                println!(
+                    " - output message: {}",
+                    format!("0x{}", hex::encode(&call_output.output))
+                );
+            }
+        }
+
+        let mut gas = Gas::new(call_output.gas_remaining);
+        gas.record_refund(call_output.gas_refund);
+
+        CallOutcome {
+            result: InterpreterResult {
+                result: ExitCode::from(call_output.exit_code),
+                output: call_output.output,
+                gas,
+            },
+            memory_offset: Default::default(),
+        }
     }
 }

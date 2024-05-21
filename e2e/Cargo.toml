@@ -1,0 +1,48 @@
+[package]
+name = "fluentbase-revm-e2e"
+version = "0.1.0"
+authors.workspace = true
+repository.workspace = true
+edition.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+fluentbase-core = { workspace = true, default-features = false, features = ["ecl", "wcl"] }
+fluentbase-sdk = { workspace = true, default-features = false }
+fluentbase-codec-derive = { workspace = true }
+fluentbase-types = { workspace = true }
+fluentbase-poseidon = { workspace = true }
+fluentbase-genesis = { workspace = true }
+
+revm = { workspace = true, features = [
+#    "fluent_revm"
+] }
+#revm-fluent = { workspace = true }
+
+hash-db = "=0.15"
+hex = "0.4"
+hashbrown = "0.14"
+indicatif = "0.17"
+microbench = "0.5"
+plain_hasher = "0.2"
+alloy-rlp = { version = "0.3", default-features = false, features = [
+    "arrayvec",
+    "derive",
+] }
+serde = { version = "1.0", features = ["derive", "rc"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+structopt = "0.3"
+thiserror = "1.0"
+triehash = "0.8"
+walkdir = "2.5"
+k256 = { version = "0.13.3", features = ["ecdsa"] }
+lazy_static = { workspace = true }
+paste.workspace = true
+
+[features]
+default = [
+    #    "e2e"
+]
+#e2e = ["fluentbase-core/e2e", "fluentbase-revm/e2e", "fluentbase-sdk/e2e"]

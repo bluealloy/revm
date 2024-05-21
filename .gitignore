@@ -19,3 +19,6 @@ burntpix/svgs
 
 # Rust bug report
 rustc-ice-*
+
+e2e/tests
+/tmp

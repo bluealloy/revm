@@ -16,6 +16,8 @@ use crate::{
 };
 use core::{convert::Infallible, default::Default};
 use std::vec::Vec;
+use fluentbase_sdk::{LowLevelSDK, LowLevelAPI};
+use crate::primitives::POSEIDON_EMPTY;
 
 /// A [Database] implementation that stores all state changes in memory.
 pub type InMemoryDB = CacheDB<EmptyDB>;
@@ -82,8 +84,25 @@ impl<ExtDB> CacheDB<ExtDB> {
                     .or_insert_with(|| code.clone());
             }
         }
+        if let Some(rwasm_code) = &account.rwasm_code {
+            if !rwasm_code.is_empty() {
+                if account.rwasm_code_hash == POSEIDON_EMPTY {
+                    LowLevelSDK::crypto_poseidon(
+                        rwasm_code.bytes().as_ptr(),
+                        rwasm_code.len() as u32,
+                        account.rwasm_code_hash.as_mut_ptr(),
+                    );
+                }
+                self.contracts
+                    .entry(account.rwasm_code_hash)
+                    .or_insert_with(|| rwasm_code.clone());
+            }
+        }
         if account.code_hash == B256::ZERO {
             account.code_hash = KECCAK_EMPTY;
+        }
+        if account.rwasm_code_hash == B256::ZERO {
+            account.rwasm_code_hash = POSEIDON_EMPTY;
         }
     }
 
@@ -104,6 +123,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
             Entry::Occupied(entry) => Ok(entry.into_mut()),
             Entry::Vacant(entry) => Ok(entry.insert(
                 db.basic_ref(address)?
+                    // TODO .map_err(|_| ExitCode::FatalExternalError)?
                     .map(|info| DbAccount {
                         info,
                         ..Default::default()

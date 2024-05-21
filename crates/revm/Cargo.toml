@@ -26,10 +26,21 @@ all = "warn"
 revm-interpreter = { path = "../interpreter", version = "5.0.0", default-features = false }
 revm-precompile = { path = "../precompile", version = "7.0.0", default-features = false }
 
+fluentbase-sdk = { workspace = true }
+fluentbase-types = { workspace = true }
+fluentbase-core = { workspace = true }
+fluentbase-runtime = { workspace = true }
+fluentbase-codec = { workspace = true }
+fluentbase-genesis = { workspace = true }
+fluentbase-poseidon = { workspace = true }
+
+rwasm = { workspace = true }
+
 # misc
 auto_impl = { version = "1.2", default-features = false }
 cfg-if = "1.0"
 dyn-clone = "1.0"
+lazy_static = {workspace=true}
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -71,6 +82,7 @@ alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "4
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+fluent_revm = ["revm-interpreter/fluent_revm"]
 std = [
     "serde?/std",
     "serde_json?/std",

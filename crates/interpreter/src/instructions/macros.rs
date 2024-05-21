@@ -39,7 +39,7 @@ macro_rules! check {
     ($interp:expr, $min:ident) => {
         // TODO: Force const-eval on the condition with a `const {}` block once they are stable
         if !<SPEC as $crate::primitives::Spec>::enabled($crate::primitives::SpecId::$min) {
-            $interp.instruction_result = $crate::InstructionResult::NotActivated;
+            $interp.instruction_result = $crate::InstructionResult::NotActivated.into();
             return;
         }
     };

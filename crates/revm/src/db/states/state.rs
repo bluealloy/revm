@@ -230,6 +230,7 @@ impl<DB: Database> Database for State<DB> {
                     }
                 }
                 // if not found in bundle ask database
+                // TODO .map_err(|_| ExitCode::FatalExternalError)?;
                 let code = self.database.code_by_hash(code_hash)?;
                 entry.insert(code.clone());
                 Ok(code)
@@ -255,6 +256,7 @@ impl<DB: Database> Database for State<DB> {
                         let value = if is_storage_known {
                             U256::ZERO
                         } else {
+                            // TODO map_err(|_| ExitCode::FatalExternalError)?
                             self.database.storage(address, index)?
                         };
                         entry.insert(value);
@@ -274,6 +276,7 @@ impl<DB: Database> Database for State<DB> {
         match self.block_hashes.entry(u64num) {
             btree_map::Entry::Occupied(entry) => Ok(*entry.get()),
             btree_map::Entry::Vacant(entry) => {
+                // TODO .map_err(|_| ExitCode::FatalExternalError)?
                 let ret = *entry.insert(self.database.block_hash(number)?);
 
                 // prune all hashes that are older then BLOCK_HASH_HISTORY

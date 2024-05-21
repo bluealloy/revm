@@ -329,7 +329,7 @@ impl<DB: Database> InnerEvmContext<DB> {
 
         // eof bytecode is going to be hashed.
         self.journaled_state
-            .set_code(address, Bytecode::Eof(bytecode));
+            .set_code(address, Bytecode::Eof(bytecode), None);
     }
 
     /// Make create frame.
@@ -500,7 +500,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         };
 
         // set code
-        self.journaled_state.set_code(address, bytecode);
+        self.journaled_state.set_code(address, bytecode, None);
 
         interpreter_result.result = InstructionResult::Return;
     }

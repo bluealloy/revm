@@ -102,7 +102,7 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Call precompile contract
     #[inline]
-    fn call_precompile(
+    pub(crate) fn call_precompile(
         &mut self,
         address: Address,
         input_data: &Bytes,

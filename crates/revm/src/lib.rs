@@ -22,6 +22,9 @@ mod inspector;
 mod journaled_state;
 #[cfg(feature = "optimism")]
 pub mod optimism;
+mod journal_db_wrapper;
+#[cfg(test)]
+mod test;
 
 // Export items.
 
@@ -47,6 +50,14 @@ pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
 
 // Reexport libraries
+
+pub fn test_feature_fluent_revm() -> bool {
+    if cfg!(feature = "fluent_revm") {
+        true
+    } else {
+        false
+    }
+}
 
 #[doc(inline)]
 pub use revm_interpreter as interpreter;

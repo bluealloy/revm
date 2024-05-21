@@ -177,7 +177,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
         if out.is_some() {
             let registers = core::mem::take(&mut self.registers);
             let mut base_handler = Handler::mainnet_with_spec(self.cfg.spec_id);
-            // apply all registers to default handeler and raw mainnet instruction table.
+            // apply all registers to default handler and raw mainnet instruction table.
             for register in registers {
                 base_handler.append_handler_register(register)
             }
@@ -190,7 +190,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     pub fn create_handle_generic<SPEC: Spec>(&mut self) -> EvmHandler<'a, EXT, DB> {
         let registers = core::mem::take(&mut self.registers);
         let mut base_handler = Handler::mainnet::<SPEC>();
-        // apply all registers to default handeler and raw mainnet instruction table.
+        // apply all registers to default handler and raw mainnet instruction table.
         for register in registers {
             base_handler.append_handler_register(register)
         }

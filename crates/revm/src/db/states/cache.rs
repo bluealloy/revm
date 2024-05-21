@@ -5,6 +5,8 @@ use revm_interpreter::primitives::{
     Account, AccountInfo, Address, Bytecode, HashMap, State as EVMState, B256,
 };
 use std::vec::Vec;
+use fluentbase_sdk::{LowLevelSDK, LowLevelAPI};
+use crate::primitives::{KECCAK_EMPTY, POSEIDON_EMPTY};
 
 /// Cache state contains both modified and original values.
 ///
@@ -64,12 +66,48 @@ impl CacheState {
 
     /// Insert Loaded (Or LoadedEmptyEip161 if account is empty) account.
     pub fn insert_account(&mut self, address: Address, info: AccountInfo) {
+        #[cfg(feature = "fluent_revm")]
+        self.insert_contract(&mut info.clone().into());
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, HashMap::default())
         } else {
             CacheAccount::new_loaded_empty_eip161(HashMap::default())
         };
         self.accounts.insert(address, account);
+    }
+
+    pub fn insert_contract(&mut self, info: &mut AccountInfo) {
+        println!("insert contract");
+        if let Some(code) = &info.code {
+            if !code.is_empty() {
+                if info.code_hash == KECCAK_EMPTY {
+                    info.code_hash = code.hash_slow();
+                }
+                self.contracts
+                    .entry(info.code_hash)
+                    .or_insert_with(|| code.clone());
+            }
+        }
+        if let Some(rwasm_code) = &info.rwasm_code {
+            if !rwasm_code.is_empty() {
+                if info.rwasm_code_hash == POSEIDON_EMPTY {
+                    LowLevelSDK::crypto_poseidon(
+                        rwasm_code.bytes().as_ptr(),
+                        rwasm_code.len() as u32,
+                        info.rwasm_code_hash.as_mut_ptr(),
+                    );
+                }
+                self.contracts
+                    .entry(info.rwasm_code_hash)
+                    .or_insert_with(|| rwasm_code.clone());
+            }
+        }
+        if info.code_hash == B256::ZERO {
+            info.code_hash = KECCAK_EMPTY;
+        }
+        if info.rwasm_code_hash == B256::ZERO {
+            info.rwasm_code_hash = POSEIDON_EMPTY;
+        }
     }
 
     /// Similar to `insert_account` but with storage.

@@ -28,28 +28,30 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
-        let opcode = interp.current_opcode();
-        let name = OpCode::name_by_op(opcode);
+        if cfg!(not(feature = "fluent_revm")) {
+            let opcode = interp.current_opcode();
+            let name = OpCode::name_by_op(opcode);
 
-        let gas_remaining = self.gas_inspector.gas_remaining();
+            let gas_remaining = self.gas_inspector.gas_remaining();
 
-        let memory_size = interp.shared_memory.len();
+            let memory_size = interp.shared_memory.len();
 
-        println!(
-            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
-            context.journaled_state.depth(),
-            interp.program_counter(),
-            gas_remaining,
-            gas_remaining,
-            name,
-            opcode,
-            interp.gas.refunded(),
-            interp.gas.refunded(),
-            interp.stack.data(),
-            memory_size,
-        );
+            println!(
+                "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
+                context.journaled_state.depth(),
+                interp.program_counter(),
+                gas_remaining,
+                gas_remaining,
+                name,
+                opcode,
+                interp.gas.refunded(),
+                interp.gas.refunded(),
+                interp.stack.data(),
+                memory_size,
+            );
 
-        self.gas_inspector.step(interp, context);
+            self.gas_inspector.step(interp, context);
+        }
     }
 
     fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {

@@ -45,8 +45,9 @@ impl Default for Context<(), EmptyDB> {
 impl Context<(), EmptyDB> {
     /// Creates empty context. This is useful for testing.
     pub fn new_empty() -> Context<(), EmptyDB> {
+        let evm_context = EvmContext::new(EmptyDB::new());
         Context {
-            evm: EvmContext::new(EmptyDB::new()),
+            evm: evm_context,
             external: (),
         }
     }

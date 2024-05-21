@@ -2,16 +2,46 @@
 members = [
     "bins/revme",
     "bins/revm-test",
-    "crates/revm",
-    "crates/primitives",
-    "crates/interpreter",
-    "crates/precompile",
+    "crates/*",
+    "e2e",
 ]
 resolver = "2"
 default-members = ["crates/revm"]
 
+[workspace.package]
+authors = [
+    "Stanislav Stepanov <stanislav@fluentlabs.xyz>",
+]
+edition = "2021"
+readme = "README.md"
+repository = "https://github.com/fluentlabs-xyz/revm-rwasm"
+keywords = ["evm", "revm", "rust", "fluent"]
+categories = ["evm", "no-std"]
+
 [workspace.dependencies]
 c-kzg = { version = "1.0", default-features = false }
+lazy_static = { version = "1.4.0", default-features = false }
+paste = { version = "1.0", default-features = false }
+
+fluentbase-types = { path = "../fluentbase/crates/types", default-features = false }
+fluentbase-core = { path = "../fluentbase/crates/core", default-features = false, features = ["ecl", "wcl"] }
+fluentbase-sdk = { path = "../fluentbase/crates/sdk", default-features = false }
+fluentbase-runtime = { path = "../fluentbase/crates/runtime", default-features = false }
+fluentbase-codec = { path = "../fluentbase/crates/codec" }
+fluentbase-codec-derive = { path = "../fluentbase/crates/codec-derive" }
+fluentbase-poseidon = { path = "../fluentbase/crates/poseidon" }
+fluentbase-genesis = { path = "../fluentbase/crates/genesis" }
+
+rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm", branch = "devel", default-features = false }
+#rwasm = { path = "../rwasm/rwasm", default-features = false }
+
+revm = { path = "crates/revm", features = [
+    "ethersdb",
+    "std",
+    "serde-json",
+    "c-kzg",
+    "blst"] }
+#revm-fluent = { path = "crates/revm_fluent" }
 
 [workspace.metadata.docs.rs]
 all-features = true

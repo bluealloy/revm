@@ -40,177 +40,179 @@ impl<DB: Database, INSP: Inspector<DB>> GetInspector<DB> for INSP {
 pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
     handler: &mut EvmHandler<'_, EXT, DB>,
 ) {
-    // Every instruction inside flat table that is going to be wrapped by inspector calls.
-    let table = handler.take_instruction_table();
-    let mut table = match table {
-        InstructionTables::Plain(table) => table
-            .into_iter()
-            .map(|i| inspector_instruction(i))
-            .collect::<Vec<_>>(),
-        InstructionTables::Boxed(table) => table
-            .into_iter()
-            .map(|i| inspector_instruction(i))
-            .collect::<Vec<_>>(),
-    };
+    if cfg!(not(feature = "fluent_revm")) {
+        // Every instruction inside flat table that is going to be wrapped by inspector calls.
+        let table = handler.take_instruction_table();
+        let mut table = match table {
+            InstructionTables::Plain(table) => table
+                .into_iter()
+                .map(|i| inspector_instruction(i))
+                .collect::<Vec<_>>(),
+            InstructionTables::Boxed(table) => table
+                .into_iter()
+                .map(|i| inspector_instruction(i))
+                .collect::<Vec<_>>(),
+        };
 
-    // Register inspector Log instruction.
-    let mut inspect_log = |index: u8| {
-        if let Some(i) = table.get_mut(index as usize) {
+        // Register inspector Log instruction.
+        let mut inspect_log = |index: u8| {
+            if let Some(i) = table.get_mut(index as usize) {
+                let old = core::mem::replace(i, Box::new(|_, _| ()));
+                *i = Box::new(
+                    move |interpreter: &mut Interpreter, host: &mut Context<EXT, DB>| {
+                        let old_log_len = host.evm.journaled_state.logs.len();
+                        old(interpreter, host);
+                        // check if log was added. It is possible that revert happened
+                        // cause of gas or stack underflow.
+                        if host.evm.journaled_state.logs.len() == old_log_len + 1 {
+                            // clone log.
+                            // TODO decide if we should remove this and leave the comment
+                            // that log can be found as journaled_state.
+                            let last_log = host.evm.journaled_state.logs.last().unwrap().clone();
+                            // call Inspector
+                            host.external.get_inspector().log(&mut host.evm, &last_log);
+                        }
+                    },
+                )
+            }
+        };
+
+        inspect_log(opcode::LOG0);
+        inspect_log(opcode::LOG1);
+        inspect_log(opcode::LOG2);
+        inspect_log(opcode::LOG3);
+        inspect_log(opcode::LOG4);
+
+        // // register selfdestruct function.
+        if let Some(i) = table.get_mut(opcode::SELFDESTRUCT as usize) {
             let old = core::mem::replace(i, Box::new(|_, _| ()));
             *i = Box::new(
                 move |interpreter: &mut Interpreter, host: &mut Context<EXT, DB>| {
-                    let old_log_len = host.evm.journaled_state.logs.len();
+                    // execute selfdestruct
                     old(interpreter, host);
-                    // check if log was added. It is possible that revert happened
-                    // cause of gas or stack underflow.
-                    if host.evm.journaled_state.logs.len() == old_log_len + 1 {
-                        // clone log.
-                        // TODO decide if we should remove this and leave the comment
-                        // that log can be found as journaled_state.
-                        let last_log = host.evm.journaled_state.logs.last().unwrap().clone();
-                        // call Inspector
-                        host.external.get_inspector().log(&mut host.evm, &last_log);
+                    // check if selfdestruct was successful and if journal entry is made.
+                    if let Some(JournalEntry::AccountDestroyed {
+                        address,
+                        target,
+                        had_balance,
+                        ..
+                    }) = host.evm.journaled_state.journal.last().unwrap().last()
+                    {
+                        host.external
+                            .get_inspector()
+                            .selfdestruct(*address, *target, *had_balance);
                     }
                 },
             )
         }
-    };
 
-    inspect_log(opcode::LOG0);
-    inspect_log(opcode::LOG1);
-    inspect_log(opcode::LOG2);
-    inspect_log(opcode::LOG3);
-    inspect_log(opcode::LOG4);
+        // cast vector to array.
+        handler.set_instruction_table(InstructionTables::Boxed(
+            table.try_into().unwrap_or_else(|_| unreachable!()),
+        ));
 
-    // // register selfdestruct function.
-    if let Some(i) = table.get_mut(opcode::SELFDESTRUCT as usize) {
-        let old = core::mem::replace(i, Box::new(|_, _| ()));
-        *i = Box::new(
-            move |interpreter: &mut Interpreter, host: &mut Context<EXT, DB>| {
-                // execute selfdestruct
-                old(interpreter, host);
-                // check if selfdestruct was successful and if journal entry is made.
-                if let Some(JournalEntry::AccountDestroyed {
-                    address,
-                    target,
-                    had_balance,
-                    ..
-                }) = host.evm.journaled_state.journal.last().unwrap().last()
-                {
-                    host.external
-                        .get_inspector()
-                        .selfdestruct(*address, *target, *had_balance);
+        // call and create input stack shared between handlers. They are used to share
+        // inputs in *_end Inspector calls.
+        let call_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
+        let create_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
+        let eofcreate_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
+
+        // Create handler
+        let create_input_stack_inner = create_input_stack.clone();
+        let old_handle = handler.execution.create.clone();
+        handler.execution.create = Arc::new(
+            move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
+                let inspector = ctx.external.get_inspector();
+                // call inspector create to change input or return outcome.
+                if let Some(outcome) = inspector.create(&mut ctx.evm, &mut inputs) {
+                    create_input_stack_inner.borrow_mut().push(inputs.clone());
+                    return Ok(FrameOrResult::Result(FrameResult::Create(outcome)));
                 }
-            },
-        )
-    }
-
-    // cast vector to array.
-    handler.set_instruction_table(InstructionTables::Boxed(
-        table.try_into().unwrap_or_else(|_| unreachable!()),
-    ));
-
-    // call and create input stack shared between handlers. They are used to share
-    // inputs in *_end Inspector calls.
-    let call_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
-    let create_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
-    let eofcreate_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
-
-    // Create handler
-    let create_input_stack_inner = create_input_stack.clone();
-    let old_handle = handler.execution.create.clone();
-    handler.execution.create = Arc::new(
-        move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
-            let inspector = ctx.external.get_inspector();
-            // call inspector create to change input or return outcome.
-            if let Some(outcome) = inspector.create(&mut ctx.evm, &mut inputs) {
                 create_input_stack_inner.borrow_mut().push(inputs.clone());
-                return Ok(FrameOrResult::Result(FrameResult::Create(outcome)));
-            }
-            create_input_stack_inner.borrow_mut().push(inputs.clone());
 
-            let mut frame_or_result = old_handle(ctx, inputs);
-            if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
-                ctx.external
+                let mut frame_or_result = old_handle(ctx, inputs);
+                if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
+                    ctx.external
+                        .get_inspector()
+                        .initialize_interp(frame.interpreter_mut(), &mut ctx.evm)
+                }
+                frame_or_result
+            },
+        );
+
+        // Call handler
+        let call_input_stack_inner = call_input_stack.clone();
+        let old_handle = handler.execution.call.clone();
+        handler.execution.call = Arc::new(
+            move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
+                // Call inspector to change input or return outcome.
+                let outcome = ctx.external.get_inspector().call(&mut ctx.evm, &mut inputs);
+                call_input_stack_inner.borrow_mut().push(inputs.clone());
+                if let Some(outcome) = outcome {
+                    return Ok(FrameOrResult::Result(FrameResult::Call(outcome)));
+                }
+
+                let mut frame_or_result = old_handle(ctx, inputs);
+                if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
+                    ctx.external
+                        .get_inspector()
+                        .initialize_interp(frame.interpreter_mut(), &mut ctx.evm)
+                }
+                frame_or_result
+            },
+        );
+
+        // TODO(EOF) EOF create call.
+
+        // call outcome
+        let call_input_stack_inner = call_input_stack.clone();
+        let old_handle = handler.execution.insert_call_outcome.clone();
+        handler.execution.insert_call_outcome =
+            Arc::new(move |ctx, frame, shared_memory, mut outcome| {
+                let call_inputs = call_input_stack_inner.borrow_mut().pop().unwrap();
+                outcome = ctx
+                    .external
                     .get_inspector()
-                    .initialize_interp(frame.interpreter_mut(), &mut ctx.evm)
-            }
-            frame_or_result
-        },
-    );
+                    .call_end(&mut ctx.evm, &call_inputs, outcome);
+                old_handle(ctx, frame, shared_memory, outcome)
+            });
 
-    // Call handler
-    let call_input_stack_inner = call_input_stack.clone();
-    let old_handle = handler.execution.call.clone();
-    handler.execution.call = Arc::new(
-        move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
-            // Call inspector to change input or return outcome.
-            let outcome = ctx.external.get_inspector().call(&mut ctx.evm, &mut inputs);
-            call_input_stack_inner.borrow_mut().push(inputs.clone());
-            if let Some(outcome) = outcome {
-                return Ok(FrameOrResult::Result(FrameResult::Call(outcome)));
-            }
-
-            let mut frame_or_result = old_handle(ctx, inputs);
-            if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
-                ctx.external
-                    .get_inspector()
-                    .initialize_interp(frame.interpreter_mut(), &mut ctx.evm)
-            }
-            frame_or_result
-        },
-    );
-
-    // TODO(EOF) EOF create call.
-
-    // call outcome
-    let call_input_stack_inner = call_input_stack.clone();
-    let old_handle = handler.execution.insert_call_outcome.clone();
-    handler.execution.insert_call_outcome =
-        Arc::new(move |ctx, frame, shared_memory, mut outcome| {
-            let call_inputs = call_input_stack_inner.borrow_mut().pop().unwrap();
+        // create outcome
+        let create_input_stack_inner = create_input_stack.clone();
+        let old_handle = handler.execution.insert_create_outcome.clone();
+        handler.execution.insert_create_outcome = Arc::new(move |ctx, frame, mut outcome| {
+            let create_inputs = create_input_stack_inner.borrow_mut().pop().unwrap();
             outcome = ctx
                 .external
                 .get_inspector()
-                .call_end(&mut ctx.evm, &call_inputs, outcome);
-            old_handle(ctx, frame, shared_memory, outcome)
+                .create_end(&mut ctx.evm, &create_inputs, outcome);
+            old_handle(ctx, frame, outcome)
         });
 
-    // create outcome
-    let create_input_stack_inner = create_input_stack.clone();
-    let old_handle = handler.execution.insert_create_outcome.clone();
-    handler.execution.insert_create_outcome = Arc::new(move |ctx, frame, mut outcome| {
-        let create_inputs = create_input_stack_inner.borrow_mut().pop().unwrap();
-        outcome = ctx
-            .external
-            .get_inspector()
-            .create_end(&mut ctx.evm, &create_inputs, outcome);
-        old_handle(ctx, frame, outcome)
-    });
+        // TODO(EOF) EOF create handle.
 
-    // TODO(EOF) EOF create handle.
-
-    // last frame outcome
-    let old_handle = handler.execution.last_frame_return.clone();
-    handler.execution.last_frame_return = Arc::new(move |ctx, frame_result| {
-        let inspector = ctx.external.get_inspector();
-        match frame_result {
-            FrameResult::Call(outcome) => {
-                let call_inputs = call_input_stack.borrow_mut().pop().unwrap();
-                *outcome = inspector.call_end(&mut ctx.evm, &call_inputs, outcome.clone());
+        // last frame outcome
+        let old_handle = handler.execution.last_frame_return.clone();
+        handler.execution.last_frame_return = Arc::new(move |ctx, frame_result| {
+            let inspector = ctx.external.get_inspector();
+            match frame_result {
+                FrameResult::Call(outcome) => {
+                    let call_inputs = call_input_stack.borrow_mut().pop().unwrap();
+                    *outcome = inspector.call_end(&mut ctx.evm, &call_inputs, outcome.clone());
+                }
+                FrameResult::Create(outcome) => {
+                    let create_inputs = create_input_stack.borrow_mut().pop().unwrap();
+                    *outcome = inspector.create_end(&mut ctx.evm, &create_inputs, outcome.clone());
+                }
+                FrameResult::EOFCreate(outcome) => {
+                    let eofcreate_inputs = eofcreate_input_stack.borrow_mut().pop().unwrap();
+                    *outcome =
+                        inspector.eofcreate_end(&mut ctx.evm, &eofcreate_inputs, outcome.clone());
+                }
             }
-            FrameResult::Create(outcome) => {
-                let create_inputs = create_input_stack.borrow_mut().pop().unwrap();
-                *outcome = inspector.create_end(&mut ctx.evm, &create_inputs, outcome.clone());
-            }
-            FrameResult::EOFCreate(outcome) => {
-                let eofcreate_inputs = eofcreate_input_stack.borrow_mut().pop().unwrap();
-                *outcome =
-                    inspector.eofcreate_end(&mut ctx.evm, &eofcreate_inputs, outcome.clone());
-            }
-        }
-        old_handle(ctx, frame_result)
-    });
+            old_handle(ctx, frame_result)
+        });
+    }
 }
 
 /// Outer closure that calls Inspector for every instruction.
