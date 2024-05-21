@@ -402,8 +402,8 @@ mod test {
         inspector::inspector_handle_register,
         inspectors::NoOpInspector,
         primitives::{
-            address, AccountInfo, Address, Bytecode, Bytes, EthSpecId, PrecompileResult,
-            TransactTo, U256,
+            address, AccountInfo, Address, Bytecode, Bytes, PrecompileResult, SpecId, TransactTo,
+            U256,
         },
         Context, ContextPrecompile, ContextStatefulPrecompile, Evm, InMemoryDB, InnerEvmContext,
     };
@@ -533,7 +533,7 @@ mod test {
         // build with spec
         Evm::builder()
             .with_empty_db()
-            .with_spec_id(EthSpecId::HOMESTEAD)
+            .with_spec_id(SpecId::HOMESTEAD)
             .build();
 
         // with with Env change in multiple places
@@ -583,11 +583,11 @@ mod test {
         // build evm
         let evm = Evm::builder()
             .with_empty_db()
-            .with_spec_id(EthSpecId::HOMESTEAD)
+            .with_spec_id(SpecId::HOMESTEAD)
             .build();
 
         // modify evm
-        let evm = evm.modify().with_spec_id(EthSpecId::FRONTIER).build();
+        let evm = evm.modify().with_spec_id(SpecId::FRONTIER).build();
         let _ = evm
             .modify()
             .modify_tx_env(|tx| tx.chain_id = Some(2))
@@ -611,7 +611,7 @@ mod test {
 
         let mut evm = Evm::builder()
             .with_empty_db()
-            .with_spec_id(EthSpecId::HOMESTEAD)
+            .with_spec_id(SpecId::HOMESTEAD)
             .append_handler_register(|handler| {
                 let precompiles = handler.pre_execution.load_precompiles();
                 handler.pre_execution.load_precompiles = Arc::new(move || {

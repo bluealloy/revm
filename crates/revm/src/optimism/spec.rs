@@ -1,6 +1,6 @@
 use revm_precompile::PrecompileSpecId;
 
-use crate::primitives::{ChainSpec, EthSpecId, Spec};
+use crate::primitives::{ChainSpec, Spec, SpecId};
 
 use super::OptimismHaltReason;
 
@@ -64,64 +64,64 @@ impl OptimismSpecId {
         our as u8 >= other as u8
     }
 
-    /// Converts the `OptimismSpecId` into a `EthSpecId`.
-    const fn into_eth_spec_id(self) -> EthSpecId {
+    /// Converts the `OptimismSpecId` into a `SpecId`.
+    const fn into_eth_spec_id(self) -> SpecId {
         match self {
-            OptimismSpecId::FRONTIER => EthSpecId::FRONTIER,
-            OptimismSpecId::FRONTIER_THAWING => EthSpecId::FRONTIER_THAWING,
-            OptimismSpecId::HOMESTEAD => EthSpecId::HOMESTEAD,
-            OptimismSpecId::DAO_FORK => EthSpecId::DAO_FORK,
-            OptimismSpecId::TANGERINE => EthSpecId::TANGERINE,
-            OptimismSpecId::SPURIOUS_DRAGON => EthSpecId::SPURIOUS_DRAGON,
-            OptimismSpecId::BYZANTIUM => EthSpecId::BYZANTIUM,
-            OptimismSpecId::CONSTANTINOPLE => EthSpecId::CONSTANTINOPLE,
-            OptimismSpecId::PETERSBURG => EthSpecId::PETERSBURG,
-            OptimismSpecId::ISTANBUL => EthSpecId::ISTANBUL,
-            OptimismSpecId::MUIR_GLACIER => EthSpecId::MUIR_GLACIER,
-            OptimismSpecId::BERLIN => EthSpecId::BERLIN,
-            OptimismSpecId::LONDON => EthSpecId::LONDON,
-            OptimismSpecId::ARROW_GLACIER => EthSpecId::ARROW_GLACIER,
-            OptimismSpecId::GRAY_GLACIER => EthSpecId::GRAY_GLACIER,
+            OptimismSpecId::FRONTIER => SpecId::FRONTIER,
+            OptimismSpecId::FRONTIER_THAWING => SpecId::FRONTIER_THAWING,
+            OptimismSpecId::HOMESTEAD => SpecId::HOMESTEAD,
+            OptimismSpecId::DAO_FORK => SpecId::DAO_FORK,
+            OptimismSpecId::TANGERINE => SpecId::TANGERINE,
+            OptimismSpecId::SPURIOUS_DRAGON => SpecId::SPURIOUS_DRAGON,
+            OptimismSpecId::BYZANTIUM => SpecId::BYZANTIUM,
+            OptimismSpecId::CONSTANTINOPLE => SpecId::CONSTANTINOPLE,
+            OptimismSpecId::PETERSBURG => SpecId::PETERSBURG,
+            OptimismSpecId::ISTANBUL => SpecId::ISTANBUL,
+            OptimismSpecId::MUIR_GLACIER => SpecId::MUIR_GLACIER,
+            OptimismSpecId::BERLIN => SpecId::BERLIN,
+            OptimismSpecId::LONDON => SpecId::LONDON,
+            OptimismSpecId::ARROW_GLACIER => SpecId::ARROW_GLACIER,
+            OptimismSpecId::GRAY_GLACIER => SpecId::GRAY_GLACIER,
             OptimismSpecId::MERGE | OptimismSpecId::BEDROCK | OptimismSpecId::REGOLITH => {
-                EthSpecId::MERGE
+                SpecId::MERGE
             }
-            OptimismSpecId::SHANGHAI | OptimismSpecId::CANYON => EthSpecId::SHANGHAI,
-            OptimismSpecId::CANCUN | OptimismSpecId::ECOTONE => EthSpecId::CANCUN,
-            OptimismSpecId::PRAGUE => EthSpecId::PRAGUE,
-            OptimismSpecId::LATEST => EthSpecId::LATEST,
+            OptimismSpecId::SHANGHAI | OptimismSpecId::CANYON => SpecId::SHANGHAI,
+            OptimismSpecId::CANCUN | OptimismSpecId::ECOTONE => SpecId::CANCUN,
+            OptimismSpecId::PRAGUE => SpecId::PRAGUE,
+            OptimismSpecId::LATEST => SpecId::LATEST,
         }
     }
 }
 
-impl From<OptimismSpecId> for EthSpecId {
+impl From<OptimismSpecId> for SpecId {
     fn from(value: OptimismSpecId) -> Self {
         value.into_eth_spec_id()
     }
 }
 
-impl From<EthSpecId> for OptimismSpecId {
-    fn from(value: EthSpecId) -> Self {
+impl From<SpecId> for OptimismSpecId {
+    fn from(value: SpecId) -> Self {
         match value {
-            EthSpecId::FRONTIER => Self::FRONTIER,
-            EthSpecId::FRONTIER_THAWING => Self::FRONTIER_THAWING,
-            EthSpecId::HOMESTEAD => Self::HOMESTEAD,
-            EthSpecId::DAO_FORK => Self::DAO_FORK,
-            EthSpecId::TANGERINE => Self::TANGERINE,
-            EthSpecId::SPURIOUS_DRAGON => Self::SPURIOUS_DRAGON,
-            EthSpecId::BYZANTIUM => Self::BYZANTIUM,
-            EthSpecId::CONSTANTINOPLE => Self::CONSTANTINOPLE,
-            EthSpecId::PETERSBURG => Self::PETERSBURG,
-            EthSpecId::ISTANBUL => Self::ISTANBUL,
-            EthSpecId::MUIR_GLACIER => Self::MUIR_GLACIER,
-            EthSpecId::BERLIN => Self::BERLIN,
-            EthSpecId::LONDON => Self::LONDON,
-            EthSpecId::ARROW_GLACIER => Self::ARROW_GLACIER,
-            EthSpecId::GRAY_GLACIER => Self::GRAY_GLACIER,
-            EthSpecId::MERGE => Self::MERGE,
-            EthSpecId::SHANGHAI => Self::SHANGHAI,
-            EthSpecId::CANCUN => Self::CANCUN,
-            EthSpecId::PRAGUE => Self::PRAGUE,
-            EthSpecId::LATEST => Self::LATEST,
+            SpecId::FRONTIER => Self::FRONTIER,
+            SpecId::FRONTIER_THAWING => Self::FRONTIER_THAWING,
+            SpecId::HOMESTEAD => Self::HOMESTEAD,
+            SpecId::DAO_FORK => Self::DAO_FORK,
+            SpecId::TANGERINE => Self::TANGERINE,
+            SpecId::SPURIOUS_DRAGON => Self::SPURIOUS_DRAGON,
+            SpecId::BYZANTIUM => Self::BYZANTIUM,
+            SpecId::CONSTANTINOPLE => Self::CONSTANTINOPLE,
+            SpecId::PETERSBURG => Self::PETERSBURG,
+            SpecId::ISTANBUL => Self::ISTANBUL,
+            SpecId::MUIR_GLACIER => Self::MUIR_GLACIER,
+            SpecId::BERLIN => Self::BERLIN,
+            SpecId::LONDON => Self::LONDON,
+            SpecId::ARROW_GLACIER => Self::ARROW_GLACIER,
+            SpecId::GRAY_GLACIER => Self::GRAY_GLACIER,
+            SpecId::MERGE => Self::MERGE,
+            SpecId::SHANGHAI => Self::SHANGHAI,
+            SpecId::CANCUN => Self::CANCUN,
+            SpecId::PRAGUE => Self::PRAGUE,
+            SpecId::LATEST => Self::LATEST,
         }
     }
 }
@@ -211,7 +211,7 @@ macro_rules! spec {
         }
 
         impl Spec for $spec_name {
-            const SPEC_ID: EthSpecId = $spec_name::OPTIMISM_SPEC_ID.into_eth_spec_id();
+            const SPEC_ID: SpecId = $spec_name::OPTIMISM_SPEC_ID.into_eth_spec_id();
         }
     };
 }
@@ -339,99 +339,99 @@ mod tests {
     fn optimism_spec_to_generic() {
         optimism_spec_to_generic!(
             OptimismSpecId::FRONTIER,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::FRONTIER)
+            assert_eq!(SPEC::SPEC_ID, SpecId::FRONTIER)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::FRONTIER_THAWING,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::FRONTIER)
+            assert_eq!(SPEC::SPEC_ID, SpecId::FRONTIER)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::HOMESTEAD,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::HOMESTEAD)
+            assert_eq!(SPEC::SPEC_ID, SpecId::HOMESTEAD)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::DAO_FORK,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::HOMESTEAD)
+            assert_eq!(SPEC::SPEC_ID, SpecId::HOMESTEAD)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::TANGERINE,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::TANGERINE)
+            assert_eq!(SPEC::SPEC_ID, SpecId::TANGERINE)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::SPURIOUS_DRAGON,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::SPURIOUS_DRAGON)
+            assert_eq!(SPEC::SPEC_ID, SpecId::SPURIOUS_DRAGON)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::BYZANTIUM,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::BYZANTIUM)
+            assert_eq!(SPEC::SPEC_ID, SpecId::BYZANTIUM)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::CONSTANTINOPLE,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::PETERSBURG)
+            assert_eq!(SPEC::SPEC_ID, SpecId::PETERSBURG)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::PETERSBURG,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::PETERSBURG)
+            assert_eq!(SPEC::SPEC_ID, SpecId::PETERSBURG)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::ISTANBUL,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::ISTANBUL)
+            assert_eq!(SPEC::SPEC_ID, SpecId::ISTANBUL)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::MUIR_GLACIER,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::ISTANBUL)
+            assert_eq!(SPEC::SPEC_ID, SpecId::ISTANBUL)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::BERLIN,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::BERLIN)
+            assert_eq!(SPEC::SPEC_ID, SpecId::BERLIN)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::LONDON,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::LONDON)
+            assert_eq!(SPEC::SPEC_ID, SpecId::LONDON)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::ARROW_GLACIER,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::LONDON)
+            assert_eq!(SPEC::SPEC_ID, SpecId::LONDON)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::GRAY_GLACIER,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::LONDON)
+            assert_eq!(SPEC::SPEC_ID, SpecId::LONDON)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::MERGE,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::MERGE)
+            assert_eq!(SPEC::SPEC_ID, SpecId::MERGE)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::BEDROCK,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::MERGE)
+            assert_eq!(SPEC::SPEC_ID, SpecId::MERGE)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::REGOLITH,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::MERGE)
+            assert_eq!(SPEC::SPEC_ID, SpecId::MERGE)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::SHANGHAI,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::SHANGHAI)
+            assert_eq!(SPEC::SPEC_ID, SpecId::SHANGHAI)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::CANYON,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::SHANGHAI)
+            assert_eq!(SPEC::SPEC_ID, SpecId::SHANGHAI)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::CANCUN,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::CANCUN)
+            assert_eq!(SPEC::SPEC_ID, SpecId::CANCUN)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::ECOTONE,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::CANCUN)
+            assert_eq!(SPEC::SPEC_ID, SpecId::CANCUN)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::PRAGUE,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::PRAGUE)
+            assert_eq!(SPEC::SPEC_ID, SpecId::PRAGUE)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::LATEST,
-            assert_eq!(SPEC::SPEC_ID, EthSpecId::LATEST)
+            assert_eq!(SPEC::SPEC_ID, SpecId::LATEST)
         );
 
         optimism_spec_to_generic!(

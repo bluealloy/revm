@@ -10,7 +10,7 @@ use crate::{
     gas::{self, cost_per_word, BASE, EOF_CREATE_GAS, KECCAK256WORD},
     instructions::utility::read_u16,
     interpreter::Interpreter,
-    primitives::{Address, Bytes, Eof, EthSpecId::*, Spec, B256, U256},
+    primitives::{Address, Bytes, Eof, Spec, SpecId::*, B256, U256},
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInput, Host,
     InstructionResult, InterpreterAction, InterpreterResult, LoadAccountResult, MAX_INITCODE_SIZE,
 };

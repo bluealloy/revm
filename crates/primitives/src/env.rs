@@ -1,7 +1,7 @@
 use crate::{
-    calc_blob_gasprice, Account, Address, Bytes, EthSpecId, HashMap, InvalidHeader,
-    InvalidTransaction, Spec, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK,
-    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
+    calc_blob_gasprice, Account, Address, Bytes, HashMap, InvalidHeader, InvalidTransaction, Spec,
+    SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
+    VERSIONED_HASH_VERSION_KZG,
 };
 use core::cmp::{min, Ordering};
 use core::hash::Hash;
@@ -72,11 +72,11 @@ impl Env {
     #[inline]
     pub fn validate_block_env<SPEC: Spec>(&self) -> Result<(), InvalidHeader> {
         // `prevrandao` is required for the merge
-        if SPEC::enabled(EthSpecId::MERGE) && self.block.prevrandao.is_none() {
+        if SPEC::enabled(SpecId::MERGE) && self.block.prevrandao.is_none() {
             return Err(InvalidHeader::PrevrandaoNotSet);
         }
         // `excess_blob_gas` is required for Cancun
-        if SPEC::enabled(EthSpecId::CANCUN) && self.block.blob_excess_gas_and_price.is_none() {
+        if SPEC::enabled(SpecId::CANCUN) && self.block.blob_excess_gas_and_price.is_none() {
             return Err(InvalidHeader::ExcessBlobGasNotSet);
         }
         Ok(())
@@ -88,7 +88,7 @@ impl Env {
     #[inline]
     pub fn validate_tx<SPEC: Spec>(&self) -> Result<(), InvalidTransaction> {
         // BASEFEE tx check
-        if SPEC::enabled(EthSpecId::LONDON) {
+        if SPEC::enabled(SpecId::LONDON) {
             if let Some(priority_fee) = self.tx.gas_priority_fee {
                 if priority_fee > self.tx.gas_price {
                     // or gas_max_fee for eip1559
@@ -112,7 +112,7 @@ impl Env {
         }
 
         // EIP-3860: Limit and meter initcode
-        if SPEC::enabled(EthSpecId::SHANGHAI) && self.tx.transact_to.is_create() {
+        if SPEC::enabled(SpecId::SHANGHAI) && self.tx.transact_to.is_create() {
             let max_initcode_size = self
                 .cfg
                 .limit_contract_code_size
@@ -131,13 +131,13 @@ impl Env {
         }
 
         // Check that access list is empty for transactions before BERLIN
-        if !SPEC::enabled(EthSpecId::BERLIN) && !self.tx.access_list.is_empty() {
+        if !SPEC::enabled(SpecId::BERLIN) && !self.tx.access_list.is_empty() {
             return Err(InvalidTransaction::AccessListNotSupported);
         }
 
         // - For CANCUN and later, check that the gas price is not more than the tx max
         // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not set
-        if SPEC::enabled(EthSpecId::CANCUN) {
+        if SPEC::enabled(SpecId::CANCUN) {
             // Presence of max_fee_per_blob_gas means that this is blob transaction.
             if let Some(max) = self.tx.max_fee_per_blob_gas {
                 // ensure that the user was willing to at least pay the current blob gasprice
@@ -181,7 +181,7 @@ impl Env {
             }
         }
 
-        if SPEC::enabled(EthSpecId::PRAGUE) {
+        if SPEC::enabled(SpecId::PRAGUE) {
             if !self.tx.eof_initcodes.is_empty() {
                 // If initcode is set other fields must be empty
                 if !self.tx.blob_hashes.is_empty() {
@@ -251,7 +251,7 @@ impl Env {
             .and_then(|gas_cost| gas_cost.checked_add(self.tx.value))
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
-        if SPEC::enabled(EthSpecId::CANCUN) {
+        if SPEC::enabled(SpecId::CANCUN) {
             // if the tx is not a blob tx, this will be None, so we add zero
             let data_fee = self.calc_max_data_fee().unwrap_or_default();
             balance_check = balance_check

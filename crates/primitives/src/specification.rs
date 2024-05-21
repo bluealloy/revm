@@ -1,6 +1,6 @@
 #![allow(non_camel_case_types)]
 
-pub use EthSpecId::*;
+pub use SpecId::*;
 
 /// Specification IDs and their activation block.
 ///
@@ -8,7 +8,7 @@ pub use EthSpecId::*;
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, enumn::N)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum EthSpecId {
+pub enum SpecId {
     FRONTIER = 0,         // Frontier               0
     FRONTIER_THAWING = 1, // Frontier Thawing       200000
     HOMESTEAD = 2,        // Homestead              1150000
@@ -32,7 +32,7 @@ pub enum EthSpecId {
     LATEST = u8::MAX,
 }
 
-impl EthSpecId {
+impl SpecId {
     /// Returns the `SpecId` for the given `u8`.
     #[inline]
     pub fn try_from_u8(spec_id: u8) -> Option<Self> {
@@ -47,12 +47,12 @@ impl EthSpecId {
 
     /// Returns `true` if the given specification ID is enabled in this spec.
     #[inline]
-    pub const fn enabled(our: EthSpecId, other: EthSpecId) -> bool {
+    pub const fn enabled(our: SpecId, other: SpecId) -> bool {
         our as u8 >= other as u8
     }
 }
 
-impl From<&str> for EthSpecId {
+impl From<&str> for SpecId {
     fn from(name: &str) -> Self {
         match name {
             "Frontier" => Self::FRONTIER,
@@ -75,41 +75,41 @@ impl From<&str> for EthSpecId {
     }
 }
 
-impl From<EthSpecId> for &'static str {
-    fn from(spec_id: EthSpecId) -> Self {
+impl From<SpecId> for &'static str {
+    fn from(spec_id: SpecId) -> Self {
         match spec_id {
-            EthSpecId::FRONTIER => "Frontier",
-            EthSpecId::FRONTIER_THAWING => "Frontier Thawing",
-            EthSpecId::HOMESTEAD => "Homestead",
-            EthSpecId::DAO_FORK => "DAO Fork",
-            EthSpecId::TANGERINE => "Tangerine",
-            EthSpecId::SPURIOUS_DRAGON => "Spurious",
-            EthSpecId::BYZANTIUM => "Byzantium",
-            EthSpecId::CONSTANTINOPLE => "Constantinople",
-            EthSpecId::PETERSBURG => "Petersburg",
-            EthSpecId::ISTANBUL => "Istanbul",
-            EthSpecId::MUIR_GLACIER => "MuirGlacier",
-            EthSpecId::BERLIN => "Berlin",
-            EthSpecId::LONDON => "London",
-            EthSpecId::ARROW_GLACIER => "Arrow Glacier",
-            EthSpecId::GRAY_GLACIER => "Gray Glacier",
-            EthSpecId::MERGE => "Merge",
-            EthSpecId::SHANGHAI => "Shanghai",
-            EthSpecId::CANCUN => "Cancun",
-            EthSpecId::PRAGUE => "Prague",
-            EthSpecId::LATEST => "Latest",
+            SpecId::FRONTIER => "Frontier",
+            SpecId::FRONTIER_THAWING => "Frontier Thawing",
+            SpecId::HOMESTEAD => "Homestead",
+            SpecId::DAO_FORK => "DAO Fork",
+            SpecId::TANGERINE => "Tangerine",
+            SpecId::SPURIOUS_DRAGON => "Spurious",
+            SpecId::BYZANTIUM => "Byzantium",
+            SpecId::CONSTANTINOPLE => "Constantinople",
+            SpecId::PETERSBURG => "Petersburg",
+            SpecId::ISTANBUL => "Istanbul",
+            SpecId::MUIR_GLACIER => "MuirGlacier",
+            SpecId::BERLIN => "Berlin",
+            SpecId::LONDON => "London",
+            SpecId::ARROW_GLACIER => "Arrow Glacier",
+            SpecId::GRAY_GLACIER => "Gray Glacier",
+            SpecId::MERGE => "Merge",
+            SpecId::SHANGHAI => "Shanghai",
+            SpecId::CANCUN => "Cancun",
+            SpecId::PRAGUE => "Prague",
+            SpecId::LATEST => "Latest",
         }
     }
 }
 
 pub trait Spec: Sized + 'static {
     /// The specification ID.
-    const SPEC_ID: EthSpecId;
+    const SPEC_ID: SpecId;
 
     /// Returns `true` if the given specification ID is enabled in this spec.
     #[inline]
-    fn enabled(spec_id: EthSpecId) -> bool {
-        EthSpecId::enabled(Self::SPEC_ID, spec_id)
+    fn enabled(spec_id: SpecId) -> bool {
+        SpecId::enabled(Self::SPEC_ID, spec_id)
     }
 }
 
@@ -119,7 +119,7 @@ macro_rules! spec {
         pub struct $spec_name;
 
         impl Spec for $spec_name {
-            const SPEC_ID: EthSpecId = $spec_id;
+            const SPEC_ID: SpecId = $spec_id;
         }
     };
 }
@@ -151,61 +151,61 @@ macro_rules! spec_to_generic {
     ($spec_id:expr, $e:expr) => {{
         // We are transitioning from var to generic spec.
         match $spec_id {
-            $crate::EthSpecId::FRONTIER | $crate::EthSpecId::FRONTIER_THAWING => {
+            $crate::SpecId::FRONTIER | $crate::SpecId::FRONTIER_THAWING => {
                 use $crate::FrontierSpec as SPEC;
                 $e
             }
-            $crate::EthSpecId::HOMESTEAD | $crate::EthSpecId::DAO_FORK => {
+            $crate::SpecId::HOMESTEAD | $crate::SpecId::DAO_FORK => {
                 use $crate::HomesteadSpec as SPEC;
                 $e
             }
-            $crate::EthSpecId::TANGERINE => {
+            $crate::SpecId::TANGERINE => {
                 use $crate::TangerineSpec as SPEC;
                 $e
             }
-            $crate::EthSpecId::SPURIOUS_DRAGON => {
+            $crate::SpecId::SPURIOUS_DRAGON => {
                 use $crate::SpuriousDragonSpec as SPEC;
                 $e
             }
-            $crate::EthSpecId::BYZANTIUM => {
+            $crate::SpecId::BYZANTIUM => {
                 use $crate::ByzantiumSpec as SPEC;
                 $e
             }
-            $crate::EthSpecId::PETERSBURG | $crate::EthSpecId::CONSTANTINOPLE => {
+            $crate::SpecId::PETERSBURG | $crate::SpecId::CONSTANTINOPLE => {
                 use $crate::PetersburgSpec as SPEC;
                 $e
             }
-            $crate::EthSpecId::ISTANBUL | $crate::EthSpecId::MUIR_GLACIER => {
+            $crate::SpecId::ISTANBUL | $crate::SpecId::MUIR_GLACIER => {
                 use $crate::IstanbulSpec as SPEC;
                 $e
             }
-            $crate::EthSpecId::BERLIN => {
+            $crate::SpecId::BERLIN => {
                 use $crate::BerlinSpec as SPEC;
                 $e
             }
-            $crate::EthSpecId::LONDON
-            | $crate::EthSpecId::ARROW_GLACIER
-            | $crate::EthSpecId::GRAY_GLACIER => {
+            $crate::SpecId::LONDON
+            | $crate::SpecId::ARROW_GLACIER
+            | $crate::SpecId::GRAY_GLACIER => {
                 use $crate::LondonSpec as SPEC;
                 $e
             }
-            $crate::EthSpecId::MERGE => {
+            $crate::SpecId::MERGE => {
                 use $crate::MergeSpec as SPEC;
                 $e
             }
-            $crate::EthSpecId::SHANGHAI => {
+            $crate::SpecId::SHANGHAI => {
                 use $crate::ShanghaiSpec as SPEC;
                 $e
             }
-            $crate::EthSpecId::CANCUN => {
+            $crate::SpecId::CANCUN => {
                 use $crate::CancunSpec as SPEC;
                 $e
             }
-            $crate::EthSpecId::LATEST => {
+            $crate::SpecId::LATEST => {
                 use $crate::LatestSpec as SPEC;
                 $e
             }
-            $crate::EthSpecId::PRAGUE => {
+            $crate::SpecId::PRAGUE => {
                 use $crate::PragueSpec as SPEC;
                 $e
             }
@@ -219,7 +219,7 @@ mod tests {
 
     #[test]
     fn spec_to_generic() {
-        use EthSpecId::*;
+        use SpecId::*;
 
         spec_to_generic!(FRONTIER, assert_eq!(SPEC::SPEC_ID, FRONTIER));
         spec_to_generic!(FRONTIER_THAWING, assert_eq!(SPEC::SPEC_ID, FRONTIER));

@@ -9,8 +9,8 @@ use revm::{
     inspector_handle_register,
     inspectors::TracerEip3155,
     primitives::{
-        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, EthSpecId,
-        ExecutionResult, TransactTo, B256, U256,
+        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, ExecutionResult,
+        SpecId, TransactTo, B256, U256,
     },
     Evm, State,
 };
@@ -356,7 +356,7 @@ pub fn execute_test_suite(
                 env.tx.transact_to = to;
 
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(EthSpecId::enabled(spec_id, EthSpecId::SPURIOUS_DRAGON));
+                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
                 let mut state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
@@ -422,7 +422,7 @@ pub fn execute_test_suite(
 
                 // re build to run with tracing
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(EthSpecId::enabled(spec_id, EthSpecId::SPURIOUS_DRAGON));
+                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
                 let state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()

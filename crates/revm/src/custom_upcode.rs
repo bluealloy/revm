@@ -6,7 +6,7 @@ use revm_interpreter::{
 
 use crate::{
     handler::register::EvmHandler,
-    primitives::{db::Database, ChainSpec, EthSpecId, HaltReason, Spec},
+    primitives::{db::Database, ChainSpec, HaltReason, Spec, SpecId},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -61,34 +61,34 @@ impl CustomOpcodeSpecId {
         Self::enabled(self, other)
     }
 
-    /// Converts the `CustomOpcodeSpecId` into an `EthSpecId`.
-    const fn into_eth_spec_id(self) -> EthSpecId {
+    /// Converts the `CustomOpcodeSpecId` into an `SpecId`.
+    const fn into_eth_spec_id(self) -> SpecId {
         match self {
-            Self::FRONTIER => EthSpecId::FRONTIER,
-            Self::FRONTIER_THAWING => EthSpecId::FRONTIER_THAWING,
-            Self::HOMESTEAD => EthSpecId::HOMESTEAD,
-            Self::DAO_FORK => EthSpecId::DAO_FORK,
-            Self::TANGERINE => EthSpecId::TANGERINE,
-            Self::SPURIOUS_DRAGON => EthSpecId::SPURIOUS_DRAGON,
-            Self::BYZANTIUM => EthSpecId::BYZANTIUM,
-            Self::CONSTANTINOPLE => EthSpecId::CONSTANTINOPLE,
-            Self::PETERSBURG => EthSpecId::PETERSBURG,
-            Self::ISTANBUL => EthSpecId::ISTANBUL,
-            Self::MUIR_GLACIER => EthSpecId::MUIR_GLACIER,
-            Self::BERLIN => EthSpecId::BERLIN,
-            Self::LONDON => EthSpecId::LONDON,
-            Self::ARROW_GLACIER => EthSpecId::ARROW_GLACIER,
-            Self::GRAY_GLACIER => EthSpecId::GRAY_GLACIER,
-            Self::MERGE | Self::INTRODUCES_OPCODE => EthSpecId::MERGE,
-            Self::SHANGHAI => EthSpecId::SHANGHAI,
-            Self::CANCUN => EthSpecId::CANCUN,
-            Self::PRAGUE => EthSpecId::PRAGUE,
-            Self::LATEST => EthSpecId::LATEST,
+            Self::FRONTIER => SpecId::FRONTIER,
+            Self::FRONTIER_THAWING => SpecId::FRONTIER_THAWING,
+            Self::HOMESTEAD => SpecId::HOMESTEAD,
+            Self::DAO_FORK => SpecId::DAO_FORK,
+            Self::TANGERINE => SpecId::TANGERINE,
+            Self::SPURIOUS_DRAGON => SpecId::SPURIOUS_DRAGON,
+            Self::BYZANTIUM => SpecId::BYZANTIUM,
+            Self::CONSTANTINOPLE => SpecId::CONSTANTINOPLE,
+            Self::PETERSBURG => SpecId::PETERSBURG,
+            Self::ISTANBUL => SpecId::ISTANBUL,
+            Self::MUIR_GLACIER => SpecId::MUIR_GLACIER,
+            Self::BERLIN => SpecId::BERLIN,
+            Self::LONDON => SpecId::LONDON,
+            Self::ARROW_GLACIER => SpecId::ARROW_GLACIER,
+            Self::GRAY_GLACIER => SpecId::GRAY_GLACIER,
+            Self::MERGE | Self::INTRODUCES_OPCODE => SpecId::MERGE,
+            Self::SHANGHAI => SpecId::SHANGHAI,
+            Self::CANCUN => SpecId::CANCUN,
+            Self::PRAGUE => SpecId::PRAGUE,
+            Self::LATEST => SpecId::LATEST,
         }
     }
 }
 
-impl From<CustomOpcodeSpecId> for EthSpecId {
+impl From<CustomOpcodeSpecId> for SpecId {
     fn from(spec_id: CustomOpcodeSpecId) -> Self {
         spec_id.into_eth_spec_id()
     }
@@ -115,7 +115,7 @@ macro_rules! spec {
         }
 
         impl Spec for $spec_name {
-            const SPEC_ID: EthSpecId = $spec_name::CUSTOM_OPCODE_SPEC_ID.into_eth_spec_id();
+            const SPEC_ID: SpecId = $spec_name::CUSTOM_OPCODE_SPEC_ID.into_eth_spec_id();
         }
     };
 }

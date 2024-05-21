@@ -3,7 +3,7 @@ use revm_primitives::U256;
 use crate::{
     gas,
     interpreter::Interpreter,
-    primitives::{Bytes, EthSpecId::*, Spec},
+    primitives::{Bytes, Spec, SpecId::*},
     Host,
 };
 use core::{cmp::min, ops::Range};

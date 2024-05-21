@@ -1,12 +1,12 @@
 use cfg_if::cfg_if;
 
-use crate::EthSpecId;
+use crate::SpecId;
 
 use core::{fmt::Debug, hash::Hash};
 
 pub trait ChainSpec: Clone + Copy + Debug + Sized + 'static {
     /// The type that enumerates the chain's hardforks.
-    type Hardfork: Clone + Copy + Default + PartialEq + Eq + Into<EthSpecId>;
+    type Hardfork: Clone + Copy + Default + PartialEq + Eq + Into<SpecId>;
 
     cfg_if! {
         if #[cfg(feature = "serde")] {
@@ -23,6 +23,6 @@ pub trait ChainSpec: Clone + Copy + Debug + Sized + 'static {
 pub struct MainnetChainSpec;
 
 impl ChainSpec for MainnetChainSpec {
-    type Hardfork = EthSpecId;
+    type Hardfork = SpecId;
     type HaltReason = crate::HaltReason;
 }
