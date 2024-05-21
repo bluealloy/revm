@@ -4,7 +4,7 @@ use crate::{
         register::{self, EvmHandler},
         CfgEnvWithChainSpec, EnvWithChainSpec,
     },
-    primitives::{BlockEnv, CfgEnv, ChainSpec, Env, TxEnv},
+    primitives::{BlockEnv, CfgEnv, ChainSpec, Env, EthChainSpec, TxEnv},
     Context, ContextWithChainSpec, Evm, Handler,
 };
 use core::marker::PhantomData;
@@ -29,14 +29,12 @@ pub struct SetGenericStage;
 /// Requires the database and external context to be set.
 pub struct HandlerStage;
 
-impl<'a, ChainSpecT: ChainSpec> Default
-    for EvmBuilder<'a, SetGenericStage, ChainSpecT, (), EmptyDB>
-{
+impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthChainSpec, (), EmptyDB> {
     fn default() -> Self {
         Self {
             context: Context::default(),
             handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(
-                ChainSpecT::Hardfork::default(),
+                <EthChainSpec as ChainSpec>::Hardfork::default(),
             ),
             phantom: PhantomData,
         }
