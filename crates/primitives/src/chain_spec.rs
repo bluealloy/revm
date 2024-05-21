@@ -4,7 +4,7 @@ use crate::SpecId;
 
 use core::{fmt::Debug, hash::Hash};
 
-pub trait ChainSpec: Clone + Copy + Debug + Sized + 'static {
+pub trait ChainSpec: Clone + Debug + Sized + 'static {
     /// The type that enumerates the chain's hardforks.
     type Hardfork: Clone + Copy + Default + PartialEq + Eq + Into<SpecId>;
 
