@@ -4,20 +4,17 @@ use criterion::{
 use revm::{
     db::BenchmarkDB,
     interpreter::{analysis::to_analysed, Contract, DummyHost, Interpreter},
-    primitives::{address, bytes, hex, BerlinSpec, Bytecode, Bytes, TransactTo, U256},
+    primitives::{
+        address, bytes, hex, BerlinSpec, Bytecode, Bytes, EthChainSpec, TransactTo, U256,
+    },
     Evm,
 };
 use revm_interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use std::time::Duration;
 
-#[cfg(feature = "optimism")]
-type BenchChainSpec = revm::optimism::OptimismChainSpec;
-#[cfg(not(feature = "optimism"))]
-type BenchChainSpec = revm::EthChainSpec;
-
 fn analysis(c: &mut Criterion) {
     let evm = Evm::builder()
-        .with_chain_spec::<BenchChainSpec>()
+        .with_chain_spec::<EthChainSpec>()
         .modify_tx_env(|tx| {
             tx.caller = address!("0000000000000000000000000000000000000002");
             tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
@@ -60,7 +57,7 @@ fn analysis(c: &mut Criterion) {
 
 fn snailtracer(c: &mut Criterion) {
     let mut evm = Evm::builder()
-        .with_chain_spec::<BenchChainSpec>()
+        .with_chain_spec::<EthChainSpec>()
         .with_db(BenchmarkDB::new_bytecode(bytecode(SNAILTRACER)))
         .modify_tx_env(|tx| {
             tx.caller = address!("1000000000000000000000000000000000000000");
@@ -81,7 +78,7 @@ fn snailtracer(c: &mut Criterion) {
 
 fn transfer(c: &mut Criterion) {
     let mut evm = Evm::builder()
-        .with_chain_spec::<BenchChainSpec>()
+        .with_chain_spec::<EthChainSpec>()
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
         .modify_tx_env(|tx| {
             tx.caller = address!("0000000000000000000000000000000000000001");
@@ -98,7 +95,7 @@ fn transfer(c: &mut Criterion) {
 
 fn bench_transact<EXT>(
     g: &mut BenchmarkGroup<'_, WallTime>,
-    evm: &mut Evm<'_, BenchChainSpec, EXT, BenchmarkDB>,
+    evm: &mut Evm<'_, EthChainSpec, EXT, BenchmarkDB>,
 ) {
     let state = match evm.context.evm.db.0 {
         Bytecode::LegacyRaw(_) => "raw",
@@ -111,7 +108,7 @@ fn bench_transact<EXT>(
 
 fn bench_eval(
     g: &mut BenchmarkGroup<'_, WallTime>,
-    evm: &mut Evm<'static, BenchChainSpec, (), BenchmarkDB>,
+    evm: &mut Evm<'static, EthChainSpec, (), BenchmarkDB>,
 ) {
     g.bench_function("eval", |b| {
         let contract = Contract {
