@@ -30,27 +30,6 @@ macro_rules! define_tests {
 
 mod specific_test_that_fails {
     define_tests! {
-        fn t05("tests/GeneralStateTests/stCallCreateCallCodeTest/Call1024BalanceTooLow.json"); // gas
-    }
-}
-
-mod all_that_fail {
-    define_tests! {
-        fn t05("tests/GeneralStateTests/stCallCreateCallCodeTest/Call1024BalanceTooLow.json"); // gas
-        fn t06("tests/GeneralStateTests/stCallCreateCallCodeTest/Call1024PreCalls.json"); // gas
-        fn t07("tests/GeneralStateTests/stCallCreateCallCodeTest/CallRecursiveBombPreCall.json"); // gas
-        fn t08("tests/GeneralStateTests/stCallCreateCallCodeTest/Callcode1024BalanceTooLow.json"); // gas
-        fn t15("tests/GeneralStateTests/stDelegatecallTestHomestead/Call1024BalanceTooLow.json"); // gas
-        fn t16("tests/GeneralStateTests/stDelegatecallTestHomestead/Call1024PreCalls.json"); // gas
-        fn t17("tests/GeneralStateTests/stDelegatecallTestHomestead/CallRecursiveBombPreCall.json"); // gas
-        fn t18("tests/GeneralStateTests/stDelegatecallTestHomestead/Delegatecall1024.json"); // gas
-        fn t21("tests/GeneralStateTests/stStaticCall/static_Call1024BalanceTooLow.json"); // gas
-        fn t22("tests/GeneralStateTests/stStaticCall/static_Call1024BalanceTooLow2.json"); // gas
-        fn t23("tests/GeneralStateTests/stStaticCall/static_Call1024PreCalls.json"); // gas
-        fn t24("tests/GeneralStateTests/stStaticCall/static_Call1024PreCalls2.json"); // gas
-        fn t25("tests/GeneralStateTests/stStaticCall/static_Call1024PreCalls3.json"); // gas
-        fn t27("tests/GeneralStateTests/stStaticCall/static_CallRecursiveBombPreCall.json"); // gas
-        fn t28("tests/GeneralStateTests/stStaticCall/static_CallRecursiveBombPreCall2.json"); // gas
     }
 }
 
