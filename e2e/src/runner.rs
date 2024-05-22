@@ -231,6 +231,19 @@ fn check_evm_execution<EXT1, EXT2>(
             expected: test.logs,
         };
         print_json_output(Some(kind.to_string()));
+        let logs1 = exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default();
+        println!("logs count: {}", logs1.len());
+        println!("log records:");
+        for log in logs1 {
+            println!(
+                " - {}: {}",
+                hex::encode(log.address),
+                log.topics()
+                    .get(0)
+                    .map(|v| hex::encode(&v))
+                    .unwrap_or_default()
+            )
+        }
         return Err(TestError {
             name: test_name.to_string(),
             kind,
@@ -253,17 +266,17 @@ fn check_evm_execution<EXT1, EXT2>(
 
     if logs_root1 != logs_root2 {
         let logs1 = exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default();
+        for log in logs1 {
+            println!(
+                " - {}: {}",
+                hex::encode(log.address),
+                log.topics()
+                    .get(0)
+                    .map(|v| hex::encode(&v))
+                    .unwrap_or_default()
+            )
+        }
         let logs2 = exec_result2.as_ref().map(|r| r.logs()).unwrap_or_default();
-        // for log in logs1 {
-        //     println!(
-        //         " - {}: {}",
-        //         hex::encode(log.address),
-        //         log.topics()
-        //             .get(0)
-        //             .map(|v| hex::encode(&v))
-        //             .unwrap_or_default()
-        //     )
-        // }
         // for log in logs2 {
         //     println!(
         //         " - {}: {}",
