@@ -1,19 +1,44 @@
 use crate::{
     db::Database,
     interpreter::{
-        analysis::to_analysed, gas, return_ok, Contract, CreateInputs, EOFCreateInput, Gas,
-        InstructionResult, Interpreter, InterpreterResult, LoadAccountResult, SStoreResult,
-        SelfDestructResult, MAX_CODE_SIZE,
+        analysis::to_analysed,
+        gas,
+        return_ok,
+        Contract,
+        CreateInputs,
+        EOFCreateInput,
+        Gas,
+        InstructionResult,
+        Interpreter,
+        InterpreterResult,
+        LoadAccountResult,
+        SStoreResult,
+        SelfDestructResult,
+        MAX_CODE_SIZE,
     },
     journaled_state::JournaledState,
     primitives::{
-        keccak256, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env,
-        Eof, HashSet, Spec,
+        keccak256,
+        Account,
+        Address,
+        AnalysisKind,
+        Bytecode,
+        Bytes,
+        CreateScheme,
+        EVMError,
+        Env,
+        Eof,
+        HashSet,
+        Spec,
         SpecId::{self, *},
-        B256, U256,
+        B256,
+        U256,
     },
-    FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
+    FrameOrResult,
+    JournalCheckpoint,
+    CALL_STACK_LIMIT,
 };
+use fluentbase_types::ExitCode;
 use std::boxed::Box;
 
 /// EVM contexts contains data that EVM needs for execution.
@@ -140,6 +165,15 @@ impl<DB: Database> InnerEvmContext<DB> {
         self.journaled_state.load_account(address, &mut self.db)
     }
 
+    /// Loads an account into memory. Returns `true` if it is cold accessed.
+    #[inline]
+    pub fn load_account_with_code(
+        &mut self,
+        address: Address,
+    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
+        self.journaled_state.load_code(address, &mut self.db)
+    }
+
     /// Load account from database to JournaledState.
     ///
     /// Return boolean pair where first is `is_cold` second bool `exists`.
@@ -168,6 +202,12 @@ impl<DB: Database> InnerEvmContext<DB> {
             .map(|(a, is_cold)| (a.info.code.clone().unwrap(), is_cold))
     }
 
+    #[inline]
+    #[cfg(feature = "fluent_revm")]
+    pub fn code_by_hash(&mut self, hash: B256) -> Result<Bytes, EVMError<DB::Error>> {
+        self.journaled_state.load_code_by_hash(hash, &mut self.db)
+    }
+
     /// Get code hash of address.
     #[inline]
     pub fn code_hash(&mut self, address: Address) -> Result<(B256, bool), EVMError<DB::Error>> {
@@ -178,7 +218,8 @@ impl<DB: Database> InnerEvmContext<DB> {
         Ok((acc.info.code_hash, is_cold))
     }
 
-    /// Load storage slot, if storage is not present inside the account then it will be loaded from database.
+    /// Load storage slot, if storage is not present inside the account then it will be loaded from
+    /// database.
     #[inline]
     pub fn sload(
         &mut self,
@@ -222,6 +263,18 @@ impl<DB: Database> InnerEvmContext<DB> {
     ) -> Result<SelfDestructResult, EVMError<DB::Error>> {
         self.journaled_state
             .selfdestruct(address, target, &mut self.db)
+    }
+
+    /// Transfer the account.
+    #[inline]
+    pub fn transfer(
+        &mut self,
+        from: &Address,
+        to: &Address,
+        balance: U256,
+    ) -> Result<Option<InstructionResult>, EVMError<DB::Error>> {
+        self.journaled_state
+            .transfer(from, to, balance, &mut self.db)
     }
 
     /// Make create frame.

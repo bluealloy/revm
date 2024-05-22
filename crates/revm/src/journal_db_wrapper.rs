@@ -1,11 +1,30 @@
-use core::cell::RefCell;
+use crate::{
+    primitives::{Address, Bytecode, Bytes, Log, LogData, B256, U256},
+    Database,
+    EvmContext,
+};
+use core::{cell::RefCell, fmt::Debug};
 use fluentbase_core::debug_log;
-use fluentbase_sdk::{Account, AccountCheckpoint, AccountManager, EvmCallMethodOutput, JZKT_ACCOUNT_COMPRESSION_FLAGS, JZKT_ACCOUNT_FIELDS_COUNT, JZKT_ACCOUNT_RWASM_CODE_HASH_FIELD, JZKT_ACCOUNT_SOURCE_CODE_HASH_FIELD, JZKT_STORAGE_COMPRESSION_FLAGS, JZKT_STORAGE_FIELDS_COUNT};
-use fluentbase_types::consts::EVM_STORAGE_ADDRESS;
-use fluentbase_types::{ExitCode, IJournaledTrie, JournalEvent, JournalLog};
+use fluentbase_sdk::{
+    Account,
+    AccountCheckpoint,
+    AccountManager,
+    EvmCallMethodOutput,
+    JZKT_ACCOUNT_COMPRESSION_FLAGS,
+    JZKT_ACCOUNT_FIELDS_COUNT,
+    JZKT_ACCOUNT_RWASM_CODE_HASH_FIELD,
+    JZKT_ACCOUNT_SOURCE_CODE_HASH_FIELD,
+    JZKT_STORAGE_COMPRESSION_FLAGS,
+    JZKT_STORAGE_FIELDS_COUNT,
+};
+use fluentbase_types::{
+    consts::EVM_STORAGE_ADDRESS,
+    ExitCode,
+    IJournaledTrie,
+    JournalEvent,
+    JournalLog,
+};
 use revm_interpreter::{Gas, InstructionResult};
-use crate::{Database, EvmContext};
-use crate::primitives::{Address, B256, Bytecode, Bytes, Log, LogData, U256};
 
 pub(crate) struct JournalDbWrapper<'a, DB: Database> {
     ctx: RefCell<&'a mut EvmContext<DB>>,
@@ -13,7 +32,7 @@ pub(crate) struct JournalDbWrapper<'a, DB: Database> {
 
 impl<'a, DB: Database> JournalDbWrapper<'a, DB> {
     pub fn new(ctx: RefCell<&'a mut EvmContext<DB>>) -> JournalDbWrapper<'a, DB> {
-        JournalDbWrapper{ ctx }
+        JournalDbWrapper { ctx }
     }
 }
 
@@ -123,7 +142,10 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
 
     fn account(&self, address: Address) -> (Account, bool) {
         let mut ctx = self.ctx.borrow_mut();
-        let (account, is_cold) = ctx.load_account(address).expect("database error");
+        let (account, is_cold) = ctx
+            .load_account(address)
+            .map_err(|_| panic!("database error"))
+            .unwrap();
         let mut account = Account::from(account.info.clone());
         account.address = address;
         (account, is_cold)
@@ -134,7 +156,8 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
         // load account with this address from journaled state
         let (db_account, _) = ctx
             .load_account_with_code(account.address)
-            .expect("database error");
+            .map_err(|_| panic!("database error"))
+            .unwrap();
         // copy all account info fields
         db_account.info.balance = account.balance;
         db_account.info.nonce = account.nonce;
@@ -156,7 +179,8 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
     fn preimage(&self, hash: &[u8; 32]) -> Bytes {
         let mut ctx = self.ctx.borrow_mut();
         ctx.code_by_hash(B256::from(hash))
-            .expect("failed to get bytecode by hash")
+            .map_err(|_| panic!("failed to get bytecode by hash"))
+            .unwrap()
     }
 
     fn update_preimage(&self, key: &[u8; 32], field: u32, preimage: &[u8]) {
@@ -188,7 +212,10 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
             (address, slot)
         };
         if committed {
-            let (account, _) = ctx.load_account(address).expect("failed to load account");
+            let (account, _) = ctx
+                .load_account(address)
+                .map_err(|_| panic!("failed to load account"))
+                .unwrap();
             if account.is_created() {
                 return (U256::ZERO, true);
             }
@@ -216,7 +243,8 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
         };
         let result = ctx
             .sstore(address, slot, value)
-            .expect("failed to update storage slot");
+            .map_err(|_| panic!("failed to update storage slot"))
+            .unwrap();
         result.is_cold
     }
 
@@ -278,7 +306,8 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
         Account::transfer(from, to, value)?;
         let mut ctx = self.ctx.borrow_mut();
         ctx.transfer(&from.address, &to.address, value)
-            .expect("unexpected EVM transfer error")
+            .map_err(|_| panic!("unexpected EVM transfer error"))
+            .unwrap()
             .and_then(|err| -> Option<InstructionResult> {
                 panic!(
                     "it seems there is an account balance mismatch between ECL and REVM: {}",
@@ -315,7 +344,8 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
         let mut ctx = self.ctx.borrow_mut();
         let result = ctx
             .selfdestruct(address, target)
-            .expect("unexpected EVM self destruct error");
+            .map_err(|_| "unexpected EVM self destruct error")
+            .unwrap();
         [
             result.had_value,
             result.target_exists,
@@ -326,7 +356,9 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
 
     fn block_hash(&self, number: U256) -> B256 {
         let mut ctx = self.ctx.borrow_mut();
-        ctx.block_hash(number).expect("unexpected EVM error")
+        ctx.block_hash(number)
+            .map_err(|_| "unexpected EVM error")
+            .unwrap()
     }
 
     fn write_transient_storage(&self, address: Address, index: U256, value: U256) {
@@ -341,7 +373,10 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
 
     fn mark_account_created(&self, address: Address) {
         let mut ctx = self.ctx.borrow_mut();
-        let (account, _) = ctx.load_account(address).expect("unexpected EVM error");
+        let (account, _) = ctx
+            .load_account(address)
+            .map_err(|_| "unexpected EVM error")
+            .unwrap();
         account.mark_created();
     }
 }

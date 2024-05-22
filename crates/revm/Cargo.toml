@@ -40,7 +40,7 @@ rwasm = { workspace = true }
 auto_impl = { version = "1.2", default-features = false }
 cfg-if = "1.0"
 dyn-clone = "1.0"
-lazy_static = {workspace=true}
+lazy_static = { workspace = true }
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -81,7 +81,7 @@ alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d
 alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d" }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst", "fluent_revm"]
 fluent_revm = ["revm-interpreter/fluent_revm"]
 std = [
     "serde?/std",

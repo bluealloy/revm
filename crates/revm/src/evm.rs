@@ -1,25 +1,47 @@
-use core::cell::RefCell;
+#[cfg(feature = "fluent_revm")]
+use crate::journal_db_wrapper::JournalDbWrapper;
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{Host, InterpreterAction, SharedMemory},
     primitives::{
-        specification::SpecId, BlockEnv, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
-        ExecutionResult, HandlerCfg, ResultAndState, TransactTo, TxEnv,
+        hex,
+        specification::SpecId,
+        Address,
+        BlockEnv,
+        Bytes,
+        CfgEnv,
+        EVMError,
+        EVMResult,
+        EnvWithHandlerCfg,
+        ExecutionResult,
+        HandlerCfg,
+        ResultAndState,
+        TransactTo,
+        TxEnv,
+        U256,
     },
-    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
+    Context,
+    ContextWithHandlerCfg,
+    Frame,
+    FrameOrResult,
+    FrameResult,
 };
-use core::fmt;
-use core::str::from_utf8;
-use revm_interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome, Gas, InstructionResult, InterpreterResult};
-use std::vec::Vec;
+use core::{cell::RefCell, fmt, str::from_utf8};
 use fluentbase_core::loader::{_loader_call, _loader_create};
-use fluentbase_sdk::{EvmCallMethodInput, EvmCreateMethodInput};
-use fluentbase_types::consts::EVM_STORAGE_ADDRESS;
-use fluentbase_types::ExitCode;
-use crate::journal_db_wrapper::JournalDbWrapper;
-use crate::primitives::{Address, Bytes, hex, U256};
+use fluentbase_sdk::{ContractInput, EvmCallMethodInput, EvmCreateMethodInput};
+use fluentbase_types::{consts::EVM_STORAGE_ADDRESS, ExitCode};
+use revm_interpreter::{
+    CallInputs,
+    CallOutcome,
+    CreateInputs,
+    CreateOutcome,
+    Gas,
+    InstructionResult,
+    InterpreterResult,
+};
+use std::vec::Vec;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -29,8 +51,8 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
-    /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
-    /// and it different depending on the specified fork.
+    /// Handler is a component of the of EVM that contains all the logic. Handler contains
+    /// specification id and it different depending on the specified fork.
     pub handler: Handler<'a, Context<EXT, DB>, EXT, DB>,
 }
 
@@ -80,8 +102,8 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     }
 
     /// Runs main call loop.
-    #[cfg(not(feature = "fluent_revm"))]
     #[inline]
+    #[cfg(not(feature = "fluent_revm"))]
     pub fn run_the_loop(&mut self, first_frame: Frame) -> Result<FrameResult, EVMError<DB::Error>> {
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
@@ -331,6 +353,40 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         ContextWithHandlerCfg::new(self.context, self.handler.cfg)
     }
 
+    fn input_from_env(
+        &self,
+        gas: &Gas,
+        caller_address: Address,
+        callee_address: Address,
+        input: Bytes,
+        value: U256,
+    ) -> ContractInput {
+        ContractInput {
+            journal_checkpoint: 0,
+            contract_gas_limit: gas.remaining(),
+            contract_address: callee_address,
+            contract_caller: caller_address,
+            contract_input: input,
+            contract_value: value,
+            contract_is_static: false,
+            block_chain_id: self.context.evm.env.cfg.chain_id,
+            block_coinbase: self.context.evm.env.block.coinbase,
+            block_timestamp: self.context.evm.env.block.timestamp.as_limbs()[0],
+            block_number: self.context.evm.env.block.number.as_limbs()[0],
+            block_difficulty: self.context.evm.env.block.difficulty.as_limbs()[0],
+            block_gas_limit: self.context.evm.env.block.gas_limit.as_limbs()[0],
+            block_base_fee: self.context.evm.env.block.basefee,
+            tx_gas_limit: self.context.evm.env.tx.gas_limit,
+            tx_nonce: self.context.evm.env.tx.nonce.unwrap_or_default(),
+            tx_gas_price: self.context.evm.env.tx.gas_price,
+            tx_gas_priority_fee: self.context.evm.env.tx.gas_priority_fee,
+            tx_caller: self.context.evm.env.tx.caller,
+            tx_access_list: self.context.evm.env.tx.access_list.clone(),
+            tx_blob_hashes: self.context.evm.env.tx.blob_hashes.clone(),
+            tx_max_fee_per_blob_gas: self.context.evm.env.tx.max_fee_per_blob_gas,
+        }
+    }
+
     /// Transact pre-verified transaction.
     fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
         let ctx = &mut self.context;
@@ -348,46 +404,51 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
 
-        let mut result = if cfg!(feature = "fluent_revm") {
-            // Load EVM storage account
-            let (evm_storage, _) = ctx.evm.load_account(EVM_STORAGE_ADDRESS)?;
-            evm_storage.info.nonce = 1;
-            ctx.evm.touch(&EVM_STORAGE_ADDRESS);
+        let mut result = {
+            #[cfg(feature = "fluent_revm")]
+            {
+                // Load EVM storage account
+                let (evm_storage, _) = ctx.evm.load_account(EVM_STORAGE_ADDRESS)?;
+                evm_storage.info.nonce = 1;
+                ctx.evm.touch(&EVM_STORAGE_ADDRESS);
 
-            match ctx.evm.env.tx.transact_to {
-                TransactTo::Call(address) => {
-                    let value = ctx.evm.env.tx.value;
-                    let caller = ctx.evm.env.tx.caller;
-                    let data = ctx.evm.env.tx.data.clone();
-                    let result = self.call_inner(caller, address, value, data, gas_limit);
-                    FrameResult::Call(result)
-                }
-                TransactTo::Create => {
-                    let value = ctx.evm.env.tx.value;
-                    let caller = ctx.evm.env.tx.caller;
-                    let data = ctx.evm.env.tx.data.clone();
-                    let result = self.create_inner(caller, value, data, gas_limit);
-                    FrameResult::Create(result)
+                match ctx.evm.env.tx.transact_to {
+                    TransactTo::Call(address) => {
+                        let value = ctx.evm.env.tx.value;
+                        let caller = ctx.evm.env.tx.caller;
+                        let data = ctx.evm.env.tx.data.clone();
+                        let result = self.call_inner(caller, address, value, data, gas_limit)?;
+                        FrameResult::Call(result)
+                    }
+                    TransactTo::Create => {
+                        let value = ctx.evm.env.tx.value;
+                        let caller = ctx.evm.env.tx.caller;
+                        let data = ctx.evm.env.tx.data.clone();
+                        let result = self.create_inner(caller, value, data, gas_limit)?;
+                        FrameResult::Create(result)
+                    }
                 }
             }
-        } else {
-            let exec = self.handler.execution();
-            // call inner handling of call/create
-            let mut first_frame_or_result = match ctx.evm.env.tx.transact_to {
-                TransactTo::Call(_) => exec.call(
-                    ctx,
-                    CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-                )?,
-                TransactTo::Create => exec.create(
-                    ctx,
-                    CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-                )?,
-            };
+            #[cfg(not(feature = "fluent_revm"))]
+            {
+                let exec = self.handler.execution();
+                // call inner handling of call/create
+                let mut first_frame_or_result = match ctx.evm.env.tx.transact_to {
+                    TransactTo::Call(_) => exec.call(
+                        ctx,
+                        CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
+                    )?,
+                    TransactTo::Create => exec.create(
+                        ctx,
+                        CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
+                    )?,
+                };
 
-            // Starts the main running loop.
-            match first_frame_or_result {
-                FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
-                FrameOrResult::Result(result) => result,
+                // Starts the main running loop.
+                match first_frame_or_result {
+                    FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
+                    FrameOrResult::Result(result) => result,
+                }
             }
         };
 
@@ -408,6 +469,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
+    #[cfg(feature = "fluent_revm")]
     fn create_inner(
         &mut self,
         caller_address: Address,
@@ -415,7 +477,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         input: Bytes,
         gas_limit: u64,
         // salt: Option<U256>,
-    ) -> CreateOutcome {
+    ) -> Result<CreateOutcome, EVMError<DB::Error>> {
         let return_result = |instruction_result: InstructionResult, gas: Gas| CreateOutcome {
             result: InterpreterResult {
                 result: instruction_result,
@@ -428,16 +490,13 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let mut gas = Gas::new(gas_limit);
 
         if self.context.evm.journaled_state.depth as u64 > CALL_STACK_LIMIT {
-            return return_result(InstructionResult::CallDepthOverflow, gas);
+            return Ok(return_result(InstructionResult::CallDepthOverflow, gas));
         }
 
-        let (caller_account, _) = self
-            .context
-            .evm
-            .load_account(caller_address)
-            .expect("external database error");
+        let (caller_account, _) = self.context.evm.load_account(caller_address)?;
+        // .expect("external database error");
         if caller_account.info.balance < value {
-            return return_result(ExitCode::InsufficientBalance, gas);
+            return Ok(return_result(InstructionResult::InsufficientBalance, gas));
         }
 
         let method_data = EvmCreateMethodInput {
@@ -455,9 +514,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             Default::default(),
             value,
         );
-        let am = JournalDbWrapper {
-            ctx: RefCell::new(&mut self.context.evm),
-        };
+        let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
         let create_output = _loader_create(&contract_input, &am, method_data);
 
         // let (output_buffer, exit_code) = self.exec_rwasm_binary(
@@ -495,17 +552,18 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let mut gas = Gas::new(create_output.gas);
         gas.record_refund(create_output.gas_refund);
 
-        CreateOutcome {
+        Ok(CreateOutcome {
             result: InterpreterResult {
-                result: ExitCode::from(create_output.exit_code),
+                result: InstructionResult::from(create_output.exit_code),
                 output: Bytes::new(),
                 gas,
             },
             address: create_output.address,
-        }
+        })
     }
 
     /// Main contract call of the EVM.
+    #[cfg(feature = "fluent_revm")]
     fn call_inner(
         &mut self,
         caller_address: Address,
@@ -513,15 +571,13 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         value: U256,
         input: Bytes,
         gas_limit: u64,
-    ) -> CallOutcome {
+    ) -> Result<CallOutcome, EVMError<DB::Error>> {
         let mut gas = Gas::new(gas_limit);
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         if value == U256::ZERO {
-            self.context
-                .evm
-                .load_account(callee_address)
-                .expect("failed to load");
+            self.context.evm.load_account(callee_address)?;
+            // .expect("failed to load");
             self.context.evm.journaled_state.touch(&callee_address);
         }
 
@@ -592,13 +648,13 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let mut gas = Gas::new(call_output.gas_remaining);
         gas.record_refund(call_output.gas_refund);
 
-        CallOutcome {
+        Ok(CallOutcome {
             result: InterpreterResult {
                 result: ExitCode::from(call_output.exit_code),
                 output: call_output.output,
                 gas,
             },
             memory_offset: Default::default(),
-        }
+        })
     }
 }
