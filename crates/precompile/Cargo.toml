@@ -49,7 +49,7 @@ criterion = { version = "0.5" }
 rand = { version = "0.8", features = ["std"] }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst", "rwasm"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
     "revm-primitives/std",
     "k256/std",
@@ -83,12 +83,12 @@ portable = ["revm-primitives/portable", "c-kzg?/portable"]
 # In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
 secp256k1 = ["dep:secp256k1"]
 
+# Enables the BLS12-381 precompiles.
+blst = ["dep:blst"]
+
 rwasm = [
     "revm-primitives/rwasm"
 ]
-
-# Enables the BLS12-381 precompiles.
-blst = ["dep:blst"]
 
 [[bench]]
 name = "bench"

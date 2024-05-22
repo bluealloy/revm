@@ -82,7 +82,6 @@ alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "4
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
-fluent_revm = ["revm-interpreter/fluent_revm"]
 std = [
     "serde?/std",
     "serde_json?/std",
@@ -149,10 +148,12 @@ secp256k1 = ["revm-precompile/secp256k1"]
 c-kzg = ["revm-precompile/c-kzg"]
 
 blst = ["revm-precompile/blst"]
+
 rwasm = [
     "revm-interpreter/rwasm",
     "revm-precompile/rwasm",
 ]
+fluent_revm = ["revm-interpreter/fluent_revm"]
 
 [[example]]
 name = "fork_ref_transact"
