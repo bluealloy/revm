@@ -2,7 +2,7 @@ use revm_precompile::PrecompileSpecId;
 
 use crate::primitives::{ChainSpec, Spec, SpecId};
 
-use super::OptimismHaltReason;
+use super::{InvalidOptimismTransaction, OptimismHaltReason};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct OptimismChainSpec;
@@ -10,6 +10,7 @@ pub struct OptimismChainSpec;
 impl ChainSpec for OptimismChainSpec {
     type Hardfork = OptimismSpecId;
     type HaltReason = OptimismHaltReason;
+    type TransactionValidationError = InvalidOptimismTransaction;
 }
 
 /// Specification IDs for the optimism blockchain.

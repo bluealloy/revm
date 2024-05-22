@@ -8,7 +8,7 @@ use crate::{
     },
     primitives::{
         Address, BlockEnv, Bytecode, CfgEnv, ChainSpec, EVMError, EVMResult, Env, EthChainSpec,
-        ExecutionResult, Log, ResultAndState, TransactTo, TxEnv, B256, U256,
+        ExecutionResult, InvalidTransaction, Log, ResultAndState, TransactTo, TxEnv, B256, U256,
     },
     Context, ContextWithChainSpec, Frame, FrameOrResult, FrameResult,
 };
@@ -45,7 +45,9 @@ where
 
 impl<EXT, ChainSpecT: ChainSpec, DB: Database + DatabaseCommit> Evm<'_, ChainSpecT, EXT, DB> {
     /// Commit the changes to the database.
-    pub fn transact_commit(&mut self) -> Result<ExecutionResult<ChainSpecT>, EVMError<DB::Error>> {
+    pub fn transact_commit(
+        &mut self,
+    ) -> Result<ExecutionResult<ChainSpecT>, EVMError<ChainSpecT, DB::Error>> {
         let ResultAndState { result, state } = self.transact()?;
         self.context.evm.db.commit(state);
         Ok(result)
@@ -90,7 +92,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
     /// Pre verify transaction by checking Environment, initial gas spend and if caller
     /// has enough balance to pay for the gas.
     #[inline]
-    pub fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
+    pub fn preverify_transaction(&mut self) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
         let output = self.preverify_transaction_inner().map(|_| ());
         self.clear();
         output
@@ -122,7 +124,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
 
     /// Pre verify transaction inner.
     #[inline]
-    fn preverify_transaction_inner(&mut self) -> Result<u64, EVMError<DB::Error>> {
+    fn preverify_transaction_inner(&mut self) -> Result<u64, EVMError<ChainSpecT, DB::Error>> {
         self.handler.validation().env(&self.context.evm.env)?;
         let initial_gas_spend = self
             .handler
@@ -198,11 +200,6 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
         &mut self.context.evm.env.block
     }
 
-    /// Modify spec id, this will create new EVM that matches this spec id.
-    pub fn modify_spec_id(&mut self, spec_id: ChainSpecT::Hardfork) {
-        self.handler.modify_spec_id(spec_id);
-    }
-
     /// Returns internal database and external struct.
     #[inline]
     pub fn into_context(self) -> Context<EXT, DB> {
@@ -231,7 +228,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
     pub fn start_the_loop(
         &mut self,
         first_frame: Frame,
-    ) -> Result<FrameResult, EVMError<DB::Error>> {
+    ) -> Result<FrameResult, EVMError<ChainSpecT, DB::Error>> {
         // take instruction table
         let table = self
             .handler
@@ -256,7 +253,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
         &mut self,
         instruction_table: &[FN; 256],
         first_frame: Frame,
-    ) -> Result<FrameResult, EVMError<DB::Error>>
+    ) -> Result<FrameResult, EVMError<ChainSpecT, DB::Error>>
     where
         FN: Fn(&mut Interpreter, &mut Self),
     {
@@ -281,7 +278,8 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
 
             // take error and break the loop if there is any.
             // This error is set From Interpreter when it's interacting with Host.
-            self.context.evm.take_error()?;
+            self.context.evm.take_error().map_err(EVMError::Database)?;
+
             // take shared memory back.
             shared_memory = interpreter.take_memory();
 
@@ -407,6 +405,16 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
         post_exec.reward_beneficiary(ctx, result.gas())?;
         // Returns output of transaction.
         post_exec.output(ctx, result)
+    }
+}
+
+impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB>
+where
+    ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
+{
+    /// Modify spec id, this will create new EVM that matches this spec id.
+    pub fn modify_spec_id(&mut self, spec_id: ChainSpecT::Hardfork) {
+        self.handler.modify_spec_id(spec_id);
     }
 }
 

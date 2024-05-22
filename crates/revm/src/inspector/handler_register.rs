@@ -141,7 +141,7 @@ pub fn inspector_handle_register<'a, ChainSpecT: ChainSpec, DB: Database, EXT: G
     let create_input_stack_inner = create_input_stack.clone();
     let old_handle = handler.execution.create.clone();
     handler.execution.create = Arc::new(
-        move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
+        move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
             let inspector = ctx.external.get_inspector();
             // call inspector create to change input or return outcome.
             if let Some(outcome) = inspector.create(&mut ctx.evm, &mut inputs) {
@@ -164,7 +164,7 @@ pub fn inspector_handle_register<'a, ChainSpecT: ChainSpec, DB: Database, EXT: G
     let call_input_stack_inner = call_input_stack.clone();
     let old_handle = handler.execution.call.clone();
     handler.execution.call = Arc::new(
-        move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
+        move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
             // Call inspector to change input or return outcome.
             let outcome = ctx.external.get_inspector().call(&mut ctx.evm, &mut inputs);
             call_input_stack_inner.borrow_mut().push(inputs.clone());

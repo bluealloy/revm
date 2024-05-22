@@ -1,12 +1,14 @@
-use crate::{Address, Bytes, ChainSpec, Log, State, U256};
+use crate::{Address, Bytes, ChainSpec, EthChainSpec, Log, State, U256};
 use core::fmt;
 use std::{boxed::Box, string::String, vec::Vec};
 
 /// Result of EVM execution.
-pub type EVMResult<ChainSpecT, DBError> = EVMResultGeneric<ResultAndState<ChainSpecT>, DBError>;
+pub type EVMResult<ChainSpecT, DBError> =
+    EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, DBError>;
 
 /// Generic result of EVM execution. Used to represent error and generic output.
-pub type EVMResultGeneric<T, DBError> = core::result::Result<T, EVMError<DBError>>;
+pub type EVMResultGeneric<T, ChainSpecT, DBError> =
+    core::result::Result<T, EVMError<ChainSpecT, DBError>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -137,9 +139,9 @@ impl Output {
 /// Main EVM error.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum EVMError<DBError> {
+pub enum EVMError<ChainSpecT: ChainSpec, DBError> {
     /// Transaction validation error.
-    Transaction(InvalidTransaction),
+    Transaction(ChainSpecT::TransactionValidationError),
     /// Header validation error.
     Header(InvalidHeader),
     /// Database error.
@@ -151,7 +153,12 @@ pub enum EVMError<DBError> {
 }
 
 #[cfg(feature = "std")]
-impl<DBError: std::error::Error + 'static> std::error::Error for EVMError<DBError> {
+impl<ChainSpecT, DBError: std::error::Error + 'static> std::error::Error
+    for EVMError<ChainSpecT, DBError>
+where
+    ChainSpecT: ChainSpec,
+    ChainSpecT::TransactionValidationError: std::error::Error + 'static,
+{
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Transaction(e) => Some(e),
@@ -162,7 +169,7 @@ impl<DBError: std::error::Error + 'static> std::error::Error for EVMError<DBErro
     }
 }
 
-impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
+impl<ChainSpecT: ChainSpec, DBError: fmt::Display> fmt::Display for EVMError<ChainSpecT, DBError> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Transaction(e) => write!(f, "transaction validation error: {e}"),
@@ -173,13 +180,13 @@ impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
     }
 }
 
-impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
+impl<DBError> From<InvalidTransaction> for EVMError<EthChainSpec, DBError> {
     fn from(value: InvalidTransaction) -> Self {
         Self::Transaction(value)
     }
 }
 
-impl<DBError> From<InvalidHeader> for EVMError<DBError> {
+impl<ChainSpecT: ChainSpec, DBError> From<InvalidHeader> for EVMError<ChainSpecT, DBError> {
     fn from(value: InvalidHeader) -> Self {
         Self::Header(value)
     }
@@ -253,38 +260,6 @@ pub enum InvalidTransaction {
     EofInitcodesSizeLimit,
     /// EOF crate should have `to` address
     EofCrateShouldHaveToAddress,
-    /// System transactions are not supported post-regolith hardfork.
-    ///
-    /// Before the Regolith hardfork, there was a special field in the `Deposit` transaction
-    /// type that differentiated between `system` and `user` deposit transactions. This field
-    /// was deprecated in the Regolith hardfork, and this error is thrown if a `Deposit` transaction
-    /// is found with this field set to `true` after the hardfork activation.
-    ///
-    /// In addition, this error is internal, and bubbles up into a [HaltReason::FailedDeposit] error
-    /// in the `revm` handler for the consumer to easily handle. This is due to a state transition
-    /// rule on OP Stack chains where, if for any reason a deposit transaction fails, the transaction
-    /// must still be included in the block, the sender nonce is bumped, the `mint` value persists, and
-    /// special gas accounting rules are applied. Normally on L1, [EVMError::Transaction] errors
-    /// are cause for non-inclusion, so a special [HaltReason] variant was introduced to handle this
-    /// case for failed deposit transactions.
-    #[cfg(feature = "optimism")]
-    DepositSystemTxPostRegolith,
-    /// Deposit transaction haults bubble up to the global main return handler, wiping state and
-    /// only increasing the nonce + persisting the mint value.
-    ///
-    /// This is a catch-all error for any deposit transaction that is results in a [HaltReason] error
-    /// post-regolith hardfork. This allows for a consumer to easily handle special cases where
-    /// a deposit transaction fails during validation, but must still be included in the block.
-    ///
-    /// In addition, this error is internal, and bubbles up into a [HaltReason::FailedDeposit] error
-    /// in the `revm` handler for the consumer to easily handle. This is due to a state transition
-    /// rule on OP Stack chains where, if for any reason a deposit transaction fails, the transaction
-    /// must still be included in the block, the sender nonce is bumped, the `mint` value persists, and
-    /// special gas accounting rules are applied. Normally on L1, [EVMError::Transaction] errors
-    /// are cause for non-inclusion, so a special [HaltReason] variant was introduced to handle this
-    /// case for failed deposit transactions.
-    #[cfg(feature = "optimism")]
-    HaltedDepositPostRegolith,
 }
 
 #[cfg(feature = "std")]
@@ -345,20 +320,6 @@ impl fmt::Display for InvalidTransaction {
             Self::EofCrateShouldHaveToAddress => write!(f, "EOF crate should have `to` address"),
             Self::EofInitcodesSizeLimit => write!(f, "EOF initcodes size limit"),
             Self::EofInitcodesNumberLimit => write!(f, "EOF initcodes number limit"),
-            #[cfg(feature = "optimism")]
-            Self::DepositSystemTxPostRegolith => {
-                write!(
-                    f,
-                    "deposit system transactions post regolith hardfork are not supported"
-                )
-            }
-            #[cfg(feature = "optimism")]
-            Self::HaltedDepositPostRegolith => {
-                write!(
-                    f,
-                    "deposit transaction halted post-regolith; error will be bubbled up to main return handler"
-                )
-            }
         }
     }
 }

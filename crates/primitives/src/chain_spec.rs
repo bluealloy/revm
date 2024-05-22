@@ -1,8 +1,11 @@
 use cfg_if::cfg_if;
 
-use crate::SpecId;
+use crate::{InvalidTransaction, SpecId};
 
-use core::{fmt::Debug, hash::Hash};
+use core::{
+    fmt::{Debug, Display},
+    hash::Hash,
+};
 
 pub trait ChainSpec: Clone + Debug + Sized + 'static {
     /// The type that enumerates the chain's hardforks.
@@ -17,6 +20,8 @@ pub trait ChainSpec: Clone + Debug + Sized + 'static {
             type HaltReason: Clone + Debug + PartialEq + Eq + Hash + From<crate::HaltReason>;
         }
     }
+
+    type TransactionValidationError: Debug + Display;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -25,4 +30,5 @@ pub struct EthChainSpec;
 impl ChainSpec for EthChainSpec {
     type Hardfork = SpecId;
     type HaltReason = crate::HaltReason;
+    type TransactionValidationError = InvalidTransaction;
 }

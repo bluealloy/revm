@@ -11,8 +11,8 @@ use crate::{
 #[inline]
 pub fn end<ChainSpecT: ChainSpec, EXT, DB: Database>(
     _context: &mut Context<EXT, DB>,
-    evm_output: Result<ResultAndState<ChainSpecT>, EVMError<DB::Error>>,
-) -> Result<ResultAndState<ChainSpecT>, EVMError<DB::Error>> {
+    evm_output: Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, DB::Error>>,
+) -> Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, DB::Error>> {
     evm_output
 }
 
@@ -26,10 +26,10 @@ pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
 
 /// Reward beneficiary with gas fee.
 #[inline]
-pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
+pub fn reward_beneficiary<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     gas: &Gas,
-) -> Result<(), EVMError<DB::Error>> {
+) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
     let beneficiary = context.evm.env.block.coinbase;
     let effective_gas_price = context.evm.env.effective_gas_price();
 
@@ -45,7 +45,8 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         .evm
         .inner
         .journaled_state
-        .load_account(beneficiary, &mut context.evm.inner.db)?;
+        .load_account(beneficiary, &mut context.evm.inner.db)
+        .map_err(EVMError::Database)?;
 
     coinbase_account.mark_touch();
     coinbase_account.info.balance = coinbase_account
@@ -57,10 +58,10 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
 }
 
 #[inline]
-pub fn reimburse_caller<EXT, DB: Database>(
+pub fn reimburse_caller<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     gas: &Gas,
-) -> Result<(), EVMError<DB::Error>> {
+) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
     let caller = context.evm.env.tx.caller;
     let effective_gas_price = context.evm.env.effective_gas_price();
 
@@ -69,7 +70,8 @@ pub fn reimburse_caller<EXT, DB: Database>(
         .evm
         .inner
         .journaled_state
-        .load_account(caller, &mut context.evm.inner.db)?;
+        .load_account(caller, &mut context.evm.inner.db)
+        .map_err(EVMError::Database)?;
 
     caller_account.info.balance = caller_account
         .info
@@ -84,8 +86,9 @@ pub fn reimburse_caller<EXT, DB: Database>(
 pub fn output<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     result: FrameResult,
-) -> Result<ResultAndState<ChainSpecT>, EVMError<DB::Error>> {
-    context.evm.take_error()?;
+) -> Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, DB::Error>> {
+    context.evm.take_error().map_err(EVMError::Database)?;
+
     // used gas with refund calculated.
     let gas_refunded = result.gas().refunded() as u64;
     let final_gas_used = result.gas().spent() - gas_refunded;

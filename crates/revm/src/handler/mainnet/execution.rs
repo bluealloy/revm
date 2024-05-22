@@ -5,7 +5,7 @@ use crate::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
     },
-    primitives::{EVMError, Env, Spec, SpecId},
+    primitives::{ChainSpec, EVMError, Env, Spec, SpecId},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use revm_interpreter::{CallOutcome, EOFCreateInput, EOFCreateOutcome, InterpreterResult};
@@ -49,29 +49,32 @@ pub fn frame_return_with_refund_flag<SPEC: Spec>(
 
 /// Handle output of the transaction
 #[inline]
-pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
+pub fn last_frame_return<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame_result: &mut FrameResult,
-) -> Result<(), EVMError<DB::Error>> {
+) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
     frame_return_with_refund_flag::<SPEC>(&context.evm.env, frame_result, true);
     Ok(())
 }
 
 /// Handle frame sub call.
 #[inline]
-pub fn call<SPEC: Spec, EXT, DB: Database>(
+pub fn call<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     inputs: Box<CallInputs>,
-) -> Result<FrameOrResult, EVMError<DB::Error>> {
-    context.evm.make_call_frame(&inputs)
+) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
+    context
+        .evm
+        .make_call_frame(&inputs)
+        .map_err(EVMError::Database)
 }
 
 #[inline]
-pub fn call_return<EXT, DB: Database>(
+pub fn call_return<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame: Box<CallFrame>,
     interpreter_result: InterpreterResult,
-) -> Result<CallOutcome, EVMError<DB::Error>> {
+) -> Result<CallOutcome, EVMError<ChainSpecT, DB::Error>> {
     context
         .evm
         .call_return(&interpreter_result, frame.frame_data.checkpoint);
@@ -82,13 +85,14 @@ pub fn call_return<EXT, DB: Database>(
 }
 
 #[inline]
-pub fn insert_call_outcome<EXT, DB: Database>(
+pub fn insert_call_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame: &mut Frame,
     shared_memory: &mut SharedMemory,
     outcome: CallOutcome,
-) -> Result<(), EVMError<DB::Error>> {
-    context.evm.take_error()?;
+) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+    context.evm.take_error().map_err(EVMError::Database)?;
+
     frame
         .frame_data_mut()
         .interpreter
@@ -98,19 +102,22 @@ pub fn insert_call_outcome<EXT, DB: Database>(
 
 /// Handle frame sub create.
 #[inline]
-pub fn create<SPEC: Spec, EXT, DB: Database>(
+pub fn create<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     inputs: Box<CreateInputs>,
-) -> Result<FrameOrResult, EVMError<DB::Error>> {
-    context.evm.make_create_frame(SPEC::SPEC_ID, &inputs)
+) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
+    context
+        .evm
+        .make_create_frame(SPEC::SPEC_ID, &inputs)
+        .map_err(EVMError::Database)
 }
 
 #[inline]
-pub fn create_return<SPEC: Spec, EXT, DB: Database>(
+pub fn create_return<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame: Box<CreateFrame>,
     mut interpreter_result: InterpreterResult,
-) -> Result<CreateOutcome, EVMError<DB::Error>> {
+) -> Result<CreateOutcome, EVMError<ChainSpecT, DB::Error>> {
     context.evm.create_return::<SPEC>(
         &mut interpreter_result,
         frame.created_address,
@@ -123,12 +130,13 @@ pub fn create_return<SPEC: Spec, EXT, DB: Database>(
 }
 
 #[inline]
-pub fn insert_create_outcome<EXT, DB: Database>(
+pub fn insert_create_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame: &mut Frame,
     outcome: CreateOutcome,
-) -> Result<(), EVMError<DB::Error>> {
-    context.evm.take_error()?;
+) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+    context.evm.take_error().map_err(EVMError::Database)?;
+
     frame
         .frame_data_mut()
         .interpreter
@@ -138,19 +146,22 @@ pub fn insert_create_outcome<EXT, DB: Database>(
 
 /// Handle frame sub create.
 #[inline]
-pub fn eofcreate<SPEC: Spec, EXT, DB: Database>(
+pub fn eofcreate<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     inputs: Box<EOFCreateInput>,
-) -> Result<FrameOrResult, EVMError<DB::Error>> {
-    context.evm.make_eofcreate_frame(SPEC::SPEC_ID, &inputs)
+) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
+    context
+        .evm
+        .make_eofcreate_frame(SPEC::SPEC_ID, &inputs)
+        .map_err(EVMError::Database)
 }
 
 #[inline]
-pub fn eofcreate_return<SPEC: Spec, EXT, DB: Database>(
+pub fn eofcreate_return<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame: Box<EOFCreateFrame>,
     mut interpreter_result: InterpreterResult,
-) -> Result<EOFCreateOutcome, EVMError<DB::Error>> {
+) -> Result<EOFCreateOutcome, EVMError<ChainSpecT, DB::Error>> {
     context.evm.eofcreate_return::<SPEC>(
         &mut interpreter_result,
         frame.created_address,
@@ -164,12 +175,13 @@ pub fn eofcreate_return<SPEC: Spec, EXT, DB: Database>(
 }
 
 #[inline]
-pub fn insert_eofcreate_outcome<EXT, DB: Database>(
+pub fn insert_eofcreate_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame: &mut Frame,
     outcome: EOFCreateOutcome,
-) -> Result<(), EVMError<DB::Error>> {
-    core::mem::replace(&mut context.evm.error, Ok(()))?;
+) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+    core::mem::replace(&mut context.evm.error, Ok(())).map_err(EVMError::Database)?;
+
     frame
         .frame_data_mut()
         .interpreter

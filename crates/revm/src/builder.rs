@@ -4,7 +4,7 @@ use crate::{
         register::{self, EvmHandler},
         CfgEnvWithChainSpec, EnvWithChainSpec,
     },
-    primitives::{BlockEnv, CfgEnv, ChainSpec, Env, EthChainSpec, TxEnv},
+    primitives::{BlockEnv, CfgEnv, ChainSpec, Env, EthChainSpec, InvalidTransaction, TxEnv},
     Context, ContextWithChainSpec, Evm, Handler,
 };
 use core::marker::PhantomData;
@@ -43,11 +43,16 @@ impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthChainSpec, (), EmptyDB> 
 
 impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
     EvmBuilder<'a, SetGenericStage, ChainSpecT, EXT, DB>
+where
+    ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
 {
     /// Sets the [`ChainSpec`] that will be used by [`Evm`].
     pub fn with_chain_spec<NewChainSpecT: ChainSpec>(
         self,
-    ) -> EvmBuilder<'a, SetGenericStage, NewChainSpecT, EXT, DB> {
+    ) -> EvmBuilder<'a, SetGenericStage, NewChainSpecT, EXT, DB>
+    where
+        NewChainSpecT::TransactionValidationError: From<InvalidTransaction>,
+    {
         EvmBuilder {
             context: self.context,
             handler: EvmBuilder::<'_, SetGenericStage, NewChainSpecT, _, _>::handler(
@@ -163,7 +168,12 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
             phantom: PhantomData,
         }
     }
+}
 
+impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB>
+where
+    ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
+{
     /// Sets the [`EmptyDB`] and resets the [`Handler`] to default mainnet.
     pub fn reset_handler_with_empty_db(
         self,
@@ -224,24 +234,17 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
 impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
     EvmBuilder<'a, BuilderStage, ChainSpecT, EXT, DB>
 {
-    /// Creates the default handler.
-    ///
-    /// This is useful for adding optimism handle register.
-    fn handler(spec_id: ChainSpecT::Hardfork) -> EvmHandler<'a, ChainSpecT, EXT, DB> {
-        Handler::mainnet_with_spec(spec_id)
-    }
-
     /// This modifies the [EvmBuilder] to make it easy to construct an [`Evm`] with a _specific_
     /// handler.
     ///
     /// # Example
     /// ```rust
-    /// use revm::{EvmBuilder, Handler, primitives::{SpecId, HandlerCfg}};
+    /// use revm::{EvmBuilder, EvmHandler, db::EmptyDB, primitives::{EthChainSpec, SpecId}};
     /// use revm_interpreter::primitives::CancunSpec;
     /// let builder = EvmBuilder::default();
     ///
     /// // get the desired handler
-    /// let mainnet = Handler::mainnet::<CancunSpec>();
+    /// let mainnet = EvmHandler::<'_, EthChainSpec, (), EmptyDB>::mainnet_with_spec(SpecId::CANCUN);
     /// let builder = builder.with_handler(mainnet);
     ///
     /// // build the EVM
@@ -291,23 +294,6 @@ impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
     ) -> EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB> {
         self.handler
             .append_handler_register(register::HandleRegisters::Box(handle_register));
-        EvmBuilder {
-            context: self.context,
-            handler: self.handler,
-
-            phantom: PhantomData,
-        }
-    }
-
-    /// Sets specification Id , that will mark the version of EVM.
-    /// It represent the hard fork of ethereum.
-    ///
-    /// # Note
-    ///
-    /// When changed it will reapply all handle registers, this can be
-    /// expensive operation depending on registers.
-    pub fn with_spec_id(mut self, spec_id: ChainSpecT::Hardfork) -> Self {
-        self.handler.modify_spec_id(spec_id);
         EvmBuilder {
             context: self.context,
             handler: self.handler,
@@ -385,6 +371,36 @@ impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
     pub fn with_clear_block_env(mut self) -> Self {
         self.context.evm.env.block.clear();
         self
+    }
+}
+
+impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
+    EvmBuilder<'a, BuilderStage, ChainSpecT, EXT, DB>
+where
+    ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
+{
+    /// Creates the default handler.
+    ///
+    /// This is useful for adding optimism handle register.
+    fn handler(spec_id: ChainSpecT::Hardfork) -> EvmHandler<'a, ChainSpecT, EXT, DB> {
+        Handler::mainnet_with_spec(spec_id)
+    }
+
+    /// Sets specification Id , that will mark the version of EVM.
+    /// It represent the hard fork of ethereum.
+    ///
+    /// # Note
+    ///
+    /// When changed it will reapply all handle registers, this can be
+    /// expensive operation depending on registers.
+    pub fn with_spec_id(mut self, spec_id: ChainSpecT::Hardfork) -> Self {
+        self.handler.modify_spec_id(spec_id);
+        EvmBuilder {
+            context: self.context,
+            handler: self.handler,
+
+            phantom: PhantomData,
+        }
     }
 
     /// Resets [`Handler`] to default mainnet.

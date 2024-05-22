@@ -123,7 +123,7 @@ fn check_evm_execution<EXT>(
     test: &Test,
     expected_output: Option<&Bytes>,
     test_name: &str,
-    exec_result: &EVMResultGeneric<ExecutionResult<TestChainSpec>, Infallible>,
+    exec_result: &EVMResultGeneric<ExecutionResult<TestChainSpec>, TestChainSpec, Infallible>,
     evm: &Evm<'_, TestChainSpec, EXT, &mut State<EmptyDB>>,
     print_json_outcome: bool,
 ) -> Result<(), TestError> {

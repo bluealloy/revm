@@ -11,7 +11,7 @@ pub use handle_types::*;
 // Includes.
 use crate::{
     interpreter::{opcode::InstructionTables, Host},
-    primitives::{db::Database, spec_to_generic, ChainSpec},
+    primitives::{db::Database, spec_to_generic, ChainSpec, InvalidTransaction},
     Evm,
 };
 use register::{EvmHandler, HandleRegisters};
@@ -30,18 +30,21 @@ pub struct Handler<'a, ChainSpecT: ChainSpec, H: Host + 'a, EXT, DB: Database> {
     /// Registers that will be called on initialization.
     pub registers: Vec<HandleRegisters<ChainSpecT, EXT, DB>>,
     /// Validity handles.
-    pub validation: ValidationHandler<'a, EXT, DB>,
+    pub validation: ValidationHandler<'a, ChainSpecT, EXT, DB>,
     /// Pre execution handle.
-    pub pre_execution: PreExecutionHandler<'a, EXT, DB>,
+    pub pre_execution: PreExecutionHandler<'a, ChainSpecT, EXT, DB>,
     /// Post Execution handle.
     pub post_execution: PostExecutionHandler<'a, ChainSpecT, EXT, DB>,
     /// Execution loop that handles frames.
-    pub execution: ExecutionHandler<'a, EXT, DB>,
+    pub execution: ExecutionHandler<'a, ChainSpecT, EXT, DB>,
 }
 
 impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EXT, DB> {
     /// Creates a base/vanilla Ethereum handler with the provided spec id.
-    pub fn mainnet_with_spec(spec_id: ChainSpecT::Hardfork) -> Self {
+    pub fn mainnet_with_spec(spec_id: ChainSpecT::Hardfork) -> Self
+    where
+        ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
+    {
         spec_to_generic!(
             spec_id.into(),
             Self {
@@ -77,7 +80,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EX
     }
 
     /// Returns reference to pre execution handler.
-    pub fn pre_execution(&self) -> &PreExecutionHandler<'a, EXT, DB> {
+    pub fn pre_execution(&self) -> &PreExecutionHandler<'a, ChainSpecT, EXT, DB> {
         &self.pre_execution
     }
 
@@ -87,12 +90,12 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EX
     }
 
     /// Returns reference to frame handler.
-    pub fn execution(&self) -> &ExecutionHandler<'a, EXT, DB> {
+    pub fn execution(&self) -> &ExecutionHandler<'a, ChainSpecT, EXT, DB> {
         &self.execution
     }
 
     /// Returns reference to validation handler.
-    pub fn validation(&self) -> &ValidationHandler<'a, EXT, DB> {
+    pub fn validation(&self) -> &ValidationHandler<'a, ChainSpecT, EXT, DB> {
         &self.validation
     }
 
@@ -116,7 +119,12 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EX
         register(self);
         self.registers.push(HandleRegisters::Box(register));
     }
+}
 
+impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EXT, DB>
+where
+    ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
+{
     /// Pop last handle register and reapply all registers that are left.
     pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<ChainSpecT, EXT, DB>> {
         let out = self.registers.pop();

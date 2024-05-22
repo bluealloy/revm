@@ -6,7 +6,7 @@ use crate::{
     interpreter::{
         return_ok, CallInputs, Contract, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
-    primitives::{Address, Bytes, EVMError, Env, HashSet, U256},
+    primitives::{Address, Bytes, Env, HashSet, U256},
     ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
 use core::{
@@ -140,10 +140,7 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Make call frame
     #[inline]
-    pub fn make_call_frame(
-        &mut self,
-        inputs: &CallInputs,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    pub fn make_call_frame(&mut self, inputs: &CallInputs) -> Result<FrameOrResult, DB::Error> {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {

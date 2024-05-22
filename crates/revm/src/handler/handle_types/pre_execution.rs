@@ -1,7 +1,7 @@
 // Includes.
 use crate::{
     handler::mainnet,
-    primitives::{db::Database, EVMError, EVMResultGeneric, Spec},
+    primitives::{db::Database, ChainSpec, EVMError, EVMResultGeneric, Spec},
     Context, ContextPrecompiles,
 };
 use std::sync::Arc;
@@ -12,42 +12,52 @@ pub type LoadPrecompilesHandle<'a, DB> = Arc<dyn Fn() -> ContextPrecompiles<DB> 
 /// Load access list accounts and beneficiary.
 /// There is no need to load Caller as it is assumed that
 /// it will be loaded in DeductCallerHandle.
-pub type LoadAccountsHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<EXT, DB>) -> Result<(), EVMError<<DB as Database>::Error>> + 'a>;
+pub type LoadAccountsHandle<'a, ChainSpecT, EXT, DB> = Arc<
+    dyn Fn(&mut Context<EXT, DB>) -> Result<(), EVMError<ChainSpecT, <DB as Database>::Error>> + 'a,
+>;
 
 /// Deduct the caller to its limit.
-pub type DeductCallerHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<EXT, DB>) -> EVMResultGeneric<(), <DB as Database>::Error> + 'a>;
+pub type DeductCallerHandle<'a, ChainSpecT, EXT, DB> = Arc<
+    dyn Fn(&mut Context<EXT, DB>) -> EVMResultGeneric<(), ChainSpecT, <DB as Database>::Error> + 'a,
+>;
 
 /// Handles related to pre execution before the stack loop is started.
-pub struct PreExecutionHandler<'a, EXT, DB: Database> {
+pub struct PreExecutionHandler<'a, ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Load precompiles
     pub load_precompiles: LoadPrecompilesHandle<'a, DB>,
     /// Main load handle
-    pub load_accounts: LoadAccountsHandle<'a, EXT, DB>,
+    pub load_accounts: LoadAccountsHandle<'a, ChainSpecT, EXT, DB>,
     /// Deduct max value from the caller.
-    pub deduct_caller: DeductCallerHandle<'a, EXT, DB>,
+    pub deduct_caller: DeductCallerHandle<'a, ChainSpecT, EXT, DB>,
 }
 
-impl<'a, EXT: 'a, DB: Database + 'a> PreExecutionHandler<'a, EXT, DB> {
+impl<'a, ChainSpecT: ChainSpec, EXT: 'a, DB: Database + 'a>
+    PreExecutionHandler<'a, ChainSpecT, EXT, DB>
+{
     /// Creates mainnet MainHandles.
     pub fn new<SPEC: Spec + 'a>() -> Self {
         Self {
             load_precompiles: Arc::new(mainnet::load_precompiles::<SPEC, DB>),
-            load_accounts: Arc::new(mainnet::load_accounts::<SPEC, EXT, DB>),
-            deduct_caller: Arc::new(mainnet::deduct_caller::<SPEC, EXT, DB>),
+            load_accounts: Arc::new(mainnet::load_accounts::<ChainSpecT, SPEC, EXT, DB>),
+            deduct_caller: Arc::new(mainnet::deduct_caller::<ChainSpecT, SPEC, EXT, DB>),
         }
     }
 }
 
-impl<'a, EXT, DB: Database> PreExecutionHandler<'a, EXT, DB> {
+impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PreExecutionHandler<'a, ChainSpecT, EXT, DB> {
     /// Deduct caller to its limit.
-    pub fn deduct_caller(&self, context: &mut Context<EXT, DB>) -> Result<(), EVMError<DB::Error>> {
+    pub fn deduct_caller(
+        &self,
+        context: &mut Context<EXT, DB>,
+    ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
         (self.deduct_caller)(context)
     }
 
     /// Main load
-    pub fn load_accounts(&self, context: &mut Context<EXT, DB>) -> Result<(), EVMError<DB::Error>> {
+    pub fn load_accounts(
+        &self,
+        context: &mut Context<EXT, DB>,
+    ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
         (self.load_accounts)(context)
     }
 

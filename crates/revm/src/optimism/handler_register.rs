@@ -17,7 +17,9 @@ use core::ops::Mul;
 use std::string::ToString;
 use std::sync::Arc;
 
-use super::{OptimismChainSpec, OptimismHaltReason, OptimismSpec, OptimismSpecId};
+use super::{
+    InvalidOptimismTransaction, OptimismChainSpec, OptimismHaltReason, OptimismSpec, OptimismSpecId,
+};
 
 pub fn optimism_handle_register<DB: Database, EXT>(
     handler: &mut EvmHandler<'_, OptimismChainSpec, EXT, DB>,
@@ -43,7 +45,7 @@ pub fn optimism_handle_register<DB: Database, EXT>(
 /// Validate environment for the Optimism chain.
 pub fn validate_env<SPEC: OptimismSpec, DB: Database>(
     env: &Env,
-) -> Result<(), EVMError<DB::Error>> {
+) -> Result<(), EVMError<OptimismChainSpec, DB::Error>> {
     // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
     if env.tx.optimism.source_hash.is_some() {
         return Ok(());
@@ -55,21 +57,22 @@ pub fn validate_env<SPEC: OptimismSpec, DB: Database>(
     let tx = &env.tx.optimism;
     if tx.is_system_transaction.unwrap_or(false) && SPEC::optimism_enabled(OptimismSpecId::REGOLITH)
     {
-        return Err(InvalidTransaction::DepositSystemTxPostRegolith.into());
+        return Err(InvalidOptimismTransaction::DepositSystemTxPostRegolith.into());
     }
 
-    env.validate_tx::<SPEC>()?;
+    env.validate_tx::<SPEC>()
+        .map_err(InvalidOptimismTransaction::Base)?;
     Ok(())
 }
 
 /// Don not perform any extra validation for deposit transactions, they are pre-verified on L1.
 pub fn validate_tx_against_state<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-) -> Result<(), EVMError<DB::Error>> {
+) -> Result<(), EVMError<OptimismChainSpec, DB::Error>> {
     if context.evm.inner.env.tx.optimism.source_hash.is_some() {
         return Ok(());
     }
-    mainnet::validate_tx_against_state::<SPEC, EXT, DB>(context)
+    mainnet::validate_tx_against_state::<OptimismChainSpec, SPEC, EXT, DB>(context)
 }
 
 /// Handle output of the transaction
@@ -77,7 +80,7 @@ pub fn validate_tx_against_state<SPEC: OptimismSpec, EXT, DB: Database>(
 pub fn last_frame_return<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame_result: &mut FrameResult,
-) -> Result<(), EVMError<DB::Error>> {
+) -> Result<(), EVMError<OptimismChainSpec, DB::Error>> {
     let env = context.evm.inner.env();
     let is_deposit = env.tx.optimism.source_hash.is_some();
     let tx_system = env.tx.optimism.is_system_transaction;
@@ -148,7 +151,7 @@ pub fn last_frame_return<SPEC: OptimismSpec, EXT, DB: Database>(
 #[inline]
 pub fn load_accounts<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-) -> Result<(), EVMError<DB::Error>> {
+) -> Result<(), EVMError<OptimismChainSpec, DB::Error>> {
     // the L1-cost fee is only computed for Optimism non-deposit transactions.
 
     if context.evm.inner.env.tx.optimism.source_hash.is_none() {
@@ -162,20 +165,21 @@ pub fn load_accounts<SPEC: OptimismSpec, EXT, DB: Database>(
         context.evm.inner.l1_block_info = Some(l1_block_info);
     }
 
-    mainnet::load_accounts::<SPEC, EXT, DB>(context)
+    mainnet::load_accounts::<OptimismChainSpec, SPEC, EXT, DB>(context)
 }
 
 /// Deduct max balance from caller
 #[inline]
 pub fn deduct_caller<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-) -> Result<(), EVMError<DB::Error>> {
+) -> Result<(), EVMError<OptimismChainSpec, DB::Error>> {
     // load caller's account.
     let (caller_account, _) = context
         .evm
         .inner
         .journaled_state
-        .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)?;
+        .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)
+        .map_err(EVMError::Database)?;
 
     // If the transaction is a deposit with a `mint` value, add the mint value
     // in wei to the caller's balance. This should be persisted to the database
@@ -210,7 +214,8 @@ pub fn deduct_caller<SPEC: OptimismSpec, EXT, DB: Database>(
                 InvalidTransaction::LackOfFundForMaxFee {
                     fee: tx_l1_cost.into(),
                     balance: caller_account.info.balance.into(),
-                },
+                }
+                .into(),
             ));
         }
         caller_account.info.balance = caller_account.info.balance.saturating_sub(tx_l1_cost);
@@ -223,12 +228,12 @@ pub fn deduct_caller<SPEC: OptimismSpec, EXT, DB: Database>(
 pub fn reward_beneficiary<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     gas: &Gas,
-) -> Result<(), EVMError<DB::Error>> {
+) -> Result<(), EVMError<OptimismChainSpec, DB::Error>> {
     let is_deposit = context.evm.inner.env.tx.optimism.source_hash.is_some();
 
     // transfer fee to coinbase/beneficiary.
     if !is_deposit {
-        mainnet::reward_beneficiary::<SPEC, EXT, DB>(context, gas)?;
+        mainnet::reward_beneficiary::<OptimismChainSpec, SPEC, EXT, DB>(context, gas)?;
     }
 
     if !is_deposit {
@@ -290,7 +295,7 @@ pub fn reward_beneficiary<SPEC: OptimismSpec, EXT, DB: Database>(
 pub fn output<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame_result: FrameResult,
-) -> Result<ResultAndState<OptimismChainSpec>, EVMError<DB::Error>> {
+) -> Result<ResultAndState<OptimismChainSpec>, EVMError<OptimismChainSpec, DB::Error>> {
     let result = mainnet::output::<OptimismChainSpec, EXT, DB>(context, frame_result)?;
 
     if result.result.is_halt() {
@@ -300,7 +305,7 @@ pub fn output<SPEC: OptimismSpec, EXT, DB: Database>(
         let is_deposit = context.evm.inner.env.tx.optimism.source_hash.is_some();
         if is_deposit && SPEC::optimism_enabled(OptimismSpecId::REGOLITH) {
             return Err(EVMError::Transaction(
-                InvalidTransaction::HaltedDepositPostRegolith,
+                InvalidOptimismTransaction::HaltedDepositPostRegolith,
             ));
         }
     }
@@ -311,8 +316,8 @@ pub fn output<SPEC: OptimismSpec, EXT, DB: Database>(
 #[inline]
 pub fn end<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-    evm_output: Result<ResultAndState<OptimismChainSpec>, EVMError<DB::Error>>,
-) -> Result<ResultAndState<OptimismChainSpec>, EVMError<DB::Error>> {
+    evm_output: Result<ResultAndState<OptimismChainSpec>, EVMError<OptimismChainSpec, DB::Error>>,
+) -> Result<ResultAndState<OptimismChainSpec>, EVMError<OptimismChainSpec, DB::Error>> {
     evm_output.or_else(|err| {
         if matches!(err, EVMError::Transaction(_))
             && context.evm.inner.env().tx.optimism.source_hash.is_some()
@@ -598,7 +603,8 @@ mod tests {
                 InvalidTransaction::LackOfFundForMaxFee {
                     fee: Box::new(U256::from(1048)),
                     balance: Box::new(U256::from(48)),
-                },
+                }
+                .into(),
             ))
         );
     }
@@ -611,7 +617,7 @@ mod tests {
         assert_eq!(
             validate_env::<RegolithSpec, EmptyDB>(&env),
             Err(EVMError::Transaction(
-                InvalidTransaction::DepositSystemTxPostRegolith
+                InvalidOptimismTransaction::DepositSystemTxPostRegolith
             ))
         );
 

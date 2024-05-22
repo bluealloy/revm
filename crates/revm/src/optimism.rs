@@ -11,5 +11,5 @@ pub use handler_register::{
     reward_beneficiary, validate_env, validate_tx_against_state,
 };
 pub use l1block::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
-pub use result::OptimismHaltReason;
+pub use result::{InvalidOptimismTransaction, OptimismHaltReason};
 pub use spec::*;

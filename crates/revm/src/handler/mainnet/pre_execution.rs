@@ -6,7 +6,7 @@ use crate::{
     precompile::{PrecompileSpecId, Precompiles},
     primitives::{
         db::Database,
-        Account, EVMError, Env, Spec,
+        Account, ChainSpec, EVMError, Env, Spec,
         SpecId::{CANCUN, SHANGHAI},
         TransactTo, U256,
     },
@@ -23,23 +23,28 @@ pub fn load_precompiles<SPEC: Spec, DB: Database>() -> ContextPrecompiles<DB> {
 
 /// Main load handle
 #[inline]
-pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
+pub fn load_accounts<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-) -> Result<(), EVMError<DB::Error>> {
+) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
     // set journaling state flag.
     context.evm.journaled_state.set_spec_id(SPEC::SPEC_ID);
 
     // load coinbase
     // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
     if SPEC::enabled(SHANGHAI) {
-        context.evm.inner.journaled_state.initial_account_load(
-            context.evm.inner.env.block.coinbase,
-            &[],
-            &mut context.evm.inner.db,
-        )?;
+        context
+            .evm
+            .inner
+            .journaled_state
+            .initial_account_load(
+                context.evm.inner.env.block.coinbase,
+                &[],
+                &mut context.evm.inner.db,
+            )
+            .map_err(EVMError::Database)?;
     }
 
-    context.evm.load_access_list()?;
+    context.evm.load_access_list().map_err(EVMError::Database)?;
     Ok(())
 }
 
@@ -71,15 +76,16 @@ pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) 
 
 /// Deducts the caller balance to the transaction limit.
 #[inline]
-pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
+pub fn deduct_caller<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-) -> Result<(), EVMError<DB::Error>> {
+) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
     // load caller's account.
     let (caller_account, _) = context
         .evm
         .inner
         .journaled_state
-        .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)?;
+        .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)
+        .map_err(EVMError::Database)?;
 
     // deduct gas cost from caller's account.
     deduct_caller_inner::<SPEC>(caller_account, &context.evm.inner.env);

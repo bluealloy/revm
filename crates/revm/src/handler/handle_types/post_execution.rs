@@ -8,18 +8,22 @@ use crate::{
 use std::sync::Arc;
 
 /// Reimburse the caller with ethereum it didn't spent.
-pub type ReimburseCallerHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<EXT, DB>, &Gas) -> EVMResultGeneric<(), <DB as Database>::Error> + 'a>;
+pub type ReimburseCallerHandle<'a, ChainSpecT, EXT, DB> = Arc<
+    dyn Fn(&mut Context<EXT, DB>, &Gas) -> EVMResultGeneric<(), ChainSpecT, <DB as Database>::Error>
+        + 'a,
+>;
 
 /// Reward beneficiary with transaction rewards.
-pub type RewardBeneficiaryHandle<'a, EXT, DB> = ReimburseCallerHandle<'a, EXT, DB>;
+pub type RewardBeneficiaryHandle<'a, ChainSpecT, EXT, DB> =
+    ReimburseCallerHandle<'a, ChainSpecT, EXT, DB>;
 
 /// Main return handle, takes state from journal and transforms internal result to external.
 pub type OutputHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<EXT, DB>,
             FrameResult,
-        ) -> Result<ResultAndState<ChainSpecT>, EVMError<<DB as Database>::Error>>
+        )
+            -> Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, <DB as Database>::Error>>
         + 'a,
 >;
 
@@ -30,8 +34,9 @@ pub type OutputHandle<'a, ChainSpecT, EXT, DB> = Arc<
 pub type EndHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<EXT, DB>,
-            Result<ResultAndState<ChainSpecT>, EVMError<<DB as Database>::Error>>,
-        ) -> Result<ResultAndState<ChainSpecT>, EVMError<<DB as Database>::Error>>
+            Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, <DB as Database>::Error>>,
+        )
+            -> Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, <DB as Database>::Error>>
         + 'a,
 >;
 
@@ -42,9 +47,9 @@ pub type ClearHandle<'a, EXT, DB> = Arc<dyn Fn(&mut Context<EXT, DB>) + 'a>;
 /// Handles related to post execution after the stack loop is finished.
 pub struct PostExecutionHandler<'a, ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Reimburse the caller with ethereum it didn't spent.
-    pub reimburse_caller: ReimburseCallerHandle<'a, EXT, DB>,
+    pub reimburse_caller: ReimburseCallerHandle<'a, ChainSpecT, EXT, DB>,
     /// Reward the beneficiary with caller fee.
-    pub reward_beneficiary: RewardBeneficiaryHandle<'a, EXT, DB>,
+    pub reward_beneficiary: RewardBeneficiaryHandle<'a, ChainSpecT, EXT, DB>,
     /// Main return handle, returns the output of the transact.
     pub output: OutputHandle<'a, ChainSpecT, EXT, DB>,
     /// End handle. Called when execution ends.
@@ -62,8 +67,8 @@ impl<'a, ChainSpecT: ChainSpec, EXT: 'a, DB: Database + 'a>
     /// Creates mainnet MainHandles.
     pub fn mainnet<SPEC: Spec + 'a>() -> Self {
         Self {
-            reimburse_caller: Arc::new(mainnet::reimburse_caller::<EXT, DB>),
-            reward_beneficiary: Arc::new(mainnet::reward_beneficiary::<SPEC, EXT, DB>),
+            reimburse_caller: Arc::new(mainnet::reimburse_caller::<ChainSpecT, EXT, DB>),
+            reward_beneficiary: Arc::new(mainnet::reward_beneficiary::<ChainSpecT, SPEC, EXT, DB>),
             output: Arc::new(mainnet::output::<ChainSpecT, EXT, DB>),
             end: Arc::new(mainnet::end::<ChainSpecT, EXT, DB>),
             clear: Arc::new(mainnet::clear::<EXT, DB>),
@@ -77,7 +82,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
         &self,
         context: &mut Context<EXT, DB>,
         gas: &Gas,
-    ) -> Result<(), EVMError<DB::Error>> {
+    ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
         (self.reimburse_caller)(context, gas)
     }
     /// Reward beneficiary
@@ -85,7 +90,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
         &self,
         context: &mut Context<EXT, DB>,
         gas: &Gas,
-    ) -> Result<(), EVMError<DB::Error>> {
+    ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
         (self.reward_beneficiary)(context, gas)
     }
 
@@ -94,7 +99,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
         &self,
         context: &mut Context<EXT, DB>,
         result: FrameResult,
-    ) -> Result<ResultAndState<ChainSpecT>, EVMError<DB::Error>> {
+    ) -> Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, DB::Error>> {
         (self.output)(context, result)
     }
 
@@ -102,8 +107,8 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
     pub fn end(
         &self,
         context: &mut Context<EXT, DB>,
-        end_output: Result<ResultAndState<ChainSpecT>, EVMError<DB::Error>>,
-    ) -> Result<ResultAndState<ChainSpecT>, EVMError<DB::Error>> {
+        end_output: Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, DB::Error>>,
+    ) -> Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, DB::Error>> {
         (self.end)(context, end_output)
     }
 

@@ -7,8 +7,8 @@ use crate::{
     },
     journaled_state::JournaledState,
     primitives::{
-        keccak256, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env,
-        Eof, HashSet, Spec,
+        keccak256, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, Env, Eof,
+        HashSet, Spec,
         SpecId::{self, *},
         B256, U256,
     },
@@ -27,7 +27,7 @@ pub struct InnerEvmContext<DB: Database> {
     /// Database to load data from.
     pub db: DB,
     /// Error that happened during execution.
-    pub error: Result<(), EVMError<DB::Error>>,
+    pub error: Result<(), DB::Error>,
     /// Used as temporary value holder to store L1 block info.
     #[cfg(feature = "optimism")]
     pub l1_block_info: Option<crate::optimism::L1BlockInfo>,
@@ -99,7 +99,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     ///
     /// Loading of accounts/storages is needed to make them warm.
     #[inline]
-    pub fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
+    pub fn load_access_list(&mut self) -> Result<(), DB::Error> {
         for (address, slots) in self.env.tx.access_list.iter() {
             self.journaled_state
                 .initial_account_load(*address, slots, &mut self.db)?;
@@ -114,14 +114,14 @@ impl<DB: Database> InnerEvmContext<DB> {
     }
 
     /// Returns the error by replacing it with `Ok(())`, if any.
-    pub fn take_error(&mut self) -> Result<(), EVMError<DB::Error>> {
+    pub fn take_error(&mut self) -> Result<(), DB::Error> {
         core::mem::replace(&mut self.error, Ok(()))
     }
 
     /// Fetch block hash from database.
     #[inline]
-    pub fn block_hash(&mut self, number: U256) -> Result<B256, EVMError<DB::Error>> {
-        self.db.block_hash(number).map_err(EVMError::Database)
+    pub fn block_hash(&mut self, number: U256) -> Result<B256, DB::Error> {
+        self.db.block_hash(number)
     }
 
     /// Mark account as touched as only touched accounts will be added to state.
@@ -132,10 +132,7 @@ impl<DB: Database> InnerEvmContext<DB> {
 
     /// Loads an account into memory. Returns `true` if it is cold accessed.
     #[inline]
-    pub fn load_account(
-        &mut self,
-        address: Address,
-    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
+    pub fn load_account(&mut self, address: Address) -> Result<(&mut Account, bool), DB::Error> {
         self.journaled_state.load_account(address, &mut self.db)
     }
 
@@ -143,17 +140,14 @@ impl<DB: Database> InnerEvmContext<DB> {
     ///
     /// Return boolean pair where first is `is_cold` second bool `exists`.
     #[inline]
-    pub fn load_account_exist(
-        &mut self,
-        address: Address,
-    ) -> Result<LoadAccountResult, EVMError<DB::Error>> {
+    pub fn load_account_exist(&mut self, address: Address) -> Result<LoadAccountResult, DB::Error> {
         self.journaled_state
             .load_account_exist(address, &mut self.db)
     }
 
     /// Return account balance and is_cold flag.
     #[inline]
-    pub fn balance(&mut self, address: Address) -> Result<(U256, bool), EVMError<DB::Error>> {
+    pub fn balance(&mut self, address: Address) -> Result<(U256, bool), DB::Error> {
         self.journaled_state
             .load_account(address, &mut self.db)
             .map(|(acc, is_cold)| (acc.info.balance, is_cold))
@@ -161,7 +155,7 @@ impl<DB: Database> InnerEvmContext<DB> {
 
     /// Return account code and if address is cold loaded.
     #[inline]
-    pub fn code(&mut self, address: Address) -> Result<(Bytecode, bool), EVMError<DB::Error>> {
+    pub fn code(&mut self, address: Address) -> Result<(Bytecode, bool), DB::Error> {
         self.journaled_state
             .load_code(address, &mut self.db)
             .map(|(a, is_cold)| (a.info.code.clone().unwrap(), is_cold))
@@ -169,7 +163,7 @@ impl<DB: Database> InnerEvmContext<DB> {
 
     /// Get code hash of address.
     #[inline]
-    pub fn code_hash(&mut self, address: Address) -> Result<(B256, bool), EVMError<DB::Error>> {
+    pub fn code_hash(&mut self, address: Address) -> Result<(B256, bool), DB::Error> {
         let (acc, is_cold) = self.journaled_state.load_code(address, &mut self.db)?;
         if acc.is_empty() {
             return Ok((B256::ZERO, is_cold));
@@ -179,11 +173,7 @@ impl<DB: Database> InnerEvmContext<DB> {
 
     /// Load storage slot, if storage is not present inside the account then it will be loaded from database.
     #[inline]
-    pub fn sload(
-        &mut self,
-        address: Address,
-        index: U256,
-    ) -> Result<(U256, bool), EVMError<DB::Error>> {
+    pub fn sload(&mut self, address: Address, index: U256) -> Result<(U256, bool), DB::Error> {
         // account is always warm. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.journaled_state.sload(address, index, &mut self.db)
     }
@@ -195,7 +185,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         address: Address,
         index: U256,
         value: U256,
-    ) -> Result<SStoreResult, EVMError<DB::Error>> {
+    ) -> Result<SStoreResult, DB::Error> {
         self.journaled_state
             .sstore(address, index, value, &mut self.db)
     }
@@ -218,7 +208,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         &mut self,
         address: Address,
         target: Address,
-    ) -> Result<SelfDestructResult, EVMError<DB::Error>> {
+    ) -> Result<SelfDestructResult, DB::Error> {
         self.journaled_state
             .selfdestruct(address, target, &mut self.db)
     }
@@ -229,7 +219,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         &mut self,
         spec_id: SpecId,
         inputs: &EOFCreateInput,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    ) -> Result<FrameOrResult, DB::Error> {
         let return_error = |e| {
             Ok(FrameOrResult::new_eofcreate_result(
                 InterpreterResult {
@@ -337,7 +327,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         &mut self,
         spec_id: SpecId,
         inputs: &CreateInputs,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    ) -> Result<FrameOrResult, DB::Error> {
         // Prepare crate.
         let gas = Gas::new(inputs.gas_limit);
 
