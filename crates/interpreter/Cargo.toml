@@ -47,7 +47,7 @@ path = "tests/eof.rs"
 required-features = ["serde"]
 
 [features]
-default = ["std", "parse", "rwasm"]
+default = ["std", "parse"]
 std = ["serde?/std", "revm-primitives/std"]
 fluent_revm = ["fluentbase-types/fluent_revm"]
 hashbrown = ["revm-primitives/hashbrown"]

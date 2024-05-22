@@ -1,5 +1,5 @@
 [package]
-name = "fluentbase-revm-e2e"
+name = "revm-rwasm-e2e"
 version = "0.1.0"
 authors.workspace = true
 repository.workspace = true
@@ -17,9 +17,8 @@ fluentbase-poseidon = { workspace = true }
 fluentbase-genesis = { workspace = true }
 
 revm = { workspace = true, features = [
-#    "fluent_revm"
+    #    "fluent_revm"
 ] }
-#revm-fluent = { workspace = true }
 
 hash-db = "=0.15"
 hex = "0.4"
@@ -43,6 +42,9 @@ paste.workspace = true
 
 [features]
 default = [
-    #    "e2e"
+    #    "fluent_revm"
 ]
+fluent_revm = ["revm/fluent_revm", "fluentbase-types/fluent_revm", "fluentbase-core/fluent_revm"]
 #e2e = ["fluentbase-core/e2e", "fluentbase-revm/e2e", "fluentbase-sdk/e2e"]
+debug_use_fluent_storage = []
+debug_print = []

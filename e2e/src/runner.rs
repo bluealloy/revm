@@ -6,14 +6,14 @@ use super::{
 use crate::merkle_trie::state_merkle_trie_root2;
 use fluentbase_genesis::devnet::{devnet_genesis_from_file, KECCAK_HASH_KEY, POSEIDON_HASH_KEY};
 use fluentbase_poseidon::poseidon_hash;
-// use revm::EVM_STORAGE_ADDRESS;
 use fluentbase_sdk::calc_storage_key;
-use fluentbase_types::{Address, ExitCode};
+use fluentbase_types::{consts::EVM_STORAGE_ADDRESS, Address, ExitCode};
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use lazy_static::lazy_static;
 use revm::{
     db::{states::plain_account::PlainStorage, EmptyDB},
     inspector_handle_register,
+    inspectors::TracerEip3155,
     interpreter::CreateScheme,
     primitives::{
         calc_excess_blob_gas,
@@ -46,10 +46,8 @@ use std::{
     },
     time::{Duration, Instant},
 };
-use fluentbase_types::consts::EVM_STORAGE_ADDRESS;
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
-use revm::inspectors::TracerEip3155;
 
 #[derive(Debug, Error)]
 #[error("Test {name} failed: {kind}")]
@@ -141,8 +139,6 @@ fn skip_test(path: &Path) -> bool {
     ) || path_str.contains("stEOF")
 }
 
-const USE_FLUENT_STORAGE: bool = false;
-
 fn check_evm_execution<EXT1, EXT2>(
     test: &Test,
     spec_name: &SpecName,
@@ -151,11 +147,7 @@ fn check_evm_execution<EXT1, EXT2>(
     exec_result1: &Result<ExecutionResult, EVMError<Infallible>>,
     exec_result2: &Result<ExecutionResult, EVMError<ExitCode>>,
     evm: &Evm<'_, EXT1, &mut State<EmptyDB>>,
-    evm2: &revm::Evm<
-        '_,
-        EXT2,
-        &mut revm::State<revm::db::EmptyDBTyped<ExitCode>>,
-    >,
+    evm2: &revm::Evm<'_, EXT2, &mut revm::State<revm::db::EmptyDBTyped<ExitCode>>>,
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root1 = log_rlp_hash(exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default());
@@ -289,8 +281,6 @@ fn check_evm_execution<EXT1, EXT2>(
         assert_eq!(logs_root1, logs_root2, "EVM <> FLUENT logs root mismatch");
     }
 
-    const PRINT: bool = false;
-
     // compare contracts
     for (k, v) in evm.context.evm.db.cache.contracts.iter() {
         let v2 = evm2
@@ -305,7 +295,7 @@ fn check_evm_execution<EXT1, EXT2>(
         assert_eq!(v.bytecode(), v2.bytecode(), "EVM bytecode mismatch");
     }
     for (address, v1) in evm.context.evm.db.cache.accounts.iter() {
-        if PRINT {
+        if cfg!(feature = "debug_print") {
             println!("comparing account (0x{})...", hex::encode(address));
         }
         let v2 = evm2.context.evm.db.cache.accounts.get(address);
@@ -324,11 +314,11 @@ fn check_evm_execution<EXT1, EXT2>(
             //     v2.unwrap()
             // );
             // assert_eq!(a1.balance, a2.balance, "EVM account balance mismatch");
-            if PRINT {
+            if cfg!(feature = "debug_print") {
                 println!(" - nonce: {}", a1.nonce);
             }
             assert_eq!(a1.nonce, a2.nonce, "EVM <> FLUENT account nonce mismatch");
-            if PRINT {
+            if cfg!(feature = "debug_print") {
                 println!(" - code_hash: {}", hex::encode(a1.code_hash));
             }
             assert_eq!(
@@ -340,7 +330,7 @@ fn check_evm_execution<EXT1, EXT2>(
                 a2.code.as_ref().map(|b| b.original_bytes()),
                 "EVM <> FLUENT account code mismatch",
             );
-            if PRINT {
+            if cfg!(feature = "debug_print") {
                 println!(" - storage:");
             }
             if let Some(s1) = v1.account.as_ref().map(|v| &v.storage) {
@@ -396,7 +386,7 @@ fn check_evm_execution<EXT1, EXT2>(
     );
 
     for (address, v1) in evm.context.evm.db.cache.accounts.iter() {
-        if PRINT {
+        if cfg!(feature = "debug_print") {
             println!("comparing balances (0x{})...", hex::encode(address));
         }
         let v2 = evm2.context.evm.db.cache.accounts.get(address);
@@ -407,7 +397,7 @@ fn check_evm_execution<EXT1, EXT2>(
                 .as_ref()
                 .map(|v| &v.info)
                 .expect("missing FLUENT account");
-            if PRINT {
+            if cfg!(feature = "debug_print") {
                 println!(" - balance: {}", a1.balance);
             }
             let balance_diff = if a1.balance > a2.balance {
@@ -497,7 +487,7 @@ pub fn execute_test_suite(
             let mut account_storage = PlainStorage::default();
             if let Some(storage) = info.storage.as_ref() {
                 for (k, v) in storage.iter() {
-                    if USE_FLUENT_STORAGE {
+                    if cfg!(feature = "debug_use_fluent_storage") {
                         let storage_key = calc_storage_key(address, k.as_ptr());
                         evm_storage.insert(U256::from_le_bytes(storage_key), (*v).into());
                     } else {
@@ -523,7 +513,7 @@ pub fn execute_test_suite(
             );
             // acc_info.rwasm_code_hash = rwasm_hash;
             // acc_info.rwasm_code = Some(Bytecode::new_raw(rwasm_bytecode.clone()));
-            if USE_FLUENT_STORAGE {
+            if cfg!(feature = "debug_use_fluent_storage") {
                 for (k, v) in info.storage.iter() {
                     let storage_key = calc_storage_key(&address, k.to_le_bytes::<32>().as_ptr());
                     println!(
@@ -545,7 +535,7 @@ pub fn execute_test_suite(
             }
         }
 
-        if USE_FLUENT_STORAGE {
+        if cfg!(feature = "debug_use_fluent_storage") {
             cache_state2.insert_account_with_storage(
                 EVM_STORAGE_ADDRESS,
                 AccountInfo {
@@ -614,7 +604,7 @@ pub fn execute_test_suite(
         let max_fee_per_blob_gas = unit.transaction.max_fee_per_blob_gas;
         env.tx.max_fee_per_blob_gas = max_fee_per_blob_gas;
 
-        let mut TOTAL_TESTS = 0;
+        let mut total_tests = 0;
 
         // post and execution
         for (spec_name, tests) in unit.post {
@@ -632,7 +622,7 @@ pub fn execute_test_suite(
 
             let spec_id = spec_name.to_spec_id();
             let tests_count = tests.len();
-            TOTAL_TESTS += tests_count;
+            total_tests += tests_count;
 
             for (index, test) in tests.into_iter().enumerate() {
                 if let Some(test_num) = test_num {
@@ -699,12 +689,11 @@ pub fn execute_test_suite(
                     .with_spec_id(spec_id)
                     .build();
 
-                let mut state2 = revm::db::StateBuilder::<
-                    revm::db::EmptyDBTyped<ExitCode>,
-                >::default()
-                .with_cached_prestate(cache2)
-                .with_bundle_update()
-                .build();
+                let mut state2 =
+                    revm::db::StateBuilder::<revm::db::EmptyDBTyped<ExitCode>>::default()
+                        .with_cached_prestate(cache2)
+                        .with_bundle_update()
+                        .build();
                 let mut evm2 = revm::Evm::builder()
                     .with_db(&mut state2)
                     .modify_env(|e| *e = env.clone())
@@ -822,7 +811,7 @@ pub fn execute_test_suite(
             }
         }
 
-        println!("FINISHED!!!!!!!!!!!\n\n{}", TOTAL_TESTS)
+        println!("FINISHED!!!!!!!!!!!\n\n{}", total_tests)
     }
     Ok(())
 }

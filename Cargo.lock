@@ -1650,35 +1650,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fluentbase-revm-e2e"
-version = "0.1.0"
-dependencies = [
- "alloy-rlp",
- "fluentbase-codec-derive",
- "fluentbase-core",
- "fluentbase-genesis",
- "fluentbase-poseidon",
- "fluentbase-sdk",
- "fluentbase-types",
- "hash-db",
- "hashbrown",
- "hex",
- "indicatif",
- "k256",
- "lazy_static",
- "microbench",
- "paste",
- "plain_hasher",
- "revm",
- "serde",
- "serde_json",
- "structopt",
- "thiserror",
- "triehash",
- "walkdir",
-]
-
-[[package]]
 name = "fluentbase-runtime"
 version = "0.1.0"
 dependencies = [
@@ -3520,6 +3491,35 @@ dependencies = [
  "hex",
  "once_cell",
  "serde",
+]
+
+[[package]]
+name = "revm-rwasm-e2e"
+version = "0.1.0"
+dependencies = [
+ "alloy-rlp",
+ "fluentbase-codec-derive",
+ "fluentbase-core",
+ "fluentbase-genesis",
+ "fluentbase-poseidon",
+ "fluentbase-sdk",
+ "fluentbase-types",
+ "hash-db",
+ "hashbrown",
+ "hex",
+ "indicatif",
+ "k256",
+ "lazy_static",
+ "microbench",
+ "paste",
+ "plain_hasher",
+ "revm",
+ "serde",
+ "serde_json",
+ "structopt",
+ "thiserror",
+ "triehash",
+ "walkdir",
 ]
 
 [[package]]
