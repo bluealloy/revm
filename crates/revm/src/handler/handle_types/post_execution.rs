@@ -3,7 +3,8 @@ use crate::{
     handler::mainnet,
     interpreter::Gas,
     primitives::{db::Database, EVMError, EVMResultGeneric, ResultAndState, Spec},
-    Context, FrameResult,
+    Context,
+    FrameResult,
 };
 use std::sync::Arc;
 

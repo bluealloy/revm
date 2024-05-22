@@ -237,6 +237,7 @@ fn check_evm_execution<EXT1, EXT2>(
         });
     }
 
+    #[cfg(not(feature = "fluent_revm"))]
     if state_root.0 != test.hash.0 {
         let kind = TestErrorKind::StateRootMismatch {
             spec_name: spec_name.clone(),

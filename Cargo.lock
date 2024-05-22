@@ -1677,6 +1677,7 @@ dependencies = [
  "fluentbase-codec",
  "fluentbase-codec-derive",
  "fluentbase-runtime",
+ "fluentbase-sdk-derive",
  "fluentbase-types",
  "lol_alloc",
  "paste",
@@ -1684,13 +1685,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "fluentbase-sdk-derive"
+version = "0.1.0"
+dependencies = [
+ "convert_case 0.6.0",
+ "crypto-hashes",
+ "quote",
+ "serde",
+ "syn 2.0.65",
+]
+
+[[package]]
 name = "fluentbase-types"
 version = "0.1.0"
 dependencies = [
  "alloy-primitives",
- "byteorder",
- "hashbrown",
- "revm-primitives",
  "rwasm",
  "serde",
  "strum_macros",

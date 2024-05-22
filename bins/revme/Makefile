@@ -1,5 +1,5 @@
-.PHONY: clone_tests
-clone_tests:
+.PHONY: sync_tests
+sync_tests:
 	if [ ! -d tests ]; then \
   		git clone https://github.com/ethereum/tests; \
   	else \

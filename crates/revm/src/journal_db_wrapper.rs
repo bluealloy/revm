@@ -10,6 +10,7 @@ use fluentbase_sdk::{
     AccountCheckpoint,
     AccountManager,
     EvmCallMethodOutput,
+    LowLevelAPI,
     JZKT_ACCOUNT_COMPRESSION_FLAGS,
     JZKT_ACCOUNT_FIELDS_COUNT,
     JZKT_ACCOUNT_RWASM_CODE_HASH_FIELD,

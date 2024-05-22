@@ -1,10 +1,13 @@
 //! Revm is a Rust EVM implementation.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
-
+#![allow(unused_extern_crates)]
 #[macro_use]
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
+
+#[cfg(feature = "std")]
+extern crate alloc;
 
 // Define modules.
 
@@ -28,7 +31,6 @@ pub mod optimism;
 mod test;
 
 // Export items.
-
 pub use builder::EvmBuilder;
 pub use context::{
     Context,

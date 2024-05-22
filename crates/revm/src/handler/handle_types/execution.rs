@@ -3,11 +3,21 @@ use crate::{
     handler::mainnet,
     interpreter::{CallInputs, CreateInputs, SharedMemory},
     primitives::{db::Database, EVMError, Spec},
-    CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
+    CallFrame,
+    Context,
+    CreateFrame,
+    Frame,
+    FrameOrResult,
+    FrameResult,
 };
 use revm_interpreter::{
-    opcode::InstructionTables, CallOutcome, CreateOutcome, EOFCreateInput, EOFCreateOutcome,
-    InterpreterAction, InterpreterResult,
+    opcode::InstructionTables,
+    CallOutcome,
+    CreateOutcome,
+    EOFCreateInput,
+    EOFCreateOutcome,
+    InterpreterAction,
+    InterpreterResult,
 };
 use std::{boxed::Box, sync::Arc};
 

@@ -84,4 +84,6 @@ optional_no_base_fee = ["revm-primitives/optional_no_base_fee"]
 optional_beneficiary_reward = ["revm-primitives/optional_beneficiary_reward"]
 
 rwasm = ["revm-primitives/rwasm"]
-fluent_revm = ["fluentbase-types/fluent_revm"]
+fluent_revm = [
+    #    "fluentbase-types/fluent_revm"
+]

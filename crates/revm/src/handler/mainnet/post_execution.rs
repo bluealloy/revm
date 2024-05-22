@@ -1,10 +1,19 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, EVMError, ExecutionResult, ResultAndState, Spec, SpecId::LONDON, U256,
+        db::Database,
+        EVMError,
+        ExecutionResult,
+        ResultAndState,
+        Spec,
+        SpecId::LONDON,
+        SuccessReason,
+        U256,
     },
-    Context, FrameResult,
+    Context,
+    FrameResult,
 };
+use fluentbase_types::ExitCode;
 
 /// Mainnet end handle does not change the output.
 #[inline]
@@ -80,6 +89,7 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
+#[cfg(not(feature = "fluent_revm"))]
 pub fn output<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     result: FrameResult,
@@ -119,6 +129,40 @@ pub fn output<EXT, DB: Database>(
                 flag, instruction_result
             )
         }
+    };
+
+    Ok(ResultAndState { result, state })
+}
+
+/// Main return handle, returns the output of the transaction.
+#[inline]
+#[cfg(feature = "fluent_revm")]
+pub fn output<EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+    result: FrameResult,
+) -> Result<ResultAndState, EVMError<DB::Error>> {
+    core::mem::replace(&mut context.evm.error, Ok(()))?;
+    // used gas with refund calculated.
+    let gas_refunded = result.gas().refunded() as u64;
+    let final_gas_used = result.gas().spend() - gas_refunded;
+    let output = result.output();
+    let instruction_result = result.into_interpreter_result();
+
+    // reset journal and return present state.
+    let (state, logs) = context.evm.journaled_state.finalize();
+
+    let result = match instruction_result.result.into() {
+        ExitCode::Ok => ExecutionResult::Success {
+            reason: SuccessReason::Return,
+            gas_used: final_gas_used,
+            gas_refunded,
+            logs,
+            output,
+        },
+        _ => ExecutionResult::Revert {
+            gas_used: final_gas_used,
+            output: output.into_data(),
+        },
     };
 
     Ok(ResultAndState { result, state })
