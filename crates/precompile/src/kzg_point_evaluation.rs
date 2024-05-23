@@ -26,19 +26,19 @@ pub const RETURN_VALUE: &[u8; 64] = &hex!(
 /// with z and y being padded 32 byte big endian values
 pub fn run(input: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
     if gas_limit < GAS_COST {
-        return Err(Error::OutOfGas);
+        return PrecompileResult::err(Error::OutOfGas);
     }
 
     // Verify input length.
     if input.len() != 192 {
-        return Err(Error::BlobInvalidInputLength);
+        return PrecompileResult::err(Error::BlobInvalidInputLength);
     }
 
     // Verify commitment matches versioned_hash
     let versioned_hash = &input[..32];
     let commitment = &input[96..144];
     if kzg_to_versioned_hash(commitment) != versioned_hash {
-        return Err(Error::BlobMismatchedVersion);
+        return PrecompileResult::err(Error::BlobMismatchedVersion);
     }
 
     // Verify KZG proof with z and y in big endian format
@@ -47,11 +47,11 @@ pub fn run(input: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
     let y = as_bytes32(&input[64..96]);
     let proof = as_bytes48(&input[144..192]);
     if !verify_kzg_proof(commitment, z, y, proof, env.cfg.kzg_settings.get()) {
-        return Err(Error::BlobVerifyKzgProofFailed);
+        return PrecompileResult::err(Error::BlobVerifyKzgProofFailed);
     }
 
     // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
-    Ok((GAS_COST, RETURN_VALUE.into()))
+    PrecompileResult::ok(GAS_COST, RETURN_VALUE.into())
 }
 
 /// `VERSIONED_HASH_VERSION_KZG ++ sha256(commitment)[1..]`
@@ -113,8 +113,14 @@ mod tests {
         let expected_output = hex!("000000000000000000000000000000000000000000000000000000000000100073eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
         let gas = 50000;
         let env = Env::default();
-        let (actual_gas, actual_output) = run(&input.into(), gas, &env).unwrap();
-        assert_eq!(actual_gas, gas);
-        assert_eq!(actual_output[..], expected_output);
+        let run_result = run(&input.into(), gas, &env);
+        match run_result {
+            PrecompileResult::Ok { gas_used, output } => {
+                assert_eq!(gas_used, gas);
+                assert_eq!(output[..], expected_output);
+            },
+            PrecompileResult::Error { error_type } => panic!("run failed with error: {:?}", error_type),
+            PrecompileResult::FatalError { msg } => panic!("run failed with fatal error: {:?}", msg),
+        }
     }
 }

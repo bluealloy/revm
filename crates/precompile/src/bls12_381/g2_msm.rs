@@ -25,7 +25,7 @@ pub const ADDRESS: u64 = 0x10;
 pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % g2_mul::INPUT_LENGTH != 0 {
-        return Err(PrecompileError::Other(format!(
+        return PrecompileResult::err(PrecompileError::Other(format!(
             "G2MSM input length should be multiple of {}, was {}",
             g2_mul::INPUT_LENGTH,
             input_len
@@ -35,7 +35,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let k = input_len / g2_mul::INPUT_LENGTH;
     let required_gas = msm_required_gas(k, g2_mul::BASE_GAS_FEE);
     if required_gas > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return PrecompileResult::err(PrecompileError::OutOfGas);
     }
 
     let mut g2_points: Vec<blst_p2> = Vec::with_capacity(k);
@@ -52,7 +52,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         //
         // So we set the subgroup_check flag to `true`
-        let p0_aff = &extract_g2_input(slice, true)?;
+        let p0_aff = &extract_g2_input(slice, true).unwrap();
 
         let mut p0 = blst_p2::default();
         // SAFETY: p0 and p0_aff are blst values.
@@ -64,14 +64,14 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             &extract_scalar_input(
                 &input[i * g2_mul::INPUT_LENGTH + G2_INPUT_ITEM_LENGTH
                     ..i * g2_mul::INPUT_LENGTH + G2_INPUT_ITEM_LENGTH + SCALAR_LENGTH],
-            )?
+            ).unwrap()
             .b,
         );
     }
 
     // return infinity point if all points are infinity
     if g2_points.is_empty() {
-        return Ok((required_gas, [0; 256].into()));
+        return PrecompileResult::ok(required_gas, [0; 256].into());
     }
 
     let points = p2_affines::from(&g2_points);
@@ -82,5 +82,5 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     unsafe { blst_p2_to_affine(&mut multiexp_aff, &multiexp) };
 
     let out = encode_g2_point(&multiexp_aff);
-    Ok((required_gas, out))
+    PrecompileResult::ok(required_gas, out)
 }

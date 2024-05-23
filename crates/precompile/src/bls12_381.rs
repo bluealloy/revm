@@ -77,39 +77,43 @@ mod test {
     #[case::map_fp_to_g1(map_fp_to_g1::map_fp_to_g1, "map_fp_to_G1_bls.json")]
     #[case::map_fp2_to_g2(map_fp2_to_g2::map_fp2_to_g2, "map_fp2_to_G2_bls.json")]
     fn test_bls(
-        #[case] precompile: fn(input: &Bytes, gas_limit: u64) -> PrecompileResult,
-        #[case] file_name: &str,
-    ) {
-        let test_vectors = load_test_vectors(format!("test-vectors/{file_name}"))
-            .unwrap_or_else(|e| panic!("Failed to load test vectors from {file_name}: {e}"));
+    #[case] precompile: fn(input: &Bytes, gas_limit: u64) -> PrecompileResult,
+    #[case] file_name: &str,
+) {
+    let test_vectors = load_test_vectors(format!("test-vectors/{}", file_name))
+        .unwrap_or_else(|e| panic!("Failed to load test vectors from {}: {}", file_name, e));
 
-        for vector in test_vectors.0 {
-            let test_name = format!("{file_name}/{}", vector.name);
-            let input = Bytes::from_hex(vector.input.clone()).unwrap_or_else(|e| {
-                panic!(
-                    "could not deserialize input {} as hex in {test_name}: {e}",
-                    &vector.input
-                )
-            });
-            let target_gas: u64 = 30_000_000;
-            let res = precompile(&input, target_gas);
-            if vector.error.unwrap_or_default() {
-                assert!(res.is_err(), "expected error didn't happen in {test_name}");
-            } else {
-                let (actual_gas, actual_output) =
-                    res.unwrap_or_else(|e| panic!("precompile call failed for {test_name}: {e}"));
+    for vector in test_vectors.0 {
+        let test_name = format!("{}/{}", file_name, vector.name);
+        let input = Bytes::from_hex(&vector.input).unwrap_or_else(|e| {
+            panic!(
+                "could not deserialize input {} as hex in {}: {}",
+                vector.input, test_name, e
+            )
+        });
+        let target_gas: u64 = 30_000_000;
+        let res = precompile(&input, target_gas);
+        match res {
+            PrecompileResult::Error { .. } if vector.error.unwrap_or_default() => {
+                // Test passed, it was expected to fail
+            }
+            PrecompileResult::Ok { gas_used: actual_gas, output: actual_output } => {
                 assert_eq!(
                     vector.gas, actual_gas,
-                    "expected gas: {}, actual gas: {} in {test_name}",
-                    vector.gas, actual_gas
+                    "expected gas: {}, actual gas: {} in {}",
+                    vector.gas, actual_gas, test_name
                 );
-                let expected_output = Bytes::from_hex(vector.expected).unwrap();
+                let expected_output = Bytes::from_hex(&vector.expected).unwrap();
                 assert_eq!(
                     expected_output, actual_output,
-                    "expected output: {expected_output}, actual output: {actual_output} in {test_name}");
+                    "expected output: {:?}, actual output: {:?} in {}",
+                    expected_output, actual_output, test_name
+                );
             }
+            _ => panic!("unexpected result in {}", test_name),
         }
     }
+}
 
     #[rstest]
     #[case::g1_empty(0, g1_mul::BASE_GAS_FEE, 0)]

@@ -1,6 +1,6 @@
 use crate::{
     utilities::{bool_to_bytes32, right_pad},
-    Address, Error, Precompile, PrecompileResult, PrecompileWithAddress,
+    Address, Error, Precompile, PrecompileResult, PrecompileWithAddress
 };
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 
@@ -122,30 +122,39 @@ pub fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
 
 pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
-        return Err(Error::OutOfGas);
+        return PrecompileResult::err(Error::OutOfGas);
     }
 
     let input = right_pad::<ADD_INPUT_LEN>(input);
 
-    let p1 = read_point(&input[..64])?;
-    let p2 = read_point(&input[64..])?;
+    let p1 = match read_point(&input[..64]) {
+        Ok(point) => point,
+        Err(_) => return PrecompileResult::err(Error::Bn128FieldPointNotAMember),
+    };
+    let p2 = match read_point(&input[64..]) {
+        Ok(point) => point,
+        Err(_) => return PrecompileResult::err(Error::Bn128FieldPointNotAMember),
+    };
 
     let mut output = [0u8; 64];
     if let Some(sum) = AffineG1::from_jacobian(p1 + p2) {
         sum.x().to_big_endian(&mut output[..32]).unwrap();
         sum.y().to_big_endian(&mut output[32..]).unwrap();
     }
-    Ok((gas_cost, output.into()))
+    PrecompileResult::ok(gas_cost, output.into())
 }
 
 pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
-        return Err(Error::OutOfGas);
+        return PrecompileResult::err(Error::OutOfGas);
     }
 
     let input = right_pad::<MUL_INPUT_LEN>(input);
 
-    let p = read_point(&input[..64])?;
+    let p = match read_point(&input[..64]) {
+        Ok(point) => point,
+        Err(_) => return PrecompileResult::err(Error::Bn128FieldPointNotAMember),
+    };
 
     // `Fr::from_slice` can only fail when the length is not 32.
     let fr = bn::Fr::from_slice(&input[64..96]).unwrap();
@@ -155,7 +164,7 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
         mul.x().to_big_endian(&mut output[..32]).unwrap();
         mul.y().to_big_endian(&mut output[32..]).unwrap();
     }
-    Ok((gas_cost, output.into()))
+    PrecompileResult::ok(gas_cost, output.into())
 }
 
 pub fn run_pair(
@@ -166,11 +175,11 @@ pub fn run_pair(
 ) -> PrecompileResult {
     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
     if gas_used > gas_limit {
-        return Err(Error::OutOfGas);
+        return PrecompileResult::err(Error::OutOfGas);
     }
 
     if input.len() % PAIR_ELEMENT_LEN != 0 {
-        return Err(Error::Bn128PairLength);
+        return PrecompileResult::err(Error::Bn128PairLength);
     }
 
     let success = if input.is_empty() {
@@ -186,23 +195,47 @@ pub fn run_pair(
                 // SAFETY: We're reading `6 * 32 == PAIR_ELEMENT_LEN` bytes from `input[idx..]`
                 // per iteration. This is guaranteed to be in-bounds.
                 let slice = unsafe { input.get_unchecked(start..start + 32) };
-                Fq::from_slice(slice).map_err(|_| Error::Bn128FieldPointNotAMember)
+                Fq::from_slice(slice).map_err(|_| PrecompileResult::err(Error::Bn128FieldPointNotAMember))
             };
-            let ax = read_fq_at(0)?;
-            let ay = read_fq_at(1)?;
-            let bay = read_fq_at(2)?;
-            let bax = read_fq_at(3)?;
-            let bby = read_fq_at(4)?;
-            let bbx = read_fq_at(5)?;
+            let ax = match read_fq_at(0) {
+                Ok(ax) => ax,
+                Err(err) => return err,
+            };
+            let ay = match read_fq_at(1) {
+                Ok(ay) => ay,
+                Err(err) => return err,
+            };
+            let bay = match read_fq_at(2) {
+                Ok(bay) => bay,
+                Err(err) => return err,
+            };
+            let bax = match read_fq_at(3) {
+                Ok(bax) => bax,
+                Err(err) => return err,
+            };
+            let bby = match read_fq_at(4) {
+                Ok(bby) => bby,
+                Err(err) => return err,
+            };
+            let bbx = match read_fq_at(5) {
+                Ok(bbx) => bbx,
+                Err(err) => return err,
+            };
 
-            let a = new_g1_point(ax, ay)?;
+            let a = match new_g1_point(ax, ay) {
+                Ok(a) => a,
+                Err(_) => return PrecompileResult::err(Error::Bn128AffineGFailedToCreate),
+            };
             let b = {
                 let ba = Fq2::new(bax, bay);
                 let bb = Fq2::new(bbx, bby);
                 if ba.is_zero() && bb.is_zero() {
                     G2::zero()
                 } else {
-                    G2::from(AffineG2::new(ba, bb).map_err(|_| Error::Bn128AffineGFailedToCreate)?)
+                    match AffineG2::new(ba, bb) {
+                        Ok(affine_g2) => G2::from(affine_g2),
+                        Err(_) => return PrecompileResult::err(Error::Bn128AffineGFailedToCreate),
+                    }
                 }
             };
 
@@ -211,7 +244,7 @@ pub fn run_pair(
 
         mul == Gt::one()
     };
-    Ok((gas_used, bool_to_bytes32(success)))
+    PrecompileResult::ok(gas_used, bool_to_bytes32(success))
 }
 
 #[cfg(test)]
@@ -219,6 +252,7 @@ mod tests {
     use crate::bn128::add::BYZANTIUM_ADD_GAS_COST;
     use crate::bn128::mul::BYZANTIUM_MUL_GAS_COST;
     use crate::bn128::pair::{BYZANTIUM_PAIR_BASE, BYZANTIUM_PAIR_PER_POINT};
+    use crate::PrecompileError;
     use revm_primitives::hex;
 
     use super::*;
@@ -240,8 +274,12 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
-        assert_eq!(res, expected);
+        let run_result = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500);
+        match run_result {
+            PrecompileResult::Ok { output, .. } => assert_eq!(output, expected),
+            PrecompileResult::Error { error_type } => panic!("run_add failed with error: {:?}", error_type),
+            PrecompileResult::FatalError { msg } => panic!("run_add failed with fatal error: {:?}", msg),
+        }
 
         // zero sum test
         let input = hex::decode(
@@ -259,8 +297,12 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
-        assert_eq!(res, expected);
+        let run_result = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500);
+        match run_result {
+            PrecompileResult::Ok { output, .. } => assert_eq!(output, expected),
+            PrecompileResult::Error { error_type } => panic!("run_add failed with error: {:?}", error_type),
+            PrecompileResult::FatalError { msg } => panic!("run_add failed with fatal error: {:?}", msg),
+        }
 
         // out of gas test
         let input = hex::decode(
@@ -273,8 +315,11 @@ mod tests {
         .unwrap();
 
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 499);
-        println!("{:?}", res);
-        assert!(matches!(res, Err(Error::OutOfGas)));
+        match res {
+            PrecompileResult::Ok { .. } => panic!("Expected an OutOfGas error, but got Ok"),
+            PrecompileResult::Error { error_type } => assert_eq!(error_type, Error::OutOfGas),
+            PrecompileResult::FatalError { msg } => panic!("Expected an OutOfGas error, but got FatalError: {:?}", msg),
+        }
 
         // no input test
         let input = [0u8; 0];
@@ -285,8 +330,12 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
-        assert_eq!(res, expected);
+        let run_result = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500);
+        match run_result {
+            PrecompileResult::Ok { output, .. } => assert_eq!(output, expected),
+            PrecompileResult::Error { error_type } => panic!("run_add failed with error: {:?}", error_type),
+            PrecompileResult::FatalError { msg } => panic!("run_add failed with fatal error: {:?}", msg),
+        }
 
         // point not on curve fail
         let input = hex::decode(
@@ -299,7 +348,11 @@ mod tests {
         .unwrap();
 
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500);
-        assert!(matches!(res, Err(Error::Bn128AffineGFailedToCreate)));
+        match res {
+            PrecompileResult::Ok { .. } => panic!("Expected a Bn128AffineGFailedToCreate error, but got Ok"),
+            PrecompileResult::Error { error_type } => assert_eq!(error_type, PrecompileError::Bn128AffineGFailedToCreate),
+            PrecompileResult::FatalError { msg } => panic!("Expected a Bn128AffineGFailedToCreate error, but got FatalError: {:?}", msg),
+        }
     }
 
     #[test]
@@ -318,8 +371,12 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
-        assert_eq!(res, expected);
+        let run_result = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000);
+        match run_result {
+            PrecompileResult::Ok { output, .. } => assert_eq!(output, expected),
+            PrecompileResult::Error { error_type } => panic!("run_mul failed with error: {:?}", error_type),
+            PrecompileResult::FatalError { msg } => panic!("run_mul failed with fatal error: {:?}", msg),
+        }
 
         // out of gas test
         let input = hex::decode(
@@ -331,7 +388,11 @@ mod tests {
         .unwrap();
 
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 39_999);
-        assert!(matches!(res, Err(Error::OutOfGas)));
+        match res {
+            PrecompileResult::Ok { .. } => panic!("Expected an OutOfGas error, but got Ok"),
+            PrecompileResult::Error { error_type } => assert_eq!(error_type, PrecompileError::OutOfGas),
+            PrecompileResult::FatalError { msg } => panic!("Expected an OutOfGas error, but got FatalError: {:?}", msg),
+        }
 
         // zero multiplication test
         let input = hex::decode(
@@ -348,8 +409,12 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
-        assert_eq!(res, expected);
+        let run_result = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000);
+        match run_result {
+            PrecompileResult::Ok { output, .. } => assert_eq!(output, expected),
+            PrecompileResult::Error { error_type } => panic!("run_mul failed with error: {:?}", error_type),
+            PrecompileResult::FatalError { msg } => panic!("run_mul failed with fatal error: {:?}", msg),
+        }
 
         // no input test
         let input = [0u8; 0];
@@ -360,8 +425,12 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
-        assert_eq!(res, expected);
+        let run_result = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000);
+        match run_result {
+            PrecompileResult::Ok { output, .. } => assert_eq!(output, expected),
+            PrecompileResult::Error { error_type } => panic!("run_mul failed with error: {:?}", error_type),
+            PrecompileResult::FatalError { msg } => panic!("run_mul failed with fatal error: {:?}", msg),
+        }
 
         // point not on curve fail
         let input = hex::decode(
@@ -373,7 +442,11 @@ mod tests {
         .unwrap();
 
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000);
-        assert!(matches!(res, Err(Error::Bn128AffineGFailedToCreate)));
+        match res {
+            PrecompileResult::Ok { .. } => panic!("Expected a Bn128AffineGFailedToCreate error, but got Ok"),
+            PrecompileResult::Error { error_type } => assert_eq!(error_type, PrecompileError::Bn128AffineGFailedToCreate),
+            PrecompileResult::FatalError { msg } => panic!("Expected a Bn128AffineGFailedToCreate error, but got FatalError: {:?}", msg),
+        }
     }
 
     #[test]
@@ -425,13 +498,12 @@ mod tests {
         )
         .unwrap();
 
-        let res = run_pair(
-            &input,
-            BYZANTIUM_PAIR_PER_POINT,
-            BYZANTIUM_PAIR_BASE,
-            259_999,
-        );
-        assert!(matches!(res, Err(Error::OutOfGas)));
+        let run_result = run_pair(&input, BYZANTIUM_PAIR_PER_POINT, BYZANTIUM_PAIR_BASE, 259_999);
+        match run_result {
+            PrecompileResult::Ok { .. } => panic!("Expected an OutOfGas error, but got Ok"),
+            PrecompileResult::Error { error_type } => assert_eq!(error_type, PrecompileError::OutOfGas),
+            PrecompileResult::FatalError { msg } => panic!("Expected an OutOfGas error, but got FatalError: {:?}", msg),
+        }
 
         // no input test
         let input = [0u8; 0];
@@ -447,7 +519,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(res, expected);
-
+        
         // point not on curve fail
         let input = hex::decode(
             "\
@@ -460,13 +532,12 @@ mod tests {
         )
         .unwrap();
 
-        let res = run_pair(
-            &input,
-            BYZANTIUM_PAIR_PER_POINT,
-            BYZANTIUM_PAIR_BASE,
-            260_000,
-        );
-        assert!(matches!(res, Err(Error::Bn128AffineGFailedToCreate)));
+        let run_result = run_pair(&input, BYZANTIUM_PAIR_PER_POINT, BYZANTIUM_PAIR_BASE, 260_000);
+        match run_result {
+            PrecompileResult::Ok { .. } => panic!("Expected a Bn128AffineGFailedToCreate error, but got Ok"),
+            PrecompileResult::Error { error_type } => assert_eq!(error_type, PrecompileError::Bn128AffineGFailedToCreate),
+            PrecompileResult::FatalError { msg } => panic!("Expected a Bn128AffineGFailedToCreate error, but got FatalError: {:?}", msg),
+        }
 
         // invalid input length
         let input = hex::decode(
@@ -478,12 +549,11 @@ mod tests {
         )
         .unwrap();
 
-        let res = run_pair(
-            &input,
-            BYZANTIUM_PAIR_PER_POINT,
-            BYZANTIUM_PAIR_BASE,
-            260_000,
-        );
-        assert!(matches!(res, Err(Error::Bn128PairLength)));
+        let run_result = run_pair(&input, BYZANTIUM_PAIR_PER_POINT, BYZANTIUM_PAIR_BASE, 260_000);
+        match run_result {
+            PrecompileResult::Ok { .. } => panic!("Expected a Bn128PairLength error, but got Ok"),
+            PrecompileResult::Error { error_type } => assert_eq!(error_type, PrecompileError::Bn128PairLength),
+            PrecompileResult::FatalError { msg } => panic!("Expected a Bn128PairLength error, but got FatalError: {:?}", msg),
+        }
     }
 }

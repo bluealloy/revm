@@ -614,7 +614,7 @@ mod test {
                 _gas_price: u64,
                 _context: &mut InnerEvmContext<EmptyDB>,
             ) -> PrecompileResult {
-                Ok((10, Bytes::new()))
+                PrecompileResult::ok(10, Bytes::new())
             }
         }
 

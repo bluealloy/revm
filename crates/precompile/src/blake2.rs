@@ -14,20 +14,20 @@ pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input = &input[..];
 
     if input.len() != INPUT_LENGTH {
-        return Err(Error::Blake2WrongLength);
+        return PrecompileResult::err(Error::Blake2WrongLength);
     }
 
     let f = match input[212] {
         1 => true,
         0 => false,
-        _ => return Err(Error::Blake2WrongFinalIndicatorFlag),
+        _ => return PrecompileResult::err(Error::Blake2WrongFinalIndicatorFlag),
     };
 
     // rounds 4 bytes
     let rounds = u32::from_be_bytes(input[..4].try_into().unwrap()) as usize;
     let gas_used = rounds as u64 * F_ROUND;
     if gas_used > gas_limit {
-        return Err(Error::OutOfGas);
+        return PrecompileResult::err(Error::OutOfGas);
     }
 
     let mut h = [0u64; 8];
@@ -51,7 +51,7 @@ pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         out[i..i + 8].copy_from_slice(&h.to_le_bytes());
     }
 
-    Ok((gas_used, out.into()))
+    PrecompileResult::ok(gas_used, out.into())
 }
 
 pub mod algo {

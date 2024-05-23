@@ -6,7 +6,39 @@ use std::{boxed::Box, string::String, sync::Arc};
 /// A precompile operation result.
 ///
 /// Returns either `Ok((gas_used, return_bytes))` or `Err(error)`.
-pub type PrecompileResult = Result<(u64, Bytes), PrecompileError>;
+pub enum PrecompileResult {
+    Ok {
+      gas_used: u64,
+      output: Bytes,
+    },
+    Error {
+        error_type: PrecompileError,
+    },
+    FatalError {
+        msg: String,
+    }
+}
+
+impl PrecompileResult {
+    pub fn ok(gas_used: u64, output: Bytes) -> Self {
+        Self::Ok { gas_used, output }
+    }
+
+    pub fn err(error_type: PrecompileError) -> Self {
+        Self::Error { error_type }
+    }
+
+    pub fn fatal_error(msg: impl Into<String>) -> Self {
+        Self::FatalError { msg: msg.into() }
+    }
+    
+    pub fn unwrap(self) -> (u64, Bytes) {
+        match self {
+            Self::Ok { gas_used, output } => (gas_used, output),
+            _ => panic!("called `PrecompileResult::unwrap()` on an `Error` value"),
+        }
+    }
+}
 
 pub type StandardPrecompileFn = fn(&Bytes, u64) -> PrecompileResult;
 pub type EnvPrecompileFn = fn(&Bytes, u64, env: &Env) -> PrecompileResult;
@@ -175,7 +207,7 @@ mod test {
                 _gas_price: u64,
                 _env: &Env,
             ) -> PrecompileResult {
-                PrecompileResult::Err(PrecompileError::OutOfGas)
+                PrecompileResult::err(PrecompileError::OutOfGas)
             }
         }
 

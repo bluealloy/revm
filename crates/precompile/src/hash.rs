@@ -17,10 +17,10 @@ pub const RIPEMD160: PrecompileWithAddress = PrecompileWithAddress(
 pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let cost = calc_linear_cost_u32(input.len(), 60, 12);
     if cost > gas_limit {
-        Err(Error::OutOfGas)
+        PrecompileResult::err(Error::OutOfGas)
     } else {
         let output = sha2::Sha256::digest(input);
-        Ok((cost, output.to_vec().into()))
+        PrecompileResult::ok(cost, output.to_vec().into())
     }
 }
 
@@ -30,13 +30,13 @@ pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 pub fn ripemd160_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let gas_used = calc_linear_cost_u32(input.len(), 600, 120);
     if gas_used > gas_limit {
-        Err(Error::OutOfGas)
+        PrecompileResult::err(Error::OutOfGas)
     } else {
         let mut hasher = ripemd::Ripemd160::new();
         hasher.update(input);
 
         let mut output = [0u8; 32];
         hasher.finalize_into((&mut output[12..]).into());
-        Ok((gas_used, output.to_vec().into()))
+        PrecompileResult::ok(gas_used, output.to_vec().into())
     }
 }

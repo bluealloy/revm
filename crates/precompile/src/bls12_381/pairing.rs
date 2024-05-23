@@ -32,7 +32,7 @@ const INPUT_LENGTH: usize = 384;
 pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % INPUT_LENGTH != 0 {
-        return Err(PrecompileError::Other(format!(
+        return PrecompileResult::err(PrecompileError::Other(format!(
             "Pairing input length should be multiple of {INPUT_LENGTH}, was {input_len}"
         )));
     }
@@ -40,7 +40,7 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let k = input_len / INPUT_LENGTH;
     let required_gas: u64 = PAIRING_MULTIPLIER_BASE * k as u64 + PAIRING_OFFSET_BASE;
     if required_gas > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return PrecompileResult::err(PrecompileError::OutOfGas);
     }
 
     // accumulator for the fp12 multiplications of the miller loops.
@@ -52,7 +52,7 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         let p1_aff = &extract_g1_input(
             &input[i * INPUT_LENGTH..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH],
             true,
-        )?;
+        ).unwrap();
 
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         //
@@ -61,7 +61,7 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             &input[i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
                 ..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + G2_INPUT_ITEM_LENGTH],
             true,
-        )?;
+        ).unwrap();
 
         if i > 0 {
             // after the first slice (i>0) we use cur_ml to store the current
@@ -98,5 +98,5 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             result = 1;
         }
     }
-    Ok((required_gas, B256::with_last_byte(result).into()))
+    PrecompileResult::ok(required_gas, B256::with_last_byte(result).into())
 }

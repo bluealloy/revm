@@ -21,17 +21,17 @@ const MAP_FP_TO_G1_BASE: u64 = 5500;
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-mapping-fp-element-to-g1-point>
 pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if MAP_FP_TO_G1_BASE > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return PrecompileResult::err(PrecompileError::OutOfGas);
     }
 
     if input.len() != PADDED_FP_LENGTH {
-        return Err(PrecompileError::Other(format!(
+        return PrecompileResult::err(PrecompileError::Other(format!(
             "MAP_FP_TO_G1 input should be {PADDED_FP_LENGTH} bytes, was {}",
             input.len()
         )));
     }
 
-    let input_p0 = remove_padding(input)?;
+    let input_p0 = remove_padding(input).unwrap();
 
     let mut fp = blst_fp::default();
 
@@ -48,5 +48,5 @@ pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     unsafe { blst_p1_to_affine(&mut p_aff, &p) };
 
     let out = encode_g1_point(&p_aff);
-    Ok((MAP_FP_TO_G1_BASE, out))
+    PrecompileResult::ok(MAP_FP_TO_G1_BASE, out)
 }

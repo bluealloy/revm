@@ -1,4 +1,5 @@
 use revm_interpreter::CallValue;
+use revm_precompile::PrecompileResult;
 
 use super::inner_evm_context::InnerEvmContext;
 use crate::{
@@ -119,20 +120,23 @@ impl<DB: Database> EvmContext<DB> {
         };
 
         match out {
-            Ok((gas_used, data)) => {
+            PrecompileResult::Ok { gas_used, output } => {
                 if result.gas.record_cost(gas_used) {
                     result.result = InstructionResult::Return;
-                    result.output = data;
+                    result.output = output;
                 } else {
                     result.result = InstructionResult::PrecompileOOG;
                 }
             }
-            Err(e) => {
-                result.result = if e == crate::precompile::Error::OutOfGas {
+            PrecompileResult::Error { error_type } => {
+                result.result = if error_type == crate::precompile::Error::OutOfGas {
                     InstructionResult::PrecompileOOG
                 } else {
                     InstructionResult::PrecompileError
                 };
+            }
+            PrecompileResult::FatalError { msg: _ } => {
+                result.result = InstructionResult::FatalExternalError;
             }
         }
         Some(result)
