@@ -52,7 +52,8 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         let p1_aff = &extract_g1_input(
             &input[i * INPUT_LENGTH..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH],
             true,
-        ).unwrap();
+        )
+        .unwrap();
 
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
         //
@@ -61,7 +62,8 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             &input[i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
                 ..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + G2_INPUT_ITEM_LENGTH],
             true,
-        ).unwrap();
+        )
+        .unwrap();
 
         if i > 0 {
             // after the first slice (i>0) we use cur_ml to store the current

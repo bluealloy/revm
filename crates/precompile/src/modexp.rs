@@ -351,11 +351,19 @@ mod tests {
             match run_result {
                 PrecompileResult::Ok { gas_used, output } => {
                     let expected = hex::decode(test.expected).unwrap();
-                    assert_eq!(gas_used, test_gas, "used gas not matching for test: {}", test.name);
+                    assert_eq!(
+                        gas_used, test_gas,
+                        "used gas not matching for test: {}",
+                        test.name
+                    );
                     assert_eq!(output, expected, "test:{}", test.name);
-                },
-                PrecompileResult::Error { error_type } => panic!("byzantium_run failed with error: {:?}", error_type),
-                PrecompileResult::FatalError { msg } => panic!("byzantium_run failed with fatal error: {:?}", msg),
+                }
+                PrecompileResult::Error { error_type } => {
+                    panic!("byzantium_run failed with error: {:?}", error_type)
+                }
+                PrecompileResult::FatalError { msg } => {
+                    panic!("byzantium_run failed with fatal error: {:?}", msg)
+                }
             }
         }
     }
@@ -368,11 +376,19 @@ mod tests {
             match run_result {
                 PrecompileResult::Ok { gas_used, output } => {
                     let expected = hex::decode(test.expected).unwrap();
-                    assert_eq!(gas_used, test_gas, "used gas not matching for test: {}", test.name);
+                    assert_eq!(
+                        gas_used, test_gas,
+                        "used gas not matching for test: {}",
+                        test.name
+                    );
                     assert_eq!(output, expected, "test:{}", test.name);
-                },
-                PrecompileResult::Error { error_type } => panic!("berlin_run failed with error: {:?}", error_type),
-                PrecompileResult::FatalError { msg } => panic!("berlin_run failed with fatal error: {:?}", msg),
+                }
+                PrecompileResult::Error { error_type } => {
+                    panic!("berlin_run failed with error: {:?}", error_type)
+                }
+                PrecompileResult::FatalError { msg } => {
+                    panic!("berlin_run failed with fatal error: {:?}", msg)
+                }
             }
         }
     }
@@ -381,12 +397,19 @@ mod tests {
     fn test_berlin_modexp_empty_input() {
         let run_result = berlin_run(&Bytes::new(), 100_000);
         match run_result {
-            PrecompileResult::Ok { gas_used: _, output } => {
+            PrecompileResult::Ok {
+                gas_used: _,
+                output,
+            } => {
                 let expected: Vec<u8> = Vec::new();
                 assert_eq!(output, expected);
-            },
-            PrecompileResult::Error { error_type } => panic!("berlin_run failed with error: {:?}", error_type),
-            PrecompileResult::FatalError { msg } => panic!("berlin_run failed with fatal error: {:?}", msg),
+            }
+            PrecompileResult::Error { error_type } => {
+                panic!("berlin_run failed with error: {:?}", error_type)
+            }
+            PrecompileResult::FatalError { msg } => {
+                panic!("berlin_run failed with fatal error: {:?}", msg)
+            }
         }
     }
 }

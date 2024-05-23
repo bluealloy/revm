@@ -64,7 +64,8 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             &extract_scalar_input(
                 &input[i * g1_mul::INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
                     ..i * g1_mul::INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + SCALAR_LENGTH],
-            ).unwrap()
+            )
+            .unwrap()
             .b,
         );
     }

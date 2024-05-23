@@ -7,16 +7,9 @@ use std::{boxed::Box, string::String, sync::Arc};
 ///
 /// Returns either `Ok((gas_used, return_bytes))` or `Err(error)`.
 pub enum PrecompileResult {
-    Ok {
-      gas_used: u64,
-      output: Bytes,
-    },
-    Error {
-        error_type: PrecompileError,
-    },
-    FatalError {
-        msg: String,
-    }
+    Ok { gas_used: u64, output: Bytes },
+    Error { error_type: PrecompileError },
+    FatalError { msg: String },
 }
 
 impl PrecompileResult {
@@ -31,7 +24,7 @@ impl PrecompileResult {
     pub fn fatal_error(msg: impl Into<String>) -> Self {
         Self::FatalError { msg: msg.into() }
     }
-    
+
     pub fn unwrap(self) -> (u64, Bytes) {
         match self {
             Self::Ok { gas_used, output } => (gas_used, output),

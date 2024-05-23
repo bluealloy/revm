@@ -118,9 +118,13 @@ mod tests {
             PrecompileResult::Ok { gas_used, output } => {
                 assert_eq!(gas_used, gas);
                 assert_eq!(output[..], expected_output);
-            },
-            PrecompileResult::Error { error_type } => panic!("run failed with error: {:?}", error_type),
-            PrecompileResult::FatalError { msg } => panic!("run failed with fatal error: {:?}", msg),
+            }
+            PrecompileResult::Error { error_type } => {
+                panic!("run failed with error: {:?}", error_type)
+            }
+            PrecompileResult::FatalError { msg } => {
+                panic!("run failed with fatal error: {:?}", msg)
+            }
         }
     }
 }
