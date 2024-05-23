@@ -382,9 +382,11 @@ fn check_evm_execution<EXT1, EXT2>(
         }
     }
 
+    let exec_result1_res = exec_result1.as_ref().unwrap();
+    let exec_result2_res = exec_result2.as_ref().unwrap();
     assert_eq!(
-        exec_result1.as_ref().unwrap().gas_used(),
-        exec_result2.as_ref().unwrap().gas_used(),
+        exec_result1_res.gas_used(),
+        exec_result2_res.gas_used(),
         "EVM <> FLUENT gas used mismatch ({})",
         exec_result2.as_ref().unwrap().gas_used() as i64
             - exec_result1.as_ref().unwrap().gas_used() as i64
@@ -744,9 +746,9 @@ pub fn execute_test_suite(
                     (e, res)
                 } else {
                     let timer = Instant::now();
-                    println!("ORIGINAL transact_commit:");
+                    println!("\n\nORIGINAL transact_commit:");
                     let res = evm.transact_commit();
-                    println!("FLUENT transact_commit:");
+                    println!("\n\nFLUENT transact_commit:");
                     let res2 = evm2.transact_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
@@ -778,14 +780,15 @@ pub fn execute_test_suite(
                 // re-build to run with tracing
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
-                let mut cache2 = cache_state2.clone();
-                cache2.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
+                let mut cache_original = cache_state2.clone();
+                cache_original
+                    .set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
                 let state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let state2 = revm_fluent::db::State::builder()
-                    .with_cached_prestate(cache2)
+                let state_original = revm_fluent::db::State::builder()
+                    .with_cached_prestate(cache_original)
                     .with_bundle_update()
                     .build();
 
@@ -799,7 +802,7 @@ pub fn execute_test_suite(
                     .build();
                 let mut evm2 = revm_fluent::Evm::builder()
                     .with_spec_id(spec_id)
-                    .with_db(state2)
+                    .with_db(state_original)
                     .with_external_context(TracerEip3155::new(Box::new(stdout())))
                     // .append_handler_register(inspector_handle_register)
                     .build();

@@ -1,12 +1,21 @@
 use super::{
-    plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
+    plain_account::PlainStorage,
+    transition_account::TransitionAccount,
+    CacheAccount,
+    PlainAccount,
 };
+use crate::primitives::{KECCAK_EMPTY, POSEIDON_EMPTY};
+use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
 use revm_interpreter::primitives::{
-    Account, AccountInfo, Address, Bytecode, HashMap, State as EVMState, B256,
+    Account,
+    AccountInfo,
+    Address,
+    Bytecode,
+    HashMap,
+    State as EVMState,
+    B256,
 };
 use std::vec::Vec;
-use fluentbase_sdk::{LowLevelSDK, LowLevelAPI};
-use crate::primitives::{KECCAK_EMPTY, POSEIDON_EMPTY};
 
 /// Cache state contains both modified and original values.
 ///
@@ -77,7 +86,6 @@ impl CacheState {
     }
 
     pub fn insert_contract(&mut self, info: &mut AccountInfo) {
-        println!("insert contract");
         if let Some(code) = &info.code {
             if !code.is_empty() {
                 if info.code_hash == KECCAK_EMPTY {
@@ -117,6 +125,8 @@ impl CacheState {
         info: AccountInfo,
         storage: PlainStorage,
     ) {
+        #[cfg(feature = "fluent_revm")]
+        self.insert_contract(&mut info.clone().into());
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, storage)
         } else {
@@ -125,7 +135,8 @@ impl CacheState {
         self.accounts.insert(address, account);
     }
 
-    /// Apply output of revm execution and create account transitions that are used to build BundleState.
+    /// Apply output of revm execution and create account transitions that are used to build
+    /// BundleState.
     pub fn apply_evm_state(&mut self, evm_state: EVMState) -> Vec<(Address, TransitionAccount)> {
         let mut transitions = Vec::with_capacity(evm_state.len());
         for (address, account) in evm_state {

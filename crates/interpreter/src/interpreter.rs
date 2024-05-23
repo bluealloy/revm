@@ -351,10 +351,13 @@ impl Interpreter {
         let opcode = unsafe { *self.instruction_pointer };
 
         println!(
-            "  opcode {:x?} pc {} stack {:?}",
+            "  opcode {:x?} pc {} stack {:?} gas (remaining {} limit {} spent {})",
             opcode,
             self.program_counter(),
-            self.stack.data()
+            self.stack.data(),
+            self.gas.remaining(),
+            self.gas.limit(),
+            self.gas.spent(),
         );
 
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
