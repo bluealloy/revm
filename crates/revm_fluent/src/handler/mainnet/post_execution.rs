@@ -144,7 +144,7 @@ pub fn output<EXT, DB: Database>(
     core::mem::replace(&mut context.evm.error, Ok(()))?;
     // used gas with refund calculated.
     let gas_refunded = result.gas().refunded() as u64;
-    let final_gas_used = result.gas().spend() - gas_refunded;
+    let final_gas_used = result.gas().spent() - gas_refunded;
     let output = result.output();
     let instruction_result = result.into_interpreter_result();
 

@@ -350,23 +350,25 @@ impl Interpreter {
         // Get current opcode.
         let opcode = unsafe { *self.instruction_pointer };
 
-        println!(
-            "  opcode {:x?} pc {} stack {:?} gas (remaining {} limit {} spent {})",
-            opcode,
-            self.program_counter(),
-            self.stack.data(),
-            self.gas.remaining(),
-            self.gas.limit(),
-            self.gas.spent(),
-        );
-
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last
         // instruction it will do noop and just stop execution of this contract
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
 
         // execute instruction.
-        (instruction_table[opcode as usize])(self, host)
+        let res = (instruction_table[opcode as usize])(self, host);
+
+        println!(
+            "  opcode {:x?} pc {} stack {:?} gas (limit {} spent {} remaining {})",
+            opcode,
+            self.program_counter(),
+            self.stack.data(),
+            self.gas.limit(),
+            self.gas.spent(),
+            self.gas.remaining(),
+        );
+
+        res
     }
 
     /// Take memory and replace it with empty memory.

@@ -1,6 +1,5 @@
-use fluentbase_types::ExitCode;
 use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
-
+use fluentbase_types::ExitCode;
 
 #[cfg(not(feature = "fluent_revm"))]
 #[repr(u8)]
@@ -107,6 +106,22 @@ impl From<HaltReason> for InstructionResult {
     }
 }
 
+#[cfg(feature = "fluent_revm")]
+#[macro_export]
+macro_rules! return_ok {
+    () => {
+        fluentbase_types::ExitCode::Ok
+    };
+}
+#[cfg(feature = "fluent_revm")]
+#[macro_export]
+macro_rules! return_revert {
+    () => {
+        fluentbase_types::ExitCode::Panic
+    };
+}
+
+#[cfg(not(feature = "fluent_revm"))]
 #[macro_export]
 macro_rules! return_ok {
     () => {
@@ -118,6 +133,7 @@ macro_rules! return_ok {
     };
 }
 
+#[cfg(not(feature = "fluent_revm"))]
 #[macro_export]
 macro_rules! return_revert {
     () => {
@@ -126,6 +142,7 @@ macro_rules! return_revert {
 }
 
 #[macro_export]
+#[cfg(not(feature = "fluent_revm"))]
 macro_rules! return_error {
     () => {
         InstructionResult::OutOfGas
@@ -236,9 +253,9 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::Return => Self::Success(SuccessReason::Return),
             InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
-            InstructionResult::CallOrCreate => Self::InternalCallOrCreate, // used only in interpreter loop
-            InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), // not gonna happen for first call
-            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), // Check for first call is done separately.
+            InstructionResult::CallOrCreate => Self::InternalCallOrCreate, /* used only in interpreter loop */
+            InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), /* not gonna happen for first call */
+            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), /* Check for first call is done separately. */
             InstructionResult::OutOfGas => Self::Halt(HaltReason::OutOfGas(OutOfGasError::Basic)),
             InstructionResult::MemoryLimitOOG => {
                 Self::Halt(HaltReason::OutOfGas(OutOfGasError::MemoryLimit))
@@ -266,7 +283,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::StackOverflow => Self::Halt(HaltReason::StackOverflow),
             InstructionResult::OutOfOffset => Self::Halt(HaltReason::OutOfOffset),
             InstructionResult::CreateCollision => Self::Halt(HaltReason::CreateCollision),
-            InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment), // Check for first call is done separately.
+            InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment), /* Check for first call is done separately. */
             InstructionResult::PrecompileError => Self::Halt(HaltReason::PrecompileError),
             InstructionResult::NonceOverflow => Self::Halt(HaltReason::NonceOverflow),
             InstructionResult::CreateContractSizeLimit
@@ -295,9 +312,9 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::Return => Self::Success(SuccessReason::Return),
             InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
-            InstructionResult::CallOrCreate => Self::InternalCallOrCreate, // used only in interpreter loop
-            InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), // not gonna happen for first call
-            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), // Check for first call is done separately.
+            InstructionResult::CallOrCreate => Self::InternalCallOrCreate, /* used only in interpreter loop */
+            InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), /* not gonna happen for first call */
+            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), /* Check for first call is done separately. */
             InstructionResult::OutOfGas => Self::Halt(HaltReason::OutOfGas(OutOfGasError::Basic)),
             InstructionResult::MemoryLimitOOG => {
                 Self::Halt(HaltReason::OutOfGas(OutOfGasError::MemoryLimit))
@@ -325,7 +342,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::StackOverflow => Self::Halt(HaltReason::StackOverflow),
             InstructionResult::OutOfOffset => Self::Halt(HaltReason::OutOfOffset),
             InstructionResult::CreateCollision => Self::Halt(HaltReason::CreateCollision),
-            InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment), // Check for first call is done separately.
+            InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment), /* Check for first call is done separately. */
             InstructionResult::PrecompileError => Self::Halt(HaltReason::PrecompileError),
             InstructionResult::NonceOverflow => Self::Halt(HaltReason::NonceOverflow),
             InstructionResult::CreateContractSizeLimit

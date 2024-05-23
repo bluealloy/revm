@@ -17,6 +17,7 @@ use crate::{
         EnvWithHandlerCfg,
         ExecutionResult,
         HandlerCfg,
+        InvalidTransaction,
         ResultAndState,
         TransactTo,
         TxEnv,
@@ -402,6 +403,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         // deduce caller balance with its limit.
         pre_exec.deduct_caller(ctx)?;
 
+        let tx_gas_limit = ctx.evm.env.tx.gas_limit;
         let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
 
         let mut result = {
@@ -417,7 +419,8 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         let value = ctx.evm.env.tx.value;
                         let caller = ctx.evm.env.tx.caller;
                         let data = ctx.evm.env.tx.data.clone();
-                        let result = self.call_inner(caller, address, value, data, gas_limit)?;
+                        let result =
+                            self.call_inner(caller, address, value, data, tx_gas_limit, gas_limit)?;
                         FrameResult::Call(result)
                     }
                     TransactTo::Create => {
@@ -570,9 +573,10 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         callee_address: Address,
         value: U256,
         input: Bytes,
+        tx_gas_limit: u64,
         gas_limit: u64,
     ) -> Result<CallOutcome, EVMError<DB::Error>> {
-        let mut gas = Gas::new(gas_limit);
+        let mut gas = Gas::new(tx_gas_limit);
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         if value == U256::ZERO {
@@ -585,7 +589,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             callee: callee_address,
             value,
             input,
-            gas_limit: gas.remaining(),
+            gas_limit,
             depth: 0,
         };
         let contract_input = self.input_from_env(
@@ -628,9 +632,18 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             println!(" - callee: 0x{}", hex::encode(callee_address));
             println!(" - value: 0x{}", hex::encode(&value.to_be_bytes::<32>()));
             println!(
+                " - call_output.gas_remaining: {}",
+                call_output.gas_remaining
+            );
+            println!(" - call_output.gas_refund: {}", call_output.gas_refund);
+            println!(
                 " - fuel consumed: {}",
                 gas.remaining() as i64 - call_output.gas_remaining as i64
             );
+            println!(" - gas.limit: {}", gas.limit() as i64);
+            println!(" - gas.remaining: {}", gas.remaining() as i64);
+            println!(" - gas.spent: {}", gas.spent() as i64);
+            println!(" - gas.refunded: {}", gas.refunded());
             println!(" - exit code: {}", call_output.exit_code);
             if call_output.output.iter().all(|c| c.is_ascii()) {
                 println!(
@@ -645,12 +658,15 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             }
         }
 
-        let mut gas = Gas::new(call_output.gas_remaining);
+        let mut gas = Gas::new(tx_gas_limit);
+        if !gas.record_cost(tx_gas_limit - call_output.gas_remaining) {
+            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
+        };
         gas.record_refund(call_output.gas_refund);
 
         Ok(CallOutcome {
             result: InterpreterResult {
-                result: ExitCode::from(call_output.exit_code),
+                result: InstructionResult::from(call_output.exit_code),
                 output: call_output.output,
                 gas,
             },
