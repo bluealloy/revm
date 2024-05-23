@@ -14,7 +14,7 @@ use revm_interpreter::{
 /// Handles first frame return handle.
 pub type LastFrameReturnHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<EXT, DB>,
+            &mut Context<ChainSpecT, EXT, DB>,
             &mut FrameResult,
         ) -> Result<(), EVMError<ChainSpecT, <DB as Database>::Error>>
         + 'a,
@@ -23,7 +23,7 @@ pub type LastFrameReturnHandle<'a, ChainSpecT, EXT, DB> = Arc<
 /// Handle sub call.
 pub type FrameCallHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<EXT, DB>,
+            &mut Context<ChainSpecT, EXT, DB>,
             Box<CallInputs>,
         ) -> Result<FrameOrResult, EVMError<ChainSpecT, <DB as Database>::Error>>
         + 'a,
@@ -32,7 +32,7 @@ pub type FrameCallHandle<'a, ChainSpecT, EXT, DB> = Arc<
 /// Handle call return
 pub type FrameCallReturnHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<EXT, DB>,
+            &mut Context<ChainSpecT, EXT, DB>,
             Box<CallFrame>,
             InterpreterResult,
         ) -> Result<CallOutcome, EVMError<ChainSpecT, <DB as Database>::Error>>
@@ -42,7 +42,7 @@ pub type FrameCallReturnHandle<'a, ChainSpecT, EXT, DB> = Arc<
 /// Insert call outcome to the parent
 pub type InsertCallOutcomeHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<EXT, DB>,
+            &mut Context<ChainSpecT, EXT, DB>,
             &mut Frame,
             &mut SharedMemory,
             CallOutcome,
@@ -53,7 +53,7 @@ pub type InsertCallOutcomeHandle<'a, ChainSpecT, EXT, DB> = Arc<
 /// Handle sub create.
 pub type FrameCreateHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<EXT, DB>,
+            &mut Context<ChainSpecT, EXT, DB>,
             Box<CreateInputs>,
         ) -> Result<FrameOrResult, EVMError<ChainSpecT, <DB as Database>::Error>>
         + 'a,
@@ -62,7 +62,7 @@ pub type FrameCreateHandle<'a, ChainSpecT, EXT, DB> = Arc<
 /// Handle create return
 pub type FrameCreateReturnHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<EXT, DB>,
+            &mut Context<ChainSpecT, EXT, DB>,
             Box<CreateFrame>,
             InterpreterResult,
         ) -> Result<CreateOutcome, EVMError<ChainSpecT, <DB as Database>::Error>>
@@ -72,7 +72,7 @@ pub type FrameCreateReturnHandle<'a, ChainSpecT, EXT, DB> = Arc<
 /// Insert call outcome to the parent
 pub type InsertCreateOutcomeHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<EXT, DB>,
+            &mut Context<ChainSpecT, EXT, DB>,
             &mut Frame,
             CreateOutcome,
         ) -> Result<(), EVMError<ChainSpecT, <DB as Database>::Error>>
@@ -82,7 +82,7 @@ pub type InsertCreateOutcomeHandle<'a, ChainSpecT, EXT, DB> = Arc<
 /// Handle EOF sub create.
 pub type FrameEOFCreateHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<EXT, DB>,
+            &mut Context<ChainSpecT, EXT, DB>,
             Box<EOFCreateInput>,
         ) -> Result<FrameOrResult, EVMError<ChainSpecT, <DB as Database>::Error>>
         + 'a,
@@ -91,7 +91,7 @@ pub type FrameEOFCreateHandle<'a, ChainSpecT, EXT, DB> = Arc<
 /// Handle EOF create return
 pub type FrameEOFCreateReturnHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<EXT, DB>,
+            &mut Context<ChainSpecT, EXT, DB>,
             Box<EOFCreateFrame>,
             InterpreterResult,
         ) -> Result<EOFCreateOutcome, EVMError<ChainSpecT, <DB as Database>::Error>>
@@ -101,7 +101,7 @@ pub type FrameEOFCreateReturnHandle<'a, ChainSpecT, EXT, DB> = Arc<
 /// Insert EOF crate outcome to the parent
 pub type InsertEOFCreateOutcomeHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<EXT, DB>,
+            &mut Context<ChainSpecT, EXT, DB>,
             &mut Frame,
             EOFCreateOutcome,
         ) -> Result<(), EVMError<ChainSpecT, <DB as Database>::Error>>
@@ -158,7 +158,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
     #[inline]
     pub fn last_frame_return(
         &self,
-        context: &mut Context<EXT, DB>,
+        context: &mut Context<ChainSpecT, EXT, DB>,
         frame_result: &mut FrameResult,
     ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
         (self.last_frame_return)(context, frame_result)
@@ -168,7 +168,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
     #[inline]
     pub fn call(
         &self,
-        context: &mut Context<EXT, DB>,
+        context: &mut Context<ChainSpecT, EXT, DB>,
         inputs: Box<CallInputs>,
     ) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
         (self.call)(context, inputs.clone())
@@ -178,7 +178,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
     #[inline]
     pub fn call_return(
         &self,
-        context: &mut Context<EXT, DB>,
+        context: &mut Context<ChainSpecT, EXT, DB>,
         frame: Box<CallFrame>,
         interpreter_result: InterpreterResult,
     ) -> Result<CallOutcome, EVMError<ChainSpecT, DB::Error>> {
@@ -189,7 +189,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
     #[inline]
     pub fn insert_call_outcome(
         &self,
-        context: &mut Context<EXT, DB>,
+        context: &mut Context<ChainSpecT, EXT, DB>,
         frame: &mut Frame,
         shared_memory: &mut SharedMemory,
         outcome: CallOutcome,
@@ -201,7 +201,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
     #[inline]
     pub fn create(
         &self,
-        context: &mut Context<EXT, DB>,
+        context: &mut Context<ChainSpecT, EXT, DB>,
         inputs: Box<CreateInputs>,
     ) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
         (self.create)(context, inputs)
@@ -211,7 +211,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
     #[inline]
     pub fn create_return(
         &self,
-        context: &mut Context<EXT, DB>,
+        context: &mut Context<ChainSpecT, EXT, DB>,
         frame: Box<CreateFrame>,
         interpreter_result: InterpreterResult,
     ) -> Result<CreateOutcome, EVMError<ChainSpecT, DB::Error>> {
@@ -222,7 +222,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
     #[inline]
     pub fn insert_create_outcome(
         &self,
-        context: &mut Context<EXT, DB>,
+        context: &mut Context<ChainSpecT, EXT, DB>,
         frame: &mut Frame,
         outcome: CreateOutcome,
     ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
@@ -233,7 +233,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
     #[inline]
     pub fn eofcreate(
         &self,
-        context: &mut Context<EXT, DB>,
+        context: &mut Context<ChainSpecT, EXT, DB>,
         inputs: Box<EOFCreateInput>,
     ) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
         (self.eofcreate)(context, inputs)
@@ -243,7 +243,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
     #[inline]
     pub fn eofcreate_return(
         &self,
-        context: &mut Context<EXT, DB>,
+        context: &mut Context<ChainSpecT, EXT, DB>,
         frame: Box<EOFCreateFrame>,
         interpreter_result: InterpreterResult,
     ) -> Result<EOFCreateOutcome, EVMError<ChainSpecT, DB::Error>> {
@@ -254,7 +254,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
     #[inline]
     pub fn insert_eofcreate_outcome(
         &self,
-        context: &mut Context<EXT, DB>,
+        context: &mut Context<ChainSpecT, EXT, DB>,
         frame: &mut Frame,
         outcome: EOFCreateOutcome,
     ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {

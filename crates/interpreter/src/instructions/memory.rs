@@ -1,3 +1,5 @@
+use revm_primitives::ChainSpec;
+
 use crate::{
     gas,
     primitives::{Spec, U256},
@@ -5,7 +7,10 @@ use crate::{
 };
 use core::cmp::max;
 
-pub fn mload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn mload<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, top);
     let offset = as_usize_or_fail!(interpreter, top);
@@ -13,7 +18,10 @@ pub fn mload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     *top = interpreter.shared_memory.get_u256(offset);
 }
 
-pub fn mstore<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn mstore<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, offset, value);
     let offset = as_usize_or_fail!(interpreter, offset);
@@ -21,7 +29,10 @@ pub fn mstore<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.shared_memory.set_u256(offset, value);
 }
 
-pub fn mstore8<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn mstore8<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, offset, value);
     let offset = as_usize_or_fail!(interpreter, offset);
@@ -29,13 +40,19 @@ pub fn mstore8<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.shared_memory.set_byte(offset, value.byte(0))
 }
 
-pub fn msize<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn msize<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.shared_memory.len()));
 }
 
 // EIP-5656: MCOPY - Memory copying instruction
-pub fn mcopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn mcopy<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     check!(interpreter, CANCUN);
     pop!(interpreter, dst, src, len);
 

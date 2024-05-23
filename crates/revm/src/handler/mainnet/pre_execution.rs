@@ -8,14 +8,15 @@ use crate::{
         db::Database,
         Account, ChainSpec, EVMError, Env, Spec,
         SpecId::{CANCUN, SHANGHAI},
-        TransactTo, U256,
+        Transaction, U256,
     },
     Context, ContextPrecompiles,
 };
 
 /// Main precompile load
 #[inline]
-pub fn load_precompiles<SPEC: Spec, DB: Database>() -> ContextPrecompiles<DB> {
+pub fn load_precompiles<ChainSpecT: ChainSpec, SPEC: Spec, DB: Database>(
+) -> ContextPrecompiles<ChainSpecT, DB> {
     Precompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
         .clone()
         .into()
@@ -24,7 +25,7 @@ pub fn load_precompiles<SPEC: Spec, DB: Database>() -> ContextPrecompiles<DB> {
 /// Main load handle
 #[inline]
 pub fn load_accounts<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
 ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
     // set journaling state flag.
     context.evm.journaled_state.set_spec_id(SPEC::SPEC_ID);
@@ -50,10 +51,13 @@ pub fn load_accounts<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
 
 /// Helper function that deducts the caller balance.
 #[inline]
-pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) {
+pub fn deduct_caller_inner<ChainSpecT: ChainSpec, SPEC: Spec>(
+    caller_account: &mut Account,
+    env: &Env<ChainSpecT>,
+) {
     // Subtract gas costs from the caller's account.
     // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
-    let mut gas_cost = U256::from(env.tx.gas_limit).saturating_mul(env.effective_gas_price());
+    let mut gas_cost = U256::from(env.tx.gas_limit()).saturating_mul(env.effective_gas_price());
 
     // EIP-4844
     if SPEC::enabled(CANCUN) {
@@ -65,7 +69,7 @@ pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) 
     caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
 
     // bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-    if matches!(env.tx.transact_to, TransactTo::Call(_)) {
+    if env.tx.transact_to().is_call() {
         // Nonce is already checked
         caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
     }
@@ -77,18 +81,21 @@ pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) 
 /// Deducts the caller balance to the transaction limit.
 #[inline]
 pub fn deduct_caller<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
 ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
     // load caller's account.
     let (caller_account, _) = context
         .evm
         .inner
         .journaled_state
-        .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)
+        .load_account(
+            *context.evm.inner.env.tx.caller(),
+            &mut context.evm.inner.db,
+        )
         .map_err(EVMError::Database)?;
 
     // deduct gas cost from caller's account.
-    deduct_caller_inner::<SPEC>(caller_account, &context.evm.inner.env);
+    deduct_caller_inner::<ChainSpecT, SPEC>(caller_account, &context.evm.inner.env);
 
     Ok(())
 }

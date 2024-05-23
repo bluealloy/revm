@@ -5,7 +5,7 @@ use crate::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
     },
-    primitives::{ChainSpec, EVMError, Env, Spec, SpecId},
+    primitives::{ChainSpec, EVMError, Env, Spec, SpecId, Transaction},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use revm_interpreter::{CallOutcome, EOFCreateInput, EOFCreateOutcome, InterpreterResult};
@@ -13,8 +13,8 @@ use std::boxed::Box;
 
 /// Helper function called inside [`last_frame_return`]
 #[inline]
-pub fn frame_return_with_refund_flag<SPEC: Spec>(
-    env: &Env,
+pub fn frame_return_with_refund_flag<ChainSpecT: ChainSpec, SPEC: Spec>(
+    env: &Env<ChainSpecT>,
     frame_result: &mut FrameResult,
     refund_enabled: bool,
 ) {
@@ -24,7 +24,7 @@ pub fn frame_return_with_refund_flag<SPEC: Spec>(
     let refunded = gas.refunded();
 
     // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-    *gas = Gas::new_spent(env.tx.gas_limit);
+    *gas = Gas::new_spent(env.tx.gas_limit());
 
     match instruction_result {
         return_ok!() => {
@@ -50,17 +50,17 @@ pub fn frame_return_with_refund_flag<SPEC: Spec>(
 /// Handle output of the transaction
 #[inline]
 pub fn last_frame_return<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
     frame_result: &mut FrameResult,
 ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
-    frame_return_with_refund_flag::<SPEC>(&context.evm.env, frame_result, true);
+    frame_return_with_refund_flag::<ChainSpecT, SPEC>(&context.evm.env, frame_result, true);
     Ok(())
 }
 
 /// Handle frame sub call.
 #[inline]
 pub fn call<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
     inputs: Box<CallInputs>,
 ) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
     context
@@ -71,7 +71,7 @@ pub fn call<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
 
 #[inline]
 pub fn call_return<ChainSpecT: ChainSpec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
     frame: Box<CallFrame>,
     interpreter_result: InterpreterResult,
 ) -> Result<CallOutcome, EVMError<ChainSpecT, DB::Error>> {
@@ -86,7 +86,7 @@ pub fn call_return<ChainSpecT: ChainSpec, EXT, DB: Database>(
 
 #[inline]
 pub fn insert_call_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
     frame: &mut Frame,
     shared_memory: &mut SharedMemory,
     outcome: CallOutcome,
@@ -103,7 +103,7 @@ pub fn insert_call_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
 /// Handle frame sub create.
 #[inline]
 pub fn create<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
     inputs: Box<CreateInputs>,
 ) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
     context
@@ -114,7 +114,7 @@ pub fn create<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
 
 #[inline]
 pub fn create_return<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
     frame: Box<CreateFrame>,
     mut interpreter_result: InterpreterResult,
 ) -> Result<CreateOutcome, EVMError<ChainSpecT, DB::Error>> {
@@ -131,7 +131,7 @@ pub fn create_return<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
 
 #[inline]
 pub fn insert_create_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
     frame: &mut Frame,
     outcome: CreateOutcome,
 ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
@@ -147,7 +147,7 @@ pub fn insert_create_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
 /// Handle frame sub create.
 #[inline]
 pub fn eofcreate<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
     inputs: Box<EOFCreateInput>,
 ) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
     context
@@ -158,7 +158,7 @@ pub fn eofcreate<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
 
 #[inline]
 pub fn eofcreate_return<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
     frame: Box<EOFCreateFrame>,
     mut interpreter_result: InterpreterResult,
 ) -> Result<EOFCreateOutcome, EVMError<ChainSpecT, DB::Error>> {
@@ -176,7 +176,7 @@ pub fn eofcreate_return<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
 
 #[inline]
 pub fn insert_eofcreate_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
     frame: &mut Frame,
     outcome: EOFCreateOutcome,
 ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
@@ -192,12 +192,13 @@ pub fn insert_eofcreate_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::primitives::EthChainSpec;
     use revm_interpreter::primitives::CancunSpec;
     use revm_precompile::Bytes;
 
     /// Creates frame result.
     fn call_last_frame_return(instruction_result: InstructionResult, gas: Gas) -> Gas {
-        let mut env = Env::default();
+        let mut env = Env::<EthChainSpec>::default();
         env.tx.gas_limit = 100;
 
         let mut first_frame = FrameResult::Call(CallOutcome::new(
@@ -208,7 +209,7 @@ mod tests {
             },
             0..0,
         ));
-        frame_return_with_refund_flag::<CancunSpec>(&env, &mut first_frame, true);
+        frame_return_with_refund_flag::<EthChainSpec, CancunSpec>(&env, &mut first_frame, true);
         *first_frame.gas()
     }
 

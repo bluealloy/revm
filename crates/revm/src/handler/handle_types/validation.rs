@@ -7,17 +7,21 @@ use std::sync::Arc;
 
 /// Handle that validates env.
 pub type ValidateEnvHandle<'a, ChainSpecT, DB> =
-    Arc<dyn Fn(&Env) -> Result<(), EVMError<ChainSpecT, <DB as Database>::Error>> + 'a>;
+    Arc<dyn Fn(&Env<ChainSpecT>) -> Result<(), EVMError<ChainSpecT, <DB as Database>::Error>> + 'a>;
 
 /// Handle that validates transaction environment against the state.
 /// Second parametar is initial gas.
 pub type ValidateTxEnvAgainstState<'a, ChainSpecT, EXT, DB> = Arc<
-    dyn Fn(&mut Context<EXT, DB>) -> Result<(), EVMError<ChainSpecT, <DB as Database>::Error>> + 'a,
+    dyn Fn(
+            &mut Context<ChainSpecT, EXT, DB>,
+        ) -> Result<(), EVMError<ChainSpecT, <DB as Database>::Error>>
+        + 'a,
 >;
 
 /// Initial gas calculation handle
-pub type ValidateInitialTxGasHandle<'a, ChainSpecT, DB> =
-    Arc<dyn Fn(&Env) -> Result<u64, EVMError<ChainSpecT, <DB as Database>::Error>> + 'a>;
+pub type ValidateInitialTxGasHandle<'a, ChainSpecT, DB> = Arc<
+    dyn Fn(&Env<ChainSpecT>) -> Result<u64, EVMError<ChainSpecT, <DB as Database>::Error>> + 'a,
+>;
 
 /// Handles related to validation.
 pub struct ValidationHandler<'a, ChainSpecT: ChainSpec, EXT, DB: Database> {
@@ -49,19 +53,22 @@ impl<'a, ChainSpecT: ChainSpec, EXT: 'a, DB: Database + 'a>
 
 impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ValidationHandler<'a, ChainSpecT, EXT, DB> {
     /// Validate env.
-    pub fn env(&self, env: &Env) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+    pub fn env(&self, env: &Env<ChainSpecT>) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
         (self.env)(env)
     }
 
     /// Initial gas
-    pub fn initial_tx_gas(&self, env: &Env) -> Result<u64, EVMError<ChainSpecT, DB::Error>> {
+    pub fn initial_tx_gas(
+        &self,
+        env: &Env<ChainSpecT>,
+    ) -> Result<u64, EVMError<ChainSpecT, DB::Error>> {
         (self.initial_tx_gas)(env)
     }
 
     /// Validate ttansaction against the state.
     pub fn tx_against_state(
         &self,
-        context: &mut Context<EXT, DB>,
+        context: &mut Context<ChainSpecT, EXT, DB>,
     ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
         (self.tx_against_state)(context)
     }

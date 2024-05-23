@@ -1,73 +1,106 @@
 use super::i256::{i256_cmp, i256_sign_compl, two_compl, Sign};
 use crate::{
     gas,
-    primitives::{Spec, U256},
+    primitives::{ChainSpec, Spec, U256},
     Host, Interpreter,
 };
 use core::cmp::Ordering;
 use revm_primitives::uint;
 
-pub fn lt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn lt<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(op1 < *op2);
 }
 
-pub fn gt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn gt<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(op1 > *op2);
 }
 
-pub fn slt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn slt<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Less);
 }
 
-pub fn sgt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn sgt<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Greater);
 }
 
-pub fn eq<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn eq<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(op1 == *op2);
 }
 
-pub fn iszero<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn iszero<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1);
     *op1 = U256::from(*op1 == U256::ZERO);
 }
 
-pub fn bitand<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn bitand<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1 & *op2;
 }
 
-pub fn bitor<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn bitor<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1 | *op2;
 }
 
-pub fn bitxor<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn bitxor<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1 ^ *op2;
 }
 
-pub fn not<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn not<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1);
     *op1 = !*op1;
 }
 
-pub fn byte<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn byte<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
 
@@ -81,7 +114,10 @@ pub fn byte<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shl<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn shl<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
@@ -89,7 +125,10 @@ pub fn shl<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shr<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn shr<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
@@ -97,7 +136,10 @@ pub fn shr<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn sar<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn sar<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
@@ -130,7 +172,7 @@ pub fn sar<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
 mod tests {
     use crate::instructions::bitwise::{sar, shl, shr};
     use crate::{Contract, DummyHost, Interpreter};
-    use revm_primitives::{uint, Env, LatestSpec, U256};
+    use revm_primitives::{uint, Env, EthChainSpec, LatestSpec, U256};
 
     #[test]
     fn test_shift_left() {
@@ -207,7 +249,7 @@ mod tests {
             host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shl::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
+            shl::<EthChainSpec, DummyHost<EthChainSpec>, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, test.expected);
         }
@@ -288,7 +330,7 @@ mod tests {
             host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shr::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
+            shr::<EthChainSpec, DummyHost<EthChainSpec>, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, test.expected);
         }
@@ -394,7 +436,7 @@ mod tests {
             host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            sar::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
+            sar::<EthChainSpec, DummyHost<EthChainSpec>, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, test.expected);
         }

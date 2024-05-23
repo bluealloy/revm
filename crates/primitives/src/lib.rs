@@ -21,6 +21,7 @@ pub mod precompile;
 pub mod result;
 pub mod specification;
 pub mod state;
+pub mod transaction;
 pub mod utilities;
 pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, ruint, uint, Address, Bytes,
@@ -47,4 +48,5 @@ pub use precompile::*;
 pub use result::*;
 pub use specification::*;
 pub use state::*;
+pub use transaction::Transaction;
 pub use utilities::*;

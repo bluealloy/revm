@@ -2,7 +2,7 @@ use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
         db::Database, ChainSpec, EVMError, ExecutionResult, ResultAndState, Spec, SpecId::LONDON,
-        U256,
+        Transaction, U256,
     },
     Context, FrameResult,
 };
@@ -10,7 +10,7 @@ use crate::{
 /// Mainnet end handle does not change the output.
 #[inline]
 pub fn end<ChainSpecT: ChainSpec, EXT, DB: Database>(
-    _context: &mut Context<EXT, DB>,
+    _context: &mut Context<ChainSpecT, EXT, DB>,
     evm_output: Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, DB::Error>>,
 ) -> Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, DB::Error>> {
     evm_output
@@ -18,7 +18,7 @@ pub fn end<ChainSpecT: ChainSpec, EXT, DB: Database>(
 
 /// Clear handle clears error and journal state.
 #[inline]
-pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
+pub fn clear<ChainSpecT: ChainSpec, EXT, DB: Database>(context: &mut Context<ChainSpecT, EXT, DB>) {
     // clear error and journaled state.
     let _ = context.evm.take_error();
     context.evm.inner.journaled_state.clear();
@@ -27,7 +27,7 @@ pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
 /// Reward beneficiary with gas fee.
 #[inline]
 pub fn reward_beneficiary<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
     let beneficiary = context.evm.env.block.coinbase;
@@ -59,10 +59,10 @@ pub fn reward_beneficiary<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
 
 #[inline]
 pub fn reimburse_caller<ChainSpecT: ChainSpec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
-    let caller = context.evm.env.tx.caller;
+    let caller = context.evm.env.tx.caller();
     let effective_gas_price = context.evm.env.effective_gas_price();
 
     // return balance of not spend gas.
@@ -70,7 +70,7 @@ pub fn reimburse_caller<ChainSpecT: ChainSpec, EXT, DB: Database>(
         .evm
         .inner
         .journaled_state
-        .load_account(caller, &mut context.evm.inner.db)
+        .load_account(*caller, &mut context.evm.inner.db)
         .map_err(EVMError::Database)?;
 
     caller_account.info.balance = caller_account
@@ -84,7 +84,7 @@ pub fn reimburse_caller<ChainSpecT: ChainSpec, EXT, DB: Database>(
 /// Main return handle, returns the output of the transaction.
 #[inline]
 pub fn output<ChainSpecT: ChainSpec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+    context: &mut Context<ChainSpecT, EXT, DB>,
     result: FrameResult,
 ) -> Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, DB::Error>> {
     context.evm.take_error().map_err(EVMError::Database)?;

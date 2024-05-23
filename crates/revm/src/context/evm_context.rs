@@ -6,7 +6,7 @@ use crate::{
     interpreter::{
         return_ok, CallInputs, Contract, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
-    primitives::{Address, Bytes, Env, HashSet, U256},
+    primitives::{Address, Bytes, ChainSpec, Env, HashSet, U256},
     ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
 use core::{
@@ -16,15 +16,16 @@ use core::{
 use std::boxed::Box;
 
 /// EVM context that contains the inner EVM context and precompiles.
-pub struct EvmContext<DB: Database> {
+pub struct EvmContext<ChainSpecT: ChainSpec, DB: Database> {
     /// Inner EVM context.
-    pub inner: InnerEvmContext<DB>,
+    pub inner: InnerEvmContext<ChainSpecT, DB>,
     /// Precompiles that are available for evm.
-    pub precompiles: ContextPrecompiles<DB>,
+    pub precompiles: ContextPrecompiles<ChainSpecT, DB>,
 }
 
-impl<DB: Database + Clone> Clone for EvmContext<DB>
+impl<ChainSpecT, DB: Database + Clone> Clone for EvmContext<ChainSpecT, DB>
 where
+    ChainSpecT: ChainSpec,
     DB::Error: Clone,
 {
     fn clone(&self) -> Self {
@@ -35,8 +36,9 @@ where
     }
 }
 
-impl<DB> fmt::Debug for EvmContext<DB>
+impl<ChainSpecT, DB> fmt::Debug for EvmContext<ChainSpecT, DB>
 where
+    ChainSpecT: ChainSpec,
     DB: Database + fmt::Debug,
     DB::Error: fmt::Debug,
 {
@@ -48,21 +50,21 @@ where
     }
 }
 
-impl<DB: Database> Deref for EvmContext<DB> {
-    type Target = InnerEvmContext<DB>;
+impl<ChainSpecT: ChainSpec, DB: Database> Deref for EvmContext<ChainSpecT, DB> {
+    type Target = InnerEvmContext<ChainSpecT, DB>;
 
     fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }
 
-impl<DB: Database> DerefMut for EvmContext<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> DerefMut for EvmContext<ChainSpecT, DB> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.inner
     }
 }
 
-impl<DB: Database> EvmContext<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
     /// Create new context with database.
     pub fn new(db: DB) -> Self {
         Self {
@@ -73,7 +75,7 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Creates a new context with the given environment and database.
     #[inline]
-    pub fn new_with_env(db: DB, env: Box<Env>) -> Self {
+    pub fn new_with_env(db: DB, env: Box<Env<ChainSpecT>>) -> Self {
         Self {
             inner: InnerEvmContext::new_with_env(db, env),
             precompiles: ContextPrecompiles::default(),
@@ -84,7 +86,7 @@ impl<DB: Database> EvmContext<DB> {
     ///
     /// Note that this will ignore the previous `error` if set.
     #[inline]
-    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmContext<ODB> {
+    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmContext<ChainSpecT, ODB> {
         EvmContext {
             inner: self.inner.with_db(db),
             precompiles: ContextPrecompiles::default(),
@@ -93,7 +95,7 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Sets precompiles
     #[inline]
-    pub fn set_precompiles(&mut self, precompiles: ContextPrecompiles<DB>) {
+    pub fn set_precompiles(&mut self, precompiles: ContextPrecompiles<ChainSpecT, DB>) {
         // set warm loaded addresses.
         self.journaled_state.warm_preloaded_addresses =
             precompiles.addresses().copied().collect::<HashSet<_>>();
@@ -249,11 +251,11 @@ pub(crate) mod test_utils {
     /// Creates an evm context with a cache db backend.
     /// Additionally loads the mock caller account into the db,
     /// and sets the balance to the provided U256 value.
-    pub fn create_cache_db_evm_context_with_balance(
-        env: Box<Env>,
+    pub fn create_cache_db_evm_context_with_balance<ChainSpecT: ChainSpec>(
+        env: Box<Env<ChainSpecT>>,
         mut db: CacheDB<EmptyDB>,
         balance: U256,
-    ) -> EvmContext<CacheDB<EmptyDB>> {
+    ) -> EvmContext<ChainSpecT, CacheDB<EmptyDB>> {
         db.insert_account_info(
             test_utils::MOCK_CALLER,
             crate::primitives::AccountInfo {
@@ -267,10 +269,10 @@ pub(crate) mod test_utils {
     }
 
     /// Creates a cached db evm context.
-    pub fn create_cache_db_evm_context(
-        env: Box<Env>,
+    pub fn create_cache_db_evm_context<ChainSpecT: ChainSpec>(
+        env: Box<Env<ChainSpecT>>,
         db: CacheDB<EmptyDB>,
-    ) -> EvmContext<CacheDB<EmptyDB>> {
+    ) -> EvmContext<ChainSpecT, CacheDB<EmptyDB>> {
         EvmContext {
             inner: InnerEvmContext {
                 env,
@@ -285,7 +287,10 @@ pub(crate) mod test_utils {
     }
 
     /// Returns a new `EvmContext` with an empty journaled state.
-    pub fn create_empty_evm_context(env: Box<Env>, db: EmptyDB) -> EvmContext<EmptyDB> {
+    pub fn create_empty_evm_context<ChainSpecT: ChainSpec>(
+        env: Box<Env<ChainSpecT>>,
+        db: EmptyDB,
+    ) -> EvmContext<ChainSpecT, EmptyDB> {
         EvmContext {
             inner: InnerEvmContext {
                 env,
@@ -305,7 +310,7 @@ mod tests {
     use super::*;
     use crate::{
         db::{CacheDB, EmptyDB},
-        primitives::{address, Bytecode},
+        primitives::{address, Bytecode, EthChainSpec},
         Frame, JournalEntry,
     };
     use std::boxed::Box;
@@ -315,7 +320,7 @@ mod tests {
     // call stack is too deep.
     #[test]
     fn test_make_call_frame_stack_too_deep() {
-        let env = Env::default();
+        let env = Env::<EthChainSpec>::default();
         let db = EmptyDB::default();
         let mut context = test_utils::create_empty_evm_context(Box::new(env), db);
         context.journaled_state.depth = CALL_STACK_LIMIT as usize + 1;
@@ -336,7 +341,7 @@ mod tests {
     // checkpointed on the journaled state correctly.
     #[test]
     fn test_make_call_frame_transfer_revert() {
-        let env = Env::default();
+        let env = Env::<EthChainSpec>::default();
         let db = EmptyDB::default();
         let mut evm_context = test_utils::create_empty_evm_context(Box::new(env), db);
         let contract = address!("dead10000000000000000000000000000001dead");
@@ -357,7 +362,7 @@ mod tests {
 
     #[test]
     fn test_make_call_frame_missing_code_context() {
-        let env = Env::default();
+        let env = Env::<EthChainSpec>::default();
         let cdb = CacheDB::new(EmptyDB::default());
         let bal = U256::from(3_000_000_000_u128);
         let mut context = create_cache_db_evm_context_with_balance(Box::new(env), cdb, bal);
@@ -372,7 +377,7 @@ mod tests {
 
     #[test]
     fn test_make_call_frame_succeeds() {
-        let env = Env::default();
+        let env = Env::<EthChainSpec>::default();
         let mut cdb = CacheDB::new(EmptyDB::default());
         let bal = U256::from(3_000_000_000_u128);
         let by = Bytecode::new_raw(Bytes::from(vec![0x60, 0x00, 0x60, 0x00]));

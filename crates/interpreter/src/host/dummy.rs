@@ -1,3 +1,5 @@
+use revm_primitives::ChainSpec;
+
 use crate::primitives::{hash_map::Entry, Bytecode, HashMap, U256};
 use crate::{
     primitives::{Address, Env, Log, B256, KECCAK_EMPTY},
@@ -9,17 +11,17 @@ use super::LoadAccountResult;
 
 /// A dummy [Host] implementation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct DummyHost {
-    pub env: Env,
+pub struct DummyHost<ChainSpecT: ChainSpec> {
+    pub env: Env<ChainSpecT>,
     pub storage: HashMap<U256, U256>,
     pub transient_storage: HashMap<U256, U256>,
     pub log: Vec<Log>,
 }
 
-impl DummyHost {
+impl<ChainSpecT: ChainSpec> DummyHost<ChainSpecT> {
     /// Create a new dummy host with the given [`Env`].
     #[inline]
-    pub fn new(env: Env) -> Self {
+    pub fn new(env: Env<ChainSpecT>) -> Self {
         Self {
             env,
             ..Default::default()
@@ -34,14 +36,14 @@ impl DummyHost {
     }
 }
 
-impl Host for DummyHost {
+impl<ChainSpecT: ChainSpec> Host<ChainSpecT> for DummyHost<ChainSpecT> {
     #[inline]
-    fn env(&self) -> &Env {
+    fn env(&self) -> &Env<ChainSpecT> {
         &self.env
     }
 
     #[inline]
-    fn env_mut(&mut self) -> &mut Env {
+    fn env_mut(&mut self) -> &mut Env<ChainSpecT> {
         &mut self.env
     }
 

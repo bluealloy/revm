@@ -4,7 +4,7 @@ use revm_interpreter::CallOutcome;
 
 use crate::{
     interpreter::{CallInputs, CreateInputs, CreateOutcome},
-    primitives::db::Database,
+    primitives::{db::Database, ChainSpec},
     EvmContext, Inspector,
 };
 
@@ -26,11 +26,11 @@ impl GasInspector {
     }
 }
 
-impl<DB: Database> Inspector<DB> for GasInspector {
+impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for GasInspector {
     fn initialize_interp(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<DB>,
+        _context: &mut EvmContext<ChainSpecT, DB>,
     ) {
         self.gas_remaining = interp.gas.limit();
     }
@@ -38,7 +38,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     fn step(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<DB>,
+        _context: &mut EvmContext<ChainSpecT, DB>,
     ) {
         self.gas_remaining = interp.gas.remaining();
     }
@@ -46,7 +46,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     fn step_end(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<DB>,
+        _context: &mut EvmContext<ChainSpecT, DB>,
     ) {
         let remaining = interp.gas.remaining();
         self.last_gas_cost = self.gas_remaining.saturating_sub(remaining);
@@ -55,7 +55,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
     fn call_end(
         &mut self,
-        _context: &mut EvmContext<DB>,
+        _context: &mut EvmContext<ChainSpecT, DB>,
         _inputs: &CallInputs,
         mut outcome: CallOutcome,
     ) -> CallOutcome {
@@ -68,7 +68,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
     fn create_end(
         &mut self,
-        _context: &mut EvmContext<DB>,
+        _context: &mut EvmContext<ChainSpecT, DB>,
         _inputs: &CreateInputs,
         mut outcome: CreateOutcome,
     ) -> CreateOutcome {
@@ -82,16 +82,9 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
 
-    use revm_interpreter::CallOutcome;
-    use revm_interpreter::CreateOutcome;
-
-    use crate::{
-        inspectors::GasInspector,
-        interpreter::{CallInputs, CreateInputs, Interpreter},
-        primitives::Log,
-        Database, EvmContext, Inspector,
-    };
+    use crate::{interpreter::Interpreter, primitives::Log};
 
     #[cfg(feature = "optimism")]
     type TestChainSpec = crate::optimism::OptimismChainSpec;
@@ -105,21 +98,25 @@ mod tests {
         gas_remaining_steps: Vec<(usize, u64)>,
     }
 
-    impl<DB: Database> Inspector<DB> for StackInspector {
-        fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+    impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for StackInspector {
+        fn initialize_interp(
+            &mut self,
+            interp: &mut Interpreter,
+            context: &mut EvmContext<ChainSpecT, DB>,
+        ) {
             self.gas_inspector.initialize_interp(interp, context);
         }
 
-        fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+        fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<ChainSpecT, DB>) {
             self.pc = interp.program_counter();
             self.gas_inspector.step(interp, context);
         }
 
-        fn log(&mut self, context: &mut EvmContext<DB>, log: &Log) {
+        fn log(&mut self, context: &mut EvmContext<ChainSpecT, DB>, log: &Log) {
             self.gas_inspector.log(context, log);
         }
 
-        fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+        fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<ChainSpecT, DB>) {
             self.gas_inspector.step_end(interp, context);
             self.gas_remaining_steps
                 .push((self.pc, self.gas_inspector.gas_remaining()));
@@ -127,7 +124,7 @@ mod tests {
 
         fn call(
             &mut self,
-            context: &mut EvmContext<DB>,
+            context: &mut EvmContext<ChainSpecT, DB>,
             call: &mut CallInputs,
         ) -> Option<CallOutcome> {
             self.gas_inspector.call(context, call)
@@ -135,7 +132,7 @@ mod tests {
 
         fn call_end(
             &mut self,
-            context: &mut EvmContext<DB>,
+            context: &mut EvmContext<ChainSpecT, DB>,
             inputs: &CallInputs,
             outcome: CallOutcome,
         ) -> CallOutcome {
@@ -144,7 +141,7 @@ mod tests {
 
         fn create(
             &mut self,
-            context: &mut EvmContext<DB>,
+            context: &mut EvmContext<ChainSpecT, DB>,
             call: &mut CreateInputs,
         ) -> Option<CreateOutcome> {
             self.gas_inspector.create(context, call);
@@ -153,7 +150,7 @@ mod tests {
 
         fn create_end(
             &mut self,
-            context: &mut EvmContext<DB>,
+            context: &mut EvmContext<ChainSpecT, DB>,
             inputs: &CreateInputs,
             outcome: CreateOutcome,
         ) -> CreateOutcome {
@@ -193,11 +190,23 @@ mod tests {
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
             .with_external_context(StackInspector::default())
             .modify_tx_env(|tx| {
-                tx.clear();
-                tx.caller = address!("1000000000000000000000000000000000000000");
-                tx.transact_to =
+                *tx = <TestChainSpec as ChainSpec>::Transaction::default();
+
+                #[cfg(feature = "optimism")]
+                let (caller, transact_to, gas_limit) = (
+                    &mut tx.base.caller,
+                    &mut tx.base.transact_to,
+                    &mut tx.base.gas_limit,
+                );
+
+                #[cfg(not(feature = "optimism"))]
+                let (caller, transact_to, gas_limit) =
+                    (&mut tx.caller, &mut tx.transact_to, &mut tx.gas_limit);
+
+                *caller = address!("1000000000000000000000000000000000000000");
+                *transact_to =
                     TransactTo::Call(address!("0000000000000000000000000000000000000000"));
-                tx.gas_limit = 21100;
+                *gas_limit = 21100;
             })
             .append_handler_register(inspector_handle_register)
             .build();

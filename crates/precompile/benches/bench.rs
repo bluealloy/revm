@@ -8,7 +8,7 @@ use revm_precompile::{
     secp256k1::ec_recover_run,
     Bytes,
 };
-use revm_primitives::{hex, keccak256, Env, U256, VERSIONED_HASH_VERSION_KZG};
+use revm_primitives::{hex, keccak256, CfgEnv, U256, VERSIONED_HASH_VERSION_KZG};
 use secp256k1::{Message, SecretKey, SECP256K1};
 use sha2::{Digest, Sha256};
 
@@ -87,7 +87,7 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     let kzg_input = [versioned_hash, z, y, commitment, proof].concat().into();
 
     let gas = 50000;
-    let env = Env::default();
+    let env = CfgEnv::default();
     let (actual_gas, _actual_output) = run(&kzg_input, gas, &env).unwrap();
     println!("gas used by kzg precompile: {:?}", actual_gas);
 

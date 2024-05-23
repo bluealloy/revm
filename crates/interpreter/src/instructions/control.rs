@@ -1,3 +1,5 @@
+use revm_primitives::ChainSpec;
+
 use super::utility::{read_i16, read_u16};
 use crate::{
     gas,
@@ -5,7 +7,10 @@ use crate::{
     Host, InstructionResult, Interpreter, InterpreterResult,
 };
 
-pub fn rjump<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn rjump<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, gas::BASE);
     let offset = unsafe { read_i16(interpreter.instruction_pointer) } as isize;
@@ -14,7 +19,10 @@ pub fn rjump<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset + 2) };
 }
 
-pub fn rjumpi<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn rjumpi<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, gas::CONDITION_JUMP_GAS);
     pop!(interpreter, condition);
@@ -28,7 +36,10 @@ pub fn rjumpi<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset) };
 }
 
-pub fn rjumpv<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn rjumpv<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, gas::CONDITION_JUMP_GAS);
     pop!(interpreter, case);
@@ -53,13 +64,19 @@ pub fn rjumpv<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset) };
 }
 
-pub fn jump<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jump<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::MID);
     pop!(interpreter, target);
     jump_inner(interpreter, target);
 }
 
-pub fn jumpi<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jumpi<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::HIGH);
     pop!(interpreter, target, cond);
     if cond != U256::ZERO {
@@ -78,11 +95,17 @@ fn jump_inner(interpreter: &mut Interpreter, target: U256) {
     interpreter.instruction_pointer = unsafe { interpreter.bytecode.as_ptr().add(target) };
 }
 
-pub fn jumpdest_or_nop<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jumpdest_or_nop<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::JUMPDEST);
 }
 
-pub fn callf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn callf<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, gas::LOW);
 
@@ -103,7 +126,10 @@ pub fn callf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.load_eof_code(idx, 0)
 }
 
-pub fn retf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn retf<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, gas::RETF_GAS);
 
@@ -114,7 +140,10 @@ pub fn retf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.load_eof_code(fframe.idx, fframe.pc);
 }
 
-pub fn jumpf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jumpf<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, gas::LOW);
 
@@ -126,7 +155,10 @@ pub fn jumpf<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.load_eof_code(idx, 0)
 }
 
-pub fn pc<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn pc<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(interpreter, U256::from(interpreter.program_counter() - 1));
@@ -156,34 +188,49 @@ fn return_inner(interpreter: &mut Interpreter, instruction_result: InstructionRe
     };
 }
 
-pub fn ret<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn ret<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     return_inner(interpreter, InstructionResult::Return);
 }
 
 /// EIP-140: REVERT instruction
-pub fn revert<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn revert<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     check!(interpreter, BYZANTIUM);
     return_inner(interpreter, InstructionResult::Revert);
 }
 
 /// Stop opcode. This opcode halts the execution.
-pub fn stop<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn stop<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     interpreter.instruction_result = InstructionResult::Stop;
 }
 
 /// Invalid opcode. This opcode halts the execution.
-pub fn invalid<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn invalid<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     interpreter.instruction_result = InstructionResult::InvalidFEOpcode;
 }
 
 /// Unknown opcode. This opcode halts the execution.
-pub fn unknown<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn unknown<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     interpreter.instruction_result = InstructionResult::OpcodeNotFound;
 }
 
 #[cfg(test)]
 mod test {
-    use revm_primitives::{bytes, Bytecode, Eof, PragueSpec};
+    use revm_primitives::{bytes, Bytecode, Eof, EthChainSpec, PragueSpec};
 
     use super::*;
     use crate::{
@@ -193,7 +240,7 @@ mod test {
 
     #[test]
     fn rjump() {
-        let table = make_instruction_table::<_, PragueSpec>();
+        let table = make_instruction_table::<EthChainSpec, _, PragueSpec>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
             RJUMP, 0x00, 0x02, STOP, STOP,
@@ -207,7 +254,7 @@ mod test {
 
     #[test]
     fn rjumpi() {
-        let table = make_instruction_table::<_, PragueSpec>();
+        let table = make_instruction_table::<EthChainSpec, _, PragueSpec>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
             RJUMPI, 0x00, 0x03, RJUMPI, 0x00, 0x01, STOP, STOP,
@@ -227,7 +274,7 @@ mod test {
 
     #[test]
     fn rjumpv() {
-        let table = make_instruction_table::<_, PragueSpec>();
+        let table = make_instruction_table::<EthChainSpec, _, PragueSpec>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
             RJUMPV,
@@ -283,7 +330,7 @@ mod test {
 
     #[test]
     fn callf_retf_jumpf() {
-        let table = make_instruction_table::<_, PragueSpec>();
+        let table = make_instruction_table::<EthChainSpec, _, PragueSpec>();
         let mut host = DummyHost::default();
         let mut eof = dummy_eof();
 

@@ -8,7 +8,8 @@ use crate::{
     },
     primitives::{
         Address, BlockEnv, Bytecode, CfgEnv, ChainSpec, EVMError, EVMResult, Env, EthChainSpec,
-        ExecutionResult, InvalidTransaction, Log, ResultAndState, TransactTo, TxEnv, B256, U256,
+        ExecutionResult, InvalidTransaction, Log, ResultAndState, TransactTo, Transaction, B256,
+        U256,
     },
     Context, ContextWithChainSpec, Frame, FrameOrResult, FrameResult,
 };
@@ -23,7 +24,7 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 /// and the handler that dictates the logic of EVM (or hardfork specification).
 pub struct Evm<'a, ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
-    pub context: Context<EXT, DB>,
+    pub context: Context<ChainSpecT, EXT, DB>,
     /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
     /// and it different depending on the specified fork.
     pub handler: Handler<'a, ChainSpecT, Self, EXT, DB>,
@@ -64,7 +65,7 @@ impl<'a> Evm<'a, EthChainSpec, (), EmptyDB> {
 impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'a, ChainSpecT, EXT, DB> {
     /// Create new EVM.
     pub fn new(
-        mut context: Context<EXT, DB>,
+        mut context: Context<ChainSpecT, EXT, DB>,
         handler: Handler<'a, ChainSpecT, Self, EXT, DB>,
     ) -> Evm<'a, ChainSpecT, EXT, DB> {
         context
@@ -166,13 +167,13 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
 
     /// Returns the reference of transaction
     #[inline]
-    pub fn tx(&self) -> &TxEnv {
+    pub fn tx(&self) -> &ChainSpecT::Transaction {
         &self.context.evm.env.tx
     }
 
     /// Returns the mutable reference of transaction
     #[inline]
-    pub fn tx_mut(&mut self) -> &mut TxEnv {
+    pub fn tx_mut(&mut self) -> &mut ChainSpecT::Transaction {
         &mut self.context.evm.env.tx
     }
 
@@ -202,7 +203,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
 
     /// Returns internal database and external struct.
     #[inline]
-    pub fn into_context(self) -> Context<EXT, DB> {
+    pub fn into_context(self) -> Context<ChainSpecT, EXT, DB> {
         self.context
     }
 
@@ -239,6 +240,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
         let frame_result = match &table {
             InstructionTables::Plain(table) => self.run_the_loop(table, first_frame),
             InstructionTables::Boxed(table) => self.run_the_loop(table, first_frame),
+            InstructionTables::_Unused(_) => unreachable!("phantom data is not used"),
         };
 
         // return back instruction table
@@ -370,11 +372,11 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
         // deduce caller balance with its limit.
         pre_exec.deduct_caller(ctx)?;
 
-        let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
+        let gas_limit = ctx.evm.env.tx.gas_limit() - initial_gas_spend;
 
         let exec = self.handler.execution();
         // call inner handling of call/create
-        let first_frame_or_result = match ctx.evm.env.tx.transact_to {
+        let first_frame_or_result = match ctx.evm.env.tx.transact_to() {
             TransactTo::Call(_) => exec.call(
                 ctx,
                 CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
@@ -418,12 +420,12 @@ where
     }
 }
 
-impl<ChainSpecT: ChainSpec, EXT, DB: Database> Host for Evm<'_, ChainSpecT, EXT, DB> {
-    fn env(&self) -> &Env {
+impl<ChainSpecT: ChainSpec, EXT, DB: Database> Host<ChainSpecT> for Evm<'_, ChainSpecT, EXT, DB> {
+    fn env(&self) -> &Env<ChainSpecT> {
         &self.context.evm.env
     }
 
-    fn env_mut(&mut self) -> &mut Env {
+    fn env_mut(&mut self) -> &mut Env<ChainSpecT> {
         &mut self.context.evm.env
     }
 

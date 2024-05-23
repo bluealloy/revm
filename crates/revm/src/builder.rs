@@ -4,8 +4,8 @@ use crate::{
         register::{self, EvmHandler},
         CfgEnvWithChainSpec, EnvWithChainSpec,
     },
-    primitives::{BlockEnv, CfgEnv, ChainSpec, Env, EthChainSpec, InvalidTransaction, TxEnv},
-    Context, ContextWithChainSpec, Evm, Handler,
+    primitives::{BlockEnv, CfgEnv, ChainSpec, Env, EthChainSpec, InvalidTransaction},
+    Context, ContextWithChainSpec, Evm, EvmContext, Handler,
 };
 use core::marker::PhantomData;
 use std::boxed::Box;
@@ -14,7 +14,7 @@ use std::boxed::Box;
 /// Note that some of the methods that changes underlying structures
 /// will reset the registered handler to default mainnet.
 pub struct EvmBuilder<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database> {
-    context: Context<EXT, DB>,
+    context: Context<ChainSpecT, EXT, DB>,
     /// Handler that will be used by EVM. It contains handle registers
     handler: Handler<'a, ChainSpecT, Evm<'a, ChainSpecT, EXT, DB>, EXT, DB>,
     /// Phantom data to mark the stage of the builder.
@@ -53,8 +53,10 @@ where
     where
         NewChainSpecT::TransactionValidationError: From<InvalidTransaction>,
     {
+        let Context { evm, external } = self.context;
+
         EvmBuilder {
-            context: self.context,
+            context: Context::new(EvmContext::new(evm.inner.db), external),
             handler: EvmBuilder::<'_, SetGenericStage, NewChainSpecT, _, _>::handler(
                 NewChainSpecT::Hardfork::default(),
             ),
@@ -315,25 +317,25 @@ impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
     }
 
     /// Allows modification of Evm Environment.
-    pub fn modify_env(mut self, f: impl FnOnce(&mut Box<Env>)) -> Self {
+    pub fn modify_env(mut self, f: impl FnOnce(&mut Box<Env<ChainSpecT>>)) -> Self {
         f(&mut self.context.evm.env);
         self
     }
 
     /// Sets Evm Environment.
-    pub fn with_env(mut self, env: Box<Env>) -> Self {
+    pub fn with_env(mut self, env: Box<Env<ChainSpecT>>) -> Self {
         self.context.evm.env = env;
         self
     }
 
     /// Allows modification of Evm's Transaction Environment.
-    pub fn modify_tx_env(mut self, f: impl FnOnce(&mut TxEnv)) -> Self {
+    pub fn modify_tx_env(mut self, f: impl FnOnce(&mut ChainSpecT::Transaction)) -> Self {
         f(&mut self.context.evm.env.tx);
         self
     }
 
     /// Sets Evm's Transaction Environment.
-    pub fn with_tx_env(mut self, tx_env: TxEnv) -> Self {
+    pub fn with_tx_env(mut self, tx_env: ChainSpecT::Transaction) -> Self {
         self.context.evm.env.tx = tx_env;
         self
     }
@@ -364,7 +366,7 @@ impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
 
     /// Clears Transaction environment of EVM.
     pub fn with_clear_tx_env(mut self) -> Self {
-        self.context.evm.env.tx.clear();
+        self.context.evm.env.tx = ChainSpecT::Transaction::default();
         self
     }
     /// Clears Block environment of EVM.
@@ -453,7 +455,14 @@ mod test {
             .modify_db(|db| {
                 db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
             })
-            .modify_tx_env(|tx| tx.transact_to = TransactTo::Call(to_addr))
+            .modify_tx_env(|tx| {
+                #[cfg(feature = "optimism")]
+                let transact_to = &mut tx.base.transact_to;
+                #[cfg(not(feature = "optimism"))]
+                let transact_to = &mut tx.transact_to;
+
+                *transact_to = TransactTo::Call(to_addr)
+            })
             // we need to use handle register box to capture the custom context in the handle
             // register
             .append_handler_register_box(Box::new(move |handler| {
@@ -493,7 +502,7 @@ mod test {
         const INITIAL_TX_GAS: u64 = 21000;
         const EXPECTED_RESULT_GAS: u64 = INITIAL_TX_GAS + CUSTOM_INSTRUCTION_COST;
 
-        fn custom_instruction(interp: &mut Interpreter, _host: &mut impl Host) {
+        fn custom_instruction(interp: &mut Interpreter, _host: &mut impl Host<TestChainSpec>) {
             // just spend some gas
             gas!(interp, CUSTOM_INSTRUCTION_COST);
         }
@@ -508,7 +517,14 @@ mod test {
             .modify_db(|db| {
                 db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
             })
-            .modify_tx_env(|tx| tx.transact_to = TransactTo::Call(to_addr))
+            .modify_tx_env(|tx| {
+                #[cfg(feature = "optimism")]
+                let transact_to = &mut tx.base.transact_to;
+                #[cfg(not(feature = "optimism"))]
+                let transact_to = &mut tx.transact_to;
+
+                *transact_to = TransactTo::Call(to_addr)
+            })
             .append_handler_register(|handler| {
                 if let Some(ref mut table) = handler.instruction_table {
                     table.insert(0xEF, custom_instruction)
@@ -555,21 +571,49 @@ mod test {
         Evm::builder()
             .with_chain_spec::<TestChainSpec>()
             .with_empty_db()
-            .modify_tx_env(|tx| tx.gas_limit = 10)
+            .modify_tx_env(|tx| {
+                #[cfg(feature = "optimism")]
+                let gas_limit = &mut tx.base.gas_limit;
+                #[cfg(not(feature = "optimism"))]
+                let gas_limit = &mut tx.gas_limit;
+
+                *gas_limit = 10
+            })
             .build();
         Evm::builder()
             .with_chain_spec::<TestChainSpec>()
-            .modify_tx_env(|tx| tx.gas_limit = 10)
+            .modify_tx_env(|tx| {
+                #[cfg(feature = "optimism")]
+                let gas_limit = &mut tx.base.gas_limit;
+                #[cfg(not(feature = "optimism"))]
+                let gas_limit = &mut tx.gas_limit;
+
+                *gas_limit = 10
+            })
             .build();
         Evm::builder()
             .with_chain_spec::<TestChainSpec>()
             .with_empty_db()
-            .modify_tx_env(|tx| tx.gas_limit = 10)
+            .modify_tx_env(|tx| {
+                #[cfg(feature = "optimism")]
+                let gas_limit = &mut tx.base.gas_limit;
+                #[cfg(not(feature = "optimism"))]
+                let gas_limit = &mut tx.gas_limit;
+
+                *gas_limit = 10
+            })
             .build();
         Evm::builder()
             .with_chain_spec::<TestChainSpec>()
             .with_empty_db()
-            .modify_tx_env(|tx| tx.gas_limit = 10)
+            .modify_tx_env(|tx| {
+                #[cfg(feature = "optimism")]
+                let gas_limit = &mut tx.base.gas_limit;
+                #[cfg(not(feature = "optimism"))]
+                let gas_limit = &mut tx.gas_limit;
+
+                *gas_limit = 10
+            })
             .build();
 
         // with inspector handle
@@ -613,20 +657,25 @@ mod test {
     fn build_custom_precompile() {
         struct CustomPrecompile;
 
-        impl ContextStatefulPrecompile<EmptyDB> for CustomPrecompile {
+        impl ContextStatefulPrecompile<TestChainSpec, EmptyDB> for CustomPrecompile {
             fn call(
                 &self,
                 _input: &Bytes,
                 _gas_price: u64,
-                _context: &mut InnerEvmContext<EmptyDB>,
+                _context: &mut InnerEvmContext<TestChainSpec, EmptyDB>,
             ) -> PrecompileResult {
                 Ok((10, Bytes::new()))
             }
         }
 
+        #[cfg(feature = "optimism")]
+        let spec_id = crate::optimism::OptimismSpecId::HOMESTEAD;
+        #[cfg(not(feature = "optimism"))]
+        let spec_id = crate::primitives::SpecId::HOMESTEAD;
+
         let mut evm = Evm::builder()
-            .with_empty_db()
-            .with_spec_id(SpecId::HOMESTEAD)
+            .with_chain_spec::<TestChainSpec>()
+            .with_spec_id(spec_id)
             .append_handler_register(|handler| {
                 let precompiles = handler.pre_execution.load_precompiles();
                 handler.pre_execution.load_precompiles = Arc::new(move || {

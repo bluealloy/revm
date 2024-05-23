@@ -1,4 +1,4 @@
-use crate::{Bytes, Env};
+use crate::{Bytes, CfgEnv};
 use core::fmt;
 use dyn_clone::DynClone;
 use std::{boxed::Box, string::String, sync::Arc};
@@ -9,18 +9,18 @@ use std::{boxed::Box, string::String, sync::Arc};
 pub type PrecompileResult = Result<(u64, Bytes), PrecompileError>;
 
 pub type StandardPrecompileFn = fn(&Bytes, u64) -> PrecompileResult;
-pub type EnvPrecompileFn = fn(&Bytes, u64, env: &Env) -> PrecompileResult;
+pub type EnvPrecompileFn = fn(&Bytes, u64, env: &CfgEnv) -> PrecompileResult;
 
 /// Stateful precompile trait. It is used to create
 /// a arc precompile Precompile::Stateful.
 pub trait StatefulPrecompile: Sync + Send {
-    fn call(&self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult;
+    fn call(&self, bytes: &Bytes, gas_price: u64, env: &CfgEnv) -> PrecompileResult;
 }
 
 /// Mutable stateful precompile trait. It is used to create
 /// a boxed precompile in Precompile::StatefulMut.
 pub trait StatefulPrecompileMut: DynClone + Send + Sync {
-    fn call_mut(&mut self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult;
+    fn call_mut(&mut self, bytes: &Bytes, gas_price: u64, env: &CfgEnv) -> PrecompileResult;
 }
 
 dyn_clone::clone_trait_object!(StatefulPrecompileMut);
@@ -36,13 +36,13 @@ pub type StatefulPrecompileBox = Box<dyn StatefulPrecompileMut>;
 pub enum Precompile {
     /// Standard simple precompile that takes input and gas limit.
     Standard(StandardPrecompileFn),
-    /// Similar to Standard but takes reference to environment.
+    /// Similar to Standard but takes reference to [`CfgEnv`].
     Env(EnvPrecompileFn),
     /// Stateful precompile that is Arc over [`StatefulPrecompile`] trait.
-    /// It takes a reference to input, gas limit and environment.
+    /// It takes a reference to input, gas limit and [`CfgEnv`].
     Stateful(StatefulPrecompileArc),
     /// Mutable stateful precompile that is Box over [`StatefulPrecompileMut`] trait.
-    /// It takes a reference to input, gas limit and environment.
+    /// It takes a reference to input, gas limit and [`CfgEnv`].
     StatefulMut(StatefulPrecompileBox),
 }
 
@@ -93,7 +93,7 @@ impl Precompile {
     }
 
     /// Call the precompile with the given input and gas limit and return the result.
-    pub fn call(&mut self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult {
+    pub fn call(&mut self, bytes: &Bytes, gas_price: u64, env: &CfgEnv) -> PrecompileResult {
         match self {
             Precompile::Standard(p) => p(bytes, gas_price),
             Precompile::Env(p) => p(bytes, gas_price, env),
@@ -173,7 +173,7 @@ mod test {
                 &mut self,
                 _bytes: &Bytes,
                 _gas_price: u64,
-                _env: &Env,
+                _env: &CfgEnv,
             ) -> PrecompileResult {
                 PrecompileResult::Err(PrecompileError::OutOfGas)
             }
@@ -182,7 +182,7 @@ mod test {
         let mut p = Precompile::new_stateful_mut(MyPrecompile::default());
         match &mut p {
             Precompile::StatefulMut(p) => {
-                let _ = p.call_mut(&Bytes::new(), 0, &Env::default());
+                let _ = p.call_mut(&Bytes::new(), 0, &CfgEnv::default());
             }
             _ => panic!("not a state"),
         }

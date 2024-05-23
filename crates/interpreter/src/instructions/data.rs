@@ -1,3 +1,5 @@
+use revm_primitives::ChainSpec;
+
 use crate::{
     gas::{BASE, DATA_LOAD_GAS, VERYLOW},
     instructions::utility::read_u16,
@@ -6,7 +8,10 @@ use crate::{
     Host,
 };
 
-pub fn data_load<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn data_load<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, DATA_LOAD_GAS);
     pop_top!(interpreter, offset);
@@ -26,7 +31,10 @@ pub fn data_load<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     *offset = U256::from_be_bytes(word);
 }
 
-pub fn data_loadn<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn data_loadn<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, VERYLOW);
     let offset = unsafe { read_u16(interpreter.instruction_pointer) } as usize;
@@ -47,7 +55,10 @@ pub fn data_loadn<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(2) };
 }
 
-pub fn data_size<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn data_size<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, BASE);
     let data_size = interpreter.eof().expect("eof").header.data_size;
@@ -55,7 +66,10 @@ pub fn data_size<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     push!(interpreter, U256::from(data_size));
 }
 
-pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn data_copy<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, VERYLOW);
     pop!(interpreter, mem_offset, offset, size);
@@ -81,7 +95,7 @@ pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
 
 #[cfg(test)]
 mod test {
-    use revm_primitives::{b256, bytes, Bytecode, Bytes, Eof, PragueSpec};
+    use revm_primitives::{b256, bytes, Bytecode, Bytes, Eof, EthChainSpec, PragueSpec};
 
     use super::*;
     use crate::{
@@ -104,7 +118,7 @@ mod test {
 
     #[test]
     fn dataload_dataloadn() {
-        let table = make_instruction_table::<_, PragueSpec>();
+        let table = make_instruction_table::<EthChainSpec, _, PragueSpec>();
         let mut host = DummyHost::default();
         let eof = dummy_eof(Bytes::from([
             DATALOAD, DATALOADN, 0x00, 0x00, DATALOAD, DATALOADN, 0x00, 35, DATALOAD, DATALOADN,
@@ -160,7 +174,7 @@ mod test {
 
     #[test]
     fn data_copy() {
-        let table = make_instruction_table::<_, PragueSpec>();
+        let table = make_instruction_table::<EthChainSpec, _, PragueSpec>();
         let mut host = DummyHost::default();
         let eof = dummy_eof(Bytes::from([DATACOPY, DATACOPY, DATACOPY, DATACOPY]));
 

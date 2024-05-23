@@ -11,19 +11,19 @@ pub use inner_evm_context::InnerEvmContext;
 
 use crate::{
     db::{Database, EmptyDB},
-    primitives::ChainSpec,
+    primitives::{ChainSpec, EthChainSpec},
 };
 use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
-pub struct Context<EXT, DB: Database> {
+pub struct Context<ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Evm Context (internal context).
-    pub evm: EvmContext<DB>,
+    pub evm: EvmContext<ChainSpecT, DB>,
     /// External contexts.
     pub external: EXT,
 }
 
-impl<EXT: Clone, DB: Database + Clone> Clone for Context<EXT, DB>
+impl<ChainSpecT: ChainSpec, EXT: Clone, DB: Database + Clone> Clone for Context<ChainSpecT, EXT, DB>
 where
     DB::Error: Clone,
 {
@@ -35,15 +35,15 @@ where
     }
 }
 
-impl Default for Context<(), EmptyDB> {
+impl Default for Context<EthChainSpec, (), EmptyDB> {
     fn default() -> Self {
         Self::new_empty()
     }
 }
 
-impl Context<(), EmptyDB> {
+impl<ChainSpecT: ChainSpec> Context<ChainSpecT, (), EmptyDB> {
     /// Creates empty context. This is useful for testing.
-    pub fn new_empty() -> Context<(), EmptyDB> {
+    pub fn new_empty() -> Context<ChainSpecT, (), EmptyDB> {
         Context {
             evm: EvmContext::new(EmptyDB::new()),
             external: (),
@@ -51,9 +51,9 @@ impl Context<(), EmptyDB> {
     }
 }
 
-impl<DB: Database> Context<(), DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> Context<ChainSpecT, (), DB> {
     /// Creates new context with database.
-    pub fn new_with_db(db: DB) -> Context<(), DB> {
+    pub fn new_with_db(db: DB) -> Context<ChainSpecT, (), DB> {
         Context {
             evm: EvmContext::new_with_env(db, Box::default()),
             external: (),
@@ -61,9 +61,9 @@ impl<DB: Database> Context<(), DB> {
     }
 }
 
-impl<EXT, DB: Database> Context<EXT, DB> {
+impl<ChainSpecT: ChainSpec, EXT, DB: Database> Context<ChainSpecT, EXT, DB> {
     /// Creates new context with external and database.
-    pub fn new(evm: EvmContext<DB>, external: EXT) -> Context<EXT, DB> {
+    pub fn new(evm: EvmContext<ChainSpecT, DB>, external: EXT) -> Context<ChainSpecT, EXT, DB> {
         Context { evm, external }
     }
 }
@@ -71,14 +71,14 @@ impl<EXT, DB: Database> Context<EXT, DB> {
 /// Context with handler configuration.
 pub struct ContextWithChainSpec<ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Context of execution.
-    pub context: Context<EXT, DB>,
+    pub context: Context<ChainSpecT, EXT, DB>,
     /// Handler configuration.
     pub spec_id: ChainSpecT::Hardfork,
 }
 
 impl<ChainSpecT: ChainSpec, EXT, DB: Database> ContextWithChainSpec<ChainSpecT, EXT, DB> {
     /// Creates new context with handler configuration.
-    pub fn new(context: Context<EXT, DB>, spec_id: ChainSpecT::Hardfork) -> Self {
+    pub fn new(context: Context<ChainSpecT, EXT, DB>, spec_id: ChainSpecT::Hardfork) -> Self {
         Self { spec_id, context }
     }
 }

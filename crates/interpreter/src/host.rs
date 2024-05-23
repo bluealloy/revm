@@ -2,14 +2,15 @@ use crate::primitives::{Address, Bytecode, Env, Log, B256, U256};
 
 mod dummy;
 pub use dummy::DummyHost;
+use revm_primitives::ChainSpec;
 
 /// EVM context host.
-pub trait Host {
+pub trait Host<ChainSpecT: ChainSpec> {
     /// Returns a reference to the environment.
-    fn env(&self) -> &Env;
+    fn env(&self) -> &Env<ChainSpecT>;
 
     /// Returns a mutable reference to the environment.
-    fn env_mut(&mut self) -> &mut Env;
+    fn env_mut(&mut self) -> &mut Env<ChainSpecT>;
 
     /// Load an account.
     ///
@@ -84,13 +85,15 @@ pub struct SelfDestructResult {
 
 #[cfg(test)]
 mod tests {
+    use revm_primitives::EthChainSpec;
+
     use super::*;
 
-    fn assert_host<H: Host + ?Sized>() {}
+    fn assert_host<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>() {}
 
     #[test]
     fn object_safety() {
-        assert_host::<DummyHost>();
-        assert_host::<dyn Host>();
+        assert_host::<EthChainSpec, DummyHost<EthChainSpec>>();
+        assert_host::<EthChainSpec, dyn Host<EthChainSpec>>();
     }
 }

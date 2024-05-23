@@ -1,7 +1,7 @@
 use core::ops::{Deref, DerefMut};
 use std::boxed::Box;
 
-use crate::primitives::{BlockEnv, CfgEnv, ChainSpec, Env, TxEnv};
+use crate::primitives::{BlockEnv, CfgEnv, ChainSpec, Env};
 
 /// Configuration environment with the chain spec id.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -37,14 +37,14 @@ impl<ChainSpecT: ChainSpec> Deref for CfgEnvWithChainSpec<ChainSpecT> {
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct EnvWithChainSpec<ChainSpecT: ChainSpec> {
     /// Evm enironment.
-    pub env: Box<Env>,
+    pub env: Box<Env<ChainSpecT>>,
     /// Handler configuration fields.
     pub spec_id: ChainSpecT::Hardfork,
 }
 
 impl<ChainSpecT: ChainSpec> EnvWithChainSpec<ChainSpecT> {
     /// Returns new `EnvWithHandlerCfg` instance.
-    pub fn new(env: Box<Env>, spec_id: ChainSpecT::Hardfork) -> Self {
+    pub fn new(env: Box<Env<ChainSpecT>>, spec_id: ChainSpecT::Hardfork) -> Self {
         Self { env, spec_id }
     }
 
@@ -52,7 +52,7 @@ impl<ChainSpecT: ChainSpec> EnvWithChainSpec<ChainSpecT> {
     pub fn new_with_cfg_env(
         cfg: CfgEnvWithChainSpec<ChainSpecT>,
         block: BlockEnv,
-        tx: TxEnv,
+        tx: ChainSpecT::Transaction,
     ) -> Self {
         Self::new(Env::boxed(cfg.cfg_env, block, tx), cfg.spec_id)
     }
@@ -70,7 +70,7 @@ impl<ChainSpecT: ChainSpec> DerefMut for EnvWithChainSpec<ChainSpecT> {
 }
 
 impl<ChainSpecT: ChainSpec> Deref for EnvWithChainSpec<ChainSpecT> {
-    type Target = Env;
+    type Target = Env<ChainSpecT>;
 
     fn deref(&self) -> &Self::Target {
         &self.env

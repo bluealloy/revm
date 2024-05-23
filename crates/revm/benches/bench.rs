@@ -118,7 +118,8 @@ fn bench_eval(
         };
         let mut shared_memory = SharedMemory::new();
         let mut host = DummyHost::new(*evm.context.evm.env.clone());
-        let instruction_table = make_instruction_table::<DummyHost, BerlinSpec>();
+        let instruction_table =
+            make_instruction_table::<EthChainSpec, DummyHost<EthChainSpec>, BerlinSpec>();
         b.iter(move || {
             // replace memory with empty memory to use it inside interpreter.
             // Later return memory back.

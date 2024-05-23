@@ -1,6 +1,6 @@
 use crate::{
     precompile::{Precompile, PrecompileResult},
-    primitives::{db::Database, Address, Bytes, HashMap},
+    primitives::{db::Database, Address, Bytes, ChainSpec, HashMap},
 };
 use core::ops::{Deref, DerefMut};
 use dyn_clone::DynClone;
@@ -10,18 +10,18 @@ use std::{boxed::Box, sync::Arc};
 use super::InnerEvmContext;
 
 /// Precompile and its handlers.
-pub enum ContextPrecompile<DB: Database> {
+pub enum ContextPrecompile<ChainSpecT: ChainSpec, DB: Database> {
     /// Ordinary precompiles
     Ordinary(Precompile),
     /// Stateful precompile that is Arc over [`ContextStatefulPrecompile`] trait.
     /// It takes a reference to input, gas limit and Context.
-    ContextStateful(ContextStatefulPrecompileArc<DB>),
+    ContextStateful(ContextStatefulPrecompileArc<ChainSpecT, DB>),
     /// Mutable stateful precompile that is Box over [`ContextStatefulPrecompileMut`] trait.
     /// It takes a reference to input, gas limit and context.
-    ContextStatefulMut(ContextStatefulPrecompileBox<DB>),
+    ContextStatefulMut(ContextStatefulPrecompileBox<ChainSpecT, DB>),
 }
 
-impl<DB: Database> Clone for ContextPrecompile<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> Clone for ContextPrecompile<ChainSpecT, DB> {
     fn clone(&self) -> Self {
         match self {
             Self::Ordinary(arg0) => Self::Ordinary(arg0.clone()),
@@ -32,11 +32,11 @@ impl<DB: Database> Clone for ContextPrecompile<DB> {
 }
 
 #[derive(Clone)]
-pub struct ContextPrecompiles<DB: Database> {
-    inner: HashMap<Address, ContextPrecompile<DB>>,
+pub struct ContextPrecompiles<ChainSpecT: ChainSpec, DB: Database> {
+    inner: HashMap<Address, ContextPrecompile<ChainSpecT, DB>>,
 }
 
-impl<DB: Database> ContextPrecompiles<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> ContextPrecompiles<ChainSpecT, DB> {
     /// Returns precompiles addresses.
     #[inline]
     pub fn addresses(&self) -> impl Iterator<Item = &Address> {
@@ -49,7 +49,7 @@ impl<DB: Database> ContextPrecompiles<DB> {
     #[inline]
     pub fn extend(
         &mut self,
-        other: impl IntoIterator<Item = impl Into<(Address, ContextPrecompile<DB>)>>,
+        other: impl IntoIterator<Item = impl Into<(Address, ContextPrecompile<ChainSpecT, DB>)>>,
     ) {
         self.inner.extend(other.into_iter().map(Into::into));
     }
@@ -62,19 +62,19 @@ impl<DB: Database> ContextPrecompiles<DB> {
         addess: Address,
         bytes: &Bytes,
         gas_price: u64,
-        evmctx: &mut InnerEvmContext<DB>,
+        evmctx: &mut InnerEvmContext<ChainSpecT, DB>,
     ) -> Option<PrecompileResult> {
         let precompile = self.inner.get_mut(&addess)?;
 
         match precompile {
-            ContextPrecompile::Ordinary(p) => Some(p.call(bytes, gas_price, &evmctx.env)),
+            ContextPrecompile::Ordinary(p) => Some(p.call(bytes, gas_price, &evmctx.env.cfg)),
             ContextPrecompile::ContextStatefulMut(p) => Some(p.call_mut(bytes, gas_price, evmctx)),
             ContextPrecompile::ContextStateful(p) => Some(p.call(bytes, gas_price, evmctx)),
         }
     }
 }
 
-impl<DB: Database> Default for ContextPrecompiles<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> Default for ContextPrecompiles<ChainSpecT, DB> {
     fn default() -> Self {
         Self {
             inner: Default::default(),
@@ -82,15 +82,15 @@ impl<DB: Database> Default for ContextPrecompiles<DB> {
     }
 }
 
-impl<DB: Database> Deref for ContextPrecompiles<DB> {
-    type Target = HashMap<Address, ContextPrecompile<DB>>;
+impl<ChainSpecT: ChainSpec, DB: Database> Deref for ContextPrecompiles<ChainSpecT, DB> {
+    type Target = HashMap<Address, ContextPrecompile<ChainSpecT, DB>>;
 
     fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }
 
-impl<DB: Database> DerefMut for ContextPrecompiles<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> DerefMut for ContextPrecompiles<ChainSpecT, DB> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.inner
     }
@@ -98,41 +98,45 @@ impl<DB: Database> DerefMut for ContextPrecompiles<DB> {
 
 /// Context aware stateful precompile trait. It is used to create
 /// a arc precompile in [`ContextPrecompile`].
-pub trait ContextStatefulPrecompile<DB: Database>: Sync + Send {
+pub trait ContextStatefulPrecompile<ChainSpecT: ChainSpec, DB: Database>: Sync + Send {
     fn call(
         &self,
         bytes: &Bytes,
         gas_price: u64,
-        evmctx: &mut InnerEvmContext<DB>,
+        evmctx: &mut InnerEvmContext<ChainSpecT, DB>,
     ) -> PrecompileResult;
 }
 
 /// Context aware mutable stateful precompile trait. It is used to create
 /// a boxed precompile in [`ContextPrecompile`].
-pub trait ContextStatefulPrecompileMut<DB: Database>: DynClone + Send + Sync {
+pub trait ContextStatefulPrecompileMut<ChainSpecT: ChainSpec, DB: Database>:
+    DynClone + Send + Sync
+{
     fn call_mut(
         &mut self,
         bytes: &Bytes,
         gas_price: u64,
-        evmctx: &mut InnerEvmContext<DB>,
+        evmctx: &mut InnerEvmContext<ChainSpecT, DB>,
     ) -> PrecompileResult;
 }
 
-dyn_clone::clone_trait_object!(<DB> ContextStatefulPrecompileMut<DB>);
+dyn_clone::clone_trait_object!(<ChainSpecT, DB> ContextStatefulPrecompileMut<ChainSpecT, DB>);
 
 /// Arc over context stateful precompile.
-pub type ContextStatefulPrecompileArc<DB> = Arc<dyn ContextStatefulPrecompile<DB>>;
+pub type ContextStatefulPrecompileArc<ChainSpecT, DB> =
+    Arc<dyn ContextStatefulPrecompile<ChainSpecT, DB>>;
 
 /// Box over context mutable stateful precompile
-pub type ContextStatefulPrecompileBox<DB> = Box<dyn ContextStatefulPrecompileMut<DB>>;
+pub type ContextStatefulPrecompileBox<ChainSpecT, DB> =
+    Box<dyn ContextStatefulPrecompileMut<ChainSpecT, DB>>;
 
-impl<DB: Database> From<Precompile> for ContextPrecompile<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> From<Precompile> for ContextPrecompile<ChainSpecT, DB> {
     fn from(p: Precompile) -> Self {
         ContextPrecompile::Ordinary(p)
     }
 }
 
-impl<DB: Database> From<Precompiles> for ContextPrecompiles<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> From<Precompiles> for ContextPrecompiles<ChainSpecT, DB> {
     fn from(p: Precompiles) -> Self {
         ContextPrecompiles {
             inner: p.inner.into_iter().map(|(k, v)| (k, v.into())).collect(),
@@ -140,7 +144,9 @@ impl<DB: Database> From<Precompiles> for ContextPrecompiles<DB> {
     }
 }
 
-impl<DB: Database> From<&Precompiles> for ContextPrecompiles<DB> {
+impl<ChainSpecT: ChainSpec, DB: Database> From<&Precompiles>
+    for ContextPrecompiles<ChainSpecT, DB>
+{
     fn from(p: &Precompiles) -> Self {
         ContextPrecompiles {
             inner: p

@@ -1,6 +1,8 @@
+use revm_primitives::ChainSpec;
+
 use super::analysis::to_analysed;
 use crate::{
-    primitives::{Address, Bytecode, Bytes, Env, TransactTo, B256, U256},
+    primitives::{Address, Bytecode, Bytes, Env, TransactTo, Transaction, B256, U256},
     CallInputs,
 };
 
@@ -48,18 +50,22 @@ impl Contract {
 
     /// Creates a new contract from the given [`Env`].
     #[inline]
-    pub fn new_env(env: &Env, bytecode: Bytecode, hash: Option<B256>) -> Self {
-        let contract_address = match env.tx.transact_to {
-            TransactTo::Call(caller) => caller,
+    pub fn new_env<ChainSpecT: ChainSpec>(
+        env: &Env<ChainSpecT>,
+        bytecode: Bytecode,
+        hash: Option<B256>,
+    ) -> Self {
+        let contract_address = match env.tx.transact_to() {
+            TransactTo::Call(caller) => *caller,
             TransactTo::Create => Address::ZERO,
         };
         Self::new(
-            env.tx.data.clone(),
+            env.tx.data().clone(),
             bytecode,
             hash,
             contract_address,
-            env.tx.caller,
-            env.tx.value,
+            *env.tx.caller(),
+            *env.tx.value(),
         )
     }
 

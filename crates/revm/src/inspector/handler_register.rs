@@ -13,14 +13,16 @@ use revm_interpreter::opcode::InstructionTables;
 use std::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
 
 /// Provides access to an `Inspector` instance.
-pub trait GetInspector<DB: Database> {
+pub trait GetInspector<ChainSpecT: ChainSpec, DB: Database> {
     /// Returns the associated `Inspector`.
-    fn get_inspector(&mut self) -> &mut impl Inspector<DB>;
+    fn get_inspector(&mut self) -> &mut impl Inspector<ChainSpecT, DB>;
 }
 
-impl<DB: Database, INSP: Inspector<DB>> GetInspector<DB> for INSP {
+impl<ChainSpecT: ChainSpec, DB: Database, INSP: Inspector<ChainSpecT, DB>>
+    GetInspector<ChainSpecT, DB> for INSP
+{
     #[inline]
-    fn get_inspector(&mut self) -> &mut impl Inspector<DB> {
+    fn get_inspector(&mut self) -> &mut impl Inspector<ChainSpecT, DB> {
         self
     }
 }
@@ -37,7 +39,12 @@ impl<DB: Database, INSP: Inspector<DB>> GetInspector<DB> for INSP {
 /// A few instructions handlers are wrapped twice once for `step` and `step_end`
 /// and in case of Logs and Selfdestruct wrapper is wrapped again for the
 /// `log` and `selfdestruct` calls.
-pub fn inspector_handle_register<'a, ChainSpecT: ChainSpec, DB: Database, EXT: GetInspector<DB>>(
+pub fn inspector_handle_register<
+    'a,
+    ChainSpecT: ChainSpec,
+    DB: Database,
+    EXT: GetInspector<ChainSpecT, DB>,
+>(
     handler: &mut EvmHandler<'a, ChainSpecT, EXT, DB>,
 ) {
     // Every instruction inside flat table that is going to be wrapped by inspector calls.
@@ -53,6 +60,7 @@ pub fn inspector_handle_register<'a, ChainSpecT: ChainSpec, DB: Database, EXT: G
             .into_iter()
             .map(|i| inspector_instruction(i))
             .collect::<Vec<_>>(),
+        InstructionTables::_Unused(_) => unreachable!("phantom data is not used"),
     };
 
     // Register inspector Log instruction.
@@ -238,7 +246,7 @@ pub fn inspector_handle_register<'a, ChainSpecT: ChainSpec, DB: Database, EXT: G
 pub fn inspector_instruction<
     'a,
     ChainSpecT: ChainSpec,
-    INSP: GetInspector<DB>,
+    INSP: GetInspector<ChainSpecT, DB>,
     DB: Database,
     Instruction: Fn(&mut Interpreter, &mut Evm<'a, ChainSpecT, INSP, DB>) + 'a,
 >(
@@ -292,9 +300,10 @@ mod tests {
     #[test]
     fn test_make_boxed_instruction_table() {
         type MyEvm<'a> = Evm<'a, TestChainSpec, NoOpInspector, EmptyDB>;
-        let table: InstructionTable<MyEvm<'_>> = make_instruction_table::<MyEvm<'_>, BerlinSpec>();
+        let table: InstructionTable<MyEvm<'_>> =
+            make_instruction_table::<TestChainSpec, MyEvm<'_>, BerlinSpec>();
         let _boxed_table: BoxedInstructionTable<'_, MyEvm<'_>> =
-            make_boxed_instruction_table::<'_, MyEvm<'_>, BerlinSpec, _>(
+            make_boxed_instruction_table::<'_, TestChainSpec, MyEvm<'_>, BerlinSpec, _>(
                 table,
                 inspector_instruction,
             );
@@ -309,25 +318,33 @@ mod tests {
         call_end: bool,
     }
 
-    impl<DB: Database> Inspector<DB> for StackInspector {
-        fn initialize_interp(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<DB>) {
+    impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for StackInspector {
+        fn initialize_interp(
+            &mut self,
+            _interp: &mut Interpreter,
+            _context: &mut EvmContext<ChainSpecT, DB>,
+        ) {
             if self.initialize_interp_called {
                 unreachable!("initialize_interp should not be called twice")
             }
             self.initialize_interp_called = true;
         }
 
-        fn step(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<DB>) {
+        fn step(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<ChainSpecT, DB>) {
             self.step += 1;
         }
 
-        fn step_end(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<DB>) {
+        fn step_end(
+            &mut self,
+            _interp: &mut Interpreter,
+            _context: &mut EvmContext<ChainSpecT, DB>,
+        ) {
             self.step_end += 1;
         }
 
         fn call(
             &mut self,
-            context: &mut EvmContext<DB>,
+            context: &mut EvmContext<ChainSpecT, DB>,
             _call: &mut CallInputs,
         ) -> Option<CallOutcome> {
             if self.call {
@@ -340,7 +357,7 @@ mod tests {
 
         fn call_end(
             &mut self,
-            context: &mut EvmContext<DB>,
+            context: &mut EvmContext<ChainSpecT, DB>,
             _inputs: &CallInputs,
             outcome: CallOutcome,
         ) -> CallOutcome {
@@ -354,7 +371,7 @@ mod tests {
 
         fn create(
             &mut self,
-            context: &mut EvmContext<DB>,
+            context: &mut EvmContext<ChainSpecT, DB>,
             _call: &mut CreateInputs,
         ) -> Option<CreateOutcome> {
             assert_eq!(context.journaled_state.depth(), 0);
@@ -363,7 +380,7 @@ mod tests {
 
         fn create_end(
             &mut self,
-            context: &mut EvmContext<DB>,
+            context: &mut EvmContext<ChainSpecT, DB>,
             _inputs: &CreateInputs,
             outcome: CreateOutcome,
         ) -> CreateOutcome {
@@ -403,11 +420,23 @@ mod tests {
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
             .with_external_context(StackInspector::default())
             .modify_tx_env(|tx| {
-                tx.clear();
-                tx.caller = address!("1000000000000000000000000000000000000000");
-                tx.transact_to =
+                *tx = <TestChainSpec as ChainSpec>::Transaction::default();
+
+                #[cfg(feature = "optimism")]
+                let (caller, transact_to, gas_limit) = (
+                    &mut tx.base.caller,
+                    &mut tx.base.transact_to,
+                    &mut tx.base.gas_limit,
+                );
+
+                #[cfg(not(feature = "optimism"))]
+                let (caller, transact_to, gas_limit) =
+                    (&mut tx.caller, &mut tx.transact_to, &mut tx.gas_limit);
+
+                *caller = address!("1000000000000000000000000000000000000000");
+                *transact_to =
                     TransactTo::Call(address!("0000000000000000000000000000000000000000"));
-                tx.gas_limit = 21100;
+                *gas_limit = 21100;
             })
             .append_handler_register(inspector_handle_register)
             .build();

@@ -3,7 +3,7 @@ mod call_helpers;
 pub use call_helpers::{
     calc_call_gas, get_memory_input_and_out_ranges, resize_memory_and_return_range,
 };
-use revm_primitives::{keccak256, BerlinSpec};
+use revm_primitives::{keccak256, BerlinSpec, ChainSpec, Transaction};
 
 use crate::{
     analysis::validate_eof,
@@ -38,7 +38,10 @@ pub fn resize_memory(
 }
 
 /// EOF Create instruction
-pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn eofcreate<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
     let initcontainer_index = unsafe { *interpreter.instruction_pointer };
@@ -91,7 +94,10 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
 }
 
-pub fn txcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn txcreate<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
     pop!(
@@ -113,7 +119,7 @@ pub fn txcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     let Some(initcode) = host
         .env()
         .tx
-        .eof_initcodes_hashed
+        .eof_initcodes_hashed()
         .get(&tx_initcode_hash)
         .cloned()
     else {
@@ -170,7 +176,10 @@ pub fn txcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn return_contract<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn return_contract<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    _host: &mut H,
+) {
     require_init_eof!(interpreter);
     let deploy_container_index = unsafe { read_u16(interpreter.instruction_pointer) };
     pop!(interpreter, aux_data_offset, aux_data_size);
@@ -237,7 +246,7 @@ pub fn extcall_input(interpreter: &mut Interpreter) -> Option<Bytes> {
     ))
 }
 
-pub fn extcall_gas_calc<H: Host + ?Sized>(
+pub fn extcall_gas_calc<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
     interpreter: &mut Interpreter,
     host: &mut H,
     target: Address,
@@ -279,7 +288,10 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
     Some(gas_limit)
 }
 
-pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extcall<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
+    interpreter: &mut Interpreter,
+    host: &mut H,
+) {
     require_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
@@ -314,7 +326,10 @@ pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn extdcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extdcall<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
+    interpreter: &mut Interpreter,
+    host: &mut H,
+) {
     require_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
@@ -347,7 +362,10 @@ pub fn extdcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, hos
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn extscall<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extscall<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    interpreter: &mut Interpreter,
+    host: &mut H,
+) {
     require_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
@@ -378,7 +396,12 @@ pub fn extscall<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
+pub fn create<
+    const IS_CREATE2: bool,
+    ChainSpecT: ChainSpec,
+    H: Host<ChainSpecT> + ?Sized,
+    SPEC: Spec,
+>(
     interpreter: &mut Interpreter,
     host: &mut H,
 ) {
@@ -448,7 +471,10 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn call<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
+    interpreter: &mut Interpreter,
+    host: &mut H,
+) {
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);
     // max gas limit is not possible in real ethereum situation.
@@ -469,7 +495,7 @@ pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-    let Some(mut gas_limit) = calc_call_gas::<H, SPEC>(
+    let Some(mut gas_limit) = calc_call_gas::<ChainSpecT, H, SPEC>(
         interpreter,
         is_cold,
         has_transfer,
@@ -504,7 +530,10 @@ pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn call_code<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn call_code<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
+    interpreter: &mut Interpreter,
+    host: &mut H,
+) {
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);
     // max gas limit is not possible in real ethereum situation.
@@ -520,7 +549,7 @@ pub fn call_code<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
         return;
     };
 
-    let Some(mut gas_limit) = calc_call_gas::<H, SPEC>(
+    let Some(mut gas_limit) = calc_call_gas::<ChainSpecT, H, SPEC>(
         interpreter,
         is_cold,
         value != U256::ZERO,
@@ -555,7 +584,10 @@ pub fn call_code<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn delegate_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn delegate_call<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
+    interpreter: &mut Interpreter,
+    host: &mut H,
+) {
     check!(interpreter, HOMESTEAD);
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);
@@ -571,7 +603,7 @@ pub fn delegate_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter
         return;
     };
     let Some(gas_limit) =
-        calc_call_gas::<H, SPEC>(interpreter, is_cold, false, false, local_gas_limit)
+        calc_call_gas::<ChainSpecT, H, SPEC>(interpreter, is_cold, false, false, local_gas_limit)
     else {
         return;
     };
@@ -596,7 +628,10 @@ pub fn delegate_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn static_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn static_call<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
+    interpreter: &mut Interpreter,
+    host: &mut H,
+) {
     check!(interpreter, BYZANTIUM);
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);
@@ -613,7 +648,7 @@ pub fn static_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
     };
 
     let Some(gas_limit) =
-        calc_call_gas::<H, SPEC>(interpreter, is_cold, false, false, local_gas_limit)
+        calc_call_gas::<ChainSpecT, H, SPEC>(interpreter, is_cold, false, false, local_gas_limit)
     else {
         return;
     };
