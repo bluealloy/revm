@@ -25,7 +25,7 @@ pub fn state_merkle_trie_root<'a>(
 }
 
 pub fn state_merkle_trie_root2<'a>(
-    accounts: impl IntoIterator<Item = (Address, &'a PlainAccount)>,
+    accounts: impl IntoIterator<Item = (Address, &'a revm_fluent::db::states::PlainAccount)>,
 ) -> B256 {
     trie_root(accounts.into_iter().map(|(address, acc)| {
         (
@@ -77,7 +77,7 @@ impl TrieAccount {
             code_hash: acc.info.code_hash,
         }
     }
-    fn new2(acc: &PlainAccount) -> Self {
+    fn new2(acc: &revm_fluent::db::states::PlainAccount) -> Self {
         Self {
             nonce: acc.info.nonce,
             balance: acc.info.balance,

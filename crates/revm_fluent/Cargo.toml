@@ -1,0 +1,187 @@
+[package]
+authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
+description = "revm - Rust Ethereum Virtual Machine"
+edition = "2021"
+keywords = ["no_std", "ethereum", "evm", "revm"]
+license = "MIT"
+name = "revm_fluent"
+repository = "https://github.com/bluealloy/revm"
+version = "9.0.0"
+readme = "../../README.md"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+# revm
+revm-interpreter = { path = "../interpreter", version = "5.0.0", default-features = false }
+revm-precompile = { path = "../precompile", version = "7.0.0", default-features = false }
+
+fluentbase-sdk = { workspace = true, features = [] }
+fluentbase-types = { workspace = true, features = [] }
+fluentbase-core = { workspace = true, features = [] }
+fluentbase-runtime = { workspace = true, features = [] }
+fluentbase-codec = { workspace = true, features = [] }
+fluentbase-genesis = { workspace = true, features = [] }
+fluentbase-poseidon = { workspace = true, features = [] }
+
+rwasm = { workspace = true }
+
+# misc
+auto_impl = { version = "1.2", default-features = false }
+cfg-if = "1.0"
+dyn-clone = "1.0"
+lazy_static = { workspace = true }
+
+# Optional
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+], optional = true }
+serde_json = { version = "1.0", default-features = false, features = [
+    "alloc",
+], optional = true }
+
+# ethersdb
+tokio = { version = "1.37", features = [
+    "rt-multi-thread",
+    "macros",
+], optional = true }
+ethers-providers = { version = "2.0", optional = true }
+ethers-core = { version = "2.0", optional = true }
+
+# alloydb
+# alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
+# alloy-rpc-types = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
+# alloy-transport = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
+
+[dev-dependencies]
+alloy-sol-types = { version = "0.7.0", default-features = false, features = [
+    "std",
+] }
+ethers-contract = { version = "2.0.14", default-features = false }
+anyhow = "1.0.82"
+criterion = "0.5"
+indicatif = "0.17"
+reqwest = { version = "0.12" }
+
+alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", default-features = false, features = [
+    "reqwest",
+] }
+# needed for enabling TLS to use HTTPS connections when testing alloy DB
+alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d" }
+
+[features]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst", "fluent_revm"]
+std = [
+    "serde?/std",
+    "serde_json?/std",
+    "serde_json?/preserve_order",
+    "revm-interpreter/std",
+    "revm-precompile/std",
+    "fluentbase-sdk/std",
+    "fluentbase-types/std",
+    "fluentbase-core/std",
+    "fluentbase-runtime/std",
+    "fluentbase-codec/std",
+    "fluentbase-genesis/std",
+]
+hashbrown = ["revm-interpreter/hashbrown", "revm-precompile/hashbrown"]
+serde = ["dep:serde", "revm-interpreter/serde"]
+serde-json = ["serde", "dep:serde_json"]
+arbitrary = ["revm-interpreter/arbitrary"]
+asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
+portable = ["revm-precompile/portable", "revm-interpreter/portable"]
+
+test-utils = []
+
+optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
+# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
+optimism-default-handler = [
+    "optimism",
+    "revm-precompile/optimism-default-handler",
+    "revm-interpreter/optimism-default-handler",
+]
+negate-optimism-default-handler = [
+    "revm-precompile/negate-optimism-default-handler",
+    "revm-interpreter/negate-optimism-default-handler",
+]
+
+ethersdb = [
+    "std",
+    "tokio",
+    "ethers-providers",
+    "ethers-core",
+] # Negate optimism default handler
+
+#
+# alloydb = [
+#     "std",
+#     "tokio",
+#     "alloy-provider",
+#     "alloy-rpc-types",
+#     "alloy-transport",
+# ]
+
+dev = [
+    "memory_limit",
+    "optional_balance_check",
+    "optional_block_gas_limit",
+    "optional_eip3607",
+    "optional_gas_refund",
+    "optional_no_base_fee",
+    "optional_beneficiary_reward",
+]
+memory_limit = ["revm-interpreter/memory_limit"]
+optional_balance_check = ["revm-interpreter/optional_balance_check"]
+optional_block_gas_limit = ["revm-interpreter/optional_block_gas_limit"]
+optional_eip3607 = ["revm-interpreter/optional_eip3607"]
+optional_gas_refund = ["revm-interpreter/optional_gas_refund"]
+optional_no_base_fee = ["revm-interpreter/optional_no_base_fee"]
+optional_beneficiary_reward = ["revm-interpreter/optional_beneficiary_reward"]
+
+# See comments in `revm-precompile`
+secp256k1 = ["revm-precompile/secp256k1"]
+c-kzg = ["revm-precompile/c-kzg"]
+
+blst = ["revm-precompile/blst"]
+
+rwasm = [
+    "revm-interpreter/rwasm",
+    "revm-precompile/rwasm",
+]
+fluent_revm = ["revm-interpreter/fluent_revm"]
+
+[[example]]
+name = "fork_ref_transact"
+path = "../../examples/fork_ref_transact.rs"
+required-features = ["ethersdb"]
+
+[[example]]
+name = "generate_block_traces"
+path = "../../examples/generate_block_traces.rs"
+required-features = ["std", "serde-json", "ethersdb"]
+
+[[example]]
+name = "db_by_ref"
+path = "../../examples/db_by_ref.rs"
+required-features = ["std", "serde-json"]
+
+#[[example]]
+#name = "uniswap_v2_usdc_swap"
+#path = "../../examples/uniswap_v2_usdc_swap.rs"
+#required-features = ["alloydb"]
+
+[[bench]]
+name = "bench"
+path = "benches/bench.rs"
+harness = false

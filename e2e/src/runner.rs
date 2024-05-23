@@ -147,7 +147,11 @@ fn check_evm_execution<EXT1, EXT2>(
     exec_result1: &Result<ExecutionResult, EVMError<Infallible>>,
     exec_result2: &Result<ExecutionResult, EVMError<ExitCode>>,
     evm: &Evm<'_, EXT1, &mut State<EmptyDB>>,
-    evm2: &revm::Evm<'_, EXT2, &mut revm::State<revm::db::EmptyDBTyped<ExitCode>>>,
+    evm2: &revm_fluent::Evm<
+        '_,
+        EXT2,
+        &mut revm_fluent::State<revm_fluent::db::EmptyDBTyped<ExitCode>>,
+    >,
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root1 = log_rlp_hash(exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default());
@@ -231,19 +235,6 @@ fn check_evm_execution<EXT1, EXT2>(
             expected: test.logs,
         };
         print_json_output(Some(kind.to_string()));
-        let logs1 = exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default();
-        println!("logs count: {}", logs1.len());
-        println!("log records:");
-        for log in logs1 {
-            println!(
-                " - {}: {}",
-                hex::encode(log.address),
-                log.topics()
-                    .get(0)
-                    .map(|v| hex::encode(&v))
-                    .unwrap_or_default()
-            )
-        }
         return Err(TestError {
             name: test_name.to_string(),
             kind,
@@ -266,6 +257,7 @@ fn check_evm_execution<EXT1, EXT2>(
 
     if logs_root1 != logs_root2 {
         let logs1 = exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default();
+        println!("ORIGINAL logs ({}):", logs1.len());
         for log in logs1 {
             println!(
                 " - {}: {}",
@@ -277,22 +269,21 @@ fn check_evm_execution<EXT1, EXT2>(
             )
         }
         let logs2 = exec_result2.as_ref().map(|r| r.logs()).unwrap_or_default();
-        // for log in logs2 {
-        //     println!(
-        //         " - {}: {}",
-        //         hex::encode(log.address),
-        //         log.topics()
-        //             .get(0)
-        //             .map(|v| hex::encode(&v))
-        //             .unwrap_or_default()
-        //     )
-        // }
+        println!("FLUENT logs ({}):", logs2.len());
+        for log in logs2 {
+            println!(
+                " - {}: {}",
+                hex::encode(log.address),
+                log.topics()
+                    .get(0)
+                    .map(|v| hex::encode(&v))
+                    .unwrap_or_default()
+            )
+        }
         assert_eq!(
-            logs1.len(),
-            logs2.len(),
-            "EVM <> FLUENT logs count mismatch"
+            logs_root1, logs_root2,
+            "ORIGINAL <> FLUENT logs root mismatch"
         );
-        assert_eq!(logs_root1, logs_root2, "EVM <> FLUENT logs root mismatch");
     }
 
     // compare contracts
@@ -474,7 +465,7 @@ pub fn execute_test_suite(
         println!("test case: {}", &name);
         // Create database and insert cache
         let mut cache_state = revm::CacheState::new(false);
-        let mut cache_state2 = revm::CacheState::new(false);
+        let mut cache_state2 = revm_fluent::CacheState::new(false);
 
         let mut evm_storage: PlainStorage = PlainStorage::default();
         for (address, info) in &devnet_genesis.alloc {
@@ -703,12 +694,13 @@ pub fn execute_test_suite(
                     .with_spec_id(spec_id)
                     .build();
 
-                let mut state2 =
-                    revm::db::StateBuilder::<revm::db::EmptyDBTyped<ExitCode>>::default()
-                        .with_cached_prestate(cache2)
-                        .with_bundle_update()
-                        .build();
-                let mut evm2 = revm::Evm::builder()
+                let mut state2 = revm_fluent::db::StateBuilder::<
+                    revm_fluent::db::EmptyDBTyped<ExitCode>,
+                >::default()
+                .with_cached_prestate(cache2)
+                .with_bundle_update()
+                .build();
+                let mut evm2 = revm_fluent::Evm::builder()
                     .with_db(&mut state2)
                     .modify_env(|e| *e = env.clone())
                     .with_spec_id(spec_id)
@@ -752,7 +744,9 @@ pub fn execute_test_suite(
                     (e, res)
                 } else {
                     let timer = Instant::now();
+                    println!("ORIGINAL transact_commit:");
                     let res = evm.transact_commit();
+                    println!("FLUENT transact_commit:");
                     let res2 = evm2.transact_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
@@ -784,15 +778,14 @@ pub fn execute_test_suite(
                 // re-build to run with tracing
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
-                let mut cache_original = cache_state2.clone();
-                cache_original
-                    .set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
+                let mut cache2 = cache_state2.clone();
+                cache2.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
                 let state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let state_original = revm::db::State::builder()
-                    .with_cached_prestate(cache_original)
+                let state2 = revm_fluent::db::State::builder()
+                    .with_cached_prestate(cache2)
                     .with_bundle_update()
                     .build();
 
@@ -804,9 +797,9 @@ pub fn execute_test_suite(
                     .with_external_context(TracerEip3155::new(Box::new(stdout())))
                     // .append_handler_register(inspector_handle_register)
                     .build();
-                let mut evm2 = revm::Evm::builder()
+                let mut evm2 = revm_fluent::Evm::builder()
                     .with_spec_id(spec_id)
-                    .with_db(state_original)
+                    .with_db(state2)
                     .with_external_context(TracerEip3155::new(Box::new(stdout())))
                     // .append_handler_register(inspector_handle_register)
                     .build();

@@ -3523,6 +3523,7 @@ dependencies = [
  "paste",
  "plain_hasher",
  "revm",
+ "revm_fluent",
  "serde",
  "serde_json",
  "structopt",
@@ -3543,6 +3544,39 @@ dependencies = [
  "microbench",
  "regex",
  "revm",
+]
+
+[[package]]
+name = "revm_fluent"
+version = "9.0.0"
+dependencies = [
+ "alloy-provider",
+ "alloy-sol-types",
+ "alloy-transport-http",
+ "anyhow",
+ "auto_impl",
+ "cfg-if",
+ "criterion",
+ "dyn-clone",
+ "ethers-contract",
+ "ethers-core",
+ "ethers-providers",
+ "fluentbase-codec",
+ "fluentbase-core",
+ "fluentbase-genesis",
+ "fluentbase-poseidon",
+ "fluentbase-runtime",
+ "fluentbase-sdk",
+ "fluentbase-types",
+ "indicatif",
+ "lazy_static",
+ "reqwest 0.12.4",
+ "revm-interpreter",
+ "revm-precompile",
+ "rwasm",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
