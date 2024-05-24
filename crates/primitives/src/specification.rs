@@ -361,7 +361,6 @@ macro_rules! spec_to_generic {
                 use $crate::EcotoneSpec as SPEC;
                 $e
             }
-            #[cfg(feature = "optimism")]
             $crate::SpecId::FJORD => {
                 use $crate::FjordSpec as SPEC;
                 $e
