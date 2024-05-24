@@ -6,7 +6,7 @@ use crate::{u64_to_address, PrecompileWithAddress};
 use blst::{
     blst_fp, blst_fp_from_bendian, blst_map_to_g1, blst_p1, blst_p1_affine, blst_p1_to_affine,
 };
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
+use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileErrors, PrecompileResult};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_MAP_FP_TO_G1 precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -21,11 +21,11 @@ const MAP_FP_TO_G1_BASE: u64 = 5500;
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-mapping-fp-element-to-g1-point>
 pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if MAP_FP_TO_G1_BASE > gas_limit {
-        return PrecompileResult::err(PrecompileError::OutOfGas);
+        return PrecompileErrors::err(PrecompileError::OutOfGas);
     }
 
     if input.len() != PADDED_FP_LENGTH {
-        return PrecompileResult::err(PrecompileError::Other(format!(
+        return PrecompileErrors::err(PrecompileError::Other(format!(
             "MAP_FP_TO_G1 input should be {PADDED_FP_LENGTH} bytes, was {}",
             input.len()
         )));

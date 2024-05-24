@@ -1,6 +1,6 @@
 use super::calc_linear_cost_u32;
 use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use revm_primitives::Bytes;
+use revm_primitives::{Bytes, PrecompileErrors};
 use sha2::Digest;
 
 pub const SHA256: PrecompileWithAddress =
@@ -17,7 +17,7 @@ pub const RIPEMD160: PrecompileWithAddress = PrecompileWithAddress(
 pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let cost = calc_linear_cost_u32(input.len(), 60, 12);
     if cost > gas_limit {
-        PrecompileResult::err(Error::OutOfGas)
+        PrecompileErrors::err(Error::OutOfGas)
     } else {
         let output = sha2::Sha256::digest(input);
         PrecompileResult::ok(cost, output.to_vec().into())
@@ -30,7 +30,7 @@ pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 pub fn ripemd160_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let gas_used = calc_linear_cost_u32(input.len(), 600, 120);
     if gas_used > gas_limit {
-        PrecompileResult::err(Error::OutOfGas)
+        PrecompileErrors::err(Error::OutOfGas)
     } else {
         let mut hasher = ripemd::Ripemd160::new();
         hasher.update(input);

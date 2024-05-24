@@ -5,7 +5,7 @@ use crate::{
 };
 use aurora_engine_modexp::modexp;
 use core::cmp::{max, min};
-use revm_primitives::Bytes;
+use revm_primitives::{Bytes, PrecompileErrors};
 
 pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(5),
@@ -50,7 +50,7 @@ where
 {
     // If there is no minimum gas, return error.
     if min_gas > gas_limit {
-        return PrecompileResult::err(Error::OutOfGas);
+        return PrecompileErrors::err(Error::OutOfGas);
     }
 
     // The format of input is:
@@ -66,10 +66,10 @@ where
 
     // cast base and modulus to usize, it does not make sense to handle larger values
     let Ok(base_len) = usize::try_from(base_len) else {
-        return PrecompileResult::err(Error::ModexpBaseOverflow);
+        return PrecompileErrors::err(Error::ModexpBaseOverflow);
     };
     let Ok(mod_len) = usize::try_from(mod_len) else {
-        return PrecompileResult::err(Error::ModexpModOverflow);
+        return PrecompileErrors::err(Error::ModexpModOverflow);
     };
 
     // Handle a special case when both the base and mod length are zero.
@@ -79,7 +79,7 @@ where
 
     // Cast exponent length to usize, since it does not make sense to handle larger values.
     let Ok(exp_len) = usize::try_from(exp_len) else {
-        return PrecompileResult::err(Error::ModexpModOverflow);
+        return PrecompileErrors::err(Error::ModexpModOverflow);
     };
 
     // Used to extract ADJUSTED_EXPONENT_LENGTH.
@@ -99,7 +99,7 @@ where
     // Check if we have enough gas.
     let gas_cost = calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp);
     if gas_cost > gas_limit {
-        return PrecompileResult::err(Error::OutOfGas);
+        return PrecompileErrors::err(Error::OutOfGas);
     }
 
     // Padding is needed if the input does not contain all 3 values.

@@ -1,5 +1,5 @@
 use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use revm_primitives::Bytes;
+use revm_primitives::{Bytes, PrecompileErrors};
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
@@ -14,20 +14,20 @@ pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input = &input[..];
 
     if input.len() != INPUT_LENGTH {
-        return PrecompileResult::err(Error::Blake2WrongLength);
+        return PrecompileErrors::err(Error::Blake2WrongLength);
     }
 
     let f = match input[212] {
         1 => true,
         0 => false,
-        _ => return PrecompileResult::err(Error::Blake2WrongFinalIndicatorFlag),
+        _ => return PrecompileErrors::err(Error::Blake2WrongFinalIndicatorFlag),
     };
 
     // rounds 4 bytes
     let rounds = u32::from_be_bytes(input[..4].try_into().unwrap()) as usize;
     let gas_used = rounds as u64 * F_ROUND;
     if gas_used > gas_limit {
-        return PrecompileResult::err(Error::OutOfGas);
+        return PrecompileErrors::err(Error::OutOfGas);
     }
 
     let mut h = [0u64; 8];

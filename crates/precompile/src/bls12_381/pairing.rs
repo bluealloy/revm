@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use blst::{blst_final_exp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_miller_loop};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult, B256};
+use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileErrors, PrecompileResult, B256};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -32,7 +32,7 @@ const INPUT_LENGTH: usize = 384;
 pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % INPUT_LENGTH != 0 {
-        return PrecompileResult::err(PrecompileError::Other(format!(
+        return PrecompileErrors::err(PrecompileError::Other(format!(
             "Pairing input length should be multiple of {INPUT_LENGTH}, was {input_len}"
         )));
     }
@@ -40,7 +40,7 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let k = input_len / INPUT_LENGTH;
     let required_gas: u64 = PAIRING_MULTIPLIER_BASE * k as u64 + PAIRING_OFFSET_BASE;
     if required_gas > gas_limit {
-        return PrecompileResult::err(PrecompileError::OutOfGas);
+        return PrecompileErrors::err(PrecompileError::OutOfGas);
     }
 
     // accumulator for the fp12 multiplications of the miller loops.

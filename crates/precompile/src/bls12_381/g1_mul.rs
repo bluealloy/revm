@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use blst::{blst_p1, blst_p1_affine, blst_p1_from_affine, blst_p1_mult, blst_p1_to_affine};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
+use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileErrors, PrecompileResult};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MUL precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -25,10 +25,10 @@ pub(super) const INPUT_LENGTH: usize = 160;
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-multiplication>
 pub(super) fn g1_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if BASE_GAS_FEE > gas_limit {
-        return PrecompileResult::err(PrecompileError::OutOfGas);
+        return PrecompileErrors::err(PrecompileError::OutOfGas);
     }
     if input.len() != INPUT_LENGTH {
-        return PrecompileResult::err(PrecompileError::Other(format!(
+        return PrecompileErrors::err(PrecompileError::Other(format!(
             "G1MUL input should be {INPUT_LENGTH} bytes, was {}",
             input.len()
         )));

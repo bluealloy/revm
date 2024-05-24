@@ -6,7 +6,7 @@ use super::{
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use blst::{blst_p2, blst_p2_affine, blst_p2_from_affine, blst_p2_to_affine, p2_affines};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
+use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileErrors, PrecompileResult};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -25,7 +25,7 @@ pub const ADDRESS: u64 = 0x10;
 pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % g2_mul::INPUT_LENGTH != 0 {
-        return PrecompileResult::err(PrecompileError::Other(format!(
+        return PrecompileErrors::err(PrecompileError::Other(format!(
             "G2MSM input length should be multiple of {}, was {}",
             g2_mul::INPUT_LENGTH,
             input_len
@@ -35,7 +35,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let k = input_len / g2_mul::INPUT_LENGTH;
     let required_gas = msm_required_gas(k, g2_mul::BASE_GAS_FEE);
     if required_gas > gas_limit {
-        return PrecompileResult::err(PrecompileError::OutOfGas);
+        return PrecompileErrors::err(PrecompileError::OutOfGas);
     }
 
     let mut g2_points: Vec<blst_p2> = Vec::with_capacity(k);

@@ -1,5 +1,5 @@
 use crate::{utilities::right_pad, Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use revm_primitives::{alloy_primitives::B512, Bytes, B256};
+use revm_primitives::{alloy_primitives::B512, Bytes, PrecompileErrors, B256};
 
 pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(1),
@@ -70,7 +70,7 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     const ECRECOVER_BASE: u64 = 3_000;
 
     if ECRECOVER_BASE > gas_limit {
-        return PrecompileResult::err(Error::OutOfGas);
+        return PrecompileErrors::err(Error::OutOfGas);
     }
 
     let input = right_pad::<128>(input);
