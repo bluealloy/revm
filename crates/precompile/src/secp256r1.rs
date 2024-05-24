@@ -14,7 +14,6 @@ use revm_primitives::{Bytes, PrecompileError, PrecompileResult, B256};
 const P256VERIFY_BASE: u64 = 3_450;
 
 /// Returns the secp256r1 precompile with its address.
-
 pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
     [P256VERIFY].into_iter()
 }
@@ -32,7 +31,7 @@ pub const P256VERIFY: PrecompileWithAddress =
 /// | signed message hash |  r  |  s  | public key x | public key y |
 /// | :-----------------: | :-: | :-: | :----------: | :----------: |
 /// |          32         | 32  | 32  |     32       |      32      |
-fn p256_verify(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub fn p256_verify(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if P256VERIFY_BASE > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }
@@ -42,7 +41,7 @@ fn p256_verify(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
 /// Returns `Some(())` if the signature included in the input byte slice is
 /// valid, `None` otherwise.
-fn verify_impl(input: &[u8]) -> Option<()> {
+pub fn verify_impl(input: &[u8]) -> Option<()> {
     if input.len() < 160 {
         return None;
     }

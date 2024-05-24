@@ -18,6 +18,7 @@ pub mod identity;
 pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
+#[cfg(feature = "secp256r1")]
 pub mod secp256r1;
 pub mod utilities;
 
@@ -66,8 +67,6 @@ impl Precompiles {
             PrecompileSpecId::ISTANBUL => Self::istanbul(),
             PrecompileSpecId::BERLIN => Self::berlin(),
             PrecompileSpecId::CANCUN => Self::cancun(),
-            #[cfg(feature = "optimism")]
-            PrecompileSpecId::FJORD => Self::fjord(),
             PrecompileSpecId::PRAGUE => Self::prague(),
             PrecompileSpecId::LATEST => Self::latest(),
         }
@@ -161,6 +160,7 @@ impl Precompiles {
     }
 
     /// Returns precompiles for Fjord spec.
+    #[cfg(feature = "optimism")]
     pub fn fjord() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
@@ -266,8 +266,6 @@ pub enum PrecompileSpecId {
     ISTANBUL,
     BERLIN,
     CANCUN,
-    #[cfg(feature = "optimism")]
-    FJORD,
     PRAGUE,
     LATEST,
 }
@@ -289,9 +287,7 @@ impl PrecompileSpecId {
             #[cfg(feature = "optimism")]
             BEDROCK | REGOLITH | CANYON => Self::BERLIN,
             #[cfg(feature = "optimism")]
-            ECOTONE => Self::CANCUN,
-            #[cfg(feature = "optimism")]
-            FJORD => Self::FJORD,
+            ECOTONE | FJORD => Self::CANCUN,
         }
     }
 }
