@@ -78,3 +78,7 @@ pub use revm_interpreter as interpreter;
 pub use revm_interpreter::primitives;
 #[doc(inline)]
 pub use revm_precompile as precompile;
+
+pub fn is_fluent_revm_feature() -> bool {
+    return cfg!(feature = "fluent_revm");
+}

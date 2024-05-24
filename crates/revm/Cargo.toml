@@ -159,7 +159,13 @@ rwasm = [
     "revm-interpreter/rwasm",
     "revm-precompile/rwasm",
 ]
-fluent_revm = ["revm-interpreter/fluent_revm"]
+debug_print = [
+    "revm-interpreter/debug_print"
+]
+fluent_revm = [
+    "rwasm",
+    "revm-interpreter/fluent_revm"
+]
 
 [[example]]
 name = "fork_ref_transact"

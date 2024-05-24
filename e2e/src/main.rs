@@ -37,7 +37,13 @@ impl Cmd {
         for path in &self.path {
             println!("\nRunning tests in {}...", path.display());
             let test_files = find_all_json_tests(path);
-            run(test_files, self.single_thread, self.json, self.json_outcome)?
+            run(
+                test_files,
+                self.single_thread,
+                self.json,
+                self.json_outcome,
+                true,
+            )?
         }
         Ok(())
     }

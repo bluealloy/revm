@@ -12,7 +12,6 @@ categories.workspace = true
 fluentbase-core = { workspace = true, default-features = false, features = [
     "ecl",
     "wcl",
-    "fluent_revm",
     "e2e",
 ] }
 fluentbase-sdk = { workspace = true, default-features = false }
@@ -21,8 +20,20 @@ fluentbase-types = { workspace = true }
 fluentbase-poseidon = { workspace = true }
 fluentbase-genesis = { workspace = true }
 
-revm = { workspace = true, features = [] }
-revm_fluent = { workspace = true, features = [] }
+revm = { workspace = true, features = [
+    "ethersdb",
+    "std",
+    "serde-json",
+    "c-kzg",
+    "blst",
+] }
+revm_fluent = { workspace = true, features = [
+    "ethersdb",
+    "std",
+    "serde-json",
+    "c-kzg",
+    "blst",
+] }
 
 hash-db = "=0.15"
 hex = "0.4"
@@ -47,13 +58,16 @@ paste.workspace = true
 [features]
 default = [
     #    "fluent_revm",
-    "debug_print",
+    #    "debug_print",
 ]
-rwasm = ["revm/rwasm"]
+#rwasm = ["revm/rwasm"]
 fluent_revm = [
-    "rwasm",
-    "revm/fluent_revm",
+    "revm_fluent/rwasm",
+    "revm_fluent/fluent_revm",
     "fluentbase-core/fluent_revm",
 ]
 debug_use_fluent_storage = []
-debug_print = []
+debug_print = [
+    "revm/debug_print",
+    "revm_fluent/debug_print",
+]

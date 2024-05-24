@@ -35,32 +35,12 @@ pub fn state_merkle_trie_root2<'a>(
     }))
 }
 
-// pub fn state_merkle_trie_root_original<'a>(
-//     accounts: impl IntoIterator<Item=(ro::precompile::Address, &'a ro::db::PlainAccount)>,
-// ) -> ro::precompile::B256 {
-//     let res = trie_root(accounts.into_iter().map(|(address, acc)| {
-//         (
-//             address,
-//             alloy_rlp::encode_fixed_size(&TrieAccountOriginal::new(acc)),
-//         )
-//     }));
-//     ro::precompile::B256::from_slice(res.as_slice())
-// }
-
 #[derive(RlpEncodable, RlpMaxEncodedLen)]
 struct TrieAccount {
     nonce: u64,
     balance: U256,
     root_hash: B256,
     code_hash: B256,
-}
-
-#[derive(RlpEncodable, RlpMaxEncodedLen)]
-struct TrieAccountOriginal {
-    nonce: u64,
-    balance: U256,
-    root_hash: B256,
-    code_hash: revm::primitives::B256,
 }
 
 impl TrieAccount {

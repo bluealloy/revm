@@ -9,10 +9,20 @@ use revm::{
     inspector_handle_register,
     inspectors::TracerEip3155,
     primitives::{
-        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, ExecutionResult,
-        SpecId, TransactTo, B256, U256,
+        calc_excess_blob_gas,
+        keccak256,
+        Bytecode,
+        Bytes,
+        EVMResultGeneric,
+        Env,
+        ExecutionResult,
+        SpecId,
+        TransactTo,
+        B256,
+        U256,
     },
-    Evm, State,
+    Evm,
+    State,
 };
 use serde_json::json;
 use std::{
@@ -21,7 +31,8 @@ use std::{
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
-        Arc, Mutex,
+        Arc,
+        Mutex,
     },
     time::{Duration, Instant},
 };
@@ -78,8 +89,8 @@ fn skip_test(path: &Path) -> bool {
 
     matches!(
         name,
-        // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require
-        // custom json parser. https://github.com/ethereum/tests/issues/971
+        // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and
+        // require custom json parser. https://github.com/ethereum/tests/issues/971
         |"ValueOverflow.json"| "ValueOverflowParis.json"
 
         // precompiles having storage is not possible
@@ -250,6 +261,7 @@ pub fn execute_test_suite(
                 code_hash: keccak256(&info.code),
                 code: Some(Bytecode::new_raw(info.code)),
                 nonce: info.nonce,
+                ..Default::default()
             };
             cache_state.insert_account_with_storage(address, acc_info, info.storage);
         }
@@ -266,7 +278,8 @@ pub fn execute_test_suite(
         env.block.gas_limit = unit.env.current_gas_limit;
         env.block.basefee = unit.env.current_base_fee.unwrap_or_default();
         env.block.difficulty = unit.env.current_difficulty;
-        // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
+        // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty
+        // opcode in EVM.
         env.block.prevrandao = unit.env.current_random;
         // EIP-4844
         if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {

@@ -4,7 +4,7 @@ use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
-    interpreter::{Host, InterpreterAction, SharedMemory},
+    interpreter::Host,
     primitives::{
         hex,
         specification::SpecId,
@@ -25,24 +25,13 @@ use crate::{
     },
     Context,
     ContextWithHandlerCfg,
-    Frame,
-    FrameOrResult,
     FrameResult,
 };
 use core::{cell::RefCell, fmt, str::from_utf8};
 use fluentbase_core::loader::{_loader_call, _loader_create};
 use fluentbase_sdk::{ContractInput, EvmCallMethodInput, EvmCreateMethodInput};
-use fluentbase_types::{consts::EVM_STORAGE_ADDRESS, ExitCode};
-use revm_interpreter::{
-    CallInputs,
-    CallOutcome,
-    CreateInputs,
-    CreateOutcome,
-    Gas,
-    InstructionResult,
-    InterpreterResult,
-};
-use std::vec::Vec;
+use fluentbase_types::consts::EVM_STORAGE_ADDRESS;
+use revm_interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -403,7 +392,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         // deduce caller balance with its limit.
         pre_exec.deduct_caller(ctx)?;
 
-        let tx_gas_limit = ctx.evm.env.tx.gas_limit;
         let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
 
         let mut result = {
@@ -413,6 +401,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 let (evm_storage, _) = ctx.evm.load_account(EVM_STORAGE_ADDRESS)?;
                 evm_storage.info.nonce = 1;
                 ctx.evm.touch(&EVM_STORAGE_ADDRESS);
+                let tx_gas_limit = ctx.evm.env.tx.gas_limit;
 
                 match ctx.evm.env.tx.transact_to {
                     TransactTo::Call(address) => {

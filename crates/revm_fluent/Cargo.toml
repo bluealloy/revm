@@ -159,6 +159,9 @@ rwasm = [
     "revm-interpreter/rwasm",
     "revm-precompile/rwasm",
 ]
+debug_print = [
+    "revm-interpreter/debug_print"
+]
 fluent_revm = ["revm-interpreter/fluent_revm"]
 
 [[example]]

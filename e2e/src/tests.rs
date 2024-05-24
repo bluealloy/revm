@@ -12,7 +12,7 @@ fn run_e2e_test(test_path: &'static str) {
         format!("../{}", test_path)
     };
     let elapsed = Arc::new(Mutex::new(Duration::new(0, 0)));
-    execute_test_suite(Path::new(path.as_str()), &elapsed, false, false, None).unwrap();
+    execute_test_suite(Path::new(path.as_str()), &elapsed, false, false).unwrap();
 }
 
 macro_rules! define_tests {
@@ -30,7 +30,8 @@ macro_rules! define_tests {
 
 mod specific_test_that_fails {
     define_tests! {
-        fn t001("tests/GeneralStateTests/stRandom2/randomStatetest418.json");
+        // fn t001("tests/GeneralStateTests/stRandom2/randomStatetest418.json");
+        fn random_statetest248("tests/GeneralStateTests/stRandom/randomStatetest248.json");
     }
 }
 

@@ -358,8 +358,9 @@ impl Interpreter {
         // execute instruction.
         let res = (instruction_table[opcode as usize])(self, host);
 
+        #[cfg(feature = "debug_print")]
         println!(
-            "  opcode {:x?} pc {} stack {:?} gas (limit {} spent {} remaining {})",
+            " - opcode {:x?} pc {} stack {:?} gas (limit {} spent {} remaining {})",
             opcode,
             self.program_counter(),
             self.stack.data(),
@@ -389,7 +390,7 @@ impl Interpreter {
         self.next_action = InterpreterAction::None;
         self.shared_memory = shared_memory;
         // main loop
-        println!("bytecode: {}", hex::encode(&self.bytecode.0));
+        // println!("bytecode: {}", hex::encode(&self.bytecode.0));
         while self.instruction_result == InstructionResult::Continue {
             self.step(instruction_table, host);
         }
