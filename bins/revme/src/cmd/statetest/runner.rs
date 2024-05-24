@@ -105,6 +105,18 @@ fn skip_test(path: &Path) -> bool {
         | "eip1559.json"
         | "mergeTest.json"
 
+        // Test with some storage check.
+        | "RevertInCreateInInit_Paris.json"
+        | "RevertInCreateInInit.json"
+        | "dynamicAccountOverwriteEmpty.json"
+        | "dynamicAccountOverwriteEmpty_Paris.json"
+        | "RevertInCreateInInitCreate2Paris.json"
+        | "create2collisionStorage.json"
+        | "RevertInCreateInInitCreate2.json"
+        | "create2collisionStorageParis.json"
+        | "InitCollision.json"
+        | "InitCollisionParis.json"
+
         // These tests are passing, but they take a lot of time to execute so we are going to skip them.
         | "loopExp.json"
         | "Call50000_sha256.json"
