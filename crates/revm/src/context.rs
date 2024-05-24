@@ -13,10 +13,7 @@ use revm_interpreter::as_usize_saturated;
 use crate::{
     db::{Database, EmptyDB},
     interpreter::{Host, LoadAccountResult, SStoreResult, SelfDestructResult},
-    primitives::{
-        Address, Bytecode, EVMError, Env, HandlerCfg, Log, B256, BLOCKHASH_SERVE_WINDOW,
-        BLOCKHASH_STORAGE_ADDRESS, BLOCK_HASH_HISTORY, PRAGUE, U256,
-    },
+    primitives::{Address, Bytecode, Env, HandlerCfg, Log, B256, BLOCK_HASH_HISTORY, U256},
 };
 use std::boxed::Box;
 
@@ -128,17 +125,6 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
                 .block_hash(number)
                 .map_err(|e| self.evm.error = Err(e))
                 .ok();
-        }
-
-        if self.evm.journaled_state.spec.is_enabled_in(PRAGUE) && diff <= BLOCKHASH_SERVE_WINDOW {
-            let index = number.wrapping_rem(U256::from(BLOCKHASH_SERVE_WINDOW));
-            return self
-                .evm
-                .db
-                .storage(BLOCKHASH_STORAGE_ADDRESS, index)
-                .map_err(|e| self.evm.error = Err(EVMError::Database(e)))
-                .ok()
-                .map(|v| v.into());
         }
 
         Some(B256::ZERO)
