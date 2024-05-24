@@ -80,6 +80,7 @@ negate-optimism-default-handler = [
     "revm-primitives/negate-optimism-default-handler",
 ]
 
+# Enables the p256verify precompile.
 secp256r1 = ["dep:p256"]
 
 # These libraries may not work on all no_std platforms as they depend on C.
