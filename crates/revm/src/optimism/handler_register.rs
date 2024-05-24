@@ -240,30 +240,20 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
 
         // Send the L1 cost of the transaction to the L1 Fee Vault.
-        let Ok((l1_fee_vault_account, _)) = context
+        let (l1_fee_vault_account, _) = context
             .evm
             .inner
             .journaled_state
-            .load_account(optimism::L1_FEE_RECIPIENT, &mut context.evm.inner.db)
-        else {
-            return Err(EVMError::Custom(
-                "[OPTIMISM] Failed to load L1 Fee Vault account.".to_string(),
-            ));
-        };
+            .load_account(optimism::L1_FEE_RECIPIENT, &mut context.evm.inner.db)?;
         l1_fee_vault_account.mark_touch();
         l1_fee_vault_account.info.balance += l1_cost;
 
         // Send the base fee of the transaction to the Base Fee Vault.
-        let Ok((base_fee_vault_account, _)) = context
+        let (base_fee_vault_account, _) = context
             .evm
             .inner
             .journaled_state
-            .load_account(optimism::BASE_FEE_RECIPIENT, &mut context.evm.inner.db)
-        else {
-            return Err(EVMError::Custom(
-                "[OPTIMISM] Failed to load Base Fee Vault account.".to_string(),
-            ));
-        };
+            .load_account(optimism::BASE_FEE_RECIPIENT, &mut context.evm.inner.db)?;
         base_fee_vault_account.mark_touch();
         base_fee_vault_account.info.balance += context
             .evm
