@@ -110,38 +110,10 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
     }
 
     fn block_hash(&mut self, number: U256) -> Option<B256> {
-        let block_number = as_usize_saturated!(self.env().block.number);
-        let requested_number = as_usize_saturated!(number);
-
-        let Some(diff) = block_number.checked_sub(requested_number) else {
-            return Some(B256::ZERO);
-        };
-
-        // blockhash should push zero if number is same as current block number.
-        if diff == 0 {
-            return Some(B256::ZERO);
-        }
-
-        if diff <= BLOCK_HASH_HISTORY {
-            return self
-                .evm
-                .block_hash(number)
-                .map_err(|e| self.evm.error = Err(e))
-                .ok();
-        }
-
-        if self.evm.journaled_state.spec.is_enabled_in(PRAGUE) && diff <= BLOCKHASH_SERVE_WINDOW {
-            let index = number.wrapping_rem(U256::from(BLOCKHASH_SERVE_WINDOW));
-            return self
-                .evm
-                .db
-                .storage(BLOCKHASH_STORAGE_ADDRESS, index)
-                .map_err(|e| self.evm.error = Err(EVMError::Database(e)))
-                .ok()
-                .map(|v| v.into());
-        }
-
-        Some(B256::ZERO)
+        self.evm
+            .block_hash(number)
+            .map_err(|e| self.evm.error = Err(e))
+            .ok()
     }
 
     fn load_account(&mut self, address: Address) -> Option<LoadAccountResult> {
