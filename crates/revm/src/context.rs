@@ -8,11 +8,15 @@ pub use context_precompiles::{
 };
 pub use evm_context::EvmContext;
 pub use inner_evm_context::InnerEvmContext;
+use revm_interpreter::as_usize_saturated;
 
 use crate::{
     db::{Database, EmptyDB},
     interpreter::{Host, LoadAccountResult, SStoreResult, SelfDestructResult},
-    primitives::{Address, Bytecode, Env, HandlerCfg, Log, B256, U256},
+    primitives::{
+        Address, Bytecode, EVMError, Env, HandlerCfg, Log, B256, BLOCKHASH_SERVE_WINDOW,
+        BLOCKHASH_STORAGE_ADDRESS, BLOCK_HASH_HISTORY, PRAGUE, U256,
+    },
 };
 use std::boxed::Box;
 
@@ -106,10 +110,27 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
     }
 
     fn block_hash(&mut self, number: U256) -> Option<B256> {
-        self.evm
-            .block_hash(number)
-            .map_err(|e| self.evm.error = Err(e))
-            .ok()
+        let block_number = as_usize_saturated!(self.env().block.number);
+        let requested_number = as_usize_saturated!(number);
+
+        let Some(diff) = block_number.checked_sub(requested_number) else {
+            return Some(B256::ZERO);
+        };
+
+        // blockhash should push zero if number is same as current block number.
+        if diff == 0 {
+            return Some(B256::ZERO);
+        }
+
+        if diff <= BLOCK_HASH_HISTORY {
+            return self
+                .evm
+                .block_hash(number)
+                .map_err(|e| self.evm.error = Err(e))
+                .ok();
+        }
+
+        Some(B256::ZERO)
     }
 
     fn load_account(&mut self, address: Address) -> Option<LoadAccountResult> {
