@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v7.0.0...revm-precompile-v8.0.0) - 2024-05-24
+
+### Fixed
+- *(precompile)* ignore infinity points in G1 MSM ([#1432](https://github.com/bluealloy/revm/pull/1432))
+- *(precompile)* BLS G2 MSM ([#1428](https://github.com/bluealloy/revm/pull/1428))
+
+### Other
+- add docs for BLS scalar input decoding ([#1446](https://github.com/bluealloy/revm/pull/1446))
+
 ## [7.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v6.0.0...revm-precompile-v7.0.0) - 2024-05-12
 
 ### Added
