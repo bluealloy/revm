@@ -8,7 +8,7 @@ It is structured as follows:
 
 - [gas](./interpreter/gas.md): Handles gas mechanics in the EVM, such as calculating gas costs for operations.
 - [host](./interpreter/host.md): Defines the EVM context `Host` trait.
-- [inner_models](./interpreter/inner_models.md): Contains inner data structures used in the EVM implementation.
+- [interpreter_action](./interpreter/interpreter_action.md): Contains data structures used in the EVM implementation.
 - [instruction_result](./interpreter/instruction_result.md): Defines results of instruction execution.
 - [instructions](./interpreter/instructions.md): Defines the EVM opcodes (i.e. instructions).
 
