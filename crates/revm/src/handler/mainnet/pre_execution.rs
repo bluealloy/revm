@@ -6,7 +6,7 @@ use crate::{
     precompile::{PrecompileSpecId, Precompiles},
     primitives::{
         db::Database,
-        Account, ChainSpec, EVMError, Env, Spec,
+        Account, Block, ChainSpec, EVMError, Env, Spec,
         SpecId::{CANCUN, SHANGHAI},
         Transaction, U256,
     },
@@ -38,7 +38,7 @@ pub fn load_accounts<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
             .inner
             .journaled_state
             .initial_account_load(
-                context.evm.inner.env.block.coinbase,
+                *context.evm.inner.env.block.coinbase(),
                 &[],
                 &mut context.evm.inner.db,
             )

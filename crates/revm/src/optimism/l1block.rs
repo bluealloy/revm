@@ -47,7 +47,7 @@ pub const L1_BLOCK_CONTRACT: Address = address!("4200000000000000000000000000000
 /// uint64 _sequenceNumber, bytes32 _batcherHash, uint256 _l1FeeOverhead, uint256 _l1FeeScalar)
 ///
 /// For now, we only care about the fields necessary for L1 cost calculation.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct L1BlockInfo {
     /// The base fee of the L1 origin block.
     pub l1_base_fee: U256,

@@ -1,11 +1,11 @@
 use crate::{
     gas::{self, warm_cold_cost},
     interpreter::Interpreter,
-    primitives::{Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
+    primitives::{Block, Bytes, ChainSpec, Log, LogData, Spec, SpecId::*, B256, U256},
     Host, InstructionResult, SStoreResult,
 };
 use core::cmp::min;
-use revm_primitives::{ChainSpec, BLOCK_HASH_HISTORY};
+use revm_primitives::BLOCK_HASH_HISTORY;
 use std::vec::Vec;
 
 pub fn balance<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
@@ -125,7 +125,7 @@ pub fn blockhash<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
     gas!(interpreter, gas::BLOCKHASH);
     pop_top!(interpreter, number);
 
-    if let Some(diff) = host.env().block.number.checked_sub(*number) {
+    if let Some(diff) = host.env().block.number().checked_sub(*number) {
         let diff = as_usize_saturated!(diff);
         // blockhash should push zero if number is same as current block number.
         if diff <= BLOCK_HASH_HISTORY && diff != 0 {

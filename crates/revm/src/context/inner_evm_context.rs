@@ -28,9 +28,6 @@ pub struct InnerEvmContext<ChainSpecT: ChainSpec, DB: Database> {
     pub db: DB,
     /// Error that happened during execution.
     pub error: Result<(), DB::Error>,
-    /// Used as temporary value holder to store L1 block info.
-    #[cfg(feature = "optimism")]
-    pub l1_block_info: Option<crate::optimism::L1BlockInfo>,
 }
 
 impl<ChainSpecT: ChainSpec, DB: Database + Clone> Clone for InnerEvmContext<ChainSpecT, DB>
@@ -43,8 +40,6 @@ where
             journaled_state: self.journaled_state.clone(),
             db: self.db.clone(),
             error: self.error.clone(),
-            #[cfg(feature = "optimism")]
-            l1_block_info: self.l1_block_info.clone(),
         }
     }
 }
@@ -56,8 +51,6 @@ impl<ChainSpecT: ChainSpec, DB: Database> InnerEvmContext<ChainSpecT, DB> {
             journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
             db,
             error: Ok(()),
-            #[cfg(feature = "optimism")]
-            l1_block_info: None,
         }
     }
 
@@ -69,8 +62,6 @@ impl<ChainSpecT: ChainSpec, DB: Database> InnerEvmContext<ChainSpecT, DB> {
             journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
             db,
             error: Ok(()),
-            #[cfg(feature = "optimism")]
-            l1_block_info: None,
         }
     }
 
@@ -84,8 +75,6 @@ impl<ChainSpecT: ChainSpec, DB: Database> InnerEvmContext<ChainSpecT, DB> {
             journaled_state: self.journaled_state,
             db,
             error: Ok(()),
-            #[cfg(feature = "optimism")]
-            l1_block_info: self.l1_block_info,
         }
     }
 

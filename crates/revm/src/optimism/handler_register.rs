@@ -8,7 +8,7 @@ use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
     optimism, optimism_spec_to_generic,
     primitives::{
-        db::Database, Account, EVMError, Env, ExecutionResult, HashMap, InvalidTransaction,
+        db::Database, Account, Block, EVMError, Env, ExecutionResult, HashMap, InvalidTransaction,
         ResultAndState, Transaction, U256,
     },
     Context, FrameResult,
@@ -30,7 +30,8 @@ pub fn optimism_handle_register<DB: Database, EXT>(
         // Validate transaction against state.
         handler.validation.tx_against_state = Arc::new(validate_tx_against_state::<SPEC, EXT, DB>);
         // load l1 data
-        handler.pre_execution.load_accounts = Arc::new(load_accounts::<SPEC, EXT, DB>);
+        handler.pre_execution.load_accounts =
+            Arc::new(mainnet::load_accounts::<OptimismChainSpec, SPEC, EXT, DB>);
         // An estimated batch cost is charged from the caller and added to L1 Fee Vault.
         handler.pre_execution.deduct_caller = Arc::new(deduct_caller::<SPEC, EXT, DB>);
         // Refund is calculated differently then mainnet.
@@ -48,10 +49,19 @@ pub fn validate_env<SPEC: OptimismSpec, DB: Database>(
 ) -> Result<(), EVMError<OptimismChainSpec, DB::Error>> {
     // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
     if env.tx.source_hash.is_some() {
-        return Ok(());
+        if env.block.l1_block_info().is_some() {
+            return Err(InvalidOptimismTransaction::UnexpectedL1BlockInfo.into());
+        } else {
+            return Ok(());
+        }
     }
+
     // Important: validate block before tx.
     env.validate_block_env::<SPEC>()?;
+
+    if env.block.l1_block_info().is_none() {
+        return Err(InvalidOptimismTransaction::MissingL1BlockInfo.into());
+    }
 
     // Do not allow for a system transaction to be processed if Regolith is enabled.
     if env.tx.is_system_transaction.unwrap_or(false)
@@ -147,27 +157,6 @@ pub fn last_frame_return<SPEC: OptimismSpec, EXT, DB: Database>(
     Ok(())
 }
 
-/// Load account (make them warm) and l1 data from database.
-#[inline]
-pub fn load_accounts<SPEC: OptimismSpec, EXT, DB: Database>(
-    context: &mut Context<OptimismChainSpec, EXT, DB>,
-) -> Result<(), EVMError<OptimismChainSpec, DB::Error>> {
-    // the L1-cost fee is only computed for Optimism non-deposit transactions.
-
-    if context.evm.inner.env.tx.source_hash.is_none() {
-        let l1_block_info = crate::optimism::L1BlockInfo::try_fetch(
-            &mut context.evm.inner.db,
-            SPEC::OPTIMISM_SPEC_ID,
-        )
-        .map_err(EVMError::Database)?;
-
-        // storage l1 block info for later use.
-        context.evm.inner.l1_block_info = Some(l1_block_info);
-    }
-
-    mainnet::load_accounts::<OptimismChainSpec, SPEC, EXT, DB>(context)
-}
-
 /// Deduct max balance from caller
 #[inline]
 pub fn deduct_caller<SPEC: OptimismSpec, EXT, DB: Database>(
@@ -208,8 +197,9 @@ pub fn deduct_caller<SPEC: OptimismSpec, EXT, DB: Database>(
         let tx_l1_cost = context
             .evm
             .inner
-            .l1_block_info
-            .as_ref()
+            .env
+            .block
+            .l1_block_info()
             .expect("L1BlockInfo should be loaded")
             .calculate_tx_l1_cost(enveloped_tx, SPEC::OPTIMISM_SPEC_ID);
         if tx_l1_cost.gt(&caller_account.info.balance) {
@@ -242,11 +232,13 @@ pub fn reward_beneficiary<SPEC: OptimismSpec, EXT, DB: Database>(
     if !is_deposit {
         // If the transaction is not a deposit transaction, fees are paid out
         // to both the Base Fee Vault as well as the L1 Fee Vault.
-        let Some(l1_block_info) = &context.evm.inner.l1_block_info else {
-            return Err(EVMError::Custom(
-                "[OPTIMISM] Failed to load L1 block information.".to_string(),
-            ));
-        };
+        let l1_block_info = context
+            .evm
+            .inner
+            .env
+            .block
+            .l1_block_info()
+            .expect("L1BlockInfo should be loaded");
 
         let Some(enveloped_tx) = &context.evm.inner.env.tx.enveloped_tx else {
             return Err(EVMError::Custom(
@@ -287,7 +279,7 @@ pub fn reward_beneficiary<SPEC: OptimismSpec, EXT, DB: Database>(
             .inner
             .env
             .block
-            .basefee
+            .basefee()
             .mul(U256::from(gas.spent() - gas.refunded() as u64));
     }
     Ok(())
@@ -367,7 +359,7 @@ pub fn end<SPEC: OptimismSpec, EXT, DB: Database>(
 
             Ok(ResultAndState {
                 result: ExecutionResult::Halt {
-                    reason: OptimismHaltReason::FailedDeposit.into(),
+                    reason: OptimismHaltReason::FailedDeposit,
                     gas_used,
                 },
                 state,
@@ -385,8 +377,8 @@ mod tests {
     use super::*;
     use crate::{
         db::{EmptyDB, InMemoryDB},
-        optimism::{BedrockSpec, LatestSpec, RegolithSpec},
-        primitives::{bytes, state::AccountInfo, Address, Bytes, Env, B256},
+        optimism::{env::OptimismBlock, BedrockSpec, LatestSpec, RegolithSpec},
+        primitives::{bytes, state::AccountInfo, Address, BlockEnv, Bytes, Env, B256},
         L1BlockInfo,
     };
 
@@ -480,13 +472,17 @@ mod tests {
                 ..Default::default()
             },
         );
+
         let mut context: Context<OptimismChainSpec, (), InMemoryDB> = Context::new_with_db(db);
-        context.evm.inner.l1_block_info = Some(L1BlockInfo {
-            l1_base_fee: U256::from(1_000),
-            l1_fee_overhead: Some(U256::from(1_000)),
-            l1_base_fee_scalar: U256::from(1_000),
-            ..Default::default()
-        });
+        context.evm.inner.env.block = OptimismBlock::new(
+            BlockEnv::default(),
+            Some(L1BlockInfo {
+                l1_base_fee: U256::from(1_000),
+                l1_fee_overhead: Some(U256::from(1_000)),
+                l1_base_fee_scalar: U256::from(1_000),
+                ..L1BlockInfo::default()
+            }),
+        );
         // Enveloped needs to be some but it will deduce zero fee.
         context.evm.inner.env.tx.enveloped_tx = Some(bytes!(""));
         // added mint value is 10.
@@ -516,12 +512,15 @@ mod tests {
             },
         );
         let mut context: Context<OptimismChainSpec, (), InMemoryDB> = Context::new_with_db(db);
-        context.evm.inner.l1_block_info = Some(L1BlockInfo {
-            l1_base_fee: U256::from(1_000),
-            l1_fee_overhead: Some(U256::from(1_000)),
-            l1_base_fee_scalar: U256::from(1_000),
-            ..Default::default()
-        });
+        context.evm.inner.env.block = OptimismBlock::new(
+            BlockEnv::default(),
+            Some(L1BlockInfo {
+                l1_base_fee: U256::from(1_000),
+                l1_fee_overhead: Some(U256::from(1_000)),
+                l1_base_fee_scalar: U256::from(1_000),
+                ..L1BlockInfo::default()
+            }),
+        );
         // l1block cost is 1048 fee.
         context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
         // added mint value is 10.
@@ -554,12 +553,15 @@ mod tests {
             },
         );
         let mut context: Context<OptimismChainSpec, (), InMemoryDB> = Context::new_with_db(db);
-        context.evm.inner.l1_block_info = Some(L1BlockInfo {
-            l1_base_fee: U256::from(1_000),
-            l1_fee_overhead: Some(U256::from(1_000)),
-            l1_base_fee_scalar: U256::from(1_000),
-            ..Default::default()
-        });
+        context.evm.inner.env.block = OptimismBlock::new(
+            BlockEnv::default(),
+            Some(L1BlockInfo {
+                l1_base_fee: U256::from(1_000),
+                l1_fee_overhead: Some(U256::from(1_000)),
+                l1_base_fee_scalar: U256::from(1_000),
+                ..L1BlockInfo::default()
+            }),
+        );
         // l1block cost is 1048 fee.
         context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
         deduct_caller::<RegolithSpec, (), _>(&mut context).unwrap();
@@ -586,12 +588,15 @@ mod tests {
             },
         );
         let mut context: Context<OptimismChainSpec, (), InMemoryDB> = Context::new_with_db(db);
-        context.evm.inner.l1_block_info = Some(L1BlockInfo {
-            l1_base_fee: U256::from(1_000),
-            l1_fee_overhead: Some(U256::from(1_000)),
-            l1_base_fee_scalar: U256::from(1_000),
-            ..Default::default()
-        });
+        context.evm.inner.env.block = OptimismBlock::new(
+            BlockEnv::default(),
+            Some(L1BlockInfo {
+                l1_base_fee: U256::from(1_000),
+                l1_fee_overhead: Some(U256::from(1_000)),
+                l1_base_fee_scalar: U256::from(1_000),
+                ..L1BlockInfo::default()
+            }),
+        );
         // l1block cost is 1048 fee.
         context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
 
@@ -610,7 +615,18 @@ mod tests {
     #[test]
     fn test_validate_sys_tx() {
         // mark the tx as a system transaction.
-        let mut env = Env::<OptimismChainSpec>::default();
+        let mut env = Env::<OptimismChainSpec> {
+            block: OptimismBlock::new(
+                BlockEnv::default(),
+                Some(L1BlockInfo {
+                    l1_base_fee: U256::from(1_000),
+                    l1_fee_overhead: Some(U256::from(1_000)),
+                    l1_base_fee_scalar: U256::from(1_000),
+                    ..L1BlockInfo::default()
+                }),
+            ),
+            ..Env::default()
+        };
         env.tx.is_system_transaction = Some(true);
         assert_eq!(
             validate_env::<RegolithSpec, EmptyDB>(&env),

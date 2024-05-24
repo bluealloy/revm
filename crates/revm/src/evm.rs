@@ -7,7 +7,7 @@ use crate::{
         SStoreResult, SelfDestructResult, SharedMemory,
     },
     primitives::{
-        Address, BlockEnv, Bytecode, CfgEnv, ChainSpec, EVMError, EVMResult, Env, EthChainSpec,
+        Address, Bytecode, CfgEnv, ChainSpec, EVMError, EVMResult, Env, EthChainSpec,
         ExecutionResult, InvalidTransaction, Log, ResultAndState, TransactTo, Transaction, B256,
         U256,
     },
@@ -191,13 +191,13 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
 
     /// Returns the reference of block
     #[inline]
-    pub fn block(&self) -> &BlockEnv {
+    pub fn block(&self) -> &ChainSpecT::Block {
         &self.context.evm.env.block
     }
 
     /// Returns the mutable reference of block
     #[inline]
-    pub fn block_mut(&mut self) -> &mut BlockEnv {
+    pub fn block_mut(&mut self) -> &mut ChainSpecT::Block {
         &mut self.context.evm.env.block
     }
 

@@ -279,8 +279,6 @@ pub(crate) mod test_utils {
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
                 db,
                 error: Ok(()),
-                #[cfg(feature = "optimism")]
-                l1_block_info: None,
             },
             precompiles: ContextPrecompiles::default(),
         }
@@ -297,8 +295,6 @@ pub(crate) mod test_utils {
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
                 db,
                 error: Ok(()),
-                #[cfg(feature = "optimism")]
-                l1_block_info: None,
             },
             precompiles: ContextPrecompiles::default(),
         }

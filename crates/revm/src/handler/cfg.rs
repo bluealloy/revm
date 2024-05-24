@@ -1,7 +1,7 @@
 use core::ops::{Deref, DerefMut};
 use std::boxed::Box;
 
-use crate::primitives::{BlockEnv, CfgEnv, ChainSpec, Env};
+use crate::primitives::{CfgEnv, ChainSpec, Env};
 
 /// Configuration environment with the chain spec id.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -51,7 +51,7 @@ impl<ChainSpecT: ChainSpec> EnvWithChainSpec<ChainSpecT> {
     /// Takes `CfgEnvWithHandlerCfg` and returns new `EnvWithHandlerCfg` instance.
     pub fn new_with_cfg_env(
         cfg: CfgEnvWithChainSpec<ChainSpecT>,
-        block: BlockEnv,
+        block: ChainSpecT::Block,
         tx: ChainSpecT::Transaction,
     ) -> Self {
         Self::new(Env::boxed(cfg.cfg_env, block, tx), cfg.spec_id)

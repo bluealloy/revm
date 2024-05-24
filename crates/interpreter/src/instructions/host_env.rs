@@ -1,6 +1,6 @@
 use crate::{
     gas,
-    primitives::{ChainSpec, Spec, SpecId::*, Transaction, U256},
+    primitives::{block, Block, ChainSpec, Spec, SpecId::*, Transaction, U256},
     Host, Interpreter,
 };
 
@@ -19,7 +19,7 @@ pub fn coinbase<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, host.env().block.coinbase.into_word());
+    push_b256!(interpreter, host.env().block.coinbase().into_word());
 }
 
 pub fn timestamp<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
@@ -27,7 +27,7 @@ pub fn timestamp<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().block.timestamp);
+    push!(interpreter, *host.env().block.timestamp());
 }
 
 pub fn block_number<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
@@ -35,7 +35,7 @@ pub fn block_number<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().block.number);
+    push!(interpreter, *host.env().block.number());
 }
 
 pub fn difficulty<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
@@ -44,9 +44,9 @@ pub fn difficulty<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spe
 ) {
     gas!(interpreter, gas::BASE);
     if SPEC::enabled(MERGE) {
-        push_b256!(interpreter, host.env().block.prevrandao.unwrap());
+        push_b256!(interpreter, *host.env().block.prevrandao().unwrap());
     } else {
-        push!(interpreter, host.env().block.difficulty);
+        push!(interpreter, *host.env().block.difficulty());
     }
 }
 
@@ -55,7 +55,7 @@ pub fn gaslimit<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().block.gas_limit);
+    push!(interpreter, *host.env().block.gas_limit());
 }
 
 pub fn gasprice<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
@@ -73,7 +73,7 @@ pub fn basefee<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
 ) {
     check!(interpreter, LONDON);
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().block.basefee);
+    push!(interpreter, *host.env().block.basefee());
 }
 
 pub fn origin<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
@@ -108,6 +108,10 @@ pub fn blob_basefee<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: S
     gas!(interpreter, gas::BASE);
     push!(
         interpreter,
-        U256::from(host.env().block.get_blob_gasprice().unwrap_or_default())
+        U256::from(
+            block::get_blob_gasprice(&host.env().block)
+                .copied()
+                .unwrap_or_default()
+        )
     );
 }

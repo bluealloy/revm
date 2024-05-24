@@ -1,6 +1,6 @@
 use crate::transaction::{self, Transaction};
 use crate::{
-    calc_blob_gasprice, Account, Address, Bytes, ChainSpec, HashMap, InvalidHeader,
+    block, calc_blob_gasprice, Account, Address, Block, Bytes, ChainSpec, HashMap, InvalidHeader,
     InvalidTransaction, Spec, SpecId, B256, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK,
     MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
@@ -16,7 +16,7 @@ pub struct Env<ChainSpecT: ChainSpec> {
     /// Configuration of the EVM itself.
     pub cfg: CfgEnv,
     /// Configuration of the block the transaction is in.
-    pub block: BlockEnv,
+    pub block: ChainSpecT::Block,
     /// Configuration of the transaction that is being executed.
     pub tx: ChainSpecT::Transaction,
 }
@@ -30,7 +30,7 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
 
     /// Create boxed [Env].
     #[inline]
-    pub fn boxed(cfg: CfgEnv, block: BlockEnv, tx: ChainSpecT::Transaction) -> Box<Self> {
+    pub fn boxed(cfg: CfgEnv, block: ChainSpecT::Block, tx: ChainSpecT::Transaction) -> Box<Self> {
         Box::new(Self { cfg, block, tx })
     }
 
@@ -39,7 +39,7 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
     pub fn effective_gas_price(&self) -> U256 {
         let gas_price = self.tx.gas_price();
         if let Some(priority_fee) = self.tx.gas_priority_fee() {
-            min(*gas_price, self.block.basefee + priority_fee)
+            min(*gas_price, self.block.basefee() + priority_fee)
         } else {
             *gas_price
         }
@@ -52,8 +52,8 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
     pub fn calc_data_fee(&self) -> Option<U256> {
-        self.block.get_blob_gasprice().map(|blob_gas_price| {
-            U256::from(blob_gas_price)
+        block::get_blob_gasprice(&self.block).map(|blob_gas_price| {
+            U256::from(*blob_gas_price)
                 .saturating_mul(U256::from(transaction::get_total_blob_gas(&self.tx)))
         })
     }
@@ -76,11 +76,11 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
     #[inline]
     pub fn validate_block_env<SPEC: Spec>(&self) -> Result<(), InvalidHeader> {
         // `prevrandao` is required for the merge
-        if SPEC::enabled(SpecId::MERGE) && self.block.prevrandao.is_none() {
+        if SPEC::enabled(SpecId::MERGE) && self.block.prevrandao().is_none() {
             return Err(InvalidHeader::PrevrandaoNotSet);
         }
         // `excess_blob_gas` is required for Cancun
-        if SPEC::enabled(SpecId::CANCUN) && self.block.blob_excess_gas_and_price.is_none() {
+        if SPEC::enabled(SpecId::CANCUN) && self.block.blob_excess_gas_and_price().is_none() {
             return Err(InvalidHeader::ExcessBlobGasNotSet);
         }
         Ok(())
@@ -102,7 +102,7 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
 
             // check minimal cost against basefee
             if !self.cfg.is_base_fee_check_disabled()
-                && self.effective_gas_price() < self.block.basefee
+                && self.effective_gas_price() < *self.block.basefee()
             {
                 return Err(InvalidTransaction::GasPriceLessThanBasefee);
             }
@@ -110,7 +110,7 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
 
         // Check if gas_limit is more than block_gas_limit
         if !self.cfg.is_block_gas_limit_disabled()
-            && U256::from(self.tx.gas_limit()) > self.block.gas_limit
+            && U256::from(self.tx.gas_limit()) > *self.block.gas_limit()
         {
             return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
         }
@@ -145,8 +145,8 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
             // Presence of max_fee_per_blob_gas means that this is blob transaction.
             if let Some(max) = self.tx.max_fee_per_blob_gas() {
                 // ensure that the user was willing to at least pay the current blob gasprice
-                let price = self.block.get_blob_gasprice().expect("already checked");
-                if U256::from(price) > *max {
+                let price = block::get_blob_gasprice(&self.block).expect("already checked");
+                if U256::from(*price) > *max {
                     return Err(InvalidTransaction::BlobGasPriceGreaterThanMax);
                 }
 
@@ -477,34 +477,47 @@ impl BlockEnv {
     pub fn set_blob_excess_gas_and_price(&mut self, excess_blob_gas: u64) {
         self.blob_excess_gas_and_price = Some(BlobExcessGasAndPrice::new(excess_blob_gas));
     }
-    /// See [EIP-4844] and [`crate::calc_blob_gasprice`].
-    ///
-    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
-    ///
-    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+}
+
+impl Block for BlockEnv {
     #[inline]
-    pub fn get_blob_gasprice(&self) -> Option<u128> {
-        self.blob_excess_gas_and_price
-            .as_ref()
-            .map(|a| a.blob_gasprice)
+    fn number(&self) -> &U256 {
+        &self.number
     }
 
-    /// Return `blob_excess_gas` header field. See [EIP-4844].
-    ///
-    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
-    ///
-    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
-    pub fn get_blob_excess_gas(&self) -> Option<u64> {
-        self.blob_excess_gas_and_price
-            .as_ref()
-            .map(|a| a.excess_blob_gas)
+    fn coinbase(&self) -> &Address {
+        &self.coinbase
     }
 
-    /// Clears environment and resets fields to default values.
     #[inline]
-    pub fn clear(&mut self) {
-        *self = Self::default();
+    fn timestamp(&self) -> &U256 {
+        &self.timestamp
+    }
+
+    #[inline]
+    fn gas_limit(&self) -> &U256 {
+        &self.gas_limit
+    }
+
+    #[inline]
+    fn basefee(&self) -> &U256 {
+        &self.basefee
+    }
+
+    #[inline]
+    fn difficulty(&self) -> &U256 {
+        &self.difficulty
+    }
+
+    #[inline]
+    fn prevrandao(&self) -> Option<&B256> {
+        self.prevrandao.as_ref()
+    }
+
+    #[inline]
+    fn blob_excess_gas_and_price(&self) -> Option<&BlobExcessGasAndPrice> {
+        self.blob_excess_gas_and_price.as_ref()
     }
 }
 

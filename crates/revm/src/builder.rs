@@ -4,7 +4,7 @@ use crate::{
         register::{self, EvmHandler},
         CfgEnvWithChainSpec, EnvWithChainSpec,
     },
-    primitives::{BlockEnv, CfgEnv, ChainSpec, Env, EthChainSpec, InvalidTransaction},
+    primitives::{CfgEnv, ChainSpec, Env, EthChainSpec, InvalidTransaction},
     Context, ContextWithChainSpec, Evm, EvmContext, Handler,
 };
 use core::marker::PhantomData;
@@ -341,13 +341,13 @@ impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
     }
 
     /// Allows modification of Evm's Block Environment.
-    pub fn modify_block_env(mut self, f: impl FnOnce(&mut BlockEnv)) -> Self {
+    pub fn modify_block_env(mut self, f: impl FnOnce(&mut ChainSpecT::Block)) -> Self {
         f(&mut self.context.evm.env.block);
         self
     }
 
     /// Sets Evm's Block Environment.
-    pub fn with_block_env(mut self, block_env: BlockEnv) -> Self {
+    pub fn with_block_env(mut self, block_env: ChainSpecT::Block) -> Self {
         self.context.evm.env.block = block_env;
         self
     }
@@ -371,7 +371,7 @@ impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
     }
     /// Clears Block environment of EVM.
     pub fn with_clear_block_env(mut self) -> Self {
-        self.context.evm.env.block.clear();
+        self.context.evm.env.block = ChainSpecT::Block::default();
         self
     }
 }

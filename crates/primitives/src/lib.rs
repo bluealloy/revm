@@ -14,6 +14,7 @@ mod constants;
 pub mod db;
 pub mod env;
 
+pub mod block;
 mod chain_spec;
 #[cfg(feature = "c-kzg")]
 pub mod kzg;
@@ -42,6 +43,7 @@ cfg_if::cfg_if! {
     }
 }
 
+pub use block::Block;
 #[cfg(feature = "c-kzg")]
 pub use kzg::{EnvKzgSettings, KzgSettings};
 pub use precompile::*;

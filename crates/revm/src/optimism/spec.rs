@@ -2,12 +2,16 @@ use revm_precompile::PrecompileSpecId;
 
 use crate::primitives::{ChainSpec, Spec, SpecId};
 
-use super::{env::OptimismTransaction, InvalidOptimismTransaction, OptimismHaltReason};
+use super::{
+    env::{OptimismBlock, OptimismTransaction},
+    InvalidOptimismTransaction, OptimismHaltReason,
+};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct OptimismChainSpec;
 
 impl ChainSpec for OptimismChainSpec {
+    type Block = OptimismBlock;
     type Hardfork = OptimismSpecId;
     type HaltReason = OptimismHaltReason;
     type Transaction = OptimismTransaction;

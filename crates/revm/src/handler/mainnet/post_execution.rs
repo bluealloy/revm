@@ -1,8 +1,8 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, ChainSpec, EVMError, ExecutionResult, ResultAndState, Spec, SpecId::LONDON,
-        Transaction, U256,
+        db::Database, Block, ChainSpec, EVMError, ExecutionResult, ResultAndState, Spec,
+        SpecId::LONDON, Transaction, U256,
     },
     Context, FrameResult,
 };
@@ -30,13 +30,13 @@ pub fn reward_beneficiary<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
-    let beneficiary = context.evm.env.block.coinbase;
+    let beneficiary = *context.evm.env.block.coinbase();
     let effective_gas_price = context.evm.env.effective_gas_price();
 
     // transfer fee to coinbase/beneficiary.
     // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
     let coinbase_gas_price = if SPEC::enabled(LONDON) {
-        effective_gas_price.saturating_sub(context.evm.env.block.basefee)
+        effective_gas_price.saturating_sub(*context.evm.env.block.basefee())
     } else {
         effective_gas_price
     };

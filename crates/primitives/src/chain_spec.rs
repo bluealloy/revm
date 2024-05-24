@@ -1,6 +1,6 @@
 use cfg_if::cfg_if;
 
-use crate::{InvalidTransaction, SpecId, Transaction};
+use crate::{Block, InvalidTransaction, SpecId, Transaction};
 
 use core::{
     fmt::{Debug, Display},
@@ -8,6 +8,9 @@ use core::{
 };
 
 pub trait ChainSpec: Clone + Debug + Default + Sized + 'static {
+    /// The type that contains all block information.
+    type Block: Block + Clone + Debug + Default + PartialEq + Eq;
+
     /// The type that enumerates the chain's hardforks.
     type Hardfork: Clone + Copy + Default + PartialEq + Eq + Into<SpecId>;
 
@@ -21,8 +24,9 @@ pub trait ChainSpec: Clone + Debug + Default + Sized + 'static {
         }
     }
 
+    /// The type that contains all transaction information.
     type Transaction: Clone + Debug + Default + PartialEq + Eq + Transaction;
-
+    /// The error type that can be returned when validating a transaction.
     type TransactionValidationError: Debug + Display;
 }
 
@@ -30,6 +34,7 @@ pub trait ChainSpec: Clone + Debug + Default + Sized + 'static {
 pub struct EthChainSpec;
 
 impl ChainSpec for EthChainSpec {
+    type Block = crate::BlockEnv;
     type Hardfork = SpecId;
     type HaltReason = crate::HaltReason;
     type Transaction = crate::TxEnv;
