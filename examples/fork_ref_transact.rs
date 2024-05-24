@@ -1,5 +1,5 @@
-use ethers_contract::BaseContract;
-use ethers_core::abi::parse_abi;
+use alloy_sol_types::sol;
+use alloy_sol_types::SolCall;
 use ethers_providers::{Http, Provider};
 use revm::{
     db::{CacheDB, EmptyDB, EthersDB},
@@ -35,14 +35,12 @@ async fn main() -> anyhow::Result<()> {
     let pool_address = address!("0d4a11d5EEaaC28EC3F61d100daF4d40471f1852");
 
     // generate abi for the calldata from the human readable interface
-    let abi = BaseContract::from(
-        parse_abi(&[
-            "function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)",
-        ])?
-    );
+    sol! {
+        function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+    }
 
     // encode abi into Bytes
-    let encoded = abi.encode("getReserves", ())?;
+    let encoded = getReservesCall::new(()).abi_encode();
 
     // initialize new EthersDB
     let mut ethersdb = EthersDB::new(Arc::clone(&client), None).unwrap();
@@ -74,7 +72,7 @@ async fn main() -> anyhow::Result<()> {
             // account you want to transact with
             tx.transact_to = TransactTo::Call(pool_address);
             // calldata formed via abigen
-            tx.data = encoded.0.into();
+            tx.data = encoded.into();
             // transaction value in wei
             tx.value = U256::from(0);
         })
@@ -94,13 +92,13 @@ async fn main() -> anyhow::Result<()> {
         result => panic!("Execution failed: {result:?}"),
     };
 
-    // decode bytes to reserves + ts via ethers-rs's abi decode
-    let (reserve0, reserve1, ts): (u128, u128, u32) = abi.decode_output("getReserves", value)?;
+    // decode bytes to reserves + ts via alloy's abi decode
+    let return_vals = getReservesCall::abi_decode_returns(&value, true)?;
 
     // Print emulated getReserves() call output
-    println!("Reserve0: {:#?}", reserve0);
-    println!("Reserve1: {:#?}", reserve1);
-    println!("Timestamp: {:#?}", ts);
+    println!("Reserve0: {:#?}", return_vals.reserve0);
+    println!("Reserve1: {:#?}", return_vals.reserve1);
+    println!("Timestamp: {:#?}", return_vals.blockTimestampLast);
 
     Ok(())
 }
