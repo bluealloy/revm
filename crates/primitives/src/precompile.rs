@@ -2,34 +2,28 @@ use crate::{Bytes, Env};
 use core::fmt;
 use dyn_clone::DynClone;
 use std::{boxed::Box, string::String, sync::Arc};
+use revm_precompile::PrecompileOutput;
 
 /// A precompile operation result.
 ///
 /// Returns either `Ok((gas_used, return_bytes))` or `Err(error)`.
-pub enum PrecompileResult {
-    Ok { gas_used: u64, output: Bytes },
-    Error { error_type: PrecompileError },
-    FatalError { msg: String },
+pub enum PrecompileErrors {
+    Error(PrecompileError),
+    Fatal {
+        msg: String
+    },
 }
 
-impl PrecompileResult {
-    pub fn ok(gas_used: u64, output: Bytes) -> Self {
-        Self::Ok { gas_used, output }
-    }
+pub type PrecompileResult = Result<PrecompileOutput, PrecompileErrors>;
 
-    pub fn err(error_type: PrecompileError) -> Self {
-        Self::Error { error_type }
+impl PrecompileErrors {
+    pub fn err(err: PrecompileError) -> PrecompileResult {
+        Err(PrecompileErrors::Error(err))
     }
-
-    pub fn fatal_error(msg: impl Into<String>) -> Self {
-        Self::FatalError { msg: msg.into() }
-    }
-
-    pub fn unwrap(self) -> (u64, Bytes) {
-        match self {
-            Self::Ok { gas_used, output } => (gas_used, output),
-            _ => panic!("called `PrecompileResult::unwrap()` on an `Error` value"),
-        }
+    pub fn fatal_error(msg: impl Into<String>) -> PrecompileResult {
+        Err(PrecompileErrors::Fatal {
+            msg: msg.into()
+        })
     }
 }
 
@@ -200,7 +194,7 @@ mod test {
                 _gas_price: u64,
                 _env: &Env,
             ) -> PrecompileResult {
-                PrecompileResult::err(PrecompileError::OutOfGas)
+                PrecompileErrors::err(PrecompileError::OutOfGas)
             }
         }
 

@@ -80,11 +80,11 @@ mod test {
         #[case] precompile: fn(input: &Bytes, gas_limit: u64) -> PrecompileResult,
         #[case] file_name: &str,
     ) {
-        let test_vectors = load_test_vectors(format!("test-vectors/{}", file_name))
-            .unwrap_or_else(|e| panic!("Failed to load test vectors from {}: {}", file_name, e));
+        let test_vectors = load_test_vectors(format!("test-vectors/{file_name}"))
+            .unwrap_or_else(|e| panic!("Failed to load test vectors from {file_name}: {e}"));
 
         for vector in test_vectors.0 {
-            let test_name = format!("{}/{}", file_name, vector.name);
+            let test_name = format!("{file_name}/{}", vector.name);
             let input = Bytes::from_hex(&vector.input).unwrap_or_else(|e| {
                 panic!(
                     "could not deserialize input {} as hex in {}: {}",
@@ -113,7 +113,7 @@ mod test {
                         expected_output, actual_output, test_name
                     );
                 }
-                _ => panic!("unexpected result in {}", test_name),
+                _ => panic!("unexpected result in {}, vector: {:?}", test_name, vector),
             }
         }
     }
