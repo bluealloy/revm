@@ -105,7 +105,7 @@ fn u24(input: &[u8], idx: u32) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use alloy_sol_macro::sol;
+    use alloy_sol_types::sol;
     use alloy_sol_types::SolCall;
 
     use super::*;

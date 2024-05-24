@@ -60,7 +60,6 @@ alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d
 alloy-sol-types = { version = "0.7.0", default-features = false, features = [
     "std",
 ] }
-alloy-sol-macro = "0.7.0"
 # needed for enabling TLS to use HTTPS connections when testing alloy DB
 alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d" }
 
