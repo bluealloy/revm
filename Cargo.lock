@@ -1616,6 +1616,7 @@ dependencies = [
  "hex",
  "paste",
  "revm-interpreter",
+ "revm-interpreter-fluent",
  "revm-primitives",
  "rwasm",
 ]
@@ -3466,6 +3467,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "revm-interpreter-fluent"
+version = "5.0.0"
+dependencies = [
+ "bincode",
+ "fluentbase-types",
+ "paste",
+ "phf",
+ "revm-primitives",
+ "serde",
+ "serde_json",
+ "walkdir",
+]
+
+[[package]]
 name = "revm-precompile"
 version = "7.0.0"
 dependencies = [
@@ -3571,7 +3586,7 @@ dependencies = [
  "indicatif",
  "lazy_static",
  "reqwest 0.12.4",
- "revm-interpreter",
+ "revm-interpreter-fluent",
  "revm-precompile",
  "rwasm",
  "serde",

@@ -1,0 +1,15 @@
+{
+  "jumpf_incompatible_outputs": {
+    "vectors": {
+      "jumpf_incompatible_outputs_0": {
+        "code": "0xef000101000c02000300040005000404000000008000030003000200050003e3000100e500025f5f5f5f5fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_JumpfDestinationIncompatibleOutputs",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

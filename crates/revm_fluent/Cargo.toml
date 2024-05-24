@@ -23,16 +23,16 @@ all = "warn"
 
 [dependencies]
 # revm
-revm-interpreter = { path = "../interpreter", version = "5.0.0", default-features = false }
-revm-precompile = { path = "../precompile", version = "7.0.0", default-features = false }
+revm-interpreter-fluent = { workspace = true }
+revm-precompile = { workspace = true }
 
-fluentbase-sdk = { workspace = true, features = [] }
-fluentbase-types = { workspace = true, features = [] }
-fluentbase-core = { workspace = true, features = [] }
-fluentbase-runtime = { workspace = true, features = [] }
-fluentbase-codec = { workspace = true, features = [] }
-fluentbase-genesis = { workspace = true, features = [] }
-fluentbase-poseidon = { workspace = true, features = [] }
+fluentbase-sdk = { workspace = true }
+fluentbase-types = { workspace = true }
+fluentbase-core = { workspace = true }
+fluentbase-runtime = { workspace = true }
+fluentbase-codec = { workspace = true }
+fluentbase-genesis = { workspace = true }
+fluentbase-poseidon = { workspace = true }
 
 rwasm = { workspace = true }
 
@@ -86,7 +86,7 @@ std = [
     "serde?/std",
     "serde_json?/std",
     "serde_json?/preserve_order",
-    "revm-interpreter/std",
+    "revm-interpreter-fluent/std",
     "revm-precompile/std",
     "fluentbase-sdk/std",
     "fluentbase-types/std",
@@ -95,25 +95,25 @@ std = [
     "fluentbase-codec/std",
     "fluentbase-genesis/std",
 ]
-hashbrown = ["revm-interpreter/hashbrown", "revm-precompile/hashbrown"]
-serde = ["dep:serde", "revm-interpreter/serde"]
+hashbrown = ["revm-interpreter-fluent/hashbrown", "revm-precompile/hashbrown"]
+serde = ["dep:serde", "revm-interpreter-fluent/serde"]
 serde-json = ["serde", "dep:serde_json"]
-arbitrary = ["revm-interpreter/arbitrary"]
-asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
-portable = ["revm-precompile/portable", "revm-interpreter/portable"]
+arbitrary = ["revm-interpreter-fluent/arbitrary"]
+asm-keccak = ["revm-interpreter-fluent/asm-keccak", "revm-precompile/asm-keccak"]
+portable = ["revm-precompile/portable", "revm-interpreter-fluent/portable"]
 
 test-utils = []
 
-optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
+optimism = ["revm-interpreter-fluent/optimism", "revm-precompile/optimism"]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
 optimism-default-handler = [
     "optimism",
     "revm-precompile/optimism-default-handler",
-    "revm-interpreter/optimism-default-handler",
+    "revm-interpreter-fluent/optimism-default-handler",
 ]
 negate-optimism-default-handler = [
     "revm-precompile/negate-optimism-default-handler",
-    "revm-interpreter/negate-optimism-default-handler",
+    "revm-interpreter-fluent/negate-optimism-default-handler",
 ]
 
 ethersdb = [
@@ -141,13 +141,13 @@ dev = [
     "optional_no_base_fee",
     "optional_beneficiary_reward",
 ]
-memory_limit = ["revm-interpreter/memory_limit"]
-optional_balance_check = ["revm-interpreter/optional_balance_check"]
-optional_block_gas_limit = ["revm-interpreter/optional_block_gas_limit"]
-optional_eip3607 = ["revm-interpreter/optional_eip3607"]
-optional_gas_refund = ["revm-interpreter/optional_gas_refund"]
-optional_no_base_fee = ["revm-interpreter/optional_no_base_fee"]
-optional_beneficiary_reward = ["revm-interpreter/optional_beneficiary_reward"]
+memory_limit = ["revm-interpreter-fluent/memory_limit"]
+optional_balance_check = ["revm-interpreter-fluent/optional_balance_check"]
+optional_block_gas_limit = ["revm-interpreter-fluent/optional_block_gas_limit"]
+optional_eip3607 = ["revm-interpreter-fluent/optional_eip3607"]
+optional_gas_refund = ["revm-interpreter-fluent/optional_gas_refund"]
+optional_no_base_fee = ["revm-interpreter-fluent/optional_no_base_fee"]
+optional_beneficiary_reward = ["revm-interpreter-fluent/optional_beneficiary_reward"]
 
 # See comments in `revm-precompile`
 secp256k1 = ["revm-precompile/secp256k1"]
@@ -156,13 +156,17 @@ c-kzg = ["revm-precompile/c-kzg"]
 blst = ["revm-precompile/blst"]
 
 rwasm = [
-    "revm-interpreter/rwasm",
+    "revm-interpreter-fluent/rwasm",
     "revm-precompile/rwasm",
 ]
 debug_print = [
-    "revm-interpreter/debug_print"
+    "revm-interpreter-fluent/debug_print",
 ]
-fluent_revm = ["revm-interpreter/fluent_revm"]
+fluent_revm = [
+    "revm-interpreter-fluent/fluent_revm",
+    "rwasm",
+    "fluentbase-core/fluent_revm",
+]
 
 [[example]]
 name = "fork_ref_transact"

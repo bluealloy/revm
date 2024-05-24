@@ -22,7 +22,8 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-revm-primitives = { path = "../primitives", version = "4.0.0", default-features = false }
+revm-primitives = { workspace = true }
+
 fluentbase-types = { workspace = true, default-features = false }
 
 paste = { version = "1.0", optional = true }
@@ -84,7 +85,7 @@ optional_no_base_fee = ["revm-primitives/optional_no_base_fee"]
 optional_beneficiary_reward = ["revm-primitives/optional_beneficiary_reward"]
 
 rwasm = ["revm-primitives/rwasm"]
-
 debug_print = []
 fluent_revm = [
+    "rwasm",
 ]

@@ -1,0 +1,94 @@
+{
+  "EOF1_section_order": {
+    "vectors": {
+      "EOF1_section_order_0": {
+        "code": "0xef0001010004020001000604000200008000016000e0000000aabb",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "EOF1_section_order_1": {
+        "code": "0xef000101000404000202000100060000800000aabb6000e0000000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_CodeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_section_order_2": {
+        "code": "0xef00010200010006010004040002006000e000000000800000aabb",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_section_order_3": {
+        "code": "0xef00010200010006040002010004006000e0000000aabb00800000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_section_order_4": {
+        "code": "0xef0001040002010004020001000600aabb008000006000e0000000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_section_order_5": {
+        "code": "0xef0001040002020001000601000400aabb6000e000000000800000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_section_order_6": {
+        "code": "0xef00010100040200010006030001001404000200008000016000e0000000ef000101000402000100010400000000800000feaabb",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "EOF1_section_order_7": {
+        "code": "0xef00010300010014010004020001000604000200ef000101000402000100010400000000800000fe008000016000e0000000aabb",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_section_order_8": {
+        "code": "0xef0001010004030001001402000100060400020000800001ef000101000402000100010400000000800000fe6000e0000000aabb",
+        "results": {
+          "Prague": {
+            "exception": "EOF_CodeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_section_order_9": {
+        "code": "0xef00010100040200010006040002030001001400008000016000e0000000aabbef000101000402000100010400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_HeaderTerminatorMissing",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

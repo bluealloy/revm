@@ -1,0 +1,32 @@
+{
+  "self_referencing_jumps": {
+    "vectors": {
+      "rjump": {
+        "code": "0xef000101000402000100030400000000800000e0fffd",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "rjumpi": {
+        "code": "0xef0001010004020001000604000000008000006000e1fffd00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ConflictingStackHeight",
+            "result": false
+          }
+        }
+      },
+      "rjumpv": {
+        "code": "0xef0001010004020001000704000000008000006000e200fffc00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ConflictingStackHeight",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "minimal_valid_EOF1_code_with_data": {
+    "vectors": {
+      "minimal_valid_EOF1_code_with_data_0": {
+        "code": "0xef000101000402000100010400010000800000feda",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      }
+    }
+  }
+}

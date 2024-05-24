@@ -1,0 +1,42 @@
+{
+  "EOF1_invalid_section_0_type": {
+    "vectors": {
+      "EOF1_invalid_section_0_type_0": {
+        "code": "0xef00010100040200010001040000000000000000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidFirstSectionType",
+            "result": false
+          }
+        }
+      },
+      "EOF1_invalid_section_0_type_1": {
+        "code": "0xef00010100040200010003040000000001000060005c",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidFirstSectionType",
+            "result": false
+          }
+        }
+      },
+      "EOF1_invalid_section_0_type_2": {
+        "code": "0xef000101000402000100010400000001800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidFirstSectionType",
+            "result": false
+          }
+        }
+      },
+      "EOF1_invalid_section_0_type_3": {
+        "code": "0xef00010100040200010003040000000203000060005c",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidFirstSectionType",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

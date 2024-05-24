@@ -12,7 +12,6 @@ categories.workspace = true
 fluentbase-core = { workspace = true, default-features = false, features = [
     "ecl",
     "wcl",
-    "e2e",
 ] }
 fluentbase-sdk = { workspace = true, default-features = false }
 fluentbase-codec-derive = { workspace = true }
@@ -57,14 +56,12 @@ paste.workspace = true
 
 [features]
 default = [
-    #    "fluent_revm",
     #    "debug_print",
+    #    "e2e"
 ]
-#rwasm = ["revm/rwasm"]
-fluent_revm = [
-    "revm_fluent/rwasm",
-    "revm_fluent/fluent_revm",
-    "fluentbase-core/fluent_revm",
+e2e = [
+    "fluentbase-core/e2e",
+    "fluentbase-sdk/e2e",
 ]
 debug_use_fluent_storage = []
 debug_print = [

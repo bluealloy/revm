@@ -23,16 +23,16 @@ all = "warn"
 
 [dependencies]
 # revm
-revm-interpreter = { path = "../interpreter", version = "5.0.0", default-features = false }
-revm-precompile = { path = "../precompile", version = "7.0.0", default-features = false }
+revm-interpreter = { workspace = true }
+revm-precompile = { workspace = true }
 
-fluentbase-sdk = { workspace = true, features = [] }
-fluentbase-types = { workspace = true, features = [] }
-fluentbase-core = { workspace = true, features = [] }
-fluentbase-runtime = { workspace = true, features = [] }
-fluentbase-codec = { workspace = true, features = [] }
-fluentbase-genesis = { workspace = true, features = [] }
-fluentbase-poseidon = { workspace = true, features = [] }
+fluentbase-sdk = { workspace = true }
+fluentbase-types = { workspace = true }
+fluentbase-core = { workspace = true }
+fluentbase-runtime = { workspace = true }
+fluentbase-codec = { workspace = true }
+fluentbase-genesis = { workspace = true }
+fluentbase-poseidon = { workspace = true }
 
 rwasm = { workspace = true }
 

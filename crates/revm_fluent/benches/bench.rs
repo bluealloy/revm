@@ -1,5 +1,9 @@
 use criterion::{
-    criterion_group, criterion_main, measurement::WallTime, BenchmarkGroup, Criterion,
+    criterion_group,
+    criterion_main,
+    measurement::WallTime,
+    BenchmarkGroup,
+    Criterion,
 };
 use revm::{
     db::BenchmarkDB,
@@ -7,7 +11,7 @@ use revm::{
     primitives::{address, bytes, hex, BerlinSpec, Bytecode, Bytes, TransactTo, U256},
     Evm,
 };
-use revm_interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
+use revm_interpreter_fluent::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use std::time::Duration;
 
 fn analysis(c: &mut Criterion) {

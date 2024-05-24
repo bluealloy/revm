@@ -1,0 +1,42 @@
+{
+  "EOF1_type_section_not_first": {
+    "vectors": {
+      "EOF1_type_section_not_first_0": {
+        "code": "0xef0001020001000101000400fe00800000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_type_section_not_first_1": {
+        "code": "0xef00010200020001000101000400fefe00800000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_type_section_not_first_2": {
+        "code": "0xef0001020001000101000404000300fe00800000aabbcc",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_type_section_not_first_3": {
+        "code": "0xef0001020001000104000301000400feaabbcc00800000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

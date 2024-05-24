@@ -1,0 +1,15 @@
+{
+  "callf_invalid_code_section_index": {
+    "vectors": {
+      "callf_invalid_code_section_index_0": {
+        "code": "0xef000101000402000100040400000000800000e3000100",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidCodeSectionIndex",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

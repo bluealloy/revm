@@ -1,0 +1,114 @@
+{
+  "EOF1_rjumpv_invalid_destination": {
+    "vectors": {
+      "EOF1_rjumpv_invalid_destination_0": {
+        "code": "0xef0001010004020001000804000000008000006000e200ffe96001",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_invalid_destination_1": {
+        "code": "0xef0001010004020001000804000000008000006000e200fff86001",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_invalid_destination_10": {
+        "code": "0xef00010100040200010012030001001404000000008000046000e2000009600060ff60006000ec005000ef000101000402000100010400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_invalid_destination_11": {
+        "code": "0xef0001010004020001000c030001001404000000008000026000e200000560006000ee00ef000101000402000100010400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_invalid_destination_2": {
+        "code": "0xef0001010004020001000804000000008000006000e200ffff6001",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_invalid_destination_3": {
+        "code": "0xef0001010004020001000804000000008000006000e20000026001",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_invalid_destination_4": {
+        "code": "0xef0001010004020001000804000000008000006000e20000036001",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_invalid_destination_5": {
+        "code": "0xef0001010004020001000f04000000008000006002e20200000003ffe56001006002",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_invalid_destination_6": {
+        "code": "0xef0001010004020001000f04000000008000006002e20200000003fff46001006002",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_invalid_destination_7": {
+        "code": "0xef0001010004020001000f04000000008000006002e20200000003ffff6001006002",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_invalid_destination_8": {
+        "code": "0xef0001010004020001000f04000000008000006002e2020000000300056001006002",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpv_invalid_destination_9": {
+        "code": "0xef0001010004020001000f04000000008000006002e2020000000300066001006002",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "retf_variable_stack": {
+    "vectors": {
+      "retf_variable_stack_0": {
+        "code": "0xef000101000802000200040009040000000080000500050003e30001005f6000e100025f5fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "retf_variable_stack_1": {
+        "code": "0xef000101000802000200040009040000000080000300030003e30001005f6000e100025f5fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "retf_variable_stack_2": {
+        "code": "0xef000101000802000200040009040000000080000100010003e30001005f6000e100025f5fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNumberOfOutputs",
+            "result": false
+          }
+        }
+      },
+      "retf_variable_stack_3": {
+        "code": "0xef000101000802000200040009040000000080000000000003e30001005f6000e100025f5fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNumberOfOutputs",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

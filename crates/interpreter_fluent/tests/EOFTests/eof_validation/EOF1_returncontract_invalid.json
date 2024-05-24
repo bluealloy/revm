@@ -1,0 +1,42 @@
+{
+  "EOF1_returncontract_invalid": {
+    "vectors": {
+      "EOF1_returncontract_invalid_0": {
+        "code": "0xef000101000402000100050300010014040000000080000460006000eeef000101000402000100010400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TruncatedImmediate",
+            "result": false
+          }
+        }
+      },
+      "EOF1_returncontract_invalid_1": {
+        "code": "0xef000101000402000100060300010014040000000080000460006000ee01ef000101000402000100010400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidContainerSectionIndex",
+            "result": false
+          }
+        }
+      },
+      "EOF1_returncontract_invalid_2": {
+        "code": "0xef000101000402000100060300010014040000000080000460006000eeffef000101000402000100010400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidContainerSectionIndex",
+            "result": false
+          }
+        }
+      },
+      "EOF1_returncontract_invalid_3": {
+        "code": "0xef000101000402000100070300010014040000000080000260006000ee0000ef000101000402000100010400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_UnreachableCode",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

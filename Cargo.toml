@@ -35,6 +35,10 @@ fluentbase-genesis = { path = "../fluentbase/crates/genesis" }
 rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm", branch = "devel", default-features = false }
 #rwasm = { path = "../rwasm/rwasm", default-features = false }
 
+revm-interpreter = { path = "crates/interpreter", default-features = false }
+revm-interpreter-fluent = { path = "crates/interpreter_fluent", default-features = false }
+revm-precompile = { path = "crates/precompile", default-features = false }
+revm-primitives = { path = "crates/primitives", default-features = false }
 revm = { path = "crates/revm", features = [
     "ethersdb",
     "std",

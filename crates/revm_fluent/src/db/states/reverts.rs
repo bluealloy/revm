@@ -1,5 +1,8 @@
 use super::{
-    changes::PlainStorageRevert, AccountStatus, BundleAccount, PlainStateReverts,
+    changes::PlainStorageRevert,
+    AccountStatus,
+    BundleAccount,
+    PlainStateReverts,
     StorageWithOriginalValues,
 };
 use core::ops::{Deref, DerefMut};
@@ -94,8 +97,8 @@ impl AccountRevert {
         1 + self.storage.len()
     }
 
-    /// Very similar to new_selfdestructed but it will add additional zeros (RevertToSlot::Destroyed)
-    /// for the storage that are set if account is again created.
+    /// Very similar to new_selfdestructed but it will add additional zeros
+    /// (RevertToSlot::Destroyed) for the storage that are set if account is again created.
     pub fn new_selfdestructed_again(
         status: AccountStatus,
         account: AccountInfoRevert,
@@ -198,7 +201,8 @@ pub enum AccountInfoRevert {
 /// * Destroyed, should be removed on revert but on Revert set it as zero.
 ///
 /// Note: It is completely different state if Storage is Zero or Some or if Storage was
-/// Destroyed. Because if it is destroyed, previous values can be found in database or it can be zero.
+/// Destroyed. Because if it is destroyed, previous values can be found in database or it can be
+/// zero.
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Hash)]
 pub enum RevertToSlot {
     Some(U256),

@@ -1,0 +1,78 @@
+{
+  "EOF1_rjumpi_invalid_destination": {
+    "vectors": {
+      "EOF1_rjumpi_invalid_destination_0": {
+        "code": "0xef0001010004020001000604000000008000006000e1fff900",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpi_invalid_destination_1": {
+        "code": "0xef0001010004020001000604000000008000006000e1fff100",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpi_invalid_destination_2": {
+        "code": "0xef0001010004020001000604000000008000006000e1000200",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpi_invalid_destination_3": {
+        "code": "0xef0001010004020001000604000000008000006000e1000100",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpi_invalid_destination_4": {
+        "code": "0xef0001010004020001000604000000008000006000e1ffff00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpi_invalid_destination_5": {
+        "code": "0xef0001010004020001000604000000008000006000e1fffc00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpi_invalid_destination_6": {
+        "code": "0xef00010100040200010011030001001404000000008000046000e10009600060ff60006000ec005000ef000101000402000100010400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      },
+      "EOF1_rjumpi_invalid_destination_7": {
+        "code": "0xef0001010004020001000b030001001404000000008000026000e1000560006000ee00ef000101000402000100010400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidJumpDestination",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}
