@@ -159,20 +159,6 @@ impl Precompiles {
         })
     }
 
-    /// Returns precompiles for Fjord spec.
-    #[cfg(feature = "optimism")]
-    pub fn fjord() -> &'static Self {
-        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::cancun().clone();
-            precompiles.extend([
-                // EIP-7212: secp256r1 P256verify
-                secp256r1::P256VERIFY,
-            ]);
-            Box::new(precompiles)
-        })
-    }
-
     /// Returns precompiles for Prague spec.
     pub fn prague() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
