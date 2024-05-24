@@ -8,15 +8,11 @@ pub use context_precompiles::{
 };
 pub use evm_context::EvmContext;
 pub use inner_evm_context::InnerEvmContext;
-use revm_interpreter::as_usize_saturated;
 
 use crate::{
     db::{Database, EmptyDB},
     interpreter::{Host, LoadAccountResult, SStoreResult, SelfDestructResult},
-    primitives::{
-        Address, Bytecode, EVMError, Env, HandlerCfg, Log, B256, BLOCKHASH_SERVE_WINDOW,
-        BLOCKHASH_STORAGE_ADDRESS, BLOCK_HASH_HISTORY, PRAGUE, U256,
-    },
+    primitives::{Address, Bytecode, Env, HandlerCfg, Log, B256, U256},
 };
 use std::boxed::Box;
 
