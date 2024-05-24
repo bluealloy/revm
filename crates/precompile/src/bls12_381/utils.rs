@@ -42,7 +42,16 @@ pub(super) fn remove_padding(input: &[u8]) -> Result<&[u8; FP_LENGTH], Precompil
     Ok(unpadded.try_into().unwrap())
 }
 
-/// Extracts an Scalar from a 32 byte slice representation.
+/// Extracts a scalar from a 32 byte slice representation, decoding the input as a big endian
+/// unsigned integer. If the input is not exactly 32 bytes long, an error is returned.
+///
+/// From [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537):
+/// * A scalar for the multiplication operation is encoded as 32 bytes by performing BigEndian
+/// encoding of the corresponding (unsigned) integer.
+///
+/// We do not check that the scalar is a canonical Fr element, because the EIP specifies:
+/// * The corresponding integer is not required to be less than or equal than main subgroup order
+/// `q`.
 pub(super) fn extract_scalar_input(input: &[u8]) -> Result<blst_scalar, PrecompileError> {
     if input.len() != SCALAR_LENGTH {
         return Err(PrecompileError::Other(format!(
@@ -53,7 +62,13 @@ pub(super) fn extract_scalar_input(input: &[u8]) -> Result<blst_scalar, Precompi
 
     let mut out = blst_scalar::default();
     // SAFETY: input length is checked previously, out is a blst value.
-    unsafe { blst_scalar_from_bendian(&mut out, input.as_ptr()) };
+    unsafe {
+        // NOTE: we do not use `blst_scalar_fr_check` here because, from EIP-2537:
+        //
+        // * The corresponding integer is not required to be less than or equal than main subgroup
+        // order `q`.
+        blst_scalar_from_bendian(&mut out, input.as_ptr())
+    };
 
     Ok(out)
 }
