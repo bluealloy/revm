@@ -1,7 +1,7 @@
 use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
 use fluentbase_types::ExitCode;
 
-#[cfg(not(feature = "fluent_revm"))]
+// #[cfg(not(feature = "fluent_revm"))]
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -57,10 +57,10 @@ pub enum InstructionResult {
     EOFFunctionStackOverflow,
 }
 
-#[cfg(feature = "fluent_revm")]
-pub type InstructionResult = ExitCode;
+// #[cfg(feature = "fluent_revm")]
+// pub type InstructionResult = ExitCode;
 
-#[cfg(not(feature = "fluent_revm"))]
+// #[cfg(not(feature = "fluent_revm"))]
 impl From<SuccessReason> for InstructionResult {
     fn from(value: SuccessReason) -> Self {
         match value {
@@ -71,7 +71,7 @@ impl From<SuccessReason> for InstructionResult {
     }
 }
 
-#[cfg(not(feature = "fluent_revm"))]
+// #[cfg(not(feature = "fluent_revm"))]
 impl From<HaltReason> for InstructionResult {
     fn from(value: HaltReason) -> Self {
         match value {
@@ -106,22 +106,30 @@ impl From<HaltReason> for InstructionResult {
     }
 }
 
-#[cfg(feature = "fluent_revm")]
-#[macro_export]
-macro_rules! return_ok {
-    () => {
-        fluentbase_types::ExitCode::Ok
-    };
-}
-#[cfg(feature = "fluent_revm")]
-#[macro_export]
-macro_rules! return_revert {
-    () => {
-        fluentbase_types::ExitCode::Panic
-    };
-}
+// #[cfg(feature = "fluent_revm")]
+// #[macro_export]
+// macro_rules! return_ok {
+//     () => {
+//         fluentbase_types::ExitCode::Ok
+//             | fluentbase_types::ExitCode::Continue
+//             | fluentbase_types::ExitCode::Stop
+//             | fluentbase_types::ExitCode::Return
+//             | fluentbase_types::ExitCode::SelfDestruct
+//             | fluentbase_types::ExitCode::ReturnContract
+//     };
+// }
+// #[cfg(feature = "fluent_revm")]
+// #[macro_export]
+// macro_rules! return_revert {
+//     () => {
+//         fluentbase_types::ExitCode::Panic
+//             | fluentbase_types::ExitCode::Revert
+//             | fluentbase_types::ExitCode::CallTooDeep
+//             | fluentbase_types::ExitCode::OutOfFunds
+//     };
+// }
 
-#[cfg(not(feature = "fluent_revm"))]
+// #[cfg(not(feature = "fluent_revm"))]
 #[macro_export]
 macro_rules! return_ok {
     () => {
@@ -133,7 +141,7 @@ macro_rules! return_ok {
     };
 }
 
-#[cfg(not(feature = "fluent_revm"))]
+// #[cfg(not(feature = "fluent_revm"))]
 #[macro_export]
 macro_rules! return_revert {
     () => {
@@ -142,7 +150,7 @@ macro_rules! return_revert {
 }
 
 #[macro_export]
-#[cfg(not(feature = "fluent_revm"))]
+// #[cfg(not(feature = "fluent_revm"))]
 macro_rules! return_error {
     () => {
         InstructionResult::OutOfGas
@@ -173,7 +181,7 @@ macro_rules! return_error {
     };
 }
 
-#[cfg(not(feature = "fluent_revm"))]
+// #[cfg(not(feature = "fluent_revm"))]
 impl InstructionResult {
     /// Returns whether the result is a success.
     #[inline]
@@ -244,7 +252,7 @@ impl SuccessOrHalt {
     }
 }
 
-#[cfg(not(feature = "fluent_revm"))]
+// #[cfg(not(feature = "fluent_revm"))]
 impl From<InstructionResult> for SuccessOrHalt {
     fn from(result: InstructionResult) -> Self {
         match result {
@@ -303,66 +311,67 @@ impl From<InstructionResult> for SuccessOrHalt {
     }
 }
 
-#[cfg(feature = "fluent_revm")]
-impl From<InstructionResult> for SuccessOrHalt {
-    fn from(result: InstructionResult) -> Self {
-        match result {
-            InstructionResult::Continue => Self::InternalContinue, // used only in interpreter loop
-            InstructionResult::Stop => Self::Success(SuccessReason::Stop),
-            InstructionResult::Return => Self::Success(SuccessReason::Return),
-            InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
-            InstructionResult::Revert => Self::Revert,
-            InstructionResult::CallOrCreate => Self::InternalCallOrCreate, /* used only in interpreter loop */
-            InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), /* not gonna happen for first call */
-            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), /* Check for first call is done separately. */
-            InstructionResult::OutOfGas => Self::Halt(HaltReason::OutOfGas(OutOfGasError::Basic)),
-            InstructionResult::MemoryLimitOOG => {
-                Self::Halt(HaltReason::OutOfGas(OutOfGasError::MemoryLimit))
-            }
-            InstructionResult::MemoryOOG => Self::Halt(HaltReason::OutOfGas(OutOfGasError::Memory)),
-            InstructionResult::PrecompileOOG => {
-                Self::Halt(HaltReason::OutOfGas(OutOfGasError::Precompile))
-            }
-            InstructionResult::InvalidOperandOOG => {
-                Self::Halt(HaltReason::OutOfGas(OutOfGasError::InvalidOperand))
-            }
-            InstructionResult::OpcodeNotFound | InstructionResult::ReturnContractInNotInitEOF => {
-                Self::Halt(HaltReason::OpcodeNotFound)
-            }
-            InstructionResult::CallNotAllowedInsideStatic => {
-                Self::Halt(HaltReason::CallNotAllowedInsideStatic)
-            } // first call is not static call
-            InstructionResult::StateChangeDuringStaticCall => {
-                Self::Halt(HaltReason::StateChangeDuringStaticCall)
-            }
-            InstructionResult::InvalidFEOpcode => Self::Halt(HaltReason::InvalidFEOpcode),
-            InstructionResult::InvalidJump => Self::Halt(HaltReason::InvalidJump),
-            InstructionResult::NotActivated => Self::Halt(HaltReason::NotActivated),
-            InstructionResult::StackUnderflow => Self::Halt(HaltReason::StackUnderflow),
-            InstructionResult::StackOverflow => Self::Halt(HaltReason::StackOverflow),
-            InstructionResult::OutOfOffset => Self::Halt(HaltReason::OutOfOffset),
-            InstructionResult::CreateCollision => Self::Halt(HaltReason::CreateCollision),
-            InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment), /* Check for first call is done separately. */
-            InstructionResult::PrecompileError => Self::Halt(HaltReason::PrecompileError),
-            InstructionResult::NonceOverflow => Self::Halt(HaltReason::NonceOverflow),
-            InstructionResult::CreateContractSizeLimit
-            | InstructionResult::CreateContractStartingWithEF => {
-                Self::Halt(HaltReason::CreateContractSizeLimit)
-            }
-            InstructionResult::CreateInitCodeSizeLimit => {
-                Self::Halt(HaltReason::CreateInitCodeSizeLimit)
-            }
-            InstructionResult::FatalExternalError => Self::FatalExternalError,
-            InstructionResult::EOFOpcodeDisabledInLegacy => Self::Halt(HaltReason::OpcodeNotFound),
-            InstructionResult::EOFFunctionStackOverflow => Self::FatalExternalError,
-            InstructionResult::ReturnContract => {
-                panic!("Unexpected EOF internal Return Contract")
-            }
-            // TODO recheck
-            _ => Self::InternalContinue,
-        }
-    }
-}
+// #[cfg(feature = "fluent_revm")]
+// impl From<InstructionResult> for SuccessOrHalt {
+//     fn from(result: InstructionResult) -> Self {
+//         match result {
+//             InstructionResult::Continue => Self::InternalContinue, // used only in interpreter
+// loop             InstructionResult::Stop => Self::Success(SuccessReason::Stop),
+//             InstructionResult::Return => Self::Success(SuccessReason::Return),
+//             InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
+//             InstructionResult::Revert => Self::Revert,
+//             InstructionResult::CallOrCreate => Self::InternalCallOrCreate, /* used only in
+// interpreter loop */             InstructionResult::CallTooDeep =>
+// Self::Halt(HaltReason::CallTooDeep), /* not gonna happen for first call */
+// InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), /* Check for first call is
+// done separately. */             InstructionResult::OutOfGas =>
+// Self::Halt(HaltReason::OutOfGas(OutOfGasError::Basic)),
+// InstructionResult::MemoryLimitOOG => {
+// Self::Halt(HaltReason::OutOfGas(OutOfGasError::MemoryLimit))             }
+//             InstructionResult::MemoryOOG =>
+// Self::Halt(HaltReason::OutOfGas(OutOfGasError::Memory)),
+// InstructionResult::PrecompileOOG => {
+// Self::Halt(HaltReason::OutOfGas(OutOfGasError::Precompile))             }
+//             InstructionResult::InvalidOperandOOG => {
+//                 Self::Halt(HaltReason::OutOfGas(OutOfGasError::InvalidOperand))
+//             }
+//             InstructionResult::OpcodeNotFound | InstructionResult::ReturnContractInNotInitEOF =>
+// {                 Self::Halt(HaltReason::OpcodeNotFound)
+//             }
+//             InstructionResult::CallNotAllowedInsideStatic => {
+//                 Self::Halt(HaltReason::CallNotAllowedInsideStatic)
+//             } // first call is not static call
+//             InstructionResult::StateChangeDuringStaticCall => {
+//                 Self::Halt(HaltReason::StateChangeDuringStaticCall)
+//             }
+//             InstructionResult::InvalidFEOpcode => Self::Halt(HaltReason::InvalidFEOpcode),
+//             InstructionResult::InvalidJump => Self::Halt(HaltReason::InvalidJump),
+//             InstructionResult::NotActivated => Self::Halt(HaltReason::NotActivated),
+//             InstructionResult::StackUnderflow => Self::Halt(HaltReason::StackUnderflow),
+//             InstructionResult::StackOverflow => Self::Halt(HaltReason::StackOverflow),
+//             InstructionResult::OutOfOffset => Self::Halt(HaltReason::OutOfOffset),
+//             InstructionResult::CreateCollision => Self::Halt(HaltReason::CreateCollision),
+//             InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment), /*
+// Check for first call is done separately. */             InstructionResult::PrecompileError =>
+// Self::Halt(HaltReason::PrecompileError),             InstructionResult::NonceOverflow =>
+// Self::Halt(HaltReason::NonceOverflow),             InstructionResult::CreateContractSizeLimit
+//             | InstructionResult::CreateContractStartingWithEF => {
+//                 Self::Halt(HaltReason::CreateContractSizeLimit)
+//             }
+//             InstructionResult::CreateInitCodeSizeLimit => {
+//                 Self::Halt(HaltReason::CreateInitCodeSizeLimit)
+//             }
+//             InstructionResult::FatalExternalError => Self::FatalExternalError,
+//             InstructionResult::EOFOpcodeDisabledInLegacy =>
+// Self::Halt(HaltReason::OpcodeNotFound),             InstructionResult::EOFFunctionStackOverflow
+// => Self::FatalExternalError,             InstructionResult::ReturnContract => {
+//                 panic!("Unexpected EOF internal Return Contract")
+//             }
+//             // TODO recheck
+//             _ => Self::InternalContinue,
+//         }
+//     }
+// }
 
 #[cfg(test)]
 mod tests {

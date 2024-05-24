@@ -284,7 +284,7 @@ impl Interpreter {
         let target_len = min(out_len, self.return_data_buffer.len());
         match call_outcome.instruction_result() {
             return_ok!() => {
-                // return unspend gas.
+                // return unspent gas.
                 let remaining = call_outcome.gas().remaining();
                 let refunded = call_outcome.gas().refunded();
                 self.gas.erase_cost(remaining);
@@ -356,7 +356,7 @@ impl Interpreter {
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
 
         // execute instruction.
-        let res = (instruction_table[opcode as usize])(self, host);
+        (instruction_table[opcode as usize])(self, host);
 
         #[cfg(feature = "debug_print")]
         println!(
@@ -368,8 +368,6 @@ impl Interpreter {
             self.gas.spent(),
             self.gas.remaining(),
         );
-
-        res
     }
 
     /// Take memory and replace it with empty memory.

@@ -13,6 +13,7 @@ use crate::{
     Context,
     FrameResult,
 };
+use fluentbase_core::helpers::exit_code_from_evm_error;
 use fluentbase_types::ExitCode;
 
 /// Mainnet end handle does not change the output.
@@ -151,7 +152,7 @@ pub fn output<EXT, DB: Database>(
     // reset journal and return present state.
     let (state, logs) = context.evm.journaled_state.finalize();
 
-    let result = match instruction_result.result.into() {
+    let result = match exit_code_from_evm_error(instruction_result.result) {
         ExitCode::Ok => ExecutionResult::Success {
             reason: SuccessReason::Return,
             gas_used: final_gas_used,

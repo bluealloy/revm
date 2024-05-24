@@ -30,8 +30,7 @@ macro_rules! define_tests {
 
 mod specific_test_that_fails {
     define_tests! {
-        // fn t001("tests/GeneralStateTests/stRandom2/randomStatetest418.json");
-        fn random_statetest248("tests/GeneralStateTests/stRandom/randomStatetest248.json");
+        // fn random_statetest248("tests/GeneralStateTests/stRandom/randomStatetest248.json");
     }
 }
 

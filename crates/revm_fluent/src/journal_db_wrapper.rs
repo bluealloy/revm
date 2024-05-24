@@ -4,7 +4,7 @@ use crate::{
     EvmContext,
 };
 use core::{cell::RefCell, fmt::Debug};
-use fluentbase_core::debug_log;
+use fluentbase_core::{debug_log, helpers::exit_code_from_evm_error};
 use fluentbase_sdk::{
     Account,
     AccountCheckpoint,
@@ -311,7 +311,7 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
             .unwrap()
             .and_then(|err| -> Option<InstructionResult> {
                 panic!(
-                    "it seems there is an account balance mismatch between ECL and REVM: {}",
+                    "it seems there is an account balance mismatch between ECL and REVM: {:?}",
                     err
                 );
             });
@@ -328,7 +328,7 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
         let result = ctx.call_precompile(*address, input, Gas::new(gas))?;
         Some(EvmCallMethodOutput {
             output: result.output,
-            exit_code: result.result.into_i32(),
+            exit_code: exit_code_from_evm_error(result.result).into_i32(),
             gas_remaining: result.gas.remaining(),
             gas_refund: result.gas.refunded(),
         })

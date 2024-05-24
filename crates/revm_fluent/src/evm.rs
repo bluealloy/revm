@@ -28,7 +28,10 @@ use crate::{
     FrameResult,
 };
 use core::{cell::RefCell, fmt, str::from_utf8};
-use fluentbase_core::loader::{_loader_call, _loader_create};
+use fluentbase_core::{
+    helpers::evm_error_from_exit_code,
+    loader::{_loader_call, _loader_create},
+};
 use fluentbase_sdk::{ContractInput, EvmCallMethodInput, EvmCreateMethodInput};
 use fluentbase_types::consts::EVM_STORAGE_ADDRESS;
 use revm_interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
@@ -482,13 +485,13 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let mut gas = Gas::new(gas_limit);
 
         if self.context.evm.journaled_state.depth as u64 > CALL_STACK_LIMIT {
-            return Ok(return_result(InstructionResult::CallDepthOverflow, gas));
+            return Ok(return_result(InstructionResult::CallTooDeep, gas));
         }
 
         let (caller_account, _) = self.context.evm.load_account(caller_address)?;
         // .expect("external database error");
         if caller_account.info.balance < value {
-            return Ok(return_result(InstructionResult::InsufficientBalance, gas));
+            return Ok(return_result(InstructionResult::OutOfFunds, gas));
         }
 
         let method_data = EvmCreateMethodInput {
@@ -546,7 +549,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         Ok(CreateOutcome {
             result: InterpreterResult {
-                result: InstructionResult::from(create_output.exit_code),
+                result: evm_error_from_exit_code(create_output.exit_code.into()),
                 output: Bytes::new(),
                 gas,
             },
@@ -655,7 +658,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         Ok(CallOutcome {
             result: InterpreterResult {
-                result: InstructionResult::from(call_output.exit_code),
+                result: evm_error_from_exit_code(call_output.exit_code.into()),
                 output: call_output.output,
                 gas,
             },
