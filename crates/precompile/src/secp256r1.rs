@@ -11,7 +11,7 @@ use p256::ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey};
 use revm_primitives::{Bytes, PrecompileError, PrecompileResult, B256};
 
 /// Base gas fee for secp256r1 p256verify operation.
-const P256VERIFY_BASE: u64 = 3_450;
+const P256VERIFY_BASE: u64 = 3450;
 
 /// Returns the secp256r1 precompile with its address.
 pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
@@ -20,7 +20,7 @@ pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
 
 /// [EIP-7212](https://eips.ethereum.org/EIPS/eip-7212#specification) secp256r1 precompile.
 pub const P256VERIFY: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(0x14), Precompile::Standard(p256_verify));
+    PrecompileWithAddress(u64_to_address(0x100), Precompile::Standard(p256_verify));
 
 /// secp256r1 precompile logic. It takes the input bytes sent to the precompile
 /// and the gas limit. The output represents the result of verifying the
@@ -42,7 +42,7 @@ pub fn p256_verify(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 /// Returns `Some(())` if the signature included in the input byte slice is
 /// valid, `None` otherwise.
 pub fn verify_impl(input: &[u8]) -> Option<()> {
-    if input.len() < 160 {
+    if input.len() != 160 {
         return None;
     }
 
@@ -86,6 +86,7 @@ mod test {
     #[case::fail_wrong_msg_5("958b991cfd78f16537fe6d1f4afd10273384db08bdfc843562a22b0626766686f6aec8247599f40bfe01bec0e0ecf17b4319559022d4d9bf007fe929943004eb4866760dedf31b7c691f5ce665f8aae0bda895c23595c834fecc2390a5bcc203b04afcacbb4280713287a2d0c37e23f7513fab898f2c1fefa00ec09a924c335d9b629f1d4fb71901c3e59611afbfea354d101324e894c788d1c01f00b3c251b2", false)]
     #[case::fail_short_input_1("4cee90eb86eaa050036147a12d49004b6a", false)]
     #[case::fail_short_input_2("4cee90eb86eaa050036147a12d49004b6a958b991cfd78f16537fe6d1f4afd10273384db08bdfc843562a22b0626766686f6aec8247599f40bfe01bec0e0ecf17b4319559022d4d9bf007fe929943004eb4866760dedf319", false)]
+    #[case::fail_long_input("4cee90eb86eaa050036147a12d49004b6b9c72bd725d39d4785011fe190f0b4da73bd4903f0ce3b639bbbf6e8e80d16931ff4bcf5993d58468e8fb19086e8cac36dbcd03009df8c59286b162af3bd7fcc0450c9aa81be5d10d312af6c66b1d604aebd3099c618202fcfe16ae7770b0c49ab5eadf74b754204a3bb6060e44eff37618b065f9832de4ca6ca971a7a1adc826d0f7c00181a5fb2ddf79ae00b4e10e00", false)]
     fn test_sig_verify(#[case] input: &str, #[case] expect_success: bool) {
         let input = Bytes::from_hex(input).unwrap();
         let target_gas = 3_500u64;
