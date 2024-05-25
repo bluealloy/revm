@@ -7,6 +7,7 @@ use revm_precompile::PrecompileOutput;
 /// A precompile operation result.
 ///
 /// Returns either `Ok((gas_used, return_bytes))` or `Err(error)`.
+#[derive(Debug)]
 pub enum PrecompileErrors {
     Error(PrecompileError),
     Fatal {
@@ -24,6 +25,12 @@ impl PrecompileErrors {
         Err(PrecompileErrors::Fatal {
             msg: msg.into()
         })
+    }
+}
+
+impl From<PrecompileError> for PrecompileErrors {
+    fn from(err: PrecompileError) -> Self {
+        PrecompileErrors::Error(err)
     }
 }
 
@@ -194,7 +201,7 @@ mod test {
                 _gas_price: u64,
                 _env: &Env,
             ) -> PrecompileResult {
-                PrecompileErrors::err(PrecompileError::OutOfGas)
+                Err(PrecompileError::OutOfGas.into())
             }
         }
 

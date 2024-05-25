@@ -123,18 +123,18 @@ pub fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
 
 pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
-        return PrecompileErrors::err(Error::OutOfGas);
+        return Err(Error::OutOfGas.into());
     }
 
     let input = right_pad::<ADD_INPUT_LEN>(input);
 
     let p1 = match read_point(&input[..64]) {
         Ok(point) => point,
-        Err(_) => return PrecompileErrors::err(Error::Bn128FieldPointNotAMember),
+        Err(_) => return Err(Error::Bn128FieldPointNotAMember.into()),
     };
     let p2 = match read_point(&input[64..]) {
         Ok(point) => point,
-        Err(_) => return PrecompileErrors::err(Error::Bn128FieldPointNotAMember),
+        Err(_) => return Err(Error::Bn128FieldPointNotAMember.into()),
     };
 
     let mut output = [0u8; 64];
@@ -147,14 +147,14 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
 
 pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
-        return PrecompileErrors::err(Error::OutOfGas);
+        return Err(Error::OutOfGas.into());
     }
 
     let input = right_pad::<MUL_INPUT_LEN>(input);
 
     let p = match read_point(&input[..64]) {
         Ok(point) => point,
-        Err(_) => return PrecompileErrors::err(Error::Bn128FieldPointNotAMember),
+        Err(_) => return Err(Error::Bn128FieldPointNotAMember.into()),
     };
 
     // `Fr::from_slice` can only fail when the length is not 32.
@@ -176,11 +176,11 @@ pub fn run_pair(
 ) -> PrecompileResult {
     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
     if gas_used > gas_limit {
-        return PrecompileErrors::err(Error::OutOfGas);
+        return Err(Error::OutOfGas.into());
     }
 
     if input.len() % PAIR_ELEMENT_LEN != 0 {
-        return PrecompileErrors::err(Error::Bn128PairLength);
+        return Err(Error::Bn128PairLength.into());
     }
 
     let success = if input.is_empty() {
@@ -197,7 +197,7 @@ pub fn run_pair(
                 // per iteration. This is guaranteed to be in-bounds.
                 let slice = unsafe { input.get_unchecked(start..start + 32) };
                 Fq::from_slice(slice)
-                    .map_err(|_| PrecompileErrors::err(Error::Bn128FieldPointNotAMember))
+                    .map_err(|_| Err(Error::Bn128FieldPointNotAMember.into()))
             };
             let ax = match read_fq_at(0) {
                 Ok(ax) => ax,
@@ -226,7 +226,7 @@ pub fn run_pair(
 
             let a = match new_g1_point(ax, ay) {
                 Ok(a) => a,
-                Err(_) => return PrecompileErrors::err(Error::Bn128AffineGFailedToCreate),
+                Err(_) => return Err(Error::Bn128AffineGFailedToCreate.into()),
             };
             let b = {
                 let ba = Fq2::new(bax, bay);
@@ -236,7 +236,7 @@ pub fn run_pair(
                 } else {
                     match AffineG2::new(ba, bb) {
                         Ok(affine_g2) => G2::from(affine_g2),
-                        Err(_) => return PrecompileErrors::err(Error::Bn128AffineGFailedToCreate),
+                        Err(_) => return Err(Error::Bn128AffineGFailedToCreate.into()),
                     }
                 }
             };
@@ -276,7 +276,7 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
+        let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap().output;
         assert_eq!(res, expected);
 
         // zero sum test
@@ -295,7 +295,7 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
+        let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap().output;
         assert_eq!(res, expected);
 
         // out of gas test
@@ -326,7 +326,7 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
+        let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap().output;
         assert_eq!(res, expected);
 
         // point not on curve fail
@@ -370,7 +370,7 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
+        let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap().output;
         assert_eq!(res, expected);
 
         // out of gas test
@@ -408,7 +408,7 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
+        let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap().output;
         assert_eq!(res, expected);
 
         // no input test
@@ -420,7 +420,7 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
+        let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap().output;
         assert_eq!(res, expected);
 
         // point not on curve fail
@@ -469,13 +469,13 @@ mod tests {
             hex::decode("0000000000000000000000000000000000000000000000000000000000000001")
                 .unwrap();
 
-        let (_, res) = run_pair(
+        let res = run_pair(
             &input,
             BYZANTIUM_PAIR_PER_POINT,
             BYZANTIUM_PAIR_BASE,
             260_000,
         )
-        .unwrap();
+        .unwrap().output;
         assert_eq!(res, expected);
 
         // out of gas test
@@ -518,13 +518,13 @@ mod tests {
             hex::decode("0000000000000000000000000000000000000000000000000000000000000001")
                 .unwrap();
 
-        let (_, res) = run_pair(
+        let res = run_pair(
             &input,
             BYZANTIUM_PAIR_PER_POINT,
             BYZANTIUM_PAIR_BASE,
             260_000,
         )
-        .unwrap();
+        .unwrap().output;
         assert_eq!(res, expected);
 
         // point not on curve fail

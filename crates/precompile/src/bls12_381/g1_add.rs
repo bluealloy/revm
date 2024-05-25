@@ -23,14 +23,14 @@ const INPUT_LENGTH: usize = 256;
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-addition>
 pub(super) fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if BASE_GAS_FEE > gas_limit {
-        return PrecompileErrors::err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     if input.len() != INPUT_LENGTH {
-        return PrecompileErrors::err(PrecompileError::Other(format!(
+        return Err(PrecompileError::Other(format!(
             "G1ADD input should be {INPUT_LENGTH} bytes, was {}",
             input.len()
-        )));
+        )).into());
     }
 
     // NB: There is no subgroup check for the G1 addition precompile.

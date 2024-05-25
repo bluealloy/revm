@@ -23,14 +23,14 @@ const BASE_GAS_FEE: u64 = 75000;
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-mapping-fp2-element-to-g2-point>
 pub(super) fn map_fp2_to_g2(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if BASE_GAS_FEE > gas_limit {
-        return PrecompileErrors::err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     if input.len() != PADDED_FP2_LENGTH {
-        return PrecompileErrors::err(PrecompileError::Other(format!(
+        return Err(PrecompileError::Other(format!(
             "MAP_FP2_TO_G2 input should be {PADDED_FP2_LENGTH} bytes, was {}",
             input.len()
-        )));
+        )).into());
     }
 
     let input_p0_x = remove_padding(&input[..PADDED_FP_LENGTH]).unwrap();

@@ -25,17 +25,17 @@ pub const ADDRESS: u64 = 0x0d;
 pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % g1_mul::INPUT_LENGTH != 0 {
-        return PrecompileErrors::err(PrecompileError::Other(format!(
+        return Err(PrecompileError::Other(format!(
             "G1MSM input length should be multiple of {}, was {}",
             g1_mul::INPUT_LENGTH,
             input_len
-        )));
+        )).into());
     }
 
     let k = input_len / g1_mul::INPUT_LENGTH;
     let required_gas = msm_required_gas(k, g1_mul::BASE_GAS_FEE);
     if required_gas > gas_limit {
-        return PrecompileErrors::err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     let mut g1_points: Vec<blst_p1> = Vec::with_capacity(k);

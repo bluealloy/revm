@@ -25,13 +25,13 @@ pub(super) const INPUT_LENGTH: usize = 160;
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g1-multiplication>
 pub(super) fn g1_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if BASE_GAS_FEE > gas_limit {
-        return PrecompileErrors::err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
     if input.len() != INPUT_LENGTH {
-        return PrecompileErrors::err(PrecompileError::Other(format!(
+        return Err(PrecompileError::Other(format!(
             "G1MUL input should be {INPUT_LENGTH} bytes, was {}",
             input.len()
-        )));
+        )).into());
     }
 
     // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.

@@ -26,19 +26,19 @@ pub const RETURN_VALUE: &[u8; 64] = &hex!(
 /// with z and y being padded 32 byte big endian values
 pub fn run(input: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
     if gas_limit < GAS_COST {
-        return PrecompileErrors::err(Error::OutOfGas);
+        return Err(Error::OutOfGas.into());
     }
 
     // Verify input length.
     if input.len() != 192 {
-        return PrecompileErrors::err(Error::BlobInvalidInputLength);
+        return Err(Error::BlobInvalidInputLength.into());
     }
 
     // Verify commitment matches versioned_hash
     let versioned_hash = &input[..32];
     let commitment = &input[96..144];
     if kzg_to_versioned_hash(commitment) != versioned_hash {
-        return PrecompileErrors::err(Error::BlobMismatchedVersion);
+        return Err(Error::BlobMismatchedVersion.into());
     }
 
     // Verify KZG proof with z and y in big endian format
@@ -47,7 +47,7 @@ pub fn run(input: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
     let y = as_bytes32(&input[64..96]);
     let proof = as_bytes48(&input[144..192]);
     if !verify_kzg_proof(commitment, z, y, proof, env.cfg.kzg_settings.get()) {
-        return PrecompileErrors::err(Error::BlobVerifyKzgProofFailed);
+        return Err(Error::BlobVerifyKzgProofFailed.into());
     }
 
     // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values

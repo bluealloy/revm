@@ -32,15 +32,15 @@ const INPUT_LENGTH: usize = 384;
 pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % INPUT_LENGTH != 0 {
-        return PrecompileErrors::err(PrecompileError::Other(format!(
+        return Err(PrecompileError::Other(format!(
             "Pairing input length should be multiple of {INPUT_LENGTH}, was {input_len}"
-        )));
+        )).into());
     }
 
     let k = input_len / INPUT_LENGTH;
     let required_gas: u64 = PAIRING_MULTIPLIER_BASE * k as u64 + PAIRING_OFFSET_BASE;
     if required_gas > gas_limit {
-        return PrecompileErrors::err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     // accumulator for the fp12 multiplications of the miller loops.

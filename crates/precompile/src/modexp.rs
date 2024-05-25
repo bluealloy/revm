@@ -50,7 +50,7 @@ where
 {
     // If there is no minimum gas, return error.
     if min_gas > gas_limit {
-        return PrecompileErrors::err(Error::OutOfGas);
+        return Err(Error::OutOfGas.into());
     }
 
     // The format of input is:
@@ -66,10 +66,10 @@ where
 
     // cast base and modulus to usize, it does not make sense to handle larger values
     let Ok(base_len) = usize::try_from(base_len) else {
-        return PrecompileErrors::err(Error::ModexpBaseOverflow);
+        return Err(Error::ModexpBaseOverflow.into());
     };
     let Ok(mod_len) = usize::try_from(mod_len) else {
-        return PrecompileErrors::err(Error::ModexpModOverflow);
+        return Err(Error::ModexpModOverflow.into());
     };
 
     // Handle a special case when both the base and mod length are zero.
@@ -79,7 +79,7 @@ where
 
     // Cast exponent length to usize, since it does not make sense to handle larger values.
     let Ok(exp_len) = usize::try_from(exp_len) else {
-        return PrecompileErrors::err(Error::ModexpModOverflow);
+        return Err(Error::ModexpModOverflow.into());
     };
 
     // Used to extract ADJUSTED_EXPONENT_LENGTH.
@@ -99,7 +99,7 @@ where
     // Check if we have enough gas.
     let gas_cost = calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp);
     if gas_cost > gas_limit {
-        return PrecompileErrors::err(Error::OutOfGas);
+        return Err(Error::OutOfGas.into());
     }
 
     // Padding is needed if the input does not contain all 3 values.
