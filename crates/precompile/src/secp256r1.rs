@@ -59,10 +59,7 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     uncompressed_pk[1..].copy_from_slice(pk);
 
     // Can fail only if the input is not exact length.
-    let signature = match Signature::from_slice(sig) {
-        Ok(sig) => sig,
-        Err(_) => return None,
-    };
+    let signature = match Signature::from_slice(sig).ok()?;
     // Can fail if the input is not valid, so we have to propagate the error.
     let public_key = VerifyingKey::from_sec1_bytes(&uncompressed_pk).ok()?;
 
