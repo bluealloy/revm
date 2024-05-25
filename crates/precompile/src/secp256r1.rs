@@ -47,11 +47,11 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     }
 
     // msg signed (msg is already the hash of the original message)
-    let msg: &[u8; 32] = input[..32].try_into().unwrap();
+    let msg = &input[..32];
     // r, s: signature
-    let sig: &[u8; 64] = input[32..96].try_into().unwrap();
+    let sig = &input[32..96];
     // x, y: public key
-    let pk: &[u8; 64] = input[96..160].try_into().unwrap();
+    let pk = &input[96..160];
 
     // append 0x04 to the public key: uncompressed form
     let mut uncompressed_pk = [0u8; 65];
@@ -59,7 +59,10 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
     uncompressed_pk[1..].copy_from_slice(pk);
 
     // Can fail only if the input is not exact length.
-    let signature = Signature::from_slice(sig).unwrap();
+    let signature = match Signature::from_slice(sig) {
+        Ok(sig) => sig,
+        Err(_) => return None,
+    };
     // Can fail if the input is not valid, so we have to propagate the error.
     let public_key = VerifyingKey::from_sec1_bytes(&uncompressed_pk).ok()?;
 
@@ -87,6 +90,7 @@ mod test {
     #[case::fail_short_input_1("4cee90eb86eaa050036147a12d49004b6a", false)]
     #[case::fail_short_input_2("4cee90eb86eaa050036147a12d49004b6a958b991cfd78f16537fe6d1f4afd10273384db08bdfc843562a22b0626766686f6aec8247599f40bfe01bec0e0ecf17b4319559022d4d9bf007fe929943004eb4866760dedf319", false)]
     #[case::fail_long_input("4cee90eb86eaa050036147a12d49004b6b9c72bd725d39d4785011fe190f0b4da73bd4903f0ce3b639bbbf6e8e80d16931ff4bcf5993d58468e8fb19086e8cac36dbcd03009df8c59286b162af3bd7fcc0450c9aa81be5d10d312af6c66b1d604aebd3099c618202fcfe16ae7770b0c49ab5eadf74b754204a3bb6060e44eff37618b065f9832de4ca6ca971a7a1adc826d0f7c00181a5fb2ddf79ae00b4e10e00", false)]
+    #[case::fail_invalid_sig("4cee90eb86eaa050036147a12d49004b6b9c72bd725d39d4785011fe190f0b4dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4aebd3099c618202fcfe16ae7770b0c49ab5eadf74b754204a3bb6060e44eff37618b065f9832de4ca6ca971a7a1adc826d0f7c00181a5fb2ddf79ae00b4e10e", false)]
     fn test_sig_verify(#[case] input: &str, #[case] expect_success: bool) {
         let input = Bytes::from_hex(input).unwrap();
         let target_gas = 3_500u64;
