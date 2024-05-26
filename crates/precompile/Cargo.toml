@@ -44,6 +44,9 @@ secp256k1 = { version = "0.29.0", default-features = false, features = [
 # BLS12-381 precompiles
 blst = { version = "0.3.11", optional = true }
 
+# p256verify precompile
+p256 = { version = "0.13.2", optional = true,  default-features = false, features = ["ecdsa"] }
+
 [dev-dependencies]
 criterion = { version = "0.5" }
 rand = { version = "0.8", features = ["std"] }
@@ -67,7 +70,7 @@ std = [
 hashbrown = ["revm-primitives/hashbrown"]
 asm-keccak = ["revm-primitives/asm-keccak"]
 
-optimism = ["revm-primitives/optimism"]
+optimism = ["revm-primitives/optimism", "secp256r1"]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
 optimism-default-handler = [
     "optimism",
@@ -76,6 +79,9 @@ optimism-default-handler = [
 negate-optimism-default-handler = [
     "revm-primitives/negate-optimism-default-handler",
 ]
+
+# Enables the p256verify precompile.
+secp256r1 = ["dep:p256"]
 
 # These libraries may not work on all no_std platforms as they depend on C.
 
