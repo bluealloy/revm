@@ -56,8 +56,8 @@ paste.workspace = true
 
 [features]
 default = [
-    #    "debug_print",
-    #    "e2e"
+    "debug_print",
+    "e2e"
 ]
 e2e = [
     "fluentbase-core/e2e",

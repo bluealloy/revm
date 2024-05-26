@@ -360,13 +360,16 @@ impl Interpreter {
 
         #[cfg(feature = "debug_print")]
         println!(
-            " - opcode {:x?} pc {} stack {:?} gas (limit {} spent {} remaining {})",
+            " - opcode {:x?} pc {} stack({}) {:?} gas (limit {} spent {} remaining {}) instruction_result {:?} next_action {:?}",
             opcode,
             self.program_counter(),
+            self.stack.len(),
             self.stack.data(),
             self.gas.limit(),
             self.gas.spent(),
             self.gas.remaining(),
+            self.instruction_result,
+            self.next_action,
         );
     }
 

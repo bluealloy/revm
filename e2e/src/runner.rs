@@ -396,7 +396,8 @@ fn check_evm_execution<EXT1, EXT2>(
                 .map(|v| &v.info)
                 .expect("missing FLUENT account");
             if cfg!(feature = "debug_print") {
-                println!(" - balance: {}", a1.balance);
+                println!(" - balance1: {}", a1.balance);
+                println!(" - balance2: {}", a2.balance);
             }
             let balance_diff = if a1.balance > a2.balance {
                 a1.balance - a2.balance
