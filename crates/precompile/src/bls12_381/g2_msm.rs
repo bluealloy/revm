@@ -11,6 +11,7 @@ use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
     PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(g2_msm));
+
 /// BLS12_G2MSM precompile address.
 pub const ADDRESS: u64 = 0x10;
 

@@ -48,14 +48,15 @@ mod test {
     use serde_derive::{Deserialize, Serialize};
     use std::{fs, path::Path};
 
+    /// Test vector structure for BLS12-381 precompile tests.
     #[derive(Serialize, Deserialize, Debug)]
     #[serde(rename_all = "PascalCase")]
     struct TestVector {
         input: String,
-        expected: String,
+        expected: Option<String>,
         name: String,
-        gas: u64,
-        error: Option<bool>,
+        gas: Option<u64>,
+        expected_error: Option<String>,
     }
 
     #[derive(Serialize, Deserialize, Debug)]
@@ -67,6 +68,15 @@ mod test {
     }
 
     #[rstest]
+    #[case::fail_g1_add(g1_add::g1_add, "fail-add_G1_bls.json")]
+    #[case::fail_g1_mul(g1_mul::g1_mul, "fail-mul_G1_bls.json")]
+    #[case::fail_g1_msm(g1_msm::g1_msm, "fail-multiexp_G1_bls.json")]
+    #[case::fail_g2_add(g2_add::g2_add, "fail-add_G2_bls.json")]
+    #[case::fail_g2_mul(g2_mul::g2_mul, "fail-mul_G2_bls.json")]
+    #[case::fail_g2_msm(g2_msm::g2_msm, "fail-multiexp_G2_bls.json")]
+    #[case::fail_pairing(pairing::pairing, "fail-pairing_check_bls.json")]
+    #[case::fail_map_fp_to_g1(map_fp_to_g1::map_fp_to_g1, "fail-map_fp_to_G1_bls.json")]
+    #[case::fail_map_fp2_to_g2(map_fp2_to_g2::map_fp2_to_g2, "fail-map_fp2_to_G2_bls.json")]
     #[case::g1_add(g1_add::g1_add, "add_G1_bls.json")]
     #[case::g1_mul(g1_mul::g1_mul, "mul_G1_bls.json")]
     #[case::g1_msm(g1_msm::g1_msm, "multiexp_G1_bls.json")]
@@ -93,17 +103,23 @@ mod test {
             });
             let target_gas: u64 = 30_000_000;
             let res = precompile(&input, target_gas);
-            if vector.error.unwrap_or_default() {
-                assert!(res.is_err(), "expected error didn't happen in {test_name}");
+            if let Some(expected_error) = vector.expected_error {
+                assert!(res.is_err(), "expected error {expected_error} didn't happen in {test_name}, got result {res:?}");
             } else {
+                let Some(gas) = vector.gas else {
+                    panic!("gas is missing in {test_name}");
+                };
                 let (actual_gas, actual_output) =
                     res.unwrap_or_else(|e| panic!("precompile call failed for {test_name}: {e}"));
                 assert_eq!(
-                    vector.gas, actual_gas,
+                    gas, actual_gas,
                     "expected gas: {}, actual gas: {} in {test_name}",
-                    vector.gas, actual_gas
+                    gas, actual_gas
                 );
-                let expected_output = Bytes::from_hex(vector.expected).unwrap();
+                let Some(expected) = vector.expected else {
+                    panic!("expected output is missing in {test_name}");
+                };
+                let expected_output = Bytes::from_hex(expected).unwrap();
                 assert_eq!(
                     expected_output, actual_output,
                     "expected output: {expected_output}, actual output: {actual_output} in {test_name}");
