@@ -1,9 +1,6 @@
-use super::{
-    g1::check_canonical_fp,
-    utils::{fp_to_bytes, remove_padding, FP_LENGTH, PADDED_FP_LENGTH},
-};
+use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding, FP_LENGTH, PADDED_FP_LENGTH};
+use crate::primitives::{Bytes, PrecompileError};
 use blst::{blst_fp2, blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_on_curve};
-use revm_primitives::{Bytes, PrecompileError};
 
 /// Length of each of the elements in a g2 operation input.
 pub(super) const G2_INPUT_ITEM_LENGTH: usize = 256;
@@ -49,8 +46,8 @@ pub(super) fn check_canonical_fp2(
     input_1: &[u8; 48],
     input_2: &[u8; 48],
 ) -> Result<blst_fp2, PrecompileError> {
-    let fp_1 = check_canonical_fp(input_1)?;
-    let fp_2 = check_canonical_fp(input_2)?;
+    let fp_1 = fp_from_bendian(input_1)?;
+    let fp_2 = fp_from_bendian(input_2)?;
 
     let fp2 = blst_fp2 { fp: [fp_1, fp_2] };
 

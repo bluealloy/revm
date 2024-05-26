@@ -1,9 +1,6 @@
-use super::utils::{fp_to_bytes, remove_padding, PADDED_FP_LENGTH};
-use blst::{
-    blst_bendian_from_fp, blst_fp, blst_fp_from_bendian, blst_p1_affine, blst_p1_affine_in_g1,
-    blst_p1_affine_on_curve,
-};
-use revm_primitives::{Bytes, PrecompileError};
+use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding, PADDED_FP_LENGTH};
+use crate::primitives::{Bytes, PrecompileError};
+use blst::{blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve};
 
 /// Length of each of the elements in a g1 operation input.
 pub(super) const G1_INPUT_ITEM_LENGTH: usize = 128;
@@ -33,33 +30,11 @@ pub(super) fn decode_and_check_g1(
     p0_y: &[u8; 48],
 ) -> Result<blst_p1_affine, PrecompileError> {
     let out = blst_p1_affine {
-        x: check_canonical_fp(p0_x)?,
-        y: check_canonical_fp(p0_y)?,
+        x: fp_from_bendian(p0_x)?,
+        y: fp_from_bendian(p0_y)?,
     };
 
     Ok(out)
-}
-
-/// Checks whether or not the input represents a canonical field element, returning the field
-/// element if successful.
-pub(super) fn check_canonical_fp(input: &[u8; 48]) -> Result<blst_fp, PrecompileError> {
-    let mut fp = blst_fp::default();
-    let mut out = [0; 48];
-    // SAFETY: input has fixed length, and fp is a blst value.
-    unsafe {
-        // TODO: cursed and horrible, we need to ensure the input is canonical. It would be nice if
-        // `blst_fp_from_bendian` checked for canonical
-        //
-        // This performs the check for canonical field elements
-        blst_fp_from_bendian(&mut fp, input.as_ptr());
-        blst_bendian_from_fp(out.as_mut_ptr(), &fp);
-    }
-
-    if *input != out {
-        return Err(PrecompileError::Other("non-canonical fp value".to_string()));
-    }
-
-    Ok(fp)
 }
 
 /// Extracts a G1 point in Affine format from a 128 byte slice representation.
