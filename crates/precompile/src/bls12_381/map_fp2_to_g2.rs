@@ -7,7 +7,7 @@ use blst::{
     blst_fp, blst_fp2, blst_fp_from_bendian, blst_map_to_g2, blst_p2, blst_p2_affine,
     blst_p2_to_affine,
 };
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileErrors, PrecompileResult};
+use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_MAP_FP2_TO_G2 precompile.
 pub const PRECOMPILE: PrecompileWithAddress =

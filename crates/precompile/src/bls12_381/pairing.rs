@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use blst::{blst_final_exp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_miller_loop};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileErrors, PrecompileResult, B256};
+use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult, B256};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
