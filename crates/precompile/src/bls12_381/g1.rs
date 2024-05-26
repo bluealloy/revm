@@ -24,7 +24,7 @@ pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> Bytes {
 ///
 /// If the x or y coordinate do not represent a canonical field element, an error is returned.
 ///
-/// See [check_canonical_fp] for more information.
+/// See [fp_from_bendian] for more information.
 pub(super) fn decode_and_check_g1(
     p0_x: &[u8; 48],
     p0_y: &[u8; 48],
