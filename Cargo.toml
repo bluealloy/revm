@@ -32,6 +32,12 @@ fluentbase-codec-derive = { path = "../fluentbase/crates/codec-derive" }
 fluentbase-poseidon = { path = "../fluentbase/crates/poseidon" }
 fluentbase-genesis = { path = "../fluentbase/crates/genesis" }
 
+alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", default-features = false, features = [
+    "reqwest",
+] }
+# needed for enabling TLS to use HTTPS connections when testing alloy DB
+alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d" }
+
 rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm", branch = "devel", default-features = false }
 #rwasm = { path = "../rwasm/rwasm", default-features = false }
 
