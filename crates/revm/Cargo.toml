@@ -24,6 +24,7 @@ all = "warn"
 [dependencies]
 # revm
 revm-interpreter = { workspace = true }
+revm-interpreter-fluent = { workspace = true }
 revm-precompile = { workspace = true }
 
 fluentbase-sdk = { workspace = true }

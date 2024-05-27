@@ -3445,6 +3445,7 @@ dependencies = [
  "lazy_static",
  "reqwest 0.12.4",
  "revm-interpreter",
+ "revm-interpreter-fluent",
  "revm-precompile",
  "rwasm",
  "serde",

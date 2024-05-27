@@ -30,7 +30,10 @@ use crate::{
     FrameResult,
 };
 use core::{cell::RefCell, fmt, str::from_utf8};
-use fluentbase_core::loader::{_loader_call, _loader_create};
+use fluentbase_core::{
+    helpers::evm_error_from_exit_code,
+    loader::{_loader_call, _loader_create},
+};
 use fluentbase_sdk::{ContractInput, EvmCallMethodInput, EvmCreateMethodInput};
 use fluentbase_types::{consts::EVM_STORAGE_ADDRESS, ExitCode};
 use revm_interpreter::{
