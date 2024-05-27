@@ -555,7 +555,7 @@ impl JournaledState {
         address: Address,
         db: &mut DB,
     ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
-        Ok(match self.state.entry(address) {
+        let (value, is_cold) = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
                 let is_cold = account.mark_warm();
@@ -569,18 +569,22 @@ impl JournaledState {
                         Account::new_not_existing()
                     };
 
-                // journal loading of account. AccessList touch.
-                self.journal
-                    .last_mut()
-                    .unwrap()
-                    .push(JournalEntry::AccountLoaded { address });
-
                 // precompiles are warm loaded so we need to take that into account
                 let is_cold = !self.warm_preloaded_addresses.contains(&address);
 
                 (vac.insert(account), is_cold)
             }
-        })
+        };
+
+        // journal loading of cold account.
+        if is_cold {
+            self.journal
+                .last_mut()
+                .unwrap()
+                .push(JournalEntry::AccountLoaded { address });
+        }
+
+        Ok((value, is_cold))
     }
 
     /// Load account from database to JournaledState.
@@ -645,7 +649,7 @@ impl JournaledState {
         let account = self.state.get_mut(&address).unwrap();
         // only if account is created in this tx we can assume that storage is empty.
         let is_newly_created = account.is_created();
-        let load = match account.storage.entry(key) {
+        let (value, is_cold) = match account.storage.entry(key) {
             Entry::Occupied(occ) => {
                 let slot = occ.into_mut();
                 let is_cold = slot.mark_warm();
@@ -658,22 +662,26 @@ impl JournaledState {
                 } else {
                     db.storage(address, key).map_err(EVMError::Database)?
                 };
-                // add it to journal as cold loaded.
-                self.journal
-                    .last_mut()
-                    .unwrap()
-                    .push(JournalEntry::StorageChange {
-                        address,
-                        key,
-                        had_value: None,
-                    });
 
                 vac.insert(StorageSlot::new(value));
 
                 (value, true)
             }
         };
-        Ok(load)
+
+        if is_cold {
+            // add it to journal as cold loaded.
+            self.journal
+                .last_mut()
+                .unwrap()
+                .push(JournalEntry::StorageChange {
+                    address,
+                    key,
+                    had_value: None,
+                });
+        }
+
+        Ok((value, is_cold))
     }
 
     /// Stores storage slot.
