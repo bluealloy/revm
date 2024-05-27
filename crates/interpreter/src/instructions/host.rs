@@ -106,8 +106,7 @@ pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
     gas!(interpreter, gas::BLOCKHASH);
     pop_top!(interpreter, number);
 
-    let block_number = host.env().block.number;
-    let Some(hash) = host.block_hash(block_number) else {
+    let Some(hash) = host.block_hash(*number) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
