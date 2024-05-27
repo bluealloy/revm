@@ -1,11 +1,25 @@
 use super::{
-    bundle_state::BundleRetention, cache::CacheState, plain_account::PlainStorage, BundleState,
-    CacheAccount, StateBuilder, TransitionAccount, TransitionState,
+    bundle_state::BundleRetention,
+    cache::CacheState,
+    plain_account::PlainStorage,
+    BundleState,
+    CacheAccount,
+    StateBuilder,
+    TransitionAccount,
+    TransitionState,
 };
 use crate::db::EmptyDB;
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
-    hash_map, Account, AccountInfo, Address, Bytecode, HashMap, B256, BLOCK_HASH_HISTORY, U256,
+    hash_map,
+    Account,
+    AccountInfo,
+    Address,
+    Bytecode,
+    HashMap,
+    B256,
+    BLOCK_HASH_HISTORY,
+    U256,
 };
 use std::{
     boxed::Box,
@@ -305,7 +319,10 @@ impl<DB: Database> DatabaseCommit for State<DB> {
 mod tests {
     use super::*;
     use crate::db::{
-        states::reverts::AccountInfoRevert, AccountRevert, AccountStatus, BundleAccount,
+        states::reverts::AccountInfoRevert,
+        AccountRevert,
+        AccountStatus,
+        BundleAccount,
         RevertToSlot,
     };
     use revm_interpreter::primitives::{keccak256, StorageSlot};
@@ -337,9 +354,9 @@ mod tests {
     /// Checks that if accounts is touched multiple times in the same block,
     /// then the old values from the first change are preserved and not overwritten.
     ///
-    /// This is important because the state transitions from different transactions in the same block may see
-    /// different states of the same account as the old value, but the revert should reflect the
-    /// state of the account before the block.
+    /// This is important because the state transitions from different transactions in the same
+    /// block may see different states of the same account as the old value, but the revert
+    /// should reflect the state of the account before the block.
     #[test]
     fn reverts_preserve_old_values() {
         let mut state = State::builder().with_bundle_update().build();
@@ -347,7 +364,8 @@ mod tests {
         let (slot1, slot2, slot3) = (U256::from(1), U256::from(2), U256::from(3));
 
         // Non-existing account for testing account state transitions.
-        // [LoadedNotExisting] -> [Changed] (nonce: 1, balance: 1) -> [Changed] (nonce: 2) -> [Changed] (nonce: 3)
+        // [LoadedNotExisting] -> [Changed] (nonce: 1, balance: 1) -> [Changed] (nonce: 2) ->
+        // [Changed] (nonce: 3)
         let new_account_address = Address::from_slice(&[0x1; 20]);
         let new_account_created_info = AccountInfo {
             nonce: 1,
@@ -421,7 +439,8 @@ mod tests {
             },
         )]));
 
-        // Another transaction in block 1 then changes the newly created account yet again and modifies the storage in an existing one.
+        // Another transaction in block 1 then changes the newly created account yet again and
+        // modifies the storage in an existing one.
         state.apply_transition(Vec::from([
             (
                 new_account_address,
@@ -512,8 +531,8 @@ mod tests {
             "The account or storage reverts are incorrect"
         );
 
-        // The latest state of the new account should be: nonce = 3, balance = 1, code & code hash = None.
-        // Storage: 0x01 = 1.
+        // The latest state of the new account should be: nonce = 3, balance = 1, code & code hash =
+        // None. Storage: 0x01 = 1.
         assert_eq!(
             bundle_state.account(&new_account_address),
             Some(&BundleAccount {

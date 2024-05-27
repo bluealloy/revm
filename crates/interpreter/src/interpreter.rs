@@ -284,7 +284,7 @@ impl Interpreter {
         let target_len = min(out_len, self.return_data_buffer.len());
         match call_outcome.instruction_result() {
             return_ok!() => {
-                // return unspend gas.
+                // return unspent gas.
                 let remaining = call_outcome.gas().remaining();
                 let refunded = call_outcome.gas().refunded();
                 self.gas.erase_cost(remaining);

@@ -4,7 +4,7 @@ use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
-    interpreter::Host,
+    interpreter::{Host, InterpreterAction, SharedMemory},
     primitives::{
         hex,
         specification::SpecId,
@@ -25,6 +25,8 @@ use crate::{
     },
     Context,
     ContextWithHandlerCfg,
+    Frame,
+    FrameOrResult,
     FrameResult,
 };
 use core::{cell::RefCell, fmt, str::from_utf8};
@@ -593,30 +595,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         );
         let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
         let call_output = _loader_call(&contract_input, &am, method_input);
-
-        // let core_input = CoreInput {
-        //     method_id,
-        //     method_data,
-        // }
-        // .encode_to_vec(0);
-        //
-        // let (output_buffer, exit_code) = self.exec_rwasm_binary(
-        //     &mut gas,
-        //     caller_account,
-        //     &mut middleware_account,
-        //     Some(callee_account.address),
-        //     core_input.into(),
-        //     value,
-        // );
-        //
-        // let call_output = if exit_code == ExitCode::Ok {
-        //     let mut buffer_decoder = BufferDecoder::new(output_buffer.as_ref());
-        //     let mut call_output = EvmCallMethodOutput::default();
-        //     EvmCallMethodOutput::decode_body(&mut buffer_decoder, 0, &mut call_output);
-        //     call_output
-        // } else {
-        //     EvmCallMethodOutput::from_exit_code(exit_code).with_gas(gas.remaining())
-        // };
 
         {
             println!("executed ECL call:");

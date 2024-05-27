@@ -2,16 +2,32 @@ use crate::{
     db::Database,
     frame::EOFCreateFrame,
     interpreter::{
-        return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
+        return_ok,
+        return_revert,
+        CallInputs,
+        CreateInputs,
+        CreateOutcome,
+        Gas,
+        InstructionResult,
         SharedMemory,
     },
     primitives::{EVMError, Env, Spec, SpecId},
-    CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
+    CallFrame,
+    Context,
+    CreateFrame,
+    Frame,
+    FrameOrResult,
+    FrameResult,
 };
 use core::mem;
 use revm_interpreter::{
-    opcode::InstructionTables, CallOutcome, EOFCreateInput, EOFCreateOutcome, InterpreterAction,
-    InterpreterResult, EMPTY_SHARED_MEMORY,
+    opcode::InstructionTables,
+    CallOutcome,
+    EOFCreateInput,
+    EOFCreateOutcome,
+    InterpreterAction,
+    InterpreterResult,
+    EMPTY_SHARED_MEMORY,
 };
 use std::boxed::Box;
 

@@ -26,7 +26,7 @@ revm = { workspace = true, features = [
     "c-kzg",
     "blst",
 ] }
-revm_fluent = { workspace = true, features = [
+revm-fluent = { workspace = true, features = [
     "ethersdb",
     "std",
     "serde-json",
@@ -55,16 +55,14 @@ lazy_static = { workspace = true }
 paste.workspace = true
 
 [features]
-default = [
-    "debug_print",
-    "e2e"
-]
+default = []
 e2e = [
     "fluentbase-core/e2e",
     "fluentbase-sdk/e2e",
 ]
 debug_use_fluent_storage = []
 debug_print = [
+    "e2e",
     "revm/debug_print",
-    "revm_fluent/debug_print",
+    "revm-fluent/debug_print",
 ]

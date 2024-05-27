@@ -1,16 +1,15 @@
 //! Custom print inspector, it has step level information of execution.
 //! It is a great tool if some debugging is needed.
 
-use revm_interpreter::CallOutcome;
-use revm_interpreter::CreateOutcome;
-use revm_interpreter::OpCode;
-
 use crate::{
     inspectors::GasInspector,
     interpreter::{CallInputs, CreateInputs, Interpreter},
     primitives::{Address, U256},
-    Database, EvmContext, Inspector,
+    Database,
+    EvmContext,
+    Inspector,
 };
+use revm_interpreter::{CallOutcome, CreateOutcome, OpCode};
 
 /// Custom print [Inspector], it has step level information of execution.
 ///

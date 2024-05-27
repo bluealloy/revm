@@ -8,14 +8,26 @@ use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
     optimism,
     primitives::{
-        db::Database, spec_to_generic, Account, EVMError, Env, ExecutionResult, HaltReason,
-        HashMap, InvalidTransaction, ResultAndState, Spec, SpecId, SpecId::REGOLITH, U256,
+        db::Database,
+        spec_to_generic,
+        Account,
+        EVMError,
+        Env,
+        ExecutionResult,
+        HaltReason,
+        HashMap,
+        InvalidTransaction,
+        ResultAndState,
+        Spec,
+        SpecId,
+        SpecId::REGOLITH,
+        U256,
     },
-    Context, FrameResult,
+    Context,
+    FrameResult,
 };
 use core::ops::Mul;
-use std::string::ToString;
-use std::sync::Arc;
+use std::{string::ToString, sync::Arc};
 
 pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {
     spec_to_generic!(handler.cfg.spec_id, {
@@ -91,13 +103,12 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
             //
             // Hardfork Behavior:
             // - Bedrock (success path):
-            //   - Deposit transactions (non-system) report their gas limit as the usage.
-            //     No refunds.
+            //   - Deposit transactions (non-system) report their gas limit as the usage. No
+            //     refunds.
             //   - Deposit transactions (system) report 0 gas used. No refunds.
             //   - Regular transactions report gas usage as normal.
             // - Regolith (success path):
-            //   - Deposit transactions (all) report their gas used as normal. Refunds
-            //     enabled.
+            //   - Deposit transactions (all) report their gas used as normal. Refunds enabled.
             //   - Regular transactions report their gas used as normal.
             if !is_deposit || is_regolith {
                 // For regular transactions prior to Regolith and all transactions after
@@ -116,12 +127,12 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
             //
             // Hardfork Behavior:
             // - Bedrock (revert path):
-            //   - Deposit transactions (all) report the gas limit as the amount of gas
-            //     used on failure. No refunds.
+            //   - Deposit transactions (all) report the gas limit as the amount of gas used on
+            //     failure. No refunds.
             //   - Regular transactions receive a refund on remaining gas as normal.
             // - Regolith (revert path):
-            //   - Deposit transactions (all) report the actual gas used as the amount of
-            //     gas used on failure. Refunds on remaining gas enabled.
+            //   - Deposit transactions (all) report the actual gas used as the amount of gas used
+            //     on failure. Refunds on remaining gas enabled.
             //   - Regular transactions receive a refund on remaining gas as normal.
             if !is_deposit || is_regolith {
                 gas.erase_cost(remaining);
@@ -368,17 +379,23 @@ pub fn end<SPEC: Spec, EXT, DB: Database>(
 
 #[cfg(test)]
 mod tests {
-    use revm_interpreter::{CallOutcome, InterpreterResult};
-
     use super::*;
     use crate::{
         db::{EmptyDB, InMemoryDB},
         primitives::{
-            bytes, state::AccountInfo, Address, BedrockSpec, Bytes, Env, LatestSpec, RegolithSpec,
+            bytes,
+            state::AccountInfo,
+            Address,
+            BedrockSpec,
+            Bytes,
+            Env,
+            LatestSpec,
+            RegolithSpec,
             B256,
         },
         L1BlockInfo,
     };
+    use revm_interpreter::{CallOutcome, InterpreterResult};
 
     /// Creates frame result.
     fn call_last_frame_return<SPEC: Spec>(

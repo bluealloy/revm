@@ -46,13 +46,7 @@ revm = { path = "crates/revm", features = [
     "c-kzg",
     "blst",
 ] }
-revm_fluent = { path = "crates/revm_fluent", features = [
-    "ethersdb",
-    "std",
-    "serde-json",
-    "c-kzg",
-    "blst",
-] }
+revm-fluent = { path = "crates/revm_fluent" }
 
 [workspace.metadata.docs.rs]
 all-features = true

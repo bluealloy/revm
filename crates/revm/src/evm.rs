@@ -17,6 +17,7 @@ use crate::{
         EnvWithHandlerCfg,
         ExecutionResult,
         HandlerCfg,
+        InvalidTransaction,
         ResultAndState,
         TransactTo,
         TxEnv,
@@ -411,13 +412,15 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 let (evm_storage, _) = ctx.evm.load_account(EVM_STORAGE_ADDRESS)?;
                 evm_storage.info.nonce = 1;
                 ctx.evm.touch(&EVM_STORAGE_ADDRESS);
+                let tx_gas_limit = ctx.evm.env.tx.gas_limit;
 
                 match ctx.evm.env.tx.transact_to {
                     TransactTo::Call(address) => {
                         let value = ctx.evm.env.tx.value;
                         let caller = ctx.evm.env.tx.caller;
                         let data = ctx.evm.env.tx.data.clone();
-                        let result = self.call_inner(caller, address, value, data, gas_limit)?;
+                        let result =
+                            self.call_inner(caller, address, value, data, tx_gas_limit, gas_limit)?;
                         FrameResult::Call(result)
                     }
                     TransactTo::Create => {
@@ -490,13 +493,13 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let mut gas = Gas::new(gas_limit);
 
         if self.context.evm.journaled_state.depth as u64 > CALL_STACK_LIMIT {
-            return Ok(return_result(InstructionResult::CallDepthOverflow, gas));
+            return Ok(return_result(InstructionResult::CallTooDeep, gas));
         }
 
         let (caller_account, _) = self.context.evm.load_account(caller_address)?;
         // .expect("external database error");
         if caller_account.info.balance < value {
-            return Ok(return_result(InstructionResult::InsufficientBalance, gas));
+            return Ok(return_result(InstructionResult::OutOfFunds, gas));
         }
 
         let method_data = EvmCreateMethodInput {
@@ -554,7 +557,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         Ok(CreateOutcome {
             result: InterpreterResult {
-                result: InstructionResult::from(create_output.exit_code),
+                result: evm_error_from_exit_code(create_output.exit_code.into()),
                 output: Bytes::new(),
                 gas,
             },
@@ -570,9 +573,10 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         callee_address: Address,
         value: U256,
         input: Bytes,
+        tx_gas_limit: u64,
         gas_limit: u64,
     ) -> Result<CallOutcome, EVMError<DB::Error>> {
-        let mut gas = Gas::new(gas_limit);
+        let mut gas = Gas::new(tx_gas_limit);
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         if value == U256::ZERO {
@@ -585,7 +589,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             callee: callee_address,
             value,
             input,
-            gas_limit: gas.remaining(),
+            gas_limit,
             depth: 0,
         };
         let contract_input = self.input_from_env(
@@ -598,39 +602,24 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
         let call_output = _loader_call(&contract_input, &am, method_input);
 
-        // let core_input = CoreInput {
-        //     method_id,
-        //     method_data,
-        // }
-        // .encode_to_vec(0);
-        //
-        // let (output_buffer, exit_code) = self.exec_rwasm_binary(
-        //     &mut gas,
-        //     caller_account,
-        //     &mut middleware_account,
-        //     Some(callee_account.address),
-        //     core_input.into(),
-        //     value,
-        // );
-        //
-        // let call_output = if exit_code == ExitCode::Ok {
-        //     let mut buffer_decoder = BufferDecoder::new(output_buffer.as_ref());
-        //     let mut call_output = EvmCallMethodOutput::default();
-        //     EvmCallMethodOutput::decode_body(&mut buffer_decoder, 0, &mut call_output);
-        //     call_output
-        // } else {
-        //     EvmCallMethodOutput::from_exit_code(exit_code).with_gas(gas.remaining())
-        // };
-
         {
             println!("executed ECL call:");
             println!(" - caller: 0x{}", hex::encode(caller_address));
             println!(" - callee: 0x{}", hex::encode(callee_address));
             println!(" - value: 0x{}", hex::encode(&value.to_be_bytes::<32>()));
             println!(
+                " - call_output.gas_remaining: {}",
+                call_output.gas_remaining
+            );
+            println!(" - call_output.gas_refund: {}", call_output.gas_refund);
+            println!(
                 " - fuel consumed: {}",
                 gas.remaining() as i64 - call_output.gas_remaining as i64
             );
+            println!(" - gas.limit: {}", gas.limit() as i64);
+            println!(" - gas.remaining: {}", gas.remaining() as i64);
+            println!(" - gas.spent: {}", gas.spent() as i64);
+            println!(" - gas.refunded: {}", gas.refunded());
             println!(" - exit code: {}", call_output.exit_code);
             if call_output.output.iter().all(|c| c.is_ascii()) {
                 println!(
@@ -645,12 +634,15 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             }
         }
 
-        let mut gas = Gas::new(call_output.gas_remaining);
+        let mut gas = Gas::new(tx_gas_limit);
+        if !gas.record_cost(tx_gas_limit - call_output.gas_remaining) {
+            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
+        };
         gas.record_refund(call_output.gas_refund);
 
         Ok(CallOutcome {
             result: InterpreterResult {
-                result: ExitCode::from(call_output.exit_code),
+                result: evm_error_from_exit_code(call_output.exit_code.into()),
                 output: call_output.output,
                 gas,
             },

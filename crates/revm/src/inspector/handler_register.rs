@@ -3,10 +3,15 @@ use crate::{
     handler::register::EvmHandler,
     interpreter::{
         opcode::{self, BoxedInstruction},
-        InstructionResult, Interpreter,
+        InstructionResult,
+        Interpreter,
     },
     primitives::EVMError,
-    Context, FrameOrResult, FrameResult, Inspector, JournalEntry,
+    Context,
+    FrameOrResult,
+    FrameResult,
+    Inspector,
+    JournalEntry,
 };
 use core::cell::RefCell;
 use revm_interpreter::opcode::InstructionTables;
@@ -170,10 +175,10 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
         handler.execution.insert_call_outcome =
             Arc::new(move |ctx, frame, shared_memory, mut outcome| {
                 let call_inputs = call_input_stack_inner.borrow_mut().pop().unwrap();
-                outcome = ctx
-                    .external
-                    .get_inspector()
-                    .call_end(&mut ctx.evm, &call_inputs, outcome);
+                outcome =
+                    ctx.external
+                        .get_inspector()
+                        .call_end(&mut ctx.evm, &call_inputs, outcome);
                 old_handle(ctx, frame, shared_memory, outcome)
             });
 
@@ -182,10 +187,10 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
         let old_handle = handler.execution.insert_create_outcome.clone();
         handler.execution.insert_create_outcome = Arc::new(move |ctx, frame, mut outcome| {
             let create_inputs = create_input_stack_inner.borrow_mut().pop().unwrap();
-            outcome = ctx
-                .external
-                .get_inspector()
-                .create_end(&mut ctx.evm, &create_inputs, outcome);
+            outcome =
+                ctx.external
+                    .get_inspector()
+                    .create_end(&mut ctx.evm, &create_inputs, outcome);
             old_handle(ctx, frame, outcome)
         });
 
@@ -258,7 +263,8 @@ mod tests {
         inspectors::NoOpInspector,
         interpreter::{opcode::*, CallInputs, CallOutcome, CreateInputs, CreateOutcome},
         primitives::BerlinSpec,
-        Evm, EvmContext,
+        Evm,
+        EvmContext,
     };
 
     // Test that this pattern builds.

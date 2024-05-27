@@ -29,7 +29,9 @@ macro_rules! define_tests {
 }
 
 mod test_that_fails {
-    define_tests! {}
+    define_tests! {
+        fn t("tests/GeneralStateTests/stExample/add11_yml.json");
+    }
 }
 
 mod st_time_consuming {

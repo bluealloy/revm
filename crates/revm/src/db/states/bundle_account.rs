@@ -1,6 +1,10 @@
 use super::{
-    reverts::AccountInfoRevert, AccountRevert, AccountStatus, RevertToSlot,
-    StorageWithOriginalValues, TransitionAccount,
+    reverts::AccountInfoRevert,
+    AccountRevert,
+    AccountStatus,
+    RevertToSlot,
+    StorageWithOriginalValues,
+    TransitionAccount,
 };
 use revm_interpreter::primitives::{AccountInfo, StorageSlot, U256};
 use revm_precompile::HashMap;
@@ -22,7 +26,8 @@ pub struct BundleAccount {
     /// When extracting changeset we compare if original value is different from present value.
     /// If it is different we add it to changeset.
     ///
-    /// If Account was destroyed we ignore original value and compare present state with U256::ZERO.
+    /// If Account was destroyed we ignore original value and compare present state with
+    /// U256::ZERO.
     pub storage: StorageWithOriginalValues,
     /// Account status.
     pub status: AccountStatus,
@@ -117,7 +122,8 @@ impl BundleAccount {
                         .present_value = value;
                 }
                 RevertToSlot::Destroyed => {
-                    // if it was destroyed this means that storage was created and we need to remove it.
+                    // if it was destroyed this means that storage was created and we need to remove
+                    // it.
                     self.storage.remove(&key);
                 }
             }
@@ -191,8 +197,9 @@ impl BundleAccount {
                 let previous_storage = previous_storage_from_update(&updated_storage);
                 let in_memory_info_revert = match self.status {
                     AccountStatus::Loaded | AccountStatus::InMemoryChange => {
-                        // from loaded (Or LoadedEmpty) to InMemoryChange can happen if there is balance change
-                        // or new created account but Loaded didn't have contract.
+                        // from loaded (Or LoadedEmpty) to InMemoryChange can happen if there is
+                        // balance change or new created account but Loaded
+                        // didn't have contract.
                         extend_storage(&mut self.storage, updated_storage);
                         info_revert
                     }
@@ -274,8 +281,8 @@ impl BundleAccount {
                             })
                         }
                         AccountStatus::DestroyedChanged => {
-                            // Account was destroyed in this transition. So we should clear present storage
-                            // and insert it inside revert.
+                            // Account was destroyed in this transition. So we should clear present
+                            // storage and insert it inside revert.
 
                             let previous_storage = if transition.storage_was_destroyed {
                                 let mut storage = core::mem::take(&mut self.storage)

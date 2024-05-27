@@ -23,6 +23,7 @@ all = "warn"
 
 [dependencies]
 revm-primitives = { workspace = true }
+
 fluentbase-types = { workspace = true, default-features = false }
 
 paste = { version = "1.0", optional = true }

@@ -8,7 +8,7 @@ sync_tests:
 
 .PHONY: run_general_state_tests
 run_general_state_tests:
-	cargo run --color=always --bin revm-rwasm-e2e statetest tests/GeneralStateTests -s
+	cargo run --color=always --bin revm-rwasm-e2e statetest tests/GeneralStateTests #-s
 
 .PHONY: help
 help:

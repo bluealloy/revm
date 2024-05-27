@@ -439,11 +439,6 @@ pub fn execute_test_suite(
     }
 
     println!("Running test: {:?}", path);
-    println!(
-        "revm::is_fluent_revm_feature: {} revm_fluent::is_fluent_revm_feature {}",
-        revm::is_fluent_revm_feature(),
-        revm_fluent::is_fluent_revm_feature(),
-    );
 
     let s = std::fs::read_to_string(path).unwrap();
     let suite: TestSuite = serde_json::from_str(&s).map_err(|e| TestError {
@@ -782,7 +777,7 @@ pub fn execute_test_suite(
                     .with_spec_id(spec_id)
                     .with_db(state_original)
                     .with_external_context(TracerEip3155::new(Box::new(stdout())))
-                    // .append_handler_register(inspector_handle_register)
+                    // .append_handler_register(revm_fluent::inspector_handle_register)
                     .build();
                 let _ = evm.transact_commit();
                 let _ = evm2.transact_commit();

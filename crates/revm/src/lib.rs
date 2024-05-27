@@ -72,13 +72,11 @@ pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 #[cfg(feature = "optimism")]
 pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
 // Reexport libraries
+#[cfg(feature = "fluent_revm")]
+pub extern crate revm_interpreter_fluent as revm_interpreter;
 #[doc(inline)]
 pub use revm_interpreter as interpreter;
 #[doc(inline)]
 pub use revm_interpreter::primitives;
 #[doc(inline)]
 pub use revm_precompile as precompile;
-
-pub fn is_fluent_revm_feature() -> bool {
-    return cfg!(feature = "fluent_revm");
-}

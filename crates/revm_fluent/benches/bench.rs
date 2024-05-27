@@ -11,8 +11,11 @@ use revm::{
     primitives::{address, bytes, hex, BerlinSpec, Bytecode, Bytes, TransactTo, U256},
     Evm,
 };
-use revm_interpreter_fluent::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
+use revm_interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use std::time::Duration;
+
+#[cfg(feature = "fluent_revmnc ")]
+extern crate revm_interpreter_fluent as revm_interpreter;
 
 fn analysis(c: &mut Criterion) {
     let evm = Evm::builder()
