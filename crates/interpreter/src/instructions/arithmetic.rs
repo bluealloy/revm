@@ -99,8 +99,6 @@ pub fn signextend<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H
     }
 }
 
-
-
 // Copy/pasted from https://github.com/recmo/uint/commit/9f2a4beecaca69c8e43e3a0175671b4ed4e3594c
 // Changes:
 // - Converted from 'self' version to be lhs/rhs
@@ -124,7 +122,7 @@ fn mul_mod_na256(lhs: U256, rhs: U256, mut modulus: U256) -> U256 {
     // Compute modulus using `div_rem`.
     // This stores the remainder in the divisor, `modulus`.
     unsafe {
-      algorithms::div(&mut product, modulus.as_limbs_mut());
+        algorithms::div(&mut product, modulus.as_limbs_mut());
     }
 
     modulus
