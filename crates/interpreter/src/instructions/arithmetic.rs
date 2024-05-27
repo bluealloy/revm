@@ -106,7 +106,7 @@ pub fn signextend<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H
 // - Converted from 'self' version to be lhs/rhs
 // - Removed generics in favor of hardcoding U256
 // - unsafe block around as_limbs_mut() (previously was self.limbs, but that is private)
-/// Alloc free variant of [`mul_mod`](Self::mul_mod).
+/// Alloc free variant of [`mul_mod`](U256::mul_mod).
 ///
 /// Requires `N` to be set to `nlimbs(2 * BITS)`.
 #[inline]
