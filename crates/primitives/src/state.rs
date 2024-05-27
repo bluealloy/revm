@@ -3,13 +3,13 @@ use bitflags::bitflags;
 use core::hash::{Hash, Hasher};
 
 /// EVM State is a mapping from addresses to accounts.
-pub type State = HashMap<Address, Account>;
+pub type PlainState = HashMap<Address, Account>;
 
 /// Structure used for EIP-1153 transient storage.
 pub type TransientStorage = HashMap<(Address, U256), U256>;
 
 /// An account's Storage is a mapping from 256-bit integer keys to [StorageSlot]s.
-pub type Storage = HashMap<U256, StorageSlot>;
+pub type PlainStorage = HashMap<U256, StorageSlot>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -17,7 +17,7 @@ pub struct Account {
     /// Balance, nonce, and code.
     pub info: AccountInfo,
     /// Storage cache
-    pub storage: Storage,
+    pub storage: PlainStorage,
     /// Account status flags.
     pub status: AccountStatus,
 }

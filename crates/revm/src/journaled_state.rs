@@ -1,7 +1,7 @@
 use crate::interpreter::{InstructionResult, SelfDestructResult};
 use crate::primitives::{
     db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, HashMap, HashSet, Log,
-    SpecId::*, State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
+    PlainState, SpecId::*, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use core::mem;
 use revm_interpreter::primitives::SpecId;
@@ -14,7 +14,7 @@ use std::vec::Vec;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournaledState {
     /// Current state.
-    pub state: State,
+    pub state: PlainState,
     /// [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153) transient storage that is discarded after every transactions
     pub transient_storage: TransientStorage,
     /// logs
@@ -62,7 +62,7 @@ impl JournaledState {
 
     /// Return reference to state.
     #[inline]
-    pub fn state(&mut self) -> &mut State {
+    pub fn state(&mut self) -> &mut PlainState {
         &mut self.state
     }
 
@@ -101,7 +101,7 @@ impl JournaledState {
     ///
     /// This resets the [JournaledState] to its initial state in [Self::new]
     #[inline]
-    pub fn finalize(&mut self) -> (State, Vec<Log>) {
+    pub fn finalize(&mut self) -> (PlainState, Vec<Log>) {
         let Self {
             state,
             transient_storage,
@@ -314,7 +314,7 @@ impl JournaledState {
     /// Revert all changes that happened in given journal entries.
     #[inline]
     fn journal_revert(
-        state: &mut State,
+        state: &mut PlainState,
         transient_storage: &mut TransientStorage,
         journal_entries: Vec<JournalEntry>,
         is_spurious_dragon_enabled: bool,

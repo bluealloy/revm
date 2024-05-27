@@ -2,7 +2,7 @@ use super::{
     plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
 };
 use revm_interpreter::primitives::{
-    Account, AccountInfo, Address, Bytecode, HashMap, State as EVMState, B256,
+    Account, AccountInfo, Address, Bytecode, HashMap, PlainState, B256,
 };
 use std::vec::Vec;
 
@@ -88,7 +88,7 @@ impl CacheState {
     }
 
     /// Apply output of revm execution and create account transitions that are used to build BundleState.
-    pub fn apply_evm_state(&mut self, evm_state: EVMState) -> Vec<(Address, TransitionAccount)> {
+    pub fn apply_evm_state(&mut self, evm_state: PlainState) -> Vec<(Address, TransitionAccount)> {
         let mut transitions = Vec::with_capacity(evm_state.len());
         for (address, account) in evm_state {
             if let Some(transition) = self.apply_account_state(address, account) {
