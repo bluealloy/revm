@@ -18,7 +18,7 @@ pub use bundle_state::{BundleBuilder, BundleState, OriginalValuesKnown};
 pub use cache::CacheState;
 pub use cache_account::CacheAccount;
 pub use changes::{PlainStateReverts, PlainStorageChangeset, PlainStorageRevert, StateChangeset};
-pub use plain_account::{PlainAccount, StorageWithOriginalValues};
+pub use plain_account::{PlainAccount, StorageSlot, StorageWithOriginalValues};
 pub use reverts::{AccountRevert, RevertToSlot};
 pub use state::{DBBox, State, StateDBBox};
 pub use state_builder::StateBuilder;
