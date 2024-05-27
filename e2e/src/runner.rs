@@ -704,7 +704,7 @@ pub fn execute_test_suite(
                     let res2 = evm2.transact_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
-                    let Err(e) = check_evm_execution/*::<TracerEip3155, ()>*/(
+                    let Err(e) = check_evm_execution(
                         &test,
                         &spec_name,
                         unit.out.as_ref(),
@@ -730,7 +730,7 @@ pub fn execute_test_suite(
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     // dump state and traces if test failed
-                    let output = check_evm_execution/*::<(), ()>*/(
+                    let output = check_evm_execution(
                         &test,
                         &spec_name,
                         unit.out.as_ref(),

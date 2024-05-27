@@ -15,7 +15,8 @@ hashbrown = "0.14"
 indicatif = "0.17"
 microbench = "0.5"
 plain_hasher = "0.2"
-revm = { workspace = true }
+revm = { workspace = true, features = [
+] }
 alloy-rlp = { version = "0.3", default-features = false, features = [
     "arrayvec",
     "derive",

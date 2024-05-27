@@ -1,7 +1,6 @@
 use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
 use fluentbase_types::ExitCode;
 
-// #[cfg(not(feature = "fluent_revm"))]
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

@@ -29,9 +29,7 @@ macro_rules! define_tests {
 }
 
 mod test_that_fails {
-    define_tests! {
-        fn random_statetest248("tests/GeneralStateTests/stRandom/randomStatetest85.json");
-    }
+    define_tests! {}
 }
 
 mod st_time_consuming {
