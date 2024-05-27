@@ -1,3 +1,5 @@
+use revm_primitives::ruint::algorithms;
+
 use super::i256::{i256_div, i256_mod};
 use crate::{
     gas,
@@ -60,7 +62,7 @@ pub fn addmod<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 pub fn mulmod<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::MID);
     pop_top!(interpreter, op1, op2, op3);
-    *op3 = op1.mul_mod(op2, *op3)
+    *op3 = mul_mod_na256(op1, op2, *op3)
 }
 
 pub fn exp<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -95,4 +97,35 @@ pub fn signextend<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H
         let mask = (U256::from(1) << bit_index) - U256::from(1);
         *x = if bit { *x | !mask } else { *x & mask };
     }
+}
+
+
+
+// Copy/pasted from https://github.com/recmo/uint/commit/9f2a4beecaca69c8e43e3a0175671b4ed4e3594c
+// Changes:
+// - Converted from 'self' version to be lhs/rhs
+// - Removed generics in favor of hardcoding U256
+// - unsafe block around as_limbs_mut() (previously was self.limbs, but that is private)
+/// Alloc free variant of [`mul_mod`](Self::mul_mod).
+///
+/// Requires `N` to be set to `nlimbs(2 * BITS)`.
+#[inline]
+#[must_use]
+fn mul_mod_na256(lhs: U256, rhs: U256, mut modulus: U256) -> U256 {
+    // assert_eq!(N, crate::nlimbs(2 * BITS));
+    if modulus == U256::ZERO {
+        return U256::ZERO;
+    }
+    // Compute full product.
+    let mut product = [0; 256];
+    let overflow = algorithms::addmul(&mut product, lhs.as_limbs(), rhs.as_limbs());
+    debug_assert!(!overflow);
+
+    // Compute modulus using `div_rem`.
+    // This stores the remainder in the divisor, `modulus`.
+    unsafe {
+      algorithms::div(&mut product, modulus.as_limbs_mut());
+    }
+
+    modulus
 }
