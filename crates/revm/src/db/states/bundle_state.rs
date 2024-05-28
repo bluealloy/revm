@@ -1,12 +1,13 @@
 use super::{
     changes::{PlainStorageChangeset, StateChangeset},
     reverts::{AccountInfoRevert, Reverts},
-    AccountRevert, AccountStatus, BundleAccount, PlainStateReverts, RevertToSlot, TransitionState,
+    AccountRevert, AccountStatus, BundleAccount, PlainStateReverts, RevertToSlot, StorageSlot,
+    TransitionState,
 };
 use core::{mem, ops::RangeInclusive};
 use revm_interpreter::primitives::{
     hash_map::{self, Entry},
-    AccountInfo, Address, Bytecode, HashMap, HashSet, StorageSlot, B256, KECCAK_EMPTY, U256,
+    AccountInfo, Address, Bytecode, HashMap, HashSet, B256, KECCAK_EMPTY, U256,
 };
 use std::{
     collections::{BTreeMap, BTreeSet},

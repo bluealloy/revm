@@ -303,10 +303,10 @@ impl<DB: Database> DatabaseCommit for State<DB> {
 mod tests {
     use super::*;
     use crate::db::{
-        states::reverts::AccountInfoRevert, AccountRevert, AccountStatus, BundleAccount,
-        RevertToSlot,
+        states::{reverts::AccountInfoRevert, StorageSlot},
+        AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
     };
-    use revm_interpreter::primitives::{keccak256, StorageSlot};
+    use revm_interpreter::primitives::keccak256;
 
     #[test]
     fn block_hash_cache() {

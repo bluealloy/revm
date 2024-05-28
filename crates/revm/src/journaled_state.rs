@@ -1,7 +1,7 @@
 use crate::interpreter::{InstructionResult, SelfDestructResult};
 use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, HashMap, HashSet, Log,
-    SpecId::*, State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
+    db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, EvmState, EvmStorageSlot,
+    HashMap, HashSet, Log, SpecId::*, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use core::mem;
 use revm_interpreter::primitives::SpecId;
@@ -14,7 +14,7 @@ use std::vec::Vec;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournaledState {
     /// Current state.
-    pub state: State,
+    pub state: EvmState,
     /// [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153) transient storage that is discarded after every transactions
     pub transient_storage: TransientStorage,
     /// logs
@@ -62,7 +62,7 @@ impl JournaledState {
 
     /// Return reference to state.
     #[inline]
-    pub fn state(&mut self) -> &mut State {
+    pub fn state(&mut self) -> &mut EvmState {
         &mut self.state
     }
 
@@ -101,7 +101,7 @@ impl JournaledState {
     ///
     /// This resets the [JournaledState] to its initial state in [Self::new]
     #[inline]
-    pub fn finalize(&mut self) -> (State, Vec<Log>) {
+    pub fn finalize(&mut self) -> (EvmState, Vec<Log>) {
         let Self {
             state,
             transient_storage,
@@ -273,7 +273,7 @@ impl JournaledState {
         // Set all storages to default value. They need to be present to act as accessed slots in access list.
         // it shouldn't be possible for them to have different values then zero as code is not existing for this account,
         // but because tests can change that assumption we are doing it.
-        let empty = StorageSlot::default();
+        let empty = EvmStorageSlot::default();
         account
             .storage
             .iter_mut()
@@ -314,7 +314,7 @@ impl JournaledState {
     /// Revert all changes that happened in given journal entries.
     #[inline]
     fn journal_revert(
-        state: &mut State,
+        state: &mut EvmState,
         transient_storage: &mut TransientStorage,
         journal_entries: Vec<JournalEntry>,
         is_spurious_dragon_enabled: bool,
@@ -542,7 +542,7 @@ impl JournaledState {
         for slot in slots {
             if let Entry::Vacant(entry) = account.storage.entry(*slot) {
                 let storage = db.storage(address, *slot).map_err(EVMError::Database)?;
-                entry.insert(StorageSlot::new(storage));
+                entry.insert(EvmStorageSlot::new(storage));
             }
         }
         Ok(account)
@@ -660,7 +660,7 @@ impl JournaledState {
                         had_value: None,
                     });
 
-                vac.insert(StorageSlot::new(value));
+                vac.insert(EvmStorageSlot::new(value));
 
                 (value, true)
             }
@@ -692,7 +692,7 @@ impl JournaledState {
         // new value is same as present, we don't need to do anything
         if present == new {
             return Ok(SStoreResult {
-                original_value: slot.previous_or_original_value,
+                original_value: slot.original_value(),
                 present_value: present,
                 new_value: new,
                 is_cold,
@@ -710,7 +710,7 @@ impl JournaledState {
         // insert value into present state.
         slot.present_value = new;
         Ok(SStoreResult {
-            original_value: slot.previous_or_original_value,
+            original_value: slot.original_value(),
             present_value: present,
             new_value: new,
             is_cold,
