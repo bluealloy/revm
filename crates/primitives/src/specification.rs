@@ -63,8 +63,8 @@ pub enum SpecId {
     CANYON = 19,
     CANCUN = 20,
     ECOTONE = 21,
-    PRAGUE = 22,
-    FJORD = 23,
+    FJORD = 22,
+    PRAGUE = 23,
     #[default]
     LATEST = u8::MAX,
 }
@@ -403,9 +403,9 @@ mod tests {
         spec_to_generic!(CANCUN, assert_eq!(SPEC::SPEC_ID, CANCUN));
         #[cfg(feature = "optimism")]
         spec_to_generic!(ECOTONE, assert_eq!(SPEC::SPEC_ID, ECOTONE));
-        spec_to_generic!(PRAGUE, assert_eq!(SPEC::SPEC_ID, PRAGUE));
         #[cfg(feature = "optimism")]
         spec_to_generic!(FJORD, assert_eq!(SPEC::SPEC_ID, FJORD));
+        spec_to_generic!(PRAGUE, assert_eq!(SPEC::SPEC_ID, PRAGUE));
         spec_to_generic!(LATEST, assert_eq!(SPEC::SPEC_ID, LATEST));
     }
 }

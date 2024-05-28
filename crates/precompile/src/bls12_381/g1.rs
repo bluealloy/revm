@@ -1,13 +1,14 @@
-use super::utils::{fp_to_bytes, remove_padding, PADDED_FP_LENGTH};
-use blst::{blst_fp_from_bendian, blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve};
-use revm_primitives::{Bytes, PrecompileError};
+use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding, PADDED_FP_LENGTH};
+use crate::primitives::{Bytes, PrecompileError};
+use blst::{blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve};
 
 /// Length of each of the elements in a g1 operation input.
 pub(super) const G1_INPUT_ITEM_LENGTH: usize = 128;
+
 /// Output length of a g1 operation.
 const G1_OUTPUT_LENGTH: usize = 128;
 
-/// Encodes a G1 point in affine format into a byte slice with padded elements.
+/// Encodes a G1 point in affine format into byte slice with padded elements.
 pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> Bytes {
     let mut out = vec![0u8; G1_OUTPUT_LENGTH];
     // SAFETY: out comes from fixed length array, input is a blst value.
@@ -16,6 +17,24 @@ pub(super) fn encode_g1_point(input: *const blst_p1_affine) -> Bytes {
         fp_to_bytes(&mut out[PADDED_FP_LENGTH..], &(*input).y);
     }
     out.into()
+}
+
+/// Returns a `blst_p1_affine` from the provided byte slices, which represent the x and y
+/// affine coordinates of the point.
+///
+/// If the x or y coordinate do not represent a canonical field element, an error is returned.
+///
+/// See [fp_from_bendian] for more information.
+pub(super) fn decode_and_check_g1(
+    p0_x: &[u8; 48],
+    p0_y: &[u8; 48],
+) -> Result<blst_p1_affine, PrecompileError> {
+    let out = blst_p1_affine {
+        x: fp_from_bendian(p0_x)?,
+        y: fp_from_bendian(p0_y)?,
+    };
+
+    Ok(out)
 }
 
 /// Extracts a G1 point in Affine format from a 128 byte slice representation.
@@ -34,13 +53,7 @@ pub(super) fn extract_g1_input(
 
     let input_p0_x = remove_padding(&input[..PADDED_FP_LENGTH])?;
     let input_p0_y = remove_padding(&input[PADDED_FP_LENGTH..G1_INPUT_ITEM_LENGTH])?;
-
-    let mut out = blst_p1_affine::default();
-    // SAFETY: input_p0_x and input_p0_y have fixed length, out is a blst value.
-    unsafe {
-        blst_fp_from_bendian(&mut out.x, input_p0_x.as_ptr());
-        blst_fp_from_bendian(&mut out.y, input_p0_y.as_ptr());
-    }
+    let out = decode_and_check_g1(input_p0_x, input_p0_y)?;
 
     if subgroup_check {
         // NB: Subgroup checks

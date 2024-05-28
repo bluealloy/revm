@@ -1,13 +1,14 @@
-use super::utils::{fp_to_bytes, remove_padding, FP_LENGTH, PADDED_FP_LENGTH};
-use blst::{blst_fp_from_bendian, blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_on_curve};
-use revm_primitives::{Bytes, PrecompileError};
+use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding, FP_LENGTH, PADDED_FP_LENGTH};
+use crate::primitives::{Bytes, PrecompileError};
+use blst::{blst_fp2, blst_p2_affine, blst_p2_affine_in_g2, blst_p2_affine_on_curve};
 
 /// Length of each of the elements in a g2 operation input.
 pub(super) const G2_INPUT_ITEM_LENGTH: usize = 256;
+
 /// Output length of a g2 operation.
 const G2_OUTPUT_LENGTH: usize = 256;
 
-/// Encodes a G2 point in affine format into a byte slice with padded elements.
+/// Encodes a G2 point in affine format into byte slice with padded elements.
 pub(super) fn encode_g2_point(input: &blst_p2_affine) -> Bytes {
     let mut out = vec![0u8; G2_OUTPUT_LENGTH];
     fp_to_bytes(&mut out[..PADDED_FP_LENGTH], &input.x.fp[0]);
@@ -24,6 +25,33 @@ pub(super) fn encode_g2_point(input: &blst_p2_affine) -> Bytes {
         &input.y.fp[1],
     );
     out.into()
+}
+
+/// Convert the following field elements from byte slices into a `blst_p2_affine` point.
+pub(super) fn decode_and_check_g2(
+    x1: &[u8; 48],
+    x2: &[u8; 48],
+    y1: &[u8; 48],
+    y2: &[u8; 48],
+) -> Result<blst_p2_affine, PrecompileError> {
+    Ok(blst_p2_affine {
+        x: check_canonical_fp2(x1, x2)?,
+        y: check_canonical_fp2(y1, y2)?,
+    })
+}
+
+/// Checks whether or not the input represents a canonical fp2 field element, returning the field
+/// element if successful.
+pub(super) fn check_canonical_fp2(
+    input_1: &[u8; 48],
+    input_2: &[u8; 48],
+) -> Result<blst_fp2, PrecompileError> {
+    let fp_1 = fp_from_bendian(input_1)?;
+    let fp_2 = fp_from_bendian(input_2)?;
+
+    let fp2 = blst_fp2 { fp: [fp_1, fp_2] };
+
+    Ok(fp2)
 }
 
 /// Extracts a G2 point in Affine format from a 256 byte slice representation.
@@ -45,14 +73,7 @@ pub(super) fn extract_g2_input(
         input_fps[i] = remove_padding(&input[i * PADDED_FP_LENGTH..(i + 1) * PADDED_FP_LENGTH])?;
     }
 
-    let mut out = blst_p2_affine::default();
-    // SAFETY: items in fps have fixed length, out is a blst value.
-    unsafe {
-        blst_fp_from_bendian(&mut out.x.fp[0], input_fps[0].as_ptr());
-        blst_fp_from_bendian(&mut out.x.fp[1], input_fps[1].as_ptr());
-        blst_fp_from_bendian(&mut out.y.fp[0], input_fps[2].as_ptr());
-        blst_fp_from_bendian(&mut out.y.fp[1], input_fps[3].as_ptr());
-    }
+    let out = decode_and_check_g2(input_fps[0], input_fps[1], input_fps[2], input_fps[3])?;
 
     if subgroup_check {
         // NB: Subgroup checks

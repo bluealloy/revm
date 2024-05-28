@@ -1,18 +1,18 @@
 use super::{
     g1::encode_g1_point,
-    utils::{remove_padding, PADDED_FP_LENGTH},
+    utils::{fp_from_bendian, remove_padding, PADDED_FP_LENGTH},
 };
 use crate::{u64_to_address, PrecompileWithAddress};
-use blst::{
-    blst_fp, blst_fp_from_bendian, blst_map_to_g1, blst_p1, blst_p1_affine, blst_p1_to_affine,
-};
+use blst::{blst_map_to_g1, blst_p1, blst_p1_affine, blst_p1_to_affine};
 use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_MAP_FP_TO_G1 precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
     PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(map_fp_to_g1));
+
 /// BLS12_MAP_FP_TO_G1 precompile address.
 pub const ADDRESS: u64 = 0x12;
+
 /// Base gas fee for BLS12-381 map_fp_to_g1 operation.
 const MAP_FP_TO_G1_BASE: u64 = 5500;
 
@@ -32,11 +32,7 @@ pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 
     let input_p0 = remove_padding(input)?;
-
-    let mut fp = blst_fp::default();
-
-    // SAFETY: input_p0 has fixed length, fp is a blst value.
-    unsafe { blst_fp_from_bendian(&mut fp, input_p0.as_ptr()) };
+    let fp = fp_from_bendian(input_p0)?;
 
     let mut p = blst_p1::default();
     // SAFETY: p and fp are blst values.
