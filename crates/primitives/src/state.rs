@@ -119,7 +119,7 @@ impl Account {
 
     /// Returns an iterator over the storage slots that have been changed.
     ///
-    /// See also [StorageSlot::is_changed]
+    /// See also [EvmStorageSlot::is_changed]
     pub fn changed_storage_slots(&self) -> impl Iterator<Item = (&U256, &EvmStorageSlot)> {
         self.storage.iter().filter(|(_, slot)| slot.is_changed())
     }
