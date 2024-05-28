@@ -2964,6 +2964,7 @@ dependencies = [
  "reqwest 0.12.4",
  "revm-interpreter",
  "revm-precompile",
+ "rstest",
  "serde",
  "serde_json",
  "tokio",
