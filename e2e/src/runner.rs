@@ -404,8 +404,7 @@ fn check_evm_execution<EXT1, EXT2>(
             } else {
                 a2.balance - a1.balance
             };
-            // yes, there is a 1 wei diff in some tests.... debug it please
-            if balance_diff > U256::from(0) {
+            if balance_diff != U256::from(0) {
                 assert_eq!(
                     a1.balance, a2.balance,
                     "EVM <> FLUENT account balance mismatch"
