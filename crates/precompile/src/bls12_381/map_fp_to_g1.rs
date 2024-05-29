@@ -46,3 +46,19 @@ pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let out = encode_g1_point(&p_aff);
     Ok((MAP_FP_TO_G1_BASE, out))
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::primitives::hex;
+
+    #[test]
+    fn sanity_test() {
+        let input = Bytes::from(hex!("000000000000000000000000000000006900000000000000636f6e7472616374595a603f343061cd305a03f40239f5ffff31818185c136bc2595f2aa18e08f17"));
+        let fail = map_fp_to_g1(&input, MAP_FP_TO_G1_BASE);
+        assert_eq!(
+            fail,
+            Err(PrecompileError::Other("non-canonical fp value".to_string()))
+        );
+    }
+}
