@@ -3,3 +3,4 @@ target
 hello_world
 Cargo.lock
 bin/*.wat
+/tests

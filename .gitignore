@@ -20,3 +20,4 @@ burntpix/svgs
 rustc-ice-*
 
 .DS_Store
+/tmp
