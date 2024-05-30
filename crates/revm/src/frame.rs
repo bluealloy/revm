@@ -33,7 +33,6 @@ pub struct CreateFrame {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EOFCreateFrame {
     pub created_address: Address,
-    pub return_memory_range: Range<usize>,
     pub frame_data: FrameData,
 }
 
@@ -240,13 +239,11 @@ impl FrameOrResult {
 
     pub fn new_eofcreate_frame(
         created_address: Address,
-        return_memory_range: Range<usize>,
         checkpoint: JournalCheckpoint,
         interpreter: Interpreter,
     ) -> Self {
         Self::Frame(Frame::EOFCreate(Box::new(EOFCreateFrame {
             created_address,
-            return_memory_range,
             frame_data: FrameData {
                 checkpoint,
                 interpreter,
@@ -278,15 +275,10 @@ impl FrameOrResult {
         }))
     }
 
-    pub fn new_eofcreate_result(
-        interpreter_result: InterpreterResult,
-        address: Address,
-        return_memory_range: Range<usize>,
-    ) -> Self {
+    pub fn new_eofcreate_result(interpreter_result: InterpreterResult, address: Address) -> Self {
         FrameOrResult::Result(FrameResult::EOFCreate(EOFCreateOutcome {
             result: interpreter_result,
             address,
-            return_memory_range,
         }))
     }
 

@@ -183,7 +183,6 @@ pub fn eofcreate_return<SPEC: Spec, EXT, DB: Database>(
     Ok(EOFCreateOutcome::new(
         interpreter_result,
         frame.created_address,
-        frame.return_memory_range,
     ))
 }
 

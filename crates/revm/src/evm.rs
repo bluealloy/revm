@@ -2,7 +2,10 @@ use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
-    interpreter::{Host, InterpreterAction, SharedMemory},
+    interpreter::{
+        analysis::validate_eof, CallInputs, CreateInputs, EOFCreateInput, Host, InterpreterAction,
+        SharedMemory,
+    },
     primitives::{
         specification::SpecId, BlockEnv, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
         ExecutionResult, HandlerCfg, ResultAndState, TransactTo, TxEnv,
@@ -10,7 +13,6 @@ use crate::{
     Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
 use core::fmt;
-use revm_interpreter::{CallInputs, CreateInputs};
 use std::vec::Vec;
 
 /// EVM call stack limit.
@@ -346,10 +348,42 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 ctx,
                 CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
             )?,
-            TransactTo::Create => exec.create(
-                ctx,
-                CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-            )?,
+            TransactTo::Create => {
+                // if first byte of data is magic 0xEF, then it is EOFCreate.
+                if matches!(ctx.env().tx.data.get(0), Some(0xEF)) {
+                    // In spec it says 0xEF00 but 0x00 is checked when decoding EOF.
+
+                    // get nonce from tx (if set) or from account.
+                    let nonce = ctx.evm.env.tx.nonce.unwrap_or_else(|| {
+                        let caller = ctx.evm.env.tx.caller;
+                        ctx.evm
+                            .load_account(caller)
+                            .map(|(a, _)| a.info.nonce)
+                            .unwrap_or_default()
+                    });
+
+                    // Create EOFCreateInput from transaction initdata.
+                    let eofcreate = EOFCreateInput::new_tx_boxed(&ctx.evm.env.tx, nonce)
+                        .ok()
+                        .and_then(|eofcreate| {
+                            // validate EOF initcode
+                            validate_eof(&eofcreate.eof_init_code).ok()?;
+                            Some(eofcreate)
+                        });
+                    if let Some(eofcreate) = eofcreate {
+                        exec.eofcreate(ctx, eofcreate)?
+                    } else {
+                        // Create Result.
+                        return Err(EVMError::Custom("Invalid EOFCreate".to_string()));
+                    }
+                } else {
+                    // Safe to unwrap because we are sure that it is create tx.
+                    exec.create(
+                        ctx,
+                        CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
+                    )?
+                }
+            }
         };
 
         // Starts the main running loop.
