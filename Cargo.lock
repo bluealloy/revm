@@ -52,7 +52,7 @@ dependencies = [
  "alloy-eips",
  "alloy-primitives",
  "alloy-rlp",
- "alloy-serde 0.1.0 (git+https://github.com/alloy-rs/alloy.git?rev=44b8a6d)",
+ "alloy-serde",
  "c-kzg",
  "serde",
 ]
@@ -64,7 +64,7 @@ source = "git+https://github.com/alloy-rs/alloy.git?rev=44b8a6d#44b8a6da656602fd
 dependencies = [
  "alloy-primitives",
  "alloy-rlp",
- "alloy-serde 0.1.0 (git+https://github.com/alloy-rs/alloy.git?rev=44b8a6d)",
+ "alloy-serde",
  "c-kzg",
  "once_cell",
  "serde",
@@ -77,18 +77,7 @@ version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy.git?rev=44b8a6d#44b8a6da656602fd9fd2c52f28ecffa4acaed96c"
 dependencies = [
  "alloy-primitives",
- "alloy-serde 0.1.0 (git+https://github.com/alloy-rs/alloy.git?rev=44b8a6d)",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "alloy-genesis"
-version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy?rev=64feb9b#64feb9bc51c8021ea08535694c44de84222f474e"
-dependencies = [
- "alloy-primitives",
- "alloy-serde 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=64feb9b)",
+ "alloy-serde",
  "serde",
  "serde_json",
 ]
@@ -226,10 +215,10 @@ source = "git+https://github.com/alloy-rs/alloy.git?rev=44b8a6d#44b8a6da656602fd
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
- "alloy-genesis 0.1.0 (git+https://github.com/alloy-rs/alloy.git?rev=44b8a6d)",
+ "alloy-genesis",
  "alloy-primitives",
  "alloy-rlp",
- "alloy-serde 0.1.0 (git+https://github.com/alloy-rs/alloy.git?rev=44b8a6d)",
+ "alloy-serde",
  "alloy-sol-types",
  "itertools 0.12.1",
  "serde",
@@ -244,7 +233,7 @@ source = "git+https://github.com/alloy-rs/alloy.git?rev=44b8a6d#44b8a6da656602fd
 dependencies = [
  "alloy-primitives",
  "alloy-rpc-types",
- "alloy-serde 0.1.0 (git+https://github.com/alloy-rs/alloy.git?rev=44b8a6d)",
+ "alloy-serde",
  "serde",
  "serde_json",
 ]
@@ -253,16 +242,6 @@ dependencies = [
 name = "alloy-serde"
 version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy.git?rev=44b8a6d#44b8a6da656602fd9fd2c52f28ecffa4acaed96c"
-dependencies = [
- "alloy-primitives",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "alloy-serde"
-version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy?rev=64feb9b#64feb9bc51c8021ea08535694c44de84222f474e"
 dependencies = [
  "alloy-primitives",
  "serde",
@@ -1646,7 +1625,7 @@ dependencies = [
 name = "fluentbase-genesis"
 version = "0.1.0"
 dependencies = [
- "alloy-genesis 0.1.0 (git+https://github.com/alloy-rs/alloy?rev=64feb9b)",
+ "alloy-genesis",
  "byteorder",
  "bytes",
  "clap 4.5.4",

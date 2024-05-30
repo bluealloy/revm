@@ -3,7 +3,7 @@ sync_tests:
 	if [ ! -d tests ]; then \
   		git clone https://github.com/ethereum/tests; \
   	else \
-  		cd tests; git pull; git checkout 65994979ae7e318f32d99eaceb4f2180d10145a7; \
+  		cd tests; git pull; git checkout faf33b471465d3c6cdc3d04fbd690895f78d33f2; \
   	fi
 
 .PHONY: run_general_state_tests
