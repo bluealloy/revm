@@ -23,6 +23,7 @@ all = "warn"
 
 [dependencies]
 # revm
+revm-interpreter = { workspace = true }
 revm-interpreter-fluent = { workspace = true }
 revm-precompile = { workspace = true }
 
@@ -69,10 +70,11 @@ alloy-sol-types = { version = "0.7.0", default-features = false, features = [
     "std",
 ] }
 ethers-contract = { version = "2.0.14", default-features = false }
-anyhow = "1.0.82"
+anyhow = "1.0.83"
 criterion = "0.5"
 indicatif = "0.17"
 reqwest = { version = "0.12" }
+rstest = "0.19.0"
 
 alloy-provider = { workspace = true }
 # needed for enabling TLS to use HTTPS connections when testing alloy DB
@@ -150,7 +152,6 @@ optional_beneficiary_reward = ["revm-interpreter-fluent/optional_beneficiary_rew
 # See comments in `revm-precompile`
 secp256k1 = ["revm-precompile/secp256k1"]
 c-kzg = ["revm-precompile/c-kzg"]
-
 blst = ["revm-precompile/blst"]
 
 rwasm = [
@@ -158,7 +159,7 @@ rwasm = [
     "revm-precompile/rwasm",
 ]
 debug_print = [
-    #    "revm-interpreter-fluent/debug_print",
+    #    "revm-interpreter-fluent/debug_print"
 ]
 fluent_revm = [
     "rwasm",

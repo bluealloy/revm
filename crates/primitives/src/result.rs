@@ -1,4 +1,4 @@
-use crate::{Address, Bytes, Log, State, U256};
+use crate::{Address, Bytes, EvmState, Log, U256};
 use core::fmt;
 use std::{boxed::Box, string::String, vec::Vec};
 
@@ -14,7 +14,7 @@ pub struct ResultAndState {
     /// Status of execution
     pub result: ExecutionResult,
     /// State that got updated
-    pub state: State,
+    pub state: EvmState,
 }
 
 /// Result of a transaction execution.
@@ -146,7 +146,8 @@ pub enum EVMError<DBError> {
     Database(DBError),
     /// Custom error.
     ///
-    /// Useful for handler registers where custom logic would want to return their own custom error.
+    /// Useful for handler registers where custom logic would want to return their own custom
+    /// error.
     Custom(String),
 }
 
@@ -189,9 +190,12 @@ impl<DBError> From<InvalidHeader> for EVMError<DBError> {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
-    /// When using the EIP-1559 fee model introduced in the London upgrade, transactions specify two primary fee fields:
-    /// - `gas_max_fee`: The maximum total fee a user is willing to pay, inclusive of both base fee and priority fee.
-    /// - `gas_priority_fee`: The extra amount a user is willing to give directly to the miner, often referred to as the "tip".
+    /// When using the EIP-1559 fee model introduced in the London upgrade, transactions specify
+    /// two primary fee fields:
+    /// - `gas_max_fee`: The maximum total fee a user is willing to pay, inclusive of both base fee
+    ///   and priority fee.
+    /// - `gas_priority_fee`: The extra amount a user is willing to give directly to the miner,
+    ///   often referred to as the "tip".
     ///
     /// Provided `gas_priority_fee` exceeds the total `gas_max_fee`.
     PriorityFeeGreaterThanMaxFee,
@@ -207,7 +211,8 @@ pub enum InvalidTransaction {
     CallGasCostMoreThanGasLimit,
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
-    /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
+    /// Transaction account does not have enough amount of ether to cover transferred value and
+    /// gas_limit*gas_price.
     LackOfFundForMaxFee {
         fee: Box<U256>,
         balance: Box<U256>,
@@ -232,7 +237,8 @@ pub enum InvalidTransaction {
     AccessListNotSupported,
     /// `max_fee_per_blob_gas` is not supported for blocks before the Cancun hardfork.
     MaxFeePerBlobGasNotSupported,
-    /// `blob_hashes`/`blob_versioned_hashes` is not supported for blocks before the Cancun hardfork.
+    /// `blob_hashes`/`blob_versioned_hashes` is not supported for blocks before the Cancun
+    /// hardfork.
     BlobVersionedHashesNotSupported,
     /// Block `blob_gas_price` is greater than tx-specified `max_fee_per_blob_gas` after Cancun.
     BlobGasPriceGreaterThanMax,
@@ -248,44 +254,41 @@ pub enum InvalidTransaction {
     },
     /// Blob transaction contains a versioned hash with an incorrect version
     BlobVersionNotSupported,
-    /// EOF TxCreate transaction is not supported before Prague hardfork.
-    EofInitcodesNotSupported,
-    /// EOF TxCreate transaction max initcode number reached.
-    EofInitcodesNumberLimit,
-    /// EOF initcode in TXCreate is too large.
-    EofInitcodesSizeLimit,
     /// EOF crate should have `to` address
     EofCrateShouldHaveToAddress,
     /// System transactions are not supported post-regolith hardfork.
     ///
     /// Before the Regolith hardfork, there was a special field in the `Deposit` transaction
     /// type that differentiated between `system` and `user` deposit transactions. This field
-    /// was deprecated in the Regolith hardfork, and this error is thrown if a `Deposit` transaction
-    /// is found with this field set to `true` after the hardfork activation.
+    /// was deprecated in the Regolith hardfork, and this error is thrown if a `Deposit`
+    /// transaction is found with this field set to `true` after the hardfork activation.
     ///
-    /// In addition, this error is internal, and bubbles up into a [HaltReason::FailedDeposit] error
-    /// in the `revm` handler for the consumer to easily handle. This is due to a state transition
-    /// rule on OP Stack chains where, if for any reason a deposit transaction fails, the transaction
-    /// must still be included in the block, the sender nonce is bumped, the `mint` value persists, and
-    /// special gas accounting rules are applied. Normally on L1, [EVMError::Transaction] errors
-    /// are cause for non-inclusion, so a special [HaltReason] variant was introduced to handle this
-    /// case for failed deposit transactions.
+    /// In addition, this error is internal, and bubbles up into a [HaltReason::FailedDeposit]
+    /// error in the `revm` handler for the consumer to easily handle. This is due to a state
+    /// transition rule on OP Stack chains where, if for any reason a deposit transaction
+    /// fails, the transaction must still be included in the block, the sender nonce is bumped,
+    /// the `mint` value persists, and special gas accounting rules are applied. Normally on
+    /// L1, [EVMError::Transaction] errors are cause for non-inclusion, so a special
+    /// [HaltReason] variant was introduced to handle this case for failed deposit
+    /// transactions.
     #[cfg(feature = "optimism")]
     DepositSystemTxPostRegolith,
     /// Deposit transaction haults bubble up to the global main return handler, wiping state and
     /// only increasing the nonce + persisting the mint value.
     ///
-    /// This is a catch-all error for any deposit transaction that is results in a [HaltReason] error
-    /// post-regolith hardfork. This allows for a consumer to easily handle special cases where
-    /// a deposit transaction fails during validation, but must still be included in the block.
+    /// This is a catch-all error for any deposit transaction that is results in a [HaltReason]
+    /// error post-regolith hardfork. This allows for a consumer to easily handle special cases
+    /// where a deposit transaction fails during validation, but must still be included in the
+    /// block.
     ///
-    /// In addition, this error is internal, and bubbles up into a [HaltReason::FailedDeposit] error
-    /// in the `revm` handler for the consumer to easily handle. This is due to a state transition
-    /// rule on OP Stack chains where, if for any reason a deposit transaction fails, the transaction
-    /// must still be included in the block, the sender nonce is bumped, the `mint` value persists, and
-    /// special gas accounting rules are applied. Normally on L1, [EVMError::Transaction] errors
-    /// are cause for non-inclusion, so a special [HaltReason] variant was introduced to handle this
-    /// case for failed deposit transactions.
+    /// In addition, this error is internal, and bubbles up into a [HaltReason::FailedDeposit]
+    /// error in the `revm` handler for the consumer to easily handle. This is due to a state
+    /// transition rule on OP Stack chains where, if for any reason a deposit transaction
+    /// fails, the transaction must still be included in the block, the sender nonce is bumped,
+    /// the `mint` value persists, and special gas accounting rules are applied. Normally on
+    /// L1, [EVMError::Transaction] errors are cause for non-inclusion, so a special
+    /// [HaltReason] variant was introduced to handle this case for failed deposit
+    /// transactions.
     #[cfg(feature = "optimism")]
     HaltedDepositPostRegolith,
     /// Error that happens when rWASM compilation failes
@@ -348,10 +351,7 @@ impl fmt::Display for InvalidTransaction {
                 write!(f, "too many blobs, have {have}, max {max}")
             }
             Self::BlobVersionNotSupported => write!(f, "blob version not supported"),
-            Self::EofInitcodesNotSupported => write!(f, "EOF initcodes not supported"),
             Self::EofCrateShouldHaveToAddress => write!(f, "EOF crate should have `to` address"),
-            Self::EofInitcodesSizeLimit => write!(f, "EOF initcodes size limit"),
-            Self::EofInitcodesNumberLimit => write!(f, "EOF initcodes number limit"),
             #[cfg(feature = "optimism")]
             Self::DepositSystemTxPostRegolith => {
                 write!(
@@ -450,7 +450,7 @@ pub enum OutOfGasError {
     Memory,
     // Precompile threw OOG error
     Precompile,
-    // When performing something that takes a U256 and casts down to a u64, if its too large this would fire
-    // i.e. in `as_usize_or_fail`
+    // When performing something that takes a U256 and casts down to a u64, if its too large this
+    // would fire i.e. in `as_usize_or_fail`
     InvalidOperand,
 }

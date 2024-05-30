@@ -31,6 +31,7 @@ pub mod optimism;
 mod test;
 
 // Export items.
+
 pub use builder::EvmBuilder;
 pub use context::{
     Context,
@@ -71,6 +72,7 @@ pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 // export Optimism types, helpers, and constants
 #[cfg(feature = "optimism")]
 pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
+
 // Reexport libraries
 #[cfg(feature = "fluent_revm")]
 pub extern crate revm_interpreter_fluent as revm_interpreter;

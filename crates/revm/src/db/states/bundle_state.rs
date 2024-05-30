@@ -6,6 +6,7 @@ use super::{
     BundleAccount,
     PlainStateReverts,
     RevertToSlot,
+    StorageSlot,
     TransitionState,
 };
 use core::{mem, ops::RangeInclusive};
@@ -16,7 +17,6 @@ use revm_interpreter::primitives::{
     Bytecode,
     HashMap,
     HashSet,
-    StorageSlot,
     B256,
     KECCAK_EMPTY,
     U256,
@@ -710,7 +710,6 @@ impl BundleState {
 mod tests {
     use super::*;
     use crate::{db::StorageWithOriginalValues, TransitionAccount};
-    use revm_interpreter::primitives::KECCAK_EMPTY;
 
     #[test]
     fn transition_states() {

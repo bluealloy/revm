@@ -39,34 +39,10 @@ macro_rules! check {
     ($interp:expr, $min:ident) => {
         // TODO: Force const-eval on the condition with a `const {}` block once they are stable
         if !<SPEC as $crate::primitives::Spec>::enabled($crate::primitives::SpecId::$min) {
-            $interp.instruction_result = $crate::InstructionResult::NotActivated.into();
+            $interp.instruction_result = $crate::InstructionResult::NotActivated;
             return;
         }
     };
-}
-
-/// Performs an `SLOAD` on the target account and storage index.
-///
-/// If the slot could not be loaded, or if the gas cost could not be charged, the expanded code
-/// sets the instruction result and returns accordingly.
-///
-/// # Note
-///
-/// This macro charges gas.
-///
-/// # Returns
-///
-/// Expands to the value of the storage slot.
-#[macro_export]
-macro_rules! sload {
-    ($interp:expr, $host:expr, $address:expr, $index:expr) => {{
-        let Some((value, is_cold)) = $host.sload($address, $index) else {
-            $interp.instruction_result = $crate::InstructionResult::FatalExternalError;
-            return;
-        };
-        $crate::gas!($interp, $crate::gas::sload_cost(SPEC::SPEC_ID, is_cold));
-        value
-    }};
 }
 
 /// Records a `gas` cost and fails the instruction if it would exceed the available gas.
@@ -138,10 +114,10 @@ macro_rules! resize_memory {
 #[macro_export]
 macro_rules! pop_address {
     ($interp:expr, $x1:ident) => {
-        pop_address_ret!($interp, $x1, ())
+        $crate::pop_address_ret!($interp, $x1, ())
     };
     ($interp:expr, $x1:ident, $x2:ident) => {
-        pop_address_ret!($interp, $x1, $x2, ())
+        $crate::pop_address_ret!($interp, $x1, $x2, ())
     };
 }
 

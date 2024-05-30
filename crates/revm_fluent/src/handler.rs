@@ -4,19 +4,18 @@ pub mod mainnet;
 pub mod register;
 
 // Exports.
-pub use handle_types::*;
-
+use self::register::{HandleRegister, HandleRegisterBox};
 // Includes.
 use crate::{
     interpreter::{opcode::InstructionTables, Host, InterpreterAction, SharedMemory},
     primitives::{db::Database, spec_to_generic, EVMError, HandlerCfg, Spec, SpecId},
-    Context, Frame,
+    Context,
+    Frame,
 };
 use core::mem;
+pub use handle_types::*;
 use register::{EvmHandler, HandleRegisters};
 use std::vec::Vec;
-
-use self::register::{HandleRegister, HandleRegisterBox};
 
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
@@ -177,7 +176,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
         if out.is_some() {
             let registers = core::mem::take(&mut self.registers);
             let mut base_handler = Handler::mainnet_with_spec(self.cfg.spec_id);
-            // apply all registers to default handler and raw mainnet instruction table.
+            // apply all registers to default handeler and raw mainnet instruction table.
             for register in registers {
                 base_handler.append_handler_register(register)
             }
@@ -190,7 +189,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     pub fn create_handle_generic<SPEC: Spec>(&mut self) -> EvmHandler<'a, EXT, DB> {
         let registers = core::mem::take(&mut self.registers);
         let mut base_handler = Handler::mainnet::<SPEC>();
-        // apply all registers to default handler and raw mainnet instruction table.
+        // apply all registers to default handeler and raw mainnet instruction table.
         for register in registers {
             base_handler.append_handler_register(register)
         }
@@ -218,12 +217,10 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
 
 #[cfg(test)]
 mod test {
-    use core::cell::RefCell;
-
-    use crate::{db::EmptyDB, primitives::EVMError};
-    use std::{rc::Rc, sync::Arc};
-
     use super::*;
+    use crate::{db::EmptyDB, primitives::EVMError};
+    use core::cell::RefCell;
+    use std::{rc::Rc, sync::Arc};
 
     #[test]
     fn test_handler_register_pop() {

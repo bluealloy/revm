@@ -18,6 +18,8 @@ pub mod identity;
 pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
+#[cfg(feature = "secp256r1")]
+pub mod secp256r1;
 pub mod utilities;
 
 use core::hash::Hash;
@@ -26,7 +28,11 @@ use once_cell::race::OnceBox;
 pub use revm_primitives as primitives;
 pub use revm_primitives::{
     precompile::{PrecompileError as Error, *},
-    Address, Bytes, HashMap, Log, B256,
+    Address,
+    Bytes,
+    HashMap,
+    Log,
+    B256,
 };
 use std::{boxed::Box, vec::Vec};
 
@@ -91,8 +97,9 @@ impl Precompiles {
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::homestead().clone();
             precompiles.extend([
-                // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
-                // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
+                // EIP-196: Precompiled contracts for addition and scalar multiplication on the
+                // elliptic curve alt_bn128. EIP-197: Precompiled contracts for
+                // optimal ate pairing check on the elliptic curve alt_bn128.
                 bn128::add::BYZANTIUM,
                 bn128::mul::BYZANTIUM,
                 bn128::pair::BYZANTIUM,
@@ -271,7 +278,7 @@ impl PrecompileSpecId {
             #[cfg(feature = "optimism")]
             BEDROCK | REGOLITH | CANYON => Self::BERLIN,
             #[cfg(feature = "optimism")]
-            ECOTONE => Self::CANCUN,
+            ECOTONE | FJORD => Self::CANCUN,
         }
     }
 }

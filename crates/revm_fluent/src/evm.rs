@@ -8,7 +8,6 @@ use crate::{
     primitives::{
         hex,
         specification::SpecId,
-        Address,
         BlockEnv,
         Bytes,
         CfgEnv,
@@ -35,8 +34,17 @@ use fluentbase_core::{
     loader::{_loader_call, _loader_create},
 };
 use fluentbase_sdk::{ContractInput, EvmCallMethodInput, EvmCreateMethodInput};
-use fluentbase_types::consts::EVM_STORAGE_ADDRESS;
-use revm_interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
+use fluentbase_types::{consts::EVM_STORAGE_ADDRESS, Address, ExitCode};
+use revm_interpreter::{
+    CallInputs,
+    CallOutcome,
+    CreateInputs,
+    CreateOutcome,
+    Gas,
+    InstructionResult,
+    InterpreterResult,
+};
+use std::vec::Vec;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -430,7 +438,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             {
                 let exec = self.handler.execution();
                 // call inner handling of call/create
-                let mut first_frame_or_result = match ctx.evm.env.tx.transact_to {
+                let first_frame_or_result = match ctx.evm.env.tx.transact_to {
                     TransactTo::Call(_) => exec.call(
                         ctx,
                         CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
@@ -442,10 +450,11 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 };
 
                 // Starts the main running loop.
-                match first_frame_or_result {
+                let mut result = match first_frame_or_result {
                     FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
                     FrameOrResult::Result(result) => result,
-                }
+                };
+                result
             }
         };
 

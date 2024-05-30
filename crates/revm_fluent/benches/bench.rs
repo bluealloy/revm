@@ -14,7 +14,7 @@ use revm::{
 use revm_interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use std::time::Duration;
 
-#[cfg(feature = "fluent_revmnc ")]
+#[cfg(feature = "fluent_revm")]
 extern crate revm_interpreter_fluent as revm_interpreter;
 
 fn analysis(c: &mut Criterion) {
@@ -39,13 +39,6 @@ fn analysis(c: &mut Criterion) {
     let mut evm = evm
         .modify()
         .reset_handler_with_db(BenchmarkDB::new_bytecode(raw))
-        .build();
-    bench_transact(&mut g, &mut evm);
-
-    let checked = Bytecode::new_raw(contract_data.clone());
-    let mut evm = evm
-        .modify()
-        .reset_handler_with_db(BenchmarkDB::new_bytecode(checked))
         .build();
     bench_transact(&mut g, &mut evm);
 

@@ -1,3 +1,4 @@
+use crate::optimism::fast_lz::flz_compress_len;
 use crate::primitives::{address, db::Database, Address, SpecId, U256};
 use core::ops::Mul;
 
@@ -116,12 +117,22 @@ impl L1BlockInfo {
         }
     }
 
-    /// Calculate the data gas for posting the transaction on L1. Calldata costs 16 gas per non-zero
-    /// byte and 4 gas per zero byte.
+    /// Calculate the data gas for posting the transaction on L1. Calldata costs 16 gas per byte
+    /// after compression.
+    ///
+    /// Prior to fjord, calldata costs 16 gas per non-zero byte and 4 gas per zero byte.
     ///
     /// Prior to regolith, an extra 68 non-zero bytes were included in the rollup data costs to
     /// account for the empty signature.
     pub fn data_gas(&self, input: &[u8], spec_id: SpecId) -> U256 {
+        if spec_id.is_enabled_in(SpecId::FJORD) {
+            let estimated_size = self.tx_estimated_size_fjord(input);
+
+            return estimated_size
+                .saturating_mul(U256::from(NON_ZERO_BYTE_COST))
+                .wrapping_div(U256::from(1_000_000));
+        };
+
         let mut rollup_data_gas_cost = U256::from(input.iter().fold(0, |acc, byte| {
             acc + if *byte == 0x00 {
                 ZERO_BYTE_COST
@@ -138,6 +149,18 @@ impl L1BlockInfo {
         rollup_data_gas_cost
     }
 
+    // Calculate the estimated compressed transaction size in bytes, scaled by 1e6.
+    // This value is computed based on the following formula:
+    // max(minTransactionSize, intercept + fastlzCoef*fastlzSize)
+    fn tx_estimated_size_fjord(&self, input: &[u8]) -> U256 {
+        let fastlz_size = U256::from(flz_compress_len(input));
+
+        fastlz_size
+            .saturating_mul(U256::from(836_500))
+            .saturating_sub(U256::from(42_585_600))
+            .max(U256::from(100_000_000))
+    }
+
     /// Calculate the gas cost of a transaction based on L1 block data posted on L2, depending on the [SpecId] passed.
     pub fn calculate_tx_l1_cost(&self, input: &[u8], spec_id: SpecId) -> U256 {
         // If the input is a deposit transaction or empty, the default value is zero.
@@ -145,7 +168,9 @@ impl L1BlockInfo {
             return U256::ZERO;
         }
 
-        if spec_id.is_enabled_in(SpecId::ECOTONE) {
+        if spec_id.is_enabled_in(SpecId::FJORD) {
+            self.calculate_tx_l1_cost_fjord(input)
+        } else if spec_id.is_enabled_in(SpecId::ECOTONE) {
             self.calculate_tx_l1_cost_ecotone(input, spec_id)
         } else {
             self.calculate_tx_l1_cost_bedrock(input, spec_id)
@@ -181,19 +206,38 @@ impl L1BlockInfo {
         }
 
         let rollup_data_gas_cost = self.data_gas(input, spec_id);
+        let l1_fee_scaled = self.calculate_l1_fee_scaled_ecotone();
+
+        l1_fee_scaled
+            .saturating_mul(rollup_data_gas_cost)
+            .wrapping_div(U256::from(1_000_000 * NON_ZERO_BYTE_COST))
+    }
+
+    /// Calculate the gas cost of a transaction based on L1 block data posted on L2, post-Fjord.
+    ///
+    /// [SpecId::FJORD] L1 cost function:
+    /// `estimatedSize*(baseFeeScalar*l1BaseFee*16 + blobFeeScalar*l1BlobBaseFee)/1e12`
+    fn calculate_tx_l1_cost_fjord(&self, input: &[u8]) -> U256 {
+        let l1_fee_scaled = self.calculate_l1_fee_scaled_ecotone();
+        let estimated_size = self.tx_estimated_size_fjord(input);
+
+        estimated_size
+            .saturating_mul(l1_fee_scaled)
+            .wrapping_div(U256::from(1e12))
+    }
+
+    // l1BaseFee*16*l1BaseFeeScalar + l1BlobBaseFee*l1BlobBaseFeeScalar
+    fn calculate_l1_fee_scaled_ecotone(&self) -> U256 {
         let calldata_cost_per_byte = self
             .l1_base_fee
-            .saturating_mul(U256::from(16))
+            .saturating_mul(U256::from(NON_ZERO_BYTE_COST))
             .saturating_mul(self.l1_base_fee_scalar);
         let blob_cost_per_byte = self
             .l1_blob_base_fee
             .unwrap_or_default()
             .saturating_mul(self.l1_blob_base_fee_scalar.unwrap_or_default());
 
-        calldata_cost_per_byte
-            .saturating_add(blob_cost_per_byte)
-            .saturating_mul(rollup_data_gas_cost)
-            .wrapping_div(U256::from(1_000_000 * 16))
+        calldata_cost_per_byte.saturating_add(blob_cost_per_byte)
     }
 }
 
@@ -225,6 +269,11 @@ mod tests {
         // gas cost = 3 * 16 = 48
         let regolith_data_gas = l1_block_info.data_gas(&input, SpecId::REGOLITH);
         assert_eq!(regolith_data_gas, U256::from(48));
+
+        // Fjord has a minimum compressed size of 100 bytes
+        // gas cost = 100 * 16 = 1600
+        let fjord_data_gas = l1_block_info.data_gas(&input, SpecId::FJORD);
+        assert_eq!(fjord_data_gas, U256::from(1600));
     }
 
     #[test]
@@ -250,6 +299,11 @@ mod tests {
         // gas cost = 3 * 16 + 2 * 4 = 56
         let regolith_data_gas = l1_block_info.data_gas(&input, SpecId::REGOLITH);
         assert_eq!(regolith_data_gas, U256::from(56));
+
+        // Fjord has a minimum compressed size of 100 bytes
+        // gas cost = 100 * 16 = 1600
+        let fjord_data_gas = l1_block_info.data_gas(&input, SpecId::FJORD);
+        assert_eq!(fjord_data_gas, U256::from(1600));
     }
 
     #[test]
@@ -309,5 +363,51 @@ mod tests {
         let input = bytes!("FACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
         assert_eq!(gas_cost, U256::from(1048));
+    }
+
+    #[test]
+    fn test_calculate_tx_l1_cost_fjord() {
+        // l1FeeScaled = baseFeeScalar*l1BaseFee*16 + blobFeeScalar*l1BlobBaseFee
+        //             = 1000 * 1000 * 16 + 1000 * 1000
+        //             = 17e6
+        let l1_block_info = L1BlockInfo {
+            l1_base_fee: U256::from(1_000),
+            l1_base_fee_scalar: U256::from(1_000),
+            l1_blob_base_fee: Some(U256::from(1_000)),
+            l1_blob_base_fee_scalar: Some(U256::from(1_000)),
+            ..Default::default()
+        };
+
+        // fastLzSize = 4
+        // estimatedSize = max(minTransactionSize, intercept + fastlzCoef*fastlzSize)
+        //               = max(100e6, 836500*4 - 42585600)
+        //               = 100e6
+        let input = bytes!("FACADE");
+        // l1Cost = estimatedSize * l1FeeScaled / 1e12
+        //        = 100e6 * 17 / 1e6
+        //        = 1700
+        let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::FJORD);
+        assert_eq!(gas_cost, U256::from(1700));
+
+        // fastLzSize = 202
+        // estimatedSize = max(minTransactionSize, intercept + fastlzCoef*fastlzSize)
+        //               = max(100e6, 836500*202 - 42585600)
+        //               = 126387400
+        let input = bytes!("02f901550a758302df1483be21b88304743f94f80e51afb613d764fa61751affd3313c190a86bb870151bd62fd12adb8e41ef24f3f000000000000000000000000000000000000000000000000000000000000006e000000000000000000000000af88d065e77c8cc2239327c5edb3a432268e5831000000000000000000000000000000000000000000000000000000000003c1e5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000148c89ed219d02f1a5be012c689b4f5b731827bebe000000000000000000000000c001a033fd89cb37c31b2cba46b6466e040c61fc9b2a3675a7f5f493ebd5ad77c497f8a07cdf65680e238392693019b4092f610222e71b7cec06449cb922b93b6a12744e");
+        // l1Cost = estimatedSize * l1FeeScaled / 1e12
+        //        = 126387400 * 17 / 1e6
+        //        = 2148
+        let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::FJORD);
+        assert_eq!(gas_cost, U256::from(2148));
+
+        // Zero rollup data gas cost should result in zero
+        let input = bytes!("");
+        let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::FJORD);
+        assert_eq!(gas_cost, U256::ZERO);
+
+        // Deposit transactions with the EIP-2718 type of 0x7F should result in zero
+        let input = bytes!("7FFACADE");
+        let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::FJORD);
+        assert_eq!(gas_cost, U256::ZERO);
     }
 }

@@ -38,7 +38,6 @@ use crate::{
     JournalCheckpoint,
     CALL_STACK_LIMIT,
 };
-use fluentbase_types::ExitCode;
 use std::boxed::Box;
 
 /// EVM contexts contains data that EVM needs for execution.

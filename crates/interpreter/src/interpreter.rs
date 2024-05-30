@@ -23,7 +23,7 @@ use crate::{
 };
 pub use contract::Contract;
 use core::cmp::min;
-use revm_primitives::{hex, Bytecode, Eof, U256};
+use revm_primitives::{Bytecode, Eof, U256};
 pub use shared_memory::{num_words, SharedMemory, EMPTY_SHARED_MEMORY};
 pub use stack::{Stack, STACK_LIMIT};
 use std::borrow::ToOwned;
@@ -148,7 +148,7 @@ impl Interpreter {
     pub(crate) fn load_eof_code(&mut self, idx: usize, pc: usize) {
         // SAFETY: eof flag is true only if bytecode is Eof.
         let Bytecode::Eof(eof) = &self.contract.bytecode else {
-            panic!("Expected EOF bytecode")
+            panic!("Expected EOF code section")
         };
         let Some(code) = eof.body.code(idx) else {
             panic!("Code not found")
@@ -284,7 +284,7 @@ impl Interpreter {
         let target_len = min(out_len, self.return_data_buffer.len());
         match call_outcome.instruction_result() {
             return_ok!() => {
-                // return unspent gas.
+                // return unspend gas.
                 let remaining = call_outcome.gas().remaining();
                 let refunded = call_outcome.gas().refunded();
                 self.gas.erase_cost(remaining);
@@ -391,7 +391,6 @@ impl Interpreter {
         self.next_action = InterpreterAction::None;
         self.shared_memory = shared_memory;
         // main loop
-        // println!("bytecode: {}", hex::encode(&self.bytecode.0));
         while self.instruction_result == InstructionResult::Continue {
             self.step(instruction_table, host);
         }

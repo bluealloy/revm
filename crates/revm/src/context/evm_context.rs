@@ -265,8 +265,8 @@ pub(crate) mod test_utils {
         balance: U256,
     ) -> EvmContext<CacheDB<EmptyDB>> {
         db.insert_account_info(
-            MOCK_CALLER,
-            AccountInfo {
+            test_utils::MOCK_CALLER,
+            crate::primitives::AccountInfo {
                 nonce: 0,
                 balance,
                 code_hash: B256::default(),

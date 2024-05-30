@@ -244,7 +244,6 @@ impl<DB: Database> Database for State<DB> {
                     }
                 }
                 // if not found in bundle ask database
-                // TODO .map_err(|_| ExitCode::FatalExternalError)?;
                 let code = self.database.code_by_hash(code_hash)?;
                 entry.insert(code.clone());
                 Ok(code)
@@ -270,7 +269,6 @@ impl<DB: Database> Database for State<DB> {
                         let value = if is_storage_known {
                             U256::ZERO
                         } else {
-                            // TODO map_err(|_| ExitCode::FatalExternalError)?
                             self.database.storage(address, index)?
                         };
                         entry.insert(value);
@@ -290,12 +288,12 @@ impl<DB: Database> Database for State<DB> {
         match self.block_hashes.entry(u64num) {
             btree_map::Entry::Occupied(entry) => Ok(*entry.get()),
             btree_map::Entry::Vacant(entry) => {
-                // TODO .map_err(|_| ExitCode::FatalExternalError)?
                 let ret = *entry.insert(self.database.block_hash(number)?);
 
                 // prune all hashes that are older then BLOCK_HASH_HISTORY
+                let last_block = u64num.saturating_sub(BLOCK_HASH_HISTORY as u64);
                 while let Some(entry) = self.block_hashes.first_entry() {
-                    if *entry.key() < u64num.saturating_sub(BLOCK_HASH_HISTORY as u64) {
+                    if *entry.key() < last_block {
                         entry.remove();
                     } else {
                         break;
@@ -319,13 +317,13 @@ impl<DB: Database> DatabaseCommit for State<DB> {
 mod tests {
     use super::*;
     use crate::db::{
-        states::reverts::AccountInfoRevert,
+        states::{reverts::AccountInfoRevert, StorageSlot},
         AccountRevert,
         AccountStatus,
         BundleAccount,
         RevertToSlot,
     };
-    use revm_interpreter::primitives::{keccak256, StorageSlot};
+    use revm_interpreter::primitives::keccak256;
 
     #[test]
     fn block_hash_cache() {
