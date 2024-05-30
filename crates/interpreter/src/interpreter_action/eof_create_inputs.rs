@@ -1,4 +1,5 @@
 use crate::primitives::{eof::EofDecodeError, Address, Bytes, Eof, TxEnv, U256};
+use std::boxed::Box;
 
 /// Inputs for EOF create call.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
