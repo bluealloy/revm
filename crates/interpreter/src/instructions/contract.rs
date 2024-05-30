@@ -35,7 +35,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
         return;
     };
 
-    let input = if input_range.is_empty() {
+    let input = if !input_range.is_empty() {
         interpreter
             .shared_memory
             .slice_range(input_range)

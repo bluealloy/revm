@@ -98,6 +98,8 @@ where
 }
 
 impl<EXT, DB: Database> Host for Context<EXT, DB> {
+    /// Returns reference to Environment.
+    #[inline]
     fn env(&self) -> &Env {
         &self.evm.env
     }
