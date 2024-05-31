@@ -135,6 +135,9 @@ pub trait Inspector<DB: Database> {
         outcome
     }
 
+    /// Called when EOF creating is called.
+    ///
+    /// This can happen from create TX or from EOFCREATE opcode.
     fn eofcreate(
         &mut self,
         context: &mut EvmContext<DB>,
@@ -145,6 +148,7 @@ pub trait Inspector<DB: Database> {
         None
     }
 
+    /// Called when eof creating has ended.
     fn eofcreate_end(
         &mut self,
         context: &mut EvmContext<DB>,
