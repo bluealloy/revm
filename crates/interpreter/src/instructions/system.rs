@@ -1,7 +1,7 @@
 use crate::{
     gas,
     primitives::{Spec, B256, KECCAK_EMPTY, U256},
-    Host, InstructionResult, Interpreter,
+    Host, Interpreter,
 };
 use core::ptr;
 
@@ -123,23 +123,42 @@ pub fn returndatasize<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
 pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
-    check!(interpreter, BYZANTIUM);
+    check!(interpreter, PRAGUE);
     pop!(interpreter, memory_offset, offset, len);
+
     let len = as_usize_or_fail!(interpreter, len);
-    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
-    let data_offset = as_usize_saturated!(offset);
-    let data_end = data_offset.saturating_add(len);
-    if data_end > interpreter.return_data_buffer.len() {
-        interpreter.instruction_result = InstructionResult::OutOfOffset;
+    if len == 0 {
         return;
     }
-    if len != 0 {
-        let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
-        resize_memory!(interpreter, memory_offset, len);
+
+    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
+
+    let data_offset = as_usize_saturated!(offset);
+    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
+
+    resize_memory!(interpreter, memory_offset, len);
+
+    let return_data_buffer_len = interpreter.return_data_buffer.len();
+    if data_offset < return_data_buffer_len {
+        let available_len = return_data_buffer_len - data_offset;
+        let copy_len = available_len.min(len);
+
         interpreter.shared_memory.set(
             memory_offset,
-            &interpreter.return_data_buffer[data_offset..data_end],
+            &interpreter.return_data_buffer[data_offset..data_offset + copy_len],
         );
+
+        if copy_len < len {
+            interpreter
+                .shared_memory
+                .slice_mut(memory_offset + copy_len, len - copy_len)
+                .fill(0);
+        }
+    } else {
+        interpreter
+            .shared_memory
+            .slice_mut(memory_offset, len)
+            .fill(0);
     }
 }
 
@@ -176,7 +195,7 @@ mod test {
     use crate::{
         opcode::{make_instruction_table, RETURNDATACOPY, RETURNDATALOAD},
         primitives::{bytes, Bytecode, PragueSpec},
-        DummyHost, Gas,
+        DummyHost, Gas, InstructionResult,
     };
 
     #[test]
