@@ -80,7 +80,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
 
 pub fn return_contract<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     require_init_eof!(interpreter);
-    let deploy_container_index = unsafe { read_u16(interpreter.instruction_pointer) };
+    let deploy_container_index = unsafe { *interpreter.instruction_pointer };
     pop!(interpreter, aux_data_offset, aux_data_size);
     let aux_data_size = as_usize_or_fail!(interpreter, aux_data_size);
     // important: offset must be ignored if len is zeros
