@@ -74,6 +74,10 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
         .caller
         .create2(salt.to_be_bytes(), keccak256(sub_container));
 
+    let gas_reduce = max(interpreter.gas.remaining() / 64, 5000);
+    let gas_limit = interpreter.gas().remaining().saturating_sub(gas_reduce);
+    gas!(interpreter, gas_limit);
+
     // Send container for execution container is preverified.
     interpreter.next_action = InterpreterAction::EOFCreate {
         inputs: Box::new(EOFCreateInput::new(
@@ -81,7 +85,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
             created_address,
             value,
             eof,
-            interpreter.gas().remaining(),
+            gas_limit,
             return_range,
         )),
     };
