@@ -7,7 +7,6 @@ use revm_primitives::{keccak256, BerlinSpec};
 
 use crate::{
     gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD},
-    instructions::utility::read_u16,
     interpreter::Interpreter,
     primitives::{Address, Bytes, Eof, Spec, SpecId::*, U256},
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInput, Host,
