@@ -61,6 +61,7 @@ impl From<SuccessReason> for InstructionResult {
             SuccessReason::Return => InstructionResult::Return,
             SuccessReason::Stop => InstructionResult::Stop,
             SuccessReason::SelfDestruct => InstructionResult::SelfDestruct,
+            SuccessReason::EofReturnContract => InstructionResult::ReturnContract,
         }
     }
 }
