@@ -220,7 +220,7 @@ mod test {
     }
 
     #[test]
-    fn test_returdatalcopy() {
+    fn returndatacopy() {
         let table = make_instruction_table::<_, PragueSpec>();
         let mut host = DummyHost::default();
 
@@ -236,9 +236,9 @@ mod test {
         interp.shared_memory.resize(256);
 
         // Copying within bounds
-        interp.stack.push(U256::from(0)).unwrap();
-        interp.stack.push(U256::from(0)).unwrap();
         interp.stack.push(U256::from(32)).unwrap();
+        interp.stack.push(U256::from(0)).unwrap();
+        interp.stack.push(U256::from(0)).unwrap();
         interp.step(&table, &mut host);
         assert_eq!(interp.instruction_result, InstructionResult::Continue);
         assert_eq!(
@@ -259,9 +259,9 @@ mod test {
         assert_eq!(&interp.shared_memory.slice(80, 48), &[0u8; 48]);
 
         // Completely out-of-bounds (should be all zeros)
-        interp.stack.push(U256::from(128)).unwrap();
-        interp.stack.push(U256::from(96)).unwrap();
         interp.stack.push(U256::from(32)).unwrap();
+        interp.stack.push(U256::from(96)).unwrap();
+        interp.stack.push(U256::from(128)).unwrap();
         interp.step(&table, &mut host);
         assert_eq!(interp.instruction_result, InstructionResult::Continue);
         assert_eq!(&interp.shared_memory.slice(128, 32), &[0u8; 32]);
