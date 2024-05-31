@@ -174,7 +174,7 @@ pub fn gas<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 mod test {
     use super::*;
     use crate::{
-        opcode::{make_instruction_table, RETURNDATALOAD},
+        opcode::{make_instruction_table, RETURNDATACOPY, RETURNDATALOAD},
         primitives::{bytes, Bytecode, PragueSpec},
         DummyHost, Gas,
     };
@@ -210,8 +210,60 @@ mod test {
         );
 
         let _ = interp.stack.pop();
-        let _ = interp.stack.push(U256::from(2));
+        let _ = interp.stack.push(U256::from(32));
         interp.step(&table, &mut host);
-        assert_eq!(interp.instruction_result, InstructionResult::OutOfOffset);
+        assert_eq!(interp.instruction_result, InstructionResult::Continue);
+        assert_eq!(
+            interp.stack.data(),
+            &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
+        );
+    }
+
+    #[test]
+    fn test_returdatalcopy() {
+        let table = make_instruction_table::<_, PragueSpec>();
+        let mut host = DummyHost::default();
+
+        let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
+            [RETURNDATACOPY, RETURNDATACOPY, RETURNDATACOPY].into(),
+        ));
+        interp.is_eof = true;
+        interp.gas = Gas::new(10000);
+
+        interp.return_data_buffer =
+            bytes!("000000000000000400000000000000030000000000000002000000000000000100");
+
+        interp.shared_memory.resize(256);
+
+        // Copying within bounds
+        interp.stack.push(U256::from(0)).unwrap();
+        interp.stack.push(U256::from(0)).unwrap();
+        interp.stack.push(U256::from(32)).unwrap();
+        interp.step(&table, &mut host);
+        assert_eq!(interp.instruction_result, InstructionResult::Continue);
+        assert_eq!(
+            interp.shared_memory.slice(0, 32),
+            &interp.return_data_buffer[0..32]
+        );
+
+        // Copying with partial out-of-bounds (should zero pad)
+        interp.stack.push(U256::from(64)).unwrap();
+        interp.stack.push(U256::from(16)).unwrap();
+        interp.stack.push(U256::from(64)).unwrap();
+        interp.step(&table, &mut host);
+        assert_eq!(interp.instruction_result, InstructionResult::Continue);
+        assert_eq!(
+            interp.shared_memory.slice(64, 16),
+            &interp.return_data_buffer[16..32]
+        );
+        assert_eq!(&interp.shared_memory.slice(80, 48), &[0u8; 48]);
+
+        // Completely out-of-bounds (should be all zeros)
+        interp.stack.push(U256::from(128)).unwrap();
+        interp.stack.push(U256::from(96)).unwrap();
+        interp.stack.push(U256::from(32)).unwrap();
+        interp.step(&table, &mut host);
+        assert_eq!(interp.instruction_result, InstructionResult::Continue);
+        assert_eq!(&interp.shared_memory.slice(128, 32), &[0u8; 32]);
     }
 }
