@@ -80,8 +80,8 @@ impl FrameResult {
             FrameResult::Create(outcome) => {
                 Output::Create(outcome.result.output.clone(), outcome.address)
             }
-            FrameResult::EOFCreate(_) => {
-                panic!("EOFCreate can't be called from external world.");
+            FrameResult::EOFCreate(outcome) => {
+                Output::Create(outcome.result.output.clone(), Some(outcome.address))
             }
         }
     }
