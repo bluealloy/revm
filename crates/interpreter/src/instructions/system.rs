@@ -149,11 +149,18 @@ pub fn returndataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &m
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, offset);
     let offset_usize = as_usize_or_fail!(interpreter, offset);
+    // TODO EOF needs to be padded with zeros, it is not correct to fail.
+    /*
+    if offset + 32 > len(returndata buffer) the result is zero-padded
+    (same behavior as CALLDATALOAD).see matching behavior of RETURNDATACOPY
+    in Modified Behavior section.
+     */
     if offset_usize.saturating_add(32) > interpreter.return_data_buffer.len() {
         // TODO(EOF) proper error.
         interpreter.instruction_result = InstructionResult::OutOfOffset;
         return;
     }
+
     *offset =
         B256::from_slice(&interpreter.return_data_buffer[offset_usize..offset_usize + 32]).into();
 }
