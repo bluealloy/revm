@@ -123,7 +123,7 @@ pub fn returndatasize<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
 pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
-    check!(interpreter, PRAGUE);
+    check!(interpreter, BYZANTIUM);
     pop!(interpreter, memory_offset, offset, len);
 
     let len = as_usize_or_fail!(interpreter, len);
