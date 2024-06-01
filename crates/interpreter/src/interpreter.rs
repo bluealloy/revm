@@ -349,7 +349,13 @@ impl Interpreter {
         self.next_action = InterpreterAction::None;
         self.shared_memory = shared_memory;
         // main loop
+        println!("Run bytecode: {:?}", self.bytecode);
         while self.instruction_result == InstructionResult::Continue {
+            println!(
+                "OP: {:02X} stack:{:x?}",
+                self.current_opcode(),
+                self.stack.data()
+            );
             self.step(instruction_table, host);
         }
 
