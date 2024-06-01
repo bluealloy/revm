@@ -350,7 +350,10 @@ impl Interpreter {
         self.next_action = InterpreterAction::None;
         self.shared_memory = shared_memory;
         // main loop
-        println!("Run bytecode: {:?}\n result:{:?}", self.bytecode, self.instruction_result);
+        println!(
+            "Run bytecode: {:?}\n result:{:?}",
+            self.bytecode, self.instruction_result
+        );
         while self.instruction_result == InstructionResult::Continue {
             println!(
                 "OP: {:02X} stack:{:x?}",

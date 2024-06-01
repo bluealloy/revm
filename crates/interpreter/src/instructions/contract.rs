@@ -140,6 +140,10 @@ pub fn extcall_input(interpreter: &mut Interpreter) -> Option<Bytes> {
 
     let return_memory_offset = resize_memory(interpreter, input_offset, input_size)?;
 
+    if return_memory_offset.is_empty() {
+        return Some(Bytes::new());
+    }
+
     Some(Bytes::copy_from_slice(
         interpreter
             .shared_memory
