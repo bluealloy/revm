@@ -192,13 +192,13 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
 pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     require_eof!(interpreter);
     pop_address!(interpreter, target_address);
+    pop!(interpreter, value);
 
     // input call
     let Some(input) = extcall_input(interpreter) else {
         return;
     };
 
-    pop!(interpreter, value);
     let has_transfer = value != U256::ZERO;
 
     let Some(gas_limit) = extcall_gas_calc(interpreter, host, target_address, has_transfer) else {
