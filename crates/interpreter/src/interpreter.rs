@@ -192,6 +192,7 @@ impl Interpreter {
     }
 
     pub fn insert_eofcreate_outcome(&mut self, create_outcome: EOFCreateOutcome) {
+        self.instruction_result = InstructionResult::Continue;
         let instruction_result = create_outcome.instruction_result();
 
         self.return_data_buffer = if *instruction_result == InstructionResult::Revert {
@@ -349,7 +350,7 @@ impl Interpreter {
         self.next_action = InterpreterAction::None;
         self.shared_memory = shared_memory;
         // main loop
-        println!("Run bytecode: {:?}", self.bytecode);
+        println!("Run bytecode: {:?}\n result:{:?}", self.bytecode, self.instruction_result);
         while self.instruction_result == InstructionResult::Continue {
             println!(
                 "OP: {:02X} stack:{:x?}",
@@ -357,6 +358,7 @@ impl Interpreter {
                 self.stack.data()
             );
             self.step(instruction_table, host);
+            println!("Result: {:?}", self.instruction_result);
         }
 
         // Return next action if it is some.
