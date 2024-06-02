@@ -163,7 +163,8 @@ debug_print = [
 ]
 fluent_revm = [
     "rwasm",
-    "revm-interpreter/fluent_revm"
+    "revm-interpreter/fluent_revm",
+    "fluentbase-core/fluent_revm",
 ]
 
 [[example]]

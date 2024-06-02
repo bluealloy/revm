@@ -453,8 +453,11 @@ impl JournaledState {
                     let acc = state.get_mut(&address).unwrap();
                     acc.info.code_hash = KECCAK_EMPTY;
                     acc.info.code = None;
-                    acc.info.rwasm_code_hash = POSEIDON_EMPTY;
-                    acc.info.rwasm_code = None;
+                    #[cfg(feature = "fluent_revm")]
+                    {
+                        acc.info.rwasm_code_hash = POSEIDON_EMPTY;
+                        acc.info.rwasm_code = None;
+                    }
                 }
             }
         }
@@ -678,6 +681,7 @@ impl JournaledState {
                 acc.info.code = Some(code);
             }
         }
+        #[cfg(feature = "fluent_revm")]
         if acc.info.rwasm_code.is_none() {
             if acc.info.rwasm_code_hash == POSEIDON_EMPTY {
                 let empty = Bytecode::new();

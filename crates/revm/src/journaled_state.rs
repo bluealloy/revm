@@ -22,7 +22,7 @@ use crate::{
 use core::mem;
 use fluentbase_sdk::B256;
 #[cfg(feature = "fluent_revm")]
-use fluentbase_types::POSEIDON_EMPTY;
+use fluentbase_types::{Bytes, F254, POSEIDON_EMPTY};
 use revm_interpreter::{primitives::SpecId, LoadAccountResult, SStoreResult};
 use std::vec::Vec;
 
