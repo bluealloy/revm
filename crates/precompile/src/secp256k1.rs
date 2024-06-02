@@ -66,6 +66,7 @@ mod secp256k1 {
     }
 }
 
+#[cfg(feature = "std")]
 pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     const ECRECOVER_BASE: u64 = 3_000;
 

@@ -6,7 +6,6 @@ use crate::{
         Account,
         Address,
         Bytecode,
-        Bytes,
         EVMError,
         EvmState,
         EvmStorageSlot,
@@ -22,7 +21,8 @@ use crate::{
 };
 use core::mem;
 use fluentbase_sdk::B256;
-use fluentbase_types::{F254, POSEIDON_EMPTY};
+#[cfg(feature = "fluent_revm")]
+use fluentbase_types::{Bytes, F254, POSEIDON_EMPTY};
 use revm_interpreter::{primitives::SpecId, LoadAccountResult, SStoreResult};
 use std::vec::Vec;
 

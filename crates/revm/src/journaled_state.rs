@@ -21,6 +21,7 @@ use crate::{
 };
 use core::mem;
 use fluentbase_sdk::B256;
+#[cfg(feature = "fluent_revm")]
 use fluentbase_types::POSEIDON_EMPTY;
 use revm_interpreter::{primitives::SpecId, LoadAccountResult, SStoreResult};
 use std::vec::Vec;
@@ -66,7 +67,6 @@ impl JournaledState {
     /// And will not take into account if account is not existing or empty.
     ///
     /// # Note
-    ///
     pub fn new(spec: SpecId, warm_preloaded_addresses: HashSet<Address>) -> JournaledState {
         Self {
             state: HashMap::new(),
@@ -453,8 +453,11 @@ impl JournaledState {
                     let acc = state.get_mut(&address).unwrap();
                     acc.info.code_hash = KECCAK_EMPTY;
                     acc.info.code = None;
-                    acc.info.rwasm_code_hash = POSEIDON_EMPTY;
-                    acc.info.rwasm_code = None;
+                    #[cfg(feature = "fluent_revm")]
+                    {
+                        acc.info.rwasm_code_hash = POSEIDON_EMPTY;
+                        acc.info.rwasm_code = None;
+                    }
                 }
             }
         }
@@ -678,6 +681,7 @@ impl JournaledState {
                 acc.info.code = Some(code);
             }
         }
+        #[cfg(feature = "fluent_revm")]
         if acc.info.rwasm_code.is_none() {
             if acc.info.rwasm_code_hash == POSEIDON_EMPTY {
                 let empty = Bytecode::new();

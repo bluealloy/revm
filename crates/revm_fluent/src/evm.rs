@@ -1,12 +1,13 @@
 #[cfg(feature = "fluent_revm")]
 use crate::journal_db_wrapper::JournalDbWrapper;
+#[cfg(feature = "fluent_revm")]
+use crate::primitives::hex;
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{Host, InterpreterAction, SharedMemory},
     primitives::{
-        hex,
         specification::SpecId,
         BlockEnv,
         Bytes,
@@ -605,6 +606,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
         let call_output = _loader_call(&contract_input, &am, method_input);
 
+        #[cfg(feature = "fluent_revm")]
         {
             println!("executed ECL call:");
             println!(" - caller: 0x{}", hex::encode(caller_address));
