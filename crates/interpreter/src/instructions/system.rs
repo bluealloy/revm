@@ -126,15 +126,14 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
     check!(interpreter, BYZANTIUM);
     pop!(interpreter, memory_offset, offset, len);
 
-    let len = as_usize_saturated!(len);
+    let len = as_usize_or_fail!(interpreter, len);
+    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
     if len == 0 {
         return;
     }
 
-    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
-
     let data_offset = as_usize_saturated!(offset);
-    let memory_offset = as_usize_saturated!(memory_offset);
+    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
 
     resize_memory!(interpreter, memory_offset, len);
 
@@ -167,7 +166,7 @@ pub fn returndataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &m
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, offset);
-    let offset_usize = as_usize_saturated!(offset);
+    let offset_usize = as_usize_or_fail!(interpreter, offset);
 
     let data = if offset_usize < interpreter.return_data_buffer.len() {
         let available = interpreter.return_data_buffer.len() - offset_usize;
@@ -209,8 +208,6 @@ mod test {
                 RETURNDATALOAD,
                 RETURNDATALOAD,
                 RETURNDATALOAD,
-                RETURNDATALOAD,
-                RETURNDATALOAD,
             ]
             .into(),
         ));
@@ -245,16 +242,6 @@ mod test {
             &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
         );
 
-        // Large offset
-        let _ = interp.stack.pop();
-        interp.stack.push(U256::MAX).unwrap();
-        interp.step(&table, &mut host);
-        assert_eq!(interp.instruction_result, InstructionResult::Continue);
-        assert_eq!(
-            interp.stack.data(),
-            &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
-        );
-
         // Offset right at the boundary of the return data buffer size
         let _ = interp.stack.pop();
         let _ = interp
@@ -266,13 +253,6 @@ mod test {
             interp.stack.data(),
             &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
         );
-
-        // Large length
-        let _ = interp.stack.pop();
-        let _ = interp.stack.push(U256::from(0));
-        interp.stack.push(U256::MAX).unwrap();
-        interp.step(&table, &mut host);
-        assert_eq!(interp.instruction_result, InstructionResult::Continue);
     }
 
     #[test]
