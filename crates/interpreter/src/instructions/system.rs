@@ -126,7 +126,7 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
     check!(interpreter, BYZANTIUM);
     pop!(interpreter, memory_offset, offset, len);
 
-    let len = as_usize_or_fail!(interpreter, len);
+    let len = as_usize_saturated!(len);
     if len == 0 {
         return;
     }
@@ -134,7 +134,7 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
 
     let data_offset = as_usize_saturated!(offset);
-    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
+    let memory_offset = as_usize_saturated!(memory_offset);
 
     resize_memory!(interpreter, memory_offset, len);
 
@@ -167,7 +167,7 @@ pub fn returndataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &m
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, offset);
-    let offset_usize = as_usize_or_fail!(interpreter, offset);
+    let offset_usize = as_usize_saturated!(offset);
 
     let data = if offset_usize < interpreter.return_data_buffer.len() {
         let available = interpreter.return_data_buffer.len() - offset_usize;
@@ -204,7 +204,15 @@ mod test {
         let mut host = DummyHost::default();
 
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
-            [RETURNDATALOAD, RETURNDATALOAD, RETURNDATALOAD].into(),
+            [
+                RETURNDATALOAD,
+                RETURNDATALOAD,
+                RETURNDATALOAD,
+                RETURNDATALOAD,
+                RETURNDATALOAD,
+                RETURNDATALOAD,
+            ]
+            .into(),
         ));
         interp.is_eof = true;
         interp.gas = Gas::new(10000);
@@ -236,6 +244,35 @@ mod test {
             interp.stack.data(),
             &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
         );
+
+        // Large offset
+        let _ = interp.stack.pop();
+        interp.stack.push(U256::MAX).unwrap();
+        interp.step(&table, &mut host);
+        assert_eq!(interp.instruction_result, InstructionResult::Continue);
+        assert_eq!(
+            interp.stack.data(),
+            &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
+        );
+
+        // Offset right at the boundary of the return data buffer size
+        let _ = interp.stack.pop();
+        let _ = interp
+            .stack
+            .push(U256::from(interp.return_data_buffer.len()));
+        interp.step(&table, &mut host);
+        assert_eq!(interp.instruction_result, InstructionResult::Continue);
+        assert_eq!(
+            interp.stack.data(),
+            &vec![U256::from_limbs([0x00, 0x00, 0x00, 0x00])]
+        );
+
+        // Large length
+        let _ = interp.stack.pop();
+        let _ = interp.stack.push(U256::from(0));
+        interp.stack.push(U256::MAX).unwrap();
+        interp.step(&table, &mut host);
+        assert_eq!(interp.instruction_result, InstructionResult::Continue);
     }
 
     #[test]
@@ -244,14 +281,21 @@ mod test {
         let mut host = DummyHost::default();
 
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
-            [RETURNDATACOPY, RETURNDATACOPY, RETURNDATACOPY].into(),
+            [
+                RETURNDATACOPY,
+                RETURNDATACOPY,
+                RETURNDATACOPY,
+                RETURNDATACOPY,
+                RETURNDATACOPY,
+                RETURNDATACOPY,
+            ]
+            .into(),
         ));
         interp.is_eof = true;
         interp.gas = Gas::new(10000);
 
         interp.return_data_buffer =
             bytes!("000000000000000400000000000000030000000000000002000000000000000100");
-
         interp.shared_memory.resize(256);
 
         // Copying within bounds
@@ -284,5 +328,38 @@ mod test {
         interp.step(&table, &mut host);
         assert_eq!(interp.instruction_result, InstructionResult::Continue);
         assert_eq!(&interp.shared_memory.slice(128, 32), &[0u8; 32]);
+
+        // Large offset
+        interp.stack.push(U256::from(32)).unwrap();
+        interp.stack.push(U256::MAX).unwrap();
+        interp.stack.push(U256::from(0)).unwrap();
+        interp.step(&table, &mut host);
+        assert_eq!(interp.instruction_result, InstructionResult::Continue);
+        assert_eq!(&interp.shared_memory.slice(0, 32), &[0u8; 32]);
+
+        // Offset just before the boundary of the return data buffer size
+        interp.stack.push(U256::from(32)).unwrap();
+        interp
+            .stack
+            .push(U256::from(interp.return_data_buffer.len() - 32))
+            .unwrap();
+        interp.stack.push(U256::from(0)).unwrap();
+        interp.step(&table, &mut host);
+        assert_eq!(interp.instruction_result, InstructionResult::Continue);
+        assert_eq!(
+            interp.shared_memory.slice(0, 32),
+            &interp.return_data_buffer[interp.return_data_buffer.len() - 32..]
+        );
+
+        // Offset right at the boundary of the return data buffer size
+        interp.stack.push(U256::from(32)).unwrap();
+        interp
+            .stack
+            .push(U256::from(interp.return_data_buffer.len()))
+            .unwrap();
+        interp.stack.push(U256::from(0)).unwrap();
+        interp.step(&table, &mut host);
+        assert_eq!(interp.instruction_result, InstructionResult::Continue);
+        assert_eq!(&interp.shared_memory.slice(0, 32), &[0u8; 32]);
     }
 }
