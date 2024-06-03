@@ -70,6 +70,11 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         );
     }
 
+    // return infinity point if all points are infinity
+    if g1_points.is_empty() {
+        return Ok((required_gas, [0; 128].into()));
+    }
+
     let points = p1_affines::from(&g1_points);
     let multiexp = points.mult(&scalars, NBITS);
 

@@ -1,8 +1,9 @@
+use revm_interpreter::gas;
+
 use crate::{
     primitives::{db::Database, EVMError, Env, InvalidTransaction, Spec},
     Context,
 };
-use revm_interpreter::gas;
 
 /// Validate environment for the mainnet.
 pub fn validate_env<SPEC: Spec, DB: Database>(env: &Env) -> Result<(), EVMError<DB::Error>> {

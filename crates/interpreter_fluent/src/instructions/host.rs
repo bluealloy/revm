@@ -2,9 +2,7 @@ use crate::{
     gas::{self, warm_cold_cost},
     interpreter::Interpreter,
     primitives::{Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
-    Host,
-    InstructionResult,
-    SStoreResult,
+    Host, InstructionResult, SStoreResult,
 };
 use core::cmp::min;
 use std::vec::Vec;

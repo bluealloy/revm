@@ -27,46 +27,24 @@ mod journal_db_wrapper;
 mod journaled_state;
 #[cfg(feature = "optimism")]
 pub mod optimism;
-#[cfg(all(test, feature = "fluent_revm"))]
-mod test;
 
 // Export items.
 
 pub use builder::EvmBuilder;
 pub use context::{
-    Context,
-    ContextPrecompile,
-    ContextPrecompiles,
-    ContextStatefulPrecompile,
-    ContextStatefulPrecompileArc,
-    ContextStatefulPrecompileBox,
-    ContextStatefulPrecompileMut,
-    ContextWithHandlerCfg,
-    EvmContext,
-    InnerEvmContext,
+    Context, ContextPrecompile, ContextPrecompiles, ContextStatefulPrecompile,
+    ContextStatefulPrecompileArc, ContextStatefulPrecompileBox, ContextStatefulPrecompileMut,
+    ContextWithHandlerCfg, EvmContext, InnerEvmContext,
 };
 pub use db::{
-    CacheState,
-    DBBox,
-    Database,
-    DatabaseCommit,
-    DatabaseRef,
-    InMemoryDB,
-    State,
-    StateBuilder,
-    StateDBBox,
-    TransitionAccount,
-    TransitionState,
+    CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
 };
+pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
 pub use evm::{Evm, CALL_STACK_LIMIT};
 pub use frame::{CallFrame, CreateFrame, Frame, FrameData, FrameOrResult, FrameResult};
 pub use handler::Handler;
 pub use inspector::{
-    inspector_handle_register,
-    inspector_instruction,
-    inspectors,
-    GetInspector,
-    Inspector,
+    inspector_handle_register, inspector_instruction, inspectors, GetInspector, Inspector,
 };
 pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 // export Optimism types, helpers, and constants

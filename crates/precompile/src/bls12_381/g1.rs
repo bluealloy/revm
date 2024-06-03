@@ -80,8 +80,8 @@ pub(super) fn extract_g1_input(
         //
         // NB: There is no subgroup check for the G1 addition precompile.
         //
-        // We use blst_p1_affine_on_curve instead of blst_p1_affine_in_g2 because the latter
-        // performs the subgroup check.
+        // We use blst_p1_affine_on_curve instead of blst_p1_affine_in_g2 because the latter performs
+        // the subgroup check.
         //
         // SAFETY: out is a blst value.
         if unsafe { !blst_p1_affine_on_curve(&out) } {

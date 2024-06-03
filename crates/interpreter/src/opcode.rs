@@ -536,8 +536,8 @@ macro_rules! opcodes {
 
 // When adding new opcodes:
 // 1. add the opcode to the list below; make sure it's sorted by opcode value
-// 2. implement the opcode in the corresponding module; the function signature must be the exact
-//    same as the others
+// 2. implement the opcode in the corresponding module;
+//    the function signature must be the exact same as the others
 opcodes! {
     0x00 => STOP => control::stop => stack_io(0, 0), terminating;
 

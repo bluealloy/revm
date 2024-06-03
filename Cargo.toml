@@ -45,14 +45,20 @@ revm-interpreter = { path = "crates/interpreter", default-features = false }
 revm-interpreter-fluent = { path = "crates/interpreter_fluent", default-features = false }
 revm-precompile = { path = "crates/precompile", default-features = false }
 revm-primitives = { path = "crates/primitives", default-features = false }
-revm = { path = "crates/revm", features = [
+revm = { path = "crates/revm", default-features = false, features = [
     "ethersdb",
     "std",
     "serde-json",
     "c-kzg",
     "blst",
 ] }
-revm-fluent = { path = "crates/revm_fluent" }
+revm-fluent = { path = "crates/revm_fluent", default-features = false, features = [
+    "ethersdb",
+    "std",
+    "serde-json",
+    "c-kzg",
+    "blst",
+] }
 
 [workspace.metadata.docs.rs]
 all-features = true

@@ -3,15 +3,10 @@ use crate::{
     handler::register::EvmHandler,
     interpreter::{
         opcode::{self, BoxedInstruction},
-        InstructionResult,
-        Interpreter,
+        InstructionResult, Interpreter,
     },
     primitives::EVMError,
-    Context,
-    FrameOrResult,
-    FrameResult,
-    Inspector,
-    JournalEntry,
+    Context, FrameOrResult, FrameResult, Inspector, JournalEntry,
 };
 use core::cell::RefCell;
 use revm_interpreter::opcode::InstructionTables;
@@ -167,7 +162,18 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
             },
         );
 
-        // TODO(EOF) EOF create call.
+        // Pops eofcreate input from the stack and calls inspector `eofcreate_end` function.
+        // preserve the old handler and calls it with the outcome.
+        let eofcreate_input_stack_inner = eofcreate_input_stack.clone();
+        let old_handle = handler.execution.insert_eofcreate_outcome.clone();
+        handler.execution.insert_eofcreate_outcome = Arc::new(move |ctx, frame, mut outcome| {
+            let create_inputs = eofcreate_input_stack_inner.borrow_mut().pop().unwrap();
+            outcome = ctx
+                .external
+                .get_inspector()
+                .eofcreate_end(&mut ctx.evm, &create_inputs, outcome);
+            old_handle(ctx, frame, outcome)
+        });
 
         // call outcome
         let call_input_stack_inner = call_input_stack.clone();
@@ -263,8 +269,7 @@ mod tests {
         inspectors::NoOpInspector,
         interpreter::{opcode::*, CallInputs, CallOutcome, CreateInputs, CreateOutcome},
         primitives::BerlinSpec,
-        Evm,
-        EvmContext,
+        Evm, EvmContext,
     };
 
     // Test that this pattern builds.

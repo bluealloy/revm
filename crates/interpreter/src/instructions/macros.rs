@@ -165,7 +165,7 @@ macro_rules! pop {
         $crate::pop_ret!($interp, $x1, $x2, $x3, $x4, ())
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $x5:ident) => {
-        pop_ret!($interp, $x1, $x2, $x3, $x4, $x5, ())
+        $crate::pop_ret!($interp, $x1, $x2, $x3, $x4, $x5, ())
     };
 }
 
@@ -206,7 +206,7 @@ macro_rules! pop_ret {
         let ($x1, $x2, $x3, $x4) = unsafe { $interp.stack.pop4_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $x5:ident, $ret:expr) => {
-        if $interp.stack.len() < 4 {
+        if $interp.stack.len() < 5 {
             $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
             return $ret;
         }

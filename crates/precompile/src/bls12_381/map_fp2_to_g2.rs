@@ -1,5 +1,6 @@
 use super::{
-    g2::{check_canonical_fp2, encode_g2_point},
+    g2::check_canonical_fp2,
+    g2::encode_g2_point,
     utils::{remove_padding, PADDED_FP2_LENGTH, PADDED_FP_LENGTH},
 };
 use crate::{u64_to_address, PrecompileWithAddress};

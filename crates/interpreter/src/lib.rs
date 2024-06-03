@@ -13,6 +13,7 @@ mod macros;
 // silence lint
 #[cfg(test)]
 use serde_json as _;
+
 #[cfg(test)]
 use walkdir as _;
 
@@ -31,30 +32,16 @@ pub use gas::Gas;
 pub use host::{DummyHost, Host, LoadAccountResult, SStoreResult, SelfDestructResult};
 pub use instruction_result::*;
 pub use interpreter::{
-    analysis,
-    num_words,
-    Contract,
-    Interpreter,
-    InterpreterResult,
-    SharedMemory,
-    Stack,
-    EMPTY_SHARED_MEMORY,
-    STACK_LIMIT,
+    analysis, num_words, Contract, Interpreter, InterpreterResult, SharedMemory, Stack,
+    EMPTY_SHARED_MEMORY, STACK_LIMIT,
 };
 pub use interpreter_action::{
-    CallInputs,
-    CallOutcome,
-    CallScheme,
-    CallValue,
-    CreateInputs,
-    CreateOutcome,
-    CreateScheme,
-    EOFCreateInput,
-    EOFCreateOutcome,
-    InterpreterAction,
+    CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome, CreateScheme,
+    EOFCreateInput, EOFCreateOutcome, InterpreterAction,
 };
 pub use opcode::{Instruction, OpCode, OPCODE_INFO_JUMPTABLE};
 pub use primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
+
 #[doc(hidden)]
 pub use revm_primitives as primitives;
 

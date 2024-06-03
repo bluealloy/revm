@@ -2,22 +2,19 @@ mod context_precompiles;
 pub(crate) mod evm_context;
 mod inner_evm_context;
 
+pub use context_precompiles::{
+    ContextPrecompile, ContextPrecompiles, ContextStatefulPrecompile, ContextStatefulPrecompileArc,
+    ContextStatefulPrecompileBox, ContextStatefulPrecompileMut,
+};
+pub use evm_context::EvmContext;
+pub use inner_evm_context::InnerEvmContext;
+use revm_interpreter::as_usize_saturated;
+
 use crate::{
     db::{Database, EmptyDB},
     interpreter::{Host, LoadAccountResult, SStoreResult, SelfDestructResult},
     primitives::{Address, Bytecode, Env, HandlerCfg, Log, B256, BLOCK_HASH_HISTORY, U256},
 };
-pub use context_precompiles::{
-    ContextPrecompile,
-    ContextPrecompiles,
-    ContextStatefulPrecompile,
-    ContextStatefulPrecompileArc,
-    ContextStatefulPrecompileBox,
-    ContextStatefulPrecompileMut,
-};
-pub use evm_context::EvmContext;
-pub use inner_evm_context::InnerEvmContext;
-use revm_interpreter::as_usize_saturated;
 use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.

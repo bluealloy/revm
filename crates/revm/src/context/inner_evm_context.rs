@@ -1,42 +1,18 @@
 use crate::{
     db::Database,
     interpreter::{
-        analysis::to_analysed,
-        gas,
-        return_ok,
-        Contract,
-        CreateInputs,
-        EOFCreateInput,
-        Gas,
-        InstructionResult,
-        Interpreter,
-        InterpreterResult,
-        LoadAccountResult,
-        SStoreResult,
-        SelfDestructResult,
-        MAX_CODE_SIZE,
+        analysis::to_analysed, gas, return_ok, Contract, CreateInputs, EOFCreateInput, Gas,
+        InstructionResult, Interpreter, InterpreterResult, LoadAccountResult, SStoreResult,
+        SelfDestructResult, MAX_CODE_SIZE,
     },
     journaled_state::JournaledState,
     primitives::{
-        keccak256,
-        Account,
-        Address,
-        AnalysisKind,
-        Bytecode,
-        Bytes,
-        CreateScheme,
-        EVMError,
-        Env,
-        Eof,
-        HashSet,
-        Spec,
+        keccak256, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env,
+        Eof, HashSet, Spec,
         SpecId::{self, *},
-        B256,
-        U256,
+        B256, U256,
     },
-    FrameOrResult,
-    JournalCheckpoint,
-    CALL_STACK_LIMIT,
+    FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
 use std::boxed::Box;
 
@@ -217,8 +193,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         Ok((acc.info.code_hash, is_cold))
     }
 
-    /// Load storage slot, if storage is not present inside the account then it will be loaded from
-    /// database.
+    /// Load storage slot, if storage is not present inside the account then it will be loaded from database.
     #[inline]
     pub fn sload(
         &mut self,

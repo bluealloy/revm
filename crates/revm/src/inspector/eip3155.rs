@@ -1,16 +1,10 @@
 use crate::{
     inspectors::GasInspector,
     interpreter::{
-        CallInputs,
-        CallOutcome,
-        CreateInputs,
-        CreateOutcome,
-        Interpreter,
-        InterpreterResult,
+        CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
     },
     primitives::{db::Database, hex, HashMap, B256, U256},
-    EvmContext,
-    Inspector,
+    EvmContext, Inspector,
 };
 use revm_interpreter::OpCode;
 use serde::Serialize;
@@ -156,8 +150,7 @@ impl TracerEip3155 {
         self
     }
 
-    /// Include a memory field for each step. This significantly increases processing time and
-    /// output size.
+    /// Include a memory field for each step. This significantly increases processing time and output size.
     pub fn with_memory(mut self) -> Self {
         self.include_memory = true;
         self

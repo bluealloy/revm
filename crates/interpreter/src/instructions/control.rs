@@ -2,10 +2,7 @@ use super::utility::{read_i16, read_u16};
 use crate::{
     gas,
     primitives::{Bytes, Spec, U256},
-    Host,
-    InstructionResult,
-    Interpreter,
-    InterpreterResult,
+    Host, InstructionResult, Interpreter, InterpreterResult,
 };
 
 pub fn rjump<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -207,13 +204,12 @@ pub fn unknown<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 
 #[cfg(test)]
 mod test {
+    use revm_primitives::{bytes, eof::TypesSection, Bytecode, Eof, PragueSpec};
+
     use super::*;
     use crate::{
         opcode::{make_instruction_table, CALLF, JUMPF, NOP, RETF, RJUMP, RJUMPI, RJUMPV, STOP},
-        DummyHost,
-        FunctionReturnFrame,
-        Gas,
-        Interpreter,
+        DummyHost, FunctionReturnFrame, Gas, Interpreter,
     };
 
     #[test]

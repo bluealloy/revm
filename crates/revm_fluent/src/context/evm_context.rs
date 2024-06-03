@@ -1,25 +1,18 @@
+use revm_interpreter::CallValue;
+
 use super::inner_evm_context::InnerEvmContext;
 use crate::{
     db::Database,
     interpreter::{
-        return_ok,
-        CallInputs,
-        Contract,
-        Gas,
-        InstructionResult,
-        Interpreter,
-        InterpreterResult,
+        return_ok, CallInputs, Contract, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
     primitives::{Address, Bytes, EVMError, Env, HashSet, U256},
-    ContextPrecompiles,
-    FrameOrResult,
-    CALL_STACK_LIMIT,
+    ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
 use core::{
     fmt,
     ops::{Deref, DerefMut},
 };
-use revm_interpreter::CallValue;
 use std::boxed::Box;
 
 /// EVM context that contains the inner EVM context and precompiles.
@@ -234,7 +227,7 @@ pub(crate) mod test_utils {
     use crate::{
         db::{CacheDB, EmptyDB},
         journaled_state::JournaledState,
-        primitives::{address, AccountInfo, SpecId, B256},
+        primitives::{address, SpecId, B256},
     };
 
     /// Mock caller address.
@@ -317,8 +310,7 @@ mod tests {
     use crate::{
         db::{CacheDB, EmptyDB},
         primitives::{address, Bytecode},
-        Frame,
-        JournalEntry,
+        Frame, JournalEntry,
     };
     use std::boxed::Box;
     use test_utils::*;

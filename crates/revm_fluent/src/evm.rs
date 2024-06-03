@@ -8,44 +8,17 @@ use crate::{
     handler::Handler,
     interpreter::{Host, InterpreterAction, SharedMemory},
     primitives::{
-        specification::SpecId,
-        BlockEnv,
-        Bytes,
-        CfgEnv,
-        EVMError,
-        EVMResult,
-        EnvWithHandlerCfg,
-        ExecutionResult,
-        HandlerCfg,
-        InvalidTransaction,
-        ResultAndState,
-        TransactTo,
-        TxEnv,
-        U256,
+        specification::SpecId, BlockEnv, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
+        ExecutionResult, HandlerCfg, ResultAndState, TransactTo, TxEnv,
     },
-    Context,
-    ContextWithHandlerCfg,
-    Frame,
-    FrameOrResult,
-    FrameResult,
+    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
-use core::{cell::RefCell, fmt, str::from_utf8};
-use fluentbase_core::{
-    helpers::evm_error_from_exit_code,
-    loader::{_loader_call, _loader_create},
-};
+use core::fmt;
+use revm_interpreter::{CallInputs, CreateInputs, Gas};
+use std::vec::Vec;
 use fluentbase_sdk::{ContractInput, EvmCallMethodInput, EvmCreateMethodInput};
 use fluentbase_types::{consts::EVM_STORAGE_ADDRESS, Address, ExitCode};
-use revm_interpreter::{
-    CallInputs,
-    CallOutcome,
-    CreateInputs,
-    CreateOutcome,
-    Gas,
-    InstructionResult,
-    InterpreterResult,
-};
-use std::vec::Vec;
+use crate::primitives::{Bytes, U256};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -55,8 +28,8 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
-    /// Handler is a component of the of EVM that contains all the logic. Handler contains
-    /// specification id and it different depending on the specified fork.
+    /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
+    /// and it different depending on the specified fork.
     pub handler: Handler<'a, Context<EXT, DB>, EXT, DB>,
 }
 

@@ -1,11 +1,8 @@
-use blst::{
-    blst_bendian_from_fp,
-    blst_fp,
-    blst_fp_from_bendian,
-    blst_scalar,
-    blst_scalar_from_bendian,
-};
 use core::cmp::Ordering;
+
+use blst::{
+    blst_bendian_from_fp, blst_fp, blst_fp_from_bendian, blst_scalar, blst_scalar_from_bendian,
+};
 use revm_primitives::PrecompileError;
 
 /// Number of bits used in the BLS12-381 curve finite field elements.
@@ -75,7 +72,6 @@ pub(super) fn extract_scalar_input(input: &[u8]) -> Result<blst_scalar, Precompi
 
     let mut out = blst_scalar::default();
     // SAFETY: input length is checked previously, out is a blst value.
-
     unsafe {
         // NOTE: we do not use `blst_scalar_fr_check` here because, from EIP-2537:
         //

@@ -1,23 +1,7 @@
-use crate::{
-    interpreter::{InstructionResult, SelfDestructResult},
-    primitives::{
-        db::Database,
-        hash_map::Entry,
-        Account,
-        Address,
-        Bytecode,
-        EVMError,
-        EvmState,
-        EvmStorageSlot,
-        HashMap,
-        HashSet,
-        Log,
-        SpecId::*,
-        TransientStorage,
-        KECCAK_EMPTY,
-        PRECOMPILE3,
-        U256,
-    },
+use crate::interpreter::{InstructionResult, SelfDestructResult};
+use crate::primitives::{
+    db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, EvmState, EvmStorageSlot,
+    HashMap, HashSet, Log, SpecId::*, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use core::mem;
 use fluentbase_sdk::B256;
@@ -26,8 +10,8 @@ use fluentbase_types::{Bytes, F254, POSEIDON_EMPTY};
 use revm_interpreter::{primitives::SpecId, LoadAccountResult, SStoreResult};
 use std::vec::Vec;
 
-/// JournalState is internal EVM state that is used to contain state and track changes to that
-/// state. It contains journal of changes that happened to state so that they can be reverted.
+/// JournalState is internal EVM state that is used to contain state and track changes to that state.
+/// It contains journal of changes that happened to state so that they can be reverted.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournaledState {
@@ -67,6 +51,8 @@ impl JournaledState {
     /// And will not take into account if account is not existing or empty.
     ///
     /// # Note
+    ///
+    ///
     pub fn new(spec: SpecId, warm_preloaded_addresses: HashSet<Address>) -> JournaledState {
         Self {
             state: HashMap::new(),
@@ -133,7 +119,7 @@ impl JournaledState {
             spec: _,
             warm_preloaded_addresses: _,
             #[cfg(feature = "fluent_revm")]
-                code_state: _,
+            code_state: _,
         } = self;
 
         *transient_storage = TransientStorage::default();
@@ -258,8 +244,7 @@ impl JournaledState {
             return Ok(Some(InstructionResult::OverflowPayment));
         };
         *to_balance = to_balance_decr;
-        // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return
-        // funds from from_acc.
+        // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
 
         self.journal
             .last_mut()
@@ -276,8 +261,8 @@ impl JournaledState {
     /// Create account or return false if collision is detected.
     ///
     /// There are few steps done:
-    /// 1. Make created account warm loaded (AccessList) and this should be done before subroutine
-    ///    checkpoint is created.
+    /// 1. Make created account warm loaded (AccessList) and this should
+    ///     be done before subroutine checkpoint is created.
     /// 2. Check if there is collision of newly created account with existing one.
     /// 3. Mark created account as created.
     /// 4. Add fund to created account
@@ -322,10 +307,9 @@ impl JournaledState {
         last_journal.push(JournalEntry::AccountCreated { address });
         account.info.code = None;
 
-        // Set all storages to default value. They need to be present to act as accessed slots in
-        // access list. it shouldn't be possible for them to have different values then zero
-        // as code is not existing for this account, but because tests can change that
-        // assumption we are doing it.
+        // Set all storages to default value. They need to be present to act as accessed slots in access list.
+        // it shouldn't be possible for them to have different values then zero as code is not existing for this account,
+        // but because tests can change that assumption we are doing it.
         let empty = EvmStorageSlot::default();
         account
             .storage
@@ -408,8 +392,7 @@ impl JournaledState {
                     }
                 }
                 JournalEntry::BalanceTransfer { from, to, balance } => {
-                    // we don't need to check overflow and underflow when adding and subtracting the
-                    // balance.
+                    // we don't need to check overflow and underflow when adding and subtracting the balance.
                     let from = state.get_mut(&from).unwrap();
                     from.info.balance += balance;
                     let to = state.get_mut(&to).unwrap();
@@ -882,8 +865,8 @@ pub enum JournalEntry {
         had_balance: U256,
     },
     /// Loading account does not mean that account will need to be added to MerkleTree (touched).
-    /// Only when account is called (to execute contract or transfer balance) only then account is
-    /// made touched. Action: Mark account touched
+    /// Only when account is called (to execute contract or transfer balance) only then account is made touched.
+    /// Action: Mark account touched
     /// Revert: Unmark account touched
     AccountTouched { address: Address },
     /// Transfer balance between two accounts
@@ -904,15 +887,14 @@ pub enum JournalEntry {
     /// Actions: Mark account as created
     /// Revert: Unmart account as created and reset nonce to zero.
     AccountCreated { address: Address },
-    /// It is used to track both storage change and warm load of storage slot. For warm load in
-    /// regard to EIP-2929 AccessList had_value will be None
+    /// It is used to track both storage change and warm load of storage slot. For warm load in regard
+    /// to EIP-2929 AccessList had_value will be None
     /// Action: Storage change or warm load
     /// Revert: Revert to previous value or remove slot from storage
     StorageChange {
         address: Address,
         key: U256,
-        had_value: Option<U256>, /* if none, storage slot was cold loaded from db and needs to
-                                  * be removed */
+        had_value: Option<U256>, //if none, storage slot was cold loaded from db and needs to be removed
     },
     /// It is used to track an EIP-1153 transient storage change.
     /// Action: Transient storage changed.

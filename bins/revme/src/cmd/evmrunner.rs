@@ -5,7 +5,10 @@ use revm::{
     primitives::{Address, Bytecode, TransactTo},
     Evm,
 };
-use std::{borrow::Cow, fs, io::Error as IoError, path::PathBuf, time::Duration};
+use std::io::Error as IoError;
+use std::path::PathBuf;
+use std::time::Duration;
+use std::{borrow::Cow, fs};
 use structopt::StructOpt;
 
 extern crate alloc;

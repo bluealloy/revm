@@ -1,17 +1,9 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database,
-        EVMError,
-        ExecutionResult,
-        ResultAndState,
-        Spec,
-        SpecId::LONDON,
-        SuccessReason,
-        U256,
+        db::Database, EVMError, ExecutionResult, ResultAndState, Spec, SpecId::LONDON, U256,
     },
-    Context,
-    FrameResult,
+    Context, FrameResult,
 };
 use fluentbase_core::helpers::exit_code_from_evm_error;
 use fluentbase_types::ExitCode;

@@ -43,14 +43,14 @@ mod secp256k1 {
 #[cfg(feature = "secp256k1")]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
-    // Silence the unused crate dependency warning.
-    use k256 as _;
     use revm_primitives::{alloy_primitives::B512, keccak256, B256};
     use secp256k1::{
         ecdsa::{RecoverableSignature, RecoveryId},
-        Message,
-        Secp256k1,
+        Message, Secp256k1,
     };
+
+    // Silence the unused crate dependency warning.
+    use k256 as _;
 
     pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, secp256k1::Error> {
         let recid = RecoveryId::from_i32(recid as i32).expect("recovery ID is valid");

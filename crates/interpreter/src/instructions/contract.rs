@@ -1,30 +1,18 @@
 mod call_helpers;
 
+pub use call_helpers::{
+    calc_call_gas, get_memory_input_and_out_ranges, resize_memory_and_return_range,
+};
+use revm_primitives::{keccak256, BerlinSpec};
+
 use crate::{
     gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD},
-    instructions::utility::read_u16,
     interpreter::Interpreter,
     primitives::{Address, Bytes, Eof, Spec, SpecId::*, U256},
-    CallInputs,
-    CallScheme,
-    CallValue,
-    CreateInputs,
-    CreateScheme,
-    EOFCreateInput,
-    Host,
-    InstructionResult,
-    InterpreterAction,
-    InterpreterResult,
-    LoadAccountResult,
-    MAX_INITCODE_SIZE,
-};
-pub use call_helpers::{
-    calc_call_gas,
-    get_memory_input_and_out_ranges,
-    resize_memory_and_return_range,
+    CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInput, Host,
+    InstructionResult, InterpreterAction, InterpreterResult, LoadAccountResult, MAX_INITCODE_SIZE,
 };
 use core::{cmp::max, ops::Range};
-use revm_primitives::{keccak256, BerlinSpec};
 use std::boxed::Box;
 
 /// Resize memory and return memory range if successful.
@@ -86,6 +74,10 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
         .caller
         .create2(salt.to_be_bytes(), keccak256(sub_container));
 
+    let gas_reduce = max(interpreter.gas.remaining() / 64, 5000);
+    let gas_limit = interpreter.gas().remaining().saturating_sub(gas_reduce);
+    gas!(interpreter, gas_limit);
+
     // Send container for execution container is preverified.
     interpreter.next_action = InterpreterAction::EOFCreate {
         inputs: Box::new(EOFCreateInput::new(
@@ -93,7 +85,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
             created_address,
             value,
             eof,
-            interpreter.gas().remaining(),
+            gas_limit,
             return_range,
         )),
     };
@@ -103,7 +95,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
 
 pub fn return_contract<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     require_init_eof!(interpreter);
-    let deploy_container_index = unsafe { read_u16(interpreter.instruction_pointer) };
+    let deploy_container_index = unsafe { *interpreter.instruction_pointer };
     pop!(interpreter, aux_data_offset, aux_data_size);
     let aux_data_size = as_usize_or_fail!(interpreter, aux_data_size);
     // important: offset must be ignored if len is zeros

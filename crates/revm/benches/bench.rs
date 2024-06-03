@@ -1,9 +1,5 @@
 use criterion::{
-    criterion_group,
-    criterion_main,
-    measurement::WallTime,
-    BenchmarkGroup,
-    Criterion,
+    criterion_group, criterion_main, measurement::WallTime, BenchmarkGroup, Criterion,
 };
 use revm::{
     db::BenchmarkDB,

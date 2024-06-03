@@ -1,9 +1,10 @@
 pub mod eof;
 pub mod legacy;
 
-use crate::{keccak256, Bytes, B256, KECCAK_EMPTY};
 pub use eof::Eof;
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
+
+use crate::{keccak256, Bytes, B256, KECCAK_EMPTY};
 
 /// State of the [`Bytecode`] analysis.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

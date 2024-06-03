@@ -5,12 +5,7 @@ use crate::{
 };
 use core::ops::Range;
 use revm_interpreter::{
-    CallOutcome,
-    CreateOutcome,
-    EOFCreateOutcome,
-    Gas,
-    InstructionResult,
-    InterpreterResult,
+    CallOutcome, CreateOutcome, EOFCreateOutcome, Gas, InstructionResult, InterpreterResult,
 };
 use std::boxed::Box;
 

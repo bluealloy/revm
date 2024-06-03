@@ -1,11 +1,7 @@
 use super::g2::{encode_g2_point, extract_g2_input, G2_INPUT_ITEM_LENGTH};
 use crate::{u64_to_address, PrecompileWithAddress};
 use blst::{
-    blst_p2,
-    blst_p2_add_or_double_affine,
-    blst_p2_affine,
-    blst_p2_from_affine,
-    blst_p2_to_affine,
+    blst_p2, blst_p2_add_or_double_affine, blst_p2_affine, blst_p2_from_affine, blst_p2_to_affine,
 };
 use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
 
