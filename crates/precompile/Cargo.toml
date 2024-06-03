@@ -42,7 +42,7 @@ secp256k1 = { version = "0.29.0", default-features = false, features = [
 ], optional = true }
 
 # BLS12-381 precompiles
-blst = { version = "0.3.11", optional = true }
+blst = { version = "0.3.12", optional = true }
 
 # p256verify precompile
 p256 = { version = "0.13.2", optional = true,  default-features = false, features = ["ecdsa"] }
