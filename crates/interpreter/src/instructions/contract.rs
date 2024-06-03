@@ -1,8 +1,6 @@
 mod call_helpers;
 
-pub use call_helpers::{
-    calc_call_gas, get_memory_input_and_out_ranges, resize_memory_and_return_range,
-};
+pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
 use revm_primitives::{keccak256, BerlinSpec};
 
 use crate::{
@@ -12,28 +10,8 @@ use crate::{
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInput, Host,
     InstructionResult, InterpreterAction, InterpreterResult, LoadAccountResult, MAX_INITCODE_SIZE,
 };
-use core::{cmp::max, ops::Range};
+use core::cmp::max;
 use std::boxed::Box;
-
-/// Resize memory and return memory range if successful.
-/// Return `None` if there is not enough gas. And if `len`
-/// is zero return `Some(usize::MAX..usize::MAX)`.
-pub fn resize_memory(
-    interpreter: &mut Interpreter,
-    offset: U256,
-    len: U256,
-) -> Option<Range<usize>> {
-    let len = as_usize_or_fail_ret!(interpreter, len, None);
-    if len != 0 {
-        let offset = as_usize_or_fail_ret!(interpreter, offset, None);
-        resize_memory!(interpreter, offset, len, None);
-        // range is checked in resize_memory! macro and it is bounded by usize.
-        Some(offset..offset + len)
-    } else {
-        //unrealistic value so we are sure it is not used
-        Some(usize::MAX..usize::MAX)
-    }
-}
 
 /// EOF Create instruction
 pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -52,8 +30,18 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
         .expect("EOF is checked");
 
     // resize memory and get return range.
-    let Some(return_range) = resize_memory(interpreter, data_offset, data_size) else {
+    let Some(input_range) = resize_memory(interpreter, data_offset, data_size) else {
         return;
+    };
+
+    let input = if !input_range.is_empty() {
+        interpreter
+            .shared_memory
+            .slice_range(input_range)
+            .to_vec()
+            .into()
+    } else {
+        Bytes::new()
     };
 
     let eof = Eof::decode(sub_container.clone()).expect("Subcontainer is verified");
@@ -86,7 +74,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
             value,
             eof,
             gas_limit,
-            return_range,
+            input,
         )),
     };
 
@@ -150,8 +138,7 @@ pub fn return_contract<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &
 pub fn extcall_input(interpreter: &mut Interpreter) -> Option<Bytes> {
     pop_ret!(interpreter, input_offset, input_size, None);
 
-    let return_memory_offset =
-        resize_memory_and_return_range(interpreter, input_offset, input_size)?;
+    let return_memory_offset = resize_memory(interpreter, input_offset, input_size)?;
 
     Some(Bytes::copy_from_slice(
         interpreter

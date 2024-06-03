@@ -1,5 +1,3 @@
-use core::ops::Range;
-
 use crate::{Gas, InstructionResult, InterpreterResult};
 use revm_primitives::{Address, Bytes};
 
@@ -14,8 +12,6 @@ pub struct EOFCreateOutcome {
     pub result: InterpreterResult,
     /// An optional address associated with the create operation.
     pub address: Address,
-    /// Return memory range. If EOF creation Reverts it can return bytes from the memory.
-    pub return_memory_range: Range<usize>,
 }
 
 impl EOFCreateOutcome {
@@ -30,16 +26,8 @@ impl EOFCreateOutcome {
     /// # Returns
     ///
     /// A new [`EOFCreateOutcome`] instance.
-    pub fn new(
-        result: InterpreterResult,
-        address: Address,
-        return_memory_range: Range<usize>,
-    ) -> Self {
-        Self {
-            result,
-            address,
-            return_memory_range,
-        }
+    pub fn new(result: InterpreterResult, address: Address) -> Self {
+        Self { result, address }
     }
 
     /// Retrieves a reference to the [`InstructionResult`] from the [`InterpreterResult`].
@@ -79,10 +67,5 @@ impl EOFCreateOutcome {
     /// A reference to the `Gas` details.
     pub fn gas(&self) -> &Gas {
         &self.result.gas
-    }
-
-    /// Returns the memory range that Revert bytes are going to be written.
-    pub fn return_range(&self) -> Range<usize> {
-        self.return_memory_range.clone()
     }
 }

@@ -239,7 +239,6 @@ impl<DB: Database> InnerEvmContext<DB> {
                     output: Bytes::new(),
                 },
                 inputs.created_address,
-                inputs.return_memory_range.clone(),
             ))
         };
 
@@ -280,7 +279,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         };
 
         let contract = Contract::new(
-            Bytes::new(),
+            inputs.input.clone(),
             // fine to clone as it is Bytes.
             Bytecode::Eof(inputs.eof_init_code.clone()),
             None,
@@ -295,7 +294,6 @@ impl<DB: Database> InnerEvmContext<DB> {
 
         Ok(FrameOrResult::new_eofcreate_frame(
             inputs.created_address,
-            inputs.return_memory_range.clone(),
             checkpoint,
             interpreter,
         ))

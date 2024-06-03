@@ -388,6 +388,7 @@ pub enum SuccessReason {
     Stop,
     Return,
     SelfDestruct,
+    EofReturnContract,
 }
 
 /// Indicates that the EVM has experienced an exceptional halt. This causes execution to
