@@ -4,14 +4,7 @@ pub mod legacy;
 pub use eof::{Eof, EofDecodeError};
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
 
-use crate::{keccak256, Bytes, B256, KECCAK_EMPTY};
-
-/// EOF prefix as per EIP-3540.
-const EOF_PREFIX: u8 = 0xEF;
-
-/// Version byte that immediately follows the EOF prefix in EIP-3540.
-// See https://github.com/bluealloy/revm/issues/1464
-const EOF_VERSION: u8 = 0x01;
+use crate::{keccak256, Bytes, B256, EOF_PREFIX, EOF_VERSION, KECCAK_EMPTY};
 
 /// State of the [`Bytecode`] analysis.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -76,7 +69,14 @@ impl Bytecode {
     /// Checks if the bytecode starts with the EOF prefix followed by the correct version.
     #[inline]
     pub fn is_eof_format(bytes: &Bytes) -> bool {
-        bytes.len() >= 2 && bytes[0] == EOF_PREFIX && bytes[1] == EOF_VERSION
+        if bytes.len() >= 3 {
+            let prefix = u16::from_be_bytes([bytes[0], bytes[1]]);
+            let version = bytes[2];
+
+            prefix == EOF_PREFIX && version == EOF_VERSION
+        } else {
+            false
+        }
     }
 
     /// Creates a new raw [`Bytecode`].
