@@ -460,7 +460,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         value: U256,
         input: Bytes,
         gas_limit: u64,
-        // salt: Option<U256>,
     ) -> Result<CreateOutcome, EVMError<DB::Error>> {
         let return_result = |instruction_result: InstructionResult, gas: Gas| CreateOutcome {
             result: InterpreterResult {

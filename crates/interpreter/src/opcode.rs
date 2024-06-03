@@ -19,9 +19,8 @@ pub type BoxedInstruction<'a, H> = Box<dyn Fn(&mut Interpreter, &mut H) + 'a>;
 /// A table of instructions.
 pub type BoxedInstructionTable<'a, H> = [BoxedInstruction<'a, H>; 256];
 
-/// Instruction set that contains plain instruction table that contains simple `fn` function
-/// pointer. and Boxed `Fn` variant that contains `Box<dyn Fn()>` function pointer that can be used
-/// with closured.
+/// Instruction set that contains plain instruction table that contains simple `fn` function pointer.
+/// and Boxed `Fn` variant that contains `Box<dyn Fn()>` function pointer that can be used with closured.
 ///
 /// Note that `Plain` variant gives us 10-20% faster Interpreter execution.
 ///

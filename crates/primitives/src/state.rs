@@ -211,22 +211,18 @@ impl Default for AccountInfo {
     }
 }
 
-#[cfg(feature = "rwasm")]
 impl PartialEq for AccountInfo {
     fn eq(&self, other: &Self) -> bool {
-        self.balance == other.balance
-            && self.nonce == other.nonce
-            && self.code_hash == other.code_hash
-            && self.rwasm_code_hash == other.rwasm_code_hash
-    }
-}
+        let mut res = {
+            self.balance == other.balance
+                && self.nonce == other.nonce
+                && self.code_hash == other.code_hash
+        };
+        #[cfg(feature = "rwasm")] {
+            res &= self.rwasm_code_hash == other.rwasm_code_hash;
+        }
 
-#[cfg(not(feature = "rwasm"))]
-impl PartialEq for AccountInfo {
-    fn eq(&self, other: &Self) -> bool {
-        self.balance == other.balance
-            && self.nonce == other.nonce
-            && self.code_hash == other.code_hash
+        res
     }
 }
 
@@ -246,9 +242,9 @@ impl AccountInfo {
             balance,
             nonce,
             code: Some(code),
+            code_hash,
             #[cfg(feature = "rwasm")]
             rwasm_code: None,
-            code_hash,
             #[cfg(feature = "rwasm")]
             rwasm_code_hash: crate::POSEIDON_EMPTY,
         }

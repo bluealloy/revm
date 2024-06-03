@@ -6,8 +6,8 @@ use crate::primitives::{
 use crate::Database;
 use core::convert::Infallible;
 use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
-use std::vec::Vec;
 use fluentbase_types::POSEIDON_EMPTY;
+use std::vec::Vec;
 
 /// A [Database] implementation that stores all state changes in memory.
 pub type InMemoryDB = CacheDB<EmptyDB>;
