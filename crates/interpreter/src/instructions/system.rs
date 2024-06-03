@@ -160,15 +160,13 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
                 .slice_mut(memory_offset + copy_len, len - copy_len)
                 .fill(0);
         }
+    } else if interpreter.is_eof {
+        interpreter
+            .shared_memory
+            .slice_mut(memory_offset, len)
+            .fill(0);
     } else {
-        if interpreter.is_eof {
-            interpreter
-                .shared_memory
-                .slice_mut(memory_offset, len)
-                .fill(0);
-        } else {
-            interpreter.instruction_result = InstructionResult::OutOfOffset;
-        }
+        interpreter.instruction_result = InstructionResult::OutOfOffset;
     }
 }
 
