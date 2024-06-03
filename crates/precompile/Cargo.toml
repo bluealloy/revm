@@ -51,7 +51,7 @@ p256 = { version = "0.13.2", optional = true,  default-features = false, feature
 criterion = { version = "0.5" }
 rand = { version = "0.8", features = ["std"] }
 eyre = "0.6.12"
-rstest = "0.19.0"
+rstest = "0.21.0"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
