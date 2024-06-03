@@ -66,6 +66,11 @@ impl Bytecode {
         matches!(self, Self::Eof(_))
     }
 
+    /// Create a new legacy raw [`Bytecode`].
+    pub fn new_legacy(bytecode: Bytes) -> Self {
+        Self::LegacyRaw(bytecode)
+    }
+
     /// Checks if the bytecode starts with the EOF prefix followed by the correct version.
     #[inline]
     pub fn is_eof_format(bytes: &Bytes) -> bool {
