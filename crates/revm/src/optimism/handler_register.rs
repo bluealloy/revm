@@ -11,9 +11,10 @@ use crate::{
         db::Database, spec_to_generic, Account, EVMError, Env, ExecutionResult, HaltReason,
         HashMap, InvalidTransaction, ResultAndState, Spec, SpecId, SpecId::REGOLITH, U256,
     },
-    Context, FrameResult,
+    Context, ContextPrecompiles, FrameResult,
 };
 use core::ops::Mul;
+use revm_precompile::{secp256r1, PrecompileSpecId, Precompiles};
 use std::string::ToString;
 use std::sync::Arc;
 
@@ -23,6 +24,8 @@ pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, 
         handler.validation.env = Arc::new(validate_env::<SPEC, DB>);
         // Validate transaction against state.
         handler.validation.tx_against_state = Arc::new(validate_tx_against_state::<SPEC, EXT, DB>);
+        // Load additional precompiles for the given chain spec.
+        handler.pre_execution.load_precompiles = Arc::new(load_precompiles::<SPEC, EXT, DB>);
         // load l1 data
         handler.pre_execution.load_accounts = Arc::new(load_accounts::<SPEC, EXT, DB>);
         // An estimated batch cost is charged from the caller and added to L1 Fee Vault.
@@ -137,6 +140,21 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
     Ok(())
 }
 
+/// Load precompiles for Optimism chain.
+#[inline]
+pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> ContextPrecompiles<DB> {
+    let mut precompiles = Precompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID)).clone();
+
+    if SPEC::enabled(SpecId::FJORD) {
+        precompiles.extend([
+            // EIP-7212: secp256r1 P256verify
+            secp256r1::P256VERIFY,
+        ])
+    }
+
+    precompiles.into()
+}
+
 /// Load account (make them warm) and l1 data from database.
 #[inline]
 pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
@@ -240,30 +258,20 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
 
         // Send the L1 cost of the transaction to the L1 Fee Vault.
-        let Ok((l1_fee_vault_account, _)) = context
+        let (l1_fee_vault_account, _) = context
             .evm
             .inner
             .journaled_state
-            .load_account(optimism::L1_FEE_RECIPIENT, &mut context.evm.inner.db)
-        else {
-            return Err(EVMError::Custom(
-                "[OPTIMISM] Failed to load L1 Fee Vault account.".to_string(),
-            ));
-        };
+            .load_account(optimism::L1_FEE_RECIPIENT, &mut context.evm.inner.db)?;
         l1_fee_vault_account.mark_touch();
         l1_fee_vault_account.info.balance += l1_cost;
 
         // Send the base fee of the transaction to the Base Fee Vault.
-        let Ok((base_fee_vault_account, _)) = context
+        let (base_fee_vault_account, _) = context
             .evm
             .inner
             .journaled_state
-            .load_account(optimism::BASE_FEE_RECIPIENT, &mut context.evm.inner.db)
-        else {
-            return Err(EVMError::Custom(
-                "[OPTIMISM] Failed to load Base Fee Vault account.".to_string(),
-            ));
-        };
+            .load_account(optimism::BASE_FEE_RECIPIENT, &mut context.evm.inner.db)?;
         base_fee_vault_account.mark_touch();
         base_fee_vault_account.info.balance += context
             .evm

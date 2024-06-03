@@ -3,13 +3,13 @@ use bitflags::bitflags;
 use core::hash::{Hash, Hasher};
 
 /// EVM State is a mapping from addresses to accounts.
-pub type State = HashMap<Address, Account>;
+pub type EvmState = HashMap<Address, Account>;
 
 /// Structure used for EIP-1153 transient storage.
 pub type TransientStorage = HashMap<(Address, U256), U256>;
 
-/// An account's Storage is a mapping from 256-bit integer keys to [StorageSlot]s.
-pub type Storage = HashMap<U256, StorageSlot>;
+/// An account's Storage is a mapping from 256-bit integer keys to [EvmStorageSlot]s.
+pub type EvmStorage = HashMap<U256, EvmStorageSlot>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -17,7 +17,7 @@ pub struct Account {
     /// Balance, nonce, and code.
     pub info: AccountInfo,
     /// Storage cache
-    pub storage: Storage,
+    pub storage: EvmStorage,
     /// Account status flags.
     pub status: AccountStatus,
 }
@@ -119,8 +119,8 @@ impl Account {
 
     /// Returns an iterator over the storage slots that have been changed.
     ///
-    /// See also [StorageSlot::is_changed]
-    pub fn changed_storage_slots(&self) -> impl Iterator<Item = (&U256, &StorageSlot)> {
+    /// See also [EvmStorageSlot::is_changed]
+    pub fn changed_storage_slots(&self) -> impl Iterator<Item = (&U256, &EvmStorageSlot)> {
         self.storage.iter().filter(|(_, slot)| slot.is_changed())
     }
 }
@@ -138,42 +138,37 @@ impl From<AccountInfo> for Account {
 /// This type keeps track of the current value of a storage slot.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct StorageSlot {
-    /// The value of the storage slot before it was changed.
-    ///
-    /// When the slot is first loaded, this is the original value.
-    ///
-    /// If the slot was not changed, this is equal to the present value.
-    pub previous_or_original_value: U256,
-    /// When loaded with sload present value is set to original value
+pub struct EvmStorageSlot {
+    /// Original value of the storage slot.
+    pub original_value: U256,
+    /// Present value of the storage slot.
     pub present_value: U256,
 }
 
-impl StorageSlot {
-    /// Creates a new _unchanged_ `StorageSlot` for the given value.
+impl EvmStorageSlot {
+    /// Creates a new _unchanged_ `EvmStorageSlot` for the given value.
     pub fn new(original: U256) -> Self {
         Self {
-            previous_or_original_value: original,
+            original_value: original,
             present_value: original,
         }
     }
 
-    /// Creates a new _changed_ `StorageSlot`.
-    pub fn new_changed(previous_or_original_value: U256, present_value: U256) -> Self {
+    /// Creates a new _changed_ `EvmStorageSlot`.
+    pub fn new_changed(original_value: U256, present_value: U256) -> Self {
         Self {
-            previous_or_original_value,
+            original_value,
             present_value,
         }
     }
-
     /// Returns true if the present value differs from the original value
     pub fn is_changed(&self) -> bool {
-        self.previous_or_original_value != self.present_value
+        self.original_value != self.present_value
     }
 
     /// Returns the original value of the storage slot.
     pub fn original_value(&self) -> U256 {
-        self.previous_or_original_value
+        self.original_value
     }
 
     /// Returns the current value of the storage slot.

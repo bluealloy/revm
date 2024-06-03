@@ -1,4 +1,4 @@
-use crate::{Address, Bytes, Log, State, U256};
+use crate::{Address, Bytes, EvmState, Log, U256};
 use core::fmt;
 use std::{boxed::Box, string::String, vec::Vec};
 
@@ -14,7 +14,7 @@ pub struct ResultAndState {
     /// Status of execution
     pub result: ExecutionResult,
     /// State that got updated
-    pub state: State,
+    pub state: EvmState,
 }
 
 /// Result of a transaction execution.

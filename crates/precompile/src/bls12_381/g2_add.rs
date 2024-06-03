@@ -22,7 +22,7 @@ const INPUT_LENGTH: usize = 512;
 /// Output is an encoding of addition operation result - single G2 point (`256`
 /// bytes).
 /// See also <https://eips.ethereum.org/EIPS/eip-2537#abi-for-g2-addition>
-fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub(super) fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if BASE_GAS_FEE > gas_limit {
         return Err(PrecompileError::OutOfGas);
     }
@@ -34,8 +34,11 @@ fn g2_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )));
     }
 
-    let a_aff = &extract_g2_input(&input[..G2_INPUT_ITEM_LENGTH])?;
-    let b_aff = &extract_g2_input(&input[G2_INPUT_ITEM_LENGTH..])?;
+    // NB: There is no subgroup check for the G2 addition precompile.
+    //
+    // So we set the subgroup checks here to `false`
+    let a_aff = &extract_g2_input(&input[..G2_INPUT_ITEM_LENGTH], false)?;
+    let b_aff = &extract_g2_input(&input[G2_INPUT_ITEM_LENGTH..], false)?;
 
     let mut b = blst_p2::default();
     // SAFETY: b and b_aff are blst values.

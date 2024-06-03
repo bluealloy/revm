@@ -29,7 +29,7 @@ const INPUT_LENGTH: usize = 384;
 /// is 0x01 if pairing result is equal to the multiplicative identity in a pairing
 /// target field and 0x00 otherwise.
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-pairing>
-fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input_len = input.len();
     if input_len == 0 || input_len % INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
@@ -46,12 +46,21 @@ fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     // accumulator for the fp12 multiplications of the miller loops.
     let mut acc = blst_fp12::default();
     for i in 0..k {
-        let p1_aff =
-            &extract_g1_input(&input[i * INPUT_LENGTH..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH])?;
+        // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
+        //
+        // So we set the subgroup_check flag to `true`
+        let p1_aff = &extract_g1_input(
+            &input[i * INPUT_LENGTH..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH],
+            true,
+        )?;
 
+        // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
+        //
+        // So we set the subgroup_check flag to `true`
         let p2_aff = &extract_g2_input(
             &input[i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH
                 ..i * INPUT_LENGTH + G1_INPUT_ITEM_LENGTH + G2_INPUT_ITEM_LENGTH],
+            true,
         )?;
 
         if i > 0 {

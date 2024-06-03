@@ -45,30 +45,6 @@ macro_rules! check {
     };
 }
 
-/// Performs an `SLOAD` on the target account and storage index.
-///
-/// If the slot could not be loaded, or if the gas cost could not be charged, the expanded code
-/// sets the instruction result and returns accordingly.
-///
-/// # Note
-///
-/// This macro charges gas.
-///
-/// # Returns
-///
-/// Expands to the value of the storage slot.
-#[macro_export]
-macro_rules! sload {
-    ($interp:expr, $host:expr, $address:expr, $index:expr) => {{
-        let Some((value, is_cold)) = $host.sload($address, $index) else {
-            $interp.instruction_result = $crate::InstructionResult::FatalExternalError;
-            return;
-        };
-        $crate::gas!($interp, $crate::gas::sload_cost(SPEC::SPEC_ID, is_cold));
-        value
-    }};
-}
-
 /// Records a `gas` cost and fails the instruction if it would exceed the available gas.
 #[macro_export]
 macro_rules! gas {
@@ -189,7 +165,7 @@ macro_rules! pop {
         $crate::pop_ret!($interp, $x1, $x2, $x3, $x4, ())
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $x5:ident) => {
-        pop_ret!($interp, $x1, $x2, $x3, $x4, $x5, ())
+        $crate::pop_ret!($interp, $x1, $x2, $x3, $x4, $x5, ())
     };
 }
 
@@ -230,7 +206,7 @@ macro_rules! pop_ret {
         let ($x1, $x2, $x3, $x4) = unsafe { $interp.stack.pop4_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $x5:ident, $ret:expr) => {
-        if $interp.stack.len() < 4 {
+        if $interp.stack.len() < 5 {
             $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
             return $ret;
         }

@@ -161,7 +161,47 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
         },
     );
 
-    // TODO(EOF) EOF create call.
+    // Calls inspector `eofcreate` and `initialize_interp` functions. Queues the inputs for the `eofcreate_end`` function.
+    // Calls the old handler, and in case of inspector returning outcome,
+    // returns the outcome without executing eofcreate.
+    let eofcreate_input_stack_inner = eofcreate_input_stack.clone();
+    let old_handle = handler.execution.eofcreate.clone();
+    handler.execution.eofcreate = Arc::new(
+        move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
+            // Call inspector to change input or return outcome.
+            let outcome = ctx
+                .external
+                .get_inspector()
+                .eofcreate(&mut ctx.evm, &mut inputs);
+            eofcreate_input_stack_inner
+                .borrow_mut()
+                .push(inputs.clone());
+            if let Some(outcome) = outcome {
+                return Ok(FrameOrResult::Result(FrameResult::EOFCreate(outcome)));
+            }
+
+            let mut frame_or_result = old_handle(ctx, inputs);
+            if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
+                ctx.external
+                    .get_inspector()
+                    .initialize_interp(frame.interpreter_mut(), &mut ctx.evm)
+            }
+            frame_or_result
+        },
+    );
+
+    // Pops eofcreate input from the stack and calls inspector `eofcreate_end` function.
+    // preserve the old handler and calls it with the outcome.
+    let eofcreate_input_stack_inner = eofcreate_input_stack.clone();
+    let old_handle = handler.execution.insert_eofcreate_outcome.clone();
+    handler.execution.insert_eofcreate_outcome = Arc::new(move |ctx, frame, mut outcome| {
+        let create_inputs = eofcreate_input_stack_inner.borrow_mut().pop().unwrap();
+        outcome = ctx
+            .external
+            .get_inspector()
+            .eofcreate_end(&mut ctx.evm, &create_inputs, outcome);
+        old_handle(ctx, frame, outcome)
+    });
 
     // call outcome
     let call_input_stack_inner = call_input_stack.clone();
@@ -187,8 +227,6 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
             .create_end(&mut ctx.evm, &create_inputs, outcome);
         old_handle(ctx, frame, outcome)
     });
-
-    // TODO(EOF) EOF create handle.
 
     // last frame outcome
     let old_handle = handler.execution.last_frame_return.clone();

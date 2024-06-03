@@ -35,13 +35,6 @@ fn analysis(c: &mut Criterion) {
         .build();
     bench_transact(&mut g, &mut evm);
 
-    let checked = Bytecode::new_raw(contract_data.clone());
-    let mut evm = evm
-        .modify()
-        .reset_handler_with_db(BenchmarkDB::new_bytecode(checked))
-        .build();
-    bench_transact(&mut g, &mut evm);
-
     let analysed = to_analysed(Bytecode::new_raw(contract_data));
     let mut evm = evm
         .modify()

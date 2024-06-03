@@ -277,8 +277,9 @@ impl<DB: Database> Database for State<DB> {
                 let ret = *entry.insert(self.database.block_hash(number)?);
 
                 // prune all hashes that are older then BLOCK_HASH_HISTORY
+                let last_block = u64num.saturating_sub(BLOCK_HASH_HISTORY as u64);
                 while let Some(entry) = self.block_hashes.first_entry() {
-                    if *entry.key() < u64num.saturating_sub(BLOCK_HASH_HISTORY as u64) {
+                    if *entry.key() < last_block {
                         entry.remove();
                     } else {
                         break;
@@ -302,10 +303,10 @@ impl<DB: Database> DatabaseCommit for State<DB> {
 mod tests {
     use super::*;
     use crate::db::{
-        states::reverts::AccountInfoRevert, AccountRevert, AccountStatus, BundleAccount,
-        RevertToSlot,
+        states::{reverts::AccountInfoRevert, StorageSlot},
+        AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
     };
-    use revm_interpreter::primitives::{keccak256, StorageSlot};
+    use revm_interpreter::primitives::keccak256;
 
     #[test]
     fn block_hash_cache() {
