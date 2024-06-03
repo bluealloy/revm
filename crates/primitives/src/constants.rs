@@ -60,3 +60,10 @@ pub const BLOB_GASPRICE_UPDATE_FRACTION: u64 = 3338477;
 
 /// First version of the blob.
 pub const VERSIONED_HASH_VERSION_KZG: u8 = 0x01;
+
+/// EOF prefix as per EIP-3540.
+pub const EOF_PREFIX: u16 = 0xEF00;
+
+/// Version byte that immediately follows the EOF prefix in EIP-3540.
+// See https://github.com/bluealloy/revm/issues/1464
+pub const EOF_VERSION: u8 = 0x01;
