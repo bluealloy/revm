@@ -7,6 +7,7 @@ use crate::{
 };
 use fluentbase_core::helpers::exit_code_from_evm_error;
 use fluentbase_types::ExitCode;
+use crate::primitives::SuccessReason;
 
 /// Mainnet end handle does not change the output.
 #[inline]

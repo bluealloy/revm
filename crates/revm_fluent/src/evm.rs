@@ -1,3 +1,4 @@
+use core::cell::RefCell;
 #[cfg(feature = "fluent_revm")]
 use crate::journal_db_wrapper::JournalDbWrapper;
 #[cfg(feature = "fluent_revm")]
@@ -14,11 +15,14 @@ use crate::{
     Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
 use core::fmt;
-use revm_interpreter::{CallInputs, CreateInputs, Gas};
+use core::str::from_utf8;
+use revm_interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome, Gas, InstructionResult, InterpreterResult};
 use std::vec::Vec;
+use fluentbase_core::helpers::evm_error_from_exit_code;
+use fluentbase_core::loader::{_loader_call, _loader_create};
 use fluentbase_sdk::{ContractInput, EvmCallMethodInput, EvmCreateMethodInput};
 use fluentbase_types::{consts::EVM_STORAGE_ADDRESS, Address, ExitCode};
-use crate::primitives::{Bytes, U256};
+use crate::primitives::{Bytes, InvalidTransaction, U256};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;

@@ -54,6 +54,8 @@ pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RE
 // Reexport libraries
 #[cfg(feature = "fluent_revm")]
 pub extern crate revm_interpreter_fluent as revm_interpreter;
+extern crate core;
+
 #[doc(inline)]
 pub use revm_interpreter as interpreter;
 #[doc(inline)]
