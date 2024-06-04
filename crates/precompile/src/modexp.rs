@@ -49,6 +49,7 @@ pub fn run_inner<F>(input: &[u8], gas_limit: u64, min_gas: u64, calc_gas: F) -> 
 where
     F: FnOnce(u64, u64, u64, &U256) -> u64,
 {
+    println!("cycle-tracker-start: modexp");
     // If there is no minimum gas, return error.
     if min_gas > gas_limit {
         return Err(Error::OutOfGas);
@@ -118,6 +119,7 @@ where
     let output = modexp(base, exponent, modulus);
     output
     };
+    println!("cycle-tracker-end: modexp");
     // left pad the result to modulus length. bytes will always by less or equal to modulus length.
     Ok((gas_cost, left_pad_vec(&output, mod_len).into_owned().into()))
 }

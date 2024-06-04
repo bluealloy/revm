@@ -13,7 +13,8 @@ mod secp256k1_zk {
     use revm_primitives::{alloy_primitives::B512, B256};
 
     pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, Error> {
-        if zk_op::contains_operation(&ZkOperation::Secp256k1) {
+        println!("cycle-tracker-start: ecrecover");
+        let res = if zk_op::contains_operation(&ZkOperation::Secp256k1) {
             zk_op::ZKVM_OPERATOR
                 .get()
                 .unwrap()
@@ -21,7 +22,9 @@ mod secp256k1_zk {
                 .map(Into::<B256>::into)
         } else {
             super::secp256k1::ecrecover(sig, recid, msg).map_err(|e| Error::Other(e.to_string()))
-        }
+        };
+        println!("cycle-tracker-end: ecrecover");
+        res
     }
 }
 

@@ -20,11 +20,13 @@ pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if cost > gas_limit {
         Err(Error::OutOfGas)
     } else {
+        println!("cycle-tracker-start: sha256");
         let output = if zk_op::contains_operation(&ZkOperation::Sha256) {
             zk_op::ZKVM_OPERATOR.get().unwrap().sha256_run(input.as_ref()).unwrap().into()
         } else {
             sha2::Sha256::digest(input).to_vec()
         };
+        println!("cycle-tracker-end: sha256");
 
         Ok((cost, output.into()))
     }
