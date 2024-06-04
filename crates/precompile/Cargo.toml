@@ -100,7 +100,7 @@ blst = ["dep:blst"]
 rwasm = [
     "revm-primitives/rwasm",
 ]
-fluent_revm = [
+revm-rwasm = [
     "rwasm",
 ]
 

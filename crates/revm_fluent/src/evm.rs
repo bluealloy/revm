@@ -1,7 +1,7 @@
 use core::cell::RefCell;
-#[cfg(feature = "fluent_revm")]
+#[cfg(feature = "revm-rwasm")]
 use crate::journal_db_wrapper::JournalDbWrapper;
-#[cfg(feature = "fluent_revm")]
+#[cfg(feature = "revm-rwasm")]
 use crate::primitives::hex;
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
@@ -84,7 +84,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
 
     /// Runs main call loop.
     #[inline]
-    #[cfg(not(feature = "fluent_revm"))]
+    #[cfg(not(feature = "revm-rwasm"))]
     pub fn run_the_loop(&mut self, first_frame: Frame) -> Result<FrameResult, EVMError<DB::Error>> {
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
@@ -386,7 +386,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
 
         let mut result = {
-            #[cfg(feature = "fluent_revm")]
+            #[cfg(feature = "revm-rwasm")]
             {
                 // Load EVM storage account
                 let (evm_storage, _) = ctx.evm.load_account(EVM_STORAGE_ADDRESS)?;
@@ -412,7 +412,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                     }
                 }
             }
-            #[cfg(not(feature = "fluent_revm"))]
+            #[cfg(not(feature = "revm-rwasm"))]
             {
                 let exec = self.handler.execution();
                 // call inner handling of call/create
@@ -453,7 +453,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
-    #[cfg(feature = "fluent_revm")]
+    #[cfg(feature = "revm-rwasm")]
     fn create_inner(
         &mut self,
         caller_address: Address,
@@ -546,7 +546,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// Main contract call of the EVM.
-    #[cfg(feature = "fluent_revm")]
+    #[cfg(feature = "revm-rwasm")]
     fn call_inner(
         &mut self,
         caller_address: Address,
@@ -582,7 +582,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
         let call_output = _loader_call(&contract_input, &am, method_input);
 
-        #[cfg(feature = "fluent_revm")]
+        #[cfg(feature = "revm-rwasm")]
         {
             println!("executed ECL call:");
             println!(" - caller: 0x{}", hex::encode(caller_address));

@@ -40,7 +40,7 @@ impl<DB: Database, INSP: Inspector<DB>> GetInspector<DB> for INSP {
 pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
     handler: &mut EvmHandler<'_, EXT, DB>,
 ) {
-    if cfg!(not(feature = "fluent_revm")) {
+    if cfg!(not(feature = "revm-rwasm")) {
         // Every instruction inside flat table that is going to be wrapped by inspector calls.
         let table = handler.take_instruction_table();
         let mut table = match table {

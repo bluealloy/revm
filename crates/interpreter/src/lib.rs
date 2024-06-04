@@ -44,7 +44,3 @@ pub use primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 
 #[doc(hidden)]
 pub use revm_primitives as primitives;
-
-pub fn is_fluent_revm_feature() -> bool {
-    return cfg!(feature = "fluent_revm");
-}

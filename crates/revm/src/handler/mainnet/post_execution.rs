@@ -83,7 +83,7 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
-#[cfg(not(feature = "fluent_revm"))]
+#[cfg(not(feature = "revm-rwasm"))]
 pub fn output<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     result: FrameResult,
@@ -130,7 +130,7 @@ pub fn output<EXT, DB: Database>(
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
-#[cfg(feature = "fluent_revm")]
+#[cfg(feature = "revm-rwasm")]
 pub fn output<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     result: FrameResult,

@@ -66,7 +66,7 @@ impl CacheState {
 
     /// Insert Loaded (Or LoadedEmptyEip161 if account is empty) account.
     pub fn insert_account(&mut self, address: Address, info: AccountInfo) {
-        #[cfg(feature = "fluent_revm")]
+        #[cfg(feature = "revm-rwasm")]
         self.insert_contract(&mut info.clone().into());
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, HashMap::default())
@@ -116,7 +116,7 @@ impl CacheState {
         info: AccountInfo,
         storage: PlainStorage,
     ) {
-        #[cfg(feature = "fluent_revm")]
+        #[cfg(feature = "revm-rwasm")]
         self.insert_contract(&mut info.clone().into());
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, storage)

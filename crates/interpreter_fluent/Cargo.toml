@@ -86,6 +86,6 @@ optional_beneficiary_reward = ["revm-primitives/optional_beneficiary_reward"]
 
 rwasm = ["revm-primitives/rwasm"]
 debug_print = []
-fluent_revm = [
+revm-rwasm = [
     "rwasm",
 ]

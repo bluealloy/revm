@@ -1,7 +1,7 @@
 use revme::cmd::{Error, MainCmd};
 use structopt::StructOpt;
 
-#[cfg(feature = "fluent_revm")]
+#[cfg(feature = "revm-rwasm")]
 pub extern crate revm_fluent as revm;
 
 pub fn main() -> Result<(), Error> {

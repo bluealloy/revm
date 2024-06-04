@@ -51,8 +51,8 @@ impl Cmd {
 
 // #[test]
 // fn feature_test() {
-//     assert_eq!(revm_fluent::test_feature_fluent_revm(), true);
-//     assert_eq!(revm::test_feature_fluent_revm(), false);
+//     assert_eq!(revm_fluent::test_feature_revm-rwasm(), true);
+//     assert_eq!(revm::test_feature_revm-rwasm(), false);
 // }
 
 fn main() {

@@ -191,7 +191,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         self.gas_inspector.step(interp, context);
-        if cfg!(not(feature = "fluent_revm")) {
+        if cfg!(not(feature = "revm-rwasm")) {
             self.stack.clone_from(interp.stack.data());
         }
         self.memory = if self.include_memory {
@@ -201,7 +201,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         };
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
-        if cfg!(not(feature = "fluent_revm")) {
+        if cfg!(not(feature = "revm-rwasm")) {
             self.mem_size = interp.shared_memory.len();
         }
         self.gas = interp.gas.remaining();

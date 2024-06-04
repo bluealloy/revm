@@ -22,7 +22,7 @@ mod evm;
 mod frame;
 pub mod handler;
 mod inspector;
-#[cfg(feature = "fluent_revm")]
+#[cfg(feature = "revm-rwasm")]
 mod journal_db_wrapper;
 mod journaled_state;
 #[cfg(feature = "optimism")]
@@ -52,7 +52,7 @@ pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
 
 // Reexport libraries
-#[cfg(feature = "fluent_revm")]
+#[cfg(feature = "revm-rwasm")]
 pub extern crate revm_interpreter_fluent as revm_interpreter;
 extern crate core;
 

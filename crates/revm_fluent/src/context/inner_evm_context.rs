@@ -178,7 +178,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     }
 
     #[inline]
-    #[cfg(feature = "fluent_revm")]
+    #[cfg(feature = "revm-rwasm")]
     pub fn code_by_hash(&mut self, hash: B256) -> Result<Bytes, EVMError<DB::Error>> {
         self.journaled_state.load_code_by_hash(hash, &mut self.db)
     }

@@ -28,7 +28,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
-        if cfg!(not(feature = "fluent_revm")) {
+        if cfg!(not(feature = "revm-rwasm")) {
             let opcode = interp.current_opcode();
             let name = OpCode::name_by_op(opcode);
 

@@ -5,7 +5,7 @@ use crate::primitives::{
 };
 use core::mem;
 use fluentbase_sdk::B256;
-#[cfg(feature = "fluent_revm")]
+#[cfg(feature = "revm-rwasm")]
 use fluentbase_types::{Bytes, F254, POSEIDON_EMPTY};
 use revm_interpreter::{primitives::SpecId, LoadAccountResult, SStoreResult};
 use std::vec::Vec;
@@ -37,7 +37,7 @@ pub struct JournaledState {
     /// is considered warm if it is found in the `State`.
     pub warm_preloaded_addresses: HashSet<Address>,
     /// Recently updated bytecode state
-    #[cfg(feature = "fluent_revm")]
+    #[cfg(feature = "revm-rwasm")]
     code_state: HashMap<B256, Bytecode>,
 }
 
@@ -62,7 +62,7 @@ impl JournaledState {
             depth: 0,
             spec,
             warm_preloaded_addresses,
-            #[cfg(feature = "fluent_revm")]
+            #[cfg(feature = "revm-rwasm")]
             code_state: HashMap::new(),
         }
     }
@@ -118,7 +118,7 @@ impl JournaledState {
             // kept, see [Self::new]
             spec: _,
             warm_preloaded_addresses: _,
-            #[cfg(feature = "fluent_revm")]
+            #[cfg(feature = "revm-rwasm")]
             code_state: _,
         } = self;
 
@@ -162,14 +162,14 @@ impl JournaledState {
             .last_mut()
             .unwrap()
             .push(JournalEntry::CodeChange { address });
-        #[cfg(feature = "fluent_revm")]
+        #[cfg(feature = "revm-rwasm")]
         {
             if let Some(code_hash) = code_hash {
                 account.info.code_hash = code_hash;
             }
             self.code_state.insert(account.info.code_hash, code.clone());
         }
-        #[cfg(not(feature = "fluent_revm"))]
+        #[cfg(not(feature = "revm-rwasm"))]
         {
             account.info.code_hash = code.hash_slow();
         }
@@ -177,7 +177,7 @@ impl JournaledState {
     }
 
     #[inline]
-    #[cfg(feature = "fluent_revm")]
+    #[cfg(feature = "revm-rwasm")]
     pub fn set_rwasm_code(&mut self, address: Address, code: Bytecode, code_hash: Option<F254>) {
         let account = self.state.get_mut(&address).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
@@ -436,7 +436,7 @@ impl JournaledState {
                     let acc = state.get_mut(&address).unwrap();
                     acc.info.code_hash = KECCAK_EMPTY;
                     acc.info.code = None;
-                    #[cfg(feature = "fluent_revm")]
+                    #[cfg(feature = "revm-rwasm")]
                     {
                         acc.info.rwasm_code_hash = POSEIDON_EMPTY;
                         acc.info.rwasm_code = None;
@@ -664,7 +664,7 @@ impl JournaledState {
                 acc.info.code = Some(code);
             }
         }
-        #[cfg(feature = "fluent_revm")]
+        #[cfg(feature = "revm-rwasm")]
         if acc.info.rwasm_code.is_none() {
             if acc.info.rwasm_code_hash == POSEIDON_EMPTY {
                 let empty = Bytecode::new();
@@ -681,7 +681,7 @@ impl JournaledState {
 
     /// Loads code.
     #[inline]
-    #[cfg(feature = "fluent_revm")]
+    #[cfg(feature = "revm-rwasm")]
     pub fn load_code_by_hash<DB: Database>(
         &mut self,
         hash: B256,

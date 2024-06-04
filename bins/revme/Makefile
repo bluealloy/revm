@@ -8,7 +8,7 @@ sync_tests:
 
 .PHONY: run_general_state_tests
 run_general_state_tests:
-	cargo run --features=fluent_revm --color=always --bin revme statetest tests/GeneralStateTests #-s
+	cargo run --features=revm-rwasm --color=always --bin revme statetest tests/GeneralStateTests #-s
 
 .PHONY: help
 help:
