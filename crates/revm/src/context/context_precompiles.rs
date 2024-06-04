@@ -4,7 +4,7 @@ use crate::{
 };
 use core::ops::{Deref, DerefMut};
 use dyn_clone::DynClone;
-use revm_precompile::Precompiles;
+use revm_precompile::{PrecompileSpecId, PrecompileWithAddress, Precompiles};
 use std::{boxed::Box, sync::Arc};
 
 use super::InnerEvmContext;
@@ -36,22 +36,32 @@ pub struct ContextPrecompiles<DB: Database> {
     inner: HashMap<Address, ContextPrecompile<DB>>,
 }
 
+impl<DB: Database> Extend<(Address, ContextPrecompile<DB>)> for ContextPrecompiles<DB> {
+    fn extend<T: IntoIterator<Item = (Address, ContextPrecompile<DB>)>>(&mut self, iter: T) {
+        self.inner.extend(iter.into_iter().map(Into::into))
+    }
+}
+
+impl<DB: Database> Extend<PrecompileWithAddress> for ContextPrecompiles<DB> {
+    fn extend<T: IntoIterator<Item = PrecompileWithAddress>>(&mut self, iter: T) {
+        self.inner.extend(iter.into_iter().map(|precompile| {
+            let (address, precompile) = precompile.into();
+            (address, precompile.into())
+        }));
+    }
+}
+
 impl<DB: Database> ContextPrecompiles<DB> {
+    /// Creates a new precompiles at the given spec ID.
+    #[inline]
+    pub fn new(spec_id: PrecompileSpecId) -> Self {
+        Precompiles::new(spec_id).into()
+    }
+
     /// Returns precompiles addresses.
     #[inline]
     pub fn addresses(&self) -> impl Iterator<Item = &Address> {
         self.inner.keys()
-    }
-
-    /// Extends the precompiles with the given precompiles.
-    ///
-    /// Other precompiles with overwrite existing precompiles.
-    #[inline]
-    pub fn extend(
-        &mut self,
-        other: impl IntoIterator<Item = impl Into<(Address, ContextPrecompile<DB>)>>,
-    ) {
-        self.inner.extend(other.into_iter().map(Into::into));
     }
 
     /// Call precompile and executes it. Returns the result of the precompile execution.
