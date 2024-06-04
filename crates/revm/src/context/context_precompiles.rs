@@ -1,15 +1,13 @@
+use super::InnerEvmContext;
 use crate::{
     precompile::{Precompile, PrecompileResult},
     primitives::{db::Database, Address, Bytes, HashMap},
 };
-use core::ops::{Deref, DerefMut};
 use dyn_clone::DynClone;
 use revm_precompile::{PrecompileSpecId, PrecompileWithAddress, Precompiles};
 use std::{boxed::Box, sync::Arc};
 
-use super::InnerEvmContext;
-
-/// Precompile and its handlers.
+/// A single precompile handler.
 pub enum ContextPrecompile<DB: Database> {
     /// Ordinary precompiles
     Ordinary(Precompile),
@@ -24,63 +22,166 @@ pub enum ContextPrecompile<DB: Database> {
 impl<DB: Database> Clone for ContextPrecompile<DB> {
     fn clone(&self) -> Self {
         match self {
-            Self::Ordinary(arg0) => Self::Ordinary(arg0.clone()),
-            Self::ContextStateful(arg0) => Self::ContextStateful(arg0.clone()),
-            Self::ContextStatefulMut(arg0) => Self::ContextStatefulMut(arg0.clone()),
+            Self::Ordinary(p) => Self::Ordinary(p.clone()),
+            Self::ContextStateful(p) => Self::ContextStateful(p.clone()),
+            Self::ContextStatefulMut(p) => Self::ContextStatefulMut(p.clone()),
         }
     }
 }
 
-#[derive(Clone)]
+enum PrecompilesCow<DB: Database> {
+    /// Default precompiles, returned by `Precompiles::new`. Used to fast-path the default case.
+    Default(&'static Precompiles),
+    Owned(HashMap<Address, ContextPrecompile<DB>>),
+}
+
+impl<DB: Database> Clone for PrecompilesCow<DB> {
+    fn clone(&self) -> Self {
+        match *self {
+            PrecompilesCow::Default(p) => PrecompilesCow::Default(p),
+            PrecompilesCow::Owned(ref inner) => PrecompilesCow::Owned(inner.clone()),
+        }
+    }
+}
+
+/// Precompiles context.
 pub struct ContextPrecompiles<DB: Database> {
-    inner: HashMap<Address, ContextPrecompile<DB>>,
+    inner: PrecompilesCow<DB>,
+}
+
+impl<DB: Database> Clone for ContextPrecompiles<DB> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+        }
+    }
+}
+
+impl<DB: Database> ContextPrecompiles<DB> {
+    /// Creates a new precompiles context at the given spec ID.
+    ///
+    /// This is a cheap operation that does not allocate by reusing the global precompiles.
+    #[inline]
+    pub fn new(spec_id: PrecompileSpecId) -> Self {
+        Self::from_static_precompiles(Precompiles::new(spec_id))
+    }
+
+    /// Creates a new precompiles context from the given static precompiles.
+    ///
+    /// NOTE: The internal precompiles must not be `StatefulMut` or `call` will panic.
+    /// This is done because the default precompiles are not stateful.
+    #[inline]
+    pub fn from_static_precompiles(precompiles: &'static Precompiles) -> Self {
+        Self {
+            inner: PrecompilesCow::Default(precompiles),
+        }
+    }
+
+    /// Creates a new precompiles context from the given precompiles.
+    #[inline]
+    pub fn from_precompiles(precompiles: HashMap<Address, ContextPrecompile<DB>>) -> Self {
+        Self {
+            inner: PrecompilesCow::Owned(precompiles),
+        }
+    }
+
+    /// Returns precompiles addresses.
+    #[inline]
+    pub fn addresses(&self) -> impl ExactSizeIterator<Item = &Address> {
+        // SAFETY: `keys` does not touch values.
+        unsafe { self.fake_as_owned() }.keys()
+    }
+
+    /// Returns `true` if the precompiles contains the given address.
+    #[inline]
+    pub fn contains(&self, address: &Address) -> bool {
+        // SAFETY: `contains_key` does not touch values.
+        unsafe { self.fake_as_owned() }.contains_key(address)
+    }
+
+    /// View the internal precompiles map as the `Owned` variant.
+    ///
+    /// # Safety
+    ///
+    /// The resulting value type is wrong if this is `Default`,
+    /// but this works for methods that operate only on keys because both maps' internal value types
+    /// have the same size.
+    #[inline]
+    unsafe fn fake_as_owned(&self) -> &HashMap<Address, ContextPrecompile<DB>> {
+        const _: () = assert!(
+            core::mem::size_of::<ContextPrecompile<crate::db::EmptyDB>>()
+                == core::mem::size_of::<Precompile>()
+        );
+        match self.inner {
+            PrecompilesCow::Default(inner) => unsafe { core::mem::transmute(inner) },
+            PrecompilesCow::Owned(ref inner) => inner,
+        }
+    }
+
+    /// Call precompile and executes it. Returns the result of the precompile execution.
+    ///
+    /// Returns `None` if the precompile does not exist.
+    #[inline]
+    pub fn call(
+        &mut self,
+        address: &Address,
+        bytes: &Bytes,
+        gas_price: u64,
+        evmctx: &mut InnerEvmContext<DB>,
+    ) -> Option<PrecompileResult> {
+        Some(match self.inner {
+            PrecompilesCow::Default(p) => p.get(address)?.call_ref(bytes, gas_price, &evmctx.env),
+            PrecompilesCow::Owned(ref mut owned) => match owned.get_mut(address)? {
+                ContextPrecompile::Ordinary(p) => p.call(bytes, gas_price, &evmctx.env),
+                ContextPrecompile::ContextStateful(p) => p.call(bytes, gas_price, evmctx),
+                ContextPrecompile::ContextStatefulMut(p) => p.call_mut(bytes, gas_price, evmctx),
+            },
+        })
+    }
+
+    /// Returns a mutable reference to the precompiles map.
+    ///
+    /// Clones the precompiles map if it is shared.
+    #[inline]
+    pub fn to_mut(&mut self) -> &mut HashMap<Address, ContextPrecompile<DB>> {
+        match self.inner {
+            PrecompilesCow::Default(_) => self.to_mut_slow(),
+            PrecompilesCow::Owned(ref mut inner) => inner,
+        }
+    }
+
+    #[allow(clippy::wrong_self_convention)]
+    #[cold]
+    fn to_mut_slow(&mut self) -> &mut HashMap<Address, ContextPrecompile<DB>> {
+        let PrecompilesCow::Default(precompiles) = self.inner else {
+            unreachable!()
+        };
+        self.inner = PrecompilesCow::Owned(
+            precompiles
+                .inner
+                .iter()
+                .map(|(k, v)| (*k, v.clone().into()))
+                .collect(),
+        );
+        match self.inner {
+            PrecompilesCow::Default(_) => unreachable!(),
+            PrecompilesCow::Owned(ref mut inner) => inner,
+        }
+    }
 }
 
 impl<DB: Database> Extend<(Address, ContextPrecompile<DB>)> for ContextPrecompiles<DB> {
     fn extend<T: IntoIterator<Item = (Address, ContextPrecompile<DB>)>>(&mut self, iter: T) {
-        self.inner.extend(iter.into_iter().map(Into::into))
+        self.to_mut().extend(iter.into_iter().map(Into::into))
     }
 }
 
 impl<DB: Database> Extend<PrecompileWithAddress> for ContextPrecompiles<DB> {
     fn extend<T: IntoIterator<Item = PrecompileWithAddress>>(&mut self, iter: T) {
-        self.inner.extend(iter.into_iter().map(|precompile| {
+        self.to_mut().extend(iter.into_iter().map(|precompile| {
             let (address, precompile) = precompile.into();
             (address, precompile.into())
         }));
-    }
-}
-
-impl<DB: Database> ContextPrecompiles<DB> {
-    /// Creates a new precompiles at the given spec ID.
-    #[inline]
-    pub fn new(spec_id: PrecompileSpecId) -> Self {
-        Precompiles::new(spec_id).into()
-    }
-
-    /// Returns precompiles addresses.
-    #[inline]
-    pub fn addresses(&self) -> impl Iterator<Item = &Address> {
-        self.inner.keys()
-    }
-
-    /// Call precompile and executes it. Returns the result of the precompile execution.
-    /// None if the precompile does not exist.
-    #[inline]
-    pub fn call(
-        &mut self,
-        addess: Address,
-        bytes: &Bytes,
-        gas_price: u64,
-        evmctx: &mut InnerEvmContext<DB>,
-    ) -> Option<PrecompileResult> {
-        let precompile = self.inner.get_mut(&addess)?;
-
-        match precompile {
-            ContextPrecompile::Ordinary(p) => Some(p.call(bytes, gas_price, &evmctx.env)),
-            ContextPrecompile::ContextStatefulMut(p) => Some(p.call_mut(bytes, gas_price, evmctx)),
-            ContextPrecompile::ContextStateful(p) => Some(p.call(bytes, gas_price, evmctx)),
-        }
     }
 }
 
@@ -92,17 +193,9 @@ impl<DB: Database> Default for ContextPrecompiles<DB> {
     }
 }
 
-impl<DB: Database> Deref for ContextPrecompiles<DB> {
-    type Target = HashMap<Address, ContextPrecompile<DB>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
-impl<DB: Database> DerefMut for ContextPrecompiles<DB> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.inner
+impl<DB: Database> Default for PrecompilesCow<DB> {
+    fn default() -> Self {
+        Self::Owned(Default::default())
     }
 }
 
@@ -142,22 +235,24 @@ impl<DB: Database> From<Precompile> for ContextPrecompile<DB> {
     }
 }
 
-impl<DB: Database> From<Precompiles> for ContextPrecompiles<DB> {
-    fn from(p: Precompiles) -> Self {
-        ContextPrecompiles {
-            inner: p.inner.into_iter().map(|(k, v)| (k, v.into())).collect(),
-        }
-    }
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::EmptyDB;
 
-impl<DB: Database> From<&Precompiles> for ContextPrecompiles<DB> {
-    fn from(p: &Precompiles) -> Self {
-        ContextPrecompiles {
-            inner: p
-                .inner
-                .iter()
-                .map(|(&k, v)| (k, v.clone().into()))
-                .collect(),
-        }
+    #[test]
+    fn test_precompiles_context() {
+        let custom_address = Address::with_last_byte(0xff);
+
+        let mut precompiles = ContextPrecompiles::<EmptyDB>::new(PrecompileSpecId::HOMESTEAD);
+        assert_eq!(precompiles.addresses().count(), 4);
+        assert!(matches!(precompiles.inner, PrecompilesCow::Default(_)));
+        assert!(!precompiles.contains(&custom_address));
+
+        let precompile = Precompile::Standard(|_, _| panic!());
+        precompiles.extend([(custom_address, precompile.into())]);
+        assert_eq!(precompiles.addresses().count(), 5);
+        assert!(matches!(precompiles.inner, PrecompilesCow::Owned(_)));
+        assert!(precompiles.contains(&custom_address));
     }
 }

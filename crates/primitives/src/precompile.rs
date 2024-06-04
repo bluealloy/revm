@@ -110,11 +110,25 @@ impl Precompile {
 
     /// Call the precompile with the given input and gas limit and return the result.
     pub fn call(&mut self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult {
-        match self {
+        match *self {
             Precompile::Standard(p) => p(bytes, gas_price),
             Precompile::Env(p) => p(bytes, gas_price, env),
-            Precompile::Stateful(p) => p.call(bytes, gas_price, env),
-            Precompile::StatefulMut(p) => p.call_mut(bytes, gas_price, env),
+            Precompile::Stateful(ref p) => p.call(bytes, gas_price, env),
+            Precompile::StatefulMut(ref mut p) => p.call_mut(bytes, gas_price, env),
+        }
+    }
+
+    /// Call the precompile with the given input and gas limit and return the result.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the precompile is a mutable stateful precompile.
+    pub fn call_ref(&self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult {
+        match *self {
+            Precompile::Standard(p) => p(bytes, gas_price),
+            Precompile::Env(p) => p(bytes, gas_price, env),
+            Precompile::Stateful(ref p) => p.call(bytes, gas_price, env),
+            Precompile::StatefulMut(_) => panic!("call_ref on mutable stateful precompile"),
         }
     }
 }

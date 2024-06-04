@@ -105,7 +105,7 @@ impl<DB: Database> EvmContext<DB> {
     #[inline]
     fn call_precompile(
         &mut self,
-        address: Address,
+        address: &Address,
         input_data: &Bytes,
         gas: Gas,
     ) -> Result<Option<InterpreterResult>, EVMError<DB::Error>> {
@@ -199,7 +199,7 @@ impl<DB: Database> EvmContext<DB> {
             _ => {}
         };
 
-        if let Some(result) = self.call_precompile(inputs.bytecode_address, &inputs.input, gas)? {
+        if let Some(result) = self.call_precompile(&inputs.bytecode_address, &inputs.input, gas)? {
             if matches!(result.result, return_ok!()) {
                 self.journaled_state.checkpoint_commit();
             } else {

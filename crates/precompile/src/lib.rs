@@ -168,13 +168,13 @@ impl Precompiles {
 
     /// Returns an iterator over the precompiles addresses.
     #[inline]
-    pub fn addresses(&self) -> impl Iterator<Item = &Address> {
+    pub fn addresses(&self) -> impl ExactSizeIterator<Item = &Address> {
         self.inner.keys()
     }
 
     /// Consumes the type and returns all precompile addresses.
     #[inline]
-    pub fn into_addresses(self) -> impl Iterator<Item = Address> {
+    pub fn into_addresses(self) -> impl ExactSizeIterator<Item = Address> {
         self.inner.into_keys()
     }
 
