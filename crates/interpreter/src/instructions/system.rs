@@ -130,13 +130,9 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
 
     let data_offset = as_usize_saturated!(offset);
-    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
-    resize_memory!(interpreter, memory_offset, len);
-
     let return_data_buffer_len = interpreter.return_data_buffer.len();
-    let data_end = data_offset.saturating_add(len);
 
-    if data_end > return_data_buffer_len && !interpreter.is_eof {
+    if data_offset.saturating_add(len) > return_data_buffer_len && !interpreter.is_eof {
         interpreter.instruction_result = InstructionResult::OutOfOffset;
         return;
     }
@@ -145,6 +141,8 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
         return;
     }
 
+    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
+    resize_memory!(interpreter, memory_offset, len);
     if data_offset < return_data_buffer_len {
         let available_len = return_data_buffer_len - data_offset;
         let copy_len = available_len.min(len);
