@@ -51,12 +51,6 @@ impl<E> EmptyDBTyped<E> {
             _phantom: PhantomData,
         }
     }
-
-    #[doc(hidden)]
-    #[deprecated = "use `new` instead"]
-    pub fn new_keccak_block_hash() -> Self {
-        Self::new()
-    }
 }
 
 impl<E> Database for EmptyDBTyped<E> {
