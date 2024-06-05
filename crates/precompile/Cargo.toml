@@ -22,33 +22,40 @@ all = "warn"
 
 [dependencies]
 revm-primitives = { path = "../primitives", version = "4.0.0", default-features = false }
-bn = { package = "substrate-bn", version = "0.6", default-features = false }
 once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
-ripemd = { version = "0.1", default-features = false }
-sha2 = { version = "0.10", default-features = false }
-# modexp precompile
-aurora-engine-modexp = { version = "1.1", default-features = false }
 
-# Optional KZG point evaluation precompile
-c-kzg = { version = "1.0.2", default-features = false, optional = true }
-
-# ecRecover precompile
+# ecRecover
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
-secp256k1 = { version = "0.29.0", default-features = false, features = [
+secp256k1 = { version = ">=0.28, <=0.29", default-features = false, features = [
     "alloc",
     "recovery",
     "rand",
     "global-context",
 ], optional = true }
 
+# SHA2-256 and RIPEMD-160
+sha2 = { version = "0.10", default-features = false }
+ripemd = { version = "0.1", default-features = false }
+
+# modexp
+aurora-engine-modexp = { version = "1.1", default-features = false }
+
+# ecAdd, ecMul, ecPairing
+bn = { package = "substrate-bn", version = "0.6", default-features = false }
+
+# KZG point evaluation precompile
+c-kzg = { version = "1.0.2", default-features = false, optional = true }
+
 # BLS12-381 precompiles
 blst = { version = "0.3.12", optional = true }
 
 # p256verify precompile
-p256 = { version = "0.13.2", optional = true,  default-features = false, features = ["ecdsa"] }
+p256 = { version = "0.13.2", optional = true, default-features = false, features = [
+    "ecdsa",
+] }
 
 [dev-dependencies]
-criterion = { version = "0.5" }
+criterion = "0.5"
 rand = { version = "0.8", features = ["std"] }
 eyre = "0.6.12"
 rstest = "0.21.0"
