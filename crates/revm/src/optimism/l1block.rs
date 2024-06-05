@@ -1,4 +1,4 @@
-use crate::optimism::fast_lz::flz_compress_len;
+use crate::optimism::rollup_cost::RollupCostData;
 use crate::primitives::{address, db::Database, Address, SpecId, U256};
 use core::ops::Mul;
 
@@ -125,21 +125,18 @@ impl L1BlockInfo {
     /// Prior to regolith, an extra 68 non-zero bytes were included in the rollup data costs to
     /// account for the empty signature.
     pub fn data_gas(&self, input: &[u8], spec_id: SpecId) -> U256 {
+        let cost_data = RollupCostData::from_bytes(input);
         if spec_id.is_enabled_in(SpecId::FJORD) {
-            let estimated_size = self.tx_estimated_size_fjord(input);
+            let estimated_size = self.tx_estimated_size_fjord(cost_data);
 
             return estimated_size
                 .saturating_mul(U256::from(NON_ZERO_BYTE_COST))
                 .wrapping_div(U256::from(1_000_000));
         };
 
-        let mut rollup_data_gas_cost = U256::from(input.iter().fold(0, |acc, byte| {
-            acc + if *byte == 0x00 {
-                ZERO_BYTE_COST
-            } else {
-                NON_ZERO_BYTE_COST
-            }
-        }));
+        let mut rollup_data_gas_cost = U256::from(cost_data.ones)
+            .saturating_mul(U256::from(NON_ZERO_BYTE_COST))
+            .saturating_add(U256::from(cost_data.zeroes).saturating_mul(U256::from(ZERO_BYTE_COST)));
 
         // Prior to regolith, an extra 68 non zero bytes were included in the rollup data costs.
         if !spec_id.is_enabled_in(SpecId::REGOLITH) {
@@ -152,8 +149,8 @@ impl L1BlockInfo {
     // Calculate the estimated compressed transaction size in bytes, scaled by 1e6.
     // This value is computed based on the following formula:
     // max(minTransactionSize, intercept + fastlzCoef*fastlzSize)
-    fn tx_estimated_size_fjord(&self, input: &[u8]) -> U256 {
-        let fastlz_size = U256::from(flz_compress_len(input));
+    fn tx_estimated_size_fjord(&self, cost_data: RollupCostData) -> U256 {
+        let fastlz_size = U256::from(cost_data.fastlz_size);
 
         fastlz_size
             .saturating_mul(U256::from(836_500))
@@ -168,8 +165,11 @@ impl L1BlockInfo {
             return U256::ZERO;
         }
 
+        // let's create a `RollupCostData` to make the computation easier
+        let cost_data = RollupCostData::from_bytes(input);
+
         if spec_id.is_enabled_in(SpecId::FJORD) {
-            self.calculate_tx_l1_cost_fjord(input)
+            self.calculate_tx_l1_cost_fjord(cost_data)
         } else if spec_id.is_enabled_in(SpecId::ECOTONE) {
             self.calculate_tx_l1_cost_ecotone(input, spec_id)
         } else {
@@ -217,9 +217,9 @@ impl L1BlockInfo {
     ///
     /// [SpecId::FJORD] L1 cost function:
     /// `estimatedSize*(baseFeeScalar*l1BaseFee*16 + blobFeeScalar*l1BlobBaseFee)/1e12`
-    fn calculate_tx_l1_cost_fjord(&self, input: &[u8]) -> U256 {
+    fn calculate_tx_l1_cost_fjord(&self, cost_data: RollupCostData) -> U256 {
         let l1_fee_scaled = self.calculate_l1_fee_scaled_ecotone();
-        let estimated_size = self.tx_estimated_size_fjord(input);
+        let estimated_size = self.tx_estimated_size_fjord(cost_data);
 
         estimated_size
             .saturating_mul(l1_fee_scaled)
