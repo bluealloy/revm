@@ -1,6 +1,6 @@
 # The `interpreter_action.rs` Module in the Rust Ethereum Virtual Machine (EVM)
 
-The `interpreter_action.rs` module within this Rust EVM implementation encompasses a collection of datastructures used as internal models within the EVM. These models represent various aspects of EVM operations such as call and create inputs, call context, value transfers, and the result of self-destruction operations.
+The `interpreter_action.rs` module within this Rust EVM implementation encompasses a collection of data structures used as internal models within the EVM. These models represent various aspects of EVM operations such as call and create inputs, call context, value transfers, and the result of self-destruction operations.
 
 ## Data Structures
 
