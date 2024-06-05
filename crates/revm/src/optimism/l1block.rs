@@ -134,10 +134,10 @@ impl L1BlockInfo {
                 .wrapping_div(U256::from(1_000_000));
         };
 
-        let mut rollup_data_gas_cost = U256::from(cost_data.ones)
+        let mut rollup_data_gas_cost = U256::from(cost_data.ones.get())
             .saturating_mul(U256::from(NON_ZERO_BYTE_COST))
             .saturating_add(
-                U256::from(cost_data.zeroes).saturating_mul(U256::from(ZERO_BYTE_COST)),
+                U256::from(cost_data.zeroes.get()).saturating_mul(U256::from(ZERO_BYTE_COST)),
             );
 
         // Prior to regolith, an extra 68 non zero bytes were included in the rollup data costs.

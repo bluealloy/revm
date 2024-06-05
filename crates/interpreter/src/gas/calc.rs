@@ -351,6 +351,15 @@ pub const fn memory_gas(num_words: u64) -> u64 {
         .saturating_add(num_words.saturating_mul(num_words) / 512)
 }
 
+/// This counts the number of zero, and non-zero bytes in the input data.
+///
+/// Returns a tuple of (zero_bytes, non_zero_bytes).
+pub fn count_zero_bytes(data: &[u8]) -> (u64, u64) {
+    let zero_data_len = data.iter().filter(|v| **v == 0).count() as u64;
+    let non_zero_data_len = data.len() as u64 - zero_data_len;
+    (zero_data_len, non_zero_data_len)
+}
+
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
 pub fn validate_initial_tx_gas(
@@ -360,8 +369,7 @@ pub fn validate_initial_tx_gas(
     access_list: &[(Address, Vec<U256>)],
 ) -> u64 {
     let mut initial_gas = 0;
-    let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
-    let non_zero_data_len = input.len() as u64 - zero_data_len;
+    let (zero_data_len, non_zero_data_len) = count_zero_bytes(input);
 
     // initdate stipend
     initial_gas += zero_data_len * TRANSACTION_ZERO_DATA;

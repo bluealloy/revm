@@ -2,6 +2,8 @@
 //! for a transaction.
 
 use crate::optimism::fast_lz::flz_compress_len;
+use core::num::NonZeroU64;
+use revm_interpreter::gas::count_zero_bytes;
 
 /// RollupCostData contains three fields, which are used depending on the current optimism fork.
 ///
@@ -10,12 +12,12 @@ use crate::optimism::fast_lz::flz_compress_len;
 ///
 /// The `fastlz_size` field is used to compute the data availability costs for a transaction
 /// post-fjord.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RollupCostData {
     /// The number of zeroes in the transaction.
-    pub(crate) zeroes: u64,
+    pub(crate) zeroes: NonZeroU64,
     /// The number of ones in the transaction.
-    pub(crate) ones: u64,
+    pub(crate) ones: NonZeroU64,
     /// The size of the transaction after fastLZ compression.
     pub(crate) fastlz_size: u32,
 }
@@ -23,17 +25,11 @@ pub struct RollupCostData {
 impl RollupCostData {
     /// This takes bytes as input, creating a [`RollupCostData`] struct based on the encoded data.
     pub fn from_bytes(bytes: &[u8]) -> Self {
-        let mut data = RollupCostData::default();
-        let mut i = 0;
-        while i < bytes.len() {
-            if bytes[i] == 0 {
-                data.zeroes += 1;
-            } else {
-                data.ones += 1;
-            }
-            i += 1;
+        let (zeroes, ones) = count_zero_bytes(bytes);
+        Self {
+            zeroes: NonZeroU64::new(zeroes).unwrap(),
+            ones: NonZeroU64::new(ones).unwrap(),
+            fastlz_size: flz_compress_len(bytes),
         }
-        data.fastlz_size = flz_compress_len(bytes);
-        data
     }
 }
