@@ -1,16 +1,13 @@
 use crate::{
     db::Database,
     handler::register::EvmHandler,
-    interpreter::{
-        opcode::{self, BoxedInstruction},
-        InstructionResult, Interpreter,
-    },
+    interpreter::{opcode, InstructionResult, Interpreter},
     primitives::EVMError,
     Context, FrameOrResult, FrameResult, Inspector, JournalEntry,
 };
 use core::cell::RefCell;
-use revm_interpreter::opcode::InstructionTables;
-use std::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
+use revm_interpreter::opcode::DynInstruction;
+use std::{rc::Rc, sync::Arc, vec::Vec};
 
 /// Provides access to an `Inspector` instance.
 pub trait GetInspector<DB: Database> {
@@ -40,85 +37,56 @@ impl<DB: Database, INSP: Inspector<DB>> GetInspector<DB> for INSP {
 pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
     handler: &mut EvmHandler<'_, EXT, DB>,
 ) {
-    // Every instruction inside flat table that is going to be wrapped by inspector calls.
-    let table = handler.take_instruction_table();
-    let mut table = match table {
-        InstructionTables::Plain(table) => table
-            .into_iter()
-            .map(|i| inspector_instruction(i))
-            .collect::<Vec<_>>(),
-        InstructionTables::Boxed(table) => table
-            .into_iter()
-            .map(|i| inspector_instruction(i))
-            .collect::<Vec<_>>(),
-    };
+    let table = &mut handler.instruction_table;
 
-    // Register inspector Log instruction.
-    let mut inspect_log = |index: u8| {
-        if let Some(i) = table.get_mut(index as usize) {
-            let old = core::mem::replace(i, Box::new(|_, _| ()));
-            *i = Box::new(
-                move |interpreter: &mut Interpreter, host: &mut Context<EXT, DB>| {
-                    let old_log_len = host.evm.journaled_state.logs.len();
-                    old(interpreter, host);
-                    // check if log was added. It is possible that revert happened
-                    // cause of gas or stack underflow.
-                    if host.evm.journaled_state.logs.len() == old_log_len + 1 {
-                        // clone log.
-                        // TODO decide if we should remove this and leave the comment
-                        // that log can be found as journaled_state.
-                        let last_log = host.evm.journaled_state.logs.last().unwrap().clone();
-                        // call Inspector
-                        host.external.get_inspector().log(&mut host.evm, &last_log);
-                    }
-                },
-            )
-        }
-    };
+    // Update all instructions to call inspector step and step_end.
+    table.update_all(inspector_instruction);
 
-    inspect_log(opcode::LOG0);
-    inspect_log(opcode::LOG1);
-    inspect_log(opcode::LOG2);
-    inspect_log(opcode::LOG3);
-    inspect_log(opcode::LOG4);
-
-    // // register selfdestruct function.
-    if let Some(i) = table.get_mut(opcode::SELFDESTRUCT as usize) {
-        let old = core::mem::replace(i, Box::new(|_, _| ()));
-        *i = Box::new(
-            move |interpreter: &mut Interpreter, host: &mut Context<EXT, DB>| {
-                // execute selfdestruct
-                old(interpreter, host);
-                // check if selfdestruct was successful and if journal entry is made.
-                if let Some(JournalEntry::AccountDestroyed {
-                    address,
-                    target,
-                    had_balance,
-                    ..
-                }) = host.evm.journaled_state.journal.last().unwrap().last()
-                {
-                    host.external
-                        .get_inspector()
-                        .selfdestruct(*address, *target, *had_balance);
-                }
-            },
-        )
+    // Register inspector LOG* instructions.
+    for opcode in opcode::LOG0..=opcode::LOG4 {
+        table.update_boxed(opcode, move |prev, interpreter, host| {
+            let prev_log_len = host.evm.journaled_state.logs.len();
+            prev(interpreter, host);
+            // check if log was added. It is possible that revert happened
+            // cause of gas or stack underflow.
+            if host.evm.journaled_state.logs.len() == prev_log_len + 1 {
+                // clone log.
+                // TODO decide if we should remove this and leave the comment
+                // that log can be found as journaled_state.
+                let last_log = host.evm.journaled_state.logs.last().unwrap().clone();
+                // call Inspector
+                host.external.get_inspector().log(&mut host.evm, &last_log);
+            }
+        });
     }
 
-    // cast vector to array.
-    handler.set_instruction_table(InstructionTables::Boxed(
-        table.try_into().unwrap_or_else(|_| unreachable!()),
-    ));
+    // Register selfdestruct function.
+    table.update_boxed(opcode::SELFDESTRUCT, |prev, interpreter, host| {
+        // execute selfdestruct
+        prev(interpreter, host);
+        // check if selfdestruct was successful and if journal entry is made.
+        if let Some(JournalEntry::AccountDestroyed {
+            address,
+            target,
+            had_balance,
+            ..
+        }) = host.evm.journaled_state.journal.last().unwrap().last()
+        {
+            host.external
+                .get_inspector()
+                .selfdestruct(*address, *target, *had_balance);
+        }
+    });
 
     // call and create input stack shared between handlers. They are used to share
     // inputs in *_end Inspector calls.
-    let call_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
-    let create_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
-    let eofcreate_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
+    let call_input_stack = Rc::<RefCell<Vec<_>>>::default();
+    let create_input_stack = Rc::<RefCell<Vec<_>>>::default();
+    let eofcreate_input_stack = Rc::<RefCell<Vec<_>>>::default();
 
     // Create handler
     let create_input_stack_inner = create_input_stack.clone();
-    let old_handle = handler.execution.create.clone();
+    let prev_handle = handler.execution.create.clone();
     handler.execution.create = Arc::new(
         move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
             let inspector = ctx.external.get_inspector();
@@ -129,7 +97,7 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
             }
             create_input_stack_inner.borrow_mut().push(inputs.clone());
 
-            let mut frame_or_result = old_handle(ctx, inputs);
+            let mut frame_or_result = prev_handle(ctx, inputs);
             if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
                 ctx.external
                     .get_inspector()
@@ -141,71 +109,67 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
 
     // Call handler
     let call_input_stack_inner = call_input_stack.clone();
-    let old_handle = handler.execution.call.clone();
-    handler.execution.call = Arc::new(
-        move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
-            // Call inspector to change input or return outcome.
-            let outcome = ctx.external.get_inspector().call(&mut ctx.evm, &mut inputs);
-            call_input_stack_inner.borrow_mut().push(inputs.clone());
-            if let Some(outcome) = outcome {
-                return Ok(FrameOrResult::Result(FrameResult::Call(outcome)));
-            }
+    let prev_handle = handler.execution.call.clone();
+    handler.execution.call = Arc::new(move |ctx, mut inputs| {
+        // Call inspector to change input or return outcome.
+        let outcome = ctx.external.get_inspector().call(&mut ctx.evm, &mut inputs);
+        call_input_stack_inner.borrow_mut().push(inputs.clone());
+        if let Some(outcome) = outcome {
+            return Ok(FrameOrResult::Result(FrameResult::Call(outcome)));
+        }
 
-            let mut frame_or_result = old_handle(ctx, inputs);
-            if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
-                ctx.external
-                    .get_inspector()
-                    .initialize_interp(frame.interpreter_mut(), &mut ctx.evm)
-            }
-            frame_or_result
-        },
-    );
+        let mut frame_or_result = prev_handle(ctx, inputs);
+        if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
+            ctx.external
+                .get_inspector()
+                .initialize_interp(frame.interpreter_mut(), &mut ctx.evm)
+        }
+        frame_or_result
+    });
 
     // Calls inspector `eofcreate` and `initialize_interp` functions. Queues the inputs for the `eofcreate_end`` function.
     // Calls the old handler, and in case of inspector returning outcome,
     // returns the outcome without executing eofcreate.
     let eofcreate_input_stack_inner = eofcreate_input_stack.clone();
-    let old_handle = handler.execution.eofcreate.clone();
-    handler.execution.eofcreate = Arc::new(
-        move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
-            // Call inspector to change input or return outcome.
-            let outcome = ctx
-                .external
-                .get_inspector()
-                .eofcreate(&mut ctx.evm, &mut inputs);
-            eofcreate_input_stack_inner
-                .borrow_mut()
-                .push(inputs.clone());
-            if let Some(outcome) = outcome {
-                return Ok(FrameOrResult::Result(FrameResult::EOFCreate(outcome)));
-            }
+    let prev_handle = handler.execution.eofcreate.clone();
+    handler.execution.eofcreate = Arc::new(move |ctx, mut inputs| {
+        // Call inspector to change input or return outcome.
+        let outcome = ctx
+            .external
+            .get_inspector()
+            .eofcreate(&mut ctx.evm, &mut inputs);
+        eofcreate_input_stack_inner
+            .borrow_mut()
+            .push(inputs.clone());
+        if let Some(outcome) = outcome {
+            return Ok(FrameOrResult::Result(FrameResult::EOFCreate(outcome)));
+        }
 
-            let mut frame_or_result = old_handle(ctx, inputs);
-            if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
-                ctx.external
-                    .get_inspector()
-                    .initialize_interp(frame.interpreter_mut(), &mut ctx.evm)
-            }
-            frame_or_result
-        },
-    );
+        let mut frame_or_result = prev_handle(ctx, inputs);
+        if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
+            ctx.external
+                .get_inspector()
+                .initialize_interp(frame.interpreter_mut(), &mut ctx.evm)
+        }
+        frame_or_result
+    });
 
     // Pops eofcreate input from the stack and calls inspector `eofcreate_end` function.
     // preserve the old handler and calls it with the outcome.
     let eofcreate_input_stack_inner = eofcreate_input_stack.clone();
-    let old_handle = handler.execution.insert_eofcreate_outcome.clone();
+    let prev_handle = handler.execution.insert_eofcreate_outcome.clone();
     handler.execution.insert_eofcreate_outcome = Arc::new(move |ctx, frame, mut outcome| {
         let create_inputs = eofcreate_input_stack_inner.borrow_mut().pop().unwrap();
         outcome = ctx
             .external
             .get_inspector()
             .eofcreate_end(&mut ctx.evm, &create_inputs, outcome);
-        old_handle(ctx, frame, outcome)
+        prev_handle(ctx, frame, outcome)
     });
 
     // call outcome
     let call_input_stack_inner = call_input_stack.clone();
-    let old_handle = handler.execution.insert_call_outcome.clone();
+    let prev_handle = handler.execution.insert_call_outcome.clone();
     handler.execution.insert_call_outcome =
         Arc::new(move |ctx, frame, shared_memory, mut outcome| {
             let call_inputs = call_input_stack_inner.borrow_mut().pop().unwrap();
@@ -213,23 +177,23 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
                 .external
                 .get_inspector()
                 .call_end(&mut ctx.evm, &call_inputs, outcome);
-            old_handle(ctx, frame, shared_memory, outcome)
+            prev_handle(ctx, frame, shared_memory, outcome)
         });
 
     // create outcome
     let create_input_stack_inner = create_input_stack.clone();
-    let old_handle = handler.execution.insert_create_outcome.clone();
+    let prev_handle = handler.execution.insert_create_outcome.clone();
     handler.execution.insert_create_outcome = Arc::new(move |ctx, frame, mut outcome| {
         let create_inputs = create_input_stack_inner.borrow_mut().pop().unwrap();
         outcome = ctx
             .external
             .get_inspector()
             .create_end(&mut ctx.evm, &create_inputs, outcome);
-        old_handle(ctx, frame, outcome)
+        prev_handle(ctx, frame, outcome)
     });
 
     // last frame outcome
-    let old_handle = handler.execution.last_frame_return.clone();
+    let prev_handle = handler.execution.last_frame_return.clone();
     handler.execution.last_frame_return = Arc::new(move |ctx, frame_result| {
         let inspector = ctx.external.get_inspector();
         match frame_result {
@@ -247,67 +211,50 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
                     inspector.eofcreate_end(&mut ctx.evm, &eofcreate_inputs, outcome.clone());
             }
         }
-        old_handle(ctx, frame_result)
+        prev_handle(ctx, frame_result)
     });
 }
 
-/// Outer closure that calls Inspector for every instruction.
-pub fn inspector_instruction<
-    'a,
+fn inspector_instruction<INSP, DB>(
+    prev: &DynInstruction<'_, Context<INSP, DB>>,
+    interpreter: &mut Interpreter,
+    host: &mut Context<INSP, DB>,
+) where
     INSP: GetInspector<DB>,
     DB: Database,
-    Instruction: Fn(&mut Interpreter, &mut Context<INSP, DB>) + 'a,
->(
-    instruction: Instruction,
-) -> BoxedInstruction<'a, Context<INSP, DB>> {
-    Box::new(
-        move |interpreter: &mut Interpreter, host: &mut Context<INSP, DB>| {
-            // SAFETY: as the PC was already incremented we need to subtract 1 to preserve the
-            // old Inspector behavior.
-            interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.sub(1) };
+{
+    // SAFETY: as the PC was already incremented we need to subtract 1 to preserve the
+    // old Inspector behavior.
+    interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.sub(1) };
 
-            host.external
-                .get_inspector()
-                .step(interpreter, &mut host.evm);
-            if interpreter.instruction_result != InstructionResult::Continue {
-                return;
-            }
+    // Call step.
+    host.external
+        .get_inspector()
+        .step(interpreter, &mut host.evm);
+    if interpreter.instruction_result != InstructionResult::Continue {
+        return;
+    }
 
-            // return PC to old value
-            interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.add(1) };
+    // Reset PC to previous value.
+    interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.add(1) };
 
-            // execute instruction.
-            instruction(interpreter, host);
+    // Execute instruction.
+    prev(interpreter, host);
 
-            host.external
-                .get_inspector()
-                .step_end(interpreter, &mut host.evm);
-        },
-    )
+    // Call step_end.
+    host.external
+        .get_inspector()
+        .step_end(interpreter, &mut host.evm);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{
-        db::EmptyDB,
         inspectors::NoOpInspector,
-        interpreter::{opcode::*, CallInputs, CallOutcome, CreateInputs, CreateOutcome},
-        primitives::BerlinSpec,
+        interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome},
         Evm, EvmContext,
     };
-
-    // Test that this pattern builds.
-    #[test]
-    fn test_make_boxed_instruction_table() {
-        type MyContext = Context<NoOpInspector, EmptyDB>;
-        let table: InstructionTable<MyContext> = make_instruction_table::<MyContext, BerlinSpec>();
-        let _boxed_table: BoxedInstructionTable<'_, MyContext> =
-            make_boxed_instruction_table::<'_, MyContext, BerlinSpec, _>(
-                table,
-                inspector_instruction,
-            );
-    }
 
     #[derive(Default, Debug)]
     struct StackInspector {
