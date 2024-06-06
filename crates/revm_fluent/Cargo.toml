@@ -23,8 +23,8 @@ all = "warn"
 
 [dependencies]
 # revm
-revm-interpreter = { workspace = true }
-revm-interpreter-fluent = { workspace = true }
+revm-interpreter = { workspace = true, optional = true }
+revm-interpreter-fluent = { workspace = true, optional = true }
 revm-precompile = { workspace = true }
 
 fluentbase-sdk = { workspace = true }
@@ -95,6 +95,10 @@ std = [
     "fluentbase-codec/std",
     "fluentbase-genesis/std",
 ]
+e2e = [
+    "fluentbase-core/e2e",
+    "fluentbase-sdk/e2e",
+]
 hashbrown = ["revm-interpreter-fluent/hashbrown", "revm-precompile/hashbrown"]
 serde = ["dep:serde", "revm-interpreter-fluent/serde"]
 serde-json = ["serde", "dep:serde_json"]
@@ -104,7 +108,11 @@ portable = ["revm-precompile/portable", "revm-interpreter-fluent/portable"]
 
 test-utils = []
 
-optimism = ["revm-interpreter-fluent/optimism", "revm-precompile/optimism"]
+optimism = [
+    "revm-interpreter/optimism",
+    "revm-interpreter-fluent/optimism",
+    "revm-precompile/optimism",
+]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
 optimism-default-handler = [
     "optimism",
@@ -162,6 +170,7 @@ debug_print = [
     #    "revm-interpreter-fluent/debug_print"
 ]
 revm-rwasm = [
+    "e2e",
     "rwasm",
     "revm-interpreter-fluent/revm-rwasm",
     "fluentbase-core/revm-rwasm",

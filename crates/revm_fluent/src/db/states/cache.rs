@@ -76,6 +76,7 @@ impl CacheState {
         self.accounts.insert(address, account);
     }
 
+    #[cfg(feature = "revm-rwasm")]
     pub fn insert_contract(&mut self, info: &mut AccountInfo) {
         if let Some(code) = &info.code {
             if !code.is_empty() {

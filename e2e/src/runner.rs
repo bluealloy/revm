@@ -532,7 +532,7 @@ pub fn execute_test_suite(
             }
         }
 
-        if cfg!(feature = "debug_use_fluent_storage") {
+        #[cfg(feature = "debug_use_fluent_storage")] {
             cache_state2.insert_account_with_storage(
                 EVM_STORAGE_ADDRESS,
                 AccountInfo {
@@ -663,12 +663,10 @@ pub fn execute_test_suite(
                     .with_spec_id(spec_id)
                     .build();
 
-                let mut state2 = revm_fluent::db::StateBuilder::<
-                    revm_fluent::db::EmptyDBTyped<ExitCode>,
-                >::default()
-                .with_cached_prestate(cache2)
-                .with_bundle_update()
-                .build();
+                let mut state2 = revm_fluent::db::StateBuilder::default()
+                    .with_cached_prestate(cache2)
+                    .with_bundle_update()
+                    .build();
                 let mut evm2 = revm_fluent::Evm::builder()
                     .with_db(&mut state2)
                     .modify_env(|e| *e = env.clone())
@@ -751,15 +749,15 @@ pub fn execute_test_suite(
                 // re build to run with tracing
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
-                let mut cache_original = cache_state2.clone();
-                cache_original
+                let mut cache2 = cache_state2.clone();
+                cache2
                     .set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
                 let state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let state_original = revm_fluent::db::State::builder()
-                    .with_cached_prestate(cache_original)
+                let state2 = revm_fluent::db::State::builder()
+                    .with_cached_prestate(cache2)
                     .with_bundle_update()
                     .build();
 
@@ -774,7 +772,7 @@ pub fn execute_test_suite(
                     .build();
                 let mut evm2 = revm_fluent::Evm::builder()
                     .with_spec_id(spec_id)
-                    .with_db(state_original)
+                    .with_db(state2)
                     .with_external_context(TracerEip3155::new(Box::new(stdout())))
                     // .append_handler_register(revm_fluent::inspector_handle_register)
                     .build();

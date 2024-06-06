@@ -58,12 +58,11 @@ paste.workspace = true
 [features]
 default = []
 e2e = [
-    "fluentbase-core/e2e",
-    "fluentbase-sdk/e2e",
+    "revm-fluent/e2e",
 ]
 debug_use_fluent_storage = []
 debug_print = [
-    "e2e",
+#    "e2e",
     "revm/debug_print",
     "revm-fluent/debug_print",
 ]

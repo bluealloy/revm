@@ -61,6 +61,12 @@ mod st_time_consuming {
     }
 }
 
+mod single_test {
+    define_tests! {
+        fn sstore_combinations_initial01_2_paris("tests/GeneralStateTests/stTimeConsuming/sstore_combinations_initial01_2_Paris.json");
+    }
+}
+
 mod st_random {
     define_tests! {
 
