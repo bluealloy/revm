@@ -389,9 +389,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             #[cfg(feature = "revm-rwasm")]
             {
                 // Load EVM storage account
-                let load_account_res = ctx.evm.load_account(EVM_STORAGE_ADDRESS);
-                let (evm_storage, _) = load_account_res?;
-                evm_storage.info.nonce = 1;
+                // let load_account_res = ctx.evm.load_account(EVM_STORAGE_ADDRESS);
+                // let (evm_storage, _) = load_account_res?;
+                // evm_storage.info.nonce = 1;
                 ctx.evm.touch(&EVM_STORAGE_ADDRESS);
                 let tx_gas_limit = ctx.evm.env.tx.gas_limit;
 
