@@ -64,7 +64,7 @@ pub struct Interpreter {
 
 impl Default for Interpreter {
     fn default() -> Self {
-        Self::new(Contract::default(), 0, false)
+        Self::new(Contract::default(), u64::MAX, false)
     }
 }
 
@@ -350,18 +350,8 @@ impl Interpreter {
         self.next_action = InterpreterAction::None;
         self.shared_memory = shared_memory;
         // main loop
-        println!(
-            "Run bytecode: {:?}\n result:{:?}",
-            self.bytecode, self.instruction_result
-        );
         while self.instruction_result == InstructionResult::Continue {
-            println!(
-                "OP: {:02X} stack:{:x?}",
-                self.current_opcode(),
-                self.stack.data()
-            );
             self.step(instruction_table, host);
-            println!("Result: {:?}", self.instruction_result);
         }
 
         // Return next action if it is some.
