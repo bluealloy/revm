@@ -134,7 +134,6 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                 }
                 InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
             };
-
             // handle result
             match frame_or_result {
                 FrameOrResult::Frame(frame) => {

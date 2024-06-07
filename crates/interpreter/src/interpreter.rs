@@ -192,6 +192,7 @@ impl Interpreter {
     }
 
     pub fn insert_eofcreate_outcome(&mut self, create_outcome: EOFCreateOutcome) {
+        self.instruction_result = InstructionResult::Continue;
         let instruction_result = create_outcome.instruction_result();
 
         self.return_data_buffer = if *instruction_result == InstructionResult::Revert {

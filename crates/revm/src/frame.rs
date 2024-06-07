@@ -55,6 +55,7 @@ pub enum Frame {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug)]
 pub enum FrameResult {
     Call(CallOutcome),
     Create(CreateOutcome),
@@ -135,6 +136,7 @@ impl FrameResult {
 
 /// Contains either a frame or a result.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug)]
 pub enum FrameOrResult {
     /// Boxed call or create frame.
     Frame(Frame),
