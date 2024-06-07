@@ -25,6 +25,8 @@ all = "warn"
 alloy-primitives = { version = "0.7.2", default-features = false, features = [
     "rlp",
 ] }
+alloy-rlp = { version = "0.3", default-features = false }
+k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
 hashbrown = "0.14"
 auto_impl = "1.2"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }

@@ -2979,6 +2979,7 @@ name = "revm-primitives"
 version = "4.0.0"
 dependencies = [
  "alloy-primitives",
+ "alloy-rlp",
  "auto_impl",
  "bitflags 2.5.0",
  "bitvec",
@@ -2989,6 +2990,7 @@ dependencies = [
  "enumn",
  "hashbrown",
  "hex",
+ "k256",
  "once_cell",
  "serde",
 ]

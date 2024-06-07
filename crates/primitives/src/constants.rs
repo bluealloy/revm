@@ -60,3 +60,8 @@ pub const BLOB_GASPRICE_UPDATE_FRACTION: u64 = 3338477;
 
 /// First version of the blob.
 pub const VERSIONED_HASH_VERSION_KZG: u8 = 0x01;
+
+// === EIP-7702 constants ===
+
+// Magic byte prepended to the rlp-encoded payload of authorizations
+pub const AUTHORIZATION_MAGIC_BYTE: u8 = 0x05;

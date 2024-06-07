@@ -625,6 +625,37 @@ impl JournaledState {
         Ok((acc, is_cold))
     }
 
+    /// Load code from one account to another
+    ///
+    /// For EIP-7702: Set EOA account code for one transaction
+    /// This touches the access list for `address` but not for the `from_address`
+    #[inline]
+    pub fn load_code_into<DB: Database>(
+        &mut self,
+        address: Address,
+        from_address: Address,
+        db: &mut DB,
+    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
+        let from_acc = db
+            .basic(from_address)
+            .map_err(EVMError::Database)?
+            .map(|i| i.into())
+            .unwrap_or(Account::new_not_existing());
+        let (acc, is_cold) = self.load_account(address, db)?;
+        if acc.info.code.is_none() {
+            if from_acc.info.code_hash == KECCAK_EMPTY {
+                let empty = Bytecode::default();
+                acc.info.code = Some(empty);
+            } else {
+                let code = db
+                    .code_by_hash(from_acc.info.code_hash)
+                    .map_err(EVMError::Database)?;
+                acc.info.code = Some(code);
+            }
+        }
+        Ok((acc, is_cold))
+    }
+
     /// Load storage slot
     ///
     /// # Panics

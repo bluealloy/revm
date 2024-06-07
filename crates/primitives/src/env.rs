@@ -3,9 +3,9 @@ pub mod handler_cfg;
 pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
-    calc_blob_gasprice, Account, Address, Bytes, HashMap, InvalidHeader, InvalidTransaction, Spec,
-    SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
-    VERSIONED_HASH_VERSION_KZG,
+    calc_blob_gasprice, Account, Address, Authorization, Bytes, HashMap, InvalidHeader,
+    InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK,
+    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
 use core::cmp::{min, Ordering};
 use core::hash::Hash;
@@ -584,6 +584,13 @@ pub struct TxEnv {
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     pub max_fee_per_blob_gas: Option<U256>,
 
+    /// The list of authorizations for this transaction
+    ///
+    /// Incorporated as part of the Prague upgrade via [EIP-7702].
+    ///
+    /// [EIP-7702]: https://eips.ethereum.org/EIPS/eip-7702
+    pub authorization_list: Vec<Authorization>,
+
     /// EOF Initcodes for EOF CREATE transaction
     ///
     /// Incorporated as part of the Prague upgrade via [EOF]
@@ -642,6 +649,7 @@ impl Default for TxEnv {
             access_list: Vec::new(),
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: None,
+            authorization_list: Vec::new(),
             eof_initcodes: Vec::new(),
             eof_initcodes_hashed: HashMap::new(),
             #[cfg(feature = "optimism")]

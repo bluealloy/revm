@@ -9,6 +9,8 @@ extern crate alloc as std;
 
 mod bytecode;
 mod constants;
+
+pub mod authorization;
 pub mod db;
 pub mod env;
 
@@ -19,10 +21,12 @@ pub mod result;
 pub mod specification;
 pub mod state;
 pub mod utilities;
+
 pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, ruint, uint, Address, Bytes,
     FixedBytes, Log, LogData, B256, I256, U256,
 };
+pub use authorization::*;
 pub use bitvec;
 pub use bytecode::*;
 pub use constants::*;

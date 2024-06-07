@@ -49,6 +49,57 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
         )?;
     }
 
+    // Load code into EOAs
+    // EIP-7702: Set EOA account code for one transaction
+    if SPEC::enabled(PRAGUE) {
+        // TODO(eip7702): This is currently UNTESTED and needs to be checked for correctness
+
+        // These authorizations are fallible, so if we encounter an invalid authorization
+        // or an error, skip it and continue
+        for authorization in context.evm.inner.env.tx.authorization_list.iter() {
+            // Recover the signer address if possible
+            let Some(authority) = authorization.recovered_authority() else {
+                continue;
+            };
+
+            // Optionally match the chain id
+            if authorization.chain_id != 0
+                && authorization.chain_id != context.evm.inner.env.cfg.chain_id
+            {
+                continue;
+            }
+
+            // Verify that the code of authority is empty
+            // TODO(eip7702): better way to do this?
+            let Ok(authority_account) = context.evm.inner.journaled_state.initial_account_load(
+                authority,
+                &[],
+                &mut context.evm.inner.db,
+            ) else {
+                continue;
+            };
+            if authority_account.info.code.is_some() {
+                continue;
+            };
+
+            // Check nonce if present
+            if let Some(nonce) = authorization.nonce {
+                if authority_account.info.nonce != nonce {
+                    continue;
+                }
+            }
+
+            // Load the code into the account
+            // This touches the access list for `address` but not for the `from_address`
+            // TODO(eip7702): better way to do this?
+            _ = context.evm.inner.journaled_state.load_code_into(
+                authority,
+                authorization.address,
+                &mut context.evm.inner.db,
+            );
+        }
+    }
+
     context.evm.load_access_list()?;
     Ok(())
 }

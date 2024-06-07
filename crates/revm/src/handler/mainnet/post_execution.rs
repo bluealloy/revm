@@ -18,6 +18,9 @@ pub fn end<EXT, DB: Database>(
 /// Clear handle clears error and journal state.
 #[inline]
 pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
+    // TODO(eip7702): teardown
+    // 'set the code of each authority back to empty'
+
     // clear error and journaled state.
     let _ = context.evm.take_error();
     context.evm.inner.journaled_state.clear();
