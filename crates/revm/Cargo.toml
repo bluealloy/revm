@@ -71,7 +71,9 @@ alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d
 alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d" }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+# default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+# for developing in editor w op
+default = ["std", "c-kzg", "secp256k1", "portable", "blst", "optimism"]
 std = [
     "serde?/std",
     "serde_json?/std",
