@@ -1,8 +1,9 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use revm_precompile::{
     bn128::{
+        add::ISTANBUL_ADD_GAS_COST,
         pair::{ISTANBUL_PAIR_BASE, ISTANBUL_PAIR_PER_POINT},
-        run_pair,
+        run_add, run_pair,
     },
     kzg_point_evaluation::run,
     secp256k1::ec_recover_run,
@@ -48,6 +49,20 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
 
     println!("gas used by regular pairing call: {:?}", res);
 
+    // === BN128 ADD ===
+
+    let ecadd_input = hex::decode(
+        "\
+         18b18acfb4c2c30276db5411368e7185b311dd124691610c5d3b74034e093dc9\
+         063c909c4720840cb5134cb9f59fa749755796819658d32efc0d288198f37266\
+         07c2b7f58a84bd6145f00c9c2bc0bb1a187f20ff2c92963a88019e7c6a014eed\
+         06614e20c147e940f2d70da3f74c9a17df361706a4485c742bd6788478fa17d7",
+    )
+    .unwrap();
+
+    let res = run_add(&ecadd_input, ISTANBUL_ADD_GAS_COST, 150).unwrap().0;
+    println!("gas used by bn128 add precompile: {:?}", res);
+
     // === ECRECOVER ===
 
     // generate secp256k1 signature
@@ -71,7 +86,7 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     message_and_signature[64..128].copy_from_slice(&data);
 
     let message_and_signature = Bytes::from(message_and_signature);
-    let gas = ec_recover_run(&message_and_signature, u64::MAX).unwrap();
+    let gas = ec_recover_run(&message_and_signature, u64::MAX).unwrap().0;
     println!("gas used by ecrecover precompile: {:?}", gas);
 
     // === POINT_EVALUATION ===
@@ -94,6 +109,13 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     group.bench_function(group_name("ecrecover precompile"), |b| {
         b.iter(|| {
             ec_recover_run(&message_and_signature, u64::MAX).unwrap();
+            black_box(())
+        })
+    });
+
+    group.bench_function(group_name("bn128 add precompile"), |b| {
+        b.iter(|| {
+            run_add(&ecadd_input, ISTANBUL_ADD_GAS_COST, 150).unwrap();
             black_box(())
         })
     });
