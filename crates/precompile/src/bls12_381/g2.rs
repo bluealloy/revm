@@ -68,7 +68,7 @@ pub(super) fn extract_g2_input(
         )));
     }
 
-    let mut input_fps: [&[u8; FP_LENGTH]; 4] = [&[0; FP_LENGTH]; 4];
+    let mut input_fps = [&[0; FP_LENGTH]; 4];
     for i in 0..4 {
         input_fps[i] = remove_padding(&input[i * PADDED_FP_LENGTH..(i + 1) * PADDED_FP_LENGTH])?;
     }
@@ -105,9 +105,7 @@ pub(super) fn extract_g2_input(
         //
         // SAFETY: out is a blst value.
         if unsafe { !blst_p2_affine_on_curve(&out) } {
-            return Err(PrecompileError::Other(
-                "Element not on G2 curve".to_string(),
-            ));
+            return Err(PrecompileError::Other("Element not on G2 curve".to_string()));
         }
     }
 

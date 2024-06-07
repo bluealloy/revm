@@ -17,7 +17,7 @@ pub const ADDRESS: u64 = 0x13;
 /// Base gas fee for BLS12-381 map_fp2_to_g2 operation.
 const BASE_GAS_FEE: u64 = 75000;
 
-/// Field-to-curve call expects 128 bytes as an input that is interpreted as a
+/// Field-to-curve call expects 128 bytes as an input that is interpreted as
 /// an element of Fp2. Output of this call is 256 bytes and is an encoded G2
 /// point.
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-mapping-fp2-element-to-g2-point>
