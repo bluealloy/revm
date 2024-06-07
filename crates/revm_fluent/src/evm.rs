@@ -1,4 +1,3 @@
-use core::cell::RefCell;
 #[cfg(feature = "revm-rwasm")]
 use crate::journal_db_wrapper::JournalDbWrapper;
 #[cfg(feature = "revm-rwasm")]
@@ -9,20 +8,44 @@ use crate::{
     handler::Handler,
     interpreter::{Host, InterpreterAction, SharedMemory},
     primitives::{
-        specification::SpecId, BlockEnv, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
-        ExecutionResult, HandlerCfg, ResultAndState, TransactTo, TxEnv,
+        specification::SpecId,
+        BlockEnv,
+        Bytes,
+        CfgEnv,
+        EVMError,
+        EVMResult,
+        EnvWithHandlerCfg,
+        ExecutionResult,
+        HandlerCfg,
+        InvalidTransaction,
+        ResultAndState,
+        TransactTo,
+        TxEnv,
+        U256,
     },
-    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
+    Context,
+    ContextWithHandlerCfg,
+    Frame,
+    FrameOrResult,
+    FrameResult,
 };
-use core::fmt;
-use core::str::from_utf8;
-use revm_interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome, Gas, InstructionResult, InterpreterResult};
-use std::vec::Vec;
-use fluentbase_core::helpers::evm_error_from_exit_code;
-use fluentbase_core::loader::{_loader_call, _loader_create};
+use core::{cell::RefCell, fmt, str::from_utf8};
+use fluentbase_core::{
+    helpers::evm_error_from_exit_code,
+    loader::{_loader_call, _loader_create},
+};
 use fluentbase_sdk::{ContractInput, EvmCallMethodInput, EvmCreateMethodInput};
 use fluentbase_types::{consts::EVM_STORAGE_ADDRESS, Address, ExitCode};
-use crate::primitives::{Bytes, InvalidTransaction, U256};
+use revm_interpreter::{
+    CallInputs,
+    CallOutcome,
+    CreateInputs,
+    CreateOutcome,
+    Gas,
+    InstructionResult,
+    InterpreterResult,
+};
+use std::vec::Vec;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -32,8 +55,8 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
-    /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
-    /// and it different depending on the specified fork.
+    /// Handler is a component of the of EVM that contains all the logic. Handler contains
+    /// specification id and it different depending on the specified fork.
     pub handler: Handler<'a, Context<EXT, DB>, EXT, DB>,
 }
 
@@ -339,15 +362,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         gas: &Gas,
         caller_address: Address,
         callee_address: Address,
-        input: Bytes,
         value: U256,
     ) -> ContractInput {
         ContractInput {
-            journal_checkpoint: 0,
             contract_gas_limit: gas.remaining(),
             contract_address: callee_address,
             contract_caller: caller_address,
-            contract_input: input,
             contract_value: value,
             contract_is_static: false,
             block_chain_id: self.context.evm.env.cfg.chain_id,
@@ -491,13 +511,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             depth: 0,
         };
 
-        let contract_input = self.input_from_env(
-            &mut gas,
-            caller_address,
-            Address::ZERO,
-            Default::default(),
-            value,
-        );
+        let contract_input = self.input_from_env(&mut gas, caller_address, Address::ZERO, value);
         let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
         let create_output = _loader_create(&contract_input, &am, method_data);
 
@@ -573,13 +587,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             gas_limit,
             depth: 0,
         };
-        let contract_input = self.input_from_env(
-            &mut gas,
-            caller_address,
-            callee_address,
-            Default::default(),
-            value,
-        );
+        let contract_input = self.input_from_env(&mut gas, caller_address, callee_address, value);
         let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
         let call_output = _loader_call(&contract_input, &am, method_input);
 

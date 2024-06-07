@@ -6,11 +6,7 @@ use std::{
 };
 
 fn run_e2e_test(test_path: &'static str) {
-    let path = if cfg!(target_os = "linux") {
-        format!("./{}", test_path)
-    } else {
-        format!("../{}", test_path)
-    };
+    let path = format!("./{}", test_path);
     let elapsed = Arc::new(Mutex::new(Duration::new(0, 0)));
     execute_test_suite(Path::new(path.as_str()), &elapsed, false, false).unwrap();
 }

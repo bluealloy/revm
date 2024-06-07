@@ -10,7 +10,6 @@ use fluentbase_sdk::{
     AccountCheckpoint,
     AccountManager,
     EvmCallMethodOutput,
-    LowLevelAPI,
     JZKT_ACCOUNT_COMPRESSION_FLAGS,
     JZKT_ACCOUNT_FIELDS_COUNT,
     JZKT_ACCOUNT_RWASM_CODE_HASH_FIELD,
@@ -260,6 +259,7 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
     fn exec_hash(
         &self,
         hash32_offset: *const u8,
+        context: &[u8],
         input: &[u8],
         fuel_offset: *mut u32,
         state: u32,
@@ -278,6 +278,7 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
         };
         let ctx = RuntimeContext::new(rwasm_bytecode)
             .with_input(input.into())
+            .with_context(context.into())
             .with_fuel_limit(unsafe { *fuel_offset } as u64)
             .with_jzkt(jzkt)
             .with_state(state);
