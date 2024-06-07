@@ -85,7 +85,9 @@ pub(super) fn extract_g1_input(
         //
         // SAFETY: out is a blst value.
         if unsafe { !blst_p1_affine_on_curve(&out) } {
-            return Err(PrecompileError::Other("Element not on G1 curve".to_string()));
+            return Err(PrecompileError::Other(
+                "Element not on G1 curve".to_string(),
+            ));
         }
     }
 

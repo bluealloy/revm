@@ -105,7 +105,9 @@ pub(super) fn extract_g2_input(
         //
         // SAFETY: out is a blst value.
         if unsafe { !blst_p2_affine_on_curve(&out) } {
-            return Err(PrecompileError::Other("Element not on G2 curve".to_string()));
+            return Err(PrecompileError::Other(
+                "Element not on G2 curve".to_string(),
+            ));
         }
     }
 
