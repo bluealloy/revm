@@ -1707,6 +1707,7 @@ version = "0.1.0"
 dependencies = [
  "convert_case 0.6.0",
  "crypto-hashes",
+ "proc-macro2",
  "quote",
  "serde",
  "syn 2.0.66",

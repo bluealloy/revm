@@ -92,10 +92,10 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 }
 
 #[cfg(not(feature = "std"))]
-#[link(wasm_import_module = "fluentbase_v1alpha")]
+#[link(wasm_import_module = "fluentbase_v1preview")]
 extern "C" {
-    fn _crypto_keccak256(data_offset: *const u8, data_len: u32, output32_offset: *mut u8);
-    fn _crypto_ecrecover(
+    fn _keccak256(data_offset: *const u8, data_len: u32, output32_offset: *mut u8);
+    fn _ecrecover(
         digest32_offset: *const u8,
         sig64_offset: *const u8,
         output65_offset: *mut u8,
@@ -117,13 +117,13 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let mut public_key: [u8; 65] = [0u8; 65];
     let mut hash: B256 = B256::ZERO;
     unsafe {
-        _crypto_ecrecover(
+        _ecrecover(
             input[0..32].as_ptr(),
             input[64..128].as_ptr(),
             public_key.as_mut_ptr(),
             (input[63] - 27) as u32,
         );
-        _crypto_keccak256(public_key[1..].as_ptr(), 64, hash.as_mut_ptr())
+        _keccak256(public_key[1..].as_ptr(), 64, hash.as_mut_ptr())
     }
     hash[..12].fill(0);
     Ok((ECRECOVER_BASE, Bytes::from(hash)))

@@ -4,7 +4,9 @@ use alloy_primitives::{address, Address};
 ///
 /// By default the limit is `0x6000` (~25kb)
 pub const MAX_CODE_SIZE: usize = 0x6000;
-pub const RWASM_MAX_CODE_SIZE: usize = 0x60000;
+
+/// rWASM max code size
+pub const WASM_MAX_CODE_SIZE: usize = 0x100000;
 
 /// Number of block hashes that EVM can access in the past (pre-Prague).
 pub const BLOCK_HASH_HISTORY: usize = 256;
