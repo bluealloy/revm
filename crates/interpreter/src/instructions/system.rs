@@ -131,11 +131,10 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
 
     let data_offset = as_usize_saturated!(offset);
     let data_end = data_offset.saturating_add(len);
-    let return_data_buffer_len = interpreter.return_data_buffer.len();
 
     // Old legacy behavior is to panic if data_end is out of scope of return buffer.
     // This behavior is changed in EOF.
-    if data_end > return_data_buffer_len && !interpreter.is_eof {
+    if data_end > interpreter.return_data_buffer.len() && !interpreter.is_eof {
         interpreter.instruction_result = InstructionResult::OutOfOffset;
         return;
     }
