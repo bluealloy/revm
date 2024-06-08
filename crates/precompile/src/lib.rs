@@ -111,12 +111,12 @@ impl Precompiles {
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::byzantium().clone();
             precompiles.extend([
-                // EIP-152: Add BLAKE2 compression function `F` precompile.
-                blake2::FUN,
                 // EIP-1108: Reduce alt_bn128 precompile gas costs.
                 bn128::add::ISTANBUL,
                 bn128::mul::ISTANBUL,
                 bn128::pair::ISTANBUL,
+                // EIP-152: Add BLAKE2 compression function `F` precompile.
+                blake2::FUN,
             ]);
             Box::new(precompiles)
         })

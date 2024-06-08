@@ -90,7 +90,10 @@ impl EofHeader {
 
     /// Returns body size. It is sum of code sizes, container sizes and data size.
     pub fn body_size(&self) -> usize {
-        self.sum_code_sizes + self.sum_container_sizes + self.data_size as usize
+        self.types_size as usize
+            + self.sum_code_sizes
+            + self.sum_container_sizes
+            + self.data_size as usize
     }
 
     /// Returns raw size of the EOF.

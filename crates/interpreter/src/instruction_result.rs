@@ -61,6 +61,7 @@ impl From<SuccessReason> for InstructionResult {
             SuccessReason::Return => InstructionResult::Return,
             SuccessReason::Stop => InstructionResult::Stop,
             SuccessReason::SelfDestruct => InstructionResult::SelfDestruct,
+            SuccessReason::EofReturnContract => InstructionResult::ReturnContract,
         }
     }
 }
@@ -269,9 +270,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::FatalExternalError => Self::FatalExternalError,
             InstructionResult::EOFOpcodeDisabledInLegacy => Self::Halt(HaltReason::OpcodeNotFound),
             InstructionResult::EOFFunctionStackOverflow => Self::FatalExternalError,
-            InstructionResult::ReturnContract => {
-                panic!("Unexpected EOF internal Return Contract")
-            }
+            InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
         }
     }
 }

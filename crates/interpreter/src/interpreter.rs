@@ -64,20 +64,8 @@ pub struct Interpreter {
 
 impl Default for Interpreter {
     fn default() -> Self {
-        Self::new(Contract::default(), 0, false)
+        Self::new(Contract::default(), u64::MAX, false)
     }
-}
-
-/// The result of an interpreter operation.
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-pub struct InterpreterResult {
-    /// The result of the instruction execution.
-    pub result: InstructionResult,
-    /// The output of the instruction execution.
-    pub output: Bytes,
-    /// The gas usage information.
-    pub gas: Gas,
 }
 
 impl Interpreter {
@@ -204,6 +192,7 @@ impl Interpreter {
     }
 
     pub fn insert_eofcreate_outcome(&mut self, create_outcome: EOFCreateOutcome) {
+        self.instruction_result = InstructionResult::Continue;
         let instruction_result = create_outcome.instruction_result();
 
         self.return_data_buffer = if *instruction_result == InstructionResult::Revert {
@@ -388,7 +377,28 @@ impl Interpreter {
     }
 }
 
+/// The result of an interpreter operation.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+pub struct InterpreterResult {
+    /// The result of the instruction execution.
+    pub result: InstructionResult,
+    /// The output of the instruction execution.
+    pub output: Bytes,
+    /// The gas usage information.
+    pub gas: Gas,
+}
+
 impl InterpreterResult {
+    /// Returns a new `InterpreterResult` with the given values.
+    pub fn new(result: InstructionResult, output: Bytes, gas: Gas) -> Self {
+        Self {
+            result,
+            output,
+            gas,
+        }
+    }
+
     /// Returns whether the instruction result is a success.
     #[inline]
     pub const fn is_ok(&self) -> bool {
