@@ -1,4 +1,5 @@
 use revm_interpreter::CallValue;
+use revm_precompile::PrecompileErrors;
 
 use super::inner_evm_context::InnerEvmContext;
 use crate::{
@@ -107,10 +108,13 @@ impl<DB: Database> EvmContext<DB> {
         address: Address,
         input_data: &Bytes,
         gas: Gas,
-    ) -> Option<InterpreterResult> {
-        let out = self
-            .precompiles
-            .call(address, input_data, gas.limit(), &mut self.inner)?;
+    ) -> Result<Option<InterpreterResult>, EVMError<DB::Error>> {
+        let Some(outcome) =
+            self.precompiles
+                .call(address, input_data, gas.limit(), &mut self.inner)
+        else {
+            return Ok(None);
+        };
 
         let mut result = InterpreterResult {
             result: InstructionResult::Return,
@@ -118,24 +122,25 @@ impl<DB: Database> EvmContext<DB> {
             output: Bytes::new(),
         };
 
-        match out {
-            Ok((gas_used, data)) => {
-                if result.gas.record_cost(gas_used) {
+        match outcome {
+            Ok(output) => {
+                if result.gas.record_cost(output.gas_used) {
                     result.result = InstructionResult::Return;
-                    result.output = data;
+                    result.output = output.bytes;
                 } else {
                     result.result = InstructionResult::PrecompileOOG;
                 }
             }
-            Err(e) => {
-                result.result = if e == crate::precompile::Error::OutOfGas {
+            Err(PrecompileErrors::Error(e)) => {
+                result.result = if e.is_oog() {
                     InstructionResult::PrecompileOOG
                 } else {
                     InstructionResult::PrecompileError
                 };
             }
+            Err(PrecompileErrors::Fatal { msg }) => return Err(EVMError::Precompile(msg)),
         }
-        Some(result)
+        Ok(Some(result))
     }
 
     /// Make call frame
@@ -194,7 +199,7 @@ impl<DB: Database> EvmContext<DB> {
             _ => {}
         };
 
-        if let Some(result) = self.call_precompile(inputs.bytecode_address, &inputs.input, gas) {
+        if let Some(result) = self.call_precompile(inputs.bytecode_address, &inputs.input, gas)? {
             if matches!(result.result, return_ok!()) {
                 self.journaled_state.checkpoint_commit();
             } else {

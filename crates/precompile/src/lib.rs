@@ -30,28 +30,12 @@ pub use revm_primitives::{
     precompile::{PrecompileError as Error, *},
     Address, Bytes, HashMap, Log, B256,
 };
-use std::{boxed::Box, vec::Vec};
+use std::boxed::Box;
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
-pub struct PrecompileOutput {
-    pub cost: u64,
-    pub output: Vec<u8>,
-    pub logs: Vec<Log>,
-}
-
-impl PrecompileOutput {
-    pub fn without_logs(cost: u64, output: Vec<u8>) -> Self {
-        Self {
-            cost,
-            output,
-            logs: Vec::new(),
-        }
-    }
-}
 #[derive(Clone, Default, Debug)]
 pub struct Precompiles {
     /// Precompiles.

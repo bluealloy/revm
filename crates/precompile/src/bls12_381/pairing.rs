@@ -4,7 +4,9 @@ use super::{
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use blst::{blst_final_exp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_miller_loop};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult, B256};
+use revm_primitives::{
+    Bytes, Precompile, PrecompileError, PrecompileOutput, PrecompileResult, B256,
+};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -34,13 +36,14 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if input_len == 0 || input_len % INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
             "Pairing input length should be multiple of {INPUT_LENGTH}, was {input_len}"
-        )));
+        ))
+        .into());
     }
 
     let k = input_len / INPUT_LENGTH;
     let required_gas: u64 = PAIRING_MULTIPLIER_BASE * k as u64 + PAIRING_OFFSET_BASE;
     if required_gas > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     // Accumulator for the fp12 multiplications of the miller loops.
@@ -98,5 +101,8 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             result = 1;
         }
     }
-    Ok((required_gas, B256::with_last_byte(result).into()))
+    Ok(PrecompileOutput::new(
+        required_gas,
+        B256::with_last_byte(result).into(),
+    ))
 }

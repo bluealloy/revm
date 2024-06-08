@@ -6,7 +6,7 @@ use super::{
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use blst::{blst_p1, blst_p1_affine, blst_p1_from_affine, blst_p1_to_affine, p1_affines};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
+use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileOutput, PrecompileResult};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -30,13 +30,14 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             "G1MSM input length should be multiple of {}, was {}",
             g1_mul::INPUT_LENGTH,
             input_len
-        )));
+        ))
+        .into());
     }
 
     let k = input_len / g1_mul::INPUT_LENGTH;
     let required_gas = msm_required_gas(k, g1_mul::BASE_GAS_FEE);
     if required_gas > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     let mut g1_points: Vec<blst_p1> = Vec::with_capacity(k);
@@ -72,7 +73,7 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
     // return infinity point if all points are infinity
     if g1_points.is_empty() {
-        return Ok((required_gas, [0; 128].into()));
+        return Ok(PrecompileOutput::new(required_gas, [0; 128].into()));
     }
 
     let points = p1_affines::from(&g1_points);
@@ -83,5 +84,5 @@ pub(super) fn g1_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     unsafe { blst_p1_to_affine(&mut multiexp_aff, &multiexp) };
 
     let out = encode_g1_point(&multiexp_aff);
-    Ok((required_gas, out))
+    Ok(PrecompileOutput::new(required_gas, out))
 }

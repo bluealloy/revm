@@ -45,7 +45,7 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
         u64::MAX,
     )
     .unwrap()
-    .0;
+    .gas_used;
 
     println!("gas used by regular pairing call: {:?}", res);
 
@@ -60,7 +60,9 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     )
     .unwrap();
 
-    let res = run_add(&ecadd_input, ISTANBUL_ADD_GAS_COST, 150).unwrap().0;
+    let res = run_add(&ecadd_input, ISTANBUL_ADD_GAS_COST, 150)
+        .unwrap()
+        .gas_used;
     println!("gas used by bn128 add precompile: {:?}", res);
 
     // === ECRECOVER ===
@@ -86,7 +88,9 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     message_and_signature[64..128].copy_from_slice(&data);
 
     let message_and_signature = Bytes::from(message_and_signature);
-    let gas = ec_recover_run(&message_and_signature, u64::MAX).unwrap().0;
+    let gas = ec_recover_run(&message_and_signature, u64::MAX)
+        .unwrap()
+        .gas_used;
     println!("gas used by ecrecover precompile: {:?}", gas);
 
     // === POINT_EVALUATION ===
@@ -103,8 +107,8 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
 
     let gas = 50000;
     let env = Env::default();
-    let (actual_gas, _actual_output) = run(&kzg_input, gas, &env).unwrap();
-    println!("gas used by kzg precompile: {:?}", actual_gas);
+    let output = run(&kzg_input, gas, &env).unwrap();
+    println!("gas used by kzg precompile: {:?}", output.gas_used);
 
     group.bench_function(group_name("ecrecover precompile"), |b| {
         b.iter(|| {
