@@ -5,6 +5,7 @@ use crate::{
     Host, InstructionResult, SStoreResult,
 };
 use core::cmp::min;
+use revm_primitives::EOF_BYTECODE_HASH;
 use std::vec::Vec;
 
 pub fn balance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
@@ -61,7 +62,7 @@ pub fn extcodesize<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
 pub fn extcodehash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, CONSTANTINOPLE);
     pop_address!(interpreter, address);
-    let Some((code_hash, is_cold)) = host.code_hash(address) else {
+    let Some((mut code_hash, is_cold)) = host.code_hash(address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
@@ -71,6 +72,13 @@ pub fn extcodehash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
         gas!(interpreter, 700);
     } else {
         gas!(interpreter, 400);
+    }
+    if let Some((bytecode, _)) = host.code(address) {
+        // TODO: Once issue https://github.com/bluealloy/revm/issues/1464 is resolved,
+        // update this logic to use the new method for detecting if the bytecode is EOF.
+        if bytecode.bytes().starts_with(&[0xEF, 0x00]) {
+            code_hash = B256::from_slice(EOF_BYTECODE_HASH);
+        }
     }
     push_b256!(interpreter, code_hash);
 }
