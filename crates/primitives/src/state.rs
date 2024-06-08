@@ -41,6 +41,8 @@ bitflags! {
         /// used only for pre spurious dragon hardforks where existing and empty were two separate states.
         /// it became same state after EIP-161: State trie clearing
         const LoadedAsNotExisting = 0b0001000;
+        /// used to mark account as cold
+        const Cold = 0b0010000;
     }
 }
 
@@ -100,6 +102,21 @@ impl Account {
         self.status -= AccountStatus::Created;
     }
 
+    /// Mark account as cold.
+    pub fn mark_cold(&mut self) {
+        self.status |= AccountStatus::Cold;
+    }
+
+    /// Mark account as warm and return true if it was previously cold.
+    pub fn mark_warm(&mut self) -> bool {
+        if self.status.contains(AccountStatus::Cold) {
+            self.status -= AccountStatus::Cold;
+            true
+        } else {
+            false
+        }
+    }
+
     /// Is account loaded as not existing from database
     /// This is needed for pre spurious dragon hardforks where
     /// existing and empty were two separate states.
@@ -143,6 +160,8 @@ pub struct EvmStorageSlot {
     pub original_value: U256,
     /// Present value of the storage slot.
     pub present_value: U256,
+    /// Represents if the storage slot is cold.
+    pub is_cold: bool,
 }
 
 impl EvmStorageSlot {
@@ -151,6 +170,7 @@ impl EvmStorageSlot {
         Self {
             original_value: original,
             present_value: original,
+            is_cold: false,
         }
     }
 
@@ -159,6 +179,7 @@ impl EvmStorageSlot {
         Self {
             original_value,
             present_value,
+            is_cold: false,
         }
     }
     /// Returns true if the present value differs from the original value
@@ -174,6 +195,16 @@ impl EvmStorageSlot {
     /// Returns the current value of the storage slot.
     pub fn present_value(&self) -> U256 {
         self.present_value
+    }
+
+    /// Marks the storage slot as cold.
+    pub fn mark_cold(&mut self) {
+        self.is_cold = true;
+    }
+
+    /// Marks the storage slot as warm and returns a bool indicating if it was previously cold.
+    pub fn mark_warm(&mut self) -> bool {
+        core::mem::replace(&mut self.is_cold, false)
     }
 }
 
@@ -342,5 +373,25 @@ mod tests {
         account.unmark_selfdestruct();
         assert!(account.is_touched());
         assert!(!account.is_selfdestructed());
+    }
+
+    #[test]
+    fn account_is_cold() {
+        let mut account = Account::default();
+
+        // Account is not cold by default
+        assert!(!account.status.contains(crate::AccountStatus::Cold));
+
+        // When marking warm account as warm again, it should return false
+        assert!(!account.mark_warm());
+
+        // Mark account as cold
+        account.mark_cold();
+
+        // Account is cold
+        assert!(account.status.contains(crate::AccountStatus::Cold));
+
+        // When marking cold account as warm, it should return true
+        assert!(account.mark_warm());
     }
 }
