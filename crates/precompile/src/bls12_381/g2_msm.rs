@@ -44,8 +44,8 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     for i in 0..k {
         let slice =
             &input[i * g2_mul::INPUT_LENGTH..i * g2_mul::INPUT_LENGTH + G2_INPUT_ITEM_LENGTH];
-        // BLST batch API for p2_affines blows up when you pass it a point at infinity and returns
-        // point at infinity so we just skip the element, and return 256 bytes in the response
+        // BLST batch API for p2_affines blows up when you pass it a point at infinity, so we must
+        // filter points at infinity (and their corresponding scalars) from the input.
         if slice.iter().all(|i| *i == 0) {
             continue;
         }

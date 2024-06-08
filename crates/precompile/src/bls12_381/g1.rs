@@ -69,7 +69,7 @@ pub(super) fn extract_g1_input(
         // As endomorphism acceleration requires input on the correct subgroup, implementers MAY
         // use endomorphism acceleration.
         if unsafe { !blst_p1_affine_in_g1(&out) } {
-            return Err(PrecompileError::Other("Element not in G2".to_string()));
+            return Err(PrecompileError::Other("Element not in G1".to_string()));
         }
     } else {
         // From EIP-2537:
@@ -80,13 +80,13 @@ pub(super) fn extract_g1_input(
         //
         // NB: There is no subgroup check for the G1 addition precompile.
         //
-        // We use blst_p1_affine_on_curve instead of blst_p1_affine_in_g2 because the latter performs
+        // We use blst_p1_affine_on_curve instead of blst_p1_affine_in_g1 because the latter performs
         // the subgroup check.
         //
         // SAFETY: out is a blst value.
         if unsafe { !blst_p1_affine_on_curve(&out) } {
             return Err(PrecompileError::Other(
-                "Element not on G2 curve".to_string(),
+                "Element not on G1 curve".to_string(),
             ));
         }
     }
