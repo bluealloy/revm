@@ -3,6 +3,7 @@ use crate::{
     Address, Error, Precompile, PrecompileResult, PrecompileWithAddress,
 };
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
+use revm_primitives::PrecompileOutput;
 
 pub mod add {
     use super::*;
@@ -122,7 +123,7 @@ pub fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
 
 pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
-        return Err(Error::OutOfGas);
+        return Err(Error::OutOfGas.into());
     }
 
     let input = right_pad::<ADD_INPUT_LEN>(input);
@@ -135,12 +136,12 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
         sum.x().to_big_endian(&mut output[..32]).unwrap();
         sum.y().to_big_endian(&mut output[32..]).unwrap();
     }
-    Ok((gas_cost, output.into()))
+    Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
 
 pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
     if gas_cost > gas_limit {
-        return Err(Error::OutOfGas);
+        return Err(Error::OutOfGas.into());
     }
 
     let input = right_pad::<MUL_INPUT_LEN>(input);
@@ -155,7 +156,7 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
         mul.x().to_big_endian(&mut output[..32]).unwrap();
         mul.y().to_big_endian(&mut output[32..]).unwrap();
     }
-    Ok((gas_cost, output.into()))
+    Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
 
 pub fn run_pair(
@@ -166,11 +167,11 @@ pub fn run_pair(
 ) -> PrecompileResult {
     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
     if gas_used > gas_limit {
-        return Err(Error::OutOfGas);
+        return Err(Error::OutOfGas.into());
     }
 
     if input.len() % PAIR_ELEMENT_LEN != 0 {
-        return Err(Error::Bn128PairLength);
+        return Err(Error::Bn128PairLength.into());
     }
 
     let success = if input.is_empty() {
@@ -211,7 +212,7 @@ pub fn run_pair(
 
         mul == Gt::one()
     };
-    Ok((gas_used, bool_to_bytes32(success)))
+    Ok(PrecompileOutput::new(gas_used, bool_to_bytes32(success)))
 }
 
 #[cfg(test)]
@@ -219,7 +220,7 @@ mod tests {
     use crate::bn128::add::BYZANTIUM_ADD_GAS_COST;
     use crate::bn128::mul::BYZANTIUM_MUL_GAS_COST;
     use crate::bn128::pair::{BYZANTIUM_PAIR_BASE, BYZANTIUM_PAIR_PER_POINT};
-    use revm_primitives::hex;
+    use revm_primitives::{hex, PrecompileErrors};
 
     use super::*;
 
@@ -240,8 +241,8 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
-        assert_eq!(res, expected);
+        let outcome = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
+        assert_eq!(outcome.bytes, expected);
 
         // zero sum test
         let input = hex::decode(
@@ -259,8 +260,8 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
-        assert_eq!(res, expected);
+        let outcome = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
+        assert_eq!(outcome.bytes, expected);
 
         // out of gas test
         let input = hex::decode(
@@ -274,7 +275,7 @@ mod tests {
 
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 499);
         println!("{:?}", res);
-        assert!(matches!(res, Err(Error::OutOfGas)));
+        assert!(matches!(res, Err(PrecompileErrors::Error(Error::OutOfGas))));
 
         // no input test
         let input = [0u8; 0];
@@ -285,8 +286,8 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
-        assert_eq!(res, expected);
+        let outcome = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
+        assert_eq!(outcome.bytes, expected);
 
         // point not on curve fail
         let input = hex::decode(
@@ -299,7 +300,10 @@ mod tests {
         .unwrap();
 
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500);
-        assert!(matches!(res, Err(Error::Bn128AffineGFailedToCreate)));
+        assert!(matches!(
+            res,
+            Err(PrecompileErrors::Error(Error::Bn128AffineGFailedToCreate))
+        ));
     }
 
     #[test]
@@ -318,8 +322,8 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
-        assert_eq!(res, expected);
+        let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
+        assert_eq!(outcome.bytes, expected);
 
         // out of gas test
         let input = hex::decode(
@@ -331,7 +335,7 @@ mod tests {
         .unwrap();
 
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 39_999);
-        assert!(matches!(res, Err(Error::OutOfGas)));
+        assert!(matches!(res, Err(PrecompileErrors::Error(Error::OutOfGas))));
 
         // zero multiplication test
         let input = hex::decode(
@@ -348,8 +352,8 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
-        assert_eq!(res, expected);
+        let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
+        assert_eq!(outcome.bytes, expected);
 
         // no input test
         let input = [0u8; 0];
@@ -360,8 +364,8 @@ mod tests {
         )
         .unwrap();
 
-        let (_, res) = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
-        assert_eq!(res, expected);
+        let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
+        assert_eq!(outcome.bytes, expected);
 
         // point not on curve fail
         let input = hex::decode(
@@ -373,7 +377,10 @@ mod tests {
         .unwrap();
 
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000);
-        assert!(matches!(res, Err(Error::Bn128AffineGFailedToCreate)));
+        assert!(matches!(
+            res,
+            Err(PrecompileErrors::Error(Error::Bn128AffineGFailedToCreate))
+        ));
     }
 
     #[test]
@@ -398,14 +405,14 @@ mod tests {
             hex::decode("0000000000000000000000000000000000000000000000000000000000000001")
                 .unwrap();
 
-        let (_, res) = run_pair(
+        let outcome = run_pair(
             &input,
             BYZANTIUM_PAIR_PER_POINT,
             BYZANTIUM_PAIR_BASE,
             260_000,
         )
         .unwrap();
-        assert_eq!(res, expected);
+        assert_eq!(outcome.bytes, expected);
 
         // out of gas test
         let input = hex::decode(
@@ -431,7 +438,7 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             259_999,
         );
-        assert!(matches!(res, Err(Error::OutOfGas)));
+        assert!(matches!(res, Err(PrecompileErrors::Error(Error::OutOfGas))));
 
         // no input test
         let input = [0u8; 0];
@@ -439,14 +446,14 @@ mod tests {
             hex::decode("0000000000000000000000000000000000000000000000000000000000000001")
                 .unwrap();
 
-        let (_, res) = run_pair(
+        let outcome = run_pair(
             &input,
             BYZANTIUM_PAIR_PER_POINT,
             BYZANTIUM_PAIR_BASE,
             260_000,
         )
         .unwrap();
-        assert_eq!(res, expected);
+        assert_eq!(outcome.bytes, expected);
 
         // point not on curve fail
         let input = hex::decode(
@@ -466,7 +473,10 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             260_000,
         );
-        assert!(matches!(res, Err(Error::Bn128AffineGFailedToCreate)));
+        assert!(matches!(
+            res,
+            Err(PrecompileErrors::Error(Error::Bn128AffineGFailedToCreate))
+        ));
 
         // invalid input length
         let input = hex::decode(
@@ -484,6 +494,9 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             260_000,
         );
-        assert!(matches!(res, Err(Error::Bn128PairLength)));
+        assert!(matches!(
+            res,
+            Err(PrecompileErrors::Error(Error::Bn128PairLength))
+        ));
     }
 }

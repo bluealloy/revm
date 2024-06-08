@@ -148,6 +148,8 @@ pub enum EVMError<DBError> {
     ///
     /// Useful for handler registers where custom logic would want to return their own custom error.
     Custom(String),
+    /// Precompile error.
+    Precompile(String),
 }
 
 #[cfg(feature = "std")]
@@ -157,7 +159,7 @@ impl<DBError: std::error::Error + 'static> std::error::Error for EVMError<DBErro
             Self::Transaction(e) => Some(e),
             Self::Header(e) => Some(e),
             Self::Database(e) => Some(e),
-            Self::Custom(_) => None,
+            Self::Precompile(_) | Self::Custom(_) => None,
         }
     }
 }
@@ -168,7 +170,7 @@ impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
             Self::Transaction(e) => write!(f, "transaction validation error: {e}"),
             Self::Header(e) => write!(f, "header validation error: {e}"),
             Self::Database(e) => write!(f, "database error: {e}"),
-            Self::Custom(e) => f.write_str(e),
+            Self::Precompile(e) | Self::Custom(e) => f.write_str(e),
         }
     }
 }
