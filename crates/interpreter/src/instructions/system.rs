@@ -130,42 +130,32 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
 
     let data_offset = as_usize_saturated!(offset);
+    let data_end = data_offset.saturating_add(len);
     let return_data_buffer_len = interpreter.return_data_buffer.len();
 
-    if data_offset.saturating_add(len) > return_data_buffer_len && !interpreter.is_eof {
+    // Old legacy behavior is to panic if data_end is out of scope of return buffer.
+    // This behavior is changed in EOF.
+    if data_end > return_data_buffer_len && !interpreter.is_eof {
         interpreter.instruction_result = InstructionResult::OutOfOffset;
         return;
     }
 
+    // if len is zero memory is not resized.
     if len == 0 {
         return;
     }
 
+    // resize memory
     let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
     resize_memory!(interpreter, memory_offset, len);
-    if data_offset < return_data_buffer_len {
-        let available_len = return_data_buffer_len - data_offset;
-        let copy_len = available_len.min(len);
 
-        interpreter.shared_memory.set(
-            memory_offset,
-            &interpreter.return_data_buffer[data_offset..data_offset + copy_len],
-        );
-
-        if interpreter.is_eof && copy_len < len {
-            interpreter
-                .shared_memory
-                .slice_mut(memory_offset + copy_len, len - copy_len)
-                .fill(0);
-        }
-    } else if interpreter.is_eof {
-        interpreter
-            .shared_memory
-            .slice_mut(memory_offset, len)
-            .fill(0);
-    } else {
-        interpreter.instruction_result = InstructionResult::OutOfOffset;
-    }
+    // Note: this can't panic because we resized memory to fit.
+    interpreter.shared_memory.set_data(
+        memory_offset,
+        data_offset,
+        len,
+        &interpreter.return_data_buffer,
+    );
 }
 
 /// Part of EOF `<https://eips.ethereum.org/EIPS/eip-7069>`.
@@ -175,19 +165,19 @@ pub fn returndataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &m
     pop_top!(interpreter, offset);
     let offset_usize = as_usize_or_fail!(interpreter, offset);
 
-    let data = if offset_usize < interpreter.return_data_buffer.len() {
-        let available = interpreter.return_data_buffer.len() - offset_usize;
-        let mut padded = [0u8; 32];
+    let mut output = [0u8; 32];
+    if let Some(available) = interpreter
+        .return_data_buffer
+        .len()
+        .checked_sub(offset_usize)
+    {
         let copy_len = available.min(32);
-        padded[..copy_len].copy_from_slice(
+        output[..copy_len].copy_from_slice(
             &interpreter.return_data_buffer[offset_usize..offset_usize + copy_len],
         );
-        padded
-    } else {
-        [0u8; 32]
-    };
+    }
 
-    *offset = B256::from_slice(&data).into();
+    *offset = B256::from(output).into();
 }
 
 pub fn gas<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
