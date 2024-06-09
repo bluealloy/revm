@@ -119,8 +119,7 @@ where
             .unwrap()
             .modexp_run(base, exponent, modulus)
             .unwrap()
-    } else {
-        // Not indented to keep the diff clean and make changes to the original code obvious
+    } else {   
         let output = modexp(base, exponent, modulus);
         output
     };
