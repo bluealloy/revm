@@ -14,6 +14,7 @@ pub const FUN: PrecompileWithAddress =
 pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     #[cfg(feature = "sp1-cycle-tracker")]
     println!("cycle-tracker-start: blake2");
+
     let input = &input[..];
 
     if input.len() != INPUT_LENGTH {
@@ -40,8 +41,6 @@ pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             .blake2_run(input)
             .unwrap()
     } else {
-        // Not indented to keep the diff clean and make changes to the original code obvious
-
         let mut h = [0u64; 8];
         let mut m = [0u64; 16];
 

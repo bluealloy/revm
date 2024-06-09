@@ -57,8 +57,7 @@ pub fn ripemd160_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
                 .ripemd160_run(input.as_ref())
                 .unwrap()
                 .into()
-        } else {    
-
+        } else {
             let mut hasher = ripemd::Ripemd160::new();
             hasher.update(input);
             let mut output = [0u8; 32];

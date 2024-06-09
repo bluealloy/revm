@@ -135,8 +135,6 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
             .bn128_run_add(input)
             .unwrap()
     } else {
-        // Not indented to keep the diff clean and make changes to the original code obvious
-
         let input = right_pad::<ADD_INPUT_LEN>(input);
 
         let p1 = read_point(&input[..64])?;
@@ -170,8 +168,6 @@ pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
             .bn128_run_mul(input)
             .unwrap()
     } else {
-        // Not indented to keep the diff clean and make changes to the original code obvious
-
         let input = right_pad::<MUL_INPUT_LEN>(input);
 
         let p = read_point(&input[..64])?;
@@ -198,6 +194,8 @@ pub fn run_pair(
     pair_base_cost: u64,
     gas_limit: u64,
 ) -> PrecompileResult {
+    #[cfg(feature = "sp1-cycle-tracker")]
+    println!("cycle-tracker-start: bn-pair");
     let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
     if gas_used > gas_limit {
         return Err(Error::OutOfGas);
@@ -214,8 +212,6 @@ pub fn run_pair(
             .bn128_run_pairing(input)
             .unwrap()
     } else {
-        // Not indented to keep the diff clean and make changes to the original code obvious
-
         let success = if input.is_empty() {
             true
         } else {
@@ -259,6 +255,8 @@ pub fn run_pair(
 
         success
     };
+    #[cfg(feature = "sp1-cycle-tracker")]
+    println!("cycle-tracker-end: bn-pair");
 
     Ok((gas_used, bool_to_bytes32(success)))
 }

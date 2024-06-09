@@ -119,7 +119,7 @@ where
             .unwrap()
             .modexp_run(base, exponent, modulus)
             .unwrap()
-    } else {   
+    } else {
         let output = modexp(base, exponent, modulus);
         output
     };
