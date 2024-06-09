@@ -49,6 +49,7 @@ pub fn run_inner<F>(input: &[u8], gas_limit: u64, min_gas: u64, calc_gas: F) -> 
 where
     F: FnOnce(u64, u64, u64, &U256) -> u64,
 {
+    #[cfg(feature = "sp1-cycle-tracker")]
     println!("cycle-tracker-start: modexp");
     // If there is no minimum gas, return error.
     if min_gas > gas_limit {
@@ -113,12 +114,17 @@ where
 
     // Call the modexp.
     let output = if zk_op::contains_operation(&ZkOperation::Modexp) {
-        zk_op::ZKVM_OPERATOR.get().unwrap().modexp_run(base, exponent, modulus).unwrap()
+        zk_op::ZKVM_OPERATOR
+            .get()
+            .unwrap()
+            .modexp_run(base, exponent, modulus)
+            .unwrap()
     } else {
-    // Not indented to keep the diff clean and make changes to the original code obvious
-    let output = modexp(base, exponent, modulus);
-    output
+        // Not indented to keep the diff clean and make changes to the original code obvious
+        let output = modexp(base, exponent, modulus);
+        output
     };
+    #[cfg(feature = "sp1-cycle-tracker")]
     println!("cycle-tracker-end: modexp");
     // left pad the result to modulus length. bytes will always by less or equal to modulus length.
     Ok((gas_cost, left_pad_vec(&output, mod_len).into_owned().into()))

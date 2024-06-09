@@ -12,6 +12,7 @@ pub const FUN: PrecompileWithAddress =
 /// input format:
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
 pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+    #[cfg(feature = "sp1-cycle-tracker")]
     println!("cycle-tracker-start: blake2");
     let input = &input[..];
 
@@ -33,33 +34,38 @@ pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 
     let out = if zk_op::contains_operation(&ZkOperation::Blake2) {
-        zk_op::ZKVM_OPERATOR.get().unwrap().blake2_run(input).unwrap()
+        zk_op::ZKVM_OPERATOR
+            .get()
+            .unwrap()
+            .blake2_run(input)
+            .unwrap()
     } else {
-    // Not indented to keep the diff clean and make changes to the original code obvious
+        // Not indented to keep the diff clean and make changes to the original code obvious
 
-    let mut h = [0u64; 8];
-    let mut m = [0u64; 16];
+        let mut h = [0u64; 8];
+        let mut m = [0u64; 16];
 
-    for (i, pos) in (4..68).step_by(8).enumerate() {
-        h[i] = u64::from_le_bytes(input[pos..pos + 8].try_into().unwrap());
-    }
-    for (i, pos) in (68..196).step_by(8).enumerate() {
-        m[i] = u64::from_le_bytes(input[pos..pos + 8].try_into().unwrap());
-    }
-    let t = [
-        u64::from_le_bytes(input[196..196 + 8].try_into().unwrap()),
-        u64::from_le_bytes(input[204..204 + 8].try_into().unwrap()),
-    ];
+        for (i, pos) in (4..68).step_by(8).enumerate() {
+            h[i] = u64::from_le_bytes(input[pos..pos + 8].try_into().unwrap());
+        }
+        for (i, pos) in (68..196).step_by(8).enumerate() {
+            m[i] = u64::from_le_bytes(input[pos..pos + 8].try_into().unwrap());
+        }
+        let t = [
+            u64::from_le_bytes(input[196..196 + 8].try_into().unwrap()),
+            u64::from_le_bytes(input[204..204 + 8].try_into().unwrap()),
+        ];
 
-    algo::compress(rounds, &mut h, m, t, f);
+        algo::compress(rounds, &mut h, m, t, f);
 
-    let mut out = [0u8; 64];
-    for (i, h) in (0..64).step_by(8).zip(h.iter()) {
-        out[i..i + 8].copy_from_slice(&h.to_le_bytes());
-    }
+        let mut out = [0u8; 64];
+        for (i, h) in (0..64).step_by(8).zip(h.iter()) {
+            out[i..i + 8].copy_from_slice(&h.to_le_bytes());
+        }
 
-    out
+        out
     };
+    #[cfg(feature = "sp1-cycle-tracker")]
     println!("cycle-tracker-end: blake2");
 
     Ok((gas_used, out.into()))

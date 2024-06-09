@@ -73,7 +73,11 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
         .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)?;
 
     // deduct gas cost from caller's account.
-    deduct_caller_inner::<SPEC>(caller_account, &context.evm.inner.env, !context.evm.inner.env.tx.taiko.is_anchor);
+    deduct_caller_inner::<SPEC>(
+        caller_account,
+        &context.evm.inner.env,
+        !context.evm.inner.env.tx.taiko.is_anchor,
+    );
 
     Ok(())
 }
