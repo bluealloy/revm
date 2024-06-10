@@ -589,4 +589,19 @@ mod test {
             ))
         );
     }
+
+    #[test]
+    fn test4() {
+        //0xef0001010004020001000e04000000008000045f6000e100025f5f6000e1fffd00
+        // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
+        let err = validate_raw_eof(
+            hex!("ef0001010004020001000e04000000008000045f6000e100025f5f6000e1fffd00").into(),
+        );
+        assert_eq!(
+            err,
+            Err(EofError::Validation(
+                EofValidationError::BackwardJumpBiggestNumMismatch
+            ))
+        );
+    }
 }
