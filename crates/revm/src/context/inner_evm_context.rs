@@ -10,7 +10,7 @@ use crate::{
         keccak256, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env,
         Eof, HashSet, Spec,
         SpecId::{self, *},
-        B256, EOF_BYTECODE_HASH, U256,
+        B256, U256,
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
