@@ -13,7 +13,7 @@ use revm_interpreter::as_usize_saturated;
 use crate::{
     db::{Database, EmptyDB},
     interpreter::{Host, LoadAccountResult, SStoreResult, SelfDestructResult},
-    primitives::{Address, Bytecode, Env, HandlerCfg, Log, B256, BLOCK_HASH_HISTORY, U256},
+    primitives::{Address, Bytes, Env, HandlerCfg, Log, B256, BLOCK_HASH_HISTORY, U256},
 };
 use std::boxed::Box;
 
@@ -146,7 +146,7 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
             .ok()
     }
 
-    fn code(&mut self, address: Address) -> Option<(Bytecode, bool)> {
+    fn code(&mut self, address: Address) -> Option<(Bytes, bool)> {
         self.evm
             .code(address)
             .map_err(|e| self.evm.error = Err(e))

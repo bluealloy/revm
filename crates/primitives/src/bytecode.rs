@@ -1,7 +1,7 @@
 pub mod eof;
 pub mod legacy;
 
-pub use eof::Eof;
+pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
 
 use crate::{keccak256, Bytes, B256, KECCAK_EMPTY};

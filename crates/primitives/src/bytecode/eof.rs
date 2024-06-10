@@ -7,9 +7,19 @@ pub use body::EofBody;
 pub use header::EofHeader;
 pub use types_section::TypesSection;
 
-use crate::Bytes;
+use crate::{b256, bytes, Bytes, B256};
 use core::cmp::min;
 use std::{vec, vec::Vec};
+
+/// Hash of EF00 bytes that is used for EXTCODEHASH when called from legacy bytecode.
+pub const EOF_MAGIC_HASH: B256 =
+    b256!("9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5");
+
+/// EOF Magic in u16 form.
+pub const EOF_MAGIC: u16 = 0xEF00;
+
+/// EOF magic number in array form.
+pub static EOF_MAGIC_BYTES: Bytes = bytes!("ef00");
 
 /// EOF - Ethereum Object Format.
 ///
