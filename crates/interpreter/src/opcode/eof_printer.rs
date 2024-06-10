@@ -32,7 +32,7 @@ pub fn print_eof_code(code: &[u8]) {
                 print!(" ({})", i16::from_be_bytes(immediate.try_into().unwrap()));
             }
         }
-        println!("");
+        println!();
 
         let mut rjumpv_additional_immediates = 0;
         if op == RJUMPV {
