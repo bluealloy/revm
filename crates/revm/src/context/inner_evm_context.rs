@@ -175,13 +175,6 @@ impl<DB: Database> InnerEvmContext<DB> {
         if acc.is_empty() {
             return Ok((B256::ZERO, is_cold));
         }
-        if let Some(bytecode) = &acc.info.code {
-            // TODO: Once issue https://github.com/bluealloy/revm/issues/1464 is resolved,
-            // update this logic to use the new method for detecting if the bytecode is EOF.
-            if bytecode.bytes().starts_with(&[0xEF, 0x00]) {
-                return Ok((B256::from_slice(EOF_BYTECODE_HASH), is_cold));
-            }
-        }
         Ok((acc.info.code_hash, is_cold))
     }
 

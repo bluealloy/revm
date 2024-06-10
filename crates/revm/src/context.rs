@@ -13,7 +13,9 @@ use revm_interpreter::as_usize_saturated;
 use crate::{
     db::{Database, EmptyDB},
     interpreter::{Host, LoadAccountResult, SStoreResult, SelfDestructResult},
-    primitives::{Address, Bytecode, Env, HandlerCfg, Log, B256, BLOCK_HASH_HISTORY, U256},
+    primitives::{
+        Address, Bytecode, Env, HandlerCfg, Log, B256, BLOCK_HASH_HISTORY, EOF_BYTECODE_HASH, U256,
+    },
 };
 use std::boxed::Box;
 
@@ -154,6 +156,13 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
     }
 
     fn code_hash(&mut self, address: Address) -> Option<(B256, bool)> {
+        if let Some((bytecode, is_cold)) = self.code(address) {
+            // TODO: Once issue https://github.com/bluealloy/revm/issues/1464 is resolved,
+            // update this logic to use the new method for detecting if the bytecode is EOF.
+            if bytecode.bytes().starts_with(&[0xEF, 0x00]) {
+                return Some((B256::from_slice(EOF_BYTECODE_HASH), is_cold));
+            }
+        }
         self.evm
             .code_hash(address)
             .map_err(|e| self.evm.error = Err(e))
