@@ -10,7 +10,7 @@ use crate::{
         keccak256, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env,
         Eof, HashSet, Spec,
         SpecId::{self, *},
-        B256, U256,
+        B256, EOF_BYTECODE_HASH, U256,
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
@@ -174,6 +174,13 @@ impl<DB: Database> InnerEvmContext<DB> {
         let (acc, is_cold) = self.journaled_state.load_code(address, &mut self.db)?;
         if acc.is_empty() {
             return Ok((B256::ZERO, is_cold));
+        }
+        if let Some(bytecode) = &acc.info.code {
+            // TODO: Once issue https://github.com/bluealloy/revm/issues/1464 is resolved,
+            // update this logic to use the new method for detecting if the bytecode is EOF.
+            if bytecode.bytes().starts_with(&[0xEF, 0x00]) {
+                return Ok((B256::from_slice(EOF_BYTECODE_HASH), is_cold));
+            }
         }
         Ok((acc.info.code_hash, is_cold))
     }

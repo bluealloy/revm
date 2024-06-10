@@ -1,4 +1,4 @@
-use alloy_primitives::{address, Address};
+use alloy_primitives::{address, hex, Address};
 
 /// EIP-170: Contract code size limit
 ///
@@ -62,7 +62,5 @@ pub const BLOB_GASPRICE_UPDATE_FRACTION: u64 = 3338477;
 pub const VERSIONED_HASH_VERSION_KZG: u8 = 0x01;
 
 /// Precomputed hash for EOF bytecode used with the EXTCODEHASH opcode for EOF contracts.
-pub const EOF_BYTECODE_HASH: &[u8] = &[
-    0x9d, 0xbf, 0x36, 0x48, 0xdb, 0x82, 0x10, 0x55, 0x2e, 0x9c, 0x4f, 0x75, 0xc6, 0xa1, 0xc3, 0x05,
-    0x7c, 0x0c, 0xa4, 0x32, 0x04, 0x3b, 0xd6, 0x48, 0xbe, 0x15, 0xfe, 0x7b, 0xe0, 0x56, 0x46, 0xf5,
-];
+pub const EOF_BYTECODE_HASH: &[u8] =
+    &hex!("9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5");
