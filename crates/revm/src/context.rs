@@ -156,17 +156,19 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
     }
 
     fn code_hash(&mut self, address: Address) -> Option<(B256, bool)> {
+        let code_hash = self
+            .evm
+            .code_hash(address)
+            .map_err(|e| self.evm.error = Err(e))
+            .ok();
+
         if let Some((bytecode, is_cold)) = self.code(address) {
-            // TODO: Once issue https://github.com/bluealloy/revm/issues/1464 is resolved,
-            // update this logic to use the new method for detecting if the bytecode is EOF.
-            if bytecode.bytes().starts_with(&[0xEF, 0x00]) {
+            if bytecode.is_eof() {
                 return Some((B256::from_slice(EOF_BYTECODE_HASH), is_cold));
             }
         }
-        self.evm
-            .code_hash(address)
-            .map_err(|e| self.evm.error = Err(e))
-            .ok()
+
+        code_hash
     }
 
     fn sload(&mut self, address: Address, index: U256) -> Option<(U256, bool)> {
