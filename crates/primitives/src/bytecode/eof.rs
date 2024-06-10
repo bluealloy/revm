@@ -19,7 +19,7 @@ pub const EOF_MAGIC_HASH: B256 =
 pub const EOF_MAGIC: u16 = 0xEF00;
 
 /// EOF magic number in array form.
-pub const EOF_MAGIC_BYTES: Bytes = bytes!("ef00");
+pub static EOF_MAGIC_BYTES: Bytes = bytes!("ef00");
 
 /// EOF - Ethereum Object Format.
 ///
