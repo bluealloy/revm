@@ -10,7 +10,7 @@ use crate::{
         keccak256, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env,
         Eof, HashSet, Spec,
         SpecId::{self, *},
-        B256, EOF_MAGIC_ARRAY, EOF_MAGIC_HASH, U256,
+        B256, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
@@ -171,7 +171,7 @@ impl<DB: Database> InnerEvmContext<DB> {
                 // SAFETY: safe to unwrap as load_code will insert code if it is empty.
                 let code = a.info.code.as_ref().unwrap();
                 if code.is_eof() {
-                    (EOF_MAGIC_ARRAY.into(), is_cold)
+                    (EOF_MAGIC_BYTES.clone(), is_cold)
                 } else {
                     (code.original_bytes().clone(), is_cold)
                 }

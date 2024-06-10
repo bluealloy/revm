@@ -7,7 +7,7 @@ pub use body::EofBody;
 pub use header::EofHeader;
 pub use types_section::TypesSection;
 
-use crate::{b256, Bytes, B256};
+use crate::{b256, bytes, Bytes, B256};
 use core::cmp::min;
 use std::{vec, vec::Vec};
 
@@ -19,7 +19,7 @@ pub const EOF_MAGIC_HASH: B256 =
 pub const EOF_MAGIC: u16 = 0xEF00;
 
 /// EOF magic number in array form.
-pub const EOF_MAGIC_ARRAY: [u8; 2] = EOF_MAGIC.to_be_bytes();
+pub const EOF_MAGIC_BYTES: Bytes = bytes!("ef00");
 
 /// EOF - Ethereum Object Format.
 ///
