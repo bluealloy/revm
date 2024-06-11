@@ -192,7 +192,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         context: &mut Context<EXT, DB>,
         inputs: Box<CallInputs>,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-        (self.call)(context, inputs.clone())
+        (self.call)(context, inputs)
     }
 
     /// Call registered handler for call return.
