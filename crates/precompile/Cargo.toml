@@ -30,7 +30,7 @@ c-kzg = { package = "c-kzg-taiko", git = "https://github.com/smtmfft/c-kzg-4844"
 
 # ecRecover precompile
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
-secp256k1 = { version = "0.28.2", default-features = false, features = [
+secp256k1 = { git = "https://github.com/CeciliaZ030/rust-secp256k1", branch = "sp1-patch", default-features = false, features = [
     "alloc",
     "recovery",
     "rand",
