@@ -1,5 +1,5 @@
 use crate::{
-    gas::{BASE, DATA_LOAD_GAS, VERYLOW},
+    gas::{cost_per_word, BASE, DATA_LOAD_GAS, VERYLOW},
     instructions::utility::read_u16,
     interpreter::Interpreter,
     primitives::U256,
@@ -69,6 +69,8 @@ pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     // fail if mem offset is big as it will spend all the gas
     let mem_offset = as_usize_or_fail!(interpreter, mem_offset);
     resize_memory!(interpreter, mem_offset, size);
+
+    gas_or_fail!(interpreter, cost_per_word(size as u64, VERYLOW));
 
     let offset = as_usize_saturated!(offset);
     let data = interpreter.contract.bytecode.eof().expect("EOF").data();
