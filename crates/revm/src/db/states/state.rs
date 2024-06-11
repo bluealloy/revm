@@ -269,7 +269,6 @@ impl<DB: Database> Database for State<DB> {
     }
 
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
-        
         match self.block_hashes.entry(number) {
             btree_map::Entry::Occupied(entry) => Ok(*entry.get()),
             btree_map::Entry::Vacant(entry) => {
