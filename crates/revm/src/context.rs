@@ -110,7 +110,7 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
 
     fn block_hash(&mut self, number: u64) -> Option<B256> {
         let block_number = as_usize_saturated!(self.env().block.number);
-        let requested_number = number as usize;
+        let requested_number = usize::try_from(number).unwrap_or(usize::MAX);
 
         let Some(diff) = block_number.checked_sub(requested_number) else {
             return Some(B256::ZERO);
