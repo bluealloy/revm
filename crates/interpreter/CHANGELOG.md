@@ -6,6 +6,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v5.0.0...revm-interpreter-v6.0.0) - 2024-06-11
+
+### Added
+- *(EOF)* EXTCODECOPY,EXTCODESIZE,EXTCODEHASH eof support ([#1504](https://github.com/bluealloy/revm/pull/1504))
+- add helpers for working with instruction tables ([#1493](https://github.com/bluealloy/revm/pull/1493))
+- *(EOF)* change oob behavior of RETURNDATALOAD and RETURNDATACOPY ([#1476](https://github.com/bluealloy/revm/pull/1476))
+- *(EOF)* EIP-7698 eof creation transaction ([#1467](https://github.com/bluealloy/revm/pull/1467))
+- adjust gas-costs for EIP-2935 BLOCKHASH ([#1422](https://github.com/bluealloy/revm/pull/1422))
+- add Opcode::modifies_memory back ([#1421](https://github.com/bluealloy/revm/pull/1421))
+- *(EOF)* Add CALLF/JUMPF stack checks ([#1417](https://github.com/bluealloy/revm/pull/1417))
+- *(EOF)* remove TXCREATE ([#1415](https://github.com/bluealloy/revm/pull/1415))
+
+### Fixed
+- *(EOF)* panic on empty input range, and continue exec after eofcreate ([#1477](https://github.com/bluealloy/revm/pull/1477))
+- *(eof)* EOFCREATE spend gas and apply 63/64 rule ([#1471](https://github.com/bluealloy/revm/pull/1471))
+- *(stack)* pop with five items was not correct ([#1472](https://github.com/bluealloy/revm/pull/1472))
+- *(EOF)* returncontract immediate is one byte ([#1468](https://github.com/bluealloy/revm/pull/1468))
+- *(Interpreter)* wrong block number used ([#1458](https://github.com/bluealloy/revm/pull/1458))
+- *(interpreter)* avoid overflow when checking if mem limit reached ([#1429](https://github.com/bluealloy/revm/pull/1429))
+- blockchash for devnet-0  ([#1427](https://github.com/bluealloy/revm/pull/1427))
+
+### Other
+- *(revme)* add new line in revme EOF printer ([#1503](https://github.com/bluealloy/revm/pull/1503))
+- remove old deprecated items ([#1489](https://github.com/bluealloy/revm/pull/1489))
+- *(interpreter)* use max gas limit in `impl Default for Interpreter` ([#1478](https://github.com/bluealloy/revm/pull/1478))
+- *(interpreter)* optimisation for BYTE, SHL, SHR and SAR ([#1418](https://github.com/bluealloy/revm/pull/1418))
+- Revert "Revert "feat: implement EIP-2935 ([#1354](https://github.com/bluealloy/revm/pull/1354))" ([#1424](https://github.com/bluealloy/revm/pull/1424))" ([#1426](https://github.com/bluealloy/revm/pull/1426))
+- Revert "feat: implement EIP-2935 ([#1354](https://github.com/bluealloy/revm/pull/1354))" ([#1424](https://github.com/bluealloy/revm/pull/1424))
+- *(EOF)* rename extcall opcode/names ([#1416](https://github.com/bluealloy/revm/pull/1416))
+- point to gas! in Gas::record_cost ([#1413](https://github.com/bluealloy/revm/pull/1413))
+- pop_address should use crate scope ([#1410](https://github.com/bluealloy/revm/pull/1410))
+- Remove Host constrain from calc_call_gas ([#1409](https://github.com/bluealloy/revm/pull/1409))
+
 ## [5.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v4.0.0...revm-interpreter-v5.0.0) - 2024-05-12
 
 ### Added
