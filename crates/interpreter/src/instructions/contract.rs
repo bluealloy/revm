@@ -162,10 +162,6 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
         return None;
     };
 
-    if load_result.is_cold {
-        gas!(interpreter, gas::COLD_ACCOUNT_ACCESS_COST, None);
-    }
-
     // TODO(EOF) is_empty should only be checked on delegatecall
     let call_cost = gas::call_cost(
         BerlinSpec::SPEC_ID,
@@ -186,8 +182,6 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
         // interpreter.instruction_result = InstructionResult::CallGasTooLow;
         return None;
     }
-
-    // TODO check remaining gas more then N
 
     gas!(interpreter, gas_limit, None);
     Some(gas_limit)
