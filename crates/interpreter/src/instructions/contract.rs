@@ -197,6 +197,8 @@ pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
     require_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
+    // TODO check if target is left paddded with zeroes.
+
     // input call
     let Some(input) = extcall_input(interpreter) else {
         return;
@@ -232,6 +234,8 @@ pub fn extdelegatecall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpret
     require_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
+    // TODO check if target is left paddded with zeroes.
+
     // input call
     let Some(input) = extcall_input(interpreter) else {
         return;
@@ -265,6 +269,8 @@ pub fn extstaticcall<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut
     require_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
+    // TODO check if target is left paddded with zeroes.
+
     // input call
     let Some(input) = extcall_input(interpreter) else {
         return;
@@ -284,7 +290,7 @@ pub fn extstaticcall<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut
             bytecode_address: target_address,
             value: CallValue::Transfer(U256::ZERO),
             scheme: CallScheme::Call,
-            is_static: interpreter.is_static,
+            is_static: true,
             is_eof: true,
             return_memory_offset: 0..0,
         }),
