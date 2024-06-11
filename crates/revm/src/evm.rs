@@ -590,7 +590,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
         let call_output = _loader_call(&contract_input, &am, method_input);
 
-        #[cfg(feature = "revm-rwasm")]
+        #[cfg(feature = "debug_print")]
         {
             println!("executed ECL call:");
             println!(" - caller: 0x{}", hex::encode(caller_address));
