@@ -22,7 +22,7 @@ impl Default for LegacyAnalyzedBytecode {
     #[inline]
     fn default() -> Self {
         Self {
-            bytecode: Bytes::from_static(&[0]),
+            bytecode: Bytes::new(),
             original_len: 0,
             jump_table: JumpTable(Arc::new(bitvec![u8, Lsb0; 0])),
         }
