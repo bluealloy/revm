@@ -259,10 +259,8 @@ impl Interpreter {
         match call_outcome.instruction_result() {
             return_ok!() => {
                 // return unspend gas.
-                let remaining = call_outcome.gas().remaining();
-                let refunded = call_outcome.gas().refunded();
-                self.gas.erase_cost(remaining);
-                self.gas.record_refund(refunded);
+                self.gas.erase_cost(call_outcome.gas().remaining());
+                self.gas.record_refund(call_outcome.gas().refunded());
                 shared_memory.set(out_offset, &self.return_data_buffer[..target_len]);
                 push!(self, U256::from(1));
             }
