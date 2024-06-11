@@ -106,7 +106,8 @@ pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
     gas!(interpreter, gas::BLOCKHASH);
     pop_top!(interpreter, number);
 
-    let Some(hash) = host.block_hash(*number) else {
+    let number_u64 = as_u64_saturated!(number);
+    let Some(hash) = host.block_hash(number_u64) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };

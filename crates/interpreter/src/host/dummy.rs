@@ -50,7 +50,7 @@ impl Host for DummyHost {
     }
 
     #[inline]
-    fn block_hash(&mut self, _number: U256) -> Option<B256> {
+    fn block_hash(&mut self, _number: u64) -> Option<B256> {
         Some(B256::ZERO)
     }
 
