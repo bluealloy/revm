@@ -9,8 +9,8 @@ use revm::{
     inspector_handle_register,
     inspectors::TracerEip3155,
     primitives::{
-        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, ExecutionResult,
-        SpecId, TransactTo, B256, U256,
+        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, Eof,
+        ExecutionResult, SpecId, TransactTo, B256, EOF_MAGIC_BYTES, U256,
     },
     Evm, State,
 };
@@ -257,10 +257,17 @@ pub fn execute_test_suite(
         // Create database and insert cache
         let mut cache_state = revm::CacheState::new(false);
         for (address, info) in unit.pre {
+            let code_hash = keccak256(&info.code);
+            let bytecode = match info.code.get(..2) {
+                Some(magic) if magic == &EOF_MAGIC_BYTES => {
+                    Bytecode::Eof(Eof::decode(info.code.clone()).unwrap())
+                }
+                _ => Bytecode::new_raw(info.code),
+            };
             let acc_info = revm::primitives::AccountInfo {
                 balance: info.balance,
-                code_hash: keccak256(&info.code),
-                code: Some(Bytecode::new_raw(info.code)),
+                code_hash,
+                code: Some(bytecode),
                 nonce: info.nonce,
             };
             cache_state.insert_account_with_storage(address, acc_info, info.storage);
