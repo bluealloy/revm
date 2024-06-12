@@ -187,11 +187,11 @@ pub struct AccountInfo {
     pub nonce: u64,
     /// code hash,
     pub code_hash: B256,
-    #[cfg(feature = "rwasm")]
-    pub rwasm_code_hash: B256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
     /// inside of `revm`.
     pub code: Option<Bytecode>,
+    #[cfg(feature = "rwasm")]
+    pub rwasm_code_hash: B256,
     #[cfg(feature = "rwasm")]
     pub rwasm_code: Option<Bytecode>,
 }

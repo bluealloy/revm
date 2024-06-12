@@ -24,6 +24,12 @@ macro_rules! define_tests {
     };
 }
 
+mod single_test {
+    define_tests! {
+        fn cancun_st_e_i_p1153_transient_storage_01_tload_beginning_txn("tests/GeneralStateTests/Cancun/stEIP1153-transientStorage/01_tloadBeginningTxn.json");
+    }
+}
+
 mod st_time_consuming {
     define_tests! {
 
@@ -54,12 +60,6 @@ mod st_time_consuming {
         fn sstore_combinations_initial11_2("tests/GeneralStateTests/stTimeConsuming/sstore_combinations_initial11_2.json");
         fn sstore_combinations_initial20_2_paris("tests/GeneralStateTests/stTimeConsuming/sstore_combinations_initial20_2_Paris.json");
         fn sstore_combinations_initial10("tests/GeneralStateTests/stTimeConsuming/sstore_combinations_initial10.json");
-    }
-}
-
-mod single_test {
-    define_tests! {
-        fn sstore_combinations_initial01_2_paris("tests/GeneralStateTests/stTimeConsuming/sstore_combinations_initial01_2_Paris.json");
     }
 }
 

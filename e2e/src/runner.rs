@@ -8,6 +8,7 @@ use fluentbase_genesis::devnet::{devnet_genesis_from_file, KECCAK_HASH_KEY, POSE
 use fluentbase_poseidon::poseidon_hash;
 use fluentbase_sdk::calc_storage_key;
 use fluentbase_types::{consts::EVM_STORAGE_ADDRESS, Address, ExitCode};
+use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use lazy_static::lazy_static;
 use revm::{
@@ -63,6 +64,8 @@ pub enum TestErrorKind {
     LogsRootMismatch { got: B256, expected: B256 },
     #[error("state root mismatch: got {got}, expected {expected}")]
     StateRootMismatch { got: B256, expected: B256 },
+    #[error("state root mismatch2: got {got}, expected {expected}")]
+    StateRootMismatch2 { got: B256, expected: B256 },
     #[error("unknown private key: {0:?}")]
     UnknownPrivateKey(B256),
     #[error("unexpected exception: got {got_exception:?}, expected {expected_exception:?}")]
@@ -150,13 +153,21 @@ fn check_evm_execution<EXT1, EXT2>(
         &mut revm_fluent::State<revm_fluent::db::EmptyDBTyped<ExitCode>>,
     >,
     print_json_outcome: bool,
+    genesis_addresses: &HashSet<Address>,
 ) -> Result<(), TestError> {
     let logs_root1 = log_rlp_hash(exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default());
     let logs_root2 = log_rlp_hash(exec_result2.as_ref().map(|r| r.logs()).unwrap_or_default());
 
     let state_root1 = state_merkle_trie_root(evm.context.evm.db.cache.trie_account().into_iter());
-    let _state_root2 =
-        state_merkle_trie_root2(evm2.context.evm.db.cache.trie_account().into_iter());
+    let state_root2 = state_merkle_trie_root2(
+        evm2.context
+            .evm
+            .db
+            .cache
+            .trie_account()
+            .into_iter()
+            .filter(|(addr, _)| !genesis_addresses.contains(addr)),
+    );
 
     let print_json_output = |error: Option<String>| {
         if print_json_outcome {
@@ -236,8 +247,21 @@ fn check_evm_execution<EXT1, EXT2>(
 
     if state_root1 != test.hash {
         let kind = TestErrorKind::StateRootMismatch {
-            got: state_root1,
             expected: test.hash,
+            got: state_root1,
+        };
+        print_json_output(Some(kind.to_string()));
+        return Err(TestError {
+            name: test_name.to_string(),
+            kind,
+        });
+    }
+
+    // #[cfg(feature = "validate_state_root")]
+    if state_root1 != state_root2 {
+        let kind = TestErrorKind::StateRootMismatch2 {
+            expected: state_root1,
+            got: state_root2,
         };
         print_json_output(Some(kind.to_string()));
         return Err(TestError {
@@ -460,6 +484,7 @@ pub fn execute_test_suite(
         let mut cache_state2 = revm_fluent::CacheState::new(false);
 
         let mut evm_storage: PlainStorage = PlainStorage::default();
+        let mut genesis_addresses: HashSet<Address> = Default::default();
         for (address, info) in &devnet_genesis.alloc {
             let code_hash = info
                 .storage
@@ -492,6 +517,7 @@ pub fn execute_test_suite(
                     }
                 }
             }
+            genesis_addresses.insert(*address);
             cache_state2.insert_account_with_storage(*address, acc_info, account_storage);
         }
 
@@ -532,7 +558,8 @@ pub fn execute_test_suite(
             }
         }
 
-        #[cfg(feature = "debug_use_fluent_storage")] {
+        #[cfg(feature = "debug_use_fluent_storage")]
+        {
             cache_state2.insert_account_with_storage(
                 EVM_STORAGE_ADDRESS,
                 AccountInfo {
@@ -706,6 +733,7 @@ pub fn execute_test_suite(
                         &evm,
                         &evm2,
                         print_json_outcome,
+                        &genesis_addresses,
                     ) else {
                         continue;
                     };
@@ -732,6 +760,7 @@ pub fn execute_test_suite(
                         &evm,
                         &evm2,
                         print_json_outcome,
+                        &genesis_addresses,
                     );
                     let Err(e) = output else {
                         continue;
@@ -750,8 +779,7 @@ pub fn execute_test_suite(
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
                 let mut cache2 = cache_state2.clone();
-                cache2
-                    .set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
+                cache2.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
                 let state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
