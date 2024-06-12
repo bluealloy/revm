@@ -126,17 +126,13 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
         return Err(Error::OutOfGas.into());
     }
 
-    let input = right_pad::<ADD_INPUT_LEN>(input);
+    let res = EIP196Executor::add(input);
+    match res {
+        Ok(res) => Ok(PrecompileOutput::new(gas_cost, res.into())),
+        Err(e) => match e {
 
-    let p1 = read_point(&input[..64])?;
-    let p2 = read_point(&input[64..])?;
-
-    let mut output = [0u8; 64];
-    if let Some(sum) = AffineG1::from_jacobian(p1 + p2) {
-        sum.x().to_big_endian(&mut output[..32]).unwrap();
-        sum.y().to_big_endian(&mut output[32..]).unwrap();
+        }
     }
-    Ok(PrecompileOutput::new(gas_cost, output.into()))
 }
 
 pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
