@@ -264,18 +264,39 @@ impl Interpreter {
                 self.gas.erase_cost(out_gas.remaining());
                 self.gas.record_refund(out_gas.refunded());
                 shared_memory.set(out_offset, &self.return_data_buffer[..target_len]);
-                push!(self, U256::from(1));
+                push!(
+                    self,
+                    if self.is_eof {
+                        U256::ZERO
+                    } else {
+                        U256::from(1)
+                    }
+                );
             }
             return_revert!() => {
                 self.gas.erase_cost(out_gas.remaining());
                 shared_memory.set(out_offset, &self.return_data_buffer[..target_len]);
-                push!(self, U256::ZERO);
+                push!(
+                    self,
+                    if self.is_eof {
+                        U256::from(1)
+                    } else {
+                        U256::ZERO
+                    }
+                );
             }
             InstructionResult::FatalExternalError => {
                 panic!("Fatal external error in insert_call_outcome");
             }
             _ => {
-                push!(self, U256::ZERO);
+                push!(
+                    self,
+                    if self.is_eof {
+                        U256::from(2)
+                    } else {
+                        U256::ZERO
+                    }
+                );
             }
         }
     }
