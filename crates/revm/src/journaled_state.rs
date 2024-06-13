@@ -834,16 +834,17 @@ pub enum JournalEntry {
     /// Actions: Mark account as created
     /// Revert: Unmart account as created and reset nonce to zero.
     AccountCreated { address: Address },
-    /// It is used to track both storage change and warm load of storage slot. For warm load in regard
-    /// to EIP-2929 AccessList had_value will be None
-    /// Action: Storage change or warm load
-    /// Revert: Revert to previous value or remove slot from storage
+    /// Entry used to track storage changes
+    /// Action: Storage change
+    /// Revert: Revert to previous value
     StorageChanged {
         address: Address,
         key: U256,
         had_value: U256,
     },
-    /// TODO
+    /// Entry used to track storage warming introduced by EIP-2929.
+    /// Action: Storage warmed
+    /// Revert: Revert to cold state
     StorageWarmed { address: Address, key: U256 },
     /// It is used to track an EIP-1153 transient storage change.
     /// Action: Transient storage changed.
