@@ -4,6 +4,7 @@ use crate::{
 };
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 use revm_primitives::PrecompileOutput;
+use eth_pairings::public_interface::{G1Api, PublicG1Api};
 
 pub mod add {
     use super::*;
@@ -126,12 +127,10 @@ pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult 
         return Err(Error::OutOfGas.into());
     }
 
-    let res = EIP196Executor::add(input);
+    let res = PublicG1Api::add_points(input);
     match res {
         Ok(res) => Ok(PrecompileOutput::new(gas_cost, res.into())),
-        Err(e) => match e {
-
-        }
+        Err(e) => Err(Error::Other(e.to_string()).into())
     }
 }
 

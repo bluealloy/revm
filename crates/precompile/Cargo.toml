@@ -43,6 +43,9 @@ aurora-engine-modexp = { version = "1.1", default-features = false }
 # ecAdd, ecMul, ecPairing
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 
+# ecAdd (soon others)
+eth_pairings = { version = "0.2.0", default-features = false }
+
 # KZG point evaluation precompile
 c-kzg = { version = "1.0.2", default-features = false, optional = true }
 
