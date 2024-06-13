@@ -260,7 +260,7 @@ pub fn execute_test_suite(
             let code_hash = keccak256(&info.code);
             let bytecode = match info.code.get(..2) {
                 Some(magic) if magic == &EOF_MAGIC_BYTES => {
-                    Bytecode::Eof(Eof::decode(info.code.clone()).unwrap())
+                    Bytecode::Eof(Eof::decode(info.code.clone()).unwrap().into())
                 }
                 _ => Bytecode::new_raw(info.code),
             };
