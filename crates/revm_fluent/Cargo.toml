@@ -35,7 +35,7 @@ fluentbase-codec = { workspace = true }
 fluentbase-genesis = { workspace = true }
 fluentbase-poseidon = { workspace = true }
 
-rwasm = { workspace = true }
+rwasm = { workspace = true, optional = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
@@ -94,6 +94,7 @@ std = [
     "fluentbase-runtime/std",
     "fluentbase-codec/std",
     "fluentbase-genesis/std",
+    "rwasm?/std",
 ]
 e2e = [
     "fluentbase-core/e2e",
@@ -109,7 +110,7 @@ portable = ["revm-precompile/portable", "revm-interpreter-fluent/portable"]
 test-utils = []
 
 optimism = [
-    "revm-interpreter/optimism",
+    "revm-interpreter-fluent/optimism",
     "revm-interpreter-fluent/optimism",
     "revm-precompile/optimism",
 ]
@@ -162,16 +163,14 @@ secp256k1 = ["revm-precompile/secp256k1"]
 c-kzg = ["revm-precompile/c-kzg"]
 blst = ["revm-precompile/blst"]
 
-rwasm = [
-    "revm-interpreter-fluent/rwasm",
-    "revm-precompile/rwasm",
-]
 debug_print = [
-    #    "revm-interpreter-fluent/debug_print"
+    "revm-interpreter-fluent/debug_print"
 ]
 revm-rwasm = [
     "e2e",
     "rwasm",
+    "revm-interpreter-fluent/rwasm",
+    "revm-precompile/rwasm",
     "revm-interpreter-fluent/revm-rwasm",
     "fluentbase-core/revm-rwasm",
 ]

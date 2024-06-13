@@ -26,7 +26,16 @@ macro_rules! define_tests {
 
 mod single_test {
     define_tests! {
-        fn cancun_st_e_i_p1153_transient_storage_01_tload_beginning_txn("tests/GeneralStateTests/Cancun/stEIP1153-transientStorage/01_tloadBeginningTxn.json");
+        // StateRootMismatch2
+        fn t1("tests/GeneralStateTests/stCreateTest/CreateAddressWarmAfterFail.json");
+
+        // Uint conversion error: Overflow(256, 18446744073709551553, 18446744073709551615)
+        // fn t2("tests/GeneralStateTests/stRandom/randomStatetest384.json");
+
+        // StateRootMismatch - original state root mismatch
+        // fn t3("tests/GeneralStateTests/stRevertTest/RevertInCreateInInit_Paris.json");
+
+        // fn t1("tests/GeneralStateTests/Pyspecs/cancun/eip1153_tstore/reentrant_selfdestructing_call.json");
     }
 }
 

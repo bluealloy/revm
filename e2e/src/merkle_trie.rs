@@ -17,6 +17,7 @@ pub fn state_merkle_trie_root<'a>(
     accounts: impl IntoIterator<Item = (Address, &'a PlainAccount)>,
 ) -> B256 {
     trie_root(accounts.into_iter().map(|(address, acc)| {
+        // println!("state_merkle_trie_root: address {} acc {:?}", &address, acc);
         (
             address,
             alloy_rlp::encode_fixed_size(&TrieAccount::new(acc)),
@@ -28,6 +29,10 @@ pub fn state_merkle_trie_root2<'a>(
     accounts: impl IntoIterator<Item = (Address, &'a revm_fluent::db::states::PlainAccount)>,
 ) -> B256 {
     trie_root(accounts.into_iter().map(|(address, acc)| {
+        // println!(
+        //     "state_merkle_trie_root2: address {} acc {:?}",
+        //     &address, acc
+        // );
         (
             address,
             alloy_rlp::encode_fixed_size(&TrieAccount::new2(acc)),

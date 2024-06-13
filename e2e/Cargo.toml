@@ -56,7 +56,9 @@ lazy_static = { workspace = true }
 paste.workspace = true
 
 [features]
-default = []
+default = [
+    #    "debug_print",
+]
 e2e = [
     "revm-fluent/e2e",
 ]

@@ -257,7 +257,6 @@ fn check_evm_execution<EXT1, EXT2>(
         });
     }
 
-    // #[cfg(feature = "validate_state_root")]
     if state_root1 != state_root2 {
         let kind = TestErrorKind::StateRootMismatch2 {
             expected: state_root1,
@@ -517,8 +516,8 @@ pub fn execute_test_suite(
                     }
                 }
             }
-            genesis_addresses.insert(*address);
-            cache_state2.insert_account_with_storage(*address, acc_info, account_storage);
+            // genesis_addresses.insert(*address);
+            // cache_state2.insert_account_with_storage(*address, acc_info, account_storage);
         }
 
         for (address, info) in unit.pre {
