@@ -241,10 +241,10 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
         // } else {
         //     (address, slot)
         // };
-        println!(
-            "write_storage: address {} slot {} value {}",
-            &address, &slot, &value
-        );
+        // println!(
+        //     "write_storage: address {} slot {} value {}",
+        //     &address, &slot, &value
+        // );
         let result = ctx
             .sstore(address, slot, value)
             .map_err(|_| panic!("failed to update storage slot"))
