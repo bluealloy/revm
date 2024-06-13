@@ -9,11 +9,8 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-fluentbase-core = { workspace = true, default-features = false, features = [
-    "ecl",
-    "wcl",
-] }
-fluentbase-sdk = { workspace = true, default-features = false }
+fluentbase-core = { workspace = true }
+fluentbase-sdk = { workspace = true }
 fluentbase-codec-derive = { workspace = true }
 fluentbase-types = { workspace = true }
 fluentbase-poseidon = { workspace = true }

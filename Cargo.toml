@@ -27,10 +27,10 @@ fluentbase-types = { path = "../fluentbase/crates/types", default-features = fal
 fluentbase-core = { path = "../fluentbase/crates/core", default-features = false, features = ["ecl", "wcl"] }
 fluentbase-sdk = { path = "../fluentbase/crates/sdk", default-features = false }
 fluentbase-runtime = { path = "../fluentbase/crates/runtime", default-features = false }
-fluentbase-codec = { path = "../fluentbase/crates/codec" }
-fluentbase-codec-derive = { path = "../fluentbase/crates/codec-derive" }
-fluentbase-poseidon = { path = "../fluentbase/crates/poseidon" }
-fluentbase-genesis = { path = "../fluentbase/crates/genesis" }
+fluentbase-codec = { path = "../fluentbase/crates/codec", default-features = false }
+fluentbase-codec-derive = { path = "../fluentbase/crates/codec-derive", default-features = false }
+fluentbase-poseidon = { path = "../fluentbase/crates/poseidon", default-features = false }
+fluentbase-genesis = { path = "../fluentbase/crates/genesis", default-features = false }
 
 alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "61140ec", default-features = false, features = [
     "reqwest",
