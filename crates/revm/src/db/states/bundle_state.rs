@@ -106,10 +106,7 @@ impl BundleBuilder {
         storage: &mut HashMap<U256, (U256, U256)>,
     ) -> Self {
         self.states.insert(address);
-        let entry = self
-            .state_storage
-            .entry(address)
-            .or_insert_with(HashMap::new);
+        let entry = self.state_storage.entry(address).or_default();
         entry.extend(storage.drain());
         self
     }
@@ -152,8 +149,8 @@ impl BundleBuilder {
         let entry = self
             .revert_storage
             .entry((block_number, address))
-            .or_insert_with(Vec::new);
-        entry.extend(storage.drain(..));
+            .or_default();
+        entry.append(storage);
         self
     }
 
