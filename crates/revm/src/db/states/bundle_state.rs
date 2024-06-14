@@ -100,9 +100,17 @@ impl BundleBuilder {
     }
 
     /// Collect storage info of BundleState state
-    pub fn state_storage(mut self, address: Address, storage: HashMap<U256, (U256, U256)>) -> Self {
+    pub fn state_storage(
+        mut self,
+        address: Address,
+        storage: &mut HashMap<U256, (U256, U256)>,
+    ) -> Self {
         self.states.insert(address);
-        self.state_storage.insert(address, storage);
+        let entry = self
+            .state_storage
+            .entry(address)
+            .or_insert_with(HashMap::new);
+        entry.extend(storage.drain());
         self
     }
 
@@ -138,10 +146,14 @@ impl BundleBuilder {
         mut self,
         block_number: u64,
         address: Address,
-        storage: Vec<(U256, U256)>,
+        storage: &mut Vec<(U256, U256)>,
     ) -> Self {
         self.reverts.insert((block_number, address));
-        self.revert_storage.insert((block_number, address), storage);
+        let entry = self
+            .revert_storage
+            .entry((block_number, address))
+            .or_insert_with(Vec::new);
+        entry.extend(storage.drain(..));
         self
     }
 
@@ -832,7 +844,7 @@ mod tests {
             )
             .state_storage(
                 account1(),
-                HashMap::from([(slot1(), (U256::from(0), U256::from(10)))]),
+                &mut HashMap::from([(slot1(), (U256::from(0), U256::from(10)))]),
             )
             .state_address(account2())
             .state_present_account_info(
@@ -846,7 +858,7 @@ mod tests {
             )
             .revert_address(0, account1())
             .revert_account_info(0, account1(), Some(None))
-            .revert_storage(0, account1(), vec![(slot1(), U256::from(0))])
+            .revert_storage(0, account1(), &mut vec![(slot1(), U256::from(0))])
             .revert_account_info(0, account2(), Some(None))
             .build()
     }
@@ -865,7 +877,7 @@ mod tests {
             )
             .state_storage(
                 account1(),
-                HashMap::from([(slot1(), (U256::from(0), U256::from(15)))]),
+                &mut HashMap::from([(slot1(), (U256::from(0), U256::from(15)))]),
             )
             .revert_address(0, account1())
             .revert_account_info(
@@ -878,7 +890,7 @@ mod tests {
                     code: None,
                 })),
             )
-            .revert_storage(0, account1(), vec![(slot1(), U256::from(10))])
+            .revert_storage(0, account1(), &mut vec![(slot1(), U256::from(10))])
             .build()
     }
 
@@ -1008,7 +1020,7 @@ mod tests {
             .revert_address(2, account2())
             .revert_account_info(0, account1(), Some(None))
             .revert_account_info(2, account2(), None)
-            .revert_storage(0, account1(), vec![(slot1(), U256::from(10))])
+            .revert_storage(0, account1(), &mut vec![(slot1(), U256::from(10))])
             .build();
 
         assert_eq!(state.reverts.len(), 4);
