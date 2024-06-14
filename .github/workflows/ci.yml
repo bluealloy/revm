@@ -31,8 +31,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace ${{ matrix.flags }}
 
-  test-no-std:
-    name: test no_std
+  check-no-std:
+    name: check no_std
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -48,9 +48,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          cd crates/revm
-          cargo check --no-default-features
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo check --no-default-features -p revm
 
   check-serde:
     name: check serde
@@ -58,9 +57,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          cd crates/revm
-          cargo check --no-default-features --features serde
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo check --no-default-features --features serde -p revm
 
   check-std:
     name: check std
@@ -68,9 +66,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          cd crates/revm
-          cargo check --no-default-features --features std
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo check --no-default-features --features std -p revm
 
   clippy:
     name: clippy
