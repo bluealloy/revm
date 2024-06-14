@@ -375,6 +375,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             block_timestamp: self.context.evm.env.block.timestamp.as_limbs()[0],
             block_number: self.context.evm.env.block.number.as_limbs()[0],
             block_difficulty: self.context.evm.env.block.difficulty.as_limbs()[0],
+            block_prevrandao: self.context.evm.env.block.prevrandao.unwrap_or_default(),
             block_gas_limit: self.context.evm.env.block.gas_limit.as_limbs()[0],
             block_base_fee: self.context.evm.env.block.basefee,
             tx_gas_limit: self.context.evm.env.tx.gas_limit,
