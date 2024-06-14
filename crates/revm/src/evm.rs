@@ -3,7 +3,7 @@ use crate::{
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
-        analysis::validate_eof, CallInputs, CreateInputs, EOFCreateInput, EOFCreateOutcome, Gas,
+        analysis::validate_eof, CallInputs, CreateInputs, EOFCreateInputs, EOFCreateOutcome, Gas,
         Host, InstructionResult, InterpreterAction, InterpreterResult, SharedMemory,
     },
     primitives::{
@@ -374,7 +374,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                     });
 
                     // Create EOFCreateInput from transaction initdata.
-                    let eofcreate = EOFCreateInput::new_tx_boxed(&ctx.evm.env.tx, nonce)
+                    let eofcreate = EOFCreateInputs::new_tx_boxed(&ctx.evm.env.tx, nonce)
                         .ok()
                         .and_then(|eofcreate| {
                             // validate EOF initcode
