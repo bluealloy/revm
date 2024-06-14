@@ -1,7 +1,7 @@
 use crate::{
     db::Database,
     interpreter::{
-        analysis::to_analysed, gas, return_ok, Contract, CreateInputs, EOFCreateInput, Gas,
+        analysis::to_analysed, gas, return_ok, Contract, CreateInputs, EOFCreateInputs, Gas,
         InstructionResult, Interpreter, InterpreterResult, LoadAccountResult, SStoreResult,
         SelfDestructResult, MAX_CODE_SIZE,
     },
@@ -245,7 +245,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     pub fn make_eofcreate_frame(
         &mut self,
         spec_id: SpecId,
-        inputs: &EOFCreateInput,
+        inputs: &EOFCreateInputs,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
         let return_error = |e| {
             Ok(FrameOrResult::new_eofcreate_result(

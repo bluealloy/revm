@@ -4,7 +4,7 @@ use std::boxed::Box;
 /// Inputs for EOF create call.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct EOFCreateInput {
+pub struct EOFCreateInputs {
     /// Caller of Eof Craate
     pub caller: Address,
     /// New contract address.
@@ -19,7 +19,7 @@ pub struct EOFCreateInput {
     pub gas_limit: u64,
 }
 
-impl EOFCreateInput {
+impl EOFCreateInputs {
     /// Returns boxed EOFCreateInput or error.
     /// Internally calls [`Self::new_tx`].
     pub fn new_tx_boxed(tx: &TxEnv, nonce: u64) -> Result<Box<Self>, EofDecodeError> {
@@ -31,7 +31,7 @@ impl EOFCreateInput {
     /// Legacy transaction still have optional nonce so we need to obtain it.
     pub fn new_tx(tx: &TxEnv, nonce: u64) -> Result<Self, EofDecodeError> {
         let (eof_init_code, input) = Eof::decode_dangling(tx.data.clone())?;
-        Ok(EOFCreateInput {
+        Ok(EOFCreateInputs {
             caller: tx.caller,
             created_address: tx.caller.create(nonce),
             value: tx.value,
@@ -49,8 +49,8 @@ impl EOFCreateInput {
         eof_init_code: Eof,
         gas_limit: u64,
         input: Bytes,
-    ) -> EOFCreateInput {
-        EOFCreateInput {
+    ) -> EOFCreateInputs {
+        EOFCreateInputs {
             caller,
             created_address,
             value,

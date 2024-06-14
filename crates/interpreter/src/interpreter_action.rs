@@ -9,7 +9,7 @@ pub use call_inputs::{CallInputs, CallScheme, CallValue};
 pub use call_outcome::CallOutcome;
 pub use create_inputs::{CreateInputs, CreateScheme};
 pub use create_outcome::CreateOutcome;
-pub use eof_create_inputs::EOFCreateInput;
+pub use eof_create_inputs::EOFCreateInputs;
 pub use eof_create_outcome::EOFCreateOutcome;
 
 use crate::InterpreterResult;
@@ -24,7 +24,7 @@ pub enum InterpreterAction {
     /// CREATE or CREATE2 instruction called.
     Create { inputs: Box<CreateInputs> },
     /// EOF CREATE instruction called.
-    EOFCreate { inputs: Box<EOFCreateInput> },
+    EOFCreate { inputs: Box<EOFCreateInputs> },
     /// Interpreter finished execution.
     Return { result: InterpreterResult },
     /// No action
