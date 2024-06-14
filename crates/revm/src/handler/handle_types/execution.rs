@@ -6,7 +6,7 @@ use crate::{
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use revm_interpreter::{
-    opcode::InstructionTables, CallOutcome, CreateOutcome, EOFCreateInput, EOFCreateOutcome,
+    opcode::InstructionTables, CallOutcome, CreateOutcome, EOFCreateInputs, EOFCreateOutcome,
     InterpreterAction, InterpreterResult,
 };
 use std::{boxed::Box, sync::Arc};
@@ -91,7 +91,7 @@ pub type InsertCreateOutcomeHandle<'a, EXT, DB> = Arc<
 pub type FrameEOFCreateHandle<'a, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<EXT, DB>,
-            Box<EOFCreateInput>,
+            Box<EOFCreateInputs>,
         ) -> Result<FrameOrResult, EVMError<<DB as Database>::Error>>
         + 'a,
 >;
@@ -255,7 +255,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
     pub fn eofcreate(
         &self,
         context: &mut Context<EXT, DB>,
-        inputs: Box<EOFCreateInput>,
+        inputs: Box<EOFCreateInputs>,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
         (self.eofcreate)(context, inputs)
     }

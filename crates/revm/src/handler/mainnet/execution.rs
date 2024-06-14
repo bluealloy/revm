@@ -10,7 +10,7 @@ use crate::{
 };
 use core::mem;
 use revm_interpreter::{
-    opcode::InstructionTables, CallOutcome, EOFCreateInput, EOFCreateOutcome, InterpreterAction,
+    opcode::InstructionTables, CallOutcome, EOFCreateInputs, EOFCreateOutcome, InterpreterAction,
     InterpreterResult, EMPTY_SHARED_MEMORY,
 };
 use std::boxed::Box;
@@ -164,7 +164,7 @@ pub fn insert_create_outcome<EXT, DB: Database>(
 #[inline]
 pub fn eofcreate<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-    inputs: Box<EOFCreateInput>,
+    inputs: Box<EOFCreateInputs>,
 ) -> Result<FrameOrResult, EVMError<DB::Error>> {
     context.evm.make_eofcreate_frame(SPEC::SPEC_ID, &inputs)
 }

@@ -7,7 +7,7 @@ use crate::{
     gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD},
     interpreter::Interpreter,
     primitives::{Address, Bytes, Eof, Spec, SpecId::*, U256},
-    CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInput, Host,
+    CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, Host,
     InstructionResult, InterpreterAction, InterpreterResult, LoadAccountResult, MAX_INITCODE_SIZE,
 };
 use core::cmp::max;
@@ -68,7 +68,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
 
     // Send container for execution container is preverified.
     interpreter.next_action = InterpreterAction::EOFCreate {
-        inputs: Box::new(EOFCreateInput::new(
+        inputs: Box::new(EOFCreateInputs::new(
             interpreter.contract.target_address,
             created_address,
             value,
