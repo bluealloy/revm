@@ -32,7 +32,7 @@ pub use env::*;
 pub use std::collections::{hash_map, hash_set, HashMap, HashSet};
 
 #[cfg(feature = "c-kzg")]
-pub use kzg::{EnvKzgSettings, KzgSettings};
+pub use kzg::{EnvKzgSettings, KZGSettings};
 pub use precompile::*;
 pub use result::*;
 pub use specification::*;

@@ -1,5 +1,8 @@
+use core::mem::MaybeUninit;
+
 use crate::{Address, Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use c_kzg::{Bytes32, Bytes48, KzgProof, KzgSettings};
+use kzg::eip_4844::{Bytes32, Bytes48, KZGProof, C_KZG_RET_OK};
+use rust_kzg_zkcrypto::{kzg_proofs::KZGSettings, eip_4844::verify_kzg_proof};
 use revm_primitives::{hex_literal::hex, Bytes, Env};
 use sha2::{Digest, Sha256};
 
@@ -48,9 +51,20 @@ pub fn run(input: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
     let z = as_bytes32(&input[32..64]);
     let y = as_bytes32(&input[64..96]);
     let proof = as_bytes48(&input[144..192]);
-    if !verify_kzg_proof(commitment, z, y, proof, env.cfg.kzg_settings.get()) {
-        return Err(Error::BlobVerifyKzgProofFailed);
-    }
+    let mut verified: MaybeUninit<bool> = MaybeUninit::uninit();
+    
+    unsafe {
+        if verify_kzg_proof(
+            verified.as_mut_ptr(), 
+            commitment,
+            z, 
+            y, 
+            proof, 
+            env.cfg.kzg_settings.get()
+        ) != C_KZG_RET_OK {
+            return Err(Error::BlobVerifyKzgProofFailed);
+        }
+    };
     #[cfg(feature = "sp1-cycle-tracker")]
     println!("cycle-tracker-end: kzg");
 
@@ -66,16 +80,6 @@ pub fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
     hash
 }
 
-#[inline]
-pub fn verify_kzg_proof(
-    commitment: &Bytes48,
-    z: &Bytes32,
-    y: &Bytes32,
-    proof: &Bytes48,
-    kzg_settings: &KzgSettings,
-) -> bool {
-    KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
-}
 
 #[inline]
 #[track_caller]

@@ -30,6 +30,10 @@ c-kzg = { package = "c-kzg-taiko", git = "https://github.com/smtmfft/c-kzg-4844"
     "preload-kzg-settings",
     "no-threads",
 ]}
+rust-kzg-zkcrypto = { path = "../../../rust-kzg/zkcrypto",default-features = false }
+kzg = { path = "../../../rust-kzg/kzg",default-features = false }
+
+
 once_cell = { version = "1.19", default-features = false, optional = true }
 
 # utility
