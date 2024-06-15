@@ -14,7 +14,7 @@ use crate::{
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
-use std::boxed::Box;
+use std::{boxed::Box, sync::Arc};
 
 /// EVM contexts contains data that EVM needs for execution.
 #[derive(Debug)]
@@ -297,7 +297,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         let contract = Contract::new(
             inputs.input.clone(),
             // fine to clone as it is Bytes.
-            Bytecode::Eof(inputs.eof_init_code.clone()),
+            Bytecode::Eof(Arc::new(inputs.eof_init_code.clone())),
             None,
             inputs.created_address,
             inputs.caller,
@@ -343,7 +343,7 @@ impl<DB: Database> InnerEvmContext<DB> {
 
         // eof bytecode is going to be hashed.
         self.journaled_state
-            .set_code(address, Bytecode::Eof(bytecode));
+            .set_code(address, Bytecode::Eof(Arc::new(bytecode)));
     }
 
     /// Make create frame.

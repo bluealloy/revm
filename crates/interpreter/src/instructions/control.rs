@@ -204,6 +204,8 @@ pub fn unknown<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
     use revm_primitives::{bytes, eof::TypesSection, Bytecode, Eof, PragueSpec};
 
     use super::*;
@@ -322,7 +324,7 @@ mod test {
         eof.body.code_section.push(bytes2.clone());
         eof.body.types_section.push(types);
 
-        let mut interp = Interpreter::new_bytecode(Bytecode::Eof(eof));
+        let mut interp = Interpreter::new_bytecode(Bytecode::Eof(Arc::new(eof)));
         interp.gas = Gas::new(10000);
         interp
     }
