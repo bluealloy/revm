@@ -1,7 +1,7 @@
 use super::InnerEvmContext;
 use crate::{
     precompile::{Precompile, PrecompileResult},
-    primitives::{db::Database, Address, Bytes, HashMap},
+    primitives::{db::Database, Address, Bytes, HashMap, HashSet},
 };
 use dyn_clone::DynClone;
 use revm_precompile::{PrecompileSpecId, PrecompileWithAddress, Precompiles};
@@ -31,30 +31,23 @@ impl<DB: Database> Clone for ContextPrecompile<DB> {
 
 enum PrecompilesCow<DB: Database> {
     /// Default precompiles, returned by `Precompiles::new`. Used to fast-path the default case.
-    Default(&'static Precompiles),
+    StaticRef(&'static Precompiles),
     Owned(HashMap<Address, ContextPrecompile<DB>>),
 }
 
 impl<DB: Database> Clone for PrecompilesCow<DB> {
     fn clone(&self) -> Self {
         match *self {
-            PrecompilesCow::Default(p) => PrecompilesCow::Default(p),
+            PrecompilesCow::StaticRef(p) => PrecompilesCow::StaticRef(p),
             PrecompilesCow::Owned(ref inner) => PrecompilesCow::Owned(inner.clone()),
         }
     }
 }
 
 /// Precompiles context.
+#[derive(Clone)]
 pub struct ContextPrecompiles<DB: Database> {
     inner: PrecompilesCow<DB>,
-}
-
-impl<DB: Database> Clone for ContextPrecompiles<DB> {
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-        }
-    }
 }
 
 impl<DB: Database> ContextPrecompiles<DB> {
@@ -73,7 +66,7 @@ impl<DB: Database> ContextPrecompiles<DB> {
     #[inline]
     pub fn from_static_precompiles(precompiles: &'static Precompiles) -> Self {
         Self {
-            inner: PrecompilesCow::Default(precompiles),
+            inner: PrecompilesCow::StaticRef(precompiles),
         }
     }
 
@@ -85,36 +78,29 @@ impl<DB: Database> ContextPrecompiles<DB> {
         }
     }
 
+    /// Returns precompiles addresses as a HashSet.
+    pub fn addresses_set(&self) -> HashSet<Address> {
+        match self.inner {
+            PrecompilesCow::StaticRef(inner) => inner.addresses_set().clone(),
+            PrecompilesCow::Owned(ref inner) => inner.keys().cloned().collect(),
+        }
+    }
+
     /// Returns precompiles addresses.
     #[inline]
-    pub fn addresses(&self) -> impl ExactSizeIterator<Item = &Address> {
-        // SAFETY: `keys` does not touch values.
-        unsafe { self.fake_as_owned() }.keys()
+    pub fn addresses<'a>(&'a self) -> Box<dyn ExactSizeIterator<Item = &Address> + 'a> {
+        match self.inner {
+            PrecompilesCow::StaticRef(inner) => Box::new(inner.addresses()),
+            PrecompilesCow::Owned(ref inner) => Box::new(inner.keys()),
+        }
     }
 
     /// Returns `true` if the precompiles contains the given address.
     #[inline]
     pub fn contains(&self, address: &Address) -> bool {
-        // SAFETY: `contains_key` does not touch values.
-        unsafe { self.fake_as_owned() }.contains_key(address)
-    }
-
-    /// View the internal precompiles map as the `Owned` variant.
-    ///
-    /// # Safety
-    ///
-    /// The resulting value type is wrong if this is `Default`,
-    /// but this works for methods that operate only on keys because both maps' internal value types
-    /// have the same size.
-    #[inline]
-    unsafe fn fake_as_owned(&self) -> &HashMap<Address, ContextPrecompile<DB>> {
-        const _: () = assert!(
-            core::mem::size_of::<ContextPrecompile<crate::db::EmptyDB>>()
-                == core::mem::size_of::<Precompile>()
-        );
         match self.inner {
-            PrecompilesCow::Default(inner) => unsafe { core::mem::transmute(inner) },
-            PrecompilesCow::Owned(ref inner) => inner,
+            PrecompilesCow::StaticRef(inner) => inner.contains(address),
+            PrecompilesCow::Owned(ref inner) => inner.contains_key(address),
         }
     }
 
@@ -130,7 +116,7 @@ impl<DB: Database> ContextPrecompiles<DB> {
         evmctx: &mut InnerEvmContext<DB>,
     ) -> Option<PrecompileResult> {
         Some(match self.inner {
-            PrecompilesCow::Default(p) => p.get(address)?.call_ref(bytes, gas_price, &evmctx.env),
+            PrecompilesCow::StaticRef(p) => p.get(address)?.call_ref(bytes, gas_price, &evmctx.env),
             PrecompilesCow::Owned(ref mut owned) => match owned.get_mut(address)? {
                 ContextPrecompile::Ordinary(p) => p.call(bytes, gas_price, &evmctx.env),
                 ContextPrecompile::ContextStateful(p) => p.call(bytes, gas_price, evmctx),
@@ -144,29 +130,28 @@ impl<DB: Database> ContextPrecompiles<DB> {
     /// Clones the precompiles map if it is shared.
     #[inline]
     pub fn to_mut(&mut self) -> &mut HashMap<Address, ContextPrecompile<DB>> {
-        match self.inner {
-            PrecompilesCow::Default(_) => self.to_mut_slow(),
-            PrecompilesCow::Owned(ref mut inner) => inner,
-        }
+        self.mutate_into_owned();
+
+        let PrecompilesCow::Owned(inner) = &mut self.inner else {
+            unreachable!()
+        };
+        inner
     }
 
-    #[allow(clippy::wrong_self_convention)]
-    #[cold]
-    fn to_mut_slow(&mut self) -> &mut HashMap<Address, ContextPrecompile<DB>> {
-        let PrecompilesCow::Default(precompiles) = self.inner else {
-            unreachable!()
+    /// Mutates Self into Owned variant, or do nothing if it is already Owned.
+    /// Mutation will clone all precompiles.
+    #[inline]
+    pub fn mutate_into_owned(&mut self) {
+        let PrecompilesCow::StaticRef(precompiles) = self.inner else {
+            return;
         };
         self.inner = PrecompilesCow::Owned(
             precompiles
-                .inner
+                .inner()
                 .iter()
                 .map(|(k, v)| (*k, v.clone().into()))
                 .collect(),
         );
-        match self.inner {
-            PrecompilesCow::Default(_) => unreachable!(),
-            PrecompilesCow::Owned(ref mut inner) => inner,
-        }
     }
 }
 
@@ -246,7 +231,7 @@ mod tests {
 
         let mut precompiles = ContextPrecompiles::<EmptyDB>::new(PrecompileSpecId::HOMESTEAD);
         assert_eq!(precompiles.addresses().count(), 4);
-        assert!(matches!(precompiles.inner, PrecompilesCow::Default(_)));
+        assert!(matches!(precompiles.inner, PrecompilesCow::StaticRef(_)));
         assert!(!precompiles.contains(&custom_address));
 
         let precompile = Precompile::Standard(|_, _| panic!());

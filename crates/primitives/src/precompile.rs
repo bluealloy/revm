@@ -128,7 +128,9 @@ impl Precompile {
             Precompile::Standard(p) => p(bytes, gas_price),
             Precompile::Env(p) => p(bytes, gas_price, env),
             Precompile::Stateful(ref p) => p.call(bytes, gas_price, env),
-            Precompile::StatefulMut(_) => panic!("call_ref on mutable stateful precompile"),
+            Precompile::StatefulMut(_) => Err(PrecompileErrors::Fatal {
+                msg: "call_ref on mutable stateful precompile".to_string(),
+            }),
         }
     }
 }
