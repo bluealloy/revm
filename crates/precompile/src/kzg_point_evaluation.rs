@@ -1,9 +1,9 @@
 use core::mem::MaybeUninit;
 
 use crate::{Address, Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use kzg::eip_4844::{Bytes32, Bytes48, KZGProof, C_KZG_RET_OK};
-use rust_kzg_zkcrypto::{kzg_proofs::KZGSettings, eip_4844::verify_kzg_proof};
+use kzg::eip_4844::{Bytes32, Bytes48, C_KZG_RET_OK};
 use revm_primitives::{hex_literal::hex, Bytes, Env};
+use rust_kzg_zkcrypto::eip_4844::verify_kzg_proof;
 use sha2::{Digest, Sha256};
 
 pub const POINT_EVALUATION: PrecompileWithAddress =
@@ -52,16 +52,17 @@ pub fn run(input: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
     let y = as_bytes32(&input[64..96]);
     let proof = as_bytes48(&input[144..192]);
     let mut verified: MaybeUninit<bool> = MaybeUninit::uninit();
-    
+
     unsafe {
         if verify_kzg_proof(
-            verified.as_mut_ptr(), 
+            verified.as_mut_ptr(),
             commitment,
-            z, 
-            y, 
-            proof, 
-            env.cfg.kzg_settings.get()
-        ) != C_KZG_RET_OK {
+            z,
+            y,
+            proof,
+            env.cfg.kzg_settings.get(),
+        ) != C_KZG_RET_OK
+        {
             return Err(Error::BlobVerifyKzgProofFailed);
         }
     };
@@ -79,7 +80,6 @@ pub fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
     hash[0] = VERSIONED_HASH_VERSION_KZG;
     hash
 }
-
 
 #[inline]
 #[track_caller]

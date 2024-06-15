@@ -2,7 +2,9 @@ use core::fmt;
 use derive_more::{AsMut, AsRef, Deref, DerefMut};
 use std::boxed::Box;
 
-pub use kzg::eip_4844::{BYTES_PER_G1, BYTES_PER_G2, FIELD_ELEMENTS_PER_BLOB, TRUSTED_SETUP_NUM_G2_POINTS};
+pub use kzg::eip_4844::{
+    BYTES_PER_G1, BYTES_PER_G2, FIELD_ELEMENTS_PER_BLOB, TRUSTED_SETUP_NUM_G2_POINTS,
+};
 
 /// Number of G1 Points.
 pub const NUM_G1_POINTS: usize = FIELD_ELEMENTS_PER_BLOB;
