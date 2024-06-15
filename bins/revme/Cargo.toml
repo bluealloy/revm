@@ -18,7 +18,7 @@ plain_hasher = "0.2"
 revm = { path = "../../crates/revm", version = "8.0.0", default-features = false, features = [
     "ethersdb",
     "serde-json",
-    "c-kzg",
+    "kzg",
 ] }
 alloy-rlp = { version = "0.3", default-features = false, features = [
     "arrayvec",

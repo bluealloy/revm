@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Other
 - *(deps)* bump bitflags from 2.4.2 to 2.5.0 ([#1210](https://github.com/bluealloy/revm/pull/1210))
 - clarify None nonce ([#1204](https://github.com/bluealloy/revm/pull/1204))
-- c-kzg v1.0.0 ([#1190](https://github.com/bluealloy/revm/pull/1190))
+- ~~c-kzg v1.0.0 ([#1190](https://github.com/bluealloy/revm/pull/1190))~~
 - fix some typos ([#1189](https://github.com/bluealloy/revm/pull/1189))
 - Fix typo in readme ([#1185](https://github.com/bluealloy/revm/pull/1185))
 - improve error implementations ([#1183](https://github.com/bluealloy/revm/pull/1183))
@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.1.0](https://github.com/bluealloy/revm/compare/revm-primitives-v2.0.1...revm-primitives-v2.1.0) - 2024-02-22
 
 ### Added
-- bump c-kzg, add portable feature, make it default ([#1106](https://github.com/bluealloy/revm/pull/1106))
+- ~~bump c-kzg, add portable feature, make it default ([#1106](https://github.com/bluealloy/revm/pull/1106))~~
 
 ### Other
 - clippy cleanup ([#1112](https://github.com/bluealloy/revm/pull/1112))
@@ -87,14 +87,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - use maximum possible data fee for 4844 balance checks ([#981](https://github.com/bluealloy/revm/pull/981))
-- make revm-primitives no-std with c-kzg feature ([#933](https://github.com/bluealloy/revm/pull/933))
+- ~~make revm-primitives no-std with c-kzg feature ([#933](https://github.com/bluealloy/revm/pull/933))~~
 - *(ci)* Workflow Touchups ([#901](https://github.com/bluealloy/revm/pull/901))
 - *(op)* Base Goerli `op-reth` sync patches ([#824](https://github.com/bluealloy/revm/pull/824))
 - rename `DatabaseRef` trait functions to `*_ref` ([#795](https://github.com/bluealloy/revm/pull/795))
 - *(primitives)* Error Primitive Display + Error Implementations ([#770](https://github.com/bluealloy/revm/pull/770))
 
 ### Other
-- bump c-kzg and enable blst portable feature ([#1059](https://github.com/bluealloy/revm/pull/1059))
+- ~~bump c-kzg and enable blst portable feature ([#1059](https://github.com/bluealloy/revm/pull/1059))~~
 - helper functions around Env ([#1057](https://github.com/bluealloy/revm/pull/1057))
 - *(std)* Add std HashMap,HashSet ([#1041](https://github.com/bluealloy/revm/pull/1041))
 - *(op)* Move op l1 block load to op handler ([#1026](https://github.com/bluealloy/revm/pull/1026))
@@ -116,7 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - cargo fmt and removed extra newlines ([#860](https://github.com/bluealloy/revm/pull/860))
 - Fix error message for LackOfFundForMaxFee ([#858](https://github.com/bluealloy/revm/pull/858))
 - Fix rustdoc warnings ([#859](https://github.com/bluealloy/revm/pull/859))
-- bump c-kzg to v0.4.0 ([#849](https://github.com/bluealloy/revm/pull/849))
+- ~~bump c-kzg to v0.4.0 ([#849](https://github.com/bluealloy/revm/pull/849))~~
 - *(state)* move account status transitions to `AccountStatus` ([#844](https://github.com/bluealloy/revm/pull/844))
 - decode KZG points directly into the buffers ([#840](https://github.com/bluealloy/revm/pull/840))
 - *(deps)* make derive-more optional ([#827](https://github.com/bluealloy/revm/pull/827))
@@ -156,11 +156,11 @@ Summary of biggest changes:
 * ChainId converted from U256 to u64.
 * CfgEnv marked as `non_exhaustive` to accommodate future changes.
 * Introduce `InvalidHeader` error that contains `prevrandao` and `blob gas` not set errors.
-* c-kzg added as dependency as it is needed for `KzgSetting` that is sed inside EnvCfg.
+* ~~c-kzg added as dependency as it is needed for `KzgSetting` that is sed inside EnvCfg.~~
 
 Full git log:
 * ea0d8d8 - fix: use u128 for calc data fee result (#757) (49 minutes ago) <Dan Cline>
-* 4f916be - chore: bump c-kzg to create lib (#758) (5 hours ago) <rakita>
+* ~~4f916be - chore: bump c-kzg to create lib (#758) (5 hours ago) <rakita>~~
 * f79d0e1 - feat: Optimism execution changes (#682) (16 hours ago) <clabby>
 * d03dfcb - Improve wording and fix typos (#749) (25 hours ago) <Paul Razvan Berg>
 * 8a85d19 - fix: balance check disabled (#751) (25 hours ago) <Wodann>

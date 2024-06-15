@@ -13,7 +13,7 @@ mod bytecode;
 mod constants;
 pub mod db;
 pub mod env;
-#[cfg(feature = "c-kzg")]
+#[cfg(feature = "kzg")]
 pub mod kzg;
 pub mod precompile;
 pub mod result;
@@ -31,7 +31,7 @@ pub use constants::*;
 pub use env::*;
 pub use std::collections::{hash_map, hash_set, HashMap, HashSet};
 
-#[cfg(feature = "c-kzg")]
+#[cfg(feature = "kzg")]
 pub use kzg::{EnvKzgSettings, KZGSettings};
 pub use precompile::*;
 pub use result::*;

@@ -14,7 +14,7 @@ pub mod blake2;
 pub mod bn128;
 pub mod hash;
 pub mod identity;
-#[cfg(feature = "c-kzg")]
+#[cfg(feature = "kzg")]
 pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
@@ -134,7 +134,7 @@ impl Precompiles {
 
     /// Returns precompiles for Cancun spec.
     ///
-    /// If the `c-kzg` feature is not enabled KZG Point Evaluation precompile will not be included,
+    /// If the `kzg` feature is not enabled KZG Point Evaluation precompile will not be included,
     /// effectively making this the same as Berlin.
     pub fn cancun() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
@@ -142,7 +142,7 @@ impl Precompiles {
             let precompiles = Self::berlin().clone();
 
             // Don't include KZG point evaluation precompile in no_std builds.
-            #[cfg(feature = "c-kzg")]
+            #[cfg(feature = "kzg")]
             let precompiles = {
                 let mut precompiles = precompiles;
                 precompiles.extend([

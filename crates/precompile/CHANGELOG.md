@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 - expose functionality for custom EVMs ([#1201](https://github.com/bluealloy/revm/pull/1201))
-- c-kzg v1.0.0 ([#1190](https://github.com/bluealloy/revm/pull/1190))
+- ~~c-kzg v1.0.0 ([#1190](https://github.com/bluealloy/revm/pull/1190))~~
 - fix some typos ([#1189](https://github.com/bluealloy/revm/pull/1189))
 
 ## [5.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v4.1.0...revm-precompile-v5.0.0) - 2024-03-08
@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v4.0.1...revm-precompile-v4.1.0) - 2024-02-22
 
 ### Added
-- bump c-kzg, add portable feature, make it default ([#1106](https://github.com/bluealloy/revm/pull/1106))
+- ~~bump c-kzg, add portable feature, make it default ([#1106](https://github.com/bluealloy/revm/pull/1106))~~
 
 ### Other
 - clippy cleanup ([#1112](https://github.com/bluealloy/revm/pull/1112))
@@ -77,7 +77,7 @@ Precompiles are refactored from list to HashMap, this allows adding arbitrary pr
 - *(ci)* Workflow Touchups ([#901](https://github.com/bluealloy/revm/pull/901))
 
 ### Other
-- bump c-kzg and enable blst portable feature ([#1059](https://github.com/bluealloy/revm/pull/1059))
+- ~~bump c-kzg and enable blst portable feature ([#1059](https://github.com/bluealloy/revm/pull/1059))~~
 - *(deps)* bump secp256k1 from 0.28.1 to 0.28.2 ([#1038](https://github.com/bluealloy/revm/pull/1038))
 - *(Cancun)* update Cancun precompiles docs ([#1015](https://github.com/bluealloy/revm/pull/1015))
 - *(log)* use alloy_primitives::Log ([#975](https://github.com/bluealloy/revm/pull/975))
@@ -88,7 +88,7 @@ Precompiles are refactored from list to HashMap, this allows adding arbitrary pr
 - simplify use statements ([#864](https://github.com/bluealloy/revm/pull/864))
 - *(precompiles)* Make PrecompileWithAddress field public, from impl ([#857](https://github.com/bluealloy/revm/pull/857))
 - change addresses to iterator and add into_addresses ([#855](https://github.com/bluealloy/revm/pull/855))
-- bump c-kzg to v0.4.0 ([#849](https://github.com/bluealloy/revm/pull/849))
+- ~~bump c-kzg to v0.4.0 ([#849](https://github.com/bluealloy/revm/pull/849))~~
 - Refactor precompile list from Hash to vec ([#823](https://github.com/bluealloy/revm/pull/823))
 - *(eip4844)* update kzg trusted setup ([#822](https://github.com/bluealloy/revm/pull/822))
 - secp256k1 from 0.27 to 0.28 ([#817](https://github.com/bluealloy/revm/pull/817))
@@ -107,13 +107,13 @@ Full git log:
 date 28.09.2023
 
  Summary:
- * Cancun EIP-4844 precompile. It is behind `c-kzg` that is enabled by default
-    the reason is that c-kzg fails to build on wasm and some docker images.
+ * Cancun EIP-4844 precompile. It is behind `kzg` that is enabled by default
+    ~~the reason is that c-kzg fails to build on wasm and some docker images.~~
  * no_std support
  * small fixes to return out of gas for modepx and pairing precompiles.
 
 Full git log:
-* 4f916be - chore: bump c-kzg to create lib (#758) (5 hours ago) <rakita>
+~~* 4f916be - chore: bump c-kzg to create lib (#758) (5 hours ago) <rakita>~~
 * f79d0e1 - feat: Optimism execution changes (#682) (16 hours ago) <clabby>
 * b9938a8 - chore(deps): bump sha2 from 0.10.7 to 0.10.8 (#752) (30 hours ago) <dependabot[bot]>
 * 8206193 - feat: add "kzg" as a separate feature (#746) (2 hours ago) <DaniPopes>

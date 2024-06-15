@@ -25,12 +25,8 @@ aurora-engine-modexp = { version = "1.0", default-features = false }
 cfg-if = "1"
 
 # Optional KZG point evaluation precompile
-c-kzg = { package = "c-kzg-taiko", git = "https://github.com/smtmfft/c-kzg-4844", branch = "for-alpha7", default-features = false, optional = true, features = [
-    "preload-kzg-settings",
-    "no-threads",
-]}
-rust-kzg-zkcrypto = { path = "../../../rust-kzg/zkcrypto",default-features = false }
-kzg = { path = "../../../rust-kzg/kzg",default-features = false }
+rust-kzg-zkcrypto = { path = "../../../rust-kzg/zkcrypto",default-features = false, optional = true }
+kzg = { path = "../../../rust-kzg/kzg",default-features = false, optional = true }
 
 
 # ecRecover precompile
@@ -48,14 +44,13 @@ criterion = { version = "0.5" }
 rand = { version = "0.8", features = ["std"] }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable"]
+default = ["std", "kzg", "secp256k1"]
 std = [
     "revm-primitives/std",
     "k256/std",
     "once_cell/std",
     "ripemd/std",
     "sha2/std",
-    "c-kzg?/std",
     "secp256k1?/std",
 ]
 asm-keccak = ["revm-primitives/asm-keccak"]
@@ -73,8 +68,7 @@ negate-taiko-default-handler = [
 # These libraries may not work on all no_std platforms as they depend on C.
 
 # Enables the KZG point evaluation precompile.
-c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
-portable = ["revm-primitives/portable", "c-kzg?/portable"]
+kzg = ["dep:kzg", "dep:rust-kzg-zkcrypto", "revm-primitives/kzg"]
 
 # Use `secp256k1` as a faster alternative to `k256`.
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.

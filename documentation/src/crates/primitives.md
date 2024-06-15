@@ -28,7 +28,7 @@ It is set up to be compatible with environments that do not include Rust's stand
 - `hex_literal`: The hex_literal crate provides a macro for including hexadecimal data directly in the source code.
 - `hashbrown`: The hashbrown crate provides high-performance hash map and hash set data structures.
 - `ruint`: The ruint crate provides types and functions for big unsigned integer arithmetic.
-- `c-kzg`: A minimal implementation of the Polynomial Commitments API for EIP-4844, written in C. (With rust bindings)
+- ~~`c-kzg`: A minimal implementation of the Polynomial Commitments API for EIP-4844, written in C. (With rust bindings)~~
 
 ### Type Aliases:
 

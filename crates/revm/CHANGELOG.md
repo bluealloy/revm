@@ -77,7 +77,7 @@ This release got yanked and replaced with 7.1.0
 ## [6.1.0](https://github.com/bluealloy/revm/compare/revm-v6.0.0...revm-v6.1.0) - 2024-02-22
 
 ### Added
-- bump c-kzg, add portable feature, make it default ([#1106](https://github.com/bluealloy/revm/pull/1106))
+- ~~bump c-kzg, add portable feature, make it default ([#1106](https://github.com/bluealloy/revm/pull/1106))~~
 - split off serde_json dependency to its own feature ([#1104](https://github.com/bluealloy/revm/pull/1104))
 
 ### Fixed
@@ -164,7 +164,7 @@ Few major renaming: EVMImpl to Evm, EVM to EvmFactory and EVMData to EvmContext.
 - rename `DatabaseRef` trait functions to `*_ref` ([#795](https://github.com/bluealloy/revm/pull/795))
 
 ### Other
-- bump c-kzg and enable blst portable feature ([#1059](https://github.com/bluealloy/revm/pull/1059))
+- ~~bump c-kzg and enable blst portable feature ([#1059](https://github.com/bluealloy/revm/pull/1059))~~
 - spelling on last commit ([#1058](https://github.com/bluealloy/revm/pull/1058))
 - helper functions around Env ([#1057](https://github.com/bluealloy/revm/pull/1057))
 - *(deps)* bump tokio from 1.35.1 to 1.36.0 ([#1052](https://github.com/bluealloy/revm/pull/1052))
@@ -249,11 +249,11 @@ Summary:
 * Optimism support
 * no_std build
 
-Note: c-kzg can't be build for wasm and is behind "c-kzg" feature flag.
+~~Note: c-kzg can't be build for wasm and is behind "c-kzg" feature flag.~~
 
 Full git log:
 * ea0d8d8 - fix: use u128 for calc data fee result (#757) (46 minutes ago) <Dan Cline>
-* 4f916be - chore: bump c-kzg to create lib (#758) (5 hours ago) <rakita>
+* ~~4f916be - chore: bump c-kzg to create lib (#758) (5 hours ago) <rakita>~~
 * ded673c - docs: Readme Updates (#756) (16 hours ago) <refcell.eth>
 * f79d0e1 - feat: Optimism execution changes (#682) (16 hours ago) <clabby>
 * d2a066b - ci: concurrency for github actions (#750) (25 hours ago) <Paul Razvan Berg>

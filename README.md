@@ -52,7 +52,7 @@ cd revm
 cargo build --release
 ```
 
-**_Note:_** `clang` is required for building revm with `c-kzg` or `secp256k1` feature flags as they depend on `C` libraries. If you don't have it installed, you can install it with `apt install clang`.
+**_Note:_** `clang` is required for building revm with ~~`c-kzg`~~ or `secp256k1` feature flags as they depend on `C` libraries. If you don't have it installed, you can install it with `apt install clang`.
 
 # Running eth tests
 

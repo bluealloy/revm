@@ -544,19 +544,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "c-kzg-taiko"
-version = "1.0.0"
-source = "git+https://github.com/smtmfft/c-kzg-4844?branch=for-alpha7#a2d3ae768eede8228920619c98c87584ad8afd09"
-dependencies = [
- "blst",
- "cc",
- "glob",
- "hex",
- "libc",
- "serde",
-]
-
-[[package]]
 name = "cast"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2666,7 +2653,6 @@ name = "revm-precompile"
 version = "6.0.0"
 dependencies = [
  "aurora-engine-modexp",
- "c-kzg-taiko",
  "cfg-if",
  "criterion",
  "k256",
@@ -2689,7 +2675,6 @@ dependencies = [
  "auto_impl",
  "bitflags 2.5.0",
  "bitvec",
- "c-kzg-taiko",
  "cfg-if",
  "derive_more",
  "dyn-clone",

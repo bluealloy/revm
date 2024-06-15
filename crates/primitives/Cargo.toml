@@ -25,13 +25,8 @@ auto_impl = "1.2"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.5.0", default-features = false }
 
-# For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
-c-kzg = { package = "c-kzg-taiko", git = "https://github.com/smtmfft/c-kzg-4844", branch = "for-alpha7", default-features = false, optional = true, features = [
-    "preload-kzg-settings",
-    "no-threads",
-]}
-rust-kzg-zkcrypto = { path = "../../../rust-kzg/zkcrypto",default-features = false }
-kzg = { path = "../../../rust-kzg/kzg",default-features = false }
+rust-kzg-zkcrypto = { path = "../../../rust-kzg/zkcrypto",default-features = false, optional = true }
+kzg = { path = "../../../rust-kzg/kzg",default-features = false, optional = true }
 
 
 once_cell = { version = "1.19", default-features = false, optional = true }
@@ -52,7 +47,7 @@ serde = { version = "1.0", default-features = false, features = [
 hex = { version = "0.4", default-features = false }
 
 [features]
-default = ["std", "c-kzg", "portable"]
+default = ["std", "kzg"]
 std = [
     "serde?/std",
     "alloy-primitives/std",
@@ -67,11 +62,9 @@ serde = [
     "hashbrown/serde",
     "bitvec/serde",
     "bitflags/serde",
-    "c-kzg?/serde",
 ]
 arbitrary = ["std", "alloy-primitives/arbitrary", "bitflags/arbitrary"]
 asm-keccak = ["alloy-primitives/asm-keccak"]
-portable = ["c-kzg?/portable"]
 
 optimism = []
 taiko = []
@@ -97,4 +90,4 @@ optional_no_base_fee = []
 optional_beneficiary_reward = []
 
 # See comments in `revm-precompile`
-c-kzg = ["dep:c-kzg", "dep:once_cell", "dep:derive_more"]
+kzg = ["dep:kzg", "dep:rust-kzg-zkcrypto", "dep:once_cell", "dep:derive_more"]

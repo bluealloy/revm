@@ -28,7 +28,6 @@ std = ["serde?/std", "revm-primitives/std"]
 serde = ["dep:serde", "revm-primitives/serde"]
 arbitrary = ["std", "revm-primitives/arbitrary"]
 asm-keccak = ["revm-primitives/asm-keccak"]
-portable = ["revm-primitives/portable"]
 
 taiko = ["revm-primitives/taiko"]
 # taiko default handler enabled taiko handler register by default in EvmBuilder.
