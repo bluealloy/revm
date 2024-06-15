@@ -1,5 +1,4 @@
 use core::cmp::Ordering;
-
 use blst::{
     blst_bendian_from_fp, blst_fp, blst_fp_from_bendian, blst_scalar, blst_scalar_from_bendian,
 };
