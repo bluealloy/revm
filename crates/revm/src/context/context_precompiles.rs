@@ -45,9 +45,16 @@ impl<DB: Database> Clone for PrecompilesCow<DB> {
 }
 
 /// Precompiles context.
-#[derive(Clone)]
 pub struct ContextPrecompiles<DB: Database> {
     inner: PrecompilesCow<DB>,
+}
+
+impl<DB: Database> Clone for ContextPrecompiles<DB> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+        }
+    }
 }
 
 impl<DB: Database> ContextPrecompiles<DB> {
@@ -141,7 +148,7 @@ impl<DB: Database> ContextPrecompiles<DB> {
     /// Mutates Self into Owned variant, or do nothing if it is already Owned.
     /// Mutation will clone all precompiles.
     #[inline]
-    pub fn mutate_into_owned(&mut self) {
+    fn mutate_into_owned(&mut self) {
         let PrecompilesCow::StaticRef(precompiles) = self.inner else {
             return;
         };
