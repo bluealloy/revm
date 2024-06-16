@@ -79,30 +79,44 @@ impl BundleBuilder {
         }
     }
 
+    /// Apply a transformation to the builder.
+    pub fn apply<F>(self, f: F) -> Self
+    where
+        F: FnOnce(Self) -> Self,
+    {
+        f(self)
+    }
+
+    /// Apply a mutable transformation to the builder.
+    pub fn apply_mut<F>(&mut self, f: F) -> &mut Self
+    where
+        F: FnOnce(&mut Self),
+    {
+        f(self);
+        self
+    }
+
     /// Collect address info of BundleState state
     pub fn state_address(mut self, address: Address) -> Self {
-        self.states.insert(address);
+        self.set_state_address(address);
         self
     }
 
     /// Collect account info of BundleState state
     pub fn state_original_account_info(mut self, address: Address, original: AccountInfo) -> Self {
-        self.states.insert(address);
-        self.state_original.insert(address, original);
+        self.set_state_original_account_info(address, original);
         self
     }
 
     /// Collect account info of BundleState state
     pub fn state_present_account_info(mut self, address: Address, present: AccountInfo) -> Self {
-        self.states.insert(address);
-        self.state_present.insert(address, present);
+        self.set_state_present_account_info(address, present);
         self
     }
 
     /// Collect storage info of BundleState state
     pub fn state_storage(mut self, address: Address, storage: HashMap<U256, (U256, U256)>) -> Self {
-        self.states.insert(address);
-        self.state_storage.insert(address, storage);
+        self.set_state_storage(address, storage);
         self
     }
 
@@ -111,7 +125,7 @@ impl BundleBuilder {
     /// `block_number` must respect `revert_range`, or the input
     /// will be ignored during the final build process
     pub fn revert_address(mut self, block_number: u64, address: Address) -> Self {
-        self.reverts.insert((block_number, address));
+        self.set_revert_address(block_number, address);
         self
     }
 
@@ -125,8 +139,7 @@ impl BundleBuilder {
         address: Address,
         account: Option<Option<AccountInfo>>,
     ) -> Self {
-        self.reverts.insert((block_number, address));
-        self.revert_account.insert((block_number, address), account);
+        self.set_revert_account_info(block_number, address, account);
         self
     }
 
@@ -140,43 +153,59 @@ impl BundleBuilder {
         address: Address,
         storage: Vec<(U256, U256)>,
     ) -> Self {
-        self.reverts.insert((block_number, address));
-        self.revert_storage.insert((block_number, address), storage);
+        self.set_revert_storage(block_number, address, storage);
         self
     }
 
     /// Collect contracts info
     pub fn contract(mut self, address: B256, bytecode: Bytecode) -> Self {
-        self.contracts.insert(address, bytecode);
+        self.set_contract(address, bytecode);
         self
     }
 
     /// Set address info of BundleState state.
-    pub fn set_state_address(&mut self, address: Address) {
+    pub fn set_state_address(&mut self, address: Address) -> &mut Self {
         self.states.insert(address);
+        self
     }
 
     /// Set original account info of BundleState state.
-    pub fn set_state_original_account_info(&mut self, address: Address, original: AccountInfo) {
+    pub fn set_state_original_account_info(
+        &mut self,
+        address: Address,
+        original: AccountInfo,
+    ) -> &mut Self {
         self.states.insert(address);
         self.state_original.insert(address, original);
+        self
     }
 
     /// Set present account info of BundleState state.
-    pub fn set_state_present_account_info(&mut self, address: Address, present: AccountInfo) {
+    pub fn set_state_present_account_info(
+        &mut self,
+        address: Address,
+        present: AccountInfo,
+    ) -> &mut Self {
         self.states.insert(address);
         self.state_present.insert(address, present);
+        self
     }
 
     /// Set storage info of BundleState state.
-    pub fn set_state_storage(&mut self, address: Address, storage: HashMap<U256, (U256, U256)>) {
+    pub fn set_state_storage(
+        &mut self,
+        address: Address,
+        storage: HashMap<U256, (U256, U256)>,
+    ) -> &mut Self {
         self.states.insert(address);
         self.state_storage.insert(address, storage);
+        self
     }
 
     /// Set address info of BundleState reverts.
-    pub fn set_revert_address(&mut self, block_number: u64, address: Address) {
+    pub fn set_revert_address(&mut self, block_number: u64, address: Address) -> &mut Self {
         self.reverts.insert((block_number, address));
+        self
     }
 
     /// Set account info of BundleState reverts.
@@ -185,9 +214,10 @@ impl BundleBuilder {
         block_number: u64,
         address: Address,
         account: Option<Option<AccountInfo>>,
-    ) {
+    ) -> &mut Self {
         self.reverts.insert((block_number, address));
         self.revert_account.insert((block_number, address), account);
+        self
     }
 
     /// Set storage info of BundleState reverts.
@@ -196,14 +226,16 @@ impl BundleBuilder {
         block_number: u64,
         address: Address,
         storage: Vec<(U256, U256)>,
-    ) {
+    ) -> &mut Self {
         self.reverts.insert((block_number, address));
         self.revert_storage.insert((block_number, address), storage);
+        self
     }
 
     /// Set contracts info.
-    pub fn set_contract(&mut self, address: B256, bytecode: Bytecode) {
+    pub fn set_contract(&mut self, address: B256, bytecode: Bytecode) -> &mut Self {
         self.contracts.insert(address, bytecode);
+        self
     }
 
     /// Create `BundleState` instance based on collected information
@@ -953,39 +985,6 @@ mod tests {
             .build()
     }
 
-    /// Test bundle three with setters
-    fn test_bundle3_with_setters() -> BundleState {
-        let mut bundle_builder = BundleState::builder(0..=0);
-        bundle_builder.set_state_present_account_info(
-            account1(),
-            AccountInfo {
-                nonce: 1,
-                balance: U256::from(10),
-                code_hash: KECCAK_EMPTY,
-                code: None,
-            },
-        );
-        bundle_builder.set_state_storage(
-            account1(),
-            HashMap::from([(slot1(), (U256::from(0), U256::from(10)))]),
-        );
-        bundle_builder.set_state_address(account2());
-        bundle_builder.set_state_present_account_info(
-            account2(),
-            AccountInfo {
-                nonce: 1,
-                balance: U256::from(10),
-                code_hash: KECCAK_EMPTY,
-                code: None,
-            },
-        );
-        bundle_builder.set_revert_address(0, account1());
-        bundle_builder.set_revert_account_info(0, account1(), Some(None));
-        bundle_builder.set_revert_storage(0, account1(), vec![(slot1(), U256::from(0))]);
-        bundle_builder.set_revert_account_info(0, account2(), Some(None));
-        bundle_builder.build()
-    }
-
     /// Test bundle four
     fn test_bundle4() -> BundleState {
         BundleState::builder(0..=0)
@@ -1015,37 +1014,6 @@ mod tests {
             )
             .revert_storage(0, account1(), vec![(slot1(), U256::from(10))])
             .build()
-    }
-
-    /// Test bundle four with setters
-    fn test_bundle4_with_setters() -> BundleState {
-        let mut bundle_builder = BundleState::builder(0..=0);
-        bundle_builder.set_state_present_account_info(
-            account1(),
-            AccountInfo {
-                nonce: 3,
-                balance: U256::from(20),
-                code_hash: KECCAK_EMPTY,
-                code: None,
-            },
-        );
-        bundle_builder.set_state_storage(
-            account1(),
-            HashMap::from([(slot1(), (U256::from(0), U256::from(15)))]),
-        );
-        bundle_builder.set_revert_address(0, account1());
-        bundle_builder.set_revert_account_info(
-            0,
-            account1(),
-            Some(Some(AccountInfo {
-                nonce: 1,
-                balance: U256::from(10),
-                code_hash: KECCAK_EMPTY,
-                code: None,
-            })),
-        );
-        bundle_builder.set_revert_storage(0, account1(), vec![(slot1(), U256::from(10))]);
-        bundle_builder.build()
     }
 
     fn sanity_path(bundle1: BundleState, bundle2: BundleState) {
@@ -1140,13 +1108,6 @@ mod tests {
     fn test_sanity_path() {
         sanity_path(test_bundle1(), test_bundle2());
         sanity_path(test_bundle3(), test_bundle4());
-    }
-
-    #[test]
-    fn test_sanity_path_with_setters() {
-        sanity_path(test_bundle1(), test_bundle2());
-        sanity_path(test_bundle3_with_setters(), test_bundle4());
-        sanity_path(test_bundle3(), test_bundle4_with_setters());
     }
 
     #[test]
