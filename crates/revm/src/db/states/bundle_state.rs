@@ -233,6 +233,53 @@ impl BundleBuilder {
     pub fn get_states(&self) -> &HashSet<Address> {
         &self.states
     }
+
+    /// Mutable getter for `states` field
+    pub fn get_states_mut(&mut self) -> &mut HashSet<Address> {
+        &mut self.states
+    }
+
+    /// Mutable getter for `state_original` field
+    pub fn get_state_original_mut(&mut self) -> &mut HashMap<Address, AccountInfo> {
+        &mut self.state_original
+    }
+
+    /// Mutable getter for `state_present` field
+    pub fn get_state_present_mut(&mut self) -> &mut HashMap<Address, AccountInfo> {
+        &mut self.state_present
+    }
+
+    /// Mutable getter for `state_storage` field
+    pub fn get_state_storage_mut(&mut self) -> &mut HashMap<Address, HashMap<U256, (U256, U256)>> {
+        &mut self.state_storage
+    }
+
+    /// Mutable getter for `reverts` field
+    pub fn get_reverts_mut(&mut self) -> &mut BTreeSet<(u64, Address)> {
+        &mut self.reverts
+    }
+
+    /// Mutable getter for `revert_range` field
+    pub fn get_revert_range_mut(&mut self) -> &mut RangeInclusive<u64> {
+        &mut self.revert_range
+    }
+
+    /// Mutable getter for `revert_account` field
+    pub fn get_revert_account_mut(
+        &mut self,
+    ) -> &mut HashMap<(u64, Address), Option<Option<AccountInfo>>> {
+        &mut self.revert_account
+    }
+
+    /// Mutable getter for `revert_storage` field
+    pub fn get_revert_storage_mut(&mut self) -> &mut HashMap<(u64, Address), Vec<(U256, U256)>> {
+        &mut self.revert_storage
+    }
+
+    /// Mutable getter for `contracts` field
+    pub fn get_contracts_mut(&mut self) -> &mut HashMap<B256, Bytecode> {
+        &mut self.contracts
+    }
 }
 
 /// Bundle retention policy for applying substate to the bundle.
@@ -1101,5 +1148,69 @@ mod tests {
         );
         // account2 got inserted
         assert_eq!(test.state.get(&address2).unwrap().info, Some(account2));
+    }
+
+    #[test]
+    fn test_getters() {
+        let mut builder = BundleBuilder::new(0..=3);
+
+        // Test get_states and get_states_mut
+        assert!(builder.get_states().is_empty());
+        builder.get_states_mut().insert(account1());
+        assert!(builder.get_states().contains(&account1()));
+
+        // Test get_state_original_mut
+        assert!(builder.get_state_original_mut().is_empty());
+        builder
+            .get_state_original_mut()
+            .insert(account1(), AccountInfo::default());
+        assert!(builder.get_state_original_mut().contains_key(&account1()));
+
+        // Test get_state_present_mut
+        assert!(builder.get_state_present_mut().is_empty());
+        builder
+            .get_state_present_mut()
+            .insert(account1(), AccountInfo::default());
+        assert!(builder.get_state_present_mut().contains_key(&account1()));
+
+        // Test get_state_storage_mut
+        assert!(builder.get_state_storage_mut().is_empty());
+        builder
+            .get_state_storage_mut()
+            .insert(account1(), HashMap::new());
+        assert!(builder.get_state_storage_mut().contains_key(&account1()));
+
+        // Test get_reverts_mut
+        assert!(builder.get_reverts_mut().is_empty());
+        builder.get_reverts_mut().insert((0, account1()));
+        assert!(builder.get_reverts_mut().contains(&(0, account1())));
+
+        // Test get_revert_range_mut
+        assert_eq!(builder.get_revert_range_mut().clone(), 0..=3);
+
+        // Test get_revert_account_mut
+        assert!(builder.get_revert_account_mut().is_empty());
+        builder
+            .get_revert_account_mut()
+            .insert((0, account1()), Some(None));
+        assert!(builder
+            .get_revert_account_mut()
+            .contains_key(&(0, account1())));
+
+        // Test get_revert_storage_mut
+        assert!(builder.get_revert_storage_mut().is_empty());
+        builder
+            .get_revert_storage_mut()
+            .insert((0, account1()), vec![(slot1(), U256::from(0))]);
+        assert!(builder
+            .get_revert_storage_mut()
+            .contains_key(&(0, account1())));
+
+        // Test get_contracts_mut
+        assert!(builder.get_contracts_mut().is_empty());
+        builder
+            .get_contracts_mut()
+            .insert(B256::default(), Bytecode::default());
+        assert!(builder.get_contracts_mut().contains_key(&B256::default()));
     }
 }
