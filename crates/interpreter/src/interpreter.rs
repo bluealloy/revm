@@ -15,7 +15,7 @@ use crate::{
     FunctionStack, Gas, Host, InstructionResult, InterpreterAction,
 };
 use core::cmp::min;
-use revm_primitives::{Bytecode, ChainSpec, Eof, U256};
+use revm_primitives::{Bytecode, Eof, U256};
 use std::borrow::ToOwned;
 
 /// EVM bytecode interpreter.
@@ -327,11 +327,8 @@ impl Interpreter {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline]
-    pub(crate) fn step<FN, ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-        &mut self,
-        instruction_table: &[FN; 256],
-        host: &mut H,
-    ) where
+    pub(crate) fn step<FN, H: Host + ?Sized>(&mut self, instruction_table: &[FN; 256], host: &mut H)
+    where
         FN: Fn(&mut Interpreter, &mut H),
     {
         // Get current opcode.
@@ -352,7 +349,7 @@ impl Interpreter {
     }
 
     /// Executes the interpreter until it returns or stops.
-    pub fn run<FN, ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
+    pub fn run<FN, H: Host + ?Sized>(
         &mut self,
         shared_memory: SharedMemory,
         instruction_table: &[FN; 256],
@@ -439,19 +436,14 @@ mod tests {
 
         let mut host = crate::DummyHost::<EthChainSpec>::default();
         let table: InstructionTable<DummyHost<EthChainSpec>> =
-            crate::opcode::make_instruction_table::<
-                EthChainSpec,
-                DummyHost<EthChainSpec>,
-                CancunSpec,
-            >();
+            crate::opcode::make_instruction_table::<DummyHost<EthChainSpec>, CancunSpec>();
         let _ = interp.run(EMPTY_SHARED_MEMORY, &table, &mut host);
 
-        let host: &mut dyn Host<EthChainSpec> = &mut host as &mut dyn Host<EthChainSpec>;
-        let table: InstructionTable<dyn Host<EthChainSpec>> = crate::opcode::make_instruction_table::<
-            EthChainSpec,
-            dyn Host<EthChainSpec>,
-            CancunSpec,
-        >();
+        let host: &mut dyn Host<ChainSpecT = EthChainSpec> =
+            &mut host as &mut dyn Host<ChainSpecT = EthChainSpec>;
+        let table: InstructionTable<dyn Host<ChainSpecT = EthChainSpec>> =
+            crate::opcode::make_instruction_table::<dyn Host<ChainSpecT = EthChainSpec>, CancunSpec>(
+            );
         let _ = interp.run(EMPTY_SHARED_MEMORY, &table, host);
     }
 }

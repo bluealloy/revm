@@ -5,37 +5,25 @@ use crate::{
     Host, Interpreter,
 };
 
-pub fn add<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn add<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1.wrapping_add(*op2);
 }
 
-pub fn mul<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn mul<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1.wrapping_mul(*op2);
 }
 
-pub fn sub<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn sub<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1.wrapping_sub(*op2);
 }
 
-pub fn div<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn div<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
     if *op2 != U256::ZERO {
@@ -43,19 +31,13 @@ pub fn div<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
     }
 }
 
-pub fn sdiv<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn sdiv<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
     *op2 = i256_div(op1, *op2);
 }
 
-pub fn rem<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn rem<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
     if *op2 != U256::ZERO {
@@ -63,37 +45,25 @@ pub fn rem<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
     }
 }
 
-pub fn smod<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn smod<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
     *op2 = i256_mod(op1, *op2)
 }
 
-pub fn addmod<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn addmod<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::MID);
     pop_top!(interpreter, op1, op2, op3);
     *op3 = op1.add_mod(op2, *op3)
 }
 
-pub fn mulmod<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn mulmod<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::MID);
     pop_top!(interpreter, op1, op2, op3);
     *op3 = op1.mul_mod(op2, *op3)
 }
 
-pub fn exp<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn exp<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
     pop_top!(interpreter, op1, op2);
     gas_or_fail!(interpreter, gas::exp_cost(SPEC::SPEC_ID, *op2));
     *op2 = op1.pow(*op2);
@@ -114,10 +84,7 @@ pub fn exp<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
 /// `y | !mask` where `|` is the bitwise `OR` and `!` is bitwise negation. Similarly, if
 /// `b == 0` then the yellow paper says the output should start with all zeros, then end with
 /// bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
-pub fn signextend<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn signextend<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, ext, x);
     // For 31 we also don't need to do anything.

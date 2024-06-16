@@ -240,7 +240,6 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
         let frame_result = match &table {
             InstructionTables::Plain(table) => self.run_the_loop(table, first_frame),
             InstructionTables::Boxed(table) => self.run_the_loop(table, first_frame),
-            InstructionTables::_Unused(_) => unreachable!("phantom data is not used"),
         };
 
         // return back instruction table
@@ -420,7 +419,9 @@ where
     }
 }
 
-impl<ChainSpecT: ChainSpec, EXT, DB: Database> Host<ChainSpecT> for Evm<'_, ChainSpecT, EXT, DB> {
+impl<ChainSpecT: ChainSpec, EXT, DB: Database> Host for Evm<'_, ChainSpecT, EXT, DB> {
+    type ChainSpecT = ChainSpecT;
+
     fn env(&self) -> &Env<ChainSpecT> {
         &self.context.evm.env
     }

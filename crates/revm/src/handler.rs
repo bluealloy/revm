@@ -22,11 +22,11 @@ use self::register::{HandleRegister, HandleRegisterBox};
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
-pub struct Handler<'a, ChainSpecT: ChainSpec, H: Host<ChainSpecT> + 'a, EXT, DB: Database> {
+pub struct Handler<'a, ChainSpecT: ChainSpec, H: Host + 'a, EXT, DB: Database> {
     /// Handler hardfork
     pub spec_id: ChainSpecT::Hardfork,
     /// Instruction table type.
-    pub instruction_table: Option<InstructionTables<'a, ChainSpecT, H>>,
+    pub instruction_table: Option<InstructionTables<'a, H>>,
     /// Registers that will be called on initialization.
     pub registers: Vec<HandleRegisters<ChainSpecT, EXT, DB>>,
     /// Validity handles.
@@ -67,14 +67,14 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EX
     /// Take instruction table.
     pub fn take_instruction_table(
         &mut self,
-    ) -> Option<InstructionTables<'a, ChainSpecT, Evm<'a, ChainSpecT, EXT, DB>>> {
+    ) -> Option<InstructionTables<'a, Evm<'a, ChainSpecT, EXT, DB>>> {
         self.instruction_table.take()
     }
 
     /// Set instruction table.
     pub fn set_instruction_table(
         &mut self,
-        table: InstructionTables<'a, ChainSpecT, Evm<'a, ChainSpecT, EXT, DB>>,
+        table: InstructionTables<'a, Evm<'a, ChainSpecT, EXT, DB>>,
     ) {
         self.instruction_table = Some(table);
     }

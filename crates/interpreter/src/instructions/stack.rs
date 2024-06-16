@@ -4,10 +4,7 @@ use crate::{
     Host, Interpreter,
 };
 
-pub fn pop<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn pop<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
     if let Err(result) = interpreter.stack.pop() {
         interpreter.instruction_result = result;
@@ -17,10 +14,7 @@ pub fn pop<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
 /// EIP-3855: PUSH0 instruction
 ///
 /// Introduce a new instruction which pushes the constant value 0 onto the stack.
-pub fn push0<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn push0<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, SHANGHAI);
     gas!(interpreter, gas::BASE);
     if let Err(result) = interpreter.stack.push(U256::ZERO) {
@@ -28,10 +22,7 @@ pub fn push0<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized, SPEC: Spec>(
     }
 }
 
-pub fn push<const N: usize, ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn push<const N: usize, H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     // SAFETY: In analysis we append trailing bytes to the bytecode so that this is safe to do
     // without bounds checking.
@@ -46,30 +37,21 @@ pub fn push<const N: usize, ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>
     interpreter.instruction_pointer = unsafe { ip.add(N) };
 }
 
-pub fn dup<const N: usize, ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn dup<const N: usize, H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     if let Err(result) = interpreter.stack.dup(N) {
         interpreter.instruction_result = result;
     }
 }
 
-pub fn swap<const N: usize, ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn swap<const N: usize, H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     if let Err(result) = interpreter.stack.swap(N) {
         interpreter.instruction_result = result;
     }
 }
 
-pub fn dupn<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn dupn<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     let imm = unsafe { *interpreter.instruction_pointer };
@@ -79,10 +61,7 @@ pub fn dupn<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
 }
 
-pub fn swapn<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn swapn<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     let imm = unsafe { *interpreter.instruction_pointer };
@@ -92,10 +71,7 @@ pub fn swapn<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
 }
 
-pub fn exchange<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>(
-    interpreter: &mut Interpreter,
-    _host: &mut H,
-) {
+pub fn exchange<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     let imm = unsafe { *interpreter.instruction_pointer };
@@ -119,7 +95,7 @@ mod test {
 
     #[test]
     fn dupn() {
-        let table = make_instruction_table::<EthChainSpec, _, PragueSpec>();
+        let table = make_instruction_table::<DummyHost<EthChainSpec>, PragueSpec>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
             DUPN, 0x00, DUPN, 0x01, DUPN, 0x02,
@@ -139,7 +115,7 @@ mod test {
 
     #[test]
     fn swapn() {
-        let table = make_instruction_table::<EthChainSpec, _, PragueSpec>();
+        let table = make_instruction_table::<DummyHost<EthChainSpec>, PragueSpec>();
         let mut host = DummyHost::default();
         let mut interp =
             Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([SWAPN, 0x00, SWAPN, 0x01])));
@@ -159,7 +135,7 @@ mod test {
 
     #[test]
     fn exchange() {
-        let table = make_instruction_table::<EthChainSpec, _, PragueSpec>();
+        let table = make_instruction_table::<DummyHost<EthChainSpec>, PragueSpec>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
             EXCHANGE, 0x00, EXCHANGE, 0x11,

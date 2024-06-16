@@ -230,7 +230,7 @@ impl<EXT, DB: Database> EvmHandler<'_, CustomOpcodeChainSpec, EXT, DB> {
 
 fn make_custom_instruction_table<
     ChainSpecT: ChainSpec,
-    H: Host<ChainSpecT> + ?Sized,
+    H: Host + ?Sized,
     SPEC: CustomOpcodeSpec,
 >() -> InstructionTable<H> {
     // custom opcode chain can reuse mainnet instructions
@@ -243,7 +243,7 @@ fn make_custom_instruction_table<
 
 fn custom_opcode_handler<
     ChainSpecT: ChainSpec,
-    H: Host<ChainSpecT> + ?Sized,
+    H: Host + ?Sized,
     SPEC: CustomOpcodeSpec,
 >(
     interpreter: &mut Interpreter,

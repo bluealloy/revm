@@ -5,12 +5,15 @@ pub use dummy::DummyHost;
 use revm_primitives::ChainSpec;
 
 /// EVM context host.
-pub trait Host<ChainSpecT: ChainSpec> {
+pub trait Host {
+    /// Chain specification.
+    type ChainSpecT: ChainSpec;
+
     /// Returns a reference to the environment.
-    fn env(&self) -> &Env<ChainSpecT>;
+    fn env(&self) -> &Env<Self::ChainSpecT>;
 
     /// Returns a mutable reference to the environment.
-    fn env_mut(&mut self) -> &mut Env<ChainSpecT>;
+    fn env_mut(&mut self) -> &mut Env<Self::ChainSpecT>;
 
     /// Load an account.
     ///
@@ -89,11 +92,11 @@ mod tests {
 
     use super::*;
 
-    fn assert_host<ChainSpecT: ChainSpec, H: Host<ChainSpecT> + ?Sized>() {}
+    fn assert_host<H: Host + ?Sized>() {}
 
     #[test]
     fn object_safety() {
-        assert_host::<EthChainSpec, DummyHost<EthChainSpec>>();
-        assert_host::<EthChainSpec, dyn Host<EthChainSpec>>();
+        assert_host::<DummyHost<EthChainSpec>>();
+        assert_host::<dyn Host<ChainSpecT = EthChainSpec>>();
     }
 }

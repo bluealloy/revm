@@ -60,7 +60,6 @@ pub fn inspector_handle_register<
             .into_iter()
             .map(|i| inspector_instruction(i))
             .collect::<Vec<_>>(),
-        InstructionTables::_Unused(_) => unreachable!("phantom data is not used"),
     };
 
     // Register inspector Log instruction.
@@ -300,10 +299,9 @@ mod tests {
     #[test]
     fn test_make_boxed_instruction_table() {
         type MyEvm<'a> = Evm<'a, TestChainSpec, NoOpInspector, EmptyDB>;
-        let table: InstructionTable<MyEvm<'_>> =
-            make_instruction_table::<TestChainSpec, MyEvm<'_>, BerlinSpec>();
+        let table: InstructionTable<MyEvm<'_>> = make_instruction_table::<MyEvm<'_>, BerlinSpec>();
         let _boxed_table: BoxedInstructionTable<'_, MyEvm<'_>> =
-            make_boxed_instruction_table::<'_, TestChainSpec, MyEvm<'_>, BerlinSpec, _>(
+            make_boxed_instruction_table::<'_, MyEvm<'_>, BerlinSpec, _>(
                 table,
                 inspector_instruction,
             );
