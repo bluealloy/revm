@@ -137,17 +137,19 @@ impl<DB: Database> ContextPrecompiles<DB> {
     /// Clones the precompiles map if it is shared.
     #[inline]
     pub fn to_mut(&mut self) -> &mut HashMap<Address, ContextPrecompile<DB>> {
-        self.mutate_into_owned();
+        if let PrecompilesCow::StaticRef(_) = self.inner {
+            self.mutate_into_owned();
+        }
 
         let PrecompilesCow::Owned(inner) = &mut self.inner else {
-            unreachable!()
+            unreachable!("self is mutated to Owned.")
         };
         inner
     }
 
     /// Mutates Self into Owned variant, or do nothing if it is already Owned.
     /// Mutation will clone all precompiles.
-    #[inline]
+    #[cold]
     fn mutate_into_owned(&mut self) {
         let PrecompilesCow::StaticRef(precompiles) = self.inner else {
             return;
