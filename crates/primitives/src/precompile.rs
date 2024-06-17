@@ -120,9 +120,7 @@ impl Precompile {
 
     /// Call the precompile with the given input and gas limit and return the result.
     ///
-    /// # Panics
-    ///
-    /// Panics if the precompile is a mutable stateful precompile.
+    /// Returns an error if the precompile is mutable.
     pub fn call_ref(&self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult {
         match *self {
             Precompile::Standard(p) => p(bytes, gas_price),
