@@ -606,12 +606,12 @@ opcodes! {
     0x53 => MSTORE8  => memory::mstore8                      => stack_io(2, 0);
     0x54 => SLOAD    => host::sload::<H, SPEC>   => stack_io(1, 1);
     0x55 => SSTORE   => host::sstore::<H, SPEC>  => stack_io(2, 0);
-    0x56 => JUMP     => control::jump                        => stack_io(1, 0), not_eof;
-    0x57 => JUMPI    => control::jumpi                       => stack_io(2, 0), not_eof;
-    0x58 => PC       => control::pc                          => stack_io(0, 1), not_eof;
-    0x59 => MSIZE    => memory::msize                        => stack_io(0, 1);
-    0x5A => GAS      => system::gas                          => stack_io(0, 1), not_eof;
-    0x5B => JUMPDEST => control::jumpdest_or_nop             => stack_io(0, 0);
+    0x56 => JUMP     => control::jump            => stack_io(1, 0), not_eof;
+    0x57 => JUMPI    => control::jumpi           => stack_io(2, 0), not_eof;
+    0x58 => PC       => control::pc              => stack_io(0, 1), not_eof;
+    0x59 => MSIZE    => memory::msize            => stack_io(0, 1);
+    0x5A => GAS      => system::gas              => stack_io(0, 1), not_eof;
+    0x5B => JUMPDEST => control::jumpdest_or_nop => stack_io(0, 0);
     0x5C => TLOAD    => host::tload::<H, SPEC>   => stack_io(1, 1);
     0x5D => TSTORE   => host::tstore::<H, SPEC>  => stack_io(2, 0);
     0x5E => MCOPY    => memory::mcopy::<H, SPEC> => stack_io(3, 0);

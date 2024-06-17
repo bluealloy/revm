@@ -1,7 +1,19 @@
-use crate::{Address, Bytes, HashMap, TransactTo, B256, GAS_PER_BLOB, U256};
+use crate::{Address, Bytes, HashMap, InvalidTransaction, TransactTo, B256, GAS_PER_BLOB, U256};
+use cfg_if::cfg_if;
+use core::fmt::{Debug, Display};
 
 /// Trait for retrieving transaction information required for execution.
-pub trait Transaction {
+pub trait Transaction: Clone + Debug + Default + PartialEq + Eq {
+    cfg_if! {
+        if #[cfg(feature = "serde")] {
+            /// The error type that can be returned when validating a transaction.
+            type TransactionValidationError: Clone + Debug + Display + PartialEq + Eq + serde::de::DeserializeOwned + serde::Serialize + From<InvalidTransaction>;
+        } else {
+            /// The error type that can be returned when validating a transaction.
+            type TransactionValidationError: Clone + Debug + Display + PartialEq + Eq + From<InvalidTransaction>;
+        }
+    }
+
     /// Caller aka Author aka transaction signer.
     fn caller(&self) -> &Address;
     /// The gas limit of the transaction.

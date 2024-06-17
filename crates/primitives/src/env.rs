@@ -609,6 +609,8 @@ pub struct TxEnv {
 }
 
 impl Transaction for TxEnv {
+    type TransactionValidationError = InvalidTransaction;
+
     #[inline]
     fn caller(&self) -> &Address {
         &self.caller

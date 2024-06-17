@@ -37,10 +37,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT: 'a, DB: Database + 'a>
     ValidationHandler<'a, ChainSpecT, EXT, DB>
 {
     /// Create new ValidationHandles
-    pub fn new<SPEC: Spec + 'a>() -> Self
-    where
-        ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
-    {
+    pub fn new<SPEC: Spec + 'a>() -> Self {
         Self {
             initial_tx_gas: Arc::new(mainnet::validate_initial_tx_gas::<ChainSpecT, SPEC, DB>),
             env: Arc::new(mainnet::validate_env::<ChainSpecT, SPEC, DB>),

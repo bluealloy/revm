@@ -1,4 +1,6 @@
-use crate::{Address, Bytes, ChainSpec, EthChainSpec, Log, State, U256};
+use crate::{
+    Address, Bytes, ChainSpec, EthChainSpec, HaltReasonTrait, Log, State, Transaction, U256,
+};
 use core::fmt;
 use std::{boxed::Box, string::String, vec::Vec};
 
@@ -137,11 +139,11 @@ impl Output {
 }
 
 /// Main EVM error.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EVMError<ChainSpecT: ChainSpec, DBError> {
     /// Transaction validation error.
-    Transaction(ChainSpecT::TransactionValidationError),
+    Transaction(<ChainSpecT::Transaction as Transaction>::TransactionValidationError),
     /// Header validation error.
     Header(InvalidHeader),
     /// Database error.
@@ -157,7 +159,8 @@ impl<ChainSpecT, DBError: std::error::Error + 'static> std::error::Error
     for EVMError<ChainSpecT, DBError>
 where
     ChainSpecT: ChainSpec,
-    ChainSpecT::TransactionValidationError: std::error::Error + 'static,
+    <ChainSpecT::Transaction as Transaction>::TransactionValidationError:
+        std::error::Error + 'static,
 {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
@@ -385,6 +388,8 @@ pub enum HaltReason {
     OutOfFunds,
     CallTooDeep,
 }
+
+impl HaltReasonTrait for HaltReason {}
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

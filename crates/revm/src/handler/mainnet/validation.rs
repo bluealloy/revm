@@ -8,10 +8,7 @@ use crate::{
 /// Validate environment for the mainnet.
 pub fn validate_env<ChainSpecT: ChainSpec, SPEC: Spec, DB: Database>(
     env: &Env<ChainSpecT>,
-) -> Result<(), EVMError<ChainSpecT, DB::Error>>
-where
-    ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
-{
+) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
     // Important: validate block before tx.
     env.validate_block_env::<SPEC>()?;
     env.validate_tx::<SPEC>()
@@ -22,10 +19,7 @@ where
 /// Validates transaction against the state.
 pub fn validate_tx_against_state<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
-) -> Result<(), EVMError<ChainSpecT, DB::Error>>
-where
-    ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
-{
+) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
     // load acc
     let tx_caller = context.evm.env.tx.caller();
     let (caller_account, _) = context
@@ -48,10 +42,7 @@ where
 /// Validate initial transaction gas.
 pub fn validate_initial_tx_gas<ChainSpecT: ChainSpec, SPEC: Spec, DB: Database>(
     env: &Env<ChainSpecT>,
-) -> Result<u64, EVMError<ChainSpecT, DB::Error>>
-where
-    ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
-{
+) -> Result<u64, EVMError<ChainSpecT, DB::Error>> {
     let input = &env.tx.data();
     let is_create = env.tx.transact_to().is_create();
     let access_list = &env.tx.access_list();

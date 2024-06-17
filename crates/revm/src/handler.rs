@@ -41,10 +41,7 @@ pub struct Handler<'a, ChainSpecT: ChainSpec, H: Host + 'a, EXT, DB: Database> {
 
 impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EXT, DB> {
     /// Creates a base/vanilla Ethereum handler with the provided spec id.
-    pub fn mainnet_with_spec(spec_id: ChainSpecT::Hardfork) -> Self
-    where
-        ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
-    {
+    pub fn mainnet_with_spec(spec_id: ChainSpecT::Hardfork) -> Self {
         spec_to_generic!(
             spec_id.into(),
             Self {
@@ -121,10 +118,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EX
     }
 }
 
-impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EXT, DB>
-where
-    ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
-{
+impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EXT, DB> {
     /// Pop last handle register and reapply all registers that are left.
     pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<ChainSpecT, EXT, DB>> {
         let out = self.registers.pop();

@@ -2,6 +2,8 @@
 
 pub use SpecId::*;
 
+use crate::HardforkTrait;
+
 /// Specification IDs and their activation block.
 ///
 /// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
@@ -31,6 +33,8 @@ pub enum SpecId {
     #[default]
     LATEST = u8::MAX,
 }
+
+impl HardforkTrait for SpecId {}
 
 impl SpecId {
     /// Returns the `SpecId` for the given `u8`.

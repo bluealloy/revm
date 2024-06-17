@@ -38,6 +38,7 @@ impl<ChainSpecT: ChainSpec> DummyHost<ChainSpecT> {
 
 impl<ChainSpecT: ChainSpec> Host for DummyHost<ChainSpecT> {
     type ChainSpecT = ChainSpecT;
+
     #[inline]
     fn env(&self) -> &Env<ChainSpecT> {
         &self.env

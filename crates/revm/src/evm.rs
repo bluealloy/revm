@@ -409,10 +409,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
     }
 }
 
-impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB>
-where
-    ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
-{
+impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
     /// Modify spec id, this will create new EVM that matches this spec id.
     pub fn modify_spec_id(&mut self, spec_id: ChainSpecT::Hardfork) {
         self.handler.modify_spec_id(spec_id);

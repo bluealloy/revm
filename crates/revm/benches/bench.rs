@@ -14,7 +14,6 @@ use std::time::Duration;
 
 fn analysis(c: &mut Criterion) {
     let evm = Evm::builder()
-        .with_chain_spec::<EthChainSpec>()
         .modify_tx_env(|tx| {
             tx.caller = address!("0000000000000000000000000000000000000002");
             tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
@@ -57,7 +56,6 @@ fn analysis(c: &mut Criterion) {
 
 fn snailtracer(c: &mut Criterion) {
     let mut evm = Evm::builder()
-        .with_chain_spec::<EthChainSpec>()
         .with_db(BenchmarkDB::new_bytecode(bytecode(SNAILTRACER)))
         .modify_tx_env(|tx| {
             tx.caller = address!("1000000000000000000000000000000000000000");
@@ -78,7 +76,6 @@ fn snailtracer(c: &mut Criterion) {
 
 fn transfer(c: &mut Criterion) {
     let mut evm = Evm::builder()
-        .with_chain_spec::<EthChainSpec>()
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
         .modify_tx_env(|tx| {
             tx.caller = address!("0000000000000000000000000000000000000001");

@@ -43,16 +43,11 @@ impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthChainSpec, (), EmptyDB> 
 
 impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
     EvmBuilder<'a, SetGenericStage, ChainSpecT, EXT, DB>
-where
-    ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
 {
     /// Sets the [`ChainSpec`] that will be used by [`Evm`].
     pub fn with_chain_spec<NewChainSpecT: ChainSpec>(
         self,
-    ) -> EvmBuilder<'a, SetGenericStage, NewChainSpecT, EXT, DB>
-    where
-        NewChainSpecT::TransactionValidationError: From<InvalidTransaction>,
-    {
+    ) -> EvmBuilder<'a, SetGenericStage, NewChainSpecT, EXT, DB> {
         let Context { evm, external } = self.context;
 
         EvmBuilder {
@@ -172,9 +167,8 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
     }
 }
 
-impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB>
-where
-    ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
+impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
+    EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB>
 {
     /// Sets the [`EmptyDB`] and resets the [`Handler`] to default mainnet.
     pub fn reset_handler_with_empty_db(
@@ -378,8 +372,6 @@ impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
 
 impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
     EvmBuilder<'a, BuilderStage, ChainSpecT, EXT, DB>
-where
-    ChainSpecT::TransactionValidationError: From<InvalidTransaction>,
 {
     /// Creates the default handler.
     ///
