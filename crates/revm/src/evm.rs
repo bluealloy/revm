@@ -8,7 +8,7 @@ use crate::{
     },
     primitives::{
         specification::SpecId, BlockEnv, Bytes, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
-        ExecutionResult, HandlerCfg, ResultAndState, TransactTo, TxEnv,
+        ExecutionResult, HandlerCfg, ResultAndState, TxEnv, TxKind,
     },
     Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
@@ -344,11 +344,11 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let exec = self.handler.execution();
         // call inner handling of call/create
         let first_frame_or_result = match ctx.evm.env.tx.transact_to {
-            TransactTo::Call(_) => exec.call(
+            TxKind::Call(_) => exec.call(
                 ctx,
                 CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
             )?,
-            TransactTo::Create => {
+            TxKind::Create => {
                 // if first byte of data is magic 0xEF00, then it is EOFCreate.
                 if spec_id.is_enabled_in(SpecId::PRAGUE)
                     && ctx

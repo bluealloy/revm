@@ -1,6 +1,6 @@
 use revm::{
     db::BenchmarkDB,
-    primitives::{Bytecode, TransactTo, U256},
+    primitives::{Bytecode, TxKind, U256},
     Evm,
 };
 
@@ -16,7 +16,7 @@ fn main() {
                 .parse()
                 .unwrap();
             tx.value = U256::from(10);
-            tx.transact_to = TransactTo::Call(
+            tx.transact_to = TxKind::Call(
                 "0x0000000000000000000000000000000000000000"
                     .parse()
                     .unwrap(),

@@ -10,7 +10,7 @@ use revm::{
     inspectors::TracerEip3155,
     primitives::{
         calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, Eof,
-        ExecutionResult, SpecId, TransactTo, B256, EOF_MAGIC_BYTES, U256,
+        ExecutionResult, SpecId, TxKind, B256, EOF_MAGIC_BYTES, U256,
     },
     Evm, State,
 };
@@ -364,8 +364,8 @@ pub fn execute_test_suite(
                     .collect();
 
                 let to = match unit.transaction.to {
-                    Some(add) => TransactTo::Call(add),
-                    None => TransactTo::Create,
+                    Some(add) => TxKind::Call(add),
+                    None => TxKind::Create,
                 };
                 env.tx.transact_to = to;
 

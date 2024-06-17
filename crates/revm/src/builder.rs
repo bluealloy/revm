@@ -444,7 +444,7 @@ mod test {
         inspector::inspector_handle_register,
         inspectors::NoOpInspector,
         primitives::{
-            address, AccountInfo, Address, Bytecode, Bytes, PrecompileResult, TransactTo, U256,
+            address, AccountInfo, Address, Bytecode, Bytes, PrecompileResult, TxKind, U256,
         },
         Context, ContextPrecompile, ContextStatefulPrecompile, Evm, InMemoryDB, InnerEvmContext,
     };
@@ -474,7 +474,7 @@ mod test {
             .modify_db(|db| {
                 db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
             })
-            .modify_tx_env(|tx| tx.transact_to = TransactTo::Call(to_addr))
+            .modify_tx_env(|tx| tx.transact_to = TxKind::Call(to_addr))
             // we need to use handle register box to capture the custom context in the handle
             // register
             .append_handler_register_box(Box::new(move |handler| {
@@ -523,7 +523,7 @@ mod test {
             .modify_db(|db| {
                 db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
             })
-            .modify_tx_env(|tx| tx.transact_to = TransactTo::Call(to_addr))
+            .modify_tx_env(|tx| tx.transact_to = TxKind::Call(to_addr))
             .append_handler_register(|handler| {
                 handler.instruction_table.insert(0xEF, custom_instruction)
             })

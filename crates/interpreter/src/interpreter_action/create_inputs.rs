@@ -1,5 +1,5 @@
 pub use crate::primitives::CreateScheme;
-use crate::primitives::{Address, Bytes, TransactTo, TxEnv, U256};
+use crate::primitives::{Address, Bytes, TxEnv, TxKind, U256};
 use std::boxed::Box;
 
 /// Inputs for a create call.
@@ -21,7 +21,7 @@ pub struct CreateInputs {
 impl CreateInputs {
     /// Creates new create inputs.
     pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
-        let TransactTo::Create = tx_env.transact_to else {
+        let TxKind::Create = tx_env.transact_to else {
             return None;
         };
 
