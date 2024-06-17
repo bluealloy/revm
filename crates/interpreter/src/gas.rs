@@ -72,6 +72,11 @@ impl Gas {
         self.remaining
     }
 
+    /// Return remaining gas after subtracting 63/64 parts.
+    pub const fn remaining_63_of_64_parts(&self) -> u64 {
+        self.remaining - self.remaining / 64
+    }
+
     /// Erases a gas cost from the totals.
     #[inline]
     pub fn erase_cost(&mut self, returned: u64) {

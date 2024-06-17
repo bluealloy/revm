@@ -55,9 +55,11 @@ pub fn calc_call_gas<SPEC: Spec>(
 
     // EIP-150: Gas cost changes for IO-heavy operations
     let gas_limit = if SPEC::enabled(TANGERINE) {
-        let gas = interpreter.gas().remaining();
         // take l64 part of gas_limit
-        min(gas - gas / 64, local_gas_limit)
+        min(
+            interpreter.gas().remaining_63_of_64_parts(),
+            local_gas_limit,
+        )
     } else {
         local_gas_limit
     };
