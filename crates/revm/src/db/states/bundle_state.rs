@@ -393,6 +393,7 @@ impl BundleRetention {
 /// Reverts and created when TransitionState is applied to BundleState.
 /// And can be used to revert BundleState to the state before transition.
 #[derive(Default, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BundleState {
     /// Account state.
     pub state: HashMap<Address, BundleAccount>,
