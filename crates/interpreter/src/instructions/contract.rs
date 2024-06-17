@@ -59,7 +59,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
 
     let created_address = interpreter
         .contract
-        .caller
+        .target_address
         .create2(salt.to_be_bytes(), keccak256(sub_container));
 
     let gas_reduce = max(interpreter.gas.remaining() / 64, 5000);
