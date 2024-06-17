@@ -516,7 +516,7 @@ pub fn execute_test_suite(
                     }
                 }
             }
-            // genesis_addresses.insert(*address);
+            genesis_addresses.insert(*address);
             // cache_state2.insert_account_with_storage(*address, acc_info, account_storage);
         }
 

@@ -1,8 +1,4 @@
-use crate::{
-    primitives::{Address, Bytecode, Bytes, Log, LogData, B256, U256},
-    Database,
-    EvmContext,
-};
+use crate::{primitives::{Address, Bytecode, Bytes, Log, LogData, B256, U256}, Database, EvmContext, JournalEntry};
 use core::{cell::RefCell, fmt::Debug};
 use fluentbase_core::{debug_log, helpers::exit_code_from_evm_error};
 use fluentbase_sdk::{
@@ -384,5 +380,7 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
             .map_err(|_| "unexpected EVM error")
             .unwrap();
         account.mark_created();
+        let last_journal = ctx.journaled_state.journal.last_mut().unwrap();
+        last_journal.push(JournalEntry::AccountCreated { address });
     }
 }

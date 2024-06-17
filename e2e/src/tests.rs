@@ -24,21 +24,6 @@ macro_rules! define_tests {
     };
 }
 
-mod single_test {
-    define_tests! {
-        // StateRootMismatch2
-        fn t1("tests/GeneralStateTests/stCreateTest/CreateAddressWarmAfterFail.json");
-
-        // Uint conversion error: Overflow(256, 18446744073709551553, 18446744073709551615)
-        // fn t2("tests/GeneralStateTests/stRandom/randomStatetest384.json");
-
-        // StateRootMismatch - original state root mismatch
-        // fn t3("tests/GeneralStateTests/stRevertTest/RevertInCreateInInit_Paris.json");
-
-        // fn t1("tests/GeneralStateTests/Pyspecs/cancun/eip1153_tstore/reentrant_selfdestructing_call.json");
-    }
-}
-
 mod st_time_consuming {
     define_tests! {
 

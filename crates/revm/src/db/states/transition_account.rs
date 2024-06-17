@@ -53,22 +53,6 @@ impl TransitionAccount {
         None
     }
 
-    /// Return new contract bytecode if it is changed or newly created.
-    pub fn has_new_rwasm_contract(&self) -> Option<(B256, &Bytecode)> {
-        let present_new_codehash = self.info.as_ref().map(|info| &info.rwasm_code_hash);
-        let previous_codehash = self
-            .previous_info
-            .as_ref()
-            .map(|info| &info.rwasm_code_hash);
-        if present_new_codehash != previous_codehash {
-            return self
-                .info
-                .as_ref()
-                .and_then(|info| info.rwasm_code.as_ref().map(|c| (info.rwasm_code_hash, c)));
-        }
-        None
-    }
-
     /// Return the balance of account before transition.
     pub fn previous_balance(&self) -> U256 {
         self.previous_info
