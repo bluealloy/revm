@@ -67,6 +67,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     gas!(interpreter, gas_limit);
 
     // Send container for execution container is preverified.
+    interpreter.instruction_result = InstructionResult::CallOrCreate;
     interpreter.next_action = InterpreterAction::EOFCreate {
         inputs: Box::new(EOFCreateInputs::new(
             interpreter.contract.target_address,
