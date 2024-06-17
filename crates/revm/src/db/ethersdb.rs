@@ -147,8 +147,9 @@ mod tests {
     use super::*;
     use ethers_providers::{Http, Provider};
 
-    //#[test]
-    fn _can_get_basic() {
+    #[test]
+    #[ignore = "flaky RPC"]
+    fn can_get_basic() {
         let client = Provider::<Http>::try_from(
             "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27",
         )
