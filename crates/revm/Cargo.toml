@@ -54,7 +54,7 @@ ethers-core = { version = "2.0", optional = true }
 # alloy-transport = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
 
 [dev-dependencies]
-alloy-sol-types = { version = "0.7.0", default-features = false, features = [
+alloy-sol-types = { version = "0.7.6", default-features = false, features = [
     "std",
 ] }
 ethers-contract = { version = "2.0.14", default-features = false }
