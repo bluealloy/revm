@@ -22,7 +22,7 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-alloy-primitives = { version = "0.7.2", default-features = false, features = [
+alloy-primitives = { version = "0.7.6", default-features = false, features = [
     "rlp",
 ] }
 hashbrown = "0.14"
