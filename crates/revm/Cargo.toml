@@ -23,8 +23,8 @@ all = "warn"
 
 [dependencies]
 # revm
-revm-interpreter = { workspace = true }
-revm-interpreter-fluent = { workspace = true }
+revm-interpreter = { workspace = true, optional = true }
+revm-interpreter-fluent = { workspace = true, optional = true }
 revm-precompile = { workspace = true }
 
 fluentbase-sdk = { workspace = true }
@@ -35,7 +35,7 @@ fluentbase-codec = { workspace = true }
 fluentbase-genesis = { workspace = true }
 fluentbase-poseidon = { workspace = true }
 
-rwasm = { workspace = true }
+rwasm = { workspace = true, optional = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
@@ -94,6 +94,11 @@ std = [
     "fluentbase-runtime/std",
     "fluentbase-codec/std",
     "fluentbase-genesis/std",
+    "rwasm?/std",
+]
+e2e = [
+    "fluentbase-core/e2e",
+    "fluentbase-sdk/e2e",
 ]
 hashbrown = ["revm-interpreter/hashbrown", "revm-precompile/hashbrown"]
 serde = ["dep:serde", "revm-interpreter/serde"]
@@ -104,7 +109,11 @@ portable = ["revm-precompile/portable", "revm-interpreter/portable"]
 
 test-utils = []
 
-optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
+optimism = [
+    "revm-interpreter/optimism",
+    "revm-interpreter/optimism",
+    "revm-precompile/optimism",
+]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
 optimism-default-handler = [
     "optimism",
@@ -154,15 +163,14 @@ secp256k1 = ["revm-precompile/secp256k1"]
 c-kzg = ["revm-precompile/c-kzg"]
 blst = ["revm-precompile/blst"]
 
-rwasm = [
-    "revm-interpreter/rwasm",
-    "revm-precompile/rwasm",
-]
 debug_print = [
     "revm-interpreter/debug_print"
 ]
 revm-rwasm = [
+    "e2e",
     "rwasm",
+    "revm-interpreter/rwasm",
+    "revm-precompile/rwasm",
     "revm-interpreter/revm-rwasm",
     "fluentbase-core/revm-rwasm",
 ]

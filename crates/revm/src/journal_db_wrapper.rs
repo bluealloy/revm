@@ -1,8 +1,4 @@
-use crate::{
-    primitives::{Address, Bytecode, Bytes, Log, LogData, B256, U256},
-    Database,
-    EvmContext,
-};
+use crate::{primitives::{Address, Bytecode, Bytes, Log, LogData, B256, U256}, Database, EvmContext, JournalEntry};
 use core::{cell::RefCell, fmt::Debug};
 use fluentbase_core::{debug_log, helpers::exit_code_from_evm_error};
 use fluentbase_sdk::{
@@ -204,13 +200,13 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
 
     fn storage(&self, address: Address, slot: U256, committed: bool) -> (U256, bool) {
         let mut ctx = self.ctx.borrow_mut();
-        let (address, slot) = if address != EVM_STORAGE_ADDRESS {
-            // let storage_key = calc_storage_key(&address, slot.as_le_slice().as_ptr());
-            // (EVM_STORAGE_ADDRESS, U256::from_le_bytes(storage_key))
-            (address, slot)
-        } else {
-            (address, slot)
-        };
+        // let (address, slot) = if address != EVM_STORAGE_ADDRESS {
+        //     // let storage_key = calc_storage_key(&address, slot.as_le_slice().as_ptr());
+        //     // (EVM_STORAGE_ADDRESS, U256::from_le_bytes(storage_key))
+        //     (address, slot)
+        // } else {
+        //     (address, slot)
+        // };
         if committed {
             let (account, _) = ctx
                 .load_account(address)
@@ -234,13 +230,17 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
 
     fn write_storage(&self, address: Address, slot: U256, value: U256) -> bool {
         let mut ctx = self.ctx.borrow_mut();
-        let (address, slot) = if address != EVM_STORAGE_ADDRESS {
-            // let storage_key = calc_storage_key(&address, slot.as_le_slice().as_ptr());
-            // (EVM_STORAGE_ADDRESS, U256::from_le_bytes(storage_key))
-            (address, slot)
-        } else {
-            (address, slot)
-        };
+        // let (address, slot) = if address != EVM_STORAGE_ADDRESS {
+        //     // let storage_key = calc_storage_key(&address, slot.as_le_slice().as_ptr());
+        //     // (EVM_STORAGE_ADDRESS, U256::from_le_bytes(storage_key))
+        //     (address, slot)
+        // } else {
+        //     (address, slot)
+        // };
+        // println!(
+        //     "write_storage: address {} slot {} value {}",
+        //     &address, &slot, &value
+        // );
         let result = ctx
             .sstore(address, slot, value)
             .map_err(|_| panic!("failed to update storage slot"))
@@ -380,5 +380,7 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
             .map_err(|_| "unexpected EVM error")
             .unwrap();
         account.mark_created();
+        let last_journal = ctx.journaled_state.journal.last_mut().unwrap();
+        last_journal.push(JournalEntry::AccountCreated { address });
     }
 }

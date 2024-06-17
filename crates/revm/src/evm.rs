@@ -576,7 +576,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         if value == U256::ZERO {
             self.context.evm.load_account(callee_address)?;
-            // .expect("failed to load");
             self.context.evm.journaled_state.touch(&callee_address);
         }
 
