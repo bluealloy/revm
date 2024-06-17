@@ -2,9 +2,10 @@ use crate::{
     db::{Database, DatabaseRef},
     primitives::{AccountInfo, Address, Bytecode, B256, KECCAK_EMPTY, U256},
 };
+use alloy_eips::BlockId;
 use alloy_provider::{Network, Provider};
-use alloy_rpc_types::BlockId;
 use alloy_transport::{Transport, TransportError};
+use std::future::IntoFuture;
 use tokio::runtime::{Builder, Handle};
 
 /// An alloy-powered REVM [Database].
@@ -75,10 +76,21 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> DatabaseRef for AlloyD
         let f = async {
             let nonce = self
                 .provider
-                .get_transaction_count(address, self.block_number);
-            let balance = self.provider.get_balance(address, self.block_number);
-            let code = self.provider.get_code_at(address, self.block_number);
-            tokio::join!(nonce, balance, code)
+                .get_transaction_count(address)
+                .block_id(self.block_number);
+            let balance = self
+                .provider
+                .get_balance(address)
+                .block_id(self.block_number);
+            let code = self
+                .provider
+                .get_code_at(address)
+                .block_id(self.block_number);
+            tokio::join!(
+                nonce.into_future(),
+                balance.into_future(),
+                code.into_future()
+            )
         };
 
         let (nonce, balance, code) = Self::block_on(f);
@@ -112,11 +124,11 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> DatabaseRef for AlloyD
     }
 
     fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
-        let slot_val = Self::block_on(self.provider.get_storage_at(
-            address,
-            index,
-            self.block_number,
-        ))?;
+        let f = self
+            .provider
+            .get_storage_at(address, index)
+            .block_id(self.block_number);
+        let slot_val = Self::block_on(f.into_future())?;
         Ok(slot_val)
     }
 }
@@ -147,11 +159,11 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> Database for AlloyDB<T
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use alloy_provider::ProviderBuilder;
 
-    use super::*;
-
     #[test]
+    #[ignore = "flaky RPC"]
     fn can_get_basic() {
         let client = ProviderBuilder::new().on_http(
             "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27"

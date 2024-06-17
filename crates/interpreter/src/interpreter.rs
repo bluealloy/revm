@@ -17,6 +17,7 @@ use crate::{
 use core::cmp::min;
 use revm_primitives::{Bytecode, Eof, U256};
 use std::borrow::ToOwned;
+use std::sync::Arc;
 
 /// EVM bytecode interpreter.
 #[derive(Debug)]
@@ -100,7 +101,7 @@ impl Interpreter {
     }
 
     #[inline]
-    pub fn eof(&self) -> Option<&Eof> {
+    pub fn eof(&self) -> Option<&Arc<Eof>> {
         self.contract.bytecode.eof()
     }
 
