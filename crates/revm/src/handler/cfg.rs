@@ -39,7 +39,7 @@ impl<ChainSpecT: ChainSpec> Deref for CfgEnvWithChainSpec<ChainSpecT> {
 }
 
 /// Evm environment with the chain spec id.
-#[derive_where(Clone, Debug; ChainSpecT::Hardfork, ChainSpecT::Transaction)]
+#[derive_where(Clone, Debug; ChainSpecT::Block, ChainSpecT::Hardfork, ChainSpecT::Transaction)]
 pub struct EnvWithChainSpec<ChainSpecT>
 where
     ChainSpecT: ChainSpec,

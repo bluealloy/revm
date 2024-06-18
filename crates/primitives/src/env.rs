@@ -19,7 +19,7 @@ use std::boxed::Box;
 use std::vec::Vec;
 
 /// EVM environment configuration.
-#[derive_where(Clone, Debug, Default; ChainSpecT::Transaction)]
+#[derive_where(Clone, Debug, Default; ChainSpecT::Block, ChainSpecT::Transaction)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Env<ChainSpecT: ChainSpec> {
     /// Configuration of the EVM itself.
@@ -266,7 +266,7 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
     }
 }
 
-impl<ChainSpecT: ChainSpec<Transaction: Default>> Env<ChainSpecT> {
+impl<ChainSpecT: ChainSpec<Block: Default, Transaction: Default>> Env<ChainSpecT> {
     /// Resets environment to default values.
     #[inline]
     pub fn clear(&mut self) {

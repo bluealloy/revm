@@ -16,32 +16,16 @@ use crate::{
     },
     ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
-use core::{
-    fmt::{self, Debug},
-    ops::{Deref, DerefMut},
-};
+use core::ops::{Deref, DerefMut};
 use std::{boxed::Box, sync::Arc};
 
 /// EVM context that contains the inner EVM context and precompiles.
-#[derive_where(Clone; ChainSpecT::Transaction, DB, DB::Error)]
+#[derive_where(Clone, Debug; ChainSpecT::Block, ChainSpecT::Transaction, DB, DB::Error)]
 pub struct EvmContext<ChainSpecT: ChainSpec, DB: Database> {
     /// Inner EVM context.
     pub inner: InnerEvmContext<ChainSpecT, DB>,
     /// Precompiles that are available for evm.
     pub precompiles: ContextPrecompiles<ChainSpecT, DB>,
-}
-
-impl<ChainSpecT, DB> Debug for EvmContext<ChainSpecT, DB>
-where
-    ChainSpecT: ChainSpec<Transaction: Debug>,
-    DB: Database<Error: Debug> + Debug,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("EvmContext")
-            .field("inner", &self.inner)
-            .field("precompiles", &self.inner)
-            .finish_non_exhaustive()
-    }
 }
 
 impl<ChainSpecT: ChainSpec, DB: Database> Deref for EvmContext<ChainSpecT, DB> {
@@ -60,7 +44,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> DerefMut for EvmContext<ChainSpecT, DB
 
 impl<ChainSpecT, DB> EvmContext<ChainSpecT, DB>
 where
-    ChainSpecT: ChainSpec<Transaction: Default>,
+    ChainSpecT: ChainSpec<Block: Default, Transaction: Default>,
     DB: Database,
 {
     /// Create new context with database.

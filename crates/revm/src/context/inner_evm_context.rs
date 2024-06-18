@@ -18,7 +18,7 @@ use crate::{
 use std::{boxed::Box, sync::Arc, vec::Vec};
 
 /// EVM contexts contains data that EVM needs for execution.
-#[derive_where(Clone, Debug; ChainSpecT::Transaction, DB, DB::Error)]
+#[derive_where(Clone, Debug; ChainSpecT::Block, ChainSpecT::Transaction, DB, DB::Error)]
 pub struct InnerEvmContext<ChainSpecT: ChainSpec, DB: Database> {
     /// EVM Environment contains all the information about config, block and transaction that
     /// evm needs.
@@ -35,7 +35,7 @@ pub struct InnerEvmContext<ChainSpecT: ChainSpec, DB: Database> {
 
 impl<ChainSpecT, DB> InnerEvmContext<ChainSpecT, DB>
 where
-    ChainSpecT: ChainSpec<Transaction: Default>,
+    ChainSpecT: ChainSpec<Block: Default, Transaction: Default>,
     DB: Database,
 {
     pub fn new(db: DB) -> Self {

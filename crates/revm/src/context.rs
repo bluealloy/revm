@@ -31,7 +31,7 @@ pub struct Context<ChainSpecT: ChainSpec, EXT, DB: Database> {
 impl<ChainSpecT, EXT, DB> Clone for Context<ChainSpecT, EXT, DB>
 where
     DB::Error: Clone,
-    ChainSpecT: ChainSpec<Transaction: Clone>,
+    ChainSpecT: ChainSpec<Block: Clone, Transaction: Clone>,
     EXT: Clone,
     DB: Database<Error: Clone> + Clone,
 {
@@ -51,7 +51,7 @@ impl Default for Context<EthChainSpec, (), EmptyDB> {
 
 impl<ChainSpecT> Context<ChainSpecT, (), EmptyDB>
 where
-    ChainSpecT: ChainSpec<Transaction: Default>,
+    ChainSpecT: ChainSpec<Block: Default, Transaction: Default>,
 {
     /// Creates empty context. This is useful for testing.
     pub fn new_empty() -> Context<ChainSpecT, (), EmptyDB> {
@@ -64,7 +64,7 @@ where
 
 impl<ChainSpecT, DB> Context<ChainSpecT, (), DB>
 where
-    ChainSpecT: ChainSpec<Transaction: Default>,
+    ChainSpecT: ChainSpec<Block: Default, Transaction: Default>,
     DB: Database,
 {
     /// Creates new context with database.
@@ -100,7 +100,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> ContextWithChainSpec<ChainSpecT, 
 
 impl<ChainSpecT, EXT, DB> Clone for ContextWithChainSpec<ChainSpecT, EXT, DB>
 where
-    ChainSpecT: ChainSpec<Transaction: Clone>,
+    ChainSpecT: ChainSpec<Block: Clone, Transaction: Clone>,
     EXT: Clone,
     DB: Database<Error: Clone> + Clone,
 {

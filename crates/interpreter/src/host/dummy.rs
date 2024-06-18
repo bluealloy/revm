@@ -10,10 +10,9 @@ use std::vec::Vec;
 use super::LoadAccountResult;
 
 /// A dummy [Host] implementation.
-#[derive(Clone, Debug)]
 pub struct DummyHost<ChainSpecT>
 where
-    ChainSpecT: ChainSpec<Transaction: Clone + Debug>,
+    ChainSpecT: ChainSpec,
 {
     pub env: Env<ChainSpecT>,
     pub storage: HashMap<U256, U256>,
@@ -23,14 +22,16 @@ where
 
 impl<ChainSpecT> DummyHost<ChainSpecT>
 where
-    ChainSpecT: ChainSpec<Transaction: Clone + Debug + Default>,
+    ChainSpecT: ChainSpec,
 {
     /// Create a new dummy host with the given [`Env`].
     #[inline]
     pub fn new(env: Env<ChainSpecT>) -> Self {
         Self {
             env,
-            ..DummyHost::default()
+            storage: HashMap::new(),
+            transient_storage: HashMap::new(),
+            log: Vec::new(),
         }
     }
 
@@ -42,9 +43,37 @@ where
     }
 }
 
+impl<ChainSpecT> Clone for DummyHost<ChainSpecT>
+where
+    ChainSpecT: ChainSpec<Block: Clone, Transaction: Clone>,
+{
+    fn clone(&self) -> Self {
+        Self {
+            env: self.env.clone(),
+            storage: self.storage.clone(),
+            transient_storage: self.transient_storage.clone(),
+            log: self.log.clone(),
+        }
+    }
+}
+
+impl<ChainSpecT> Debug for DummyHost<ChainSpecT>
+where
+    ChainSpecT: ChainSpec<Block: Debug, Transaction: Debug>,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("DummyHost")
+            .field("env", &self.env)
+            .field("storage", &self.storage)
+            .field("transient_storage", &self.transient_storage)
+            .field("log", &self.log)
+            .finish()
+    }
+}
+
 impl<ChainSpecT> Default for DummyHost<ChainSpecT>
 where
-    ChainSpecT: ChainSpec<Transaction: Clone + Debug + Default>,
+    ChainSpecT: ChainSpec<Block: Default, Transaction: Default>,
 {
     fn default() -> Self {
         Self {
@@ -58,7 +87,7 @@ where
 
 impl<ChainSpecT> Host for DummyHost<ChainSpecT>
 where
-    ChainSpecT: ChainSpec<Transaction: Clone + Debug + Default>,
+    ChainSpecT: ChainSpec,
 {
     type ChainSpecT = ChainSpecT;
 
