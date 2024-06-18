@@ -2,7 +2,10 @@
 use crate::{
     handler::mainnet,
     interpreter::Gas,
-    primitives::{db::Database, ChainSpec, EVMError, EVMResultGeneric, ResultAndState, Spec},
+    primitives::{
+        db::Database, ChainSpec, EVMError, EVMResultGeneric, ResultAndState, Spec,
+        TransactionValidation,
+    },
     Context, FrameResult,
 };
 use std::sync::Arc;
@@ -25,9 +28,13 @@ pub type OutputHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<ChainSpecT, EXT, DB>,
             FrameResult,
-        )
-            -> Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, <DB as Database>::Error>>
-        + 'a,
+        ) -> Result<
+            ResultAndState<ChainSpecT>,
+            EVMError<
+                <DB as Database>::Error,
+                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+            >,
+        > + 'a,
 >;
 
 /// End handle, takes result and state and returns final result.
@@ -37,9 +44,9 @@ pub type OutputHandle<'a, ChainSpecT, EXT, DB> = Arc<
 pub type EndHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<ChainSpecT, EXT, DB>,
-            Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, <DB as Database>::Error>>,
+            Result<ResultAndState<ChainSpecT>, EVMError<<DB as Database>::Error, <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError>>,
         )
-            -> Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, <DB as Database>::Error>>
+            -> Result<ResultAndState<ChainSpecT>, EVMError<<DB as Database>::Error, <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError>>
         + 'a,
 >;
 
@@ -85,7 +92,13 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
         gas: &Gas,
-    ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+    ) -> Result<
+        (),
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         (self.reimburse_caller)(context, gas)
     }
     /// Reward beneficiary
@@ -93,7 +106,13 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
         gas: &Gas,
-    ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+    ) -> Result<
+        (),
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         (self.reward_beneficiary)(context, gas)
     }
 
@@ -102,7 +121,13 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
         result: FrameResult,
-    ) -> Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, DB::Error>> {
+    ) -> Result<
+        ResultAndState<ChainSpecT>,
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         (self.output)(context, result)
     }
 
@@ -110,8 +135,20 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
     pub fn end(
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
-        end_output: Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, DB::Error>>,
-    ) -> Result<ResultAndState<ChainSpecT>, EVMError<ChainSpecT, DB::Error>> {
+        end_output: Result<
+            ResultAndState<ChainSpecT>,
+            EVMError<
+                DB::Error,
+                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+            >,
+        >,
+    ) -> Result<
+        ResultAndState<ChainSpecT>,
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         (self.end)(context, end_output)
     }
 

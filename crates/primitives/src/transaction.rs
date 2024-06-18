@@ -1,22 +1,7 @@
-use crate::{
-    AccessListItem, Address, AuthorizationList, Bytes, InvalidTransaction, TxKind, B256,
-    GAS_PER_BLOB, U256,
-};
-use cfg_if::cfg_if;
-use core::fmt::{Debug, Display};
+use crate::{AccessListItem, Address, AuthorizationList, Bytes, TxKind, B256, GAS_PER_BLOB, U256};
 
 /// Trait for retrieving transaction information required for execution.
-pub trait Transaction: Clone + Debug + Default + PartialEq + Eq {
-    cfg_if! {
-        if #[cfg(feature = "serde")] {
-            /// The error type that can be returned when validating a transaction.
-            type TransactionValidationError: Clone + Debug + Display + PartialEq + Eq + serde::de::DeserializeOwned + serde::Serialize + From<InvalidTransaction>;
-        } else {
-            /// The error type that can be returned when validating a transaction.
-            type TransactionValidationError: Clone + Debug + Display + PartialEq + Eq + From<InvalidTransaction>;
-        }
-    }
-
+pub trait Transaction {
     /// Caller aka Author aka transaction signer.
     fn caller(&self) -> &Address;
     /// The maximum amount of gas the transaction can use.

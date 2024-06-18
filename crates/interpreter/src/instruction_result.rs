@@ -1,3 +1,6 @@
+use core::fmt::Debug;
+
+use derive_where::derive_where;
 use revm_primitives::ChainSpec;
 
 use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
@@ -209,7 +212,8 @@ pub enum InternalResult {
     InvalidExtDelegateCallTarget,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive_where(Debug; ChainSpecT::HaltReason)]
 pub enum SuccessOrHalt<ChainSpecT: ChainSpec> {
     Success(SuccessReason),
     Revert,

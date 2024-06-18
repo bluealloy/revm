@@ -64,7 +64,7 @@ impl Contract {
             TxKind::Call(caller) => *caller,
             TxKind::Create => Address::ZERO,
         };
-        let bytecode_address = match env.tx.transact_to() {
+        let bytecode_address = match env.tx.kind() {
             TxKind::Call(caller) => Some(*caller),
             TxKind::Create => None,
         };

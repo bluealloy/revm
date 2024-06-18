@@ -5,7 +5,7 @@ use crate::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
     },
-    primitives::{ChainSpec, EVMError, Env, Spec, SpecId, Transaction},
+    primitives::{ChainSpec, EVMError, Env, Spec, SpecId, Transaction, TransactionValidation},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use core::mem;
@@ -22,7 +22,13 @@ pub fn execute_frame<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     shared_memory: &mut SharedMemory,
     instruction_tables: &InstructionTables<'_, Context<ChainSpecT, EXT, DB>>,
     context: &mut Context<ChainSpecT, EXT, DB>,
-) -> Result<InterpreterAction, EVMError<ChainSpecT, DB::Error>> {
+) -> Result<
+    InterpreterAction,
+    EVMError<
+        DB::Error,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+> {
     let interpreter = frame.interpreter_mut();
     let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
     let next_action = match instruction_tables {
@@ -76,7 +82,13 @@ pub fn frame_return_with_refund_flag<ChainSpecT: ChainSpec, SPEC: Spec>(
 pub fn last_frame_return<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     frame_result: &mut FrameResult,
-) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+) -> Result<
+    (),
+    EVMError<
+        DB::Error,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+> {
     frame_return_with_refund_flag::<ChainSpecT, SPEC>(&context.evm.env, frame_result, true);
     Ok(())
 }
@@ -86,7 +98,13 @@ pub fn last_frame_return<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
 pub fn call<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     inputs: Box<CallInputs>,
-) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
+) -> Result<
+    FrameOrResult,
+    EVMError<
+        DB::Error,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+> {
     context.evm.make_call_frame(&inputs)
 }
 
@@ -95,7 +113,13 @@ pub fn call_return<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     frame: Box<CallFrame>,
     interpreter_result: InterpreterResult,
-) -> Result<CallOutcome, EVMError<ChainSpecT, DB::Error>> {
+) -> Result<
+    CallOutcome,
+    EVMError<
+        DB::Error,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+> {
     context
         .evm
         .call_return(&interpreter_result, frame.frame_data.checkpoint);
@@ -111,7 +135,13 @@ pub fn insert_call_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
     frame: &mut Frame,
     shared_memory: &mut SharedMemory,
     outcome: CallOutcome,
-) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+) -> Result<
+    (),
+    EVMError<
+        DB::Error,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+> {
     context.evm.take_error().map_err(EVMError::Database)?;
 
     frame
@@ -126,7 +156,13 @@ pub fn insert_call_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
 pub fn create<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     inputs: Box<CreateInputs>,
-) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
+) -> Result<
+    FrameOrResult,
+    EVMError<
+        DB::Error,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+> {
     context
         .evm
         .make_create_frame(SPEC::SPEC_ID, &inputs)
@@ -138,7 +174,13 @@ pub fn create_return<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     frame: Box<CreateFrame>,
     mut interpreter_result: InterpreterResult,
-) -> Result<CreateOutcome, EVMError<ChainSpecT, DB::Error>> {
+) -> Result<
+    CreateOutcome,
+    EVMError<
+        DB::Error,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+> {
     context.evm.create_return::<SPEC>(
         &mut interpreter_result,
         frame.created_address,
@@ -155,7 +197,13 @@ pub fn insert_create_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     frame: &mut Frame,
     outcome: CreateOutcome,
-) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+) -> Result<
+    (),
+    EVMError<
+        DB::Error,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+> {
     context.evm.take_error().map_err(EVMError::Database)?;
 
     frame
@@ -170,7 +218,13 @@ pub fn insert_create_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
 pub fn eofcreate<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     inputs: Box<EOFCreateInputs>,
-) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
+) -> Result<
+    FrameOrResult,
+    EVMError<
+        DB::Error,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+> {
     context
         .evm
         .make_eofcreate_frame(SPEC::SPEC_ID, &inputs)
@@ -182,7 +236,13 @@ pub fn eofcreate_return<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     frame: Box<EOFCreateFrame>,
     mut interpreter_result: InterpreterResult,
-) -> Result<CreateOutcome, EVMError<ChainSpecT, DB::Error>> {
+) -> Result<
+    CreateOutcome,
+    EVMError<
+        DB::Error,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+> {
     context.evm.eofcreate_return::<SPEC>(
         &mut interpreter_result,
         frame.created_address,
@@ -199,7 +259,13 @@ pub fn insert_eofcreate_outcome<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     frame: &mut Frame,
     outcome: CreateOutcome,
-) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+) -> Result<
+    (),
+    EVMError<
+        DB::Error,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+> {
     core::mem::replace(&mut context.evm.error, Ok(())).map_err(EVMError::Database)?;
 
     frame

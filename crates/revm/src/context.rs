@@ -28,9 +28,12 @@ pub struct Context<ChainSpecT: ChainSpec, EXT, DB: Database> {
     pub external: EXT,
 }
 
-impl<ChainSpecT: ChainSpec, EXT: Clone, DB: Database + Clone> Clone for Context<ChainSpecT, EXT, DB>
+impl<ChainSpecT, EXT, DB> Clone for Context<ChainSpecT, EXT, DB>
 where
     DB::Error: Clone,
+    ChainSpecT: ChainSpec<Transaction: Clone>,
+    EXT: Clone,
+    DB: Database<Error: Clone> + Clone,
 {
     fn clone(&self) -> Self {
         Self {
@@ -46,7 +49,10 @@ impl Default for Context<EthChainSpec, (), EmptyDB> {
     }
 }
 
-impl<ChainSpecT: ChainSpec> Context<ChainSpecT, (), EmptyDB> {
+impl<ChainSpecT> Context<ChainSpecT, (), EmptyDB>
+where
+    ChainSpecT: ChainSpec<Transaction: Default>,
+{
     /// Creates empty context. This is useful for testing.
     pub fn new_empty() -> Context<ChainSpecT, (), EmptyDB> {
         Context {
@@ -56,7 +62,11 @@ impl<ChainSpecT: ChainSpec> Context<ChainSpecT, (), EmptyDB> {
     }
 }
 
-impl<ChainSpecT: ChainSpec, DB: Database> Context<ChainSpecT, (), DB> {
+impl<ChainSpecT, DB> Context<ChainSpecT, (), DB>
+where
+    ChainSpecT: ChainSpec<Transaction: Default>,
+    DB: Database,
+{
     /// Creates new context with database.
     pub fn new_with_db(db: DB) -> Context<ChainSpecT, (), DB> {
         Context {
@@ -88,10 +98,11 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> ContextWithChainSpec<ChainSpecT, 
     }
 }
 
-impl<ChainSpecT: ChainSpec, EXT: Clone, DB: Database + Clone> Clone
-    for ContextWithChainSpec<ChainSpecT, EXT, DB>
+impl<ChainSpecT, EXT, DB> Clone for ContextWithChainSpec<ChainSpecT, EXT, DB>
 where
-    DB::Error: Clone,
+    ChainSpecT: ChainSpec<Transaction: Clone>,
+    EXT: Clone,
+    DB: Database<Error: Clone> + Clone,
 {
     fn clone(&self) -> Self {
         Self {

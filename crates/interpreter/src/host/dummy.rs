@@ -4,26 +4,33 @@ use crate::{
     },
     Host, SStoreResult, SelfDestructResult,
 };
+use core::fmt::Debug;
 use std::vec::Vec;
 
 use super::LoadAccountResult;
 
 /// A dummy [Host] implementation.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct DummyHost<ChainSpecT: ChainSpec> {
+#[derive(Clone, Debug)]
+pub struct DummyHost<ChainSpecT>
+where
+    ChainSpecT: ChainSpec<Transaction: Clone + Debug>,
+{
     pub env: Env<ChainSpecT>,
     pub storage: HashMap<U256, U256>,
     pub transient_storage: HashMap<U256, U256>,
     pub log: Vec<Log>,
 }
 
-impl<ChainSpecT: ChainSpec> DummyHost<ChainSpecT> {
+impl<ChainSpecT> DummyHost<ChainSpecT>
+where
+    ChainSpecT: ChainSpec<Transaction: Clone + Debug + Default>,
+{
     /// Create a new dummy host with the given [`Env`].
     #[inline]
     pub fn new(env: Env<ChainSpecT>) -> Self {
         Self {
             env,
-            ..Default::default()
+            ..DummyHost::default()
         }
     }
 
@@ -35,7 +42,24 @@ impl<ChainSpecT: ChainSpec> DummyHost<ChainSpecT> {
     }
 }
 
-impl<ChainSpecT: ChainSpec> Host for DummyHost<ChainSpecT> {
+impl<ChainSpecT> Default for DummyHost<ChainSpecT>
+where
+    ChainSpecT: ChainSpec<Transaction: Clone + Debug + Default>,
+{
+    fn default() -> Self {
+        Self {
+            env: Env::default(),
+            storage: HashMap::new(),
+            transient_storage: HashMap::new(),
+            log: Vec::new(),
+        }
+    }
+}
+
+impl<ChainSpecT> Host for DummyHost<ChainSpecT>
+where
+    ChainSpecT: ChainSpec<Transaction: Clone + Debug + Default>,
+{
     type ChainSpecT = ChainSpecT;
 
     #[inline]

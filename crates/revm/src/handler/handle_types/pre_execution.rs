@@ -1,7 +1,9 @@
 // Includes.
 use crate::{
     handler::mainnet,
-    primitives::{db::Database, ChainSpec, EVMError, EVMResultGeneric, Spec},
+    primitives::{
+        db::Database, ChainSpec, EVMError, EVMResultGeneric, Spec, TransactionValidation,
+    },
     Context, ContextPrecompiles,
 };
 use std::sync::Arc;
@@ -16,8 +18,13 @@ pub type LoadPrecompilesHandle<'a, ChainSpecT, DB> =
 pub type LoadAccountsHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<ChainSpecT, EXT, DB>,
-        ) -> Result<(), EVMError<ChainSpecT, <DB as Database>::Error>>
-        + 'a,
+        ) -> Result<
+            (),
+            EVMError<
+                <DB as Database>::Error,
+                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+            >,
+        > + 'a,
 >;
 
 /// Deduct the caller to its limit.
@@ -56,7 +63,13 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PreExecutionHandler<'a, Chain
     pub fn deduct_caller(
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
-    ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+    ) -> Result<
+        (),
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         (self.deduct_caller)(context)
     }
 
@@ -64,7 +77,13 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PreExecutionHandler<'a, Chain
     pub fn load_accounts(
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
-    ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+    ) -> Result<
+        (),
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         (self.load_accounts)(context)
     }
 

@@ -6,7 +6,7 @@ use crate::{
     precompile::PrecompileSpecId,
     primitives::{
         db::Database, Account, Block, ChainSpec, EVMError, Env, Spec, SpecId, Transaction as _,
-        BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256,
+        TransactionValidation, BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256,
     },
     Context, ContextPrecompiles,
 };
@@ -23,7 +23,13 @@ pub fn load_precompiles<ChainSpecT: ChainSpec, SPEC: Spec, DB: Database>(
 #[inline]
 pub fn load_accounts<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
-) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+) -> Result<
+    (),
+    EVMError<
+        DB::Error,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+> {
     // set journaling state flag.
     context.evm.journaled_state.set_spec_id(SPEC::SPEC_ID);
 
@@ -156,7 +162,13 @@ pub fn deduct_caller_inner<ChainSpecT: ChainSpec, SPEC: Spec>(
 #[inline]
 pub fn deduct_caller<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
-) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+) -> Result<
+    (),
+    EVMError<
+        DB::Error,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+> {
     // load caller's account.
     let (caller_account, _) = context
         .evm

@@ -6,17 +6,20 @@ pub use eip7702::{
 
 use crate::{
     block, calc_blob_gasprice, transaction, AccessListItem, Account, Address, Block, Bytes,
-    ChainSpec, InvalidHeader, InvalidTransaction, Spec, SpecId, Transaction, B256, KECCAK_EMPTY,
-    MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
+    ChainSpec, InvalidHeader, InvalidTransaction, Spec, SpecId, Transaction, TransactionValidation,
+    B256, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256,
+    VERSIONED_HASH_VERSION_KZG,
 };
 use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
+use core::fmt::Debug;
 use core::hash::Hash;
+use derive_where::derive_where;
 use std::boxed::Box;
 use std::vec::Vec;
 
 /// EVM environment configuration.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive_where(Clone, Debug, Default; ChainSpecT::Transaction)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Env<ChainSpecT: ChainSpec> {
     /// Configuration of the EVM itself.
@@ -28,12 +31,6 @@ pub struct Env<ChainSpecT: ChainSpec> {
 }
 
 impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
-    /// Resets environment to default values.
-    #[inline]
-    pub fn clear(&mut self) {
-        *self = Self::default();
-    }
-
     /// Create boxed [Env].
     #[inline]
     pub fn boxed(cfg: CfgEnv, block: ChainSpecT::Block, tx: ChainSpecT::Transaction) -> Box<Self> {
@@ -266,6 +263,14 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
         }
 
         Ok(())
+    }
+}
+
+impl<ChainSpecT: ChainSpec<Transaction: Default>> Env<ChainSpecT> {
+    /// Resets environment to default values.
+    #[inline]
+    pub fn clear(&mut self) {
+        *self = Self::default();
     }
 }
 
@@ -598,8 +603,6 @@ pub struct TxEnv {
 }
 
 impl Transaction for TxEnv {
-    type TransactionValidationError = InvalidTransaction;
-
     #[inline]
     fn caller(&self) -> &Address {
         &self.caller
@@ -664,6 +667,10 @@ impl Transaction for TxEnv {
     fn authorization_list(&self) -> Option<&AuthorizationList> {
         self.authorization_list.as_ref()
     }
+}
+
+impl TransactionValidation for TxEnv {
+    type ValidationError = InvalidTransaction;
 }
 
 pub enum TxType {

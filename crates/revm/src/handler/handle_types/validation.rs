@@ -1,26 +1,50 @@
 use crate::{
     handler::mainnet,
-    primitives::{db::Database, ChainSpec, EVMError, Env, Spec},
+    primitives::{
+        db::Database, ChainSpec, EVMError, Env, InvalidTransaction, Spec, TransactionValidation,
+    },
     Context,
 };
 use std::sync::Arc;
 
 /// Handle that validates env.
-pub type ValidateEnvHandle<'a, ChainSpecT, DB> =
-    Arc<dyn Fn(&Env<ChainSpecT>) -> Result<(), EVMError<ChainSpecT, <DB as Database>::Error>> + 'a>;
+pub type ValidateEnvHandle<'a, ChainSpecT, DB> = Arc<
+    dyn Fn(
+            &Env<ChainSpecT>,
+        ) -> Result<
+            (),
+            EVMError<
+                <DB as Database>::Error,
+                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+            >,
+        > + 'a,
+>;
 
 /// Handle that validates transaction environment against the state.
 /// Second parametar is initial gas.
 pub type ValidateTxEnvAgainstState<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<ChainSpecT, EXT, DB>,
-        ) -> Result<(), EVMError<ChainSpecT, <DB as Database>::Error>>
-        + 'a,
+        ) -> Result<
+            (),
+            EVMError<
+                <DB as Database>::Error,
+                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+            >,
+        > + 'a,
 >;
 
 /// Initial gas calculation handle
 pub type ValidateInitialTxGasHandle<'a, ChainSpecT, DB> = Arc<
-    dyn Fn(&Env<ChainSpecT>) -> Result<u64, EVMError<ChainSpecT, <DB as Database>::Error>> + 'a,
+    dyn Fn(
+            &Env<ChainSpecT>,
+        ) -> Result<
+            u64,
+            EVMError<
+                <DB as Database>::Error,
+                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+            >,
+        > + 'a,
 >;
 
 /// Handles related to validation.
@@ -35,6 +59,8 @@ pub struct ValidationHandler<'a, ChainSpecT: ChainSpec, EXT, DB: Database> {
 
 impl<'a, ChainSpecT: ChainSpec, EXT: 'a, DB: Database + 'a>
     ValidationHandler<'a, ChainSpecT, EXT, DB>
+where
+    <ChainSpecT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
 {
     /// Create new ValidationHandles
     pub fn new<SPEC: Spec + 'a>() -> Self {
@@ -50,7 +76,16 @@ impl<'a, ChainSpecT: ChainSpec, EXT: 'a, DB: Database + 'a>
 
 impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ValidationHandler<'a, ChainSpecT, EXT, DB> {
     /// Validate env.
-    pub fn env(&self, env: &Env<ChainSpecT>) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+    pub fn env(
+        &self,
+        env: &Env<ChainSpecT>,
+    ) -> Result<
+        (),
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         (self.env)(env)
     }
 
@@ -58,7 +93,13 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ValidationHandler<'a, ChainSp
     pub fn initial_tx_gas(
         &self,
         env: &Env<ChainSpecT>,
-    ) -> Result<u64, EVMError<ChainSpecT, DB::Error>> {
+    ) -> Result<
+        u64,
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         (self.initial_tx_gas)(env)
     }
 
@@ -66,7 +107,13 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ValidationHandler<'a, ChainSp
     pub fn tx_against_state(
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
-    ) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+    ) -> Result<
+        (),
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         (self.tx_against_state)(context)
     }
 }

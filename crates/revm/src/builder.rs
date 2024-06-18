@@ -4,7 +4,7 @@ use crate::{
         register::{self, EvmHandler},
         CfgEnvWithChainSpec, EnvWithChainSpec,
     },
-    primitives::{CfgEnv, ChainSpec, Env, EthChainSpec},
+    primitives::{CfgEnv, ChainSpec, Env, EthChainSpec, InvalidTransaction, TransactionValidation},
     Context, ContextWithChainSpec, Evm, EvmContext, Handler,
 };
 use core::marker::PhantomData;
@@ -41,13 +41,19 @@ impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthChainSpec, (), EmptyDB> 
     }
 }
 
-impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
-    EvmBuilder<'a, SetGenericStage, ChainSpecT, EXT, DB>
+impl<'a, ChainSpecT, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, ChainSpecT, EXT, DB>
+where
+    ChainSpecT: ChainSpec,
 {
     /// Sets the [`ChainSpec`] that will be used by [`Evm`].
-    pub fn with_chain_spec<NewChainSpecT: ChainSpec>(
+    pub fn with_chain_spec<NewChainSpecT>(
         self,
-    ) -> EvmBuilder<'a, SetGenericStage, NewChainSpecT, EXT, DB> {
+    ) -> EvmBuilder<'a, SetGenericStage, NewChainSpecT, EXT, DB>
+    where
+        NewChainSpecT: ChainSpec<
+            Transaction: Default + TransactionValidation<ValidationError: From<InvalidTransaction>>,
+        >,
+    {
         let Context { evm, external } = self.context;
 
         EvmBuilder {
@@ -58,7 +64,13 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
             phantom: PhantomData,
         }
     }
+}
 
+impl<'a, ChainSpecT, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, ChainSpecT, EXT, DB>
+where
+    ChainSpecT:
+        ChainSpec<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
+{
     /// Sets the [`EmptyDB`] as the [`Database`] that will be used by [`Evm`].
     pub fn with_empty_db(self) -> EvmBuilder<'a, SetGenericStage, ChainSpecT, EXT, EmptyDB> {
         EvmBuilder {
@@ -167,8 +179,10 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
     }
 }
 
-impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database>
-    EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB>
+impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmBuilder<'a, HandlerStage, ChainSpecT, EXT, DB>
+where
+    ChainSpecT:
+        ChainSpec<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
 {
     /// Sets the [`EmptyDB`] and resets the [`Handler`] to default mainnet.
     pub fn reset_handler_with_empty_db(
@@ -352,6 +366,18 @@ impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
         self
     }
 
+    /// Clears Block environment of EVM.
+    pub fn with_clear_block_env(mut self) -> Self {
+        self.context.evm.env.block = ChainSpecT::Block::default();
+        self
+    }
+}
+
+impl<'a, BuilderStage, ChainSpecT, EXT, DB> EvmBuilder<'a, BuilderStage, ChainSpecT, EXT, DB>
+where
+    ChainSpecT: ChainSpec<Transaction: Default>,
+    DB: Database,
+{
     /// Clears Environment of EVM.
     pub fn with_clear_env(mut self) -> Self {
         self.context.evm.env.clear();
@@ -363,15 +389,13 @@ impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
         self.context.evm.env.tx = ChainSpecT::Transaction::default();
         self
     }
-    /// Clears Block environment of EVM.
-    pub fn with_clear_block_env(mut self) -> Self {
-        self.context.evm.env.block = ChainSpecT::Block::default();
-        self
-    }
 }
 
 impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
     EvmBuilder<'a, BuilderStage, ChainSpecT, EXT, DB>
+where
+    ChainSpecT:
+        ChainSpec<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
 {
     /// Creates the default handler.
     ///

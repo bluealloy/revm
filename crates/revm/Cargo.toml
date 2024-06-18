@@ -28,6 +28,7 @@ revm-precompile = { path = "../precompile", version = "9.2.0", default-features 
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
+derive-where = { version = "1.2.7", default-features = false }
 dyn-clone = "1.0"
 enumn = { version = "0.1", optional = true }
 

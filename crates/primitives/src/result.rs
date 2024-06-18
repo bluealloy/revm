@@ -1,5 +1,5 @@
-use crate::{Address, Bytes, ChainSpec, EthChainSpec, EvmState, Log, Transaction, U256};
-use core::fmt;
+use crate::{Address, Bytes, ChainSpec, EvmState, Log, TransactionValidation, U256};
+use core::fmt::{self, Debug};
 use std::{boxed::Box, string::String, vec::Vec};
 
 /// Result of EVM execution.
@@ -7,8 +7,13 @@ pub type EVMResult<ChainSpecT, DBError> =
     EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, DBError>;
 
 /// Generic result of EVM execution. Used to represent error and generic output.
-pub type EVMResultGeneric<T, ChainSpecT, DBError> =
-    core::result::Result<T, EVMError<ChainSpecT, DBError>>;
+pub type EVMResultGeneric<T, ChainSpecT, DBError> = core::result::Result<
+    T,
+    EVMError<
+        DBError,
+        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    >,
+>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -138,10 +143,9 @@ impl Output {
 
 /// Main EVM error.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum EVMError<ChainSpecT: ChainSpec, DBError> {
+pub enum EVMError<DBError, TransactionValidationErrorT> {
     /// Transaction validation error.
-    Transaction(<ChainSpecT::Transaction as Transaction>::TransactionValidationError),
+    Transaction(TransactionValidationErrorT),
     /// Header validation error.
     Header(InvalidHeader),
     /// Database error.
@@ -154,9 +158,9 @@ pub enum EVMError<ChainSpecT: ChainSpec, DBError> {
     Precompile(String),
 }
 
-impl<ChainSpecT: ChainSpec, DBError> EVMError<ChainSpecT, DBError> {
+impl<ChainSpecT: ChainSpec, DBError> EVMError<DBError, ChainSpecT> {
     /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
-    pub fn map_db_err<F, E>(self, op: F) -> EVMError<ChainSpecT, E>
+    pub fn map_db_err<F, E>(self, op: F) -> EVMError<E, ChainSpecT>
     where
         F: FnOnce(DBError) -> E,
     {
@@ -171,12 +175,11 @@ impl<ChainSpecT: ChainSpec, DBError> EVMError<ChainSpecT, DBError> {
 }
 
 #[cfg(feature = "std")]
-impl<ChainSpecT, DBError: std::error::Error + 'static> std::error::Error
-    for EVMError<ChainSpecT, DBError>
+impl<DBError, TransactionValidationErrorT> std::error::Error
+    for EVMError<DBError, TransactionValidationErrorT>
 where
-    ChainSpecT: ChainSpec,
-    <ChainSpecT::Transaction as Transaction>::TransactionValidationError:
-        std::error::Error + 'static,
+    DBError: std::error::Error + 'static,
+    TransactionValidationErrorT: std::error::Error + 'static,
 {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
@@ -188,7 +191,12 @@ where
     }
 }
 
-impl<ChainSpecT: ChainSpec, DBError: fmt::Display> fmt::Display for EVMError<ChainSpecT, DBError> {
+impl<DBError, TransactionValidationErrorT> fmt::Display
+    for EVMError<DBError, TransactionValidationErrorT>
+where
+    DBError: fmt::Display,
+    TransactionValidationErrorT: fmt::Display,
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Transaction(e) => write!(f, "transaction validation error: {e}"),
@@ -199,13 +207,15 @@ impl<ChainSpecT: ChainSpec, DBError: fmt::Display> fmt::Display for EVMError<Cha
     }
 }
 
-impl<DBError> From<InvalidTransaction> for EVMError<EthChainSpec, DBError> {
+impl<DBError> From<InvalidTransaction> for EVMError<DBError, InvalidTransaction> {
     fn from(value: InvalidTransaction) -> Self {
         Self::Transaction(value)
     }
 }
 
-impl<ChainSpecT: ChainSpec, DBError> From<InvalidHeader> for EVMError<ChainSpecT, DBError> {
+impl<DBError, TransactionValidationErrorT> From<InvalidHeader>
+    for EVMError<DBError, TransactionValidationErrorT>
+{
     fn from(value: InvalidHeader) -> Self {
         Self::Header(value)
     }
