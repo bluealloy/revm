@@ -1,7 +1,7 @@
 use crate::{
     primitives::{
         db::Database, AccessListItem, Address, BlobExcessGasAndPrice, Block, BlockEnv, Bytes,
-        TransactTo, Transaction, TxEnv, B256, U256,
+        Transaction, TransactionValidation, TxEnv, TxKind, B256, U256,
     },
     L1BlockInfo,
 };
@@ -115,8 +115,6 @@ pub struct OptimismTransaction {
 }
 
 impl Transaction for OptimismTransaction {
-    type TransactionValidationError = InvalidOptimismTransaction;
-
     fn caller(&self) -> &Address {
         self.base.caller()
     }
@@ -129,7 +127,7 @@ impl Transaction for OptimismTransaction {
         self.base.gas_price()
     }
 
-    fn kind(&self) -> &TransactTo {
+    fn kind(&self) -> &TxKind {
         self.base.kind()
     }
 
@@ -164,4 +162,8 @@ impl Transaction for OptimismTransaction {
     fn max_fee_per_blob_gas(&self) -> Option<&U256> {
         self.base.max_fee_per_blob_gas()
     }
+}
+
+impl TransactionValidation for OptimismTransaction {
+    type ValidationError = InvalidOptimismTransaction;
 }

@@ -32,12 +32,25 @@ cfg_if! {
     }
 }
 
-pub trait ChainSpec: Clone + Debug + Default + Sized + 'static {
+pub trait TransactionValidation {
+    cfg_if! {
+        if #[cfg(feature = "std")] {
+            /// An error that occurs when validating a transaction.
+            type ValidationError: Debug + std::error::Error;
+        } else {
+            /// An error that occurs when validating a transaction.
+            type ValidationError: Debug;
+        }
+    }
+}
+
+pub trait ChainSpec: Sized + 'static {
     /// The type that contains all block information.
-    type Block: Block;
+    type Block: Block + Clone + Debug + Default + PartialEq + Eq;
 
     /// The type that contains all transaction information.
-    type Transaction: Transaction;
+    type Transaction: Transaction + TransactionValidation;
+    // Clone + Debug + Default + PartialEq + Eq
 
     /// The type that enumerates the chain's hardforks.
     type Hardfork: HardforkTrait;

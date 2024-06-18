@@ -11,7 +11,10 @@ pub use handle_types::*;
 // Includes.
 use crate::{
     interpreter::{opcode::InstructionTables, Host, InterpreterAction, SharedMemory},
-    primitives::{db::Database, spec_to_generic, ChainSpec, EVMError},
+    primitives::{
+        db::Database, spec_to_generic, ChainSpec, EVMError, InvalidTransaction,
+        TransactionValidation,
+    },
     Context, Frame,
 };
 use core::mem;
@@ -40,7 +43,12 @@ pub struct Handler<'a, ChainSpecT: ChainSpec, H: Host + 'a, EXT, DB: Database> {
     pub execution: ExecutionHandler<'a, ChainSpecT, EXT, DB>,
 }
 
-impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EXT, DB> {
+impl<'a, ChainSpecT, EXT, DB> EvmHandler<'a, ChainSpecT, EXT, DB>
+where
+    ChainSpecT:
+        ChainSpec<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
+    DB: Database,
+{
     /// Creates a base/vanilla Ethereum handler with the provided spec id.
     pub fn mainnet_with_spec(spec_id: ChainSpecT::Hardfork) -> Self {
         spec_to_generic!(
@@ -56,7 +64,13 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EX
             }
         )
     }
+}
 
+impl<'a, ChainSpecT, EXT, DB> EvmHandler<'a, ChainSpecT, EXT, DB>
+where
+    ChainSpecT: ChainSpec,
+    DB: Database,
+{
     /// Returns the specification ID.
     pub fn spec_id(&self) -> ChainSpecT::Hardfork {
         self.spec_id
@@ -68,7 +82,13 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EX
         frame: &mut Frame,
         shared_memory: &mut SharedMemory,
         context: &mut Context<ChainSpecT, EXT, DB>,
-    ) -> Result<InterpreterAction, EVMError<ChainSpecT, DB::Error>> {
+    ) -> Result<
+        InterpreterAction,
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         self.execution
             .execute_frame(frame, shared_memory, &self.instruction_table, context)
     }
@@ -134,7 +154,12 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EX
     }
 }
 
-impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> EvmHandler<'a, ChainSpecT, EXT, DB> {
+impl<'a, ChainSpecT, EXT, DB> EvmHandler<'a, ChainSpecT, EXT, DB>
+where
+    ChainSpecT:
+        ChainSpec<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
+    DB: Database,
+{
     /// Pop last handle register and reapply all registers that are left.
     pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<ChainSpecT, EXT, DB>> {
         let out = self.registers.pop();

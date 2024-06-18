@@ -1,19 +1,22 @@
+use derive_where::derive_where;
+
 use crate::{
     block, calc_blob_gasprice, AccessListItem, Account, Address, Block, Bytes, ChainSpec,
-    InvalidHeader, InvalidTransaction, Spec, SpecId, B256, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK,
-    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
+    InvalidHeader, InvalidTransaction, Spec, SpecId, TransactionValidation, B256, KECCAK_EMPTY,
+    MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
 use crate::{
     transaction::{self, Transaction},
     TxKind,
 };
 use core::cmp::{min, Ordering};
+use core::fmt::Debug;
 use core::hash::Hash;
 use std::boxed::Box;
 use std::vec::Vec;
 
 /// EVM environment configuration.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive_where(Clone, Debug, Default; ChainSpecT::Transaction)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Env<ChainSpecT: ChainSpec> {
     /// Configuration of the EVM itself.
@@ -25,12 +28,6 @@ pub struct Env<ChainSpecT: ChainSpec> {
 }
 
 impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
-    /// Resets environment to default values.
-    #[inline]
-    pub fn clear(&mut self) {
-        *self = Self::default();
-    }
-
     /// Create boxed [Env].
     #[inline]
     pub fn boxed(cfg: CfgEnv, block: ChainSpecT::Block, tx: ChainSpecT::Transaction) -> Box<Self> {
@@ -250,6 +247,14 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
         }
 
         Ok(())
+    }
+}
+
+impl<ChainSpecT: ChainSpec<Transaction: Default>> Env<ChainSpecT> {
+    /// Resets environment to default values.
+    #[inline]
+    pub fn clear(&mut self) {
+        *self = Self::default();
     }
 }
 
@@ -567,8 +572,6 @@ pub struct TxEnv {
 }
 
 impl Transaction for TxEnv {
-    type TransactionValidationError = InvalidTransaction;
-
     #[inline]
     fn caller(&self) -> &Address {
         &self.caller
@@ -628,6 +631,10 @@ impl Transaction for TxEnv {
     fn max_fee_per_blob_gas(&self) -> Option<&U256> {
         self.max_fee_per_blob_gas.as_ref()
     }
+}
+
+impl TransactionValidation for TxEnv {
+    type ValidationError = InvalidTransaction;
 }
 
 pub enum TxType {

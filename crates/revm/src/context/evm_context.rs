@@ -1,3 +1,4 @@
+use derive_where::derive_where;
 use revm_interpreter::CallValue;
 use revm_precompile::PrecompileErrors;
 
@@ -7,16 +8,17 @@ use crate::{
     interpreter::{
         return_ok, CallInputs, Contract, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
-    primitives::{Address, Bytes, ChainSpec, EVMError, Env, U256},
+    primitives::{Address, Bytes, ChainSpec, EVMError, Env, TransactionValidation, U256},
     ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
 use core::{
-    fmt,
+    fmt::{self, Debug},
     ops::{Deref, DerefMut},
 };
 use std::boxed::Box;
 
 /// EVM context that contains the inner EVM context and precompiles.
+#[derive_where(Clone; ChainSpecT::Transaction, DB, DB::Error)]
 pub struct EvmContext<ChainSpecT: ChainSpec, DB: Database> {
     /// Inner EVM context.
     pub inner: InnerEvmContext<ChainSpecT, DB>,
@@ -24,24 +26,10 @@ pub struct EvmContext<ChainSpecT: ChainSpec, DB: Database> {
     pub precompiles: ContextPrecompiles<ChainSpecT, DB>,
 }
 
-impl<ChainSpecT, DB: Database + Clone> Clone for EvmContext<ChainSpecT, DB>
+impl<ChainSpecT, DB> Debug for EvmContext<ChainSpecT, DB>
 where
-    ChainSpecT: ChainSpec,
-    DB::Error: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-            precompiles: ContextPrecompiles::default(),
-        }
-    }
-}
-
-impl<ChainSpecT, DB> fmt::Debug for EvmContext<ChainSpecT, DB>
-where
-    ChainSpecT: ChainSpec,
-    DB: Database + fmt::Debug,
-    DB::Error: fmt::Debug,
+    ChainSpecT: ChainSpec<Transaction: Debug>,
+    DB: Database<Error: Debug> + Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("EvmContext")
@@ -65,7 +53,11 @@ impl<ChainSpecT: ChainSpec, DB: Database> DerefMut for EvmContext<ChainSpecT, DB
     }
 }
 
-impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
+impl<ChainSpecT, DB> EvmContext<ChainSpecT, DB>
+where
+    ChainSpecT: ChainSpec<Transaction: Default>,
+    DB: Database,
+{
     /// Create new context with database.
     pub fn new(db: DB) -> Self {
         Self {
@@ -73,7 +65,9 @@ impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
             precompiles: ContextPrecompiles::default(),
         }
     }
+}
 
+impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
     /// Creates a new context with the given environment and database.
     #[inline]
     pub fn new_with_env(db: DB, env: Box<Env<ChainSpecT>>) -> Self {
@@ -109,7 +103,13 @@ impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
         address: &Address,
         input_data: &Bytes,
         gas: Gas,
-    ) -> Result<Option<InterpreterResult>, EVMError<ChainSpecT, DB::Error>> {
+    ) -> Result<
+        Option<InterpreterResult>,
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         let Some(outcome) =
             self.precompiles
                 .call(address, input_data, gas.limit(), &mut self.inner)
@@ -149,7 +149,13 @@ impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
     pub fn make_call_frame(
         &mut self,
         inputs: &CallInputs,
-    ) -> Result<FrameOrResult, EVMError<ChainSpecT, DB::Error>> {
+    ) -> Result<
+        FrameOrResult,
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {

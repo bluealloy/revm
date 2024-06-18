@@ -1,8 +1,7 @@
 use crate::{Address, BlobExcessGasAndPrice, B256, U256};
-use core::fmt::Debug;
 
 /// Trait for retrieving block information required for execution.
-pub trait Block: Clone + Debug + Default + PartialEq + Eq {
+pub trait Block {
     /// The number of ancestor blocks of this block (block height).
     fn number(&self) -> &U256;
 

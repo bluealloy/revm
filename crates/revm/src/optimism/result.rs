@@ -2,8 +2,6 @@ use core::fmt::Display;
 
 use crate::primitives::{EVMError, HaltReason, InvalidTransaction};
 
-use super::OptimismChainSpec;
-
 /// Optimism transaction validation error.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -80,7 +78,7 @@ impl From<InvalidTransaction> for InvalidOptimismTransaction {
     }
 }
 
-impl<DBError> From<InvalidOptimismTransaction> for EVMError<OptimismChainSpec, DBError> {
+impl<DBError> From<InvalidOptimismTransaction> for EVMError<DBError, InvalidOptimismTransaction> {
     fn from(value: InvalidOptimismTransaction) -> Self {
         Self::Transaction(value)
     }

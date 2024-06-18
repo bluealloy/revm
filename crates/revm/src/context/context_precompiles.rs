@@ -3,6 +3,7 @@ use crate::{
     precompile::{Precompile, PrecompileResult},
     primitives::{db::Database, Address, Bytes, ChainSpec, HashMap, HashSet},
 };
+use derive_where::derive_where;
 use dyn_clone::DynClone;
 use revm_precompile::{PrecompileSpecId, PrecompileWithAddress, Precompiles};
 use std::{boxed::Box, sync::Arc};
@@ -45,16 +46,10 @@ impl<ChainSpecT: ChainSpec, DB: Database> Clone for PrecompilesCow<ChainSpecT, D
 }
 
 /// Precompiles context.
+
+#[derive_where(Clone, Default)]
 pub struct ContextPrecompiles<ChainSpecT: ChainSpec, DB: Database> {
     inner: PrecompilesCow<ChainSpecT, DB>,
-}
-
-impl<ChainSpecT: ChainSpec, DB: Database> Clone for ContextPrecompiles<ChainSpecT, DB> {
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-        }
-    }
 }
 
 impl<ChainSpecT: ChainSpec, DB: Database> ContextPrecompiles<ChainSpecT, DB> {
@@ -187,14 +182,6 @@ impl<ChainSpecT: ChainSpec, DB: Database> Extend<PrecompileWithAddress>
             let (address, precompile) = precompile.into();
             (address, precompile.into())
         }));
-    }
-}
-
-impl<ChainSpecT: ChainSpec, DB: Database> Default for ContextPrecompiles<ChainSpecT, DB> {
-    fn default() -> Self {
-        Self {
-            inner: Default::default(),
-        }
     }
 }
 

@@ -7,11 +7,11 @@ use crate::{
     interpreter::{CallInputs, CreateInputs, EOFCreateInputs, InterpreterAction, SharedMemory},
     primitives::{
         CfgEnv, ChainSpec, EVMError, EVMResult, EthChainSpec, ExecutionResult, ResultAndState,
-        SpecId, Transaction as _, TxKind,
+        SpecId, Transaction as _, TransactionValidation, TxKind,
     },
     Context, ContextWithChainSpec, Frame, FrameOrResult, FrameResult,
 };
-use core::fmt;
+use core::fmt::{self, Debug};
 use std::{boxed::Box, vec::Vec};
 
 /// EVM call stack limit.
@@ -27,12 +27,11 @@ pub struct Evm<'a, ChainSpecT: ChainSpec, EXT, DB: Database> {
     pub handler: Handler<'a, ChainSpecT, Context<ChainSpecT, EXT, DB>, EXT, DB>,
 }
 
-impl<ChainSpecT, EXT, DB> fmt::Debug for Evm<'_, ChainSpecT, EXT, DB>
+impl<ChainSpecT, EXT, DB> Debug for Evm<'_, ChainSpecT, EXT, DB>
 where
-    ChainSpecT: ChainSpec,
-    EXT: fmt::Debug,
-    DB: Database + fmt::Debug,
-    DB::Error: fmt::Debug,
+    ChainSpecT: ChainSpec<Transaction: Debug>,
+    EXT: Debug,
+    DB: Database<Error: Debug> + Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Evm")
@@ -45,7 +44,13 @@ impl<EXT, ChainSpecT: ChainSpec, DB: Database + DatabaseCommit> Evm<'_, ChainSpe
     /// Commit the changes to the database.
     pub fn transact_commit(
         &mut self,
-    ) -> Result<ExecutionResult<ChainSpecT>, EVMError<ChainSpecT, DB::Error>> {
+    ) -> Result<
+        ExecutionResult<ChainSpecT>,
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         let ResultAndState { result, state } = self.transact()?;
         self.context.evm.db.commit(state);
         Ok(result)
@@ -83,7 +88,13 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'a, ChainSpecT, EXT, DB> 
     pub fn run_the_loop(
         &mut self,
         first_frame: Frame,
-    ) -> Result<FrameResult, EVMError<ChainSpecT, DB::Error>> {
+    ) -> Result<
+        FrameResult,
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
 
@@ -188,7 +199,15 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
     /// Pre verify transaction by checking Environment, initial gas spend and if caller
     /// has enough balance to pay for the gas.
     #[inline]
-    pub fn preverify_transaction(&mut self) -> Result<(), EVMError<ChainSpecT, DB::Error>> {
+    pub fn preverify_transaction(
+        &mut self,
+    ) -> Result<
+        (),
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         let output = self.preverify_transaction_inner().map(|_| ());
         self.clear();
         output
@@ -220,7 +239,15 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
 
     /// Pre verify transaction inner.
     #[inline]
-    fn preverify_transaction_inner(&mut self) -> Result<u64, EVMError<ChainSpecT, DB::Error>> {
+    fn preverify_transaction_inner(
+        &mut self,
+    ) -> Result<
+        u64,
+        EVMError<
+            DB::Error,
+            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+        >,
+    > {
         self.handler.validation().env(&self.context.evm.env)?;
         let initial_gas_spend = self
             .handler

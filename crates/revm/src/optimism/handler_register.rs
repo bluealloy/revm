@@ -49,7 +49,7 @@ pub fn optimism_handle_register<DB: Database, EXT>(
 /// Validate environment for the Optimism chain.
 pub fn validate_env<SPEC: OptimismSpec, DB: Database>(
     env: &Env<OptimismChainSpec>,
-) -> Result<(), EVMError<OptimismChainSpec, DB::Error>> {
+) -> Result<(), EVMError<DB::Error, InvalidOptimismTransaction>> {
     // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
     if env.tx.source_hash.is_some() {
         if env.block.l1_block_info().is_some() {
@@ -81,7 +81,7 @@ pub fn validate_env<SPEC: OptimismSpec, DB: Database>(
 /// Don not perform any extra validation for deposit transactions, they are pre-verified on L1.
 pub fn validate_tx_against_state<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<OptimismChainSpec, EXT, DB>,
-) -> Result<(), EVMError<OptimismChainSpec, DB::Error>> {
+) -> Result<(), EVMError<DB::Error, InvalidOptimismTransaction>> {
     if context.evm.inner.env.tx.source_hash.is_some() {
         return Ok(());
     }
@@ -93,7 +93,7 @@ pub fn validate_tx_against_state<SPEC: OptimismSpec, EXT, DB: Database>(
 pub fn last_frame_return<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<OptimismChainSpec, EXT, DB>,
     frame_result: &mut FrameResult,
-) -> Result<(), EVMError<OptimismChainSpec, DB::Error>> {
+) -> Result<(), EVMError<DB::Error, InvalidOptimismTransaction>> {
     let env = context.evm.inner.env();
     let is_deposit = env.tx.source_hash.is_some();
     let tx_system = env.tx.is_system_transaction;
@@ -180,7 +180,7 @@ pub fn load_precompiles<SPEC: OptimismSpec, EXT, DB: Database>(
 #[inline]
 pub fn deduct_caller<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<OptimismChainSpec, EXT, DB>,
-) -> Result<(), EVMError<OptimismChainSpec, DB::Error>> {
+) -> Result<(), EVMError<DB::Error, InvalidOptimismTransaction>> {
     // load caller's account.
     let (caller_account, _) = context
         .evm
@@ -240,7 +240,7 @@ pub fn deduct_caller<SPEC: OptimismSpec, EXT, DB: Database>(
 pub fn reward_beneficiary<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<OptimismChainSpec, EXT, DB>,
     gas: &Gas,
-) -> Result<(), EVMError<OptimismChainSpec, DB::Error>> {
+) -> Result<(), EVMError<DB::Error, InvalidOptimismTransaction>> {
     let is_deposit = context.evm.inner.env.tx.source_hash.is_some();
 
     // transfer fee to coinbase/beneficiary.
@@ -301,7 +301,7 @@ pub fn reward_beneficiary<SPEC: OptimismSpec, EXT, DB: Database>(
 pub fn output<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<OptimismChainSpec, EXT, DB>,
     frame_result: FrameResult,
-) -> Result<ResultAndState<OptimismChainSpec>, EVMError<OptimismChainSpec, DB::Error>> {
+) -> Result<ResultAndState<OptimismChainSpec>, EVMError<DB::Error, InvalidOptimismTransaction>> {
     let result = mainnet::output::<OptimismChainSpec, EXT, DB>(context, frame_result)?;
 
     if result.result.is_halt() {
@@ -322,8 +322,11 @@ pub fn output<SPEC: OptimismSpec, EXT, DB: Database>(
 #[inline]
 pub fn end<SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<OptimismChainSpec, EXT, DB>,
-    evm_output: Result<ResultAndState<OptimismChainSpec>, EVMError<OptimismChainSpec, DB::Error>>,
-) -> Result<ResultAndState<OptimismChainSpec>, EVMError<OptimismChainSpec, DB::Error>> {
+    evm_output: Result<
+        ResultAndState<OptimismChainSpec>,
+        EVMError<DB::Error, InvalidOptimismTransaction>,
+    >,
+) -> Result<ResultAndState<OptimismChainSpec>, EVMError<DB::Error, InvalidOptimismTransaction>> {
     evm_output.or_else(|err| {
         if matches!(err, EVMError::Transaction(_))
             && context.evm.inner.env().tx.source_hash.is_some()

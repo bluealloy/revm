@@ -1,3 +1,5 @@
+use derive_where::derive_where;
+
 use crate::{
     db::Database,
     interpreter::{
@@ -18,7 +20,7 @@ use crate::{
 use std::{boxed::Box, sync::Arc};
 
 /// EVM contexts contains data that EVM needs for execution.
-#[derive(Debug)]
+#[derive_where(Clone, Debug; ChainSpecT::Transaction, DB, DB::Error)]
 pub struct InnerEvmContext<ChainSpecT: ChainSpec, DB: Database> {
     /// EVM Environment contains all the information about config, block and transaction that
     /// evm needs.
@@ -31,21 +33,11 @@ pub struct InnerEvmContext<ChainSpecT: ChainSpec, DB: Database> {
     pub error: Result<(), DB::Error>,
 }
 
-impl<ChainSpecT: ChainSpec, DB: Database + Clone> Clone for InnerEvmContext<ChainSpecT, DB>
+impl<ChainSpecT, DB> InnerEvmContext<ChainSpecT, DB>
 where
-    DB::Error: Clone,
+    ChainSpecT: ChainSpec<Transaction: Default>,
+    DB: Database,
 {
-    fn clone(&self) -> Self {
-        Self {
-            env: self.env.clone(),
-            journaled_state: self.journaled_state.clone(),
-            db: self.db.clone(),
-            error: self.error.clone(),
-        }
-    }
-}
-
-impl<ChainSpecT: ChainSpec, DB: Database> InnerEvmContext<ChainSpecT, DB> {
     pub fn new(db: DB) -> Self {
         Self {
             env: Box::default(),
@@ -54,7 +46,9 @@ impl<ChainSpecT: ChainSpec, DB: Database> InnerEvmContext<ChainSpecT, DB> {
             error: Ok(()),
         }
     }
+}
 
+impl<ChainSpecT: ChainSpec, DB: Database> InnerEvmContext<ChainSpecT, DB> {
     /// Creates a new context with the given environment and database.
     #[inline]
     pub fn new_with_env(db: DB, env: Box<Env<ChainSpecT>>) -> Self {
