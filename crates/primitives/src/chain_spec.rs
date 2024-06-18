@@ -46,11 +46,10 @@ pub trait TransactionValidation {
 
 pub trait ChainSpec: Sized + 'static {
     /// The type that contains all block information.
-    type Block: Block + Clone + Debug + Default + PartialEq + Eq;
+    type Block: Block;
 
     /// The type that contains all transaction information.
     type Transaction: Transaction + TransactionValidation;
-    // Clone + Debug + Default + PartialEq + Eq
 
     /// The type that enumerates the chain's hardforks.
     type Hardfork: HardforkTrait;

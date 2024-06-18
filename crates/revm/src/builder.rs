@@ -51,6 +51,7 @@ where
     ) -> EvmBuilder<'a, SetGenericStage, NewChainSpecT, EXT, DB>
     where
         NewChainSpecT: ChainSpec<
+            Block: Default,
             Transaction: Default + TransactionValidation<ValidationError: From<InvalidTransaction>>,
         >,
     {
@@ -365,7 +366,13 @@ impl<'a, BuilderStage, ChainSpecT: ChainSpec, EXT, DB: Database>
         f(&mut self.context.evm.env.cfg);
         self
     }
+}
 
+impl<'a, BuilderStage, ChainSpecT, EXT, DB> EvmBuilder<'a, BuilderStage, ChainSpecT, EXT, DB>
+where
+    ChainSpecT: ChainSpec<Block: Default>,
+    DB: Database,
+{
     /// Clears Block environment of EVM.
     pub fn with_clear_block_env(mut self) -> Self {
         self.context.evm.env.block = ChainSpecT::Block::default();
@@ -378,15 +385,21 @@ where
     ChainSpecT: ChainSpec<Transaction: Default>,
     DB: Database,
 {
-    /// Clears Environment of EVM.
-    pub fn with_clear_env(mut self) -> Self {
-        self.context.evm.env.clear();
-        self
-    }
-
     /// Clears Transaction environment of EVM.
     pub fn with_clear_tx_env(mut self) -> Self {
         self.context.evm.env.tx = ChainSpecT::Transaction::default();
+        self
+    }
+}
+
+impl<'a, BuilderStage, ChainSpecT, EXT, DB> EvmBuilder<'a, BuilderStage, ChainSpecT, EXT, DB>
+where
+    ChainSpecT: ChainSpec<Block: Default, Transaction: Default>,
+    DB: Database,
+{
+    /// Clears Environment of EVM.
+    pub fn with_clear_env(mut self) -> Self {
+        self.context.evm.env.clear();
         self
     }
 }

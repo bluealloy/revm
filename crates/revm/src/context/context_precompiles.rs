@@ -3,12 +3,14 @@ use crate::{
     precompile::{Precompile, PrecompileResult},
     primitives::{db::Database, Address, Bytes, ChainSpec, HashMap, HashSet},
 };
+use core::fmt::Debug;
 use derive_where::derive_where;
 use dyn_clone::DynClone;
 use revm_precompile::{PrecompileSpecId, PrecompileWithAddress, Precompiles};
 use std::{boxed::Box, sync::Arc};
 
 /// A single precompile handler.
+#[derive_where(Clone)]
 pub enum ContextPrecompile<ChainSpecT: ChainSpec, DB: Database> {
     /// Ordinary precompiles
     Ordinary(Precompile),
@@ -20,34 +22,26 @@ pub enum ContextPrecompile<ChainSpecT: ChainSpec, DB: Database> {
     ContextStatefulMut(ContextStatefulPrecompileBox<ChainSpecT, DB>),
 }
 
-impl<ChainSpecT: ChainSpec, DB: Database> Clone for ContextPrecompile<ChainSpecT, DB> {
-    fn clone(&self) -> Self {
+impl<ChainSpecT: ChainSpec, DB: Database> Debug for ContextPrecompile<ChainSpecT, DB> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            Self::Ordinary(p) => Self::Ordinary(p.clone()),
-            Self::ContextStateful(p) => Self::ContextStateful(p.clone()),
-            Self::ContextStatefulMut(p) => Self::ContextStatefulMut(p.clone()),
+            Self::Ordinary(arg0) => f.debug_tuple("Ordinary").field(arg0).finish(),
+            Self::ContextStateful(_arg0) => f.debug_tuple("ContextStateful").finish(),
+            Self::ContextStatefulMut(_arg0) => f.debug_tuple("ContextStatefulMut").finish(),
         }
     }
 }
 
+#[derive_where(Clone, Debug)]
 enum PrecompilesCow<ChainSpecT: ChainSpec, DB: Database> {
     /// Default precompiles, returned by `Precompiles::new`. Used to fast-path the default case.
     StaticRef(&'static Precompiles),
     Owned(HashMap<Address, ContextPrecompile<ChainSpecT, DB>>),
 }
 
-impl<ChainSpecT: ChainSpec, DB: Database> Clone for PrecompilesCow<ChainSpecT, DB> {
-    fn clone(&self) -> Self {
-        match *self {
-            PrecompilesCow::StaticRef(p) => PrecompilesCow::StaticRef(p),
-            PrecompilesCow::Owned(ref inner) => PrecompilesCow::Owned(inner.clone()),
-        }
-    }
-}
-
 /// Precompiles context.
 
-#[derive_where(Clone, Default)]
+#[derive_where(Clone, Debug, Default)]
 pub struct ContextPrecompiles<ChainSpecT: ChainSpec, DB: Database> {
     inner: PrecompilesCow<ChainSpecT, DB>,
 }

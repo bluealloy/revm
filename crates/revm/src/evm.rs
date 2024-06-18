@@ -29,7 +29,7 @@ pub struct Evm<'a, ChainSpecT: ChainSpec, EXT, DB: Database> {
 
 impl<ChainSpecT, EXT, DB> Debug for Evm<'_, ChainSpecT, EXT, DB>
 where
-    ChainSpecT: ChainSpec<Transaction: Debug>,
+    ChainSpecT: ChainSpec<Block: Debug, Transaction: Debug>,
     EXT: Debug,
     DB: Database<Error: Debug> + Debug,
 {
@@ -42,14 +42,12 @@ where
 
 impl<EXT, ChainSpecT: ChainSpec, DB: Database + DatabaseCommit> Evm<'_, ChainSpecT, EXT, DB> {
     /// Commit the changes to the database.
+    #[allow(clippy::type_complexity)]
     pub fn transact_commit(
         &mut self,
     ) -> Result<
         ExecutionResult<ChainSpecT>,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
+        EVMError<DB::Error, <ChainSpecT::Transaction as TransactionValidation>::ValidationError>,
     > {
         let ResultAndState { result, state } = self.transact()?;
         self.context.evm.db.commit(state);
