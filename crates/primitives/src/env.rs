@@ -659,6 +659,9 @@ pub struct OptimismFields {
     pub enveloped_tx: Option<Bytes>,
 }
 
+/// Transaction destination
+pub type TransactTo = TxKind;
+
 /// Create scheme.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
