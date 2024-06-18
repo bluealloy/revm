@@ -60,7 +60,7 @@ impl Contract {
         bytecode: Bytecode,
         hash: Option<B256>,
     ) -> Self {
-        let contract_address = match env.tx.transact_to() {
+        let contract_address = match env.tx.kind() {
             TxKind::Call(caller) => *caller,
             TxKind::Create => Address::ZERO,
         };

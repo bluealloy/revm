@@ -23,7 +23,7 @@ pub struct CreateInputs {
 impl CreateInputs {
     /// Creates new create inputs.
     pub fn new(tx_env: &impl Transaction, gas_limit: u64) -> Option<Self> {
-        let TxKind::Create = tx_env.transact_to() else {
+        let TxKind::Create = tx_env.kind() else {
             return None;
         };
 
