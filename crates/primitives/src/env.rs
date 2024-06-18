@@ -119,7 +119,7 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
         }
 
         // EIP-3860: Limit and meter initcode
-        if SPEC::enabled(SpecId::SHANGHAI) && self.tx.transact_to().is_create() {
+        if SPEC::enabled(SpecId::SHANGHAI) && self.tx.kind().is_create() {
             let max_initcode_size = self
                 .cfg
                 .limit_contract_code_size
@@ -162,7 +162,7 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
                 // that it MUST NOT be nil and therefore must always represent
                 // a 20-byte address. This means that blob transactions cannot
                 // have the form of a create transaction.
-                if self.tx.transact_to().is_create() {
+                if self.tx.kind().is_create() {
                     return Err(InvalidTransaction::BlobCreateTransaction);
                 }
 
@@ -585,7 +585,7 @@ impl Transaction for TxEnv {
     }
 
     #[inline]
-    fn transact_to(&self) -> &TransactTo {
+    fn kind(&self) -> &TransactTo {
         &self.transact_to
     }
 

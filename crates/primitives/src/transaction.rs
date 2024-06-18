@@ -16,15 +16,15 @@ pub trait Transaction: Clone + Debug + Default + PartialEq + Eq {
 
     /// Caller aka Author aka transaction signer.
     fn caller(&self) -> &Address;
-    /// The gas limit of the transaction.
+    /// The maximum amount of gas the transaction can use.
     fn gas_limit(&self) -> u64;
-    /// The gas price of the transaction.
+    /// The gas price the sender is willing to pay.
     fn gas_price(&self) -> &U256;
-    /// The destination of the transaction.
-    fn transact_to(&self) -> &TxKind;
-    /// The value sent to `transact_to`.
+    /// Returns what kind of transaction this is.
+    fn kind(&self) -> &TxKind;
+    /// The value sent to the receiver of `TxKind::Call`.
     fn value(&self) -> &U256;
-    /// The data of the transaction.
+    /// Returns the input data of the transaction.
     fn data(&self) -> &Bytes;
     /// The nonce of the transaction.
     ///
@@ -55,7 +55,7 @@ pub trait Transaction: Clone + Debug + Default + PartialEq + Eq {
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     fn blob_hashes(&self) -> &[B256];
-    /// The max fee per blob gas.
+    /// The maximum fee per blob gas the sender is willing to pay.
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///

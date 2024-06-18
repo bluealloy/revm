@@ -44,7 +44,7 @@ pub fn validate_initial_tx_gas<ChainSpecT: ChainSpec, SPEC: Spec, DB: Database>(
     env: &Env<ChainSpecT>,
 ) -> Result<u64, EVMError<ChainSpecT, DB::Error>> {
     let input = &env.tx.data();
-    let is_create = env.tx.transact_to().is_create();
+    let is_create = env.tx.kind().is_create();
     let access_list = &env.tx.access_list();
 
     let initial_gas_spend =

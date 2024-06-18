@@ -76,7 +76,7 @@ pub fn deduct_caller_inner<ChainSpecT: ChainSpec, SPEC: Spec>(
     caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
 
     // bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-    if env.tx.transact_to().is_call() {
+    if env.tx.kind().is_call() {
         // Nonce is already checked
         caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
     }

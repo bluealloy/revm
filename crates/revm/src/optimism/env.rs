@@ -129,8 +129,8 @@ impl Transaction for OptimismTransaction {
         self.base.gas_price()
     }
 
-    fn transact_to(&self) -> &TransactTo {
-        self.base.transact_to()
+    fn kind(&self) -> &TransactTo {
+        self.base.kind()
     }
 
     fn value(&self) -> &U256 {
