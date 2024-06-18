@@ -334,6 +334,14 @@ impl<DB: Database> InnerEvmContext<DB> {
             return;
         }
 
+        // deduct gas for code deployment.
+        let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
+        if !interpreter_result.gas.record_cost(gas_for_code) {
+            self.journaled_state.checkpoint_revert(journal_checkpoint);
+            interpreter_result.result = InstructionResult::OutOfGas;
+            return;
+        }
+
         // commit changes reduces depth by -1.
         self.journaled_state.checkpoint_commit();
 

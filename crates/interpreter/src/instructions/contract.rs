@@ -62,10 +62,8 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
         .target_address
         .create2(salt.to_be_bytes(), keccak256(sub_container));
 
-    let gas_reduce = max(interpreter.gas.remaining() / 64, 5000);
-    let gas_limit = interpreter.gas().remaining().saturating_sub(gas_reduce);
+    let gas_limit = interpreter.gas().remaining_63_of_64_parts();
     gas!(interpreter, gas_limit);
-
     // Send container for execution container is preverified.
     interpreter.instruction_result = InstructionResult::CallOrCreate;
     interpreter.next_action = InterpreterAction::EOFCreate {
