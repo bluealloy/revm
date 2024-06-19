@@ -75,7 +75,7 @@ where
 {
     let input = &env.tx.data();
     let is_create = env.tx.kind().is_create();
-    let access_list = &env.tx.access_list();
+    let access_list = env.tx.access_list();
 
     let initial_gas_spend =
         gas::validate_initial_tx_gas(SPEC::SPEC_ID, input, is_create, access_list);

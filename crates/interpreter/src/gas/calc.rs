@@ -1,9 +1,7 @@
-use revm_primitives::AccessListItem;
-
 use super::constants::*;
 use crate::{
     num_words,
-    primitives::{SpecId, U256},
+    primitives::{AccessListItem, SpecId, U256},
     SelfDestructResult,
 };
 
