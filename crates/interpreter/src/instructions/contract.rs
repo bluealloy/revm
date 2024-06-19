@@ -1,17 +1,18 @@
 mod call_helpers;
 
 pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
-use revm_primitives::{eof::EofHeader, keccak256, BerlinSpec};
 
 use crate::{
     gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD},
     interpreter::Interpreter,
-    primitives::{Address, Bytes, Eof, Spec, SpecId::*, U256},
+    primitives::{
+        eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, U256,
+    },
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, Host,
     InstructionResult, InterpreterAction, InterpreterResult, LoadAccountResult, MAX_INITCODE_SIZE,
 };
 use core::cmp::max;
-use std::{boxed::Box, os::macos::raw::stat};
+use std::boxed::Box;
 
 /// EOF Create instruction
 pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
