@@ -223,7 +223,7 @@ impl L1BlockInfo {
 
         estimated_size
             .saturating_mul(l1_fee_scaled)
-            .wrapping_div(U256::from(1000000000000u64))
+            .wrapping_div(U256::from(1_000_000_000_000u64))
     }
 
     // l1BaseFee*16*l1BaseFeeScalar + l1BlobBaseFee*l1BlobBaseFeeScalar
