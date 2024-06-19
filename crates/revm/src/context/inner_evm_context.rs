@@ -249,7 +249,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> InnerEvmContext<ChainSpecT, DB> {
                 // Use nonce from tx (if set) or from account (if not).
                 // Nonce for call is bumped in deduct_caller
                 // TODO(make this part of nonce increment code)
-                let nonce = self.env.tx.nonce().unwrap_or_else(|| {
+                let nonce = self.env.tx.nonce_opt().unwrap_or_else(|| {
                     let caller = self.env.tx.caller();
                     self.load_account(*caller)
                         .map(|(a, _)| a.info.nonce)

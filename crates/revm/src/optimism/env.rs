@@ -127,7 +127,7 @@ impl Transaction for OptimismTransaction {
         self.base.gas_price()
     }
 
-    fn kind(&self) -> &TxKind {
+    fn kind(&self) -> TxKind {
         self.base.kind()
     }
 
@@ -139,8 +139,8 @@ impl Transaction for OptimismTransaction {
         self.base.data()
     }
 
-    fn nonce(&self) -> Option<u64> {
-        self.base.nonce()
+    fn nonce_opt(&self) -> Option<u64> {
+        self.base.nonce_opt()
     }
 
     fn chain_id(&self) -> Option<u64> {
