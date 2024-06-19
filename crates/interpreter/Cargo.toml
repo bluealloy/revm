@@ -46,7 +46,7 @@ path = "tests/eof.rs"
 required-features = ["serde"]
 
 [features]
-default = ["std", "parse"]
+default = ["std", "parse", "rwasm"]
 std = ["serde?/std", "revm-primitives/std"]
 hashbrown = ["revm-primitives/hashbrown"]
 serde = ["dep:serde", "revm-primitives/serde"]
