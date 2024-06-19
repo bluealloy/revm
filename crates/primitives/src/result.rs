@@ -16,7 +16,6 @@ pub type EVMResultGeneric<T, ChainSpecT, DBError> = core::result::Result<
 >;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ResultAndState<ChainSpecT: ChainSpec> {
     /// Status of execution
     pub result: ExecutionResult<ChainSpecT>,
@@ -26,7 +25,6 @@ pub struct ResultAndState<ChainSpecT: ChainSpec> {
 
 /// Result of a transaction execution.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExecutionResult<ChainSpecT: ChainSpec> {
     /// Returned successfully
     Success {
