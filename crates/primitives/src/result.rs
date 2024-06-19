@@ -158,9 +158,9 @@ pub enum EVMError<DBError, TransactionValidationErrorT> {
     Precompile(String),
 }
 
-impl<DBError> EVMError<DBError> {
+impl<DBError, TransactionValidationErrorT> EVMError<DBError, TransactionValidationErrorT> {
     /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
-    pub fn map_db_err<F, E>(self, op: F) -> EVMError<E>
+    pub fn map_db_err<F, E>(self, op: F) -> EVMError<E, TransactionValidationErrorT>
     where
         F: FnOnce(DBError) -> E,
     {
@@ -173,6 +173,11 @@ impl<DBError> EVMError<DBError> {
         }
     }
 }
+
+pub type EVMErrorForChain<DBError, ChainSpecT> = EVMError<
+    DBError,
+    <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+>;
 
 #[cfg(feature = "std")]
 impl<DBError, TransactionValidationErrorT> std::error::Error

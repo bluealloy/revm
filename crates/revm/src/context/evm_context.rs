@@ -8,7 +8,9 @@ use crate::{
     interpreter::{
         return_ok, CallInputs, Contract, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
-    primitives::{Address, Bytes, ChainSpec, EVMError, Env, TransactionValidation, U256},
+    primitives::{
+        Address, Bytes, ChainSpec, EVMError, EVMErrorForChain, Env, TransactionValidation, U256,
+    },
     ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
 use core::ops::{Deref, DerefMut};
@@ -87,13 +89,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
         address: &Address,
         input_data: &Bytes,
         gas: Gas,
-    ) -> Result<
-        Option<InterpreterResult>,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> Result<Option<InterpreterResult>, EVMErrorForChain<DB::Error, ChainSpecT>> {
         let Some(outcome) =
             self.precompiles
                 .call(address, input_data, gas.limit(), &mut self.inner)

@@ -1,8 +1,8 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, Block, ChainSpec, EVMError, ExecutionResult, ResultAndState, Spec,
-        SpecId::LONDON, Transaction, TransactionValidation, U256,
+        db::Database, Block, ChainSpec, EVMError, EVMErrorForChain, ExecutionResult,
+        ResultAndState, Spec, SpecId::LONDON, Transaction, TransactionValidation, U256,
     },
     Context, FrameResult,
 };
@@ -11,20 +11,8 @@ use crate::{
 #[inline]
 pub fn end<ChainSpecT: ChainSpec, EXT, DB: Database>(
     _context: &mut Context<ChainSpecT, EXT, DB>,
-    evm_output: Result<
-        ResultAndState<ChainSpecT>,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    >,
-) -> Result<
-    ResultAndState<ChainSpecT>,
-    EVMError<
-        DB::Error,
-        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-    >,
-> {
+    evm_output: Result<ResultAndState<ChainSpecT>, EVMErrorForChain<DB::Error, ChainSpecT>>,
+) -> Result<ResultAndState<ChainSpecT>, EVMErrorForChain<DB::Error, ChainSpecT>> {
     evm_output
 }
 
@@ -79,13 +67,7 @@ pub fn reward_beneficiary<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
 pub fn reimburse_caller<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     gas: &Gas,
-) -> Result<
-    (),
-    EVMError<
-        DB::Error,
-        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-    >,
-> {
+) -> Result<(), EVMErrorForChain<DB::Error, ChainSpecT>> {
     let caller = context.evm.env.tx.caller();
     let effective_gas_price = context.evm.env.effective_gas_price();
 
@@ -110,13 +92,7 @@ pub fn reimburse_caller<ChainSpecT: ChainSpec, EXT, DB: Database>(
 pub fn output<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     result: FrameResult,
-) -> Result<
-    ResultAndState<ChainSpecT>,
-    EVMError<
-        DB::Error,
-        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-    >,
-> {
+) -> Result<ResultAndState<ChainSpecT>, EVMErrorForChain<DB::Error, ChainSpecT>> {
     context.evm.take_error().map_err(EVMError::Database)?;
 
     // used gas with refund calculated.

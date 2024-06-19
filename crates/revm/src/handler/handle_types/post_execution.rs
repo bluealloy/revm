@@ -3,8 +3,8 @@ use crate::{
     handler::mainnet,
     interpreter::Gas,
     primitives::{
-        db::Database, ChainSpec, EVMError, EVMResultGeneric, ResultAndState, Spec,
-        TransactionValidation,
+        db::Database, ChainSpec, EVMError, EVMErrorForChain, EVMResultGeneric, ResultAndState,
+        Spec, TransactionValidation,
     },
     Context, FrameResult,
 };
@@ -121,13 +121,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
         result: FrameResult,
-    ) -> Result<
-        ResultAndState<ChainSpecT>,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> Result<ResultAndState<ChainSpecT>, EVMErrorForChain<DB::Error, ChainSpecT>> {
         (self.output)(context, result)
     }
 
@@ -135,20 +129,8 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
     pub fn end(
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
-        end_output: Result<
-            ResultAndState<ChainSpecT>,
-            EVMError<
-                DB::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        >,
-    ) -> Result<
-        ResultAndState<ChainSpecT>,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+        end_output: Result<ResultAndState<ChainSpecT>, EVMErrorForChain<DB::Error, ChainSpecT>>,
+    ) -> Result<ResultAndState<ChainSpecT>, EVMErrorForChain<DB::Error, ChainSpecT>> {
         (self.end)(context, end_output)
     }
 
