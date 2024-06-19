@@ -16,7 +16,9 @@ pub trait Transaction {
     fn data(&self) -> &Bytes;
     /// The nonce of the transaction.
     ///
-    /// Caution: If set to `None`, then nonce validation against the account's nonce is skipped: [InvalidTransaction::NonceTooHigh] and [InvalidTransaction::NonceTooLow]
+    /// Caution: If set to `None`, then nonce validation against the account's
+    /// nonce is skipped: [`crate::InvalidTransaction::NonceTooHigh`] and
+    /// [`crate::InvalidTransaction::NonceTooLow`]
     fn nonce(&self) -> Option<u64>;
     /// The chain ID of the transaction. If set to `None`, no checks are performed.
     ///
