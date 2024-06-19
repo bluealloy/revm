@@ -1,9 +1,19 @@
 use super::{DatabaseCommit, DatabaseRef, EmptyDB};
-use crate::primitives::{
-    hash_map::Entry, Account, AccountInfo, Address, Bytecode, HashMap, Log, B256, KECCAK_EMPTY,
-    U256,
+use crate::{
+    primitives::{
+        hash_map::Entry,
+        Account,
+        AccountInfo,
+        Address,
+        Bytecode,
+        HashMap,
+        Log,
+        B256,
+        KECCAK_EMPTY,
+        U256,
+    },
+    Database,
 };
-use crate::Database;
 use core::convert::Infallible;
 use fluentbase_sdk::{LowLevelSDK, SharedAPI};
 use fluentbase_types::POSEIDON_EMPTY;
@@ -16,14 +26,15 @@ pub type InMemoryDB = CacheDB<EmptyDB>;
 ///
 /// This implementation wraps a [DatabaseRef] that is used to load data ([AccountInfo]).
 ///
-/// Accounts and code are stored in two separate maps, the `accounts` map maps addresses to [DbAccount],
-/// whereas contracts are identified by their code hash, and are stored in the `contracts` map.
-/// The [DbAccount] holds the code hash of the contract, which is used to look up the contract in the `contracts` map.
+/// Accounts and code are stored in two separate maps, the `accounts` map maps addresses to
+/// [DbAccount], whereas contracts are identified by their code hash, and are stored in the
+/// `contracts` map. The [DbAccount] holds the code hash of the contract, which is used to look up
+/// the contract in the `contracts` map.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CacheDB<ExtDB> {
-    /// Account info where None means it is not existing. Not existing state is needed for Pre TANGERINE forks.
-    /// `code` is always `None`, and bytecode can be found in `contracts`.
+    /// Account info where None means it is not existing. Not existing state is needed for Pre
+    /// TANGERINE forks. `code` is always `None`, and bytecode can be found in `contracts`.
     pub accounts: HashMap<Address, DbAccount>,
     /// Tracks all contracts by their code hash.
     pub contracts: HashMap<B256, Bytecode>,
@@ -59,7 +70,8 @@ impl<ExtDB> CacheDB<ExtDB> {
 
     /// Inserts the account's code into the cache.
     ///
-    /// Accounts objects and code are stored separately in the cache, this will take the code from the account and instead map it to the code hash.
+    /// Accounts objects and code are stored separately in the cache, this will take the code from
+    /// the account and instead map it to the code hash.
     ///
     /// Note: This will not insert into the underlying external database.
     pub fn insert_contract(&mut self, account: &mut AccountInfo) {
@@ -73,6 +85,7 @@ impl<ExtDB> CacheDB<ExtDB> {
                     .or_insert_with(|| code.clone());
             }
         }
+        #[cfg(feature = "rwasm")]
         if let Some(rwasm_code) = &account.rwasm_code {
             if !rwasm_code.is_empty() {
                 if account.rwasm_code_hash == POSEIDON_EMPTY {
@@ -90,6 +103,7 @@ impl<ExtDB> CacheDB<ExtDB> {
         if account.code_hash == B256::ZERO {
             account.code_hash = KECCAK_EMPTY;
         }
+        #[cfg(feature = "rwasm")]
         if account.rwasm_code_hash == B256::ZERO {
             account.rwasm_code_hash = POSEIDON_EMPTY;
         }
@@ -358,10 +372,11 @@ pub enum AccountState {
     /// Before Spurious Dragon hardfork there was a difference between empty and not existing.
     /// And we are flagging it here.
     NotExisting,
-    /// EVM touched this account. For newer hardfork this means it can be cleared/removed from state.
+    /// EVM touched this account. For newer hardfork this means it can be cleared/removed from
+    /// state.
     Touched,
-    /// EVM cleared storage of this account, mostly by selfdestruct, we don't ask database for storage slots
-    /// and assume they are U256::ZERO
+    /// EVM cleared storage of this account, mostly by selfdestruct, we don't ask database for
+    /// storage slots and assume they are U256::ZERO
     StorageCleared,
     /// EVM didn't interacted with this account
     #[default]
