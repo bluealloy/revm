@@ -1621,7 +1621,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-codec"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40676f79b10ba3c829dabb124ec840ae498f67e5"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#f6aaa35fd50c6fc696cacce62b24fe6af2dd4e05"
 dependencies = [
  "alloy-primitives",
  "byteorder",
@@ -1635,7 +1635,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-codec-derive"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40676f79b10ba3c829dabb124ec840ae498f67e5"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#f6aaa35fd50c6fc696cacce62b24fe6af2dd4e05"
 dependencies = [
  "convert_case 0.6.0",
  "crypto-hashes",
@@ -1647,7 +1647,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-core"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40676f79b10ba3c829dabb124ec840ae498f67e5"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#f6aaa35fd50c6fc696cacce62b24fe6af2dd4e05"
 dependencies = [
  "alloy-rlp",
  "byteorder",
@@ -1665,7 +1665,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-genesis"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40676f79b10ba3c829dabb124ec840ae498f67e5"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#f6aaa35fd50c6fc696cacce62b24fe6af2dd4e05"
 dependencies = [
  "alloy-genesis 0.1.1",
  "byteorder",
@@ -1684,7 +1684,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-poseidon"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40676f79b10ba3c829dabb124ec840ae498f67e5"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#f6aaa35fd50c6fc696cacce62b24fe6af2dd4e05"
 dependencies = [
  "bitvec",
  "halo2curves 0.6.1 (git+https://github.com/privacy-scaling-explorations/halo2curves?tag=v0.6.1)",
@@ -1696,7 +1696,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-runtime"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40676f79b10ba3c829dabb124ec840ae498f67e5"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#f6aaa35fd50c6fc696cacce62b24fe6af2dd4e05"
 dependencies = [
  "byteorder",
  "chrono",
@@ -1716,7 +1716,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-sdk"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40676f79b10ba3c829dabb124ec840ae498f67e5"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#f6aaa35fd50c6fc696cacce62b24fe6af2dd4e05"
 dependencies = [
  "alloy-rlp",
  "byteorder",
@@ -1732,7 +1732,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-sdk-derive"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40676f79b10ba3c829dabb124ec840ae498f67e5"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#f6aaa35fd50c6fc696cacce62b24fe6af2dd4e05"
 dependencies = [
  "convert_case 0.6.0",
  "crypto-hashes",
@@ -1745,7 +1745,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-types"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40676f79b10ba3c829dabb124ec840ae498f67e5"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#f6aaa35fd50c6fc696cacce62b24fe6af2dd4e05"
 dependencies = [
  "alloy-primitives",
  "rwasm",
@@ -1755,7 +1755,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-zktrie"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40676f79b10ba3c829dabb124ec840ae498f67e5"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#f6aaa35fd50c6fc696cacce62b24fe6af2dd4e05"
 dependencies = [
  "byteorder",
  "fluentbase-poseidon",
@@ -3593,7 +3593,7 @@ dependencies = [
 [[package]]
 name = "revm-interpreter-fluent"
 version = "5.0.0"
-source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#799d956e663298a95af9db321c6c5253a398cd29"
+source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#820faf7e15edcb88b1b98a84bb72f751b793e99e"
 dependencies = [
  "revm-primitives 4.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
  "serde",
@@ -3645,7 +3645,7 @@ dependencies = [
 [[package]]
 name = "revm-primitives"
 version = "4.0.0"
-source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#799d956e663298a95af9db321c6c5253a398cd29"
+source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#820faf7e15edcb88b1b98a84bb72f751b793e99e"
 dependencies = [
  "alloy-primitives",
  "auto_impl",
