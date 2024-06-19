@@ -10,7 +10,8 @@ use crate::{
         EOFCreateKind, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
     primitives::{
-        keccak256, Address, Bytecode, Bytes, ChainSpec, CreateScheme, EVMError, Env, Eof,
+        keccak256, Address, Bytecode, Bytes, ChainSpec, CreateScheme, EVMError, EVMErrorForChain,
+        Env, Eof,
         SpecId::{self, *},
         Transaction as _, TransactionValidation, B256, EOF_MAGIC_BYTES,
     },
@@ -94,13 +95,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
         address: &Address,
         input_data: &Bytes,
         gas: Gas,
-    ) -> Result<
-        Option<InterpreterResult>,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> Result<Option<InterpreterResult>, EVMErrorForChain<DB::Error, ChainSpecT>> {
         let Some(outcome) =
             self.precompiles
                 .call(address, input_data, gas.limit(), &mut self.inner)

@@ -6,8 +6,8 @@ use crate::{
     handler::{EnvWithChainSpec, Handler},
     interpreter::{CallInputs, CreateInputs, EOFCreateInputs, InterpreterAction, SharedMemory},
     primitives::{
-        CfgEnv, ChainSpec, EVMError, EVMResult, EthChainSpec, ExecutionResult, ResultAndState,
-        SpecId, Transaction as _, TransactionValidation, TxKind, EOF_MAGIC_BYTES,
+        CfgEnv, ChainSpec, EVMError, EVMErrorForChain, EVMResult, EthChainSpec, ExecutionResult,
+        ResultAndState, SpecId, Transaction as _, TransactionValidation, TxKind, EOF_MAGIC_BYTES,
     },
     Context, ContextWithChainSpec, Frame, FrameOrResult, FrameResult,
 };
@@ -42,13 +42,9 @@ where
 
 impl<EXT, ChainSpecT: ChainSpec, DB: Database + DatabaseCommit> Evm<'_, ChainSpecT, EXT, DB> {
     /// Commit the changes to the database.
-    #[allow(clippy::type_complexity)]
     pub fn transact_commit(
         &mut self,
-    ) -> Result<
-        ExecutionResult<ChainSpecT>,
-        EVMError<DB::Error, <ChainSpecT::Transaction as TransactionValidation>::ValidationError>,
-    > {
+    ) -> Result<ExecutionResult<ChainSpecT>, EVMErrorForChain<DB::Error, ChainSpecT>> {
         let ResultAndState { result, state } = self.transact()?;
         self.context.evm.db.commit(state);
         Ok(result)
