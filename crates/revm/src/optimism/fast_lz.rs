@@ -112,7 +112,7 @@ mod tests {
     use crate::db::BenchmarkDB;
     use crate::{
         primitives::address, primitives::bytes, primitives::Bytecode, primitives::Bytes,
-        primitives::TransactTo, primitives::U256, Evm,
+        primitives::TxKind, primitives::U256, Evm,
     };
 
     use rstest::rstest;
@@ -166,8 +166,7 @@ mod tests {
             .with_db(BenchmarkDB::new_bytecode(contract_bytecode.clone()))
             .modify_tx_env(|tx| {
                 tx.caller = address!("1000000000000000000000000000000000000000");
-                tx.transact_to =
-                    TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+                tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
                 tx.data = FastLz::fastLzCall::new((input,)).abi_encode().into();
             })
             .build();

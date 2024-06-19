@@ -8,7 +8,7 @@ use crate::{
         db::Database,
         Account, EVMError, Env, Spec,
         SpecId::{CANCUN, PRAGUE, SHANGHAI},
-        TransactTo, BLOCKHASH_STORAGE_ADDRESS, U256,
+        TxKind, BLOCKHASH_STORAGE_ADDRESS, U256,
     },
     Context, ContextPrecompiles,
 };
@@ -68,7 +68,7 @@ pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) 
     caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
 
     // bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-    if matches!(env.tx.transact_to, TransactTo::Call(_)) {
+    if matches!(env.tx.transact_to, TxKind::Call(_)) {
         // Nonce is already checked
         caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
     }

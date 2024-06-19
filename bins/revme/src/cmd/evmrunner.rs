@@ -2,7 +2,7 @@ use revm::{
     db::BenchmarkDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
-    primitives::{Address, Bytecode, TransactTo},
+    primitives::{Address, Bytecode, TxKind},
     Evm,
 };
 use std::io::Error as IoError;
@@ -86,7 +86,7 @@ impl Cmd {
                 tx.caller = "0x0000000000000000000000000000000000000001"
                     .parse()
                     .unwrap();
-                tx.transact_to = TransactTo::Call(Address::ZERO);
+                tx.transact_to = TxKind::Call(Address::ZERO);
                 tx.data = input;
             })
             .build();
