@@ -24,7 +24,7 @@ lazy_static = { version = "1.4.0", default-features = false }
 paste = { version = "1.0", default-features = false }
 
 fluentbase-types = { path = "../fluentbase/crates/types", default-features = false }
-fluentbase-core = { path = "../fluentbase/crates/core", default-features = false, features = ["ecl", "wcl"] }
+fluentbase-core = { path = "../fluentbase/crates/core", default-features = false }
 fluentbase-sdk = { path = "../fluentbase/crates/sdk", default-features = false }
 fluentbase-runtime = { path = "../fluentbase/crates/runtime", default-features = false }
 fluentbase-codec = { path = "../fluentbase/crates/codec", default-features = false }

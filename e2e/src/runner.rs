@@ -6,7 +6,6 @@ use super::{
 use crate::merkle_trie::state_merkle_trie_root2;
 use fluentbase_genesis::devnet::{devnet_genesis_from_file, KECCAK_HASH_KEY, POSEIDON_HASH_KEY};
 use fluentbase_poseidon::poseidon_hash;
-use fluentbase_sdk::calc_storage_key;
 use fluentbase_types::{consts::EVM_STORAGE_ADDRESS, Address, ExitCode};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
@@ -508,12 +507,12 @@ pub fn execute_test_suite(
             let mut account_storage = PlainStorage::default();
             if let Some(storage) = info.storage.as_ref() {
                 for (k, v) in storage.iter() {
-                    if cfg!(feature = "debug_use_fluent_storage") {
-                        let storage_key = calc_storage_key(address, k.as_ptr());
-                        evm_storage.insert(U256::from_le_bytes(storage_key), (*v).into());
-                    } else {
-                        account_storage.insert(U256::from_be_bytes(k.0), U256::from_be_bytes(v.0));
-                    }
+                    // if cfg!(feature = "debug_use_fluent_storage") {
+                    //     let storage_key = calc_storage_key(address, k.as_ptr());
+                    //     evm_storage.insert(U256::from_le_bytes(storage_key), (*v).into());
+                    // } else {
+                    account_storage.insert(U256::from_be_bytes(k.0), U256::from_be_bytes(v.0));
+                    // }
                 }
             }
             genesis_addresses.insert(*address);
@@ -535,26 +534,26 @@ pub fn execute_test_suite(
             );
             // acc_info.rwasm_code_hash = rwasm_hash;
             // acc_info.rwasm_code = Some(Bytecode::new_raw(rwasm_bytecode.clone()));
-            if cfg!(feature = "debug_use_fluent_storage") {
-                for (k, v) in info.storage.iter() {
-                    let storage_key = calc_storage_key(&address, k.to_le_bytes::<32>().as_ptr());
-                    println!(
-                        "mapping EVM storage address=0x{}, slot={}, storage_key={}, value={}",
-                        hex::encode(&address),
-                        hex::encode(k.to_be_bytes::<32>().as_slice()),
-                        hex::encode(&storage_key),
-                        hex::encode(v.to_be_bytes::<32>().as_slice()),
-                    );
-                    evm_storage.insert(U256::from_le_bytes(storage_key), (*v).into());
-                }
-                cache_state2.insert_account_with_storage(
-                    address,
-                    acc_info,
-                    PlainStorage::default(),
-                );
-            } else {
-                cache_state2.insert_account_with_storage(address, acc_info, info.storage);
-            }
+            // if cfg!(feature = "debug_use_fluent_storage") {
+            //     for (k, v) in info.storage.iter() {
+            //         let storage_key = calc_storage_key(&address, k.to_le_bytes::<32>().as_ptr());
+            //         println!(
+            //             "mapping EVM storage address=0x{}, slot={}, storage_key={}, value={}",
+            //             hex::encode(&address),
+            //             hex::encode(k.to_be_bytes::<32>().as_slice()),
+            //             hex::encode(&storage_key),
+            //             hex::encode(v.to_be_bytes::<32>().as_slice()),
+            //         );
+            //         evm_storage.insert(U256::from_le_bytes(storage_key), (*v).into());
+            //     }
+            //     cache_state2.insert_account_with_storage(
+            //         address,
+            //         acc_info,
+            //         PlainStorage::default(),
+            //     );
+            // } else {
+            cache_state2.insert_account_with_storage(address, acc_info, info.storage);
+            // }
         }
 
         #[cfg(feature = "debug_use_fluent_storage")]

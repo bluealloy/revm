@@ -21,8 +21,8 @@ use fluentbase_core::{
     helpers::evm_error_from_exit_code,
     loader::{_loader_call, _loader_create},
 };
-use fluentbase_sdk::{ContractInput, EvmCallMethodInput, EvmCreateMethodInput};
-use fluentbase_types::{consts::EVM_STORAGE_ADDRESS, Address, ExitCode};
+use fluentbase_sdk::{ContractInput, types::{EvmCallMethodInput, EvmCreateMethodInput}};
+use fluentbase_types::{Address, ExitCode};
 use core::fmt;
 use std::vec::Vec;
 use revm_interpreter::{CallOutcome, CreateOutcome};

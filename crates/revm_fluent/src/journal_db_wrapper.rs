@@ -5,7 +5,6 @@ use fluentbase_sdk::{
     Account,
     AccountCheckpoint,
     AccountManager,
-    EvmCallMethodOutput,
     JZKT_ACCOUNT_COMPRESSION_FLAGS,
     JZKT_ACCOUNT_FIELDS_COUNT,
     JZKT_ACCOUNT_RWASM_CODE_HASH_FIELD,
@@ -13,15 +12,15 @@ use fluentbase_sdk::{
     JZKT_STORAGE_COMPRESSION_FLAGS,
     JZKT_STORAGE_FIELDS_COUNT,
 };
+use fluentbase_sdk::types::EvmCallMethodOutput;
 use fluentbase_types::{
-    consts::EVM_STORAGE_ADDRESS,
     ExitCode,
     IJournaledTrie,
     JournalEvent,
     JournalLog,
 };
+use fluentbase_types::consts::EVM_STORAGE_ADDRESS;
 use revm_interpreter::{Gas, InstructionResult};
-use std::borrow::BorrowMut;
 
 pub(crate) struct JournalDbWrapper<'a, DB: Database> {
     ctx: RefCell<&'a mut EvmContext<DB>>,
@@ -327,7 +326,7 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
         gas: u64,
     ) -> Option<EvmCallMethodOutput> {
         let mut ctx = self.ctx.borrow_mut();
-        let result = ctx.call_precompile(address, input, Gas::new(gas)).unwrap_or_else(|_| None)?;
+        let result = ctx.call_precompile(&address, input, Gas::new(gas)).unwrap_or(None)?;
         Some(EvmCallMethodOutput {
             output: result.output,
             exit_code: exit_code_from_evm_error(result.result).into_i32(),

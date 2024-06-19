@@ -62,7 +62,7 @@ dependencies = [
  "alloy-eips",
  "alloy-primitives",
  "alloy-rlp",
- "alloy-serde",
+ "alloy-serde 0.1.0",
  "c-kzg",
  "serde",
 ]
@@ -74,7 +74,7 @@ source = "git+https://github.com/alloy-rs/alloy.git?rev=61140ec#61140ec42988abed
 dependencies = [
  "alloy-primitives",
  "alloy-rlp",
- "alloy-serde",
+ "alloy-serde 0.1.0",
  "c-kzg",
  "once_cell",
  "serde",
@@ -87,7 +87,19 @@ version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy.git?rev=61140ec#61140ec42988abed6db3d2d38044b2918e08d2a9"
 dependencies = [
  "alloy-primitives",
- "alloy-serde",
+ "alloy-serde 0.1.0",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "alloy-genesis"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e10a047066076b32d52b3228e95a4f7793db7a204f648aa1a1ea675085bffd8"
+dependencies = [
+ "alloy-primitives",
+ "alloy-serde 0.1.1",
  "serde",
  "serde_json",
 ]
@@ -230,10 +242,10 @@ source = "git+https://github.com/alloy-rs/alloy.git?rev=61140ec#61140ec42988abed
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
- "alloy-genesis",
+ "alloy-genesis 0.1.0",
  "alloy-primitives",
  "alloy-rlp",
- "alloy-serde",
+ "alloy-serde 0.1.0",
  "alloy-sol-types",
  "itertools 0.12.1",
  "serde",
@@ -248,7 +260,7 @@ source = "git+https://github.com/alloy-rs/alloy.git?rev=61140ec#61140ec42988abed
 dependencies = [
  "alloy-primitives",
  "alloy-rpc-types",
- "alloy-serde",
+ "alloy-serde 0.1.0",
  "serde",
  "serde_json",
 ]
@@ -257,6 +269,17 @@ dependencies = [
 name = "alloy-serde"
 version = "0.1.0"
 source = "git+https://github.com/alloy-rs/alloy.git?rev=61140ec#61140ec42988abed6db3d2d38044b2918e08d2a9"
+dependencies = [
+ "alloy-primitives",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "alloy-serde"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c224916316519558d8c2b6a60dc7626688c08f1b8951774702562dbcb8666ee"
 dependencies = [
  "alloy-primitives",
  "serde",
@@ -1652,13 +1675,13 @@ dependencies = [
 name = "fluentbase-genesis"
 version = "0.1.0"
 dependencies = [
- "alloy-genesis",
+ "alloy-genesis 0.1.1",
  "byteorder",
  "bytes",
  "clap 4.5.7",
  "fluentbase-core",
  "fluentbase-poseidon",
- "fluentbase-types",
+ "fluentbase-sdk",
  "hashbrown",
  "hex",
  "revm-primitives",
@@ -1707,7 +1730,6 @@ dependencies = [
  "fluentbase-runtime",
  "fluentbase-sdk-derive",
  "fluentbase-types",
- "lol_alloc",
  "paste",
  "revm-primitives",
 ]
@@ -2700,15 +2722,6 @@ name = "log"
 version = "0.4.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90ed8c1e510134f979dbc4f070f87d4313098b704861a105fe34231c70a3901c"
-
-[[package]]
-name = "lol_alloc"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83e5106554cabc97552dcadf54f57560ae6af3276652f82ca2be06120dc4c5dc"
-dependencies = [
- "spin 0.9.8",
-]
 
 [[package]]
 name = "lru"
@@ -4403,9 +4416,6 @@ name = "spin"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
-dependencies = [
- "lock_api",
-]
 
 [[package]]
 name = "spki"

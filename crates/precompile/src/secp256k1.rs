@@ -1,5 +1,5 @@
 use crate::{utilities::right_pad, Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use revm_primitives::{alloy_primitives::B512, Bytes, PrecompileOutput, B256};
+use revm_primitives::{alloy_primitives::B512, Bytes, PrecompileOutput, B256, PrecompileErrors, PrecompileError};
 
 pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(1),
@@ -107,12 +107,12 @@ extern "C" {
 pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     const ECRECOVER_BASE: u64 = 3_000;
     if ECRECOVER_BASE > gas_limit {
-        return Err(Error::OutOfGas);
+        return Err(PrecompileErrors::Error(PrecompileError::OutOfGas));
     }
     let input = right_pad::<128>(input);
     // `v` must be a 32-byte big-endian integer equal to 27 or 28.
     if !(input[32..63].iter().all(|&b| b == 0) && matches!(input[63], 27 | 28)) {
-        return Ok((ECRECOVER_BASE, Bytes::new()));
+        return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()))
     }
     let mut public_key: [u8; 65] = [0u8; 65];
     let mut hash: B256 = B256::ZERO;
@@ -126,7 +126,7 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         _keccak256(public_key[1..].as_ptr(), 64, hash.as_mut_ptr())
     }
     hash[..12].fill(0);
-    Ok((ECRECOVER_BASE, Bytes::from(hash)))
+    Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::from(hash)))
 }
 
 // #[cfg(test)]
