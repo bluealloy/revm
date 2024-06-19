@@ -1,4 +1,5 @@
 use revm_interpreter::CallValue;
+use revm_precompile::PrecompileErrors;
 
 use super::inner_evm_context::InnerEvmContext;
 use crate::{
@@ -6,7 +7,7 @@ use crate::{
     interpreter::{
         return_ok, CallInputs, Contract, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
-    primitives::{Address, Bytes, EVMError, Env, HashSet, U256},
+    primitives::{Address, Bytes, EVMError, Env, U256},
     ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
 use core::{
@@ -14,6 +15,7 @@ use core::{
     ops::{Deref, DerefMut},
 };
 use std::boxed::Box;
+use std::borrow::BorrowMut;
 
 /// EVM context that contains the inner EVM context and precompiles.
 pub struct EvmContext<DB: Database> {
@@ -95,8 +97,7 @@ impl<DB: Database> EvmContext<DB> {
     #[inline]
     pub fn set_precompiles(&mut self, precompiles: ContextPrecompiles<DB>) {
         // set warm loaded addresses.
-        self.journaled_state.warm_preloaded_addresses =
-            precompiles.addresses().copied().collect::<HashSet<_>>();
+        self.journaled_state.warm_preloaded_addresses = precompiles.addresses_set();
         self.precompiles = precompiles;
     }
 
@@ -104,13 +105,16 @@ impl<DB: Database> EvmContext<DB> {
     #[inline]
     pub(crate) fn call_precompile(
         &mut self,
-        address: Address,
+        address: &Address,
         input_data: &Bytes,
         gas: Gas,
-    ) -> Option<InterpreterResult> {
-        let out = self
-            .precompiles
-            .call(address, input_data, gas.limit(), &mut self.inner)?;
+    ) -> Result<Option<InterpreterResult>, EVMError<DB::Error>> {
+        let Some(outcome) =
+            self.precompiles
+                .call(address, input_data, gas.limit(), &mut self.inner)
+        else {
+            return Ok(None);
+        };
 
         let mut result = InterpreterResult {
             result: InstructionResult::Return,
@@ -118,24 +122,25 @@ impl<DB: Database> EvmContext<DB> {
             output: Bytes::new(),
         };
 
-        match out {
-            Ok((gas_used, data)) => {
-                if result.gas.record_cost(gas_used) {
+        match outcome {
+            Ok(output) => {
+                if result.gas.record_cost(output.gas_used) {
                     result.result = InstructionResult::Return;
-                    result.output = data;
+                    result.output = output.bytes;
                 } else {
                     result.result = InstructionResult::PrecompileOOG;
                 }
             }
-            Err(e) => {
-                result.result = if e == crate::precompile::Error::OutOfGas {
+            Err(PrecompileErrors::Error(e)) => {
+                result.result = if e.is_oog() {
                     InstructionResult::PrecompileOOG
                 } else {
                     InstructionResult::PrecompileError
                 };
             }
+            Err(PrecompileErrors::Fatal { msg }) => return Err(EVMError::Precompile(msg)),
         }
-        Some(result)
+        Ok(Some(result))
     }
 
     /// Make call frame
@@ -194,7 +199,7 @@ impl<DB: Database> EvmContext<DB> {
             _ => {}
         };
 
-        if let Some(result) = self.call_precompile(inputs.bytecode_address, &inputs.input, gas) {
+        if let Some(result) = self.call_precompile(&inputs.bytecode_address, &inputs.input, gas)? {
             if matches!(result.result, return_ok!()) {
                 self.journaled_state.checkpoint_commit();
             } else {
@@ -227,7 +232,7 @@ pub(crate) mod test_utils {
     use crate::{
         db::{CacheDB, EmptyDB},
         journaled_state::JournaledState,
-        primitives::{address, SpecId, B256},
+        primitives::{address, HashSet, SpecId, B256},
     };
 
     /// Mock caller address.
@@ -354,7 +359,7 @@ mod tests {
             result.interpreter_result().result,
             InstructionResult::OutOfFunds
         );
-        let checkpointed = vec![vec![JournalEntry::AccountLoaded { address: contract }]];
+        let checkpointed = vec![vec![JournalEntry::AccountWarmed { address: contract }]];
         assert_eq!(evm_context.journaled_state.journal, checkpointed);
         assert_eq!(evm_context.journaled_state.depth, 0);
     }

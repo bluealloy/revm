@@ -15,6 +15,7 @@ use revm_precompile::HashMap;
 ///
 /// On selfdestruct storage original value is ignored.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BundleAccount {
     pub info: Option<AccountInfo>,
     pub original_info: Option<AccountInfo>,

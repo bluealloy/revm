@@ -66,13 +66,6 @@ impl Gas {
         self.limit - self.remaining
     }
 
-    #[doc(hidden)]
-    #[inline]
-    #[deprecated(note = "use `spent` instead")]
-    pub const fn spend(&self) -> u64 {
-        self.spent()
-    }
-
     /// Returns the amount of gas remaining.
     #[inline]
     pub const fn remaining(&self) -> u64 {

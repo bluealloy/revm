@@ -28,7 +28,7 @@ use once_cell::race::OnceBox;
 pub use revm_primitives as primitives;
 pub use revm_primitives::{
     precompile::{PrecompileError as Error, *},
-    Address, Bytes, HashMap, Log, B256,
+    Address, Bytes, HashMap, HashSet, Log, B256,
 };
 use std::{boxed::Box, vec::Vec};
 
@@ -36,26 +36,12 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
-pub struct PrecompileOutput {
-    pub cost: u64,
-    pub output: Vec<u8>,
-    pub logs: Vec<Log>,
-}
-
-impl PrecompileOutput {
-    pub fn without_logs(cost: u64, output: Vec<u8>) -> Self {
-        Self {
-            cost,
-            output,
-            logs: Vec::new(),
-        }
-    }
-}
 #[derive(Clone, Default, Debug)]
 pub struct Precompiles {
     /// Precompiles.
-    pub inner: HashMap<Address, Precompile>,
+    inner: HashMap<Address, Precompile>,
+    /// Addresses of precompile.
+    addresses: HashSet<Address>,
 }
 
 impl Precompiles {
@@ -87,6 +73,11 @@ impl Precompiles {
         })
     }
 
+    /// Returns inner HashMap of precompiles.
+    pub fn inner(&self) -> &HashMap<Address, Precompile> {
+        &self.inner
+    }
+
     /// Returns precompiles for Byzantium spec.
     pub fn byzantium() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
@@ -111,12 +102,12 @@ impl Precompiles {
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::byzantium().clone();
             precompiles.extend([
-                // EIP-152: Add BLAKE2 compression function `F` precompile.
-                blake2::FUN,
                 // EIP-1108: Reduce alt_bn128 precompile gas costs.
                 bn128::add::ISTANBUL,
                 bn128::mul::ISTANBUL,
                 bn128::pair::ISTANBUL,
+                // EIP-152: Add BLAKE2 compression function `F` precompile.
+                blake2::FUN,
             ]);
             Box::new(precompiles)
         })
@@ -184,13 +175,13 @@ impl Precompiles {
 
     /// Returns an iterator over the precompiles addresses.
     #[inline]
-    pub fn addresses(&self) -> impl Iterator<Item = &Address> {
+    pub fn addresses(&self) -> impl ExactSizeIterator<Item = &Address> {
         self.inner.keys()
     }
 
     /// Consumes the type and returns all precompile addresses.
     #[inline]
-    pub fn into_addresses(self) -> impl Iterator<Item = Address> {
+    pub fn into_addresses(self) -> impl ExactSizeIterator<Item = Address> {
         self.inner.into_keys()
     }
 
@@ -222,11 +213,19 @@ impl Precompiles {
         self.inner.len()
     }
 
+    /// Returns the precompiles addresses as a set.
+    pub fn addresses_set(&self) -> &HashSet<Address> {
+        &self.addresses
+    }
+
     /// Extends the precompiles with the given precompiles.
     ///
     /// Other precompiles with overwrite existing precompiles.
+    #[inline]
     pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
-        self.inner.extend(other.into_iter().map(Into::into));
+        let items = other.into_iter().collect::<Vec<_>>();
+        self.addresses.extend(items.iter().map(|p| *p.address()));
+        self.inner.extend(items.into_iter().map(Into::into));
     }
 }
 
@@ -242,6 +241,20 @@ impl From<(Address, Precompile)> for PrecompileWithAddress {
 impl From<PrecompileWithAddress> for (Address, Precompile) {
     fn from(value: PrecompileWithAddress) -> Self {
         (value.0, value.1)
+    }
+}
+
+impl PrecompileWithAddress {
+    /// Returns reference of address.
+    #[inline]
+    pub fn address(&self) -> &Address {
+        &self.0
+    }
+
+    /// Returns reference of precompile.
+    #[inline]
+    pub fn precompile(&self) -> &Precompile {
+        &self.1
     }
 }
 

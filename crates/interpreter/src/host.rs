@@ -1,4 +1,4 @@
-use crate::primitives::{Address, Bytecode, Env, Log, B256, U256};
+use crate::primitives::{Address, Bytes, Env, Log, B256, U256};
 
 mod dummy;
 pub use dummy::DummyHost;
@@ -23,7 +23,7 @@ pub trait Host {
     fn balance(&mut self, address: Address) -> Option<(U256, bool)>;
 
     /// Get code of `address` and if the account is cold.
-    fn code(&mut self, address: Address) -> Option<(Bytecode, bool)>;
+    fn code(&mut self, address: Address) -> Option<(Bytes, bool)>;
 
     /// Get code hash of `address` and if the account is cold.
     fn code_hash(&mut self, address: Address) -> Option<(B256, bool)>;

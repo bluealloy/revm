@@ -17,6 +17,7 @@ use crate::{
 use core::cmp::min;
 use revm_primitives::{Bytecode, Eof, U256};
 use std::borrow::ToOwned;
+use std::sync::Arc;
 
 /// EVM bytecode interpreter.
 #[derive(Debug)]
@@ -68,18 +69,6 @@ impl Default for Interpreter {
     }
 }
 
-/// The result of an interpreter operation.
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-pub struct InterpreterResult {
-    /// The result of the instruction execution.
-    pub result: InstructionResult,
-    /// The output of the instruction execution.
-    pub output: Bytes,
-    /// The gas usage information.
-    pub gas: Gas,
-}
-
 impl Interpreter {
     /// Create new interpreter
     pub fn new(contract: Contract, gas_limit: u64, is_static: bool) -> Self {
@@ -112,7 +101,7 @@ impl Interpreter {
     }
 
     #[inline]
-    pub fn eof(&self) -> Option<&Eof> {
+    pub fn eof(&self) -> Option<&Arc<Eof>> {
         self.contract.bytecode.eof()
     }
 
@@ -204,6 +193,7 @@ impl Interpreter {
     }
 
     pub fn insert_eofcreate_outcome(&mut self, create_outcome: EOFCreateOutcome) {
+        self.instruction_result = InstructionResult::Continue;
         let instruction_result = create_outcome.instruction_result();
 
         self.return_data_buffer = if *instruction_result == InstructionResult::Revert {
@@ -261,32 +251,53 @@ impl Interpreter {
         call_outcome: CallOutcome,
     ) {
         self.instruction_result = InstructionResult::Continue;
-        self.return_data_buffer.clone_from(call_outcome.output());
 
         let out_offset = call_outcome.memory_start();
         let out_len = call_outcome.memory_length();
+        let out_ins_result = *call_outcome.instruction_result();
+        let out_gas = call_outcome.gas();
+        self.return_data_buffer = call_outcome.result.output;
 
         let target_len = min(out_len, self.return_data_buffer.len());
-        match call_outcome.instruction_result() {
+        match out_ins_result {
             return_ok!() => {
                 // return unspend gas.
-                let remaining = call_outcome.gas().remaining();
-                let refunded = call_outcome.gas().refunded();
-                self.gas.erase_cost(remaining);
-                self.gas.record_refund(refunded);
+                self.gas.erase_cost(out_gas.remaining());
+                self.gas.record_refund(out_gas.refunded());
                 shared_memory.set(out_offset, &self.return_data_buffer[..target_len]);
-                push!(self, U256::from(1));
+                push!(
+                    self,
+                    if self.is_eof {
+                        U256::ZERO
+                    } else {
+                        U256::from(1)
+                    }
+                );
             }
             return_revert!() => {
-                self.gas.erase_cost(call_outcome.gas().remaining());
+                self.gas.erase_cost(out_gas.remaining());
                 shared_memory.set(out_offset, &self.return_data_buffer[..target_len]);
-                push!(self, U256::ZERO);
+                push!(
+                    self,
+                    if self.is_eof {
+                        U256::from(1)
+                    } else {
+                        U256::ZERO
+                    }
+                );
             }
             InstructionResult::FatalExternalError => {
                 panic!("Fatal external error in insert_call_outcome");
             }
             _ => {
-                push!(self, U256::ZERO);
+                push!(
+                    self,
+                    if self.is_eof {
+                        U256::from(2)
+                    } else {
+                        U256::ZERO
+                    }
+                );
             }
         }
     }
@@ -402,7 +413,28 @@ impl Interpreter {
     }
 }
 
+/// The result of an interpreter operation.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+pub struct InterpreterResult {
+    /// The result of the instruction execution.
+    pub result: InstructionResult,
+    /// The output of the instruction execution.
+    pub output: Bytes,
+    /// The gas usage information.
+    pub gas: Gas,
+}
+
 impl InterpreterResult {
+    /// Returns a new `InterpreterResult` with the given values.
+    pub fn new(result: InstructionResult, output: Bytes, gas: Gas) -> Self {
+        Self {
+            result,
+            output,
+            gas,
+        }
+    }
+
     /// Returns whether the instruction result is a success.
     #[inline]
     pub const fn is_ok(&self) -> bool {

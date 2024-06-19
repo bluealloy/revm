@@ -32,49 +32,27 @@ pub mod optimism;
 
 pub use builder::EvmBuilder;
 pub use context::{
-    Context,
-    ContextPrecompile,
-    ContextPrecompiles,
-    ContextStatefulPrecompile,
-    ContextStatefulPrecompileArc,
-    ContextStatefulPrecompileBox,
-    ContextStatefulPrecompileMut,
-    ContextWithHandlerCfg,
-    EvmContext,
-    InnerEvmContext,
+    Context, ContextPrecompile, ContextPrecompiles, ContextStatefulPrecompile,
+    ContextStatefulPrecompileArc, ContextStatefulPrecompileBox, ContextStatefulPrecompileMut,
+    ContextWithHandlerCfg, EvmContext, InnerEvmContext,
 };
 pub use db::{
-    CacheState,
-    DBBox,
-    Database,
-    DatabaseCommit,
-    DatabaseRef,
-    InMemoryDB,
-    State,
-    StateBuilder,
-    StateDBBox,
-    TransitionAccount,
-    TransitionState,
+    CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
 };
+pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
 pub use evm::{Evm, CALL_STACK_LIMIT};
 pub use frame::{CallFrame, CreateFrame, Frame, FrameData, FrameOrResult, FrameResult};
 pub use handler::Handler;
-pub use inspector::{
-    inspector_handle_register,
-    inspector_instruction,
-    inspectors,
-    GetInspector,
-    Inspector,
-};
+pub use inspector::{inspector_handle_register, inspectors, GetInspector, Inspector};
 pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 // export Optimism types, helpers, and constants
 #[cfg(feature = "optimism")]
 pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
 
 // Reexport libraries
-extern crate core;
 #[cfg(feature = "revm-rwasm")]
 pub extern crate revm_interpreter_fluent as revm_interpreter;
+extern crate core;
 
 #[doc(inline)]
 pub use revm_interpreter as interpreter;

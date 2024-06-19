@@ -1,12 +1,28 @@
 use crate::{Bytes, Env};
-use core::fmt;
+use core::fmt::{self};
 use dyn_clone::DynClone;
 use std::{boxed::Box, string::String, sync::Arc};
 
 /// A precompile operation result.
 ///
 /// Returns either `Ok((gas_used, return_bytes))` or `Err(error)`.
-pub type PrecompileResult = Result<(u64, Bytes), PrecompileError>;
+pub type PrecompileResult = Result<PrecompileOutput, PrecompileErrors>;
+
+/// Precompile execution output
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct PrecompileOutput {
+    /// Gas used by the precompile.
+    pub gas_used: u64,
+    /// Output bytes.
+    pub bytes: Bytes,
+}
+
+impl PrecompileOutput {
+    /// Returns new precompile output with the given gas used and output bytes.
+    pub fn new(gas_used: u64, bytes: Bytes) -> Self {
+        Self { gas_used, bytes }
+    }
+}
 
 pub type StandardPrecompileFn = fn(&Bytes, u64) -> PrecompileResult;
 pub type EnvPrecompileFn = fn(&Bytes, u64, env: &Env) -> PrecompileResult;
@@ -94,11 +110,44 @@ impl Precompile {
 
     /// Call the precompile with the given input and gas limit and return the result.
     pub fn call(&mut self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult {
-        match self {
+        match *self {
             Precompile::Standard(p) => p(bytes, gas_price),
             Precompile::Env(p) => p(bytes, gas_price, env),
-            Precompile::Stateful(p) => p.call(bytes, gas_price, env),
-            Precompile::StatefulMut(p) => p.call_mut(bytes, gas_price, env),
+            Precompile::Stateful(ref p) => p.call(bytes, gas_price, env),
+            Precompile::StatefulMut(ref mut p) => p.call_mut(bytes, gas_price, env),
+        }
+    }
+
+    /// Call the precompile with the given input and gas limit and return the result.
+    ///
+    /// Returns an error if the precompile is mutable.
+    pub fn call_ref(&self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult {
+        match *self {
+            Precompile::Standard(p) => p(bytes, gas_price),
+            Precompile::Env(p) => p(bytes, gas_price, env),
+            Precompile::Stateful(ref p) => p.call(bytes, gas_price, env),
+            Precompile::StatefulMut(_) => Err(PrecompileErrors::Fatal {
+                msg: "call_ref on mutable stateful precompile".into(),
+            }),
+        }
+    }
+}
+
+/// Precompile errors.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum PrecompileErrors {
+    Error(PrecompileError),
+    Fatal { msg: String },
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for PrecompileErrors {}
+
+impl fmt::Display for PrecompileErrors {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Error(e) => e.fmt(f),
+            Self::Fatal { msg } => f.write_str(msg),
         }
     }
 }
@@ -130,8 +179,20 @@ pub enum PrecompileError {
 }
 
 impl PrecompileError {
+    /// Returns an other error with the given message.
     pub fn other(err: impl Into<String>) -> Self {
         Self::Other(err.into())
+    }
+
+    /// Returns true if the error is out of gas.
+    pub fn is_oog(&self) -> bool {
+        matches!(self, Self::OutOfGas)
+    }
+}
+
+impl From<PrecompileError> for PrecompileErrors {
+    fn from(err: PrecompileError) -> Self {
+        PrecompileErrors::Error(err)
     }
 }
 
@@ -175,7 +236,7 @@ mod test {
                 _gas_price: u64,
                 _env: &Env,
             ) -> PrecompileResult {
-                PrecompileResult::Err(PrecompileError::OutOfGas)
+                Err(PrecompileError::OutOfGas.into())
             }
         }
 

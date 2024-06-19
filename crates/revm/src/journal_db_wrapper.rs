@@ -21,6 +21,7 @@ use fluentbase_types::{
     JournalLog,
 };
 use revm_interpreter::{Gas, InstructionResult};
+use std::borrow::BorrowMut;
 
 pub(crate) struct JournalDbWrapper<'a, DB: Database> {
     ctx: RefCell<&'a mut EvmContext<DB>>,

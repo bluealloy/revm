@@ -14,7 +14,7 @@ use crate::{
     Context, ContextPrecompiles, FrameResult,
 };
 use core::ops::Mul;
-use revm_precompile::{secp256r1, PrecompileSpecId, Precompiles};
+use revm_precompile::{secp256r1, PrecompileSpecId};
 use std::string::ToString;
 use std::sync::Arc;
 
@@ -143,7 +143,7 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
 /// Load precompiles for Optimism chain.
 #[inline]
 pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> ContextPrecompiles<DB> {
-    let mut precompiles = Precompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID)).clone();
+    let mut precompiles = ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID));
 
     if SPEC::enabled(SpecId::FJORD) {
         precompiles.extend([
@@ -152,7 +152,7 @@ pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> ContextPrecompiles<D
         ])
     }
 
-    precompiles.into()
+    precompiles
 }
 
 /// Load account (make them warm) and l1 data from database.

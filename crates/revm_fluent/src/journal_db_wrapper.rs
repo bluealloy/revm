@@ -21,6 +21,7 @@ use fluentbase_types::{
     JournalLog,
 };
 use revm_interpreter::{Gas, InstructionResult};
+use std::borrow::BorrowMut;
 
 pub(crate) struct JournalDbWrapper<'a, DB: Database> {
     ctx: RefCell<&'a mut EvmContext<DB>>,
@@ -326,7 +327,7 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
         gas: u64,
     ) -> Option<EvmCallMethodOutput> {
         let mut ctx = self.ctx.borrow_mut();
-        let result = ctx.call_precompile(*address, input, Gas::new(gas))?;
+        let result = ctx.call_precompile(address, input, Gas::new(gas)).unwrap_or_else(|_| None)?;
         Some(EvmCallMethodOutput {
             output: result.output,
             exit_code: exit_code_from_evm_error(result.result).into_i32(),

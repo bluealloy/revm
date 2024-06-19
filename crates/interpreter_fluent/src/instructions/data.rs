@@ -1,5 +1,5 @@
 use crate::{
-    gas::{BASE, DATA_LOAD_GAS, VERYLOW},
+    gas::{cost_per_word, BASE, DATA_LOAD_GAS, VERYLOW},
     instructions::utility::read_u16,
     interpreter::Interpreter,
     primitives::U256,
@@ -70,8 +70,10 @@ pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     let mem_offset = as_usize_or_fail!(interpreter, mem_offset);
     resize_memory!(interpreter, mem_offset, size);
 
+    gas_or_fail!(interpreter, cost_per_word(size as u64, VERYLOW));
+
     let offset = as_usize_saturated!(offset);
-    let data = interpreter.contract.bytecode.eof().expect("EOF").data();
+    let data = interpreter.contract.bytecode.eof().expect("eof").data();
 
     // set data from the eof to the shared memory. Padd it with zeros.
     interpreter
@@ -82,6 +84,7 @@ pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
 #[cfg(test)]
 mod test {
     use revm_primitives::{b256, bytes, Bytecode, Bytes, Eof, PragueSpec};
+    use std::sync::Arc;
 
     use super::*;
     use crate::{
@@ -99,7 +102,7 @@ mod test {
 
         eof.header.code_sizes[0] = code_bytes.len() as u16;
         eof.body.code_section[0] = code_bytes;
-        Bytecode::Eof(eof)
+        Bytecode::Eof(Arc::new(eof))
     }
 
     #[test]

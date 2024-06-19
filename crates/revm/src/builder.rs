@@ -449,6 +449,7 @@ mod test {
         Context, ContextPrecompile, ContextStatefulPrecompile, Evm, InMemoryDB, InnerEvmContext,
     };
     use revm_interpreter::{gas, Host, Interpreter};
+    use revm_precompile::PrecompileOutput;
     use std::{cell::RefCell, rc::Rc, sync::Arc};
 
     /// Custom evm context
@@ -614,7 +615,7 @@ mod test {
                 _gas_price: u64,
                 _context: &mut InnerEvmContext<EmptyDB>,
             ) -> PrecompileResult {
-                Ok((10, Bytes::new()))
+                Ok(PrecompileOutput::new(10, Bytes::new()))
             }
         }
 

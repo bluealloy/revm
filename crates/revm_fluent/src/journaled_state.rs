@@ -7,7 +7,8 @@ use core::mem;
 use fluentbase_sdk::B256;
 #[cfg(feature = "revm-rwasm")]
 use fluentbase_types::{Bytes, F254, POSEIDON_EMPTY};
-use revm_interpreter::{primitives::SpecId, LoadAccountResult, SStoreResult};
+use revm_interpreter::primitives::SpecId;
+use revm_interpreter::{LoadAccountResult, SStoreResult};
 use std::vec::Vec;
 
 /// JournalState is internal EVM state that is used to contain state and track changes to that state.
@@ -307,15 +308,6 @@ impl JournaledState {
         last_journal.push(JournalEntry::AccountCreated { address });
         account.info.code = None;
 
-        // Set all storages to default value. They need to be present to act as accessed slots in access list.
-        // it shouldn't be possible for them to have different values then zero as code is not existing for this account,
-        // but because tests can change that assumption we are doing it.
-        let empty = EvmStorageSlot::default();
-        account
-            .storage
-            .iter_mut()
-            .for_each(|(_, slot)| *slot = empty.clone());
-
         // touch account. This is important as for pre SpuriousDragon account could be
         // saved even empty.
         Self::touch_account(last_journal, &address, account);
@@ -358,8 +350,8 @@ impl JournaledState {
     ) {
         for entry in journal_entries.into_iter().rev() {
             match entry {
-                JournalEntry::AccountLoaded { address } => {
-                    state.remove(&address);
+                JournalEntry::AccountWarmed { address } => {
+                    state.get_mut(&address).unwrap().mark_cold();
                 }
                 JournalEntry::AccountTouched { address } => {
                     if is_spurious_dragon_enabled && address == PRECOMPILE3 {
@@ -404,19 +396,33 @@ impl JournaledState {
                 JournalEntry::AccountCreated { address } => {
                     let account = &mut state.get_mut(&address).unwrap();
                     account.unmark_created();
+                    account
+                        .storage
+                        .values_mut()
+                        .for_each(|slot| slot.mark_cold());
                     account.info.nonce = 0;
                 }
-                JournalEntry::StorageChange {
+                JournalEntry::StorageWarmed { address, key } => {
+                    state
+                        .get_mut(&address)
+                        .unwrap()
+                        .storage
+                        .get_mut(&key)
+                        .unwrap()
+                        .mark_cold();
+                }
+                JournalEntry::StorageChanged {
                     address,
                     key,
                     had_value,
                 } => {
-                    let storage = &mut state.get_mut(&address).unwrap().storage;
-                    if let Some(had_value) = had_value {
-                        storage.get_mut(&key).unwrap().present_value = had_value;
-                    } else {
-                        storage.remove(&key);
-                    }
+                    state
+                        .get_mut(&address)
+                        .unwrap()
+                        .storage
+                        .get_mut(&key)
+                        .unwrap()
+                        .present_value = had_value;
                 }
                 JournalEntry::TransientStorageChange {
                     address,
@@ -597,8 +603,12 @@ impl JournaledState {
         address: Address,
         db: &mut DB,
     ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
-        Ok(match self.state.entry(address) {
-            Entry::Occupied(entry) => (entry.into_mut(), false),
+        let (value, is_cold) = match self.state.entry(address) {
+            Entry::Occupied(entry) => {
+                let account = entry.into_mut();
+                let is_cold = account.mark_warm();
+                (account, is_cold)
+            }
             Entry::Vacant(vac) => {
                 let account =
                     if let Some(account) = db.basic(address).map_err(EVMError::Database)? {
@@ -607,18 +617,22 @@ impl JournaledState {
                         Account::new_not_existing()
                     };
 
-                // journal loading of account. AccessList touch.
-                self.journal
-                    .last_mut()
-                    .unwrap()
-                    .push(JournalEntry::AccountLoaded { address });
-
                 // precompiles are warm loaded so we need to take that into account
                 let is_cold = !self.warm_preloaded_addresses.contains(&address);
 
                 (vac.insert(account), is_cold)
             }
-        })
+        };
+
+        // journal loading of cold account.
+        if is_cold {
+            self.journal
+                .last_mut()
+                .unwrap()
+                .push(JournalEntry::AccountWarmed { address });
+        }
+
+        Ok((value, is_cold))
     }
 
     /// Load account from database to JournaledState.
@@ -711,8 +725,12 @@ impl JournaledState {
         let account = self.state.get_mut(&address).unwrap();
         // only if account is created in this tx we can assume that storage is empty.
         let is_newly_created = account.is_created();
-        let load = match account.storage.entry(key) {
-            Entry::Occupied(occ) => (occ.get().present_value, false),
+        let (value, is_cold) = match account.storage.entry(key) {
+            Entry::Occupied(occ) => {
+                let slot = occ.into_mut();
+                let is_cold = slot.mark_warm();
+                (slot.present_value, is_cold)
+            }
             Entry::Vacant(vac) => {
                 // if storage was cleared, we don't need to ping db.
                 let value = if is_newly_created {
@@ -720,22 +738,22 @@ impl JournaledState {
                 } else {
                     db.storage(address, key).map_err(EVMError::Database)?
                 };
-                // add it to journal as cold loaded.
-                self.journal
-                    .last_mut()
-                    .unwrap()
-                    .push(JournalEntry::StorageChange {
-                        address,
-                        key,
-                        had_value: None,
-                    });
 
                 vac.insert(EvmStorageSlot::new(value));
 
                 (value, true)
             }
         };
-        Ok(load)
+
+        if is_cold {
+            // add it to journal as cold loaded.
+            self.journal
+                .last_mut()
+                .unwrap()
+                .push(JournalEntry::StorageWarmed { address, key });
+        }
+
+        Ok((value, is_cold))
     }
 
     /// Stores storage slot.
@@ -772,10 +790,10 @@ impl JournaledState {
         self.journal
             .last_mut()
             .unwrap()
-            .push(JournalEntry::StorageChange {
+            .push(JournalEntry::StorageChanged {
                 address,
                 key,
-                had_value: Some(present),
+                had_value: present,
             });
         // insert value into present state.
         slot.present_value = new;
@@ -854,7 +872,7 @@ pub enum JournalEntry {
     /// Used to mark account that is warm inside EVM in regards to EIP-2929 AccessList.
     /// Action: We will add Account to state.
     /// Revert: we will remove account from state.
-    AccountLoaded { address: Address },
+    AccountWarmed { address: Address },
     /// Mark account to be destroyed and journal balance to be reverted
     /// Action: Mark account and transfer the balance
     /// Revert: Unmark the account and transfer balance back
@@ -887,15 +905,18 @@ pub enum JournalEntry {
     /// Actions: Mark account as created
     /// Revert: Unmart account as created and reset nonce to zero.
     AccountCreated { address: Address },
-    /// It is used to track both storage change and warm load of storage slot. For warm load in regard
-    /// to EIP-2929 AccessList had_value will be None
-    /// Action: Storage change or warm load
-    /// Revert: Revert to previous value or remove slot from storage
-    StorageChange {
+    /// Entry used to track storage changes
+    /// Action: Storage change
+    /// Revert: Revert to previous value
+    StorageChanged {
         address: Address,
         key: U256,
-        had_value: Option<U256>, //if none, storage slot was cold loaded from db and needs to be removed
+        had_value: U256,
     },
+    /// Entry used to track storage warming introduced by EIP-2929.
+    /// Action: Storage warmed
+    /// Revert: Revert to cold state
+    StorageWarmed { address: Address, key: U256 },
     /// It is used to track an EIP-1153 transient storage change.
     /// Action: Transient storage changed.
     /// Revert: Revert to previous value.

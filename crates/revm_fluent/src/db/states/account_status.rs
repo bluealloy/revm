@@ -2,6 +2,7 @@
 /// while we execute multiple transaction and even blocks over account that is in memory.
 /// This structure models all possible states that account can be in.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AccountStatus {
     #[default]
     LoadedNotExisting,

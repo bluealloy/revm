@@ -112,25 +112,12 @@ pub fn sar<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
     pop_top!(interpreter, op1, op2);
 
     let shift = as_usize_saturated!(op1);
-    *op2 = if shift >= 256 {
-        // If the shift is 256 or more, the result depends on the sign of the last bit.
-        if op2.bit(255) {
-            U256::MAX // Negative number, all bits set to one.
-        } else {
-            U256::ZERO // Non-negative number, all bits set to zero.
-        }
+    *op2 = if shift < 256 {
+        op2.arithmetic_shr(shift)
+    } else if op2.bit(255) {
+        U256::MAX
     } else {
-        // Normal shift
-        if op2.bit(255) {
-            // Check the most significant bit.
-            // Arithmetic right shift for negative numbers.
-            let shifted_value = *op2 >> shift;
-            let mask = U256::MAX << (256 - shift); // Mask for the sign bits.
-            shifted_value | mask // Apply the mask to simulate the filling of sign bits.
-        } else {
-            // Logical right shift for non-negative numbers.
-            *op2 >> shift
-        }
+        U256::ZERO
     };
 }
 

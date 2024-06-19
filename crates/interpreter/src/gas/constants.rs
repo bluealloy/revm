@@ -5,7 +5,7 @@ pub const VERYLOW: u64 = 3;
 pub const DATA_LOADN_GAS: u64 = 3;
 
 pub const CONDITION_JUMP_GAS: u64 = 4;
-pub const RETF_GAS: u64 = 4;
+pub const RETF_GAS: u64 = 3;
 pub const DATA_LOAD_GAS: u64 = 4;
 
 pub const LOW: u64 = 5;

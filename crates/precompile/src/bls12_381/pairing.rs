@@ -4,7 +4,9 @@ use super::{
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use blst::{blst_final_exp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_miller_loop};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult, B256};
+use revm_primitives::{
+    Bytes, Precompile, PrecompileError, PrecompileOutput, PrecompileResult, B256,
+};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -16,7 +18,7 @@ pub const ADDRESS: u64 = 0x11;
 const PAIRING_MULTIPLIER_BASE: u64 = 43000;
 /// Offset gas fee for BLS12-381 pairing operation.
 const PAIRING_OFFSET_BASE: u64 = 65000;
-/// Input length of paitring operation.
+/// Input length of pairing operation.
 const INPUT_LENGTH: usize = 384;
 
 /// Pairing call expects 384*k (k being a positive integer) bytes as an inputs
@@ -25,7 +27,7 @@ const INPUT_LENGTH: usize = 384;
 ///    * 128 bytes of G1 point encoding
 ///    * 256 bytes of G2 point encoding
 /// Each point is expected to be in the subgroup of order q.
-/// Output is a 32 bytes where first 31 bytes are equal to 0x00 and the last byte
+/// Output is 32 bytes where first 31 bytes are equal to 0x00 and the last byte
 /// is 0x01 if pairing result is equal to the multiplicative identity in a pairing
 /// target field and 0x00 otherwise.
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-pairing>
@@ -34,16 +36,17 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if input_len == 0 || input_len % INPUT_LENGTH != 0 {
         return Err(PrecompileError::Other(format!(
             "Pairing input length should be multiple of {INPUT_LENGTH}, was {input_len}"
-        )));
+        ))
+        .into());
     }
 
     let k = input_len / INPUT_LENGTH;
     let required_gas: u64 = PAIRING_MULTIPLIER_BASE * k as u64 + PAIRING_OFFSET_BASE;
     if required_gas > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
-    // accumulator for the fp12 multiplications of the miller loops.
+    // Accumulator for the fp12 multiplications of the miller loops.
     let mut acc = blst_fp12::default();
     for i in 0..k {
         // NB: Scalar multiplications, MSMs and pairings MUST perform a subgroup check.
@@ -64,7 +67,7 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         )?;
 
         if i > 0 {
-            // after the first slice (i>0) we use cur_ml to store the current
+            // After the first slice (i>0) we use cur_ml to store the current
             // miller loop and accumulate with the previous results using a fp12
             // multiplication.
             let mut cur_ml = blst_fp12::default();
@@ -76,7 +79,7 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             }
             acc = res;
         } else {
-            // on the first slice (i==0) there is no previous results and no need
+            // On the first slice (i==0) there is no previous results and no need
             // to accumulate.
             // SAFETY: acc, p1_aff and p2_aff are blst values.
             unsafe {
@@ -98,5 +101,8 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             result = 1;
         }
     }
-    Ok((required_gas, B256::with_last_byte(result).into()))
+    Ok(PrecompileOutput::new(
+        required_gas,
+        B256::with_last_byte(result).into(),
+    ))
 }

@@ -3,7 +3,7 @@
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
 use crate::{
-    precompile::{PrecompileSpecId, Precompiles},
+    precompile::PrecompileSpecId,
     primitives::{
         db::Database,
         Account, EVMError, Env, Spec,
@@ -16,9 +16,7 @@ use crate::{
 /// Main precompile load
 #[inline]
 pub fn load_precompiles<SPEC: Spec, DB: Database>() -> ContextPrecompiles<DB> {
-    Precompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
-        .clone()
-        .into()
+    ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
 }
 
 /// Main load handle
