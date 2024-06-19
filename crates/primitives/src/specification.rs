@@ -66,6 +66,7 @@ pub enum SpecId {
     ECOTONE = 21,
     FJORD = 22,
     PRAGUE = 23,
+    PRAGUE_EOF = 24,
     #[default]
     LATEST = u8::MAX,
 }
@@ -108,6 +109,7 @@ impl From<&str> for SpecId {
             "Shanghai" => Self::SHANGHAI,
             "Cancun" => Self::CANCUN,
             "Prague" => Self::PRAGUE,
+            "PragueEOF" => Self::PRAGUE_EOF,
             #[cfg(feature = "optimism")]
             "Bedrock" => SpecId::BEDROCK,
             #[cfg(feature = "optimism")]
@@ -417,6 +419,7 @@ mod tests {
         #[cfg(feature = "optimism")]
         spec_to_generic!(FJORD, assert_eq!(SPEC::SPEC_ID, FJORD));
         spec_to_generic!(PRAGUE, assert_eq!(SPEC::SPEC_ID, PRAGUE));
+        spec_to_generic!(PRAGUE_EOF, assert_eq!(SPEC::SPEC_ID, PRAGUE_EOF));
         spec_to_generic!(LATEST, assert_eq!(SPEC::SPEC_ID, LATEST));
     }
 }
