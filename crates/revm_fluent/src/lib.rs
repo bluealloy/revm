@@ -72,8 +72,8 @@ pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
 
 // Reexport libraries
-// #[cfg(feature = "revm-rwasm")]
 extern crate core;
+#[cfg(feature = "revm-rwasm")]
 pub extern crate revm_interpreter_fluent as revm_interpreter;
 
 #[doc(inline)]
