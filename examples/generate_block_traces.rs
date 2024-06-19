@@ -6,7 +6,7 @@ use ethers_providers::{Http, Provider};
 use indicatif::ProgressBar;
 use revm::db::{CacheDB, EthersDB, StateBuilder};
 use revm::inspectors::TracerEip3155;
-use revm::primitives::{Address, TxKind, U256};
+use revm::primitives::{AccessListItem, Address, TxKind, B256, U256};
 use revm::{inspector_handle_register, Evm};
 use std::fs::OpenOptions;
 use std::io::BufWriter;
@@ -130,12 +130,16 @@ async fn main() -> anyhow::Result<()> {
                         .0
                         .into_iter()
                         .map(|item| {
-                            let new_keys: Vec<U256> = item
+                            let storage_keys: Vec<B256> = item
                                 .storage_keys
                                 .into_iter()
-                                .map(|h256| U256::from_le_bytes(h256.0))
+                                .map(|h256| B256::new(h256.0))
                                 .collect();
-                            (Address::from(item.address.as_fixed_bytes()), new_keys)
+
+                            AccessListItem {
+                                address: Address::new(item.address.0),
+                                storage_keys,
+                            }
                         })
                         .collect();
                 } else {
