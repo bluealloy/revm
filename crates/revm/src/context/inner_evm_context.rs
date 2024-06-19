@@ -399,14 +399,11 @@ impl<DB: Database> InnerEvmContext<DB> {
         spec_id: SpecId,
         inputs: &CreateInputs,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-        // Prepare crate.
-        let gas = Gas::new(inputs.gas_limit);
-
         let return_error = |e| {
             Ok(FrameOrResult::new_create_result(
                 InterpreterResult {
                     result: e,
-                    gas,
+                    gas: Gas::new(inputs.gas_limit),
                     output: Bytes::new(),
                 },
                 None,
@@ -416,6 +413,11 @@ impl<DB: Database> InnerEvmContext<DB> {
         // Check depth
         if self.journaled_state.depth() > CALL_STACK_LIMIT {
             return return_error(InstructionResult::CallTooDeep);
+        }
+
+        // Prague EOF
+        if spec_id.is_enabled_in(PRAGUE) && inputs.init_code.get(..2) == Some(&[0xEF, 00]) {
+            return return_error(InstructionResult::CreateInitCodeStartingEF00);
         }
 
         // Fetch balance of caller.
@@ -475,7 +477,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         Ok(FrameOrResult::new_create_frame(
             created_address,
             checkpoint,
-            Interpreter::new(contract, gas.limit(), false),
+            Interpreter::new(contract, inputs.gas_limit, false),
         ))
     }
 

@@ -16,6 +16,10 @@ pub enum InstructionResult {
     Revert = 0x10, // revert opcode
     CallTooDeep,
     OutOfFunds,
+    /// Revert if CREATE/CREATE2 starts with 0xEF00
+    CreateInitCodeStartingEF00,
+    /// Invalid EOF initcode,
+    InvalidEOFInitCode,
 
     // Actions
     CallOrCreate = 0x20,
@@ -53,8 +57,6 @@ pub enum InstructionResult {
     EOFOpcodeDisabledInLegacy,
     /// EOF function stack overflow
     EOFFunctionStackOverflow,
-    /// Invalid EOF initcode,
-    InvalidEOFInitCode,
     /// Aux data overflow, new aux data is larger tha u16 max size.
     EofAuxDataOverflow,
     /// Aud data is smaller then already present data size.
@@ -126,6 +128,7 @@ macro_rules! return_revert {
             | InstructionResult::CallTooDeep
             | InstructionResult::OutOfFunds
             | InstructionResult::InvalidEOFInitCode
+            | InstructionResult::CreateInitCodeStartingEF00
     };
 }
 
@@ -240,6 +243,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::Return => Self::Success(SuccessReason::Return),
             InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
+            InstructionResult::CreateInitCodeStartingEF00 => Self::Revert,
             InstructionResult::CallOrCreate => Self::InternalCallOrCreate, // used only in interpreter loop
             InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), // not gonna happen for first call
             InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), // Check for first call is done separately.
