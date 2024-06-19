@@ -9,7 +9,6 @@ pub use contract::Contract;
 pub use shared_memory::{num_words, SharedMemory, EMPTY_SHARED_MEMORY};
 pub use stack::{Stack, STACK_LIMIT};
 
-use crate::EOFCreateOutcome;
 use crate::{
     gas, primitives::Bytes, push, push_b256, return_ok, return_revert, CallOutcome, CreateOutcome,
     FunctionStack, Gas, Host, InstructionResult, InterpreterAction,
@@ -192,7 +191,7 @@ impl Interpreter {
         }
     }
 
-    pub fn insert_eofcreate_outcome(&mut self, create_outcome: EOFCreateOutcome) {
+    pub fn insert_eofcreate_outcome(&mut self, create_outcome: CreateOutcome) {
         self.instruction_result = InstructionResult::Continue;
         let instruction_result = create_outcome.instruction_result();
 
@@ -206,7 +205,10 @@ impl Interpreter {
 
         match instruction_result {
             InstructionResult::ReturnContract => {
-                push_b256!(self, create_outcome.address.into_word());
+                push_b256!(
+                    self,
+                    create_outcome.address.expect("EOF Address").into_word()
+                );
                 self.gas.erase_cost(create_outcome.gas().remaining());
                 self.gas.record_refund(create_outcome.gas().refunded());
             }

@@ -1,10 +1,3 @@
-use crate::{
-    interpreter::{CallInputs, CreateInputs, EOFCreateInputs, EOFCreateOutcome, Interpreter},
-    primitives::{db::Database, Address, Log, U256},
-    EvmContext,
-};
-use auto_impl::auto_impl;
-
 #[cfg(feature = "std")]
 mod customprinter;
 #[cfg(all(feature = "std", feature = "serde-json"))]
@@ -13,10 +6,16 @@ mod gas;
 mod handler_register;
 mod noop;
 
-// Exports.
-
 pub use handler_register::{inspector_handle_register, GetInspector};
-use revm_interpreter::{CallOutcome, CreateOutcome};
+
+use crate::{
+    interpreter::{
+        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
+    },
+    primitives::{db::Database, Address, Log, U256},
+    EvmContext,
+};
+use auto_impl::auto_impl;
 
 /// [Inspector] implementations.
 pub mod inspectors {
@@ -142,7 +141,7 @@ pub trait Inspector<DB: Database> {
         &mut self,
         context: &mut EvmContext<DB>,
         inputs: &mut EOFCreateInputs,
-    ) -> Option<EOFCreateOutcome> {
+    ) -> Option<CreateOutcome> {
         let _ = context;
         let _ = inputs;
         None
@@ -153,8 +152,8 @@ pub trait Inspector<DB: Database> {
         &mut self,
         context: &mut EvmContext<DB>,
         inputs: &EOFCreateInputs,
-        outcome: EOFCreateOutcome,
-    ) -> EOFCreateOutcome {
+        outcome: CreateOutcome,
+    ) -> CreateOutcome {
         let _ = context;
         let _ = inputs;
         outcome

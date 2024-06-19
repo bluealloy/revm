@@ -53,6 +53,12 @@ pub enum InstructionResult {
     EOFOpcodeDisabledInLegacy,
     /// EOF function stack overflow
     EOFFunctionStackOverflow,
+    /// Invalid EOF initcode,
+    InvalidEOFInitCode,
+    /// Aux data overflow, new aux data is larger tha u16 max size.
+    EofAuxDataOverflow,
+    /// Aud data is smaller then already present data size.
+    EofAuxDataTooSmall,
 }
 
 impl From<SuccessReason> for InstructionResult {
@@ -94,6 +100,8 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::CallNotAllowedInsideStatic => Self::CallNotAllowedInsideStatic,
             HaltReason::OutOfFunds => Self::OutOfFunds,
             HaltReason::CallTooDeep => Self::CallTooDeep,
+            HaltReason::EofAuxDataOverflow => Self::EofAuxDataOverflow,
+            HaltReason::EofAuxDataTooSmall => Self::EofAuxDataTooSmall,
             #[cfg(feature = "optimism")]
             HaltReason::FailedDeposit => Self::FatalExternalError,
         }
@@ -114,7 +122,10 @@ macro_rules! return_ok {
 #[macro_export]
 macro_rules! return_revert {
     () => {
-        InstructionResult::Revert | InstructionResult::CallTooDeep | InstructionResult::OutOfFunds
+        InstructionResult::Revert
+            | InstructionResult::CallTooDeep
+            | InstructionResult::OutOfFunds
+            | InstructionResult::InvalidEOFInitCode
     };
 }
 
@@ -146,6 +157,8 @@ macro_rules! return_error {
             | InstructionResult::ReturnContractInNotInitEOF
             | InstructionResult::EOFOpcodeDisabledInLegacy
             | InstructionResult::EOFFunctionStackOverflow
+            | InstructionResult::EofAuxDataTooSmall
+            | InstructionResult::EofAuxDataOverflow
     };
 }
 
@@ -267,10 +280,14 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::CreateInitCodeSizeLimit => {
                 Self::Halt(HaltReason::CreateInitCodeSizeLimit)
             }
+            // TODO(EOF) - revise if Revert should have subenum.
+            InstructionResult::InvalidEOFInitCode => Self::Revert,
             InstructionResult::FatalExternalError => Self::FatalExternalError,
             InstructionResult::EOFOpcodeDisabledInLegacy => Self::Halt(HaltReason::OpcodeNotFound),
             InstructionResult::EOFFunctionStackOverflow => Self::FatalExternalError,
             InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
+            InstructionResult::EofAuxDataOverflow => Self::Halt(HaltReason::EofAuxDataOverflow),
+            InstructionResult::EofAuxDataTooSmall => Self::Halt(HaltReason::EofAuxDataTooSmall),
         }
     }
 }
