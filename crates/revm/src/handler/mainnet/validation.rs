@@ -75,7 +75,7 @@ where
 {
     let input = &env.tx.data();
     let is_create = env.tx.kind().is_create();
-    let access_list = &env.tx.access_list();
+    let access_list = env.tx.access_list();
     let authorization_list_num = env
         .tx
         .authorization_list()
