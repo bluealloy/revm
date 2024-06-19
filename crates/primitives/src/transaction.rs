@@ -9,7 +9,7 @@ pub trait Transaction {
     /// The gas price the sender is willing to pay.
     fn gas_price(&self) -> &U256;
     /// Returns what kind of transaction this is.
-    fn kind(&self) -> &TxKind;
+    fn kind(&self) -> TxKind;
     /// The value sent to the receiver of `TxKind::Call`.
     fn value(&self) -> &U256;
     /// Returns the input data of the transaction.
