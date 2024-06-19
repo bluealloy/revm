@@ -1,13 +1,20 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, EVMError, ExecutionResult, ResultAndState, Spec, SpecId::LONDON, U256,
+        db::Database,
+        EVMError,
+        ExecutionResult,
+        ResultAndState,
+        Spec,
+        SpecId::LONDON,
+        SuccessReason,
+        U256,
     },
-    Context, FrameResult,
+    Context,
+    FrameResult,
 };
 use fluentbase_core::helpers::exit_code_from_evm_error;
 use fluentbase_types::ExitCode;
-use crate::primitives::SuccessReason;
 
 /// Mainnet end handle does not change the output.
 #[inline]
@@ -83,7 +90,7 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
-#[cfg(not(feature = "revm-rwasm"))]
+#[cfg(not(feature = "rwasm"))]
 pub fn output<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     result: FrameResult,
@@ -130,7 +137,7 @@ pub fn output<EXT, DB: Database>(
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
-#[cfg(feature = "revm-rwasm")]
+#[cfg(feature = "rwasm")]
 pub fn output<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     result: FrameResult,

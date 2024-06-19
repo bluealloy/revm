@@ -9,10 +9,22 @@ use revm::{
     inspector_handle_register,
     inspectors::TracerEip3155,
     primitives::{
-        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, Eof,
-        ExecutionResult, SpecId, TransactTo, B256, EOF_MAGIC_BYTES, U256,
+        calc_excess_blob_gas,
+        keccak256,
+        Bytecode,
+        Bytes,
+        EVMResultGeneric,
+        Env,
+        Eof,
+        ExecutionResult,
+        SpecId,
+        TransactTo,
+        B256,
+        EOF_MAGIC_BYTES,
+        U256,
     },
-    Evm, State,
+    Evm,
+    State,
 };
 use serde_json::json;
 use std::{
@@ -21,7 +33,8 @@ use std::{
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
-        Arc, Mutex,
+        Arc,
+        Mutex,
     },
     time::{Duration, Instant},
 };
@@ -78,8 +91,8 @@ fn skip_test(path: &Path) -> bool {
 
     matches!(
         name,
-        // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require
-        // custom json parser. https://github.com/ethereum/tests/issues/971
+        // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and
+        // require custom json parser. https://github.com/ethereum/tests/issues/971
         |"ValueOverflow.json"| "ValueOverflowParis.json"
 
         // precompiles having storage is not possible
@@ -220,7 +233,7 @@ fn check_evm_execution<EXT>(
         });
     }
 
-    #[cfg(not(feature = "revm-rwasm"))]
+    #[cfg(not(feature = "rwasm"))]
     if state_root != test.hash {
         let kind = TestErrorKind::StateRootMismatch {
             got: state_root,
@@ -287,7 +300,8 @@ pub fn execute_test_suite(
         env.block.gas_limit = unit.env.current_gas_limit;
         env.block.basefee = unit.env.current_base_fee.unwrap_or_default();
         env.block.difficulty = unit.env.current_difficulty;
-        // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
+        // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty
+        // opcode in EVM.
         env.block.prevrandao = unit.env.current_random;
         // EIP-4844
         if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {

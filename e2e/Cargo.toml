@@ -28,7 +28,7 @@ revm-fluent = { workspace = true, features = [
     "serde-json",
     "c-kzg",
     "blst",
-    "revm-rwasm",
+    "rwasm",
 ] }
 
 hash-db = "=0.15"

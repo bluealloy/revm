@@ -1,32 +1,58 @@
-use core::cell::RefCell;
-#[cfg(feature = "revm-rwasm")]
+#[cfg(feature = "rwasm")]
 use crate::journal_db_wrapper::JournalDbWrapper;
-#[cfg(feature = "revm-rwasm")]
+#[cfg(feature = "rwasm")]
 use crate::primitives::hex;
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
-        analysis::validate_eof, CallInputs, CreateInputs, EOFCreateInputs, EOFCreateOutcome, Gas,
-        Host, InstructionResult, InterpreterAction, InterpreterResult, SharedMemory,
+        analysis::validate_eof,
+        CallInputs,
+        CreateInputs,
+        EOFCreateInputs,
+        EOFCreateOutcome,
+        Gas,
+        Host,
+        InstructionResult,
+        InterpreterAction,
+        InterpreterResult,
+        SharedMemory,
     },
     primitives::{
-        specification::SpecId, BlockEnv, Bytes, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
-        ExecutionResult, HandlerCfg, ResultAndState, TransactTo, TxEnv,
+        specification::SpecId,
+        BlockEnv,
+        Bytes,
+        CfgEnv,
+        EVMError,
+        EVMResult,
+        EnvWithHandlerCfg,
+        ExecutionResult,
+        HandlerCfg,
+        InvalidTransaction,
+        ResultAndState,
+        TransactTo,
+        TxEnv,
+        U256,
     },
-    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
+    Context,
+    ContextWithHandlerCfg,
+    Frame,
+    FrameOrResult,
+    FrameResult,
 };
+use core::{cell::RefCell, fmt};
 use fluentbase_core::{
     helpers::evm_error_from_exit_code,
     loader::{_loader_call, _loader_create},
 };
-use fluentbase_sdk::{ContractInput, types::{EvmCallMethodInput, EvmCreateMethodInput}};
+use fluentbase_sdk::{
+    types::{EvmCallMethodInput, EvmCreateMethodInput},
+    ContractInput,
+};
 use fluentbase_types::{Address, ExitCode};
-use core::fmt;
-use std::vec::Vec;
 use revm_interpreter::{CallOutcome, CreateOutcome};
-use crate::primitives::{InvalidTransaction, U256};
+use std::vec::Vec;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -36,8 +62,8 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
-    /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
-    /// and it different depending on the specified fork.
+    /// Handler is a component of the of EVM that contains all the logic. Handler contains
+    /// specification id and it different depending on the specified fork.
     pub handler: Handler<'a, Context<EXT, DB>, EXT, DB>,
 }
 
@@ -88,7 +114,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
 
     /// Runs main call loop.
     #[inline]
-    #[cfg(not(feature = "revm-rwasm"))]
+    #[cfg(not(feature = "rwasm"))]
     pub fn run_the_loop(&mut self, first_frame: Frame) -> Result<FrameResult, EVMError<DB::Error>> {
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
@@ -388,7 +414,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
 
         let mut result = {
-            #[cfg(feature = "revm-rwasm")]
+            #[cfg(feature = "rwasm")]
             {
                 // Load EVM storage account
                 // let (evm_storage, _) = ctx.evm.load_account(EVM_STORAGE_ADDRESS)?;
@@ -414,7 +440,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                     }
                 }
             }
-            #[cfg(not(feature = "revm-rwasm"))]
+            #[cfg(not(feature = "rwasm"))]
             {
                 let exec = self.handler.execution();
                 // call inner handling of call/create
@@ -427,15 +453,15 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         // if first byte of data is magic 0xEF00, then it is EOFCreate.
                         if spec_id.is_enabled_in(SpecId::PRAGUE)
                             && ctx
-                            .env()
-                            .tx
-                            .data
-                            .get(0..=1)
-                            .filter(|&t| t == [0xEF, 00])
-                            .is_some()
+                                .env()
+                                .tx
+                                .data
+                                .get(0..=1)
+                                .filter(|&t| t == [0xEF, 00])
+                                .is_some()
                         {
-                            // TODO Should we just check 0xEF it seems excessive to switch to legacy only
-                            // if it 0xEF00?
+                            // TODO Should we just check 0xEF it seems excessive to switch to legacy
+                            // only if it 0xEF00?
 
                             // get nonce from tx (if set) or from account (if not).
                             // Nonce for call is bumped in deduct_caller while
@@ -461,14 +487,16 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                                 exec.eofcreate(ctx, eofcreate)?
                             } else {
                                 // Return result, as code is invalid.
-                                FrameOrResult::Result(FrameResult::EOFCreate(EOFCreateOutcome::new(
-                                    InterpreterResult::new(
-                                        InstructionResult::Stop,
-                                        Bytes::new(),
-                                        Gas::new(gas_limit),
+                                FrameOrResult::Result(FrameResult::EOFCreate(
+                                    EOFCreateOutcome::new(
+                                        InterpreterResult::new(
+                                            InstructionResult::Stop,
+                                            Bytes::new(),
+                                            Gas::new(gas_limit),
+                                        ),
+                                        ctx.env().tx.caller.create(nonce),
                                     ),
-                                    ctx.env().tx.caller.create(nonce),
-                                )))
+                                ))
                             }
                         } else {
                             // Safe to unwrap because we are sure that it is create tx.
@@ -506,7 +534,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
-    #[cfg(feature = "revm-rwasm")]
+    #[cfg(feature = "rwasm")]
     fn create_inner(
         &mut self,
         caller_address: Address,
@@ -593,7 +621,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// Main contract call of the EVM.
-    #[cfg(feature = "revm-rwasm")]
+    #[cfg(feature = "rwasm")]
     fn call_inner(
         &mut self,
         caller_address: Address,

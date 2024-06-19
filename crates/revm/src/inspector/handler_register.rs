@@ -3,7 +3,11 @@ use crate::{
     handler::register::EvmHandler,
     interpreter::{opcode, InstructionResult, Interpreter},
     primitives::EVMError,
-    Context, FrameOrResult, FrameResult, Inspector, JournalEntry,
+    Context,
+    FrameOrResult,
+    FrameResult,
+    Inspector,
+    JournalEntry,
 };
 use core::cell::RefCell;
 use revm_interpreter::opcode::DynInstruction;
@@ -37,7 +41,7 @@ impl<DB: Database, INSP: Inspector<DB>> GetInspector<DB> for INSP {
 pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
     handler: &mut EvmHandler<'_, EXT, DB>,
 ) {
-    if cfg!(not(feature = "revm-rwasm")) {
+    if cfg!(not(feature = "rwasm")) {
         let table = &mut handler.instruction_table;
 
         // Update all instructions to call inspector step and step_end.
@@ -128,9 +132,9 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
             frame_or_result
         });
 
-        // Calls inspector `eofcreate` and `initialize_interp` functions. Queues the inputs for the `eofcreate_end`` function.
-        // Calls the old handler, and in case of inspector returning outcome,
-        // returns the outcome without executing eofcreate.
+        // Calls inspector `eofcreate` and `initialize_interp` functions. Queues the inputs for the
+        // `eofcreate_end`` function. Calls the old handler, and in case of inspector
+        // returning outcome, returns the outcome without executing eofcreate.
         let eofcreate_input_stack_inner = eofcreate_input_stack.clone();
         let prev_handle = handler.execution.eofcreate.clone();
         handler.execution.eofcreate = Arc::new(move |ctx, mut inputs| {
@@ -161,10 +165,10 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
         let prev_handle = handler.execution.insert_eofcreate_outcome.clone();
         handler.execution.insert_eofcreate_outcome = Arc::new(move |ctx, frame, mut outcome| {
             let create_inputs = eofcreate_input_stack_inner.borrow_mut().pop().unwrap();
-            outcome = ctx
-                .external
-                .get_inspector()
-                .eofcreate_end(&mut ctx.evm, &create_inputs, outcome);
+            outcome =
+                ctx.external
+                    .get_inspector()
+                    .eofcreate_end(&mut ctx.evm, &create_inputs, outcome);
             prev_handle(ctx, frame, outcome)
         });
 
@@ -174,10 +178,10 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
         handler.execution.insert_call_outcome =
             Arc::new(move |ctx, frame, shared_memory, mut outcome| {
                 let call_inputs = call_input_stack_inner.borrow_mut().pop().unwrap();
-                outcome = ctx
-                    .external
-                    .get_inspector()
-                    .call_end(&mut ctx.evm, &call_inputs, outcome);
+                outcome =
+                    ctx.external
+                        .get_inspector()
+                        .call_end(&mut ctx.evm, &call_inputs, outcome);
                 prev_handle(ctx, frame, shared_memory, outcome)
             });
 
@@ -186,10 +190,10 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
         let prev_handle = handler.execution.insert_create_outcome.clone();
         handler.execution.insert_create_outcome = Arc::new(move |ctx, frame, mut outcome| {
             let create_inputs = create_input_stack_inner.borrow_mut().pop().unwrap();
-            outcome = ctx
-                .external
-                .get_inspector()
-                .create_end(&mut ctx.evm, &create_inputs, outcome);
+            outcome =
+                ctx.external
+                    .get_inspector()
+                    .create_end(&mut ctx.evm, &create_inputs, outcome);
             prev_handle(ctx, frame, outcome)
         });
 
@@ -255,7 +259,8 @@ mod tests {
     use crate::{
         inspectors::NoOpInspector,
         interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome},
-        Evm, EvmContext,
+        Evm,
+        EvmContext,
     };
 
     #[derive(Default, Debug)]

@@ -1,16 +1,15 @@
 //! Custom print inspector, it has step level information of execution.
 //! It is a great tool if some debugging is needed.
 
-use revm_interpreter::CallOutcome;
-use revm_interpreter::CreateOutcome;
-use revm_interpreter::OpCode;
-
 use crate::{
     inspectors::GasInspector,
     interpreter::{CallInputs, CreateInputs, Interpreter},
     primitives::{Address, U256},
-    Database, EvmContext, Inspector,
+    Database,
+    EvmContext,
+    Inspector,
 };
+use revm_interpreter::{CallOutcome, CreateOutcome, OpCode};
 
 /// Custom print [Inspector], it has step level information of execution.
 ///
@@ -28,7 +27,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
-        if cfg!(not(feature = "revm-rwasm")) {
+        if cfg!(not(feature = "rwasm")) {
             let opcode = interp.current_opcode();
             let name = OpCode::name_by_op(opcode);
 
@@ -120,7 +119,8 @@ mod test {
         inspector_handle_register,
         inspectors::CustomPrintTracer,
         primitives::{address, bytes, SpecId},
-        Evm, InMemoryDB,
+        Evm,
+        InMemoryDB,
     };
 
     #[test]

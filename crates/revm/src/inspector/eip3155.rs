@@ -1,10 +1,16 @@
 use crate::{
     inspectors::GasInspector,
     interpreter::{
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
+        CallInputs,
+        CallOutcome,
+        CreateInputs,
+        CreateOutcome,
+        Interpreter,
+        InterpreterResult,
     },
     primitives::{db::Database, hex, HashMap, B256, U256},
-    EvmContext, Inspector,
+    EvmContext,
+    Inspector,
 };
 use revm_interpreter::OpCode;
 use serde::Serialize;
@@ -150,7 +156,8 @@ impl TracerEip3155 {
         self
     }
 
-    /// Include a memory field for each step. This significantly increases processing time and output size.
+    /// Include a memory field for each step. This significantly increases processing time and
+    /// output size.
     pub fn with_memory(mut self) -> Self {
         self.include_memory = true;
         self
@@ -191,7 +198,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         self.gas_inspector.step(interp, context);
-        if cfg!(not(feature = "revm-rwasm")) {
+        if cfg!(not(feature = "rwasm")) {
             self.stack.clone_from(interp.stack.data());
         }
         self.memory = if self.include_memory {
@@ -201,7 +208,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         };
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
-        if cfg!(not(feature = "revm-rwasm")) {
+        if cfg!(not(feature = "rwasm")) {
             self.mem_size = interp.shared_memory.len();
         }
         self.gas = interp.gas.remaining();

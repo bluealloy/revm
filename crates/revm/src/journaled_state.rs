@@ -1,18 +1,33 @@
-use crate::interpreter::{InstructionResult, SelfDestructResult};
-use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, EvmState, EvmStorageSlot,
-    HashMap, HashSet, Log, SpecId::*, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
+use crate::{
+    interpreter::{InstructionResult, SelfDestructResult},
+    primitives::{
+        db::Database,
+        hash_map::Entry,
+        Account,
+        Address,
+        Bytecode,
+        EVMError,
+        EvmState,
+        EvmStorageSlot,
+        HashMap,
+        HashSet,
+        Log,
+        SpecId::*,
+        TransientStorage,
+        KECCAK_EMPTY,
+        PRECOMPILE3,
+        U256,
+    },
 };
 use core::mem;
 use fluentbase_sdk::B256;
-#[cfg(feature = "revm-rwasm")]
+#[cfg(feature = "rwasm")]
 use fluentbase_types::{Bytes, F254, POSEIDON_EMPTY};
-use revm_interpreter::primitives::SpecId;
-use revm_interpreter::{LoadAccountResult, SStoreResult};
+use revm_interpreter::{primitives::SpecId, LoadAccountResult, SStoreResult};
 use std::vec::Vec;
 
-/// JournalState is internal EVM state that is used to contain state and track changes to that state.
-/// It contains journal of changes that happened to state so that they can be reverted.
+/// JournalState is internal EVM state that is used to contain state and track changes to that
+/// state. It contains journal of changes that happened to state so that they can be reverted.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournaledState {
@@ -38,7 +53,7 @@ pub struct JournaledState {
     /// is considered warm if it is found in the `State`.
     pub warm_preloaded_addresses: HashSet<Address>,
     /// Recently updated bytecode state
-    #[cfg(feature = "revm-rwasm")]
+    #[cfg(feature = "rwasm")]
     code_state: HashMap<B256, Bytecode>,
 }
 
@@ -53,7 +68,6 @@ impl JournaledState {
     ///
     /// # Note
     ///
-    ///
     pub fn new(spec: SpecId, warm_preloaded_addresses: HashSet<Address>) -> JournaledState {
         Self {
             state: HashMap::new(),
@@ -63,7 +77,7 @@ impl JournaledState {
             depth: 0,
             spec,
             warm_preloaded_addresses,
-            #[cfg(feature = "revm-rwasm")]
+            #[cfg(feature = "rwasm")]
             code_state: HashMap::new(),
         }
     }
@@ -119,8 +133,8 @@ impl JournaledState {
             // kept, see [Self::new]
             spec: _,
             warm_preloaded_addresses: _,
-            #[cfg(feature = "revm-rwasm")]
-            code_state: _,
+            #[cfg(feature = "rwasm")]
+                code_state: _,
         } = self;
 
         *transient_storage = TransientStorage::default();
@@ -163,14 +177,14 @@ impl JournaledState {
             .last_mut()
             .unwrap()
             .push(JournalEntry::CodeChange { address });
-        #[cfg(feature = "revm-rwasm")]
+        #[cfg(feature = "rwasm")]
         {
             if let Some(code_hash) = code_hash {
                 account.info.code_hash = code_hash;
             }
             self.code_state.insert(account.info.code_hash, code.clone());
         }
-        #[cfg(not(feature = "revm-rwasm"))]
+        #[cfg(not(feature = "rwasm"))]
         {
             account.info.code_hash = code.hash_slow();
         }
@@ -178,7 +192,7 @@ impl JournaledState {
     }
 
     #[inline]
-    #[cfg(feature = "revm-rwasm")]
+    #[cfg(feature = "rwasm")]
     pub fn set_rwasm_code(&mut self, address: Address, code: Bytecode, code_hash: Option<F254>) {
         let account = self.state.get_mut(&address).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
@@ -245,7 +259,8 @@ impl JournaledState {
             return Ok(Some(InstructionResult::OverflowPayment));
         };
         *to_balance = to_balance_decr;
-        // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
+        // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return
+        // funds from from_acc.
 
         self.journal
             .last_mut()
@@ -262,8 +277,8 @@ impl JournaledState {
     /// Create account or return false if collision is detected.
     ///
     /// There are few steps done:
-    /// 1. Make created account warm loaded (AccessList) and this should
-    ///     be done before subroutine checkpoint is created.
+    /// 1. Make created account warm loaded (AccessList) and this should be done before subroutine
+    ///    checkpoint is created.
     /// 2. Check if there is collision of newly created account with existing one.
     /// 3. Mark created account as created.
     /// 4. Add fund to created account
@@ -384,7 +399,8 @@ impl JournaledState {
                     }
                 }
                 JournalEntry::BalanceTransfer { from, to, balance } => {
-                    // we don't need to check overflow and underflow when adding and subtracting the balance.
+                    // we don't need to check overflow and underflow when adding and subtracting the
+                    // balance.
                     let from = state.get_mut(&from).unwrap();
                     from.info.balance += balance;
                     let to = state.get_mut(&to).unwrap();
@@ -442,7 +458,7 @@ impl JournaledState {
                     let acc = state.get_mut(&address).unwrap();
                     acc.info.code_hash = KECCAK_EMPTY;
                     acc.info.code = None;
-                    #[cfg(feature = "revm-rwasm")]
+                    #[cfg(feature = "rwasm")]
                     {
                         acc.info.rwasm_code_hash = POSEIDON_EMPTY;
                         acc.info.rwasm_code = None;
@@ -678,7 +694,7 @@ impl JournaledState {
                 acc.info.code = Some(code);
             }
         }
-        #[cfg(feature = "revm-rwasm")]
+        #[cfg(feature = "rwasm")]
         if acc.info.rwasm_code.is_none() {
             if acc.info.rwasm_code_hash == POSEIDON_EMPTY {
                 let empty = Bytecode::new();
@@ -695,7 +711,7 @@ impl JournaledState {
 
     /// Loads code.
     #[inline]
-    #[cfg(feature = "revm-rwasm")]
+    #[cfg(feature = "rwasm")]
     pub fn load_code_by_hash<DB: Database>(
         &mut self,
         hash: B256,
@@ -883,8 +899,8 @@ pub enum JournalEntry {
         had_balance: U256,
     },
     /// Loading account does not mean that account will need to be added to MerkleTree (touched).
-    /// Only when account is called (to execute contract or transfer balance) only then account is made touched.
-    /// Action: Mark account touched
+    /// Only when account is called (to execute contract or transfer balance) only then account is
+    /// made touched. Action: Mark account touched
     /// Revert: Unmark account touched
     AccountTouched { address: Address },
     /// Transfer balance between two accounts

@@ -1,4 +1,4 @@
 pub mod cmd;
 
-#[cfg(feature = "revm-rwasm")]
+#[cfg(feature = "rwasm")]
 pub extern crate revm_fluent as revm;
