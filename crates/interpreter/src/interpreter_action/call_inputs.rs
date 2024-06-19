@@ -49,7 +49,7 @@ impl CallInputs {
     ///
     /// Returns `None` if the transaction is not a call.
     pub fn new(tx_env: &impl Transaction, gas_limit: u64) -> Option<Self> {
-        let TxKind::Call(target_address) = *tx_env.kind() else {
+        let TxKind::Call(target_address) = tx_env.kind() else {
             return None;
         };
         Some(CallInputs {

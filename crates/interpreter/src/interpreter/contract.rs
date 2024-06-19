@@ -61,11 +61,11 @@ impl Contract {
         hash: Option<B256>,
     ) -> Self {
         let contract_address = match env.tx.kind() {
-            TxKind::Call(caller) => *caller,
+            TxKind::Call(caller) => caller,
             TxKind::Create => Address::ZERO,
         };
         let bytecode_address = match env.tx.kind() {
-            TxKind::Call(caller) => Some(*caller),
+            TxKind::Call(caller) => Some(caller),
             TxKind::Create => None,
         };
         Self::new(

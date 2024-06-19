@@ -222,7 +222,7 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
         }
 
         // Check that the transaction's nonce is correct
-        if let Some(tx) = self.tx.nonce() {
+        if let Some(tx) = self.tx.nonce_opt() {
             let state = account.info.nonce;
             match tx.cmp(&state) {
                 Ordering::Greater => {
@@ -619,8 +619,8 @@ impl Transaction for TxEnv {
     }
 
     #[inline]
-    fn kind(&self) -> &TransactTo {
-        &self.transact_to
+    fn kind(&self) -> TxKind {
+        self.transact_to
     }
 
     #[inline]
@@ -634,7 +634,7 @@ impl Transaction for TxEnv {
     }
 
     #[inline]
-    fn nonce(&self) -> Option<u64> {
+    fn nonce_opt(&self) -> Option<u64> {
         self.nonce
     }
 

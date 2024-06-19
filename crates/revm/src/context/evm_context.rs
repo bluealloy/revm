@@ -376,7 +376,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
                 let nonce = self
                     .env
                     .tx
-                    .nonce()
+                    .nonce_opt()
                     .map(|nonce| self.env.tx.caller().create(nonce));
 
                 (input, eof, nonce)

@@ -19,7 +19,7 @@ pub trait Transaction {
     /// Caution: If set to `None`, then nonce validation against the account's
     /// nonce is skipped: [`crate::InvalidTransaction::NonceTooHigh`] and
     /// [`crate::InvalidTransaction::NonceTooLow`]
-    fn nonce(&self) -> Option<u64>;
+    fn nonce_opt(&self) -> Option<u64>;
     /// The chain ID of the transaction. If set to `None`, no checks are performed.
     ///
     /// Incorporated as part of the Spurious Dragon upgrade via [EIP-155].
