@@ -172,7 +172,6 @@ revm-rwasm = [
     "revm-interpreter-fluent/rwasm",
     "revm-precompile/rwasm",
     "revm-interpreter-fluent/revm-rwasm",
-    "fluentbase-core/revm-rwasm",
 ]
 
 [[example]]
