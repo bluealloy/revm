@@ -107,9 +107,6 @@ blst = ["dep:blst"]
 rwasm = [
     "revm-primitives/rwasm",
 ]
-revm-rwasm = [
-    "rwasm",
-]
 
 [[bench]]
 name = "bench"

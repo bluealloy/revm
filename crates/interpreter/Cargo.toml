@@ -46,7 +46,7 @@ path = "tests/eof.rs"
 required-features = ["serde"]
 
 [features]
-default = ["std", "parse", "rwasm"]
+default = ["std", "parse"]
 std = ["serde?/std", "revm-primitives/std"]
 hashbrown = ["revm-primitives/hashbrown"]
 serde = ["dep:serde", "revm-primitives/serde"]
@@ -84,6 +84,3 @@ optional_beneficiary_reward = ["revm-primitives/optional_beneficiary_reward"]
 
 rwasm = ["revm-primitives/rwasm"]
 debug_print = []
-revm-rwasm = [
-    "rwasm",
-]

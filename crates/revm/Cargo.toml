@@ -154,12 +154,10 @@ blst = ["revm-precompile/blst"]
 debug_print = [
     "revm-interpreter/debug_print"
 ]
-revm-rwasm = [
+rwasm = [
     "e2e",
-    "rwasm",
     "revm-interpreter/rwasm",
     "revm-precompile/rwasm",
-    "revm-interpreter/revm-rwasm",
 ]
 
 [[example]]

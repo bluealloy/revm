@@ -37,7 +37,7 @@ walkdir = "2.5"
 k256 = { version = "0.13.3", features = ["ecdsa"] }
 
 [features]
-revm-rwasm = [
-    "revm-fluent/revm-rwasm",
+rwasm = [
+    "revm-fluent/rwasm",
     "revm-fluent/serde-json",
 ]
