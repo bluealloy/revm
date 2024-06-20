@@ -1,5 +1,24 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v37 tag
+date: 20.06.2024
+
+Audit of the codebase announced: https://hackmd.io/G7zazTX4TtekCnj6xlgctQ
+secp256r1 precompile added.
+
+Prague changes:
+* EOF bugs squashed.
+* Introducing PragueEOF hardfork.
+* EIP-2935 (blockhashes) modified for devnet-1.
+* Fixed for BLS12-381 curve.
+
+Versions:
+* revme: 0.5.0 -> 0.6.0
+* revm: 9.0.0 -> 10.0.0
+* revm-interpreter: 5.0.0 -> 6.0.0
+* revm-primitives: 4.0.0 -> 5.0.0
+* revm-precompile: 7.0.0 -> 8.0.0
+
 # v36 tag
 date: 12.05.2024
 
@@ -10,35 +29,35 @@ Support for prague EIPs.
 
 EOF removed BytecodeLocked, OpCode table got changed, and CallInputs got refactored.
 
-revme: 0.4.0 -> 0.5.0 (⚠️ API breaking changes)
-revm: 8.0.0 -> 9.0.0 (⚠️ API breaking changes)
-revm-interpreter: 4.0.0 -> 5.0.0 (⚠️ API breaking changes)
-revm-primitives: 3.1.1 -> 4.0.0 (⚠️ API breaking changes)
-revm-precompile: 6.0.0 -> 7.0.0 (⚠️ API breaking changes)
-revm-test: 0.1.0
+* revme: 0.4.0 -> 0.5.0 (⚠️ API breaking changes)
+* revm: 8.0.0 -> 9.0.0 (⚠️ API breaking changes)
+* revm-interpreter: 4.0.0 -> 5.0.0 (⚠️ API breaking changes)
+* revm-primitives: 3.1.1 -> 4.0.0 (⚠️ API breaking changes)
+* revm-precompile: 6.0.0 -> 7.0.0 (⚠️ API breaking changes)
+* revm-test: 0.1.0
 
 # v35 tag
 date: 02.04.2024
 
 Small release. Alloy bump. Small refactors and deprecated functions removed.
 
-revme: 0.3.1 -> 0.4.0 (✓ API compatible changes)
-revm: 7.2.0 -> 8.0.0 (⚠️ API breaking changes)
-revm-interpreter: 3.4.0 -> 4.0.0 (⚠️ API breaking changes)
-revm-primitives: 3.1.0 -> 3.1.1 (✓ API compatible changes)
-revm-precompile: 5.1.0 -> 6.0.0 (⚠️ API breaking changes)
-revm-test: 0.1.0
+* revme: 0.3.1 -> 0.4.0 (✓ API compatible changes)
+* revm: 7.2.0 -> 8.0.0 (⚠️ API breaking changes)
+* revm-interpreter: 3.4.0 -> 4.0.0 (⚠️ API breaking changes)
+* revm-primitives: 3.1.0 -> 3.1.1 (✓ API compatible changes)
+* revm-precompile: 5.1.0 -> 6.0.0 (⚠️ API breaking changes)
+* revm-test: 0.1.0
 
 # v34 tag
 date: 20.03.2024
 
 Small release, few utilities and refactoring, precompiles fn and Interpreter helper macros are made public.
 
-revme: 0.3.0 -> 0.3.1 (✓ API compatible changes)
-revm: 7.1.0 -> 7.2.0 (✓ API compatible changes)
-revm-interpreter: 3.3.0 -> 3.4.0 (✓ API compatible changes)
-revm-primitives: 3.0.0 -> 3.1.0 (✓ API compatible changes)
-revm-precompile: 5.0.0 -> 5.1.0 (✓ API compatible changes)
+* revme: 0.3.0 -> 0.3.1 (✓ API compatible changes)
+* revm: 7.1.0 -> 7.2.0 (✓ API compatible changes)
+* revm-interpreter: 3.3.0 -> 3.4.0 (✓ API compatible changes)
+* revm-primitives: 3.0.0 -> 3.1.0 (✓ API compatible changes)
+* revm-precompile: 5.0.0 -> 5.1.0 (✓ API compatible changes)
 
 # v33 tag TODO
 
