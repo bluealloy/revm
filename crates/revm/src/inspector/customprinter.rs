@@ -140,7 +140,7 @@ mod test {
             })
             .modify_tx_env(|tx| {
                 tx.caller = address!("5fdcca53617f4d2b9134b29090c87d01058e27e0");
-                tx.transact_to = crate::primitives::TransactTo::Call(callee);
+                tx.transact_to = crate::primitives::TxKind::Call(callee);
                 tx.data = crate::primitives::Bytes::new();
                 tx.value = crate::primitives::U256::ZERO;
             })

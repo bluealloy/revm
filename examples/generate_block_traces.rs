@@ -6,7 +6,7 @@ use ethers_providers::{Http, Provider};
 use indicatif::ProgressBar;
 use revm::db::{CacheDB, EthersDB, StateBuilder};
 use revm::inspectors::TracerEip3155;
-use revm::primitives::{Address, TransactTo, U256};
+use revm::primitives::{Address, TxKind, U256};
 use revm::{inspector_handle_register, Evm};
 use std::fs::OpenOptions;
 use std::io::BufWriter;
@@ -143,10 +143,8 @@ async fn main() -> anyhow::Result<()> {
                 }
 
                 etx.transact_to = match tx.to {
-                    Some(to_address) => {
-                        TransactTo::Call(Address::from(to_address.as_fixed_bytes()))
-                    }
-                    None => TransactTo::create(),
+                    Some(to_address) => TxKind::Call(Address::from(to_address.as_fixed_bytes())),
+                    None => TxKind::Create,
                 };
             })
             .build();

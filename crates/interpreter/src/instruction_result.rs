@@ -33,7 +33,7 @@ pub enum InstructionResult {
     OpcodeNotFound,
     CallNotAllowedInsideStatic,
     StateChangeDuringStaticCall,
-    InvalidFEOpcode,
+    InvalidEFOpcode,
     InvalidJump,
     NotActivated,
     StackUnderflow,
@@ -85,7 +85,7 @@ impl From<HaltReason> for InstructionResult {
                 OutOfGasError::Precompile => Self::PrecompileOOG,
             },
             HaltReason::OpcodeNotFound => Self::OpcodeNotFound,
-            HaltReason::InvalidFEOpcode => Self::InvalidFEOpcode,
+            HaltReason::InvalidEFOpcode => Self::InvalidEFOpcode,
             HaltReason::InvalidJump => Self::InvalidJump,
             HaltReason::NotActivated => Self::NotActivated,
             HaltReason::StackOverflow => Self::StackOverflow,
@@ -104,6 +104,7 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::CallTooDeep => Self::CallTooDeep,
             HaltReason::EofAuxDataOverflow => Self::EofAuxDataOverflow,
             HaltReason::EofAuxDataTooSmall => Self::EofAuxDataTooSmall,
+            HaltReason::EOFFunctionStackOverflow => Self::EOFFunctionStackOverflow,
             #[cfg(feature = "optimism")]
             HaltReason::FailedDeposit => Self::FatalExternalError,
         }
@@ -143,7 +144,7 @@ macro_rules! return_error {
             | InstructionResult::OpcodeNotFound
             | InstructionResult::CallNotAllowedInsideStatic
             | InstructionResult::StateChangeDuringStaticCall
-            | InstructionResult::InvalidFEOpcode
+            | InstructionResult::InvalidEFOpcode
             | InstructionResult::InvalidJump
             | InstructionResult::NotActivated
             | InstructionResult::StackUnderflow
@@ -185,16 +186,24 @@ impl InstructionResult {
     }
 }
 
+/// Internal result that are not ex
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum InternalResult {
+    /// Internal instruction that signals Interpreter should continue running.
+    InternalContinue,
+    /// Internal instruction that signals call or create.
+    InternalCallOrCreate,
+    /// Internal CREATE/CREATE starts with 0xEF00
+    CreateInitCodeStartingEF00,
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum SuccessOrHalt {
     Success(SuccessReason),
     Revert,
     Halt(HaltReason),
     FatalExternalError,
-    /// Internal instruction that signals Interpreter should continue running.
-    InternalContinue,
-    /// Internal instruction that signals call or create.
-    InternalCallOrCreate,
+    Internal(InternalResult),
 }
 
 impl SuccessOrHalt {
@@ -238,13 +247,13 @@ impl SuccessOrHalt {
 impl From<InstructionResult> for SuccessOrHalt {
     fn from(result: InstructionResult) -> Self {
         match result {
-            InstructionResult::Continue => Self::InternalContinue, // used only in interpreter loop
+            InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), // used only in interpreter loop
             InstructionResult::Stop => Self::Success(SuccessReason::Stop),
             InstructionResult::Return => Self::Success(SuccessReason::Return),
             InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
             InstructionResult::CreateInitCodeStartingEF00 => Self::Revert,
-            InstructionResult::CallOrCreate => Self::InternalCallOrCreate, // used only in interpreter loop
+            InstructionResult::CallOrCreate => Self::Internal(InternalResult::InternalCallOrCreate), // used only in interpreter loop
             InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), // not gonna happen for first call
             InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), // Check for first call is done separately.
             InstructionResult::OutOfGas => Self::Halt(HaltReason::OutOfGas(OutOfGasError::Basic)),
@@ -267,7 +276,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::StateChangeDuringStaticCall => {
                 Self::Halt(HaltReason::StateChangeDuringStaticCall)
             }
-            InstructionResult::InvalidFEOpcode => Self::Halt(HaltReason::InvalidFEOpcode),
+            InstructionResult::InvalidEFOpcode => Self::Halt(HaltReason::InvalidEFOpcode),
             InstructionResult::InvalidJump => Self::Halt(HaltReason::InvalidJump),
             InstructionResult::NotActivated => Self::Halt(HaltReason::NotActivated),
             InstructionResult::StackUnderflow => Self::Halt(HaltReason::StackUnderflow),
@@ -284,11 +293,13 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::CreateInitCodeSizeLimit => {
                 Self::Halt(HaltReason::CreateInitCodeSizeLimit)
             }
-            // TODO(EOF) - revise if Revert should have subenum.
+            // TODO (EOF) add proper Revert subtype.
             InstructionResult::InvalidEOFInitCode => Self::Revert,
             InstructionResult::FatalExternalError => Self::FatalExternalError,
             InstructionResult::EOFOpcodeDisabledInLegacy => Self::Halt(HaltReason::OpcodeNotFound),
-            InstructionResult::EOFFunctionStackOverflow => Self::FatalExternalError,
+            InstructionResult::EOFFunctionStackOverflow => {
+                Self::Halt(HaltReason::EOFFunctionStackOverflow)
+            }
             InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
             InstructionResult::EofAuxDataOverflow => Self::Halt(HaltReason::EofAuxDataOverflow),
             InstructionResult::EofAuxDataTooSmall => Self::Halt(HaltReason::EofAuxDataTooSmall),
@@ -346,7 +357,7 @@ mod tests {
             InstructionResult::OpcodeNotFound,
             InstructionResult::CallNotAllowedInsideStatic,
             InstructionResult::StateChangeDuringStaticCall,
-            InstructionResult::InvalidFEOpcode,
+            InstructionResult::InvalidEFOpcode,
             InstructionResult::InvalidJump,
             InstructionResult::NotActivated,
             InstructionResult::StackUnderflow,

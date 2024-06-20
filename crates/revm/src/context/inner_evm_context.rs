@@ -266,9 +266,9 @@ impl<DB: Database> InnerEvmContext<DB> {
                 created_address,
             } => (input.clone(), initcode.clone(), *created_address),
             EOFCreateKind::Tx { initdata } => {
-                // get nonce from tx (if set) or from account (if not).
-                // Nonce for call is bumped in deduct_caller while
-                // for CREATE it is not (it is done inside exec handlers).
+                // Use nonce from tx (if set) or from account (if not).
+                // Nonce for call is bumped in deduct_caller
+                // TODO(make this part of nonce increment code)
                 let nonce = self.env.tx.nonce.unwrap_or_else(|| {
                     let caller = self.env.tx.caller;
                     self.load_account(caller)

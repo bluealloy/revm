@@ -5,7 +5,7 @@ use revm::{
     db::{CacheDB, EmptyDB},
     primitives::{
         address, hex, keccak256, AccountInfo, Address, Bytecode, Bytes, ExecutionResult, Output,
-        TransactTo, B256, U256,
+        TxKind, B256, U256,
     },
     Evm,
 };
@@ -38,7 +38,7 @@ fn main() {
     let mut evm = Evm::builder()
         .modify_tx_env(|tx| {
             tx.caller = address!("1000000000000000000000000000000000000000");
-            tx.transact_to = TransactTo::Call(BURNTPIX_MAIN_ADDRESS);
+            tx.transact_to = TxKind::Call(BURNTPIX_MAIN_ADDRESS);
             tx.data = run_call_data.clone().into();
         })
         .with_db(db)

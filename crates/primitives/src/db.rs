@@ -67,12 +67,6 @@ impl<F: DatabaseRef> From<F> for WrapDatabaseRef<F> {
     }
 }
 
-pub trait DatabaseWithDebugError: Database
-where
-    <Self as Database>::Error: std::fmt::Debug + std::fmt::Display,
-{
-}
-
 impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     type Error = T::Error;
 

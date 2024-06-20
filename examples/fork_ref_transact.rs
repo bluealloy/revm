@@ -3,7 +3,7 @@ use alloy_sol_types::SolCall;
 use ethers_providers::{Http, Provider};
 use revm::{
     db::{CacheDB, EmptyDB, EthersDB},
-    primitives::{address, ExecutionResult, Output, TransactTo, U256},
+    primitives::{address, ExecutionResult, Output, TxKind, U256},
     Database, Evm,
 };
 use std::sync::Arc;
@@ -70,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
             // change that to whatever caller you want to be
             tx.caller = address!("0000000000000000000000000000000000000000");
             // account you want to transact with
-            tx.transact_to = TransactTo::Call(pool_address);
+            tx.transact_to = TxKind::Call(pool_address);
             // calldata formed via abigen
             tx.data = encoded.into();
             // transaction value in wei

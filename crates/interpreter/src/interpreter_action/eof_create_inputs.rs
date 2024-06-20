@@ -26,7 +26,9 @@ impl EOFCreateKind {
     /// Returns created address
     pub fn created_address(&self) -> Option<&Address> {
         match self {
-            EOFCreateKind::Opcode { created_address, .. } => Some(created_address),
+            EOFCreateKind::Opcode {
+                created_address, ..
+            } => Some(created_address),
             EOFCreateKind::Tx { .. } => None,
         }
     }
