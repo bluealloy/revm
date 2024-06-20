@@ -24,7 +24,7 @@ pub struct ResultAndState<ChainSpecT: ChainSpec> {
 }
 
 /// Result of a transaction execution.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum ExecutionResult<ChainSpecT: ChainSpec> {
     /// Returned successfully
     Success {
@@ -42,6 +42,34 @@ pub enum ExecutionResult<ChainSpecT: ChainSpec> {
         /// Halting will spend all the gas, and will be equal to gas_limit.
         gas_used: u64,
     },
+}
+
+impl<ChainSpecT: ChainSpec> Clone for ExecutionResult<ChainSpecT> {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Success {
+                reason,
+                gas_used,
+                gas_refunded,
+                logs,
+                output,
+            } => Self::Success {
+                reason: *reason,
+                gas_used: *gas_used,
+                gas_refunded: *gas_refunded,
+                logs: logs.clone(),
+                output: output.clone(),
+            },
+            Self::Revert { gas_used, output } => Self::Revert {
+                gas_used: *gas_used,
+                output: output.clone(),
+            },
+            Self::Halt { reason, gas_used } => Self::Halt {
+                reason: reason.clone(),
+                gas_used: *gas_used,
+            },
+        }
+    }
 }
 
 impl<ChainSpecT: ChainSpec> ExecutionResult<ChainSpecT> {

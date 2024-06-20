@@ -229,11 +229,12 @@ pub fn inspector_handle_register<
     });
 }
 
-fn inspector_instruction<ChainSpecT: ChainSpec, INSP, DB>(
+fn inspector_instruction<ChainSpecT, INSP, DB>(
     prev: &DynInstruction<'_, Context<ChainSpecT, INSP, DB>>,
     interpreter: &mut Interpreter,
     host: &mut Context<ChainSpecT, INSP, DB>,
 ) where
+    ChainSpecT: ChainSpec,
     INSP: GetInspector<ChainSpecT, DB>,
     DB: Database,
 {
