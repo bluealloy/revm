@@ -65,8 +65,8 @@ impl EOFCreateInputs {
     pub fn new(caller: Address, value: U256, gas_limit: u64, kind: EOFCreateKind) -> Self {
         //let (eof_init_code, input) = Eof::decode_dangling(tx.data.clone())?;
         EOFCreateInputs {
-            caller: caller,
-            value: value,
+            caller,
+            value,
             gas_limit,
             kind,
         }

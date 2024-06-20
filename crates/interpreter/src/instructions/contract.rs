@@ -128,6 +128,7 @@ pub fn return_contract<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &
     let new_data_size = (new_data_size as u16).to_be_bytes();
 
     let mut output = [&container, aux_slice].concat();
+    // set new data size in eof bytes as we know exact index.
     output[eof_header.data_size_raw_i()..][..2].clone_from_slice(&new_data_size);
     let output: Bytes = output.into();
 
@@ -135,7 +136,7 @@ pub fn return_contract<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &
     interpreter.instruction_result = result;
     interpreter.next_action = crate::InterpreterAction::Return {
         result: InterpreterResult {
-            output: output,
+            output,
             gas: interpreter.gas,
             result,
         },
