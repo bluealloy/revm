@@ -32,45 +32,33 @@ jobs:
       - run: cargo test --workspace ${{ matrix.flags }}
 
   test-no-std:
-    name: test no_std
+    name: test no_std ${{ matrix.features }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        features: ["", "optimism"]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: riscv32imac-unknown-none-elf
-      - run: cargo check --target riscv32imac-unknown-none-elf --no-default-features
+      - run: cargo check --target riscv32imac-unknown-none-elf --no-default-features --features=${{ matrix.features }}
 
-  check-no-default-features:
-    name: check no-default-features
+  check:
+    name: check ${{ matrix.features }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        features: ["", "serde", "std"]
     steps:
       - uses: actions/checkout@v4
       - run: |
           cd crates/revm
-          cargo check --no-default-features
-
-  check-serde:
-    name: check serde
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - run: |
-          cd crates/revm
-          cargo check --no-default-features --features serde
-
-  check-std:
-    name: check std
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - run: |
-          cd crates/revm
-          cargo check --no-default-features --features std
+          cargo check --no-default-features --features=${{ matrix.features }}
 
   clippy:
     name: clippy
