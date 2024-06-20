@@ -670,7 +670,7 @@ opcodes! {
     0xEC => EOFCREATE       => contract::eofcreate            => stack_io(4, 1), immediate_size(1);
     // 0xED
     0xEE => RETURNCONTRACT  => contract::return_contract      => stack_io(2, 0), immediate_size(1), terminating;
-    // 0xEF
+    0xEF => INVALID      => control::invalid                  => stack_io(0, 0), terminating;
     0xF0 => CREATE       => contract::create::<false, H, SPEC> => stack_io(3, 1), not_eof;
     0xF1 => CALL         => contract::call::<H, SPEC>          => stack_io(7, 1), not_eof;
     0xF2 => CALLCODE     => contract::call_code::<H, SPEC>     => stack_io(7, 1), not_eof;
@@ -685,7 +685,7 @@ opcodes! {
     0xFB => EXTSTATICCALL   => contract::extstaticcall               => stack_io(3, 1);
     // 0xFC
     0xFD => REVERT       => control::revert::<H, SPEC>    => stack_io(2, 0), terminating;
-    0xFE => INVALID      => control::invalid              => stack_io(0, 0), terminating;
+    // 0xFE
     0xFF => SELFDESTRUCT => host::selfdestruct::<H, SPEC> => stack_io(1, 0), not_eof, terminating;
 }
 
@@ -766,7 +766,6 @@ mod tests {
             0xf0..=0xf5,
             0xfa..=0xfa,
             0xfd..=0xfd,
-            //0xfe,
             0xff..=0xff,
         ];
         for i in opcodes {
