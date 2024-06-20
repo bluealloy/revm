@@ -124,7 +124,7 @@ async fn main() -> anyhow::Result<()> {
                 );
                 etx.gas_priority_fee = Some(gas_priority_fee);
                 etx.chain_id = Some(chain_id);
-                etx.nonce = Some(tx.nonce.as_u64());
+                etx.nonce = tx.nonce.as_u64();
                 if let Some(access_list) = tx.access_list {
                     etx.access_list = access_list
                         .0

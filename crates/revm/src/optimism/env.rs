@@ -139,8 +139,8 @@ impl Transaction for OptimismTransaction {
         self.base.data()
     }
 
-    fn nonce_opt(&self) -> Option<u64> {
-        self.base.nonce_opt()
+    fn nonce(&self) -> u64 {
+        self.base.nonce()
     }
 
     fn chain_id(&self) -> Option<u64> {

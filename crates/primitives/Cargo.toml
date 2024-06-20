@@ -97,6 +97,7 @@ dev = [
     "optional_gas_refund",
     "optional_no_base_fee",
     "optional_beneficiary_reward",
+    "optional_nonce_check",
 ]
 memory_limit = []
 optional_balance_check = []
@@ -105,6 +106,7 @@ optional_eip3607 = []
 optional_gas_refund = []
 optional_no_base_fee = []
 optional_beneficiary_reward = []
+optional_nonce_check = []
 rand = ["alloy-primitives/rand"]
 
 # See comments in `revm-precompile`

@@ -371,15 +371,10 @@ impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
                     return return_error(InstructionResult::InvalidEOFInitCode);
                 }
 
-                // Use nonce from tx (if set) to calculate address.
-                // If not set, use the nonce from the account.
-                let nonce = self
-                    .env
-                    .tx
-                    .nonce_opt()
-                    .map(|nonce| self.env.tx.caller().create(nonce));
+                // Use nonce from tx to calculate address.
+                let nonce = self.env.tx.nonce();
 
-                (input, eof, nonce)
+                (input, eof, Some(self.env.tx.caller().create(nonce)))
             }
         };
 
