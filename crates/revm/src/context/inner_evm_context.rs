@@ -416,7 +416,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         }
 
         // Prague EOF
-        if spec_id.is_enabled_in(PRAGUE) && inputs.init_code.get(..2) == Some(&[0xEF, 00]) {
+        if spec_id.is_enabled_in(PRAGUE_EOF) && inputs.init_code.get(..2) == Some(&[0xEF, 00]) {
             return return_error(InstructionResult::CreateInitCodeStartingEF00);
         }
 

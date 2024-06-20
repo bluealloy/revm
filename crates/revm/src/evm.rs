@@ -349,7 +349,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             )?,
             TxKind::Create => {
                 // if first byte of data is magic 0xEF00, then it is EOFCreate.
-                if spec_id.is_enabled_in(SpecId::PRAGUE)
+                if spec_id.is_enabled_in(SpecId::PRAGUE_EOF)
                     && ctx
                         .env()
                         .tx
