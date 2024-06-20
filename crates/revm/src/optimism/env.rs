@@ -151,8 +151,8 @@ impl Transaction for OptimismTransaction {
         self.base.access_list()
     }
 
-    fn gas_priority_fee(&self) -> Option<&U256> {
-        self.base.gas_priority_fee()
+    fn max_priority_fee_per_gas(&self) -> Option<&U256> {
+        self.base.max_priority_fee_per_gas()
     }
 
     fn blob_hashes(&self) -> &[B256] {

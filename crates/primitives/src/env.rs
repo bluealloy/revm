@@ -41,7 +41,7 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
     #[inline]
     pub fn effective_gas_price(&self) -> U256 {
         let gas_price = self.tx.gas_price();
-        if let Some(priority_fee) = self.tx.gas_priority_fee() {
+        if let Some(priority_fee) = self.tx.max_priority_fee_per_gas() {
             min(*gas_price, self.block.basefee() + priority_fee)
         } else {
             *gas_price
@@ -115,7 +115,7 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
 
         // BASEFEE tx check
         if SPEC::enabled(SpecId::LONDON) {
-            if let Some(priority_fee) = self.tx.gas_priority_fee() {
+            if let Some(priority_fee) = self.tx.max_priority_fee_per_gas() {
                 if priority_fee > self.tx.gas_price() {
                     // or gas_max_fee for eip1559
                     return Err(InvalidTransaction::PriorityFeeGreaterThanMaxFee);
@@ -649,7 +649,7 @@ impl Transaction for TxEnv {
     }
 
     #[inline]
-    fn gas_priority_fee(&self) -> Option<&U256> {
+    fn max_priority_fee_per_gas(&self) -> Option<&U256> {
         self.gas_priority_fee.as_ref()
     }
 

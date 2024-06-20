@@ -32,12 +32,12 @@ pub trait Transaction {
     ///
     /// [EIP-2930]: https://eips.ethereum.org/EIPS/eip-2930
     fn access_list(&self) -> &[AccessListItem];
-    /// The priority fee per gas.
+    /// The maximum priority fee per gas the sender is willing to pay.
     ///
     /// Incorporated as part of the London upgrade via [EIP-1559].
     ///
     /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
-    fn gas_priority_fee(&self) -> Option<&U256>;
+    fn max_priority_fee_per_gas(&self) -> Option<&U256>;
     /// The list of blob versioned hashes. Per EIP there should be at least
     /// one blob present if [`Self::max_fee_per_blob_gas`] is `Some`.
     ///
