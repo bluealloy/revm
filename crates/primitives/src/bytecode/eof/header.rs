@@ -62,25 +62,23 @@ fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize),
 impl EofHeader {
     /// Length of the header in bytes.
     ///
-    /// Length is calculated as:
-    /// magic 2 byte +
-    /// version 1 byte +
-    /// types section 3 bytes +
-    /// code section 3 bytes +
-    /// num_code_sections * 2 +
-    /// if num_container_sections != 0 { container section 3 bytes} +
-    /// num_container_sections * 2 +
-    /// data section 3 bytes +
-    /// terminator 1 byte
-    ///
     /// It is minimum 15 bytes (there is at least one code section).
     pub fn size(&self) -> usize {
-        let optional_container_sizes = if self.container_sizes.is_empty() {
-            0
-        } else {
-            3 + self.container_sizes.len() * 2
-        };
-        13 + self.code_sizes.len() * 2 + optional_container_sizes
+        2 + // magic
+        1 + // version
+        3 + // types section
+        3 + // code section
+        2 * self.code_sizes.len() + // num_code_sections
+        if self.container_sizes.is_empty() { 0 } else { 3 + 2 * self.container_sizes.len() } + // container
+        3 + // data section.
+        1 // terminator
+    }
+
+    /// Return index where data size starts.
+    /// Data size is two bytes long.
+    pub fn data_size_raw_i(&self) -> usize {
+        // termination(1byte) + code size(2) bytes.
+        self.size() - 3
     }
 
     /// Returns number of types.

@@ -3,17 +3,16 @@ use crate::{
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
-        analysis::validate_eof, CallInputs, CreateInputs, EOFCreateInputs, EOFCreateOutcome, Gas,
-        Host, InstructionResult, InterpreterAction, InterpreterResult, SharedMemory,
+        CallInputs, CreateInputs, EOFCreateInputs, Host, InterpreterAction, SharedMemory,
     },
     primitives::{
-        specification::SpecId, BlockEnv, Bytes, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
+        specification::SpecId, BlockEnv, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
         ExecutionResult, HandlerCfg, ResultAndState, TxEnv, TxKind,
     },
     Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
 use core::fmt;
-use std::vec::Vec;
+use std::{boxed::Box, vec::Vec};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -350,51 +349,19 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             )?,
             TxKind::Create => {
                 // if first byte of data is magic 0xEF00, then it is EOFCreate.
-                if spec_id.is_enabled_in(SpecId::PRAGUE)
+                if spec_id.is_enabled_in(SpecId::PRAGUE_EOF)
                     && ctx
                         .env()
                         .tx
                         .data
-                        .get(0..=1)
+                        .get(0..2)
                         .filter(|&t| t == [0xEF, 00])
                         .is_some()
                 {
-                    // TODO Should we just check 0xEF it seems excessive to switch to legacy only
-                    // if it 0xEF00?
-
-                    // get nonce from tx (if set) or from account (if not).
-                    // Nonce for call is bumped in deduct_caller while
-                    // for CREATE it is not (it is done inside exec handlers).
-                    let nonce = ctx.evm.env.tx.nonce.unwrap_or_else(|| {
-                        let caller = ctx.evm.env.tx.caller;
-                        ctx.evm
-                            .load_account(caller)
-                            .map(|(a, _)| a.info.nonce)
-                            .unwrap_or_default()
-                    });
-
-                    // Create EOFCreateInput from transaction initdata.
-                    let eofcreate = EOFCreateInputs::new_tx_boxed(&ctx.evm.env.tx, nonce)
-                        .ok()
-                        .and_then(|eofcreate| {
-                            // validate EOF initcode
-                            validate_eof(&eofcreate.eof_init_code).ok()?;
-                            Some(eofcreate)
-                        });
-
-                    if let Some(eofcreate) = eofcreate {
-                        exec.eofcreate(ctx, eofcreate)?
-                    } else {
-                        // Return result, as code is invalid.
-                        FrameOrResult::Result(FrameResult::EOFCreate(EOFCreateOutcome::new(
-                            InterpreterResult::new(
-                                InstructionResult::Stop,
-                                Bytes::new(),
-                                Gas::new(gas_limit),
-                            ),
-                            ctx.env().tx.caller.create(nonce),
-                        )))
-                    }
+                    exec.eofcreate(
+                        ctx,
+                        Box::new(EOFCreateInputs::new_tx(&ctx.evm.env.tx, gas_limit)),
+                    )?
                 } else {
                     // Safe to unwrap because we are sure that it is create tx.
                     exec.create(

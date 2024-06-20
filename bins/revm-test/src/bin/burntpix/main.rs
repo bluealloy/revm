@@ -100,7 +100,7 @@ fn try_from_hex_to_u32(hex: &str) -> eyre::Result<u32> {
 }
 
 fn insert_account_info(cache_db: &mut CacheDB<EmptyDB>, addr: Address, code: Bytes) {
-    let code_hash = hex::encode(keccak256(code.clone()));
+    let code_hash = hex::encode(keccak256(&code));
     let account_info = AccountInfo::new(
         U256::from(0),
         0,

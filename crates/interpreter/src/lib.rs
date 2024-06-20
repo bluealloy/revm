@@ -37,7 +37,7 @@ pub use interpreter::{
 };
 pub use interpreter_action::{
     CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome, CreateScheme,
-    EOFCreateInputs, EOFCreateOutcome, InterpreterAction,
+    EOFCreateInputs, EOFCreateKind, InterpreterAction,
 };
 pub use opcode::{Instruction, OpCode, OPCODE_INFO_JUMPTABLE};
 pub use primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};

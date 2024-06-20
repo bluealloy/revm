@@ -400,7 +400,7 @@ pub enum SuccessReason {
 pub enum HaltReason {
     OutOfGas(OutOfGasError),
     OpcodeNotFound,
-    InvalidFEOpcode,
+    InvalidEFOpcode,
     InvalidJump,
     NotActivated,
     StackUnderflow,
@@ -422,6 +422,13 @@ pub enum HaltReason {
     CallNotAllowedInsideStatic,
     OutOfFunds,
     CallTooDeep,
+
+    /// Aux data overflow, new aux data is larger tha u16 max size.
+    EofAuxDataOverflow,
+    /// Aud data is smaller then already present data size.
+    EofAuxDataTooSmall,
+    /// EOF Subroutine stack overflow
+    EOFFunctionStackOverflow,
 
     /* Optimism errors */
     #[cfg(feature = "optimism")]

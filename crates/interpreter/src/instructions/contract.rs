@@ -1,12 +1,13 @@
 mod call_helpers;
 
 pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
-use revm_primitives::{keccak256, BerlinSpec};
 
 use crate::{
     gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD},
     interpreter::Interpreter,
-    primitives::{Address, Bytes, Eof, Spec, SpecId::*, U256},
+    primitives::{
+        eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, U256,
+    },
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, Host,
     InstructionResult, InterpreterAction, InterpreterResult, LoadAccountResult, MAX_INITCODE_SIZE,
 };
@@ -67,7 +68,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     // Send container for execution container is preverified.
     interpreter.instruction_result = InstructionResult::CallOrCreate;
     interpreter.next_action = InterpreterAction::EOFCreate {
-        inputs: Box::new(EOFCreateInputs::new(
+        inputs: Box::new(EOFCreateInputs::new_opcode(
             interpreter.contract.target_address,
             created_address,
             value,
@@ -92,10 +93,11 @@ pub fn return_contract<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &
         .body
         .container_section
         .get(deploy_container_index as usize)
-        .expect("EOF is checked");
+        .expect("EOF is checked")
+        .clone();
 
     // convert to EOF so we can check data section size.
-    let new_eof = Eof::decode(container.clone()).expect("Container is verified");
+    let (eof_header, _) = EofHeader::decode(&container).expect("valid EOF header");
 
     let aux_slice = if aux_data_size != 0 {
         let aux_data_offset = as_usize_or_fail!(interpreter, aux_data_offset);
@@ -108,20 +110,27 @@ pub fn return_contract<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &
         &[]
     };
 
-    let new_data_size = new_eof.body.data_section.len() + aux_slice.len();
+    let static_aux_size = eof_header.eof_size() - container.len();
+
+    // data_size - static_aux_size give us current data `container` size.
+    // and with aux_slice len we can calculate new data size.
+    let new_data_size = eof_header.data_size as usize - static_aux_size + aux_slice.len();
     if new_data_size > 0xFFFF {
         // aux data is too big
-        interpreter.instruction_result = InstructionResult::FatalExternalError;
+        interpreter.instruction_result = InstructionResult::EofAuxDataOverflow;
         return;
     }
-    if new_data_size < new_eof.header.data_size as usize {
+    if new_data_size < eof_header.data_size as usize {
         // aux data is too small
-        interpreter.instruction_result = InstructionResult::FatalExternalError;
+        interpreter.instruction_result = InstructionResult::EofAuxDataTooSmall;
         return;
     }
+    let new_data_size = (new_data_size as u16).to_be_bytes();
 
-    // append data bytes
-    let output = [new_eof.raw(), aux_slice].concat().into();
+    let mut output = [&container, aux_slice].concat();
+    // set new data size in eof bytes as we know exact index.
+    output[eof_header.data_size_raw_i()..][..2].clone_from_slice(&new_data_size);
+    let output: Bytes = output.into();
 
     let result = InstructionResult::ReturnContract;
     interpreter.instruction_result = result;
