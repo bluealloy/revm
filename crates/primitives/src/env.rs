@@ -206,7 +206,8 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
         }
 
         // Check that the transaction's nonce is correct
-        if let Some(tx) = self.tx.nonce_opt() {
+        if !self.cfg.is_nonce_check_disabled() {
+            let tx = self.tx.nonce();
             let state = account.info.nonce;
             match tx.cmp(&state) {
                 Ordering::Greater => {
@@ -312,6 +313,11 @@ pub struct CfgEnv {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_beneficiary_reward")]
     pub disable_beneficiary_reward: bool,
+    /// Skips the nonce validation against the account's nonce:
+    /// [`crate::InvalidTransaction::NonceTooHigh`] and
+    /// [`crate::InvalidTransaction::NonceTooLow`]
+    #[cfg(feature = "optional_nonce_check")]
+    pub disable_nonce_check: bool,
 }
 
 impl CfgEnv {
@@ -379,6 +385,16 @@ impl CfgEnv {
     pub fn is_beneficiary_reward_disabled(&self) -> bool {
         false
     }
+
+    #[cfg(feature = "optional_nonce_check")]
+    pub const fn is_nonce_check_disabled(&self) -> bool {
+        self.disable_nonce_check
+    }
+
+    #[cfg(not(feature = "optional_nonce_check"))]
+    pub const fn is_nonce_check_disabled(&self) -> bool {
+        false
+    }
 }
 
 impl Default for CfgEnv {
@@ -403,6 +419,8 @@ impl Default for CfgEnv {
             disable_base_fee: false,
             #[cfg(feature = "optional_beneficiary_reward")]
             disable_beneficiary_reward: false,
+            #[cfg(feature = "optional_nonce_check")]
+            disable_nonce_check: false,
         }
     }
 }
@@ -530,9 +548,7 @@ pub struct TxEnv {
     /// The data of the transaction.
     pub data: Bytes,
     /// The nonce of the transaction.
-    ///
-    /// Caution: If set to `None`, then nonce validation against the account's nonce is skipped: [InvalidTransaction::NonceTooHigh] and [InvalidTransaction::NonceTooLow]
-    pub nonce: Option<u64>,
+    pub nonce: u64,
 
     /// The chain ID of the transaction. If set to `None`, no checks are performed.
     ///
@@ -603,7 +619,7 @@ impl Transaction for TxEnv {
     }
 
     #[inline]
-    fn nonce_opt(&self) -> Option<u64> {
+    fn nonce(&self) -> u64 {
         self.nonce
     }
 
@@ -655,7 +671,7 @@ impl Default for TxEnv {
             value: U256::ZERO,
             data: Bytes::new(),
             chain_id: None,
-            nonce: None,
+            nonce: 0,
             access_list: Vec::new(),
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: None,

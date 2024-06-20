@@ -246,15 +246,10 @@ impl<ChainSpecT: ChainSpec, DB: Database> InnerEvmContext<ChainSpecT, DB> {
                 created_address,
             } => (input.clone(), initcode.clone(), *created_address),
             EOFCreateKind::Tx { initdata } => {
-                // Use nonce from tx (if set) or from account (if not).
+                // Use nonce from tx.
                 // Nonce for call is bumped in deduct_caller
                 // TODO(make this part of nonce increment code)
-                let nonce = self.env.tx.nonce_opt().unwrap_or_else(|| {
-                    let caller = self.env.tx.caller();
-                    self.load_account(*caller)
-                        .map(|(a, _)| a.info.nonce)
-                        .unwrap_or_default()
-                });
+                let nonce = self.env.tx.nonce();
 
                 // decode eof and init code.
                 let Ok((eof, input)) = Eof::decode_dangling(initdata.clone()) else {
