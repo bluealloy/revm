@@ -12,7 +12,7 @@ use crate::{
     Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
 use core::fmt;
-use std::vec::Vec;
+use std::{boxed::Box, vec::Vec};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
