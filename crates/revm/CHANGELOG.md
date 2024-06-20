@@ -6,6 +6,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.0](https://github.com/bluealloy/revm/compare/revm-v9.0.0...revm-v10.0.0) - 2024-06-20
+
+### Added
+- *(revm)* derive serde for `BundleState` ([#1539](https://github.com/bluealloy/revm/pull/1539))
+- bump alloy, re-enable alloydb ([#1533](https://github.com/bluealloy/revm/pull/1533))
+- mutable access for all fields in BundleBuilder ([#1524](https://github.com/bluealloy/revm/pull/1524))
+- *(EOF)* Put EOF bytecode behind an Arc ([#1517](https://github.com/bluealloy/revm/pull/1517))
+- *(EOF)* EXTCODECOPY,EXTCODESIZE,EXTCODEHASH eof support ([#1504](https://github.com/bluealloy/revm/pull/1504))
+- add helpers for working with instruction tables ([#1493](https://github.com/bluealloy/revm/pull/1493))
+- *(precompiles)* fatal error for precompiles ([#1499](https://github.com/bluealloy/revm/pull/1499))
+- Persist reverted account and storage slot lookups in `JournaledState` ([#1437](https://github.com/bluealloy/revm/pull/1437))
+- *(EOF)* EIP-7698 eof creation transaction ([#1467](https://github.com/bluealloy/revm/pull/1467))
+- *(EOF)* Add EOF to inspector handle register ([#1469](https://github.com/bluealloy/revm/pull/1469))
+- *(optimism)* Implement new L1 cost function for Fjord ([#1420](https://github.com/bluealloy/revm/pull/1420))
+- *(optimism)* Add secp256r1 precompile for Fjord ([#1436](https://github.com/bluealloy/revm/pull/1436))
+- *(revm)* revert EIP-2935 BLOCKHASH opcode changes ([#1450](https://github.com/bluealloy/revm/pull/1450))
+- load account should return db error ([#1447](https://github.com/bluealloy/revm/pull/1447))
+- *(EOF)* remove TXCREATE ([#1415](https://github.com/bluealloy/revm/pull/1415))
+
+### Fixed
+- *(eof)* fixture 2 tests ([#1550](https://github.com/bluealloy/revm/pull/1550))
+- *(eof)* output gas for eofcreate ([#1540](https://github.com/bluealloy/revm/pull/1540))
+- *(revm)* remove storage reset that clears is_cold flag ([#1518](https://github.com/bluealloy/revm/pull/1518))
+- *(op)* Remove `U256::from(<float>)` ([#1498](https://github.com/bluealloy/revm/pull/1498))
+- *(EOF)* panic on empty input range, and continue exec after eofcreate ([#1477](https://github.com/bluealloy/revm/pull/1477))
+- *(Interpreter)* wrong block number used ([#1458](https://github.com/bluealloy/revm/pull/1458))
+- blockchash for devnet-0  ([#1427](https://github.com/bluealloy/revm/pull/1427))
+
+### Other
+- Add CI build target for no-std + optimism, use matrix builds ([#1551](https://github.com/bluealloy/revm/pull/1551))
+- replace TransactTo with TxKind ([#1542](https://github.com/bluealloy/revm/pull/1542))
+- avoid cloning precompiles ([#1486](https://github.com/bluealloy/revm/pull/1486))
+- add setters to `BundleBuilder` with `&mut self` ([#1527](https://github.com/bluealloy/revm/pull/1527))
+- pluralize EOFCreateInput ([#1523](https://github.com/bluealloy/revm/pull/1523))
+- added simular to used-by ([#1521](https://github.com/bluealloy/revm/pull/1521))
+- Removed .clone() in ExecutionHandler::call, and reusing output buffer in Interpreter ([#1512](https://github.com/bluealloy/revm/pull/1512))
+- remove old deprecated items ([#1489](https://github.com/bluealloy/revm/pull/1489))
+- *(deps)* bump rstest from 0.19.0 to 0.21.0 ([#1482](https://github.com/bluealloy/revm/pull/1482))
+- *(deps)* bump tokio from 1.37.0 to 1.38.0 ([#1480](https://github.com/bluealloy/revm/pull/1480))
+- *(primitives)* rename State/Storage to EvmState/EvmStorage ([#1459](https://github.com/bluealloy/revm/pull/1459))
+- remove 'checked' bytecode bench causing benchmarks to crash due to name ([#1461](https://github.com/bluealloy/revm/pull/1461))
+- cargo update ([#1451](https://github.com/bluealloy/revm/pull/1451))
+- cleanup host blockhash fn ([#1430](https://github.com/bluealloy/revm/pull/1430))
+- Revert "Revert "feat: implement EIP-2935 ([#1354](https://github.com/bluealloy/revm/pull/1354))" ([#1424](https://github.com/bluealloy/revm/pull/1424))" ([#1426](https://github.com/bluealloy/revm/pull/1426))
+- Revert "feat: implement EIP-2935 ([#1354](https://github.com/bluealloy/revm/pull/1354))" ([#1424](https://github.com/bluealloy/revm/pull/1424))
+- *(deps)* bump anyhow from 1.0.82 to 1.0.83 ([#1404](https://github.com/bluealloy/revm/pull/1404))
+
 ## [9.0.0](https://github.com/bluealloy/revm/compare/revm-v8.0.0...revm-v9.0.0) - 2024-05-12
 
 ### Added
