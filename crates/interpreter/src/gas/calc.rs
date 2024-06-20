@@ -376,14 +376,12 @@ pub fn validate_initial_tx_gas(
 
     // get number of access list account and storages.
     if spec_id.is_enabled_in(SpecId::BERLIN) {
-        let accessed_slots =
-            access_list
-                .iter()
-                .fold(0, |slot_count, AccessListItem { storage_keys, .. }| {
-                    slot_count + storage_keys.len() as u64
-                });
+        let accessed_slots: usize = access_list
+            .iter()
+            .map(|AccessListItem { storage_keys, .. }| storage_keys.len())
+            .sum();
         initial_gas += access_list.len() as u64 * ACCESS_LIST_ADDRESS;
-        initial_gas += accessed_slots * ACCESS_LIST_STORAGE_KEY;
+        initial_gas += accessed_slots as u64 * ACCESS_LIST_STORAGE_KEY;
     }
 
     // base stipend
