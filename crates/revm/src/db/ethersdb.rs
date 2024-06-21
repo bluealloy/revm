@@ -27,29 +27,33 @@ impl<M: Middleware> EthersDB<M> {
             Err(_) => return None,
         };
 
-        let block_number: Option<BlockId> = if block_number.is_some() {
-            block_number
+        if block_number.is_some() {
+            Some(Self {
+                client,
+                block_number,
+                handle,
+            })
         } else {
-            Some(BlockId::from(
-                Self::block_on(client.get_block_number(), &handle).ok()?,
-            ))
-        };
-
-        Some(Self {
-            client,
-            block_number,
-            handle,
-        })
+            let mut instance = Self {
+                client: client.clone(),
+                block_number: None,
+                handle,
+            };
+            instance.block_number = Some(BlockId::from(
+                instance.block_on(client.get_block_number()).ok()?,
+            ));
+            Some(instance)
+        }
     }
 
     /// Internal utility function to call tokio feature and wait for output
     #[inline]
-    fn block_on<F>(f: F, handle: &Handle) -> F::Output
+    fn block_on<F>(&self, f: F) -> F::Output
     where
         F: core::future::Future + Send,
         F::Output: Send,
     {
-        tokio::task::block_in_place(move || handle.block_on(f))
+        tokio::task::block_in_place(move || self.handle.block_on(f))
     }
 
     /// set block number on which upcoming queries will be based
@@ -71,7 +75,7 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
             let code = self.client.get_code(add, self.block_number);
             tokio::join!(nonce, balance, code)
         };
-        let (nonce, balance, code) = Self::block_on(f, &self.handle);
+        let (nonce, balance, code) = self.block_on(f);
 
         let balance = U256::from_limbs(balance?.0);
         let nonce = nonce?.as_u64();
@@ -88,17 +92,15 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
     fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
         let add = eH160::from(address.0 .0);
         let index = H256::from(index.to_be_bytes());
-        let slot_value: H256 = Self::block_on(
-            self.client.get_storage_at(add, index, self.block_number),
-            &self.handle,
-        )?;
+        let slot_value: H256 =
+            self.block_on(self.client.get_storage_at(add, index, self.block_number))?;
         Ok(U256::from_be_bytes(slot_value.to_fixed_bytes()))
     }
 
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
         let number = eU64::from(number);
         let block: Option<Block<TxHash>> =
-            Self::block_on(self.client.get_block(BlockId::from(number)), &self.handle)?;
+            self.block_on(self.client.get_block(BlockId::from(number)))?;
         // If number is given, the block is supposed to be finalized so unwrap is safe too.
         Ok(B256::new(block.unwrap().hash.unwrap().0))
     }
