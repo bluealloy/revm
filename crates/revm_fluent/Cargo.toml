@@ -27,15 +27,15 @@ revm-interpreter = { workspace = true, optional = true }
 revm-interpreter-fluent = { workspace = true, optional = true }
 revm-precompile = { workspace = true }
 
-fluentbase-sdk = { workspace = true }
-fluentbase-types = { workspace = true }
-fluentbase-core = { workspace = true }
-fluentbase-runtime = { workspace = true }
-fluentbase-codec = { workspace = true }
-fluentbase-genesis = { workspace = true }
-fluentbase-poseidon = { workspace = true }
+fluentbase-sdk = { workspace = true, default-features = false }
+fluentbase-types = { workspace = true, default-features = false }
+fluentbase-core = { workspace = true, default-features = false }
+fluentbase-runtime = { workspace = true, default-features = false, optional = true }
+#fluentbase-codec = { workspace = true, default-features = false }
+fluentbase-genesis = { workspace = true, default-features = false, optional = true }
+#fluentbase-poseidon = { workspace = true, default-features = false }
 
-rwasm = { workspace = true, optional = true }
+rwasm = { workspace = true, default-features = false, optional = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
@@ -70,18 +70,24 @@ alloy-sol-types = { version = "0.7.0", default-features = false, features = [
     "std",
 ] }
 ethers-contract = { version = "2.0.14", default-features = false }
-anyhow = "1.0.83"
-criterion = "0.5"
-indicatif = "0.17"
-reqwest = { version = "0.12" }
-rstest = "0.19.0"
+anyhow = { version = "1.0.83", default-features = false }
+criterion = { version = "0.5", default-features = false }
+indicatif = { version = "0.17", default-features = false }
+reqwest = { version = "0.12", default-features = false }
+rstest = { version = "0.19.0", default-features = false }
 
 alloy-provider = { workspace = true }
 # needed for enabling TLS to use HTTPS connections when testing alloy DB
 alloy-transport-http = { workspace = true }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = [
+    "std",
+    "c-kzg",
+    "secp256k1",
+    "portable",
+    "blst",
+]
 std = [
     "serde?/std",
     "serde_json?/std",
@@ -91,8 +97,10 @@ std = [
     "fluentbase-sdk/std",
     "fluentbase-types/std",
     "fluentbase-core/std",
-    "fluentbase-runtime/std",
-    "fluentbase-codec/std",
+    "dep:fluentbase-runtime",
+    "dep:fluentbase-genesis",
+#    "fluentbase-runtime?/std",
+#    "fluentbase-codec/std",
     "fluentbase-genesis/std",
     "rwasm?/std",
 ]

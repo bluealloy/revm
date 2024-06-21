@@ -13,7 +13,7 @@ fluentbase-core = { workspace = true }
 fluentbase-sdk = { workspace = true }
 fluentbase-types = { workspace = true }
 fluentbase-poseidon = { workspace = true }
-fluentbase-genesis = { workspace = true }
+fluentbase-genesis = { workspace = true, default-features = false }
 
 revm = { workspace = true, features = [
     "ethersdb",

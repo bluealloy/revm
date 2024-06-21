@@ -1,17 +1,7 @@
 use crate::{primitives::{Address, Bytecode, Bytes, Log, LogData, B256, U256}, Database, EvmContext, JournalEntry};
 use core::{cell::RefCell, fmt::Debug};
 use fluentbase_core::{debug_log, helpers::exit_code_from_evm_error};
-use fluentbase_sdk::{
-    Account,
-    AccountCheckpoint,
-    AccountManager,
-    JZKT_ACCOUNT_COMPRESSION_FLAGS,
-    JZKT_ACCOUNT_FIELDS_COUNT,
-    JZKT_ACCOUNT_RWASM_CODE_HASH_FIELD,
-    JZKT_ACCOUNT_SOURCE_CODE_HASH_FIELD,
-    JZKT_STORAGE_COMPRESSION_FLAGS,
-    JZKT_STORAGE_FIELDS_COUNT,
-};
+use fluentbase_sdk::{Account, AccountCheckpoint, AccountManager, JZKT_ACCOUNT_COMPRESSION_FLAGS, JZKT_ACCOUNT_FIELDS_COUNT, JZKT_ACCOUNT_RWASM_CODE_HASH_FIELD, JZKT_ACCOUNT_SOURCE_CODE_HASH_FIELD, JZKT_STORAGE_COMPRESSION_FLAGS, JZKT_STORAGE_FIELDS_COUNT, LowLevelSDK};
 use fluentbase_sdk::types::EvmCallMethodOutput;
 use fluentbase_types::{
     ExitCode,
@@ -21,6 +11,7 @@ use fluentbase_types::{
 };
 use fluentbase_types::consts::EVM_STORAGE_ADDRESS;
 use revm_interpreter::{Gas, InstructionResult};
+use std::vec::Vec;
 
 pub(crate) struct JournalDbWrapper<'a, DB: Database> {
     ctx: RefCell<&'a mut EvmContext<DB>>,
@@ -182,7 +173,7 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
     fn update_preimage(&self, key: &[u8; 32], field: u32, preimage: &[u8]) {
         let mut ctx = self.ctx.borrow_mut();
         let address = Address::from_slice(&key[12..]);
-        debug_log!("am: update_preimage for address {}", address);
+        // debug_log!("am: update_preimage for address {}", address);
         if field == JZKT_ACCOUNT_SOURCE_CODE_HASH_FIELD && !preimage.is_empty() {
             ctx.journaled_state.set_code(
                 address,
@@ -264,7 +255,6 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
         fuel_offset: *mut u32,
         state: u32,
     ) -> (Bytes, i32) {
-        use fluentbase_runtime::{Runtime, RuntimeContext};
         let hash32: [u8; 32] = unsafe { &*core::ptr::slice_from_raw_parts(hash32_offset, 32) }
             .try_into()
             .unwrap();
@@ -276,24 +266,37 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
         let jzkt = JournalDbWrapper {
             ctx: RefCell::new(&mut ctx),
         };
-        let ctx = RuntimeContext::new(rwasm_bytecode)
-            .with_input(input.into())
-            .with_context(context.into())
-            .with_fuel_limit(unsafe { *fuel_offset } as u64)
-            .with_jzkt(jzkt)
-            .with_state(state);
-        let mut runtime = Runtime::new(ctx);
-        let result = match runtime.call() {
-            Ok(result) => result,
-            Err(err) => {
-                let exit_code = Runtime::catch_trap(&err);
-                println!("execution failed with err: {:?}", err);
-                return (Bytes::default(), exit_code);
+        let result = {
+            #[cfg(feature = "std")]
+            {
+                use fluentbase_runtime::{Runtime, RuntimeContext};
+                // #[cfg(feature = "std")]
+                let ctx = RuntimeContext::new(rwasm_bytecode)
+                    .with_input(input.into())
+                    .with_context(context.into())
+                    .with_fuel_limit(unsafe { *fuel_offset } as u64)
+                    .with_jzkt(jzkt)
+                    .with_state(state);
+                // #[cfg(feature = "std")]
+                let mut runtime = Runtime::new(ctx);
+                // #[cfg(feature = "std")]
+                let result = match runtime.call() {
+                    Ok(result) => result,
+                    Err(err) => {
+                        let exit_code = Runtime::catch_trap(&err);
+                        return (Bytes::default(), exit_code);
+                    }
+                };
+                // #[cfg(feature = "std")]
+                unsafe {
+                    *fuel_offset -= result.fuel_consumed as u32;
+                }
+                result
             }
         };
-        unsafe {
-            *fuel_offset -= result.fuel_consumed as u32;
-        }
+        #[cfg(not(feature = "std"))]
+        return (Bytes::new(), 0);
+        #[cfg(feature = "std")]
         (Bytes::from(result.output.clone()), result.exit_code.into())
     }
 

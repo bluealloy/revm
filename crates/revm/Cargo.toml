@@ -27,13 +27,13 @@ revm-interpreter = { workspace = true, optional = true }
 revm-interpreter-fluent = { workspace = true, optional = true }
 revm-precompile = { workspace = true }
 
-fluentbase-sdk = { workspace = true }
-fluentbase-types = { workspace = true }
-fluentbase-core = { workspace = true }
-fluentbase-runtime = { workspace = true }
-fluentbase-codec = { workspace = true }
-fluentbase-genesis = { workspace = true }
-fluentbase-poseidon = { workspace = true }
+fluentbase-sdk = { workspace = true, default-features = false }
+fluentbase-types = { workspace = true, default-features = false }
+fluentbase-core = { workspace = true, default-features = false }
+fluentbase-runtime = { workspace = true, default-features = false }
+fluentbase-codec = { workspace = true, default-features = false }
+fluentbase-genesis = { workspace = true, default-features = false }
+fluentbase-poseidon = { workspace = true, default-features = false }
 
 rwasm = { workspace = true, optional = true }
 

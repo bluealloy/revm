@@ -46,13 +46,11 @@ use fluentbase_core::{
     helpers::evm_error_from_exit_code,
     loader::{_loader_call, _loader_create},
 };
-use fluentbase_sdk::{
-    types::{EvmCallMethodInput, EvmCreateMethodInput},
-    ContractInput,
-};
+use fluentbase_sdk::{types::{EvmCallMethodInput, EvmCreateMethodInput}, ContractInput, GuestAccountManager, AccountManager};
 use fluentbase_types::{Address, ExitCode};
 use revm_interpreter::{CallOutcome, CreateOutcome};
 use std::vec::Vec;
+use fluentbase_sdk::contracts::call_system_contract;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -649,6 +647,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let contract_input = self.input_from_env(&mut gas, caller_address, callee_address, value);
         let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
         let call_output = _loader_call(&contract_input, &am, method_input);
+
+        // let gam = GuestAccountManager::default();
+        // gam.exec_hash();
 
         #[cfg(feature = "debug_print")]
         {

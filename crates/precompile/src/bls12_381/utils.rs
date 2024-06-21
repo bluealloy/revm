@@ -3,6 +3,7 @@ use blst::{
 };
 use core::cmp::Ordering;
 use revm_primitives::PrecompileError;
+use std::string::ToString;
 
 /// Number of bits used in the BLS12-381 curve finite field elements.
 pub(super) const NBITS: usize = 256;
