@@ -1,3 +1,5 @@
+use revm_primitives::SpecId::PRAGUE;
+
 use super::constants::*;
 use crate::{
     num_words,
@@ -358,6 +360,8 @@ pub fn validate_initial_tx_gas(
     input: &[u8],
     is_create: bool,
     access_list: &[(Address, Vec<U256>)],
+    // TODO authorization list items.
+    authorization_list_num: u64,
 ) -> u64 {
     let mut initial_gas = 0;
     let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
@@ -398,6 +402,11 @@ pub fn validate_initial_tx_gas(
     // Init code stipend for bytecode analysis
     if spec_id.is_enabled_in(SpecId::SHANGHAI) && is_create {
         initial_gas += initcode_cost(input.len() as u64)
+    }
+
+    //   EIP-7702
+    if spec_id.is_enabled_in(PRAGUE) {
+        initial_gas += authorization_list_num * PER_CONTRACT_CODE_BASE_COST;
     }
 
     initial_gas

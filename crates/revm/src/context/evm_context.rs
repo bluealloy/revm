@@ -284,6 +284,7 @@ pub(crate) mod test_utils {
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
                 db,
                 error: Ok(()),
+                valid_authorizations: Vec::new(),
                 #[cfg(feature = "optimism")]
                 l1_block_info: None,
             },
@@ -299,6 +300,7 @@ pub(crate) mod test_utils {
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
                 db,
                 error: Ok(()),
+                valid_authorizations: Default::default(),
                 #[cfg(feature = "optimism")]
                 l1_block_info: None,
             },
