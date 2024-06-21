@@ -1,5 +1,6 @@
 pub mod handler_cfg;
 
+use alloy_primitives::TxKind;
 pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
@@ -503,7 +504,7 @@ pub struct TxEnv {
     /// The gas price of the transaction.
     pub gas_price: U256,
     /// The destination of the transaction.
-    pub transact_to: TransactTo,
+    pub transact_to: TxKind,
     /// The value sent to `transact_to`.
     pub value: U256,
     /// The data of the transaction.
@@ -585,7 +586,7 @@ impl Default for TxEnv {
             gas_limit: u64::MAX,
             gas_price: U256::ZERO,
             gas_priority_fee: None,
-            transact_to: TransactTo::Call(Address::ZERO), // will do nothing
+            transact_to: TxKind::Call(Address::ZERO), // will do nothing
             value: U256::ZERO,
             data: Bytes::new(),
             chain_id: None,
@@ -658,40 +659,8 @@ pub struct OptimismFields {
     pub enveloped_tx: Option<Bytes>,
 }
 
-/// Transaction destination.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum TransactTo {
-    /// Simple call to an address.
-    Call(Address),
-    /// Contract creation.
-    Create,
-}
-
-impl TransactTo {
-    /// Calls the given address.
-    #[inline]
-    pub fn call(address: Address) -> Self {
-        Self::Call(address)
-    }
-
-    /// Creates a contract.
-    #[inline]
-    pub fn create() -> Self {
-        Self::Create
-    }
-    /// Returns `true` if the transaction is `Call`.
-    #[inline]
-    pub fn is_call(&self) -> bool {
-        matches!(self, Self::Call(_))
-    }
-
-    /// Returns `true` if the transaction is `Create` or `Create2`.
-    #[inline]
-    pub fn is_create(&self) -> bool {
-        matches!(self, Self::Create)
-    }
-}
+/// Transaction destination
+pub type TransactTo = TxKind;
 
 /// Create scheme.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]

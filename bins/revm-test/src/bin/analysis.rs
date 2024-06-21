@@ -1,7 +1,7 @@
 use revm::{
     db::BenchmarkDB,
     interpreter::analysis::to_analysed,
-    primitives::{address, bytes, Bytecode, Bytes, TransactTo},
+    primitives::{address, bytes, Bytecode, Bytes, TxKind},
     Evm,
 };
 use std::time::Instant;
@@ -17,7 +17,7 @@ fn main() {
         .modify_tx_env(|tx| {
             // execution globals block hash/gas_limit/coinbase/timestamp..
             tx.caller = address!("1000000000000000000000000000000000000000");
-            tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+            tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
             //evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
             tx.data = bytes!("8035F0CE");
         })

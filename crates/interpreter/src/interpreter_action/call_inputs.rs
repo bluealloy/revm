@@ -1,4 +1,4 @@
-use crate::primitives::{Address, Bytes, TransactTo, TxEnv, U256};
+use crate::primitives::{Address, Bytes, TxEnv, TxKind, U256};
 use core::ops::Range;
 use std::boxed::Box;
 
@@ -47,7 +47,7 @@ impl CallInputs {
     ///
     /// Returns `None` if the transaction is not a call.
     pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
-        let TransactTo::Call(target_address) = tx_env.transact_to else {
+        let TxKind::Call(target_address) = tx_env.transact_to else {
             return None;
         };
         Some(CallInputs {

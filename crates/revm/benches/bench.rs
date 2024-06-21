@@ -4,7 +4,7 @@ use criterion::{
 use revm::{
     db::BenchmarkDB,
     interpreter::{analysis::to_analysed, Contract, DummyHost, Interpreter},
-    primitives::{address, bytes, hex, BerlinSpec, Bytecode, Bytes, TransactTo, U256},
+    primitives::{address, bytes, hex, BerlinSpec, Bytecode, Bytes, TxKind, U256},
     Evm,
 };
 use revm_interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
@@ -14,7 +14,7 @@ fn analysis(c: &mut Criterion) {
     let evm = Evm::builder()
         .modify_tx_env(|tx| {
             tx.caller = address!("0000000000000000000000000000000000000002");
-            tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+            tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
             // evm.env.tx.data = bytes!("30627b7c");
             tx.data = bytes!("8035F0CE");
         })
@@ -50,7 +50,7 @@ fn snailtracer(c: &mut Criterion) {
         .with_db(BenchmarkDB::new_bytecode(bytecode(SNAILTRACER)))
         .modify_tx_env(|tx| {
             tx.caller = address!("1000000000000000000000000000000000000000");
-            tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+            tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
             tx.data = bytes!("30627b7c");
         })
         .build();
@@ -70,7 +70,7 @@ fn transfer(c: &mut Criterion) {
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
         .modify_tx_env(|tx| {
             tx.caller = address!("0000000000000000000000000000000000000001");
-            tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+            tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
             tx.value = U256::from(10);
         })
         .build();

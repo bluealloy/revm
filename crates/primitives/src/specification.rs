@@ -29,6 +29,7 @@ pub enum SpecId {
     SHANGHAI = 16,        // Shanghai               17034870 (Timestamp: 1681338455)
     CANCUN = 17,          // Cancun                 19426587 (Timestamp: 1710338135)
     PRAGUE = 18,          // Praque                 TBD
+    PRAGUE_EOF = 19,      // Praque+EOF             TBD
     #[default]
     LATEST = u8::MAX,
 }
@@ -65,6 +66,7 @@ pub enum SpecId {
     ECOTONE = 21,
     FJORD = 22,
     PRAGUE = 23,
+    PRAGUE_EOF = 24,
     #[default]
     LATEST = u8::MAX,
 }
@@ -107,6 +109,7 @@ impl From<&str> for SpecId {
             "Shanghai" => Self::SHANGHAI,
             "Cancun" => Self::CANCUN,
             "Prague" => Self::PRAGUE,
+            "PragueEOF" => Self::PRAGUE_EOF,
             #[cfg(feature = "optimism")]
             "Bedrock" => SpecId::BEDROCK,
             #[cfg(feature = "optimism")]
@@ -144,6 +147,7 @@ impl From<SpecId> for &'static str {
             SpecId::SHANGHAI => "Shanghai",
             SpecId::CANCUN => "Cancun",
             SpecId::PRAGUE => "Prague",
+            SpecId::PRAGUE_EOF => "PragueEOF",
             #[cfg(feature = "optimism")]
             SpecId::BEDROCK => "Bedrock",
             #[cfg(feature = "optimism")]
@@ -200,6 +204,7 @@ spec!(MERGE, MergeSpec);
 spec!(SHANGHAI, ShanghaiSpec);
 spec!(CANCUN, CancunSpec);
 spec!(PRAGUE, PragueSpec);
+spec!(PRAGUE_EOF, PragueEofSpec);
 
 spec!(LATEST, LatestSpec);
 
@@ -278,6 +283,10 @@ macro_rules! spec_to_generic {
                 use $crate::PragueSpec as SPEC;
                 $e
             }
+            $crate::SpecId::PRAGUE_EOF => {
+                use $crate::PragueEofSpec as SPEC;
+                $e
+            }
         }
     }};
 }
@@ -345,6 +354,10 @@ macro_rules! spec_to_generic {
                 use $crate::PragueSpec as SPEC;
                 $e
             }
+            $crate::SpecId::PRAGUE_EOF => {
+                use $crate::PragueEofSpec as SPEC;
+                $e
+            }
             $crate::SpecId::BEDROCK => {
                 use $crate::BedrockSpec as SPEC;
                 $e
@@ -406,6 +419,7 @@ mod tests {
         #[cfg(feature = "optimism")]
         spec_to_generic!(FJORD, assert_eq!(SPEC::SPEC_ID, FJORD));
         spec_to_generic!(PRAGUE, assert_eq!(SPEC::SPEC_ID, PRAGUE));
+        spec_to_generic!(PRAGUE_EOF, assert_eq!(SPEC::SPEC_ID, PRAGUE_EOF));
         spec_to_generic!(LATEST, assert_eq!(SPEC::SPEC_ID, LATEST));
     }
 }
