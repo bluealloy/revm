@@ -15,9 +15,18 @@ pub struct EthersDB<M: Middleware> {
 }
 
 impl<M: Middleware> EthersDB<M> {
-    /// create ethers db connector inputs are url and block on what we are basing our database (None for latest)
+    /// Create ethers db connector inputs are url and block on what we are basing our database (None for latest).
+    ///
+    /// Returns `None` if no tokio runtime is available or if the current runtime is a current-thread runtime.
     pub fn new(client: Arc<M>, block_number: Option<BlockId>) -> Option<Self> {
-        let handle = Handle::try_current().ok()?;
+        let handle = match Handle::try_current() {
+            Ok(handle) => match handle.runtime_flavor() {
+                tokio::runtime::RuntimeFlavor::CurrentThread => return None,
+                _ => handle,
+            },
+            Err(_) => return None,
+        };
+
         let block_number: Option<BlockId> = if block_number.is_some() {
             block_number
         } else {
