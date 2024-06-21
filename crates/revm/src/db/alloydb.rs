@@ -24,7 +24,7 @@ pub struct AlloyDB<T: Transport + Clone, N: Network, P: Provider<T, N>> {
 
 impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
     /// Create a new AlloyDB instance, with a [Provider] and a block (Use None for latest).
-    /// 
+    ///
     /// Returns `None` if no tokio runtime is available or if the current runtime is a current-thread runtime.
     pub fn new(provider: P, block_number: BlockId) -> Option<Self> {
         let handle = match Handle::try_current() {
