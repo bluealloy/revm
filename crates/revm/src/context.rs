@@ -108,9 +108,9 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
         &mut self.evm.env
     }
 
-    fn block_hash(&mut self, number: U256) -> Option<B256> {
+    fn block_hash(&mut self, number: u64) -> Option<B256> {
         let block_number = as_usize_saturated!(self.env().block.number);
-        let requested_number = as_usize_saturated!(number);
+        let requested_number = usize::try_from(number).unwrap_or(usize::MAX);
 
         let Some(diff) = block_number.checked_sub(requested_number) else {
             return Some(B256::ZERO);

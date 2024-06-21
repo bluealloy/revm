@@ -17,7 +17,7 @@ pub trait Host {
     fn load_account(&mut self, address: Address) -> Option<LoadAccountResult>;
 
     /// Get the block hash of the given block `number`.
-    fn block_hash(&mut self, number: U256) -> Option<B256>;
+    fn block_hash(&mut self, number: u64) -> Option<B256>;
 
     /// Get balance of `address` and if the account is cold.
     fn balance(&mut self, address: Address) -> Option<(U256, bool)>;

@@ -72,7 +72,7 @@ impl<E> Database for EmptyDBTyped<E> {
     }
 
     #[inline]
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         <Self as DatabaseRef>::block_hash_ref(self, number)
     }
 }
@@ -96,7 +96,7 @@ impl<E> DatabaseRef for EmptyDBTyped<E> {
     }
 
     #[inline]
-    fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error> {
+    fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
         Ok(keccak256(number.to_string().as_bytes()))
     }
 }
@@ -110,21 +110,21 @@ mod tests {
     fn conform_block_hash_calculation() {
         let db = EmptyDB::new();
         assert_eq!(
-            db.block_hash_ref(U256::from(0)),
+            db.block_hash_ref(0u64),
             Ok(b256!(
                 "044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d"
             ))
         );
 
         assert_eq!(
-            db.block_hash_ref(U256::from(1)),
+            db.block_hash_ref(1u64),
             Ok(b256!(
                 "c89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6"
             ))
         );
 
         assert_eq!(
-            db.block_hash_ref(U256::from(100)),
+            db.block_hash_ref(100u64),
             Ok(b256!(
                 "8c18210df0d9514f2d2e5d8ca7c100978219ee80d3968ad850ab5ead208287b3"
             ))

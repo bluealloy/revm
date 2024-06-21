@@ -122,7 +122,7 @@ impl<DB: Database> InnerEvmContext<DB> {
 
     /// Fetch block hash from database.
     #[inline]
-    pub fn block_hash(&mut self, number: U256) -> Result<B256, EVMError<DB::Error>> {
+    pub fn block_hash(&mut self, number: u64) -> Result<B256, EVMError<DB::Error>> {
         self.db.block_hash(number).map_err(EVMError::Database)
     }
 
