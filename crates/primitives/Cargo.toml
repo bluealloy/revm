@@ -22,7 +22,8 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-alloy-eips = { version = "0.1", default-features = false }
+# alloy-eips = { version = "0.1", default-features = false }
+alloy-eips = { git = "https://github.com/NomicFoundation/alloy.git", rev = "905d846", default-features = false }
 alloy-primitives = { version = "0.7.2", default-features = false, features = [
     "rlp",
 ] }
