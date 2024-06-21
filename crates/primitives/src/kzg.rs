@@ -1,7 +1,11 @@
 mod env_settings;
 mod trusted_setup_points;
 
+#[cfg(feature = "kzg-rs")]
+pub use kzg_rs::KzgSettings;
+#[cfg(not(feature = "kzg-rs"))]
 pub use c_kzg::KzgSettings;
+
 pub use env_settings::EnvKzgSettings;
 pub use trusted_setup_points::{
     parse_kzg_trusted_setup, G1Points, G2Points, KzgErrors, BYTES_PER_G1_POINT, BYTES_PER_G2_POINT,
