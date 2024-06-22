@@ -4,9 +4,9 @@ use alloy_primitives::TxKind;
 pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
-    calc_blob_gasprice, Account, Address, Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId,
-    B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
-    VERSIONED_HASH_VERSION_KZG,
+    calc_blob_gasprice, AccessListItem, Account, Address, Bytes, InvalidHeader, InvalidTransaction,
+    Spec, SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE,
+    U256, VERSIONED_HASH_VERSION_KZG,
 };
 use core::cmp::{min, Ordering};
 use core::hash::Hash;
@@ -526,7 +526,7 @@ pub struct TxEnv {
     /// Added in [EIP-2930].
     ///
     /// [EIP-2930]: https://eips.ethereum.org/EIPS/eip-2930
-    pub access_list: Vec<(Address, Vec<U256>)>,
+    pub access_list: Vec<AccessListItem>,
 
     /// The priority fee per gas.
     ///
@@ -704,7 +704,10 @@ mod tests {
     #[test]
     fn test_validate_tx_access_list() {
         let mut env = Env::default();
-        env.tx.access_list = vec![(Address::ZERO, vec![])];
+        env.tx.access_list = vec![AccessListItem {
+            address: Address::ZERO,
+            storage_keys: vec![],
+        }];
         assert_eq!(
             env.validate_tx::<crate::FrontierSpec>(),
             Err(InvalidTransaction::AccessListNotSupported)

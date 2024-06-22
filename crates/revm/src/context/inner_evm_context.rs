@@ -8,8 +8,8 @@ use crate::{
     },
     journaled_state::JournaledState,
     primitives::{
-        keccak256, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env,
-        Eof, HashSet, Spec,
+        keccak256, AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme,
+        EVMError, Env, Eof, HashSet, Spec,
         SpecId::{self, *},
         B256, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
     },
@@ -101,9 +101,13 @@ impl<DB: Database> InnerEvmContext<DB> {
     /// Loading of accounts/storages is needed to make them warm.
     #[inline]
     pub fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
-        for (address, slots) in self.env.tx.access_list.iter() {
+        for AccessListItem {
+            address,
+            storage_keys,
+        } in self.env.tx.access_list.iter()
+        {
             self.journaled_state
-                .initial_account_load(*address, slots, &mut self.db)?;
+                .initial_account_load(*address, storage_keys, &mut self.db)?;
         }
         Ok(())
     }

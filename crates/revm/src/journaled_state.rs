@@ -6,6 +6,7 @@ use crate::primitives::{
 use core::mem;
 use revm_interpreter::primitives::SpecId;
 use revm_interpreter::{LoadAccountResult, SStoreResult};
+use revm_precompile::B256;
 use std::vec::Vec;
 
 /// JournalState is internal EVM state that is used to contain state and track changes to that state.
@@ -530,7 +531,7 @@ impl JournaledState {
     pub fn initial_account_load<DB: Database>(
         &mut self,
         address: Address,
-        slots: &[U256],
+        storage_keys: &[B256],
         db: &mut DB,
     ) -> Result<&mut Account, EVMError<DB::Error>> {
         // load or get account.
@@ -544,9 +545,10 @@ impl JournaledState {
             ),
         };
         // preload storages.
-        for slot in slots {
-            if let Entry::Vacant(entry) = account.storage.entry(*slot) {
-                let storage = db.storage(address, *slot).map_err(EVMError::Database)?;
+        for storage_key in storage_keys {
+            let slot = U256::from_be_bytes(storage_key.0);
+            if let Entry::Vacant(entry) = account.storage.entry(slot) {
+                let storage = db.storage(address, slot).map_err(EVMError::Database)?;
                 entry.insert(EvmStorageSlot::new(storage));
             }
         }

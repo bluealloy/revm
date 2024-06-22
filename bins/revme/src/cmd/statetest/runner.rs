@@ -10,7 +10,7 @@ use revm::{
     inspectors::TracerEip3155,
     primitives::{
         calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, Eof,
-        ExecutionResult, SpecId, TxKind, B256, EOF_MAGIC_BYTES, U256,
+        ExecutionResult, SpecId, TxKind, B256, EOF_MAGIC_BYTES,
     },
     Evm, State,
 };
@@ -350,18 +350,8 @@ pub fn execute_test_suite(
                     .access_lists
                     .get(test.indexes.data)
                     .and_then(Option::as_deref)
-                    .unwrap_or_default()
-                    .iter()
-                    .map(|item| {
-                        (
-                            item.address,
-                            item.storage_keys
-                                .iter()
-                                .map(|key| U256::from_be_bytes(key.0))
-                                .collect::<Vec<_>>(),
-                        )
-                    })
-                    .collect();
+                    .cloned()
+                    .unwrap_or_default();
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),
