@@ -348,7 +348,9 @@ impl fmt::Display for InvalidTransaction {
             Self::BlobVersionNotSupported => write!(f, "blob version not supported"),
             Self::EofCrateShouldHaveToAddress => write!(f, "EOF crate should have `to` address"),
             Self::AuthorizationListNotSupported => write!(f, "authorization list not supported"),
-            Self::AuthorizationListInvalidFields => write!(f, "authorization list tx has invalid fields"),
+            Self::AuthorizationListInvalidFields => {
+                write!(f, "authorization list tx has invalid fields")
+            }
             #[cfg(feature = "optimism")]
             Self::DepositSystemTxPostRegolith => {
                 write!(

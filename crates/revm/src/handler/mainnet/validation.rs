@@ -42,11 +42,12 @@ pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
     let input = &env.tx.data;
     let is_create = env.tx.transact_to.is_create();
     let access_list = &env.tx.access_list;
-    let authorization_list_num = env.tx
-    .authorization_list
-    .as_ref()
-    .map(|l| l.len() as u64)
-    .unwrap_or_default();
+    let authorization_list_num = env
+        .tx
+        .authorization_list
+        .as_ref()
+        .map(|l| l.len() as u64)
+        .unwrap_or_default();
 
     let initial_gas_spend = gas::validate_initial_tx_gas(
         SPEC::SPEC_ID,
