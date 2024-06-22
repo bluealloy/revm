@@ -1,6 +1,6 @@
 use crate::{
     db::{Database, DatabaseRef},
-    primitives::{AccountInfo, Address, Bytecode, B256, KECCAK_EMPTY, U256},
+    primitives::{AccountInfo, Address, Bytecode, B256, U256},
 };
 use alloy_eips::BlockId;
 use alloy_provider::{Network, Provider};
@@ -103,16 +103,11 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> DatabaseRef for AlloyD
         Ok(Some(AccountInfo::new(balance, nonce, code_hash, code)))
     }
 
-    fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error> {
-        // Saturate usize
-        if number > U256::from(u64::MAX) {
-            return Ok(KECCAK_EMPTY);
-        }
-
+    fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
         let block = Self::block_on(
             self.provider
                 // SAFETY: We know number <= u64::MAX, so we can safely convert it to u64
-                .get_block_by_number(number.to::<u64>().into(), false),
+                .get_block_by_number(number.into(), false),
         )?;
         // SAFETY: If the number is given, the block is supposed to be finalized, so unwrapping is safe.
         Ok(B256::new(*block.unwrap().header.hash.unwrap()))
@@ -152,7 +147,7 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> Database for AlloyDB<T
     }
 
     #[inline]
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         <Self as DatabaseRef>::block_hash_ref(self, number)
     }
 }

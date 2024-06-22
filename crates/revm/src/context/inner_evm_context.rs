@@ -106,8 +106,11 @@ impl<DB: Database> InnerEvmContext<DB> {
             storage_keys,
         } in self.env.tx.access_list.iter()
         {
-            self.journaled_state
-                .initial_account_load(*address, storage_keys, &mut self.db)?;
+            self.journaled_state.initial_account_load(
+                *address,
+                storage_keys.iter().map(|i| U256::from_be_bytes(i.0)),
+                &mut self.db,
+            )?;
         }
         Ok(())
     }

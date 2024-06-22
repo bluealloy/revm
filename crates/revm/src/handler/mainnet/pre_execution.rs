@@ -32,7 +32,7 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
     if SPEC::enabled(SHANGHAI) {
         context.evm.inner.journaled_state.initial_account_load(
             context.evm.inner.env.block.coinbase,
-            &[],
+            [],
             &mut context.evm.inner.db,
         )?;
     }
@@ -42,7 +42,7 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
     if SPEC::enabled(PRAGUE) {
         context.evm.inner.journaled_state.initial_account_load(
             BLOCKHASH_STORAGE_ADDRESS,
-            &[],
+            [],
             &mut context.evm.inner.db,
         )?;
     }

@@ -376,10 +376,7 @@ pub fn validate_initial_tx_gas(
 
     // get number of access list account and storages.
     if spec_id.is_enabled_in(SpecId::BERLIN) {
-        let accessed_slots: usize = access_list
-            .iter()
-            .map(|item| item.storage_keys.len())
-            .sum();
+        let accessed_slots: usize = access_list.iter().map(|item| item.storage_keys.len()).sum();
         initial_gas += access_list.len() as u64 * ACCESS_LIST_ADDRESS;
         initial_gas += accessed_slots as u64 * ACCESS_LIST_STORAGE_KEY;
     }

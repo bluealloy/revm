@@ -1,12 +1,12 @@
-use crate::interpreter::{InstructionResult, SelfDestructResult};
-use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, EvmState, EvmStorageSlot,
-    HashMap, HashSet, Log, SpecId::*, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
+use crate::{
+    interpreter::{InstructionResult, LoadAccountResult, SStoreResult, SelfDestructResult},
+    primitives::{
+        db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, EvmState,
+        EvmStorageSlot, HashMap, HashSet, Log, SpecId, SpecId::*, TransientStorage, KECCAK_EMPTY,
+        PRECOMPILE3, U256,
+    },
 };
 use core::mem;
-use revm_interpreter::primitives::SpecId;
-use revm_interpreter::{LoadAccountResult, SStoreResult};
-use revm_precompile::B256;
 use std::vec::Vec;
 
 /// JournalState is internal EVM state that is used to contain state and track changes to that state.
@@ -531,7 +531,7 @@ impl JournaledState {
     pub fn initial_account_load<DB: Database>(
         &mut self,
         address: Address,
-        storage_keys: &[B256],
+        storage_keys: impl IntoIterator<Item = U256>,
         db: &mut DB,
     ) -> Result<&mut Account, EVMError<DB::Error>> {
         // load or get account.
@@ -545,10 +545,11 @@ impl JournaledState {
             ),
         };
         // preload storages.
-        for storage_key in storage_keys {
-            let slot = U256::from_be_bytes(storage_key.0);
-            if let Entry::Vacant(entry) = account.storage.entry(slot) {
-                let storage = db.storage(address, slot).map_err(EVMError::Database)?;
+        for storage_key in storage_keys.into_iter() {
+            if let Entry::Vacant(entry) = account.storage.entry(storage_key) {
+                let storage = db
+                    .storage(address, storage_key)
+                    .map_err(EVMError::Database)?;
                 entry.insert(EvmStorageSlot::new(storage));
             }
         }
