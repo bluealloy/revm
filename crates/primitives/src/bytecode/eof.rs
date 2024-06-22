@@ -215,8 +215,10 @@ mod test {
         assert_eq!(eof.data_slice(0, 4), &[0x01, 0x02, 0x03, 0x04]);
         assert_eq!(eof.data_slice(0, 5), &[0x01, 0x02, 0x03, 0x04]);
         assert_eq!(eof.data_slice(1, 2), &[0x02, 0x03]);
-        assert_eq!(eof.data_slice(10, 2), &[]);
-        assert_eq!(eof.data_slice(1, 0), &[]);
-        assert_eq!(eof.data_slice(10, 0), &[]);
+
+        const EMPTY: &[u8] = &[];
+        assert_eq!(eof.data_slice(10, 2), EMPTY);
+        assert_eq!(eof.data_slice(1, 0), EMPTY);
+        assert_eq!(eof.data_slice(10, 0), EMPTY);
     }
 }

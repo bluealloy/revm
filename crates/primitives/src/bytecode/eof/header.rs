@@ -240,7 +240,7 @@ mod tests {
         let (header, _) = EofHeader::decode(&input).unwrap();
         assert_eq!(header.types_size, 4);
         assert_eq!(header.code_sizes, vec![1]);
-        assert_eq!(header.container_sizes, vec![]);
+        assert_eq!(header.container_sizes, Vec::<u16>::new());
         assert_eq!(header.data_size, 0);
     }
 

@@ -4,7 +4,7 @@ use ethers_core::types::{Block, BlockId, TxHash, H160 as eH160, H256, U64 as eU6
 use ethers_providers::Middleware;
 use tokio::runtime::{Builder, Handle, RuntimeFlavor};
 
-use crate::primitives::{AccountInfo, Address, Bytecode, B256, KECCAK_EMPTY, U256};
+use crate::primitives::{AccountInfo, Address, Bytecode, B256, U256};
 use crate::{Database, DatabaseRef};
 
 #[derive(Debug, Clone)]
@@ -103,13 +103,8 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
         Ok(U256::from_be_bytes(slot_value.to_fixed_bytes()))
     }
 
-    fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error> {
-        // saturate usize
-        if number > U256::from(u64::MAX) {
-            return Ok(KECCAK_EMPTY);
-        }
-        // We know number <= u64::MAX so unwrap is safe
-        let number = eU64::from(u64::try_from(number).unwrap());
+    fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
+        let number = eU64::from(number);
         let block: Option<Block<TxHash>> =
             Self::block_on(self.client.get_block(BlockId::from(number)))?;
         // If number is given, the block is supposed to be finalized so unwrap is safe too.
@@ -136,7 +131,7 @@ impl<M: Middleware> Database for EthersDB<M> {
     }
 
     #[inline]
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         <Self as DatabaseRef>::block_hash_ref(self, number)
     }
 }

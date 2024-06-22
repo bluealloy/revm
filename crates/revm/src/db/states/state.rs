@@ -268,16 +268,14 @@ impl<DB: Database> Database for State<DB> {
         }
     }
 
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        // block number is never bigger then u64::MAX.
-        let u64num: u64 = number.to();
-        match self.block_hashes.entry(u64num) {
+    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
+        match self.block_hashes.entry(number) {
             btree_map::Entry::Occupied(entry) => Ok(*entry.get()),
             btree_map::Entry::Vacant(entry) => {
                 let ret = *entry.insert(self.database.block_hash(number)?);
 
                 // prune all hashes that are older then BLOCK_HASH_HISTORY
-                let last_block = u64num.saturating_sub(BLOCK_HASH_HISTORY as u64);
+                let last_block = number.saturating_sub(BLOCK_HASH_HISTORY as u64);
                 while let Some(entry) = self.block_hashes.first_entry() {
                     if *entry.key() < last_block {
                         entry.remove();
@@ -311,8 +309,8 @@ mod tests {
     #[test]
     fn block_hash_cache() {
         let mut state = State::builder().build();
-        state.block_hash(U256::from(1)).unwrap();
-        state.block_hash(U256::from(2)).unwrap();
+        state.block_hash(1u64).unwrap();
+        state.block_hash(2u64).unwrap();
 
         let test_number = BLOCK_HASH_HISTORY as u64 + 2;
 
@@ -325,7 +323,7 @@ mod tests {
             BTreeMap::from([(1, block1_hash), (2, block2_hash)])
         );
 
-        state.block_hash(U256::from(test_number)).unwrap();
+        state.block_hash(test_number).unwrap();
         assert_eq!(
             state.block_hashes,
             BTreeMap::from([(test_number, block_test_hash), (2, block2_hash)])

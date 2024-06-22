@@ -1,12 +1,9 @@
-use revm_primitives::SpecId::PRAGUE;
-
 use super::constants::*;
 use crate::{
     num_words,
-    primitives::{Address, SpecId, U256},
+    primitives::{AccessListItem, SpecId, U256},
     SelfDestructResult,
 };
-use std::vec::Vec;
 
 /// `const` Option `?`.
 macro_rules! tri {
@@ -359,8 +356,7 @@ pub fn validate_initial_tx_gas(
     spec_id: SpecId,
     input: &[u8],
     is_create: bool,
-    access_list: &[(Address, Vec<U256>)],
-    // TODO authorization list items.
+    access_list: &[AccessListItem],
     authorization_list_num: u64,
 ) -> u64 {
     let mut initial_gas = 0;
@@ -379,11 +375,9 @@ pub fn validate_initial_tx_gas(
 
     // get number of access list account and storages.
     if spec_id.is_enabled_in(SpecId::BERLIN) {
-        let accessed_slots = access_list
-            .iter()
-            .fold(0, |slot_count, (_, slots)| slot_count + slots.len() as u64);
+        let accessed_slots: usize = access_list.iter().map(|item| item.storage_keys.len()).sum();
         initial_gas += access_list.len() as u64 * ACCESS_LIST_ADDRESS;
-        initial_gas += accessed_slots * ACCESS_LIST_STORAGE_KEY;
+        initial_gas += accessed_slots as u64 * ACCESS_LIST_STORAGE_KEY;
     }
 
     // base stipend
@@ -405,7 +399,7 @@ pub fn validate_initial_tx_gas(
     }
 
     //   EIP-7702
-    if spec_id.is_enabled_in(PRAGUE) {
+    if spec_id.is_enabled_in(SpecId::PRAGUE) {
         initial_gas += authorization_list_num * PER_CONTRACT_CODE_BASE_COST;
     }
 

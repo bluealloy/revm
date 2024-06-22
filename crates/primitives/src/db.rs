@@ -22,7 +22,7 @@ pub trait Database {
     fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error>;
 
     /// Get block hash by block number.
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error>;
+    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error>;
 }
 
 /// EVM database commit interface.
@@ -53,7 +53,7 @@ pub trait DatabaseRef {
     fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error>;
 
     /// Get block hash by block number.
-    fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error>;
+    fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error>;
 }
 
 /// Wraps a [`DatabaseRef`] to provide a [`Database`] implementation.
@@ -86,7 +86,7 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     }
 
     #[inline]
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         self.0.block_hash_ref(number)
     }
 }

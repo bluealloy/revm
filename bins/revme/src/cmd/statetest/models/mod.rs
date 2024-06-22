@@ -1,4 +1,4 @@
-use revm::primitives::{Address, Bytes, HashMap, B256, U256};
+use revm::primitives::{AccessList, Address, Bytes, HashMap, B256, U256};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -109,15 +109,6 @@ pub struct TransactionParts {
     pub blob_versioned_hashes: Vec<B256>,
     pub max_fee_per_blob_gas: Option<U256>,
 }
-
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct AccessListItem {
-    pub address: Address,
-    pub storage_keys: Vec<B256>,
-}
-
-pub type AccessList = Vec<AccessListItem>;
 
 #[cfg(test)]
 mod tests {
