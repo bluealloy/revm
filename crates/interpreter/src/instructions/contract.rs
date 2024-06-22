@@ -199,7 +199,7 @@ pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
     require_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
-    // TODO check if target is left paddded with zeroes.
+    // TODO check if target is left padded with zeroes.
 
     // input call
     let Some(input) = extcall_input(interpreter) else {
@@ -271,7 +271,7 @@ pub fn extstaticcall<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut
     require_eof!(interpreter);
     pop_address!(interpreter, target_address);
 
-    // TODO check if target is left paddded with zeroes.
+    // TODO check if target is left padded with zeroes.
 
     // input call
     let Some(input) = extcall_input(interpreter) else {

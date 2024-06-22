@@ -31,8 +31,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace ${{ matrix.flags }}
 
-  test-no-std:
-    name: test no_std ${{ matrix.features }}
+  check-no-std:
+    name: check no_std ${{ matrix.features }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -56,9 +56,8 @@ jobs:
         features: ["", "serde", "std"]
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          cd crates/revm
-          cargo check --no-default-features --features=${{ matrix.features }}
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo check --no-default-features -p revm  --features=${{ matrix.features }}
 
   clippy:
     name: clippy
