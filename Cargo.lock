@@ -2150,7 +2150,8 @@ dependencies = [
 [[package]]
 name = "kzg-rs"
 version = "0.1.0"
-source = "git+https://github.com/0xWOLAND/kzg-rs#a0dbaf3d7796d3c19baf8f1870a421584481f012"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd9920cd4460ce3cbca19c62f3bb9a9611562478a4dc9d2c556f4a7d049c5b6b"
 dependencies = [
  "bls12_381",
  "glob",
@@ -2786,9 +2787,9 @@ dependencies = [
 
 [[package]]
 name = "proptest"
-version = "1.4.0"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31b476131c3c86cb68032fdc5cb6d5a1045e3e42d96b69fa599fd77701e1f5bf"
+checksum = "b4c2511913b88df1637da85cc8d96ec8e43a3f8bb8ccb71ee1ac240d6f3df58d"
 dependencies = [
  "bit-set",
  "bit-vec",

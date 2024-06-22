@@ -48,7 +48,7 @@ bn = { package = "substrate-bn", version = "0.6", default-features = false }
 c-kzg = { version = "1.0.2", default-features = false, optional = true }
 
 # Optionally use `kzg-rs` for a pure Rust implementation of KZG point evaluation.
-kzg-rs = { git = "https://github.com/0xWOLAND/kzg-rs", default-features = false, features = [
+kzg-rs = { version = "0.1", default-features = false, features = [
     'cache',
 ], optional = true }
 
