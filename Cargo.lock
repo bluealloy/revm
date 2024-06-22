@@ -406,7 +406,7 @@ dependencies = [
  "ark-serialize 0.3.0",
  "ark-std 0.3.0",
  "derivative",
- "num-bigint",
+ "num-bigint 0.4.5",
  "num-traits",
  "paste",
  "rustc_version 0.3.3",
@@ -426,7 +426,7 @@ dependencies = [
  "derivative",
  "digest 0.10.7",
  "itertools 0.10.5",
- "num-bigint",
+ "num-bigint 0.4.5",
  "num-traits",
  "paste",
  "rustc_version 0.4.0",
@@ -459,7 +459,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db2fd794a08ccb318058009eefdf15bcaaaaf6f8161eb3345f907222bac38b20"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.4.5",
  "num-traits",
  "quote",
  "syn 1.0.109",
@@ -471,7 +471,7 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7abe79b0e4288889c4574159ab790824d0033b9fdcb2a112a3182fac2e514565"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.4.5",
  "num-traits",
  "proc-macro2",
  "quote",
@@ -496,7 +496,7 @@ checksum = "adb7b85a02b83d2f22f89bd5cac66c9c89474240cb6207cb1efc16d098e822a5"
 dependencies = [
  "ark-std 0.4.0",
  "digest 0.10.7",
- "num-bigint",
+ "num-bigint 0.4.5",
 ]
 
 [[package]]
@@ -1236,6 +1236,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "eth_pairings"
+version = "0.6.0"
+source = "git+https://github.com/matter-labs/eip1962#17ba98bdbdd7bdf239c09cd88ca46a486124f5e7"
+dependencies = [
+ "byteorder",
+ "eth_pairings_repr_derive",
+ "fixed_width_field",
+ "fixed_width_group_and_loop",
+ "num-bigint 0.2.6",
+ "num-traits",
+ "once_cell",
+ "static_assertions",
+]
+
+[[package]]
+name = "eth_pairings_repr_derive"
+version = "0.2.0"
+source = "git+https://github.com/matter-labs/eip1962#17ba98bdbdd7bdf239c09cd88ca46a486124f5e7"
+dependencies = [
+ "byteorder",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "ethabi"
 version = "18.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1423,6 +1449,22 @@ dependencies = [
  "rand",
  "rustc-hex",
  "static_assertions",
+]
+
+[[package]]
+name = "fixed_width_field"
+version = "0.1.0"
+source = "git+https://github.com/matter-labs/eip1962#17ba98bdbdd7bdf239c09cd88ca46a486124f5e7"
+dependencies = [
+ "simple_uint",
+]
+
+[[package]]
+name = "fixed_width_group_and_loop"
+version = "0.1.0"
+source = "git+https://github.com/matter-labs/eip1962#17ba98bdbdd7bdf239c09cd88ca46a486124f5e7"
+dependencies = [
+ "simple_uint",
 ]
 
 [[package]]
@@ -2344,11 +2386,22 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35bd024e8b2ff75562e5f34e7f4905839deb4b22955ef5e73d2fea1b9813cb23"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.4.5",
  "num-complex",
  "num-integer",
  "num-iter",
  "num-rational",
+ "num-traits",
+]
+
+[[package]]
+name = "num-bigint"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "090c7f9998ee0ff65aa5b723e4009f7b217707f1fb5ea551329cc4d6231fb304"
+dependencies = [
+ "autocfg",
+ "num-integer",
  "num-traits",
 ]
 
@@ -2403,7 +2456,7 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f83d14da390562dca69fc84082e73e548e1ad308d24accdedd2720017cb37824"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.4.5",
  "num-integer",
  "num-traits",
 ]
@@ -3133,6 +3186,7 @@ dependencies = [
  "blst",
  "c-kzg",
  "criterion",
+ "eth_pairings",
  "eyre",
  "k256",
  "once_cell",
@@ -3317,7 +3371,7 @@ dependencies = [
  "ark-ff 0.4.2",
  "bytes",
  "fastrlp",
- "num-bigint",
+ "num-bigint 0.4.5",
  "num-traits",
  "parity-scale-codec",
  "primitive-types",
@@ -3702,10 +3756,21 @@ version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "adc4e5204eb1910f40f9cfa375f6f05b68c3abac4b6fd879c8ff5e7ae8a0a085"
 dependencies = [
- "num-bigint",
+ "num-bigint 0.4.5",
  "num-traits",
  "thiserror",
  "time",
+]
+
+[[package]]
+name = "simple_uint"
+version = "0.1.0"
+source = "git+https://github.com/matter-labs/eip1962#17ba98bdbdd7bdf239c09cd88ca46a486124f5e7"
+dependencies = [
+ "byteorder",
+ "crunchy",
+ "rustc-hex",
+ "static_assertions",
 ]
 
 [[package]]
