@@ -1,15 +1,17 @@
+use derive_where::derive_where;
+
 use crate::{
     primitives::{
         hash_map::Entry, Address, Bytes, ChainSpec, Env, HashMap, Log, B256, KECCAK_EMPTY, U256,
     },
     Host, SStoreResult, SelfDestructResult,
 };
-use core::fmt::Debug;
 use std::vec::Vec;
 
 use super::LoadAccountResult;
 
 /// A dummy [Host] implementation.
+#[derive_where(Clone, Debug, Default; ChainSpecT::Block, ChainSpecT::Transaction)]
 pub struct DummyHost<ChainSpecT>
 where
     ChainSpecT: ChainSpec,
@@ -40,48 +42,6 @@ where
     pub fn clear(&mut self) {
         self.storage.clear();
         self.log.clear();
-    }
-}
-
-impl<ChainSpecT> Clone for DummyHost<ChainSpecT>
-where
-    ChainSpecT: ChainSpec<Block: Clone, Transaction: Clone>,
-{
-    fn clone(&self) -> Self {
-        Self {
-            env: self.env.clone(),
-            storage: self.storage.clone(),
-            transient_storage: self.transient_storage.clone(),
-            log: self.log.clone(),
-        }
-    }
-}
-
-impl<ChainSpecT> Debug for DummyHost<ChainSpecT>
-where
-    ChainSpecT: ChainSpec<Block: Debug, Transaction: Debug>,
-{
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("DummyHost")
-            .field("env", &self.env)
-            .field("storage", &self.storage)
-            .field("transient_storage", &self.transient_storage)
-            .field("log", &self.log)
-            .finish()
-    }
-}
-
-impl<ChainSpecT> Default for DummyHost<ChainSpecT>
-where
-    ChainSpecT: ChainSpec<Block: Default, Transaction: Default>,
-{
-    fn default() -> Self {
-        Self {
-            env: Env::default(),
-            storage: HashMap::new(),
-            transient_storage: HashMap::new(),
-            log: Vec::new(),
-        }
     }
 }
 
