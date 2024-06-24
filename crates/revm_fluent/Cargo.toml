@@ -23,9 +23,12 @@ all = "warn"
 
 [dependencies]
 # revm
-revm-interpreter = { path = "../interpreter", default-features = false, optional = true }
-revm-interpreter-fluent = { path = "../interpreter_fluent", default-features = false, optional = true }
-revm-precompile = { path = "../precompile", default-features = false }
+#revm-interpreter = { path = "../interpreter", default-features = false, optional = true }
+#revm-interpreter-fluent = { path = "../interpreter_fluent", default-features = false, optional = true }
+#revm-precompile = { path = "../precompile", default-features = false }
+revm-interpreter = { package = "revm-interpreter", git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false, optional = true }
+revm-interpreter-fluent = { package = "revm-interpreter-fluent", git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false, optional = true }
+revm-precompile = { package = "revm-precompile", git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false, optional = true }
 
 #fluentbase-sdk = { workspace = true, default-features = false }
 #fluentbase-types = { workspace = true, default-features = false }
