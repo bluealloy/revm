@@ -55,14 +55,14 @@ revm = { path = "crates/revm", default-features = false, features = [
     "ethersdb",
     "std",
     "serde-json",
-    "c-kzg",
+#    "c-kzg",
     "blst",
 ] }
 revm-fluent = { path = "crates/revm_fluent", default-features = false, features = [
     "ethersdb",
     "std",
     "serde-json",
-    "c-kzg",
+#    "c-kzg",
     "blst",
 ] }
 

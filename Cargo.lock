@@ -3590,7 +3590,7 @@ dependencies = [
 [[package]]
 name = "revm-interpreter-fluent"
 version = "5.0.0"
-source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#acf0b50cc1e16a4afe3a446bdd654b07b61e2a17"
+source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#c4987f17d160e923190f1b535b772985c5fd9f4f"
 dependencies = [
  "revm-primitives 4.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
  "serde",
@@ -3642,7 +3642,7 @@ dependencies = [
 [[package]]
 name = "revm-primitives"
 version = "4.0.0"
-source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#acf0b50cc1e16a4afe3a446bdd654b07b61e2a17"
+source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#c4987f17d160e923190f1b535b772985c5fd9f4f"
 dependencies = [
  "alloy-primitives",
  "auto_impl",
