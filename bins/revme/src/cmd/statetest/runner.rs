@@ -348,6 +348,8 @@ pub fn execute_test_suite(
                     .get(test.indexes.data)
                     .unwrap()
                     .clone();
+
+                env.tx.nonce = u64::try_from(unit.transaction.nonce).unwrap();
                 env.tx.value = unit.transaction.value[test.indexes.value];
 
                 env.tx.access_list = unit
