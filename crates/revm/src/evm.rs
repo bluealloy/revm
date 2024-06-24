@@ -7,7 +7,7 @@ use crate::{
     interpreter::{CallInputs, CreateInputs, EOFCreateInputs, InterpreterAction, SharedMemory},
     primitives::{
         result::EVMResultGeneric, CfgEnv, ChainSpec, EVMError, EVMResult, EthChainSpec,
-        ExecutionResult, ResultAndState, SpecId, Transaction as _, TransactionValidation, TxKind,
+        ExecutionResult, ResultAndState, SpecId, Transaction as _, TxKind,
     },
     Context, ContextWithChainSpec, Frame, FrameOrResult, FrameResult,
 };
@@ -82,13 +82,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'a, ChainSpecT, EXT, DB> 
     pub fn run_the_loop(
         &mut self,
         first_frame: Frame,
-    ) -> Result<
-        FrameResult,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<FrameResult, ChainSpecT, DB::Error> {
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
 
@@ -193,15 +187,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
     /// Pre verify transaction by checking Environment, initial gas spend and if caller
     /// has enough balance to pay for the gas.
     #[inline]
-    pub fn preverify_transaction(
-        &mut self,
-    ) -> Result<
-        (),
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    pub fn preverify_transaction(&mut self) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
         let output = self.preverify_transaction_inner().map(|_| ());
         self.clear();
         output
@@ -233,15 +219,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Evm<'_, ChainSpecT, EXT, DB> {
 
     /// Pre verify transaction inner.
     #[inline]
-    fn preverify_transaction_inner(
-        &mut self,
-    ) -> Result<
-        u64,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    fn preverify_transaction_inner(&mut self) -> EVMResultGeneric<u64, ChainSpecT, DB::Error> {
         self.handler.validation().env(&self.context.evm.env)?;
         let initial_gas_spend = self
             .handler
