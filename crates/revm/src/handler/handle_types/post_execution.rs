@@ -28,13 +28,9 @@ pub type OutputHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<ChainSpecT, EXT, DB>,
             FrameResult,
-        ) -> Result<
-            ResultAndState<ChainSpecT>,
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        )
+            -> EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// End handle, takes result and state and returns final result.

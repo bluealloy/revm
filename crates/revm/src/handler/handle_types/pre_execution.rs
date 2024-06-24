@@ -1,9 +1,7 @@
 // Includes.
 use crate::{
     handler::mainnet,
-    primitives::{
-        db::Database, ChainSpec, EVMError, EVMResultGeneric, Spec, TransactionValidation,
-    },
+    primitives::{db::Database, ChainSpec, EVMResultGeneric, Spec},
     Context, ContextPrecompiles,
 };
 use std::sync::Arc;
@@ -18,13 +16,8 @@ pub type LoadPrecompilesHandle<'a, ChainSpecT, DB> =
 pub type LoadAccountsHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<ChainSpecT, EXT, DB>,
-        ) -> Result<
-            (),
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        ) -> EVMResultGeneric<(), ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// Deduct the caller to its limit.
