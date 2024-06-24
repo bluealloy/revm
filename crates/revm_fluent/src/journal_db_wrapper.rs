@@ -293,7 +293,7 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
                     context,
                     input,
                     fuel_offset,
-                    STATE_MAIN,
+                    state,
                 );
                 unsafe {
                     *fuel_offset -= result.1 as u32;
