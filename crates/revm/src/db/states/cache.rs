@@ -14,10 +14,10 @@ use std::vec::Vec;
 /// It generates transitions that is used to build BundleState.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CacheState {
-    /// Block state account with account state
+    /// Block state account with account state.
     pub accounts: HashMap<Address, CacheAccount>,
-    /// created contracts
-    /// TODO add bytecode counter for number of bytecodes added/removed.
+    /// Created contracts.
+    // TODO add bytecode counter for number of bytecodes added/removed.
     pub contracts: HashMap<B256, Bytecode>,
     /// Has EIP-161 state clear enabled (Spurious Dragon hardfork).
     pub has_state_clear: bool,

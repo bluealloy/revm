@@ -469,13 +469,13 @@ mod tests {
         let mut interp = Interpreter::new(Contract::default(), u64::MAX, false);
 
         let mut host = crate::DummyHost::default();
-        let table: InstructionTable<DummyHost> =
-            crate::opcode::make_instruction_table::<DummyHost, CancunSpec>();
-        let _ = interp.run(EMPTY_SHARED_MEMORY, &table, &mut host);
+        let table: &InstructionTable<DummyHost> =
+            &crate::opcode::make_instruction_table::<DummyHost, CancunSpec>();
+        let _ = interp.run(EMPTY_SHARED_MEMORY, table, &mut host);
 
         let host: &mut dyn Host = &mut host as &mut dyn Host;
-        let table: InstructionTable<dyn Host> =
-            crate::opcode::make_instruction_table::<dyn Host, CancunSpec>();
-        let _ = interp.run(EMPTY_SHARED_MEMORY, &table, host);
+        let table: &InstructionTable<dyn Host> =
+            &crate::opcode::make_instruction_table::<dyn Host, CancunSpec>();
+        let _ = interp.run(EMPTY_SHARED_MEMORY, table, host);
     }
 }
