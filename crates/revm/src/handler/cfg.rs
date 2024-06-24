@@ -10,6 +10,7 @@ use crate::primitives::{CfgEnv, ChainSpec, Env};
 
 /// Configuration environment with the chain spec id.
 #[derive(Debug, Eq, PartialEq)]
+#[derive_where(Clone; ChainSpecT::Hardfork)]
 pub struct CfgEnvWithChainSpec<ChainSpecT: ChainSpec> {
     /// Configuration environment.
     pub cfg_env: CfgEnv,
@@ -21,15 +22,6 @@ impl<ChainSpecT: ChainSpec> CfgEnvWithChainSpec<ChainSpecT> {
     /// Returns new instance of `CfgEnvWithHandlerCfg`.
     pub fn new(cfg_env: CfgEnv, spec_id: ChainSpecT::Hardfork) -> Self {
         Self { cfg_env, spec_id }
-    }
-}
-
-impl<ChainSpecT: ChainSpec> Clone for CfgEnvWithChainSpec<ChainSpecT> {
-    fn clone(&self) -> Self {
-        Self {
-            cfg_env: self.cfg_env.clone(),
-            spec_id: self.spec_id,
-        }
     }
 }
 
