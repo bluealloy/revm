@@ -3518,10 +3518,36 @@ dependencies = [
  "indicatif",
  "lazy_static",
  "reqwest 0.12.5",
- "revm-interpreter",
+ "revm-interpreter 5.0.0",
  "revm-interpreter-fluent 5.0.0",
- "revm-precompile",
+ "revm-precompile 7.0.0",
  "rstest 0.21.0",
+ "rwasm",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "revm"
+version = "9.0.0"
+source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#8138257ca5f87d4897f48e9ad9635dc48bf5d456"
+dependencies = [
+ "auto_impl",
+ "cfg-if",
+ "dyn-clone",
+ "ethers-core",
+ "ethers-providers",
+ "fluentbase-codec",
+ "fluentbase-core",
+ "fluentbase-genesis",
+ "fluentbase-poseidon",
+ "fluentbase-runtime",
+ "fluentbase-sdk",
+ "fluentbase-types",
+ "lazy_static",
+ "revm-interpreter 5.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
+ "revm-precompile 7.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
  "rwasm",
  "serde",
  "serde_json",
@@ -3551,10 +3577,34 @@ dependencies = [
  "indicatif",
  "lazy_static",
  "reqwest 0.12.5",
- "revm-interpreter",
+ "revm-interpreter 5.0.0",
  "revm-interpreter-fluent 5.0.0",
- "revm-precompile",
+ "revm-precompile 7.0.0",
  "rstest 0.19.0",
+ "rwasm",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "revm-fluent"
+version = "9.0.0"
+source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#8138257ca5f87d4897f48e9ad9635dc48bf5d456"
+dependencies = [
+ "auto_impl",
+ "cfg-if",
+ "dyn-clone",
+ "ethers-core",
+ "ethers-providers",
+ "fluentbase-core",
+ "fluentbase-genesis",
+ "fluentbase-runtime",
+ "fluentbase-sdk",
+ "fluentbase-types",
+ "lazy_static",
+ "revm-interpreter-fluent 5.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
+ "revm-precompile 7.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
  "rwasm",
  "serde",
  "serde_json",
@@ -3572,6 +3622,15 @@ dependencies = [
  "serde",
  "serde_json",
  "walkdir",
+]
+
+[[package]]
+name = "revm-interpreter"
+version = "5.0.0"
+source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#8138257ca5f87d4897f48e9ad9635dc48bf5d456"
+dependencies = [
+ "revm-primitives 4.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
+ "serde",
 ]
 
 [[package]]
@@ -3621,6 +3680,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "revm-precompile"
+version = "7.0.0"
+source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#8138257ca5f87d4897f48e9ad9635dc48bf5d456"
+dependencies = [
+ "aurora-engine-modexp",
+ "blst",
+ "c-kzg",
+ "k256",
+ "once_cell",
+ "revm-primitives 4.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
+ "ripemd",
+ "secp256k1",
+ "sha2",
+ "substrate-bn",
+]
+
+[[package]]
 name = "revm-primitives"
 version = "4.0.0"
 dependencies = [
@@ -3648,11 +3724,14 @@ dependencies = [
  "auto_impl",
  "bitflags 2.5.0",
  "bitvec",
+ "c-kzg",
  "cfg-if",
+ "derive_more",
  "dyn-clone",
  "enumn",
  "hashbrown",
  "hex",
+ "once_cell",
  "serde",
 ]
 
@@ -3675,8 +3754,8 @@ dependencies = [
  "microbench",
  "paste",
  "plain_hasher",
- "revm",
- "revm-fluent",
+ "revm 9.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
+ "revm-fluent 9.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
  "serde",
  "serde_json",
  "structopt",
@@ -3696,7 +3775,7 @@ dependencies = [
  "hex",
  "microbench",
  "regex",
- "revm",
+ "revm 9.0.0",
 ]
 
 [[package]]
@@ -3711,8 +3790,8 @@ dependencies = [
  "k256",
  "microbench",
  "plain_hasher",
- "revm",
- "revm-fluent",
+ "revm 9.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
+ "revm-fluent 9.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
  "serde",
  "serde_json",
  "structopt",
