@@ -2,10 +2,7 @@
 use crate::{
     handler::mainnet,
     interpreter::Gas,
-    primitives::{
-        db::Database, ChainSpec, EVMError, EVMResultGeneric, ResultAndState, Spec,
-        TransactionValidation,
-    },
+    primitives::{db::Database, ChainSpec, EVMResultGeneric, ResultAndState, Spec},
     Context, FrameResult,
 };
 use std::sync::Arc;
@@ -40,9 +37,9 @@ pub type OutputHandle<'a, ChainSpecT, EXT, DB> = Arc<
 pub type EndHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<ChainSpecT, EXT, DB>,
-            Result<ResultAndState<ChainSpecT>, EVMError<<DB as Database>::Error, <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError>>,
+            EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, <DB as Database>::Error>,
         )
-            -> Result<ResultAndState<ChainSpecT>, EVMError<<DB as Database>::Error, <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError>>
+            -> EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, <DB as Database>::Error>
         + 'a,
 >;
 
