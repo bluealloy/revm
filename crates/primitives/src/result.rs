@@ -175,11 +175,6 @@ impl<DBError, TransactionValidationErrorT> EVMError<DBError, TransactionValidati
     }
 }
 
-pub type EVMErrorForChain<DBError, ChainSpecT> = EVMError<
-    DBError,
-    <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
->;
-
 #[cfg(feature = "std")]
 impl<DBError, TransactionValidationErrorT> std::error::Error
     for EVMError<DBError, TransactionValidationErrorT>

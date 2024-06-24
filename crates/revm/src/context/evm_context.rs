@@ -9,7 +9,7 @@ use crate::{
         return_ok, CallInputs, Contract, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
     primitives::{
-        Address, Bytes, ChainSpec, EVMError, EVMErrorForChain, Env, TransactionValidation, U256,
+        Address, Bytes, ChainSpec, EVMError, result::EVMResultGeneric, Env, TransactionValidation, U256,
     },
     ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
@@ -89,7 +89,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
         address: &Address,
         input_data: &Bytes,
         gas: Gas,
-    ) -> Result<Option<InterpreterResult>, EVMErrorForChain<DB::Error, ChainSpecT>> {
+    ) -> EVMResultGeneric<Option<InterpreterResult>, ChainSpecT, DB::Error> {
         let Some(outcome) =
             self.precompiles
                 .call(address, input_data, gas.limit(), &mut self.inner)

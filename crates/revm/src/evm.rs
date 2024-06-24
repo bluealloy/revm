@@ -6,8 +6,8 @@ use crate::{
     handler::{EnvWithChainSpec, Handler},
     interpreter::{CallInputs, CreateInputs, EOFCreateInputs, InterpreterAction, SharedMemory},
     primitives::{
-        CfgEnv, ChainSpec, EVMError, EVMErrorForChain, EVMResult, EthChainSpec, ExecutionResult,
-        ResultAndState, SpecId, Transaction as _, TransactionValidation, TxKind,
+        result::EVMResultGeneric, CfgEnv, ChainSpec, EVMError, EVMResult, EthChainSpec,
+        ExecutionResult, ResultAndState, SpecId, Transaction as _, TransactionValidation, TxKind,
     },
     Context, ContextWithChainSpec, Frame, FrameOrResult, FrameResult,
 };
@@ -44,7 +44,7 @@ impl<EXT, ChainSpecT: ChainSpec, DB: Database + DatabaseCommit> Evm<'_, ChainSpe
     /// Commit the changes to the database.
     pub fn transact_commit(
         &mut self,
-    ) -> Result<ExecutionResult<ChainSpecT>, EVMErrorForChain<DB::Error, ChainSpecT>> {
+    ) -> EVMResultGeneric<ExecutionResult<ChainSpecT>, ChainSpecT, DB::Error> {
         let ResultAndState { result, state } = self.transact()?;
         self.context.evm.db.commit(state);
         Ok(result)
