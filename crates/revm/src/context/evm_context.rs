@@ -10,9 +10,8 @@ use crate::{
         EOFCreateKind, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
     primitives::{
-        keccak256,
-        result::EVMResultGeneric,
-        Address, Bytecode, Bytes, ChainSpec, CreateScheme, EVMError, Env, Eof,
+        keccak256, Address, Bytecode, Bytes, ChainSpec, CreateScheme, EVMError, EVMResultGeneric,
+        Env, Eof,
         SpecId::{self, *},
         Transaction as _, B256, EOF_MAGIC_BYTES,
     },

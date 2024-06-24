@@ -1,9 +1,8 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, result::EVMResultGeneric, Block, Bytecode, ChainSpec, EVMError,
-        ExecutionResult, ResultAndState, Spec, SpecId::LONDON, Transaction, TransactionValidation,
-        KECCAK_EMPTY, U256,
+        db::Database, Block, Bytecode, ChainSpec, EVMError, EVMResultGeneric, ExecutionResult,
+        ResultAndState, Spec, SpecId::LONDON, Transaction, KECCAK_EMPTY, U256,
     },
     Context, FrameResult,
 };
@@ -33,13 +32,7 @@ pub fn clear<ChainSpecT: ChainSpec, EXT, DB: Database>(context: &mut Context<Cha
 pub fn reward_beneficiary<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     gas: &Gas,
-) -> Result<
-    (),
-    EVMError<
-        DB::Error,
-        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-    >,
-> {
+) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
     let beneficiary = *context.evm.env.block.coinbase();
     let effective_gas_price = context.evm.env.effective_gas_price();
 

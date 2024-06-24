@@ -2,7 +2,7 @@ use crate::{
     db::Database,
     handler::register::EvmHandler,
     interpreter::{opcode, InstructionResult, Interpreter},
-    primitives::{ChainSpec, EVMError, TransactionValidation},
+    primitives::{ChainSpec, EVMResultGeneric},
     Context, FrameOrResult, FrameResult, Inspector, JournalEntry,
 };
 use core::cell::RefCell;
@@ -96,15 +96,7 @@ pub fn inspector_handle_register<
     let create_input_stack_inner = create_input_stack.clone();
     let prev_handle = handler.execution.create.clone();
     handler.execution.create = Arc::new(
-        move |ctx,
-              mut inputs|
-              -> Result<
-            FrameOrResult,
-            EVMError<
-                DB::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > {
+        move |ctx, mut inputs| -> EVMResultGeneric<FrameOrResult, ChainSpecT, DB::Error> {
             let inspector = ctx.external.get_inspector();
             // call inspector create to change input or return outcome.
             if let Some(outcome) = inspector.create(&mut ctx.evm, &mut inputs) {

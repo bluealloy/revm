@@ -12,7 +12,7 @@ pub use handle_types::*;
 use crate::{
     interpreter::{opcode::InstructionTables, Host, InterpreterAction, SharedMemory},
     primitives::{
-        db::Database, spec_to_generic, ChainSpec, EVMError, InvalidTransaction,
+        db::Database, spec_to_generic, ChainSpec, EVMResultGeneric, InvalidTransaction,
         TransactionValidation,
     },
     Context, Frame,
@@ -82,13 +82,7 @@ where
         frame: &mut Frame,
         shared_memory: &mut SharedMemory,
         context: &mut Context<ChainSpecT, EXT, DB>,
-    ) -> Result<
-        InterpreterAction,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<InterpreterAction, ChainSpecT, DB::Error> {
         self.execution
             .execute_frame(frame, shared_memory, &self.instruction_table, context)
     }

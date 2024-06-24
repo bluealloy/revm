@@ -2,10 +2,7 @@
 use crate::{
     handler::mainnet,
     interpreter::Gas,
-    primitives::{
-        db::Database, ChainSpec, EVMError, EVMResultGeneric, ResultAndState,
-        Spec, TransactionValidation,
-    },
+    primitives::{db::Database, ChainSpec, EVMResultGeneric, ResultAndState, Spec},
     Context, FrameResult,
 };
 use std::sync::Arc;
@@ -28,13 +25,9 @@ pub type OutputHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<ChainSpecT, EXT, DB>,
             FrameResult,
-        ) -> Result<
-            ResultAndState<ChainSpecT>,
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        )
+            -> EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// End handle, takes result and state and returns final result.
@@ -44,9 +37,9 @@ pub type OutputHandle<'a, ChainSpecT, EXT, DB> = Arc<
 pub type EndHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<ChainSpecT, EXT, DB>,
-            Result<ResultAndState<ChainSpecT>, EVMError<<DB as Database>::Error, <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError>>,
+            EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, <DB as Database>::Error>,
         )
-            -> Result<ResultAndState<ChainSpecT>, EVMError<<DB as Database>::Error, <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError>>
+            -> EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, <DB as Database>::Error>
         + 'a,
 >;
 
@@ -92,13 +85,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
         gas: &Gas,
-    ) -> Result<
-        (),
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
         (self.reimburse_caller)(context, gas)
     }
     /// Reward beneficiary
@@ -106,13 +93,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
         gas: &Gas,
-    ) -> Result<
-        (),
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
         (self.reward_beneficiary)(context, gas)
     }
 
