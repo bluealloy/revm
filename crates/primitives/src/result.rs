@@ -9,12 +9,13 @@ pub type EVMResult<ChainSpecT, DBError> =
     EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, DBError>;
 
 /// Generic result of EVM execution. Used to represent error and generic output.
-pub type EVMResultGeneric<T, ChainSpecT, DBError> = core::result::Result<
-    T,
-    EVMError<
-        DBError,
-        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-    >,
+pub type EVMResultGeneric<T, ChainSpecT, DBError> =
+    core::result::Result<T, EVMErrorForChain<DBError, ChainSpecT>>;
+
+/// EVM error type for a specific chain.
+pub type EVMErrorForChain<DBError, ChainSpecT> = EVMError<
+    DBError,
+    <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
 >;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
