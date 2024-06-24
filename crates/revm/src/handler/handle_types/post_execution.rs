@@ -3,8 +3,8 @@ use crate::{
     handler::mainnet,
     interpreter::Gas,
     primitives::{
-        db::Database, ChainSpec, EVMError, EVMResultGeneric, ResultAndState,
-        Spec, TransactionValidation,
+        db::Database, ChainSpec, EVMError, EVMResultGeneric, ResultAndState, Spec,
+        TransactionValidation,
     },
     Context, FrameResult,
 };
@@ -92,13 +92,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
         gas: &Gas,
-    ) -> Result<
-        (),
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
         (self.reimburse_caller)(context, gas)
     }
     /// Reward beneficiary
@@ -106,13 +100,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PostExecutionHandler<'a, Chai
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
         gas: &Gas,
-    ) -> Result<
-        (),
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
         (self.reward_beneficiary)(context, gas)
     }
 

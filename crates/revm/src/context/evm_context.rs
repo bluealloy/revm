@@ -8,7 +8,7 @@ use crate::{
     interpreter::{
         return_ok, CallInputs, Contract, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
-    primitives::{result::EVMResultGeneric, Address, Bytes, ChainSpec, EVMError, Env, U256},
+    primitives::{Address, Bytes, ChainSpec, EVMError, EVMResultGeneric, Env, U256},
     ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
 use core::ops::{Deref, DerefMut};

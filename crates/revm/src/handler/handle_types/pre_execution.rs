@@ -63,13 +63,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PreExecutionHandler<'a, Chain
     pub fn deduct_caller(
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
-    ) -> Result<
-        (),
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
         (self.deduct_caller)(context)
     }
 
@@ -77,13 +71,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> PreExecutionHandler<'a, Chain
     pub fn load_accounts(
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
-    ) -> Result<
-        (),
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
         (self.load_accounts)(context)
     }
 

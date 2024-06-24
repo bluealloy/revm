@@ -6,8 +6,8 @@ use crate::{
     handler::{EnvWithChainSpec, Handler},
     interpreter::{CallInputs, CreateInputs, EOFCreateInputs, InterpreterAction, SharedMemory},
     primitives::{
-        result::EVMResultGeneric, CfgEnv, ChainSpec, EVMError, EVMResult, EthChainSpec,
-        ExecutionResult, ResultAndState, SpecId, Transaction as _, TxKind,
+        CfgEnv, ChainSpec, EVMError, EVMResult, EVMResultGeneric, EthChainSpec, ExecutionResult,
+        ResultAndState, SpecId, Transaction as _, TxKind,
     },
     Context, ContextWithChainSpec, Frame, FrameOrResult, FrameResult,
 };

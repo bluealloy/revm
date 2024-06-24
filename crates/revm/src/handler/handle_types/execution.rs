@@ -2,7 +2,7 @@ use crate::{
     frame::EOFCreateFrame,
     handler::mainnet,
     interpreter::{CallInputs, CreateInputs, SharedMemory},
-    primitives::{db::Database, result::EVMResultGeneric, ChainSpec, Spec},
+    primitives::{db::Database, ChainSpec, EVMResultGeneric, Spec},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use revm_interpreter::{
