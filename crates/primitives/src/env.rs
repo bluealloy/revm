@@ -572,7 +572,7 @@ pub struct TxEnv {
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
     ///
     /// TODO: include from alloy/eips crate.
-    pub authorization_list: Option<Vec<(Address,Address)>>,
+    pub authorization_list: Option<Vec<(Address, Address)>>,
 
     #[cfg_attr(feature = "serde", serde(flatten))]
     #[cfg(feature = "optimism")]
