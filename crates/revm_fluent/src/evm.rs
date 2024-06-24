@@ -43,13 +43,13 @@ use crate::{
 };
 use core::{cell::RefCell, fmt};
 use fluentbase_core::{
-    helpers::evm_error_from_exit_code,
     loader::{_loader_call, _loader_create},
 };
 use fluentbase_sdk::{types::{EvmCallMethodInput, EvmCreateMethodInput}, ContractInput, GuestAccountManager, AccountManager};
 use fluentbase_types::{Address, ExitCode};
 use revm_interpreter::{CallOutcome, CreateOutcome};
 use std::vec::Vec;
+use fluentbase_core::helpers::evm_error_from_exit_code;
 use fluentbase_sdk::contracts::call_system_contract;
 
 /// EVM call stack limit.
