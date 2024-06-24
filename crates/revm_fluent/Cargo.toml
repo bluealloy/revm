@@ -23,25 +23,28 @@ all = "warn"
 
 [dependencies]
 # revm
-revm-interpreter = { workspace = true, optional = true }
-revm-interpreter-fluent = { workspace = true, optional = true }
-revm-precompile = { workspace = true }
+revm-interpreter = { path = "../interpreter", default-features = false, optional = true }
+revm-interpreter-fluent = { path = "../interpreter_fluent", default-features = false, optional = true }
+revm-precompile = { path = "../precompile", default-features = false }
 
-fluentbase-sdk = { workspace = true, default-features = false }
-fluentbase-types = { workspace = true, default-features = false }
-fluentbase-core = { workspace = true, default-features = false }
-fluentbase-runtime = { workspace = true, default-features = false, optional = true }
-#fluentbase-codec = { workspace = true, default-features = false }
-fluentbase-genesis = { workspace = true, default-features = false, optional = true }
-#fluentbase-poseidon = { workspace = true, default-features = false }
+#fluentbase-sdk = { workspace = true, default-features = false }
+#fluentbase-types = { workspace = true, default-features = false }
+#fluentbase-core = { workspace = true, default-features = false }
+#fluentbase-runtime = { workspace = true, default-features = false, optional = true }
+#fluentbase-genesis = { workspace = true, default-features = false, optional = true }
+fluentbase-types = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
+fluentbase-core = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
+fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
+fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false, optional = true }
+fluentbase-genesis = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false, optional = true }
 
-rwasm = { workspace = true, default-features = false, optional = true }
+rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm", branch = "devel", default-features = false, optional = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
 cfg-if = "1.0"
 dyn-clone = "1.0"
-lazy_static = { workspace = true }
+lazy_static = { version = "1.4.0", default-features = false }
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -76,9 +79,11 @@ indicatif = { version = "0.17", default-features = false }
 reqwest = { version = "0.12", default-features = false }
 rstest = { version = "0.19.0", default-features = false }
 
-alloy-provider = { workspace = true }
+alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "61140ec", default-features = false, features = [
+    "reqwest",
+] }
 # needed for enabling TLS to use HTTPS connections when testing alloy DB
-alloy-transport-http = { workspace = true }
+alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "61140ec", default-features = false }
 
 [features]
 default = [
@@ -92,7 +97,7 @@ std = [
     "serde?/std",
     "serde_json?/std",
     "serde_json?/preserve_order",
-    "revm-interpreter-fluent/std",
+    "revm-interpreter-fluent?/std",
     "revm-precompile/std",
     "fluentbase-sdk/std",
     "fluentbase-types/std",

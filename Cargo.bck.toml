@@ -37,20 +37,13 @@ fluentbase-genesis = { git = "https://github.com/fluentlabs-xyz/fluentbase.git",
 #fluentbase-codec = { path = "../fluentbase/crates/codec", default-features = false }
 #fluentbase-poseidon = { path = "../fluentbase/crates/poseidon", default-features = false }
 #fluentbase-genesis = { path = "../fluentbase/crates/genesis", default-features = false }
-revm = { package = "revm", git = "https://github.com/fluentlabs-xyz/revm-rwasm.git", default-features = false, branch = "devel", features = [
-    "ethersdb",
-    "std",
-    "serde-json",
-    "c-kzg",
-    "blst",
-] }
-revm-fluent = { package = "revm-fluent", git = "https://github.com/fluentlabs-xyz/revm-rwasm.git", default-features = false, branch = "devel", features = [
-    "ethersdb",
-    "std",
-    "serde-json",
-    "c-kzg",
-    "blst",
-] }
+#revm = { package = "revm", git = "https://github.com/fluentlabs-xyz/revm-rwasm.git", default-features = false, branch = "devel", features = [
+#    "ethersdb",
+#    "std",
+#    "serde-json",
+#    "c-kzg",
+#    "blst",
+#] }
 
 alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "61140ec", default-features = false, features = [
     "reqwest",

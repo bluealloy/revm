@@ -15,14 +15,33 @@ hashbrown = "0.14"
 indicatif = "0.17"
 microbench = "0.5"
 plain_hasher = "0.2"
-revm = { workspace = true }
-revm-fluent = { workspace = true }
-#revm = { path = "../../crates/revm", version = "9.0.0", default-features = false, features = [
+revm = { package = "revm", git = "https://github.com/fluentlabs-xyz/revm-rwasm.git", default-features = false, branch = "devel", features = [
+    "ethersdb",
+    "std",
+    "serde-json",
+    "c-kzg",
+    "blst",
+] }
+revm-fluent = { package = "revm-fluent", git = "https://github.com/fluentlabs-xyz/revm-rwasm.git", default-features = false, branch = "devel", features = [
+    "ethersdb",
+    "std",
+    "serde-json",
+    "c-kzg",
+    "blst",
+] }
+#revm = { package = "revm", path = "../../crates/revm", default-features = false, features = [
 #    "ethersdb",
 #    "std",
 #    "serde-json",
 #    "c-kzg",
-#    "blst"
+#    "blst",
+#] }
+#revm-fluent = { package = "revm-fluent", path = "../../crates/revm_fluent", default-features = false, features = [
+#    "ethersdb",
+#    "std",
+#    "serde-json",
+#    "c-kzg",
+#    "blst",
 #] }
 alloy-rlp = { version = "0.3", default-features = false, features = [
     "arrayvec",
