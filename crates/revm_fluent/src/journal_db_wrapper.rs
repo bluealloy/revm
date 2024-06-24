@@ -1,17 +1,13 @@
 use crate::{primitives::{Address, Bytecode, Bytes, Log, LogData, B256, U256}, Database, EvmContext, JournalEntry};
 use core::{cell::RefCell, fmt::Debug};
 use fluentbase_core::{debug_log, helpers::exit_code_from_evm_error};
-use fluentbase_sdk::{Account, AccountCheckpoint, AccountManager, JZKT_ACCOUNT_COMPRESSION_FLAGS, JZKT_ACCOUNT_FIELDS_COUNT, JZKT_ACCOUNT_RWASM_CODE_HASH_FIELD, JZKT_ACCOUNT_SOURCE_CODE_HASH_FIELD, JZKT_STORAGE_COMPRESSION_FLAGS, JZKT_STORAGE_FIELDS_COUNT, LowLevelSDK};
+use fluentbase_sdk::{Account, AccountCheckpoint, AccountManager, GuestAccountManager, JZKT_ACCOUNT_COMPRESSION_FLAGS, JZKT_ACCOUNT_FIELDS_COUNT, JZKT_ACCOUNT_RWASM_CODE_HASH_FIELD, JZKT_ACCOUNT_SOURCE_CODE_HASH_FIELD, JZKT_STORAGE_COMPRESSION_FLAGS, JZKT_STORAGE_FIELDS_COUNT, LowLevelSDK};
 use fluentbase_sdk::types::EvmCallMethodOutput;
-use fluentbase_types::{
-    ExitCode,
-    IJournaledTrie,
-    JournalEvent,
-    JournalLog,
-};
+use fluentbase_types::{ExitCode, IJournaledTrie, JournalEvent, JournalLog, STATE_MAIN};
 use fluentbase_types::consts::EVM_STORAGE_ADDRESS;
 use revm_interpreter::{Gas, InstructionResult};
 use std::vec::Vec;
+use fluentbase_runtime::ExecutionResult;
 
 pub(crate) struct JournalDbWrapper<'a, DB: Database> {
     ctx: RefCell<&'a mut EvmContext<DB>>,
@@ -270,16 +266,13 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
             #[cfg(feature = "std")]
             {
                 use fluentbase_runtime::{Runtime, RuntimeContext};
-                // #[cfg(feature = "std")]
                 let ctx = RuntimeContext::new(rwasm_bytecode)
                     .with_input(input.into())
                     .with_context(context.into())
                     .with_fuel_limit(unsafe { *fuel_offset } as u64)
                     .with_jzkt(jzkt)
                     .with_state(state);
-                // #[cfg(feature = "std")]
                 let mut runtime = Runtime::new(ctx);
-                // #[cfg(feature = "std")]
                 let result = match runtime.call() {
                     Ok(result) => result,
                     Err(err) => {
@@ -287,16 +280,31 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
                         return (Bytes::default(), exit_code);
                     }
                 };
-                // #[cfg(feature = "std")]
                 unsafe {
                     *fuel_offset -= result.fuel_consumed as u32;
                 }
                 result
             }
+            #[cfg(not(feature = "std"))]
+            {
+                let result = GuestAccountManager::exec_hash(
+                    &self,
+                    hash32_offset,
+                    context,
+                    input,
+                    fuel_offset,
+                    STATE_MAIN,
+                );
+                unsafe {
+                    *fuel_offset -= result.1 as u32;
+                }
+                ExecutionResult {
+                    exit_code: result.1,
+                    output: result.0.into(),
+                    .. Default::default()
+                }
+            }
         };
-        #[cfg(not(feature = "std"))]
-        return (Bytes::new(), 0);
-        #[cfg(feature = "std")]
         (Bytes::from(result.output.clone()), result.exit_code.into())
     }
 
