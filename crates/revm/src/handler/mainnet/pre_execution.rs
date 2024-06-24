@@ -8,7 +8,7 @@ use crate::{
         db::Database,
         Account, EVMError, Env, Spec,
         SpecId::{CANCUN, PRAGUE, SHANGHAI},
-        TxKind, BLOCKHASH_STORAGE_ADDRESS, U256,
+        TxKind, BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256,
     },
     Context, ContextPrecompiles,
 };
@@ -45,6 +45,56 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
             &[],
             &mut context.evm.inner.db,
         )?;
+    }
+
+    // EIP-7702. Load bytecode to authorized accounts.
+    if SPEC::enabled(PRAGUE) {
+        if let Some(authorization_list) = context.evm.inner.env.tx.authorization_list.as_ref() {
+            let mut valid_auths = Vec::with_capacity(authorization_list.len());
+            for (authority, authorized) in authorization_list.iter() {
+                // TODO EIP-7702 do verification of authorizations.
+                // Recover authority and authorized addresses.
+
+                // warm authority account and check nonce.
+                let (authority_acc, _) = context
+                    .evm
+                    .inner
+                    .journaled_state
+                    .load_account(*authority, &mut context.evm.inner.db)?;
+
+                // TODO 2. Verify the chain id is either 0 or the chain's current ID.
+
+                // 3. Verify that the code of authority is empty.
+                // In case of multiple same authorities this step will skip loading of
+                // authorized account.
+                if authority_acc.info.code_hash() != KECCAK_EMPTY {
+                    continue;
+                }
+
+                // TODO 4. If nonce list item is length one, verify the nonce of authority is equal to nonce.
+
+                // warm code account and get the code.
+                // 6. Add the authority account to accessed_addresses
+                let (account, _) = context
+                    .evm
+                    .inner
+                    .journaled_state
+                    .load_code(*authorized, &mut context.evm.inner.db)?;
+                let code = account.info.code.clone();
+                let code_hash = account.info.code_hash;
+
+                // 5. Set the code of authority to code associated with address.
+                context.evm.inner.journaled_state.set_code_with_hash(
+                    *authority,
+                    code.unwrap_or_default(),
+                    code_hash,
+                );
+
+                valid_auths.push(*authority);
+            }
+
+            context.evm.inner.valid_authorizations = valid_auths;
+        }
     }
 
     context.evm.load_access_list()?;
