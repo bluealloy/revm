@@ -1,9 +1,9 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, Block, Bytecode, ChainSpec, EVMError, EVMErrorForChain, ExecutionResult,
-        ResultAndState, Spec, SpecId::LONDON, Transaction, TransactionValidation, KECCAK_EMPTY,
-        U256,
+        db::Database, result::EVMResultGeneric, Block, Bytecode, ChainSpec, EVMError,
+        ExecutionResult, ResultAndState, Spec, SpecId::LONDON, Transaction, TransactionValidation,
+        KECCAK_EMPTY, U256,
     },
     Context, FrameResult,
 };
@@ -12,8 +12,8 @@ use crate::{
 #[inline]
 pub fn end<ChainSpecT: ChainSpec, EXT, DB: Database>(
     _context: &mut Context<ChainSpecT, EXT, DB>,
-    evm_output: Result<ResultAndState<ChainSpecT>, EVMErrorForChain<DB::Error, ChainSpecT>>,
-) -> Result<ResultAndState<ChainSpecT>, EVMErrorForChain<DB::Error, ChainSpecT>> {
+    evm_output: EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, DB::Error>,
+) -> EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, DB::Error> {
     evm_output
 }
 
@@ -71,7 +71,7 @@ pub fn reward_beneficiary<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
 pub fn reimburse_caller<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     gas: &Gas,
-) -> Result<(), EVMErrorForChain<DB::Error, ChainSpecT>> {
+) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
     let caller = context.evm.env.tx.caller();
     let effective_gas_price = context.evm.env.effective_gas_price();
 
@@ -96,7 +96,7 @@ pub fn reimburse_caller<ChainSpecT: ChainSpec, EXT, DB: Database>(
 pub fn output<ChainSpecT: ChainSpec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
     result: FrameResult,
-) -> Result<ResultAndState<ChainSpecT>, EVMErrorForChain<DB::Error, ChainSpecT>> {
+) -> EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, DB::Error> {
     context.evm.take_error().map_err(EVMError::Database)?;
 
     // used gas with refund calculated.

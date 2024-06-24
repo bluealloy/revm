@@ -10,10 +10,11 @@ use crate::{
         EOFCreateKind, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
     primitives::{
-        keccak256, Address, Bytecode, Bytes, ChainSpec, CreateScheme, EVMError, EVMErrorForChain,
-        Env, Eof,
+        keccak256,
+        result::EVMResultGeneric,
+        Address, Bytecode, Bytes, ChainSpec, CreateScheme, EVMError, Env, Eof,
         SpecId::{self, *},
-        Transaction as _, TransactionValidation, B256, EOF_MAGIC_BYTES,
+        Transaction as _, B256, EOF_MAGIC_BYTES,
     },
     ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
@@ -95,7 +96,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
         address: &Address,
         input_data: &Bytes,
         gas: Gas,
-    ) -> Result<Option<InterpreterResult>, EVMErrorForChain<DB::Error, ChainSpecT>> {
+    ) -> EVMResultGeneric<Option<InterpreterResult>, ChainSpecT, DB::Error> {
         let Some(outcome) =
             self.precompiles
                 .call(address, input_data, gas.limit(), &mut self.inner)
@@ -135,13 +136,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
     pub fn make_call_frame(
         &mut self,
         inputs: &CallInputs,
-    ) -> Result<
-        FrameOrResult,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<FrameOrResult, ChainSpecT, DB::Error> {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {
