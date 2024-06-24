@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.1](https://github.com/bluealloy/revm/compare/revm-v10.0.0...revm-v10.0.1) - 2024-06-24
+
+### Other
+- use const blocks ([#1522](https://github.com/bluealloy/revm/pull/1522))
+- fix compile for alloydb ([#1559](https://github.com/bluealloy/revm/pull/1559))
+- replace AccessList with alloy version ([#1552](https://github.com/bluealloy/revm/pull/1552))
+- replace U256 with u64 in BLOCKHASH ([#1505](https://github.com/bluealloy/revm/pull/1505))
+
 ## [10.0.0](https://github.com/bluealloy/revm/compare/revm-v9.0.0...revm-v10.0.0) - 2024-06-20
 
 ### Added
