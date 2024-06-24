@@ -1653,8 +1653,8 @@ dependencies = [
  "hashbrown",
  "hex",
  "paste",
- "revm-interpreter-fluent 5.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
- "revm-primitives 4.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
+ "revm-interpreter-fluent",
+ "revm-primitives",
  "rwasm",
 ]
 
@@ -1670,7 +1670,7 @@ dependencies = [
  "fluentbase-types",
  "hashbrown",
  "hex",
- "revm-primitives 4.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
+ "revm-primitives",
  "serde",
  "serde_json",
 ]
@@ -1683,7 +1683,7 @@ dependencies = [
  "halo2curves 0.6.1 (git+https://github.com/privacy-scaling-explorations/halo2curves?tag=v0.6.1)",
  "lazy_static",
  "poseidon",
- "revm-primitives 4.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
+ "revm-primitives",
 ]
 
 [[package]]
@@ -1718,7 +1718,7 @@ dependencies = [
  "fluentbase-sdk-derive",
  "fluentbase-types",
  "paste",
- "revm-primitives 4.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
+ "revm-primitives",
 ]
 
 [[package]]
@@ -3509,7 +3509,7 @@ dependencies = [
  "lazy_static",
  "reqwest 0.12.5",
  "revm-interpreter",
- "revm-interpreter-fluent 5.0.0",
+ "revm-interpreter-fluent",
  "revm-precompile",
  "rstest 0.21.0",
  "rwasm",
@@ -3542,7 +3542,7 @@ dependencies = [
  "lazy_static",
  "reqwest 0.12.5",
  "revm-interpreter",
- "revm-interpreter-fluent 5.0.0",
+ "revm-interpreter-fluent",
  "revm-precompile",
  "rstest 0.19.0",
  "rwasm",
@@ -3558,7 +3558,7 @@ dependencies = [
  "bincode",
  "paste",
  "phf",
- "revm-primitives 4.0.0",
+ "revm-primitives",
  "serde",
  "serde_json",
  "walkdir",
@@ -3571,19 +3571,10 @@ dependencies = [
  "bincode",
  "paste",
  "phf",
- "revm-primitives 4.0.0",
+ "revm-primitives",
  "serde",
  "serde_json",
  "walkdir",
-]
-
-[[package]]
-name = "revm-interpreter-fluent"
-version = "5.0.0"
-source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#6ad513f3625b5ab28fcacc689f0fbfb24c9c4e60"
-dependencies = [
- "revm-primitives 4.0.0 (git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel)",
- "serde",
 ]
 
 [[package]]
@@ -3599,7 +3590,7 @@ dependencies = [
  "once_cell",
  "p256",
  "rand",
- "revm-primitives 4.0.0",
+ "revm-primitives",
  "ripemd",
  "rstest 0.21.0",
  "secp256k1",
@@ -3626,23 +3617,6 @@ dependencies = [
  "hashbrown",
  "hex",
  "once_cell",
- "serde",
-]
-
-[[package]]
-name = "revm-primitives"
-version = "4.0.0"
-source = "git+https://github.com/fluentlabs-xyz/revm-rwasm.git?branch=devel#6ad513f3625b5ab28fcacc689f0fbfb24c9c4e60"
-dependencies = [
- "alloy-primitives",
- "auto_impl",
- "bitflags 2.5.0",
- "bitvec",
- "cfg-if",
- "dyn-clone",
- "enumn",
- "hashbrown",
- "hex",
  "serde",
 ]
 

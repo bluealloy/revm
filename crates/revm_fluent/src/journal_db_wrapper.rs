@@ -7,7 +7,6 @@ use fluentbase_types::{ExitCode, IJournaledTrie, JournalEvent, JournalLog, STATE
 use fluentbase_types::consts::EVM_STORAGE_ADDRESS;
 use revm_interpreter::{Gas, InstructionResult};
 use std::vec::Vec;
-use fluentbase_runtime::ExecutionResult;
 
 pub(crate) struct JournalDbWrapper<'a, DB: Database> {
     ctx: RefCell<&'a mut EvmContext<DB>>,
@@ -258,13 +257,13 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
         if rwasm_bytecode.is_empty() {
             return (Bytes::default(), ExitCode::Ok.into_i32());
         }
-        let mut ctx = self.ctx.borrow_mut();
-        let jzkt = JournalDbWrapper {
-            ctx: RefCell::new(&mut ctx),
-        };
         let result = {
             #[cfg(feature = "std")]
             {
+                let mut ctx = self.ctx.borrow_mut();
+                let jzkt = JournalDbWrapper {
+                    ctx: RefCell::new(&mut ctx),
+                };
                 use fluentbase_runtime::{Runtime, RuntimeContext};
                 let ctx = RuntimeContext::new(rwasm_bytecode)
                     .with_input(input.into())
@@ -283,12 +282,12 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
                 unsafe {
                     *fuel_offset -= result.fuel_consumed as u32;
                 }
-                result
+                (Bytes::from(result.output.clone()), result.exit_code.into())
             }
             #[cfg(not(feature = "std"))]
             {
-                let result = GuestAccountManager::exec_hash(
-                    &self,
+                let gam = GuestAccountManager::default();
+                let result = gam.exec_hash(
                     hash32_offset,
                     context,
                     input,
@@ -298,14 +297,10 @@ impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
                 unsafe {
                     *fuel_offset -= result.1 as u32;
                 }
-                ExecutionResult {
-                    exit_code: result.1,
-                    output: result.0.into(),
-                    .. Default::default()
-                }
+                (result.0, result.1)
             }
         };
-        (Bytes::from(result.output.clone()), result.exit_code.into())
+        result
     }
 
     fn inc_nonce(&self, account: &mut Account) -> Option<u64> {
