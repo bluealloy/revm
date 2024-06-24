@@ -2,8 +2,8 @@ use revm_interpreter::gas;
 
 use crate::{
     primitives::{
-        db::Database, ChainSpec, EVMError, Env, InvalidTransaction, Spec, Transaction,
-        TransactionValidation,
+        db::Database, ChainSpec, EVMError, EVMResultGeneric, Env, InvalidTransaction, Spec,
+        Transaction, TransactionValidation,
     },
     Context,
 };
@@ -11,13 +11,7 @@ use crate::{
 /// Validate environment for the mainnet.
 pub fn validate_env<ChainSpecT: ChainSpec, SPEC: Spec, DB: Database>(
     env: &Env<ChainSpecT>,
-) -> Result<
-    (),
-    EVMError<
-        DB::Error,
-        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-    >,
->
+) -> EVMResultGeneric<(), ChainSpecT, DB::Error>
 where
     <ChainSpecT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
 {
@@ -31,13 +25,7 @@ where
 /// Validates transaction against the state.
 pub fn validate_tx_against_state<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<ChainSpecT, EXT, DB>,
-) -> Result<
-    (),
-    EVMError<
-        DB::Error,
-        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-    >,
->
+) -> EVMResultGeneric<(), ChainSpecT, DB::Error>
 where
     <ChainSpecT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
 {
@@ -63,13 +51,7 @@ where
 /// Validate initial transaction gas.
 pub fn validate_initial_tx_gas<ChainSpecT: ChainSpec, SPEC: Spec, DB: Database>(
     env: &Env<ChainSpecT>,
-) -> Result<
-    u64,
-    EVMError<
-        DB::Error,
-        <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-    >,
->
+) -> EVMResultGeneric<u64, ChainSpecT, DB::Error>
 where
     <ChainSpecT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
 {
