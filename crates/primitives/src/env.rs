@@ -1,6 +1,7 @@
+pub mod eip7702;
 pub mod handler_cfg;
 
-use alloy_primitives::TxKind;
+pub use eip7702::AuthorizationList;
 pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
@@ -8,6 +9,7 @@ use crate::{
     Spec, SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE,
     U256, VERSIONED_HASH_VERSION_KZG,
 };
+use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
 use core::hash::Hash;
 use std::boxed::Box;
@@ -570,9 +572,7 @@ pub struct TxEnv {
     /// Set EOA account code for one transaction
     ///
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
-    ///
-    /// TODO: include from alloy/eips crate.
-    pub authorization_list: Option<Vec<(Address, Address)>>,
+    pub authorization_list: Option<AuthorizationList>,
 
     #[cfg_attr(feature = "serde", serde(flatten))]
     #[cfg(feature = "optimism")]
