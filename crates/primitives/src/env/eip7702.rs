@@ -1,6 +1,6 @@
 use alloy_eips::eip7702::{RecoveredAuthorization, SignedAuthorization};
 use alloy_primitives::Signature;
-use std::vec::Vec;
+use std::{boxed::Box, vec::Vec};
 
 /// Authorization list for EIP-7702 transaction type.
 #[derive(Clone, Debug, Eq, PartialEq)]
