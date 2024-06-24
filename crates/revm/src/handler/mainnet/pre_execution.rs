@@ -12,6 +12,7 @@ use crate::{
     },
     Context, ContextPrecompiles,
 };
+use std::vec::Vec;
 
 /// Main precompile load
 #[inline]

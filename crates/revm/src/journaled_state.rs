@@ -1,12 +1,11 @@
 use crate::interpreter::{InstructionResult, SelfDestructResult};
 use crate::primitives::{
     db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, EvmState, EvmStorageSlot,
-    HashMap, HashSet, Log, SpecId::*, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
+    HashMap, HashSet, Log, SpecId::*, TransientStorage, B256, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use core::mem;
 use revm_interpreter::primitives::SpecId;
 use revm_interpreter::{LoadAccountResult, SStoreResult};
-use revm_precompile::B256;
 use std::vec::Vec;
 
 /// JournalState is internal EVM state that is used to contain state and track changes to that state.
@@ -144,7 +143,7 @@ impl JournaledState {
     }
 
     /// Set code and its hash to the account.
-    /// 
+    ///
     /// Note: Assume account is warm and that hash is calculated from code.
     #[inline]
     pub fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256) {
