@@ -2,7 +2,7 @@ use crate::{
     frame::EOFCreateFrame,
     handler::mainnet,
     interpreter::{CallInputs, CreateInputs, SharedMemory},
-    primitives::{db::Database, ChainSpec, EVMError, Spec, TransactionValidation},
+    primitives::{db::Database, result::EVMResultGeneric, ChainSpec, Spec},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use revm_interpreter::{
@@ -16,13 +16,8 @@ pub type LastFrameReturnHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<ChainSpecT, EXT, DB>,
             &mut FrameResult,
-        ) -> Result<
-            (),
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        ) -> EVMResultGeneric<(), ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// Executes a single frame. Errors can be returned in the EVM context.
@@ -32,13 +27,8 @@ pub type ExecuteFrameHandle<'a, ChainSpecT, EXT, DB> = Arc<
             &mut SharedMemory,
             &InstructionTables<'_, Context<ChainSpecT, EXT, DB>>,
             &mut Context<ChainSpecT, EXT, DB>,
-        ) -> Result<
-            InterpreterAction,
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        ) -> EVMResultGeneric<InterpreterAction, ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// Handle sub call.
@@ -46,13 +36,8 @@ pub type FrameCallHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<ChainSpecT, EXT, DB>,
             Box<CallInputs>,
-        ) -> Result<
-            FrameOrResult,
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        ) -> EVMResultGeneric<FrameOrResult, ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// Handle call return
@@ -61,13 +46,8 @@ pub type FrameCallReturnHandle<'a, ChainSpecT, EXT, DB> = Arc<
             &mut Context<ChainSpecT, EXT, DB>,
             Box<CallFrame>,
             InterpreterResult,
-        ) -> Result<
-            CallOutcome,
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        ) -> EVMResultGeneric<CallOutcome, ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// Insert call outcome to the parent
@@ -77,13 +57,8 @@ pub type InsertCallOutcomeHandle<'a, ChainSpecT, EXT, DB> = Arc<
             &mut Frame,
             &mut SharedMemory,
             CallOutcome,
-        ) -> Result<
-            (),
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        ) -> EVMResultGeneric<(), ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// Handle sub create.
@@ -91,13 +66,8 @@ pub type FrameCreateHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<ChainSpecT, EXT, DB>,
             Box<CreateInputs>,
-        ) -> Result<
-            FrameOrResult,
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        ) -> EVMResultGeneric<FrameOrResult, ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// Handle create return
@@ -106,13 +76,8 @@ pub type FrameCreateReturnHandle<'a, ChainSpecT, EXT, DB> = Arc<
             &mut Context<ChainSpecT, EXT, DB>,
             Box<CreateFrame>,
             InterpreterResult,
-        ) -> Result<
-            CreateOutcome,
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        ) -> EVMResultGeneric<CreateOutcome, ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// Insert call outcome to the parent
@@ -121,13 +86,8 @@ pub type InsertCreateOutcomeHandle<'a, ChainSpecT, EXT, DB> = Arc<
             &mut Context<ChainSpecT, EXT, DB>,
             &mut Frame,
             CreateOutcome,
-        ) -> Result<
-            (),
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        ) -> EVMResultGeneric<(), ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// Handle EOF sub create.
@@ -135,13 +95,8 @@ pub type FrameEOFCreateHandle<'a, ChainSpecT, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<ChainSpecT, EXT, DB>,
             Box<EOFCreateInputs>,
-        ) -> Result<
-            FrameOrResult,
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        ) -> EVMResultGeneric<FrameOrResult, ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// Handle EOF create return
@@ -150,13 +105,8 @@ pub type FrameEOFCreateReturnHandle<'a, ChainSpecT, EXT, DB> = Arc<
             &mut Context<ChainSpecT, EXT, DB>,
             Box<EOFCreateFrame>,
             InterpreterResult,
-        ) -> Result<
-            CreateOutcome,
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        ) -> EVMResultGeneric<CreateOutcome, ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// Insert EOF crate outcome to the parent
@@ -165,13 +115,8 @@ pub type InsertEOFCreateOutcomeHandle<'a, ChainSpecT, EXT, DB> = Arc<
             &mut Context<ChainSpecT, EXT, DB>,
             &mut Frame,
             CreateOutcome,
-        ) -> Result<
-            (),
-            EVMError<
-                <DB as Database>::Error,
-                <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-            >,
-        > + 'a,
+        ) -> EVMResultGeneric<(), ChainSpecT, <DB as Database>::Error>
+        + 'a,
 >;
 
 /// Handles related to stack frames.
@@ -231,13 +176,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
         shared_memory: &mut SharedMemory,
         instruction_tables: &InstructionTables<'_, Context<ChainSpecT, EXT, DB>>,
         context: &mut Context<ChainSpecT, EXT, DB>,
-    ) -> Result<
-        InterpreterAction,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<InterpreterAction, ChainSpecT, DB::Error> {
         (self.execute_frame)(frame, shared_memory, instruction_tables, context)
     }
 
@@ -247,13 +186,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
         frame_result: &mut FrameResult,
-    ) -> Result<
-        (),
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
         (self.last_frame_return)(context, frame_result)
     }
 
@@ -263,13 +196,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
         inputs: Box<CallInputs>,
-    ) -> Result<
-        FrameOrResult,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<FrameOrResult, ChainSpecT, DB::Error> {
         (self.call)(context, inputs)
     }
 
@@ -280,13 +207,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
         context: &mut Context<ChainSpecT, EXT, DB>,
         frame: Box<CallFrame>,
         interpreter_result: InterpreterResult,
-    ) -> Result<
-        CallOutcome,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<CallOutcome, ChainSpecT, DB::Error> {
         (self.call_return)(context, frame, interpreter_result)
     }
 
@@ -298,13 +219,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
         frame: &mut Frame,
         shared_memory: &mut SharedMemory,
         outcome: CallOutcome,
-    ) -> Result<
-        (),
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
         (self.insert_call_outcome)(context, frame, shared_memory, outcome)
     }
 
@@ -314,13 +229,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
         inputs: Box<CreateInputs>,
-    ) -> Result<
-        FrameOrResult,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<FrameOrResult, ChainSpecT, DB::Error> {
         (self.create)(context, inputs)
     }
 
@@ -331,13 +240,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
         context: &mut Context<ChainSpecT, EXT, DB>,
         frame: Box<CreateFrame>,
         interpreter_result: InterpreterResult,
-    ) -> Result<
-        CreateOutcome,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<CreateOutcome, ChainSpecT, DB::Error> {
         (self.create_return)(context, frame, interpreter_result)
     }
 
@@ -348,13 +251,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
         context: &mut Context<ChainSpecT, EXT, DB>,
         frame: &mut Frame,
         outcome: CreateOutcome,
-    ) -> Result<
-        (),
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
         (self.insert_create_outcome)(context, frame, outcome)
     }
 
@@ -364,13 +261,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
         &self,
         context: &mut Context<ChainSpecT, EXT, DB>,
         inputs: Box<EOFCreateInputs>,
-    ) -> Result<
-        FrameOrResult,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<FrameOrResult, ChainSpecT, DB::Error> {
         (self.eofcreate)(context, inputs)
     }
 
@@ -381,13 +272,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
         context: &mut Context<ChainSpecT, EXT, DB>,
         frame: Box<EOFCreateFrame>,
         interpreter_result: InterpreterResult,
-    ) -> Result<
-        CreateOutcome,
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<CreateOutcome, ChainSpecT, DB::Error> {
         (self.eofcreate_return)(context, frame, interpreter_result)
     }
 
@@ -398,13 +283,7 @@ impl<'a, ChainSpecT: ChainSpec, EXT, DB: Database> ExecutionHandler<'a, ChainSpe
         context: &mut Context<ChainSpecT, EXT, DB>,
         frame: &mut Frame,
         outcome: CreateOutcome,
-    ) -> Result<
-        (),
-        EVMError<
-            DB::Error,
-            <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
-        >,
-    > {
+    ) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
         (self.insert_eofcreate_outcome)(context, frame, outcome)
     }
 }
