@@ -70,7 +70,7 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
                     .evm
                     .inner
                     .journaled_state
-                    .load_account(authority.clone(), &mut context.evm.inner.db)?;
+                    .load_account(authority, &mut context.evm.inner.db)?;
 
                 // 3. Verify that the code of authority is empty.
                 // In case of multiple same authorities this step will skip loading of
@@ -92,11 +92,11 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
                     .evm
                     .inner
                     .journaled_state
-                    .load_code(authority.clone(), &mut context.evm.inner.db)?;
+                    .load_code(authority, &mut context.evm.inner.db)?;
                 let code = account.info.code.clone();
                 let code_hash = account.info.code_hash;
 
-                // If code is empty no need to set code or add it to valid 
+                // If code is empty no need to set code or add it to valid
                 // authorizations, as it is a noop operation.
                 if code_hash == KECCAK_EMPTY {
                     continue;

@@ -19,6 +19,11 @@ impl AuthorizationList {
         }
     }
 
+    /// Returns true if the authorization list is empty.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Returns iterator of recovered Authorizations.
     pub fn recovered_iter<'a>(&'a self) -> Box<dyn Iterator<Item = RecoveredAuthorization> + 'a> {
         match self {
