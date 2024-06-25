@@ -26,17 +26,17 @@ all = "warn"
 #revm-interpreter = { path = "../interpreter", default-features = false, optional = true }
 #revm-interpreter-fluent = { path = "../interpreter_fluent", default-features = false, optional = true }
 #revm-precompile = { path = "../precompile", default-features = false }
-revm-interpreter = { package = "revm-interpreter", git = "https://github.com/fluentlabs-xyz/revm-rwasm.git", branch = "devel", default-features = false, optional = true }
-revm-interpreter-fluent = { package = "revm-interpreter-fluent", git = "https://github.com/fluentlabs-xyz/revm-rwasm.git", branch = "devel", default-features = false, optional = true }
-revm-precompile = { package = "revm-precompile", git = "https://github.com/fluentlabs-xyz/revm-rwasm.git", branch = "devel", default-features = false, optional = true }
+revm-interpreter = { package = "revm-interpreter", path = "../interpreter", default-features = false, optional = true }
+revm-interpreter-fluent = { package = "revm-interpreter-fluent", path = "../interpreter_fluent", default-features = false, optional = true }
+revm-precompile = { package = "revm-precompile", path = "../precompile", default-features = false, optional = true }
 
-fluentbase-types = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-core = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-codec = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-poseidon = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-genesis = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
+fluentbase-types = { path = "../../../crates/types", default-features = false }
+fluentbase-core = { path = "../../../crates/core", default-features = false }
+fluentbase-sdk = { path = "../../../crates/sdk", default-features = false }
+fluentbase-runtime = { path = "../../../crates/runtime", default-features = false }
+fluentbase-codec = { path = "../../../crates/codec", default-features = false }
+fluentbase-poseidon = { path = "../../../crates/poseidon", default-features = false }
+fluentbase-genesis = { path = "../../../crates/genesis", default-features = false }
 
 rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm", branch = "devel", default-features = false, optional = true }
 
@@ -160,7 +160,7 @@ debug_print = [
     "revm-interpreter/debug_print"
 ]
 rwasm = [
-#    "e2e",
+    #    "e2e",
     "revm-interpreter/rwasm",
     "revm-precompile/rwasm",
 ]
