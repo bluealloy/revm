@@ -1,5 +1,7 @@
+use revm_primitives::Transaction;
+
 pub use crate::primitives::CreateScheme;
-use crate::primitives::{Address, Bytes, TxEnv, TxKind, U256};
+use crate::primitives::{Address, Bytes, TxKind, U256};
 use std::boxed::Box;
 
 /// Inputs for a create call.
@@ -20,22 +22,22 @@ pub struct CreateInputs {
 
 impl CreateInputs {
     /// Creates new create inputs.
-    pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
-        let TxKind::Create = tx_env.transact_to else {
+    pub fn new(tx_env: &impl Transaction, gas_limit: u64) -> Option<Self> {
+        let TxKind::Create = tx_env.kind() else {
             return None;
         };
 
         Some(CreateInputs {
-            caller: tx_env.caller,
+            caller: *tx_env.caller(),
             scheme: CreateScheme::Create,
-            value: tx_env.value,
-            init_code: tx_env.data.clone(),
+            value: *tx_env.value(),
+            init_code: tx_env.data().clone(),
             gas_limit,
         })
     }
 
     /// Returns boxed create inputs.
-    pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
+    pub fn new_boxed(tx_env: &impl Transaction, gas_limit: u64) -> Option<Box<Self>> {
         Self::new(tx_env, gas_limit).map(Box::new)
     }
 

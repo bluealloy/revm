@@ -28,8 +28,9 @@ revm-precompile = { path = "../precompile", version = "8.0.0", default-features 
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
-cfg-if = "1.0"
+derive-where = { version = "1.2.7", default-features = false }
 dyn-clone = "1.0"
+enumn = { version = "0.1", optional = true }
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -50,7 +51,7 @@ ethers-core = { version = "2.0", optional = true }
 
 # alloydb
 alloy-provider = { version = "0.1", optional = true, default-features = false }
-alloy-eips = { version = "0.1", optional = true, default-features = false }
+alloy-eips = { version = "0.1.2", optional = true, default-features = false }
 alloy-transport = { version = "0.1", optional = true, default-features = false }
 
 [dev-dependencies]
@@ -84,17 +85,7 @@ portable = ["revm-precompile/portable", "revm-interpreter/portable"]
 
 test-utils = []
 
-optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
-# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
-optimism-default-handler = [
-    "optimism",
-    "revm-precompile/optimism-default-handler",
-    "revm-interpreter/optimism-default-handler",
-]
-negate-optimism-default-handler = [
-    "revm-precompile/negate-optimism-default-handler",
-    "revm-interpreter/negate-optimism-default-handler",
-]
+optimism = ["dep:enumn", "revm-interpreter/optimism", "revm-precompile/optimism"]
 
 ethersdb = ["std", "dep:tokio", "dep:ethers-providers", "dep:ethers-core"]
 
@@ -114,6 +105,7 @@ dev = [
     "optional_gas_refund",
     "optional_no_base_fee",
     "optional_beneficiary_reward",
+    "optional_nonce_check",
 ]
 memory_limit = ["revm-interpreter/memory_limit"]
 optional_balance_check = ["revm-interpreter/optional_balance_check"]
@@ -122,6 +114,7 @@ optional_eip3607 = ["revm-interpreter/optional_eip3607"]
 optional_gas_refund = ["revm-interpreter/optional_gas_refund"]
 optional_no_base_fee = ["revm-interpreter/optional_no_base_fee"]
 optional_beneficiary_reward = ["revm-interpreter/optional_beneficiary_reward"]
+optional_nonce_check = ["revm-interpreter/optional_nonce_check"]
 
 # See comments in `revm-precompile`
 secp256k1 = ["revm-precompile/secp256k1"]

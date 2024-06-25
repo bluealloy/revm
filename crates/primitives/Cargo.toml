@@ -22,7 +22,7 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-alloy-eips = { version = "0.1", default-features = false }
+alloy-eips = { version = "0.1.2", default-features = false }
 alloy-primitives = { version = "0.7.2", default-features = false, features = [
     "rlp",
 ] }
@@ -38,6 +38,7 @@ once_cell = { version = "1.19", default-features = false, optional = true }
 # utility
 enumn = "0.1"
 derive_more = { version = "0.99", optional = true }
+derive-where = { version = "1.2.7", default-features = false }
 cfg-if = "1"
 dyn-clone = "1.0"
 
@@ -81,9 +82,6 @@ asm-keccak = ["alloy-primitives/asm-keccak"]
 portable = ["c-kzg?/portable"]
 
 optimism = []
-# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
-optimism-default-handler = ["optimism"]
-negate-optimism-default-handler = []
 
 dev = [
     "memory_limit",
@@ -93,6 +91,7 @@ dev = [
     "optional_gas_refund",
     "optional_no_base_fee",
     "optional_beneficiary_reward",
+    "optional_nonce_check",
 ]
 memory_limit = []
 optional_balance_check = []
@@ -101,6 +100,7 @@ optional_eip3607 = []
 optional_gas_refund = []
 optional_no_base_fee = []
 optional_beneficiary_reward = []
+optional_nonce_check = []
 rand = ["alloy-primitives/rand"]
 
 # See comments in `revm-precompile`

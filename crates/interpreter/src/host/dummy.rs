@@ -1,5 +1,9 @@
+use derive_where::derive_where;
+
 use crate::{
-    primitives::{hash_map::Entry, Address, Bytes, Env, HashMap, Log, B256, KECCAK_EMPTY, U256},
+    primitives::{
+        hash_map::Entry, Address, Bytes, ChainSpec, Env, HashMap, Log, B256, KECCAK_EMPTY, U256,
+    },
     Host, SStoreResult, SelfDestructResult,
 };
 use std::vec::Vec;
@@ -7,21 +11,29 @@ use std::vec::Vec;
 use super::LoadAccountResult;
 
 /// A dummy [Host] implementation.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct DummyHost {
-    pub env: Env,
+#[derive_where(Clone, Debug, Default; ChainSpecT::Block, ChainSpecT::Transaction)]
+pub struct DummyHost<ChainSpecT>
+where
+    ChainSpecT: ChainSpec,
+{
+    pub env: Env<ChainSpecT>,
     pub storage: HashMap<U256, U256>,
     pub transient_storage: HashMap<U256, U256>,
     pub log: Vec<Log>,
 }
 
-impl DummyHost {
+impl<ChainSpecT> DummyHost<ChainSpecT>
+where
+    ChainSpecT: ChainSpec,
+{
     /// Create a new dummy host with the given [`Env`].
     #[inline]
-    pub fn new(env: Env) -> Self {
+    pub fn new(env: Env<ChainSpecT>) -> Self {
         Self {
             env,
-            ..Default::default()
+            storage: HashMap::new(),
+            transient_storage: HashMap::new(),
+            log: Vec::new(),
         }
     }
 
@@ -33,14 +45,19 @@ impl DummyHost {
     }
 }
 
-impl Host for DummyHost {
+impl<ChainSpecT> Host for DummyHost<ChainSpecT>
+where
+    ChainSpecT: ChainSpec,
+{
+    type ChainSpecT = ChainSpecT;
+
     #[inline]
-    fn env(&self) -> &Env {
+    fn env(&self) -> &Env<ChainSpecT> {
         &self.env
     }
 
     #[inline]
-    fn env_mut(&mut self) -> &mut Env {
+    fn env_mut(&mut self) -> &mut Env<ChainSpecT> {
         &mut self.env
     }
 

@@ -24,6 +24,7 @@ all = "warn"
 [dependencies]
 revm-primitives = { path = "../primitives", version = "5.0.0", default-features = false }
 
+derive-where = { version = "1.2.7", default-features = false }
 paste = { version = "1.0", optional = true }
 phf = { version = "0.11", default-features = false, optional = true, features = [
     "macros",
@@ -56,14 +57,6 @@ portable = ["revm-primitives/portable"]
 parse = ["dep:paste", "dep:phf"]
 
 optimism = ["revm-primitives/optimism"]
-# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
-optimism-default-handler = [
-    "optimism",
-    "revm-primitives/optimism-default-handler",
-]
-negate-optimism-default-handler = [
-    "revm-primitives/negate-optimism-default-handler",
-]
 
 dev = [
     "memory_limit",
@@ -73,6 +66,7 @@ dev = [
     "optional_gas_refund",
     "optional_no_base_fee",
     "optional_beneficiary_reward",
+    "optional_nonce_check",
 ]
 memory_limit = ["revm-primitives/memory_limit"]
 optional_balance_check = ["revm-primitives/optional_balance_check"]
@@ -81,3 +75,4 @@ optional_eip3607 = ["revm-primitives/optional_eip3607"]
 optional_gas_refund = ["revm-primitives/optional_gas_refund"]
 optional_no_base_fee = ["revm-primitives/optional_no_base_fee"]
 optional_beneficiary_reward = ["revm-primitives/optional_beneficiary_reward"]
+optional_nonce_check = ["revm-primitives/optional_nonce_check"]

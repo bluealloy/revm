@@ -1,9 +1,9 @@
 use crate::{
     interpreter::{InstructionResult, LoadAccountResult, SStoreResult, SelfDestructResult},
     primitives::{
-        db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, EvmState,
-        EvmStorageSlot, HashMap, HashSet, Log, SpecId, SpecId::*, TransientStorage, KECCAK_EMPTY,
-        PRECOMPILE3, U256,
+        db::Database, hash_map::Entry, Account, Address, Bytecode, EvmState, EvmStorageSlot,
+        HashMap, HashSet, Log, SpecId, SpecId::*, TransientStorage, KECCAK_EMPTY, PRECOMPILE3,
+        U256,
     },
 };
 use core::mem;
@@ -185,7 +185,7 @@ impl JournaledState {
         to: &Address,
         balance: U256,
         db: &mut DB,
-    ) -> Result<Option<InstructionResult>, EVMError<DB::Error>> {
+    ) -> Result<Option<InstructionResult>, DB::Error> {
         // load accounts
         self.load_account(*from, db)?;
         self.load_account(*to, db)?;
@@ -471,7 +471,7 @@ impl JournaledState {
         address: Address,
         target: Address,
         db: &mut DB,
-    ) -> Result<SelfDestructResult, EVMError<DB::Error>> {
+    ) -> Result<SelfDestructResult, DB::Error> {
         let load_result = self.load_account_exist(target, db)?;
 
         if address != target {
@@ -533,13 +533,12 @@ impl JournaledState {
         address: Address,
         storage_keys: impl IntoIterator<Item = U256>,
         db: &mut DB,
-    ) -> Result<&mut Account, EVMError<DB::Error>> {
+    ) -> Result<&mut Account, DB::Error> {
         // load or get account.
         let account = match self.state.entry(address) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(vac) => vac.insert(
-                db.basic(address)
-                    .map_err(EVMError::Database)?
+                db.basic(address)?
                     .map(|i| i.into())
                     .unwrap_or(Account::new_not_existing()),
             ),
@@ -547,9 +546,7 @@ impl JournaledState {
         // preload storages.
         for storage_key in storage_keys.into_iter() {
             if let Entry::Vacant(entry) = account.storage.entry(storage_key) {
-                let storage = db
-                    .storage(address, storage_key)
-                    .map_err(EVMError::Database)?;
+                let storage = db.storage(address, storage_key)?;
                 entry.insert(EvmStorageSlot::new(storage));
             }
         }
@@ -562,7 +559,7 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
+    ) -> Result<(&mut Account, bool), DB::Error> {
         let (value, is_cold) = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
@@ -570,12 +567,11 @@ impl JournaledState {
                 (account, is_cold)
             }
             Entry::Vacant(vac) => {
-                let account =
-                    if let Some(account) = db.basic(address).map_err(EVMError::Database)? {
-                        account.into()
-                    } else {
-                        Account::new_not_existing()
-                    };
+                let account = if let Some(account) = db.basic(address)? {
+                    account.into()
+                } else {
+                    Account::new_not_existing()
+                };
 
                 // precompiles are warm loaded so we need to take that into account
                 let is_cold = !self.warm_preloaded_addresses.contains(&address);
@@ -603,7 +599,7 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<LoadAccountResult, EVMError<DB::Error>> {
+    ) -> Result<LoadAccountResult, DB::Error> {
         let spec = self.spec;
         let (acc, is_cold) = self.load_account(address, db)?;
 
@@ -625,16 +621,14 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
+    ) -> Result<(&mut Account, bool), DB::Error> {
         let (acc, is_cold) = self.load_account(address, db)?;
         if acc.info.code.is_none() {
             if acc.info.code_hash == KECCAK_EMPTY {
                 let empty = Bytecode::default();
                 acc.info.code = Some(empty);
             } else {
-                let code = db
-                    .code_by_hash(acc.info.code_hash)
-                    .map_err(EVMError::Database)?;
+                let code = db.code_by_hash(acc.info.code_hash)?;
                 acc.info.code = Some(code);
             }
         }
@@ -652,7 +646,7 @@ impl JournaledState {
         address: Address,
         key: U256,
         db: &mut DB,
-    ) -> Result<(U256, bool), EVMError<DB::Error>> {
+    ) -> Result<(U256, bool), DB::Error> {
         // assume acc is warm
         let account = self.state.get_mut(&address).unwrap();
         // only if account is created in this tx we can assume that storage is empty.
@@ -668,7 +662,7 @@ impl JournaledState {
                 let value = if is_newly_created {
                     U256::ZERO
                 } else {
-                    db.storage(address, key).map_err(EVMError::Database)?
+                    db.storage(address, key)?
                 };
 
                 vac.insert(EvmStorageSlot::new(value));
@@ -701,7 +695,7 @@ impl JournaledState {
         key: U256,
         new: U256,
         db: &mut DB,
-    ) -> Result<SStoreResult, EVMError<DB::Error>> {
+    ) -> Result<SStoreResult, DB::Error> {
         // assume that acc exists and load the slot.
         let (present, is_cold) = self.sload(address, key, db)?;
         let acc = self.state.get_mut(&address).unwrap();

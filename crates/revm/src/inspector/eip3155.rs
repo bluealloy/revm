@@ -3,7 +3,7 @@ use crate::{
     interpreter::{
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
     },
-    primitives::{db::Database, hex, HashMap, B256, U256},
+    primitives::{db::Database, hex, ChainSpec, HashMap, Transaction, B256, U256},
     EvmContext, Inspector,
 };
 use revm_interpreter::OpCode;
@@ -162,10 +162,10 @@ impl TracerEip3155 {
         self.output.flush()
     }
 
-    fn print_summary<DB: Database>(
+    fn print_summary<ChainSpecT: ChainSpec, DB: Database>(
         &mut self,
         result: &InterpreterResult,
-        context: &mut EvmContext<DB>,
+        context: &mut EvmContext<ChainSpecT, DB>,
     ) {
         if self.print_summary {
             let spec_name: &str = context.spec_id().into();
@@ -173,7 +173,7 @@ impl TracerEip3155 {
                 state_root: B256::ZERO.to_string(),
                 output: result.output.to_string(),
                 gas_used: hex_number(
-                    context.inner.env().tx.gas_limit - self.gas_inspector.gas_remaining(),
+                    context.inner.env().tx.gas_limit() - self.gas_inspector.gas_remaining(),
                 ),
                 pass: result.is_ok(),
                 time: None,
@@ -184,12 +184,16 @@ impl TracerEip3155 {
     }
 }
 
-impl<DB: Database> Inspector<DB> for TracerEip3155 {
-    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for TracerEip3155 {
+    fn initialize_interp(
+        &mut self,
+        interp: &mut Interpreter,
+        context: &mut EvmContext<ChainSpecT, DB>,
+    ) {
         self.gas_inspector.initialize_interp(interp, context);
     }
 
-    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<ChainSpecT, DB>) {
         self.gas_inspector.step(interp, context);
         self.stack.clone_from(interp.stack.data());
         self.memory = if self.include_memory {
@@ -204,7 +208,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         self.refunded = interp.gas.refunded();
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<ChainSpecT, DB>) {
         self.gas_inspector.step_end(interp, context);
         if self.skip {
             self.skip = false;
@@ -237,7 +241,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn call_end(
         &mut self,
-        context: &mut EvmContext<DB>,
+        context: &mut EvmContext<ChainSpecT, DB>,
         inputs: &CallInputs,
         outcome: CallOutcome,
     ) -> CallOutcome {
@@ -254,7 +258,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn create_end(
         &mut self,
-        context: &mut EvmContext<DB>,
+        context: &mut EvmContext<ChainSpecT, DB>,
         inputs: &CreateInputs,
         outcome: CreateOutcome,
     ) -> CreateOutcome {

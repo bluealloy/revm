@@ -8,7 +8,7 @@ use revm_interpreter::OpCode;
 use crate::{
     inspectors::GasInspector,
     interpreter::{CallInputs, CreateInputs, Interpreter},
-    primitives::{Address, U256},
+    primitives::{Address, ChainSpec, U256},
     Database, EvmContext, Inspector,
 };
 
@@ -20,14 +20,18 @@ pub struct CustomPrintTracer {
     gas_inspector: GasInspector,
 }
 
-impl<DB: Database> Inspector<DB> for CustomPrintTracer {
-    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for CustomPrintTracer {
+    fn initialize_interp(
+        &mut self,
+        interp: &mut Interpreter,
+        context: &mut EvmContext<ChainSpecT, DB>,
+    ) {
         self.gas_inspector.initialize_interp(interp, context);
     }
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<ChainSpecT, DB>) {
         let opcode = interp.current_opcode();
         let name = OpCode::name_by_op(opcode);
 
@@ -52,13 +56,13 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         self.gas_inspector.step(interp, context);
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<ChainSpecT, DB>) {
         self.gas_inspector.step_end(interp, context);
     }
 
     fn call_end(
         &mut self,
-        context: &mut EvmContext<DB>,
+        context: &mut EvmContext<ChainSpecT, DB>,
         inputs: &CallInputs,
         outcome: CallOutcome,
     ) -> CallOutcome {
@@ -67,7 +71,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
 
     fn create_end(
         &mut self,
-        context: &mut EvmContext<DB>,
+        context: &mut EvmContext<ChainSpecT, DB>,
         inputs: &CreateInputs,
         outcome: CreateOutcome,
     ) -> CreateOutcome {
@@ -76,7 +80,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
 
     fn call(
         &mut self,
-        _context: &mut EvmContext<DB>,
+        _context: &mut EvmContext<ChainSpecT, DB>,
         inputs: &mut CallInputs,
     ) -> Option<CallOutcome> {
         println!(
@@ -93,7 +97,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
 
     fn create(
         &mut self,
-        _context: &mut EvmContext<DB>,
+        _context: &mut EvmContext<ChainSpecT, DB>,
         inputs: &mut CreateInputs,
     ) -> Option<CreateOutcome> {
         println!(
