@@ -152,6 +152,22 @@ pub enum EVMError<DBError> {
     Precompile(String),
 }
 
+impl<DBError> EVMError<DBError> {
+    /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
+    pub fn map_db_err<F, E>(self, op: F) -> EVMError<E>
+    where
+        F: FnOnce(DBError) -> E,
+    {
+        match self {
+            Self::Transaction(e) => EVMError::Transaction(e),
+            Self::Header(e) => EVMError::Header(e),
+            Self::Database(e) => EVMError::Database(op(e)),
+            Self::Precompile(e) => EVMError::Precompile(e),
+            Self::Custom(e) => EVMError::Custom(e),
+        }
+    }
+}
+
 #[cfg(feature = "std")]
 impl<DBError: std::error::Error + 'static> std::error::Error for EVMError<DBError> {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
