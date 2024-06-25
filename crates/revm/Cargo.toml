@@ -98,13 +98,13 @@ negate-optimism-default-handler = [
 
 ethersdb = ["std", "dep:tokio", "dep:ethers-providers", "dep:ethers-core"]
 
-# alloydb = [
-#     "std",
-#     "dep:tokio",
-#     "dep:alloy-provider",
-#     "dep:alloy-eips",
-#     "dep:alloy-transport",
-# ]
+alloydb = [
+    "std",
+    "dep:tokio",
+    "dep:alloy-provider",
+    "dep:alloy-eips",
+    "dep:alloy-transport",
+]
 
 dev = [
     "memory_limit",
