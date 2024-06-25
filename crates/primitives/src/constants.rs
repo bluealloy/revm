@@ -31,9 +31,9 @@ pub const BLOCKHASH_STORAGE_ADDRESS: Address = address!("25a219378dad9b3503c8268
 
 /// EIP-3860: Limit and meter initcode
 ///
-/// Limit of maximum initcode size is `2 * MAX_CODE_SIZE`.
-pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
-pub const RWASM_MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
+/// Limit of maximum initcode size is `2 * WASM_MAX_CODE_SIZE`.
+pub const MAX_INITCODE_SIZE: usize = 2 * WASM_MAX_CODE_SIZE;
+pub const RWASM_MAX_INITCODE_SIZE: usize = 2 * WASM_MAX_CODE_SIZE;
 
 /// The address of precompile 3, which is handled specially in a few places.
 pub const PRECOMPILE3: Address =
