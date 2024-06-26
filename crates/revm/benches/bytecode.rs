@@ -18,7 +18,7 @@ fn bytecode_bench(c: &mut Criterion) {
 
     if code_input.trim().len() == 0 {
         println!("Empty bytecode on stdin.");
-        return
+        return;
     }
 
     let code_input = code_input.trim();
