@@ -16,7 +16,7 @@ fn bytecode_bench(c: &mut Criterion) {
         Err(_error) => {}
     }
 
-    if code_input.trim().len() == 0 {
+    if code_input.trim().is_empty() {
         println!("Empty bytecode on stdin.");
         return;
     }
