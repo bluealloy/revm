@@ -15,7 +15,8 @@ pub struct Contract {
     /// Bytecode contains contract code, size of original code, analysis with gas block and jump table.
     /// Note that current code is extended with push padding and STOP at end.
     pub bytecode: Bytecode,
-    /// Address of the account the bytecode was loaded from.
+    /// Address of the account the bytecode was loaded from. This can be different from target_address
+    /// in the case of DELEGATECALL or CALLCODE
     pub bytecode_address: Address,
     /// Bytecode hash for legacy. For EOF this would be None.
     pub hash: Option<B256>,
