@@ -337,6 +337,7 @@ impl<DB: Database> InnerEvmContext<DB> {
             input.clone(),
             // fine to clone as it is Bytes.
             Bytecode::Eof(Arc::new(initcode.clone())),
+            created_address,
             None,
             created_address,
             inputs.caller,
@@ -475,6 +476,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         let contract = Contract::new(
             Bytes::new(),
             bytecode,
+            created_address,
             Some(init_code_hash),
             created_address,
             inputs.caller,
