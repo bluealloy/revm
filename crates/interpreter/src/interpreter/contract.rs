@@ -15,6 +15,8 @@ pub struct Contract {
     /// Bytecode contains contract code, size of original code, analysis with gas block and jump table.
     /// Note that current code is extended with push padding and STOP at end.
     pub bytecode: Bytecode,
+    /// Address of the account the bytecode was loaded from.
+    pub bytecode_address: Address,
     /// Bytecode hash for legacy. For EOF this would be None.
     pub hash: Option<B256>,
     /// Target address of the account. Storage of this address is going to be modified.
@@ -31,6 +33,7 @@ impl Contract {
     pub fn new(
         input: Bytes,
         bytecode: Bytecode,
+        bytecode_address: Address,
         hash: Option<B256>,
         target_address: Address,
         caller: Address,
@@ -41,6 +44,7 @@ impl Contract {
         Self {
             input,
             bytecode,
+            bytecode_address,
             hash,
             target_address,
             caller,
@@ -58,6 +62,7 @@ impl Contract {
         Self::new(
             env.tx.data.clone(),
             bytecode,
+            contract_address,
             hash,
             contract_address,
             env.tx.caller,
@@ -76,6 +81,7 @@ impl Contract {
         Self::new(
             input,
             bytecode,
+            call_context.bytecode_address,
             hash,
             call_context.target_address,
             call_context.caller,

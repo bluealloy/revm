@@ -111,6 +111,7 @@ impl Interpreter {
             Contract::new(
                 Bytes::new(),
                 bytecode,
+                crate::primitives::Address::default(),
                 None,
                 crate::primitives::Address::default(),
                 crate::primitives::Address::default(),
