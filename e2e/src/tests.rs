@@ -24,6 +24,12 @@ macro_rules! define_tests {
     };
 }
 
+mod failing_tests {
+    define_tests! {
+        fn operation_diff_gas("tests/GeneralStateTests/stBadOpcode/operationDiffGas.json");
+    }
+}
+
 mod st_time_consuming {
     define_tests! {
 
