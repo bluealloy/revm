@@ -6,7 +6,7 @@ use crate::{
     gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD},
     interpreter::Interpreter,
     primitives::{
-        eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, U256,
+        eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, B256, U256,
     },
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, Host,
     InstructionResult, InterpreterAction, InterpreterResult, LoadAccountResult, MAX_INITCODE_SIZE,
@@ -195,11 +195,29 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
     Some(gas_limit)
 }
 
+/// Pop target address from stack and check if it is valid.
+///
+/// Valid address has first 12 bytes as zeroes.
+#[inline]
+pub fn pop_extcall_target_address(interpreter: &mut Interpreter) -> Option<Address> {
+    pop_ret!(interpreter, target_address, None);
+    let target_address = B256::from(target_address);
+    // Check if target is left padded with zeroes.
+    if target_address[..12].iter().any(|i| *i != 0) {
+        interpreter.instruction_result = InstructionResult::InvalidEXTCALLTarget;
+        return None;
+    }
+    // discard first 12 bytes.
+    Some(Address::from_word(target_address))
+}
+
 pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     require_eof!(interpreter);
-    pop_address!(interpreter, target_address);
 
-    // TODO check if target is left padded with zeroes.
+    // pop target address
+    let Some(target_address) = pop_extcall_target_address(interpreter) else {
+        return;
+    };
 
     // input call
     let Some(input) = extcall_input(interpreter) else {
@@ -234,9 +252,11 @@ pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
 
 pub fn extdelegatecall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     require_eof!(interpreter);
-    pop_address!(interpreter, target_address);
 
-    // TODO check if target is left paddded with zeroes.
+    // pop target address
+    let Some(target_address) = pop_extcall_target_address(interpreter) else {
+        return;
+    };
 
     // input call
     let Some(input) = extcall_input(interpreter) else {
@@ -269,9 +289,11 @@ pub fn extdelegatecall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpret
 
 pub fn extstaticcall<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     require_eof!(interpreter);
-    pop_address!(interpreter, target_address);
 
-    // TODO check if target is left padded with zeroes.
+    // pop target address
+    let Some(target_address) = pop_extcall_target_address(interpreter) else {
+        return;
+    };
 
     // input call
     let Some(input) = extcall_input(interpreter) else {
