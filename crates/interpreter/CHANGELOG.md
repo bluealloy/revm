@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v6.0.0...revm-interpreter-v7.0.0) - 2024-06-27
+
+### Added
+- *(EOF)* Add target address expansion checks ([#1570](https://github.com/bluealloy/revm/pull/1570))
+
+### Fixed
+- *(eof)* ExtDelegateCall caller/target switch ([#1571](https://github.com/bluealloy/revm/pull/1571))
+
+### Other
+- use const blocks ([#1522](https://github.com/bluealloy/revm/pull/1522))
+- fix compile for alloydb ([#1559](https://github.com/bluealloy/revm/pull/1559))
+- replace AccessList with alloy version ([#1552](https://github.com/bluealloy/revm/pull/1552))
+- replace U256 with u64 in BLOCKHASH ([#1505](https://github.com/bluealloy/revm/pull/1505))
+
 ## [6.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v5.0.0...revm-interpreter-v6.0.0) - 2024-06-20
 
 ### Added
