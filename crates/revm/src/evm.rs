@@ -7,7 +7,7 @@ use crate::{
     },
     primitives::{
         specification::SpecId, BlockEnv, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
-        ExecutionResult, HandlerCfg, ResultAndState, TxEnv, TxKind,
+        ExecutionResult, HandlerCfg, ResultAndState, TxEnv, TxKind, EOF_MAGIC_BYTES,
     },
     Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
@@ -350,13 +350,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             TxKind::Create => {
                 // if first byte of data is magic 0xEF00, then it is EOFCreate.
                 if spec_id.is_enabled_in(SpecId::PRAGUE_EOF)
-                    && ctx
-                        .env()
-                        .tx
-                        .data
-                        .get(0..2)
-                        .filter(|&t| t == [0xEF, 00])
-                        .is_some()
+                    && ctx.env().tx.data.get(0..2) == Some(&EOF_MAGIC_BYTES)
                 {
                     exec.eofcreate(
                         ctx,
