@@ -273,8 +273,8 @@ pub fn extdelegatecall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpret
         inputs: Box::new(CallInputs {
             input,
             gas_limit,
-            target_address,
-            caller: interpreter.contract.target_address,
+            target_address: interpreter.contract.target_address,
+            caller: interpreter.contract.caller,
             bytecode_address: target_address,
             value: CallValue::Apparent(interpreter.contract.call_value),
             // TODO(EOF) should be EofDelegateCall?
