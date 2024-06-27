@@ -63,6 +63,8 @@ pub enum InstructionResult {
     EofAuxDataOverflow,
     /// Aud data is smaller then already present data size.
     EofAuxDataTooSmall,
+    /// EXT*CALL target address needs to be padded with 0s.
+    InvalidEXTCALLTarget,
 }
 
 impl From<SuccessReason> for InstructionResult {
@@ -166,6 +168,7 @@ macro_rules! return_error {
             | InstructionResult::EOFFunctionStackOverflow
             | InstructionResult::EofAuxDataTooSmall
             | InstructionResult::EofAuxDataOverflow
+            | InstructionResult::InvalidEXTCALLTarget
     };
 }
 
@@ -198,6 +201,8 @@ pub enum InternalResult {
     InternalCallOrCreate,
     /// Internal CREATE/CREATE starts with 0xEF00
     CreateInitCodeStartingEF00,
+    /// Check for target address validity is only done inside subcall.
+    InvalidEXTCALLTarget,
     /// Internal to ExtDelegateCall
     InvalidExtDelegateCallTarget,
 }
@@ -308,7 +313,12 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
             InstructionResult::EofAuxDataOverflow => Self::Halt(HaltReason::EofAuxDataOverflow),
             InstructionResult::EofAuxDataTooSmall => Self::Halt(HaltReason::EofAuxDataTooSmall),
-            InstructionResult::InvalidExtDelegateCallTarget => Self::Internal(InternalResult::InvalidExtDelegateCallTarget)
+            InstructionResult::InvalidEXTCALLTarget => {
+                Self::Internal(InternalResult::InvalidEXTCALLTarget)
+            }
+            InstructionResult::InvalidExtDelegateCallTarget => {
+                Self::Internal(InternalResult::InvalidExtDelegateCallTarget)
+            }
         }
     }
 }
