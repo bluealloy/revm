@@ -20,6 +20,8 @@ pub enum InstructionResult {
     CreateInitCodeStartingEF00,
     /// Invalid EOF initcode,
     InvalidEOFInitCode,
+    /// ExtDelegateCall calling a non EOF contract.
+    InvalidExtDelegateCallTarget,
 
     // Actions
     CallOrCreate = 0x20,
@@ -130,6 +132,7 @@ macro_rules! return_revert {
             | InstructionResult::OutOfFunds
             | InstructionResult::InvalidEOFInitCode
             | InstructionResult::CreateInitCodeStartingEF00
+            | InstructionResult::InvalidExtDelegateCallTarget
     };
 }
 
@@ -195,6 +198,8 @@ pub enum InternalResult {
     InternalCallOrCreate,
     /// Internal CREATE/CREATE starts with 0xEF00
     CreateInitCodeStartingEF00,
+    /// Internal to ExtDelegateCall
+    InvalidExtDelegateCallTarget,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -303,6 +308,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
             InstructionResult::EofAuxDataOverflow => Self::Halt(HaltReason::EofAuxDataOverflow),
             InstructionResult::EofAuxDataTooSmall => Self::Halt(HaltReason::EofAuxDataTooSmall),
+            InstructionResult::InvalidExtDelegateCallTarget => Self::Internal(InternalResult::InvalidExtDelegateCallTarget)
         }
     }
 }
