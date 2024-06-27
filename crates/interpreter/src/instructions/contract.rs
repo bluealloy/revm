@@ -203,7 +203,7 @@ pub fn pop_extcall_target_address(interpreter: &mut Interpreter) -> Option<Addre
     pop_ret!(interpreter, target_address, None);
     let target_address = B256::from(target_address);
     // Check if target is left padded with zeroes.
-    if target_address[..12].iter().find(|i| **i != 0).is_some() {
+    if target_address[..12].iter().any(|i| *i != 0) {
         interpreter.instruction_result = InstructionResult::InvalidEXTCALLTarget;
         return None;
     }
