@@ -7,11 +7,13 @@ use tokio::runtime::Handle;
 use crate::primitives::{AccountInfo, Address, Bytecode, B256, U256};
 use crate::{Database, DatabaseRef};
 
+use super::utils::HandleOrRuntime;
+
 #[derive(Debug, Clone)]
 pub struct EthersDB<M: Middleware> {
     client: Arc<M>,
     block_number: Option<BlockId>,
-    handle: Handle,
+    rt: HandleOrRuntime,
 }
 
 impl<M: Middleware> EthersDB<M> {
@@ -19,10 +21,10 @@ impl<M: Middleware> EthersDB<M> {
     ///
     /// Returns `None` if no tokio runtime is available or if the current runtime is a current-thread runtime.
     pub fn new(client: Arc<M>, block_number: Option<BlockId>) -> Option<Self> {
-        let handle = match Handle::try_current() {
+        let rt = match Handle::try_current() {
             Ok(handle) => match handle.runtime_flavor() {
                 tokio::runtime::RuntimeFlavor::CurrentThread => return None,
-                _ => handle,
+                _ => HandleOrRuntime::Handle(handle),
             },
             Err(_) => return None,
         };
@@ -31,19 +33,41 @@ impl<M: Middleware> EthersDB<M> {
             Some(Self {
                 client,
                 block_number,
-                handle,
+                rt,
             })
         } else {
             let mut instance = Self {
                 client: client.clone(),
                 block_number: None,
-                handle,
+                rt,
             };
             instance.block_number = Some(BlockId::from(
                 instance.block_on(client.get_block_number()).ok()?,
             ));
             Some(instance)
         }
+    }
+
+    // Create a new AlloyDB instance, with a provider and a block and a runtime.
+    //
+    // Refer to [tokio::runtime::Builder] how to create a runtime if you are in synchronous world.
+    // If you are already using something like [tokio::main], call AlloyDB::new instead.
+    pub fn with_runtime(
+        client: Arc<M>,
+        block_number: Option<BlockId>,
+        runtime: Runtime,
+    ) -> Option<Self> {
+        let rt = HandleOrRuntime::Runtime(runtime);
+        let mut instance = Self {
+            client,
+            block_number,
+            rt,
+        };
+
+        instance.block_number = Some(BlockId::from(
+            instance.block_on(client.get_block_number()).ok()?,
+        ));
+        Some(instance)
     }
 
     /// Internal utility function to call tokio feature and wait for output
@@ -53,7 +77,7 @@ impl<M: Middleware> EthersDB<M> {
         F: core::future::Future + Send,
         F::Output: Send,
     {
-        tokio::task::block_in_place(move || self.handle.block_on(f))
+        self.rt.block_on(f)
     }
 
     /// set block number on which upcoming queries will be based

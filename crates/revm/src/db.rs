@@ -1,5 +1,8 @@
 //! [Database] implementations.
 
+#[cfg(any(feature = "alloydb", feature = "ethersdb"))]
+mod utils;
+
 #[cfg(feature = "alloydb")]
 mod alloydb;
 pub mod emptydb;
