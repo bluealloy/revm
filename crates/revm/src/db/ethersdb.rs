@@ -37,7 +37,7 @@ impl<M: Middleware> EthersDB<M> {
             })
         } else {
             let mut instance = Self {
-                client: client,
+                client,
                 block_number: None,
                 rt,
             };
