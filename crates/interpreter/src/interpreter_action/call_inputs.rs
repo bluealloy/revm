@@ -130,6 +130,27 @@ pub enum CallScheme {
     DelegateCall,
     /// `STATICCALL`
     StaticCall,
+    /// `EXTCALL`
+    ExtCall,
+    /// `EXTSTATICCALL`
+    ExtStaticCall,
+    /// `EXTDELEGATECALL`
+    ExtDelegateCall,
+}
+
+impl CallScheme {
+    /// Returns true if it is EOF EXT*CALL.
+    pub fn is_ext(&self) -> bool {
+        matches!(
+            self,
+            Self::ExtCall | Self::ExtStaticCall | Self::ExtDelegateCall
+        )
+    }
+
+    /// Returns true if it is ExtDelegateCall.
+    pub fn is_ext_delegate_call(&self) -> bool {
+        matches!(self, Self::ExtDelegateCall)
+    }
 }
 
 /// Call value.

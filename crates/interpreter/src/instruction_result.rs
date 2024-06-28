@@ -20,6 +20,8 @@ pub enum InstructionResult {
     CreateInitCodeStartingEF00,
     /// Invalid EOF initcode,
     InvalidEOFInitCode,
+    /// ExtDelegateCall calling a non EOF contract.
+    InvalidExtDelegateCallTarget,
 
     // Actions
     CallOrCreate = 0x20,
@@ -61,6 +63,8 @@ pub enum InstructionResult {
     EofAuxDataOverflow,
     /// Aux data is smaller then already present data size.
     EofAuxDataTooSmall,
+    /// EXT*CALL target address needs to be padded with 0s.
+    InvalidEXTCALLTarget,
 }
 
 impl From<SuccessReason> for InstructionResult {
@@ -130,6 +134,7 @@ macro_rules! return_revert {
             | InstructionResult::OutOfFunds
             | InstructionResult::InvalidEOFInitCode
             | InstructionResult::CreateInitCodeStartingEF00
+            | InstructionResult::InvalidExtDelegateCallTarget
     };
 }
 
@@ -163,6 +168,7 @@ macro_rules! return_error {
             | InstructionResult::EOFFunctionStackOverflow
             | InstructionResult::EofAuxDataTooSmall
             | InstructionResult::EofAuxDataOverflow
+            | InstructionResult::InvalidEXTCALLTarget
     };
 }
 
@@ -195,6 +201,10 @@ pub enum InternalResult {
     InternalCallOrCreate,
     /// Internal CREATE/CREATE starts with 0xEF00
     CreateInitCodeStartingEF00,
+    /// Check for target address validity is only done inside subcall.
+    InvalidEXTCALLTarget,
+    /// Internal to ExtDelegateCall
+    InvalidExtDelegateCallTarget,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -303,6 +313,12 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
             InstructionResult::EofAuxDataOverflow => Self::Halt(HaltReason::EofAuxDataOverflow),
             InstructionResult::EofAuxDataTooSmall => Self::Halt(HaltReason::EofAuxDataTooSmall),
+            InstructionResult::InvalidEXTCALLTarget => {
+                Self::Internal(InternalResult::InvalidEXTCALLTarget)
+            }
+            InstructionResult::InvalidExtDelegateCallTarget => {
+                Self::Internal(InternalResult::InvalidExtDelegateCallTarget)
+            }
         }
     }
 }
