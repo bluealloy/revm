@@ -22,3 +22,8 @@ debug = true
 [profile.ethtests]
 inherits = "test"
 opt-level = 3
+
+# [patch.crates-io]
+# alloy-eips = { git = "https://github.com/alloy-rs/alloy.git", rev = "41d4c7c" }
+# alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "41d4c7c" }
+# alloy-transport = { git = "https://github.com/alloy-rs/alloy.git", rev = "41d4c7c" }

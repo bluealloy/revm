@@ -2,8 +2,8 @@ use crate::{
     interpreter::{InstructionResult, LoadAccountResult, SStoreResult, SelfDestructResult},
     primitives::{
         db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, EvmState,
-        EvmStorageSlot, HashMap, HashSet, Log, SpecId, SpecId::*, TransientStorage, KECCAK_EMPTY,
-        PRECOMPILE3, U256,
+        EvmStorageSlot, HashMap, HashSet, Log, SpecId, SpecId::*, TransientStorage, B256,
+        KECCAK_EMPTY, PRECOMPILE3, U256,
     },
 };
 use core::mem;
@@ -143,10 +143,11 @@ impl JournaledState {
         self.depth as u64
     }
 
-    /// use it only if you know that acc is warm
-    /// Assume account is warm
+    /// Set code and its hash to the account.
+    ///
+    /// Note: Assume account is warm and that hash is calculated from code.
     #[inline]
-    pub fn set_code(&mut self, address: Address, code: Bytecode) {
+    pub fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256) {
         let account = self.state.get_mut(&address).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
 
@@ -155,8 +156,16 @@ impl JournaledState {
             .unwrap()
             .push(JournalEntry::CodeChange { address });
 
-        account.info.code_hash = code.hash_slow();
+        account.info.code_hash = hash;
         account.info.code = Some(code);
+    }
+
+    /// use it only if you know that acc is warm
+    /// Assume account is warm
+    #[inline]
+    pub fn set_code(&mut self, address: Address, code: Bytecode) {
+        let hash = code.hash_slow();
+        self.set_code_with_hash(address, code, hash)
     }
 
     #[inline]

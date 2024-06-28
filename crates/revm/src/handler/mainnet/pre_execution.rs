@@ -8,10 +8,11 @@ use crate::{
         db::Database,
         Account, EVMError, Env, Spec,
         SpecId::{CANCUN, PRAGUE, SHANGHAI},
-        TxKind, BLOCKHASH_STORAGE_ADDRESS, U256,
+        TxKind, BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256,
     },
     Context, ContextPrecompiles,
 };
+use std::vec::Vec;
 
 /// Main precompile load
 #[inline]
@@ -45,6 +46,74 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
             [],
             &mut context.evm.inner.db,
         )?;
+    }
+
+    // EIP-7702. Load bytecode to authorized accounts.
+    if SPEC::enabled(PRAGUE) {
+        if let Some(authorization_list) = context.evm.inner.env.tx.authorization_list.as_ref() {
+            let mut valid_auths = Vec::with_capacity(authorization_list.len());
+            for authorization in authorization_list.recovered_iter() {
+                // 1. recover authority and authorized addresses.
+                let Some(authority) = authorization.authority() else {
+                    continue;
+                };
+
+                // 2. Verify the chain id is either 0 or the chain's current ID.
+                if authorization.chain_id() != 0
+                    && authorization.chain_id() != context.evm.inner.env.cfg.chain_id
+                {
+                    continue;
+                }
+
+                // warm authority account and check nonce.
+                let (authority_acc, _) = context
+                    .evm
+                    .inner
+                    .journaled_state
+                    .load_account(authority, &mut context.evm.inner.db)?;
+
+                // 3. Verify that the code of authority is empty.
+                // In case of multiple same authorities this step will skip loading of
+                // authorized account.
+                if authority_acc.info.code_hash() != KECCAK_EMPTY {
+                    continue;
+                }
+
+                // 4. If nonce list item is length one, verify the nonce of authority is equal to nonce.
+                if let Some(nonce) = authorization.nonce() {
+                    if nonce != authority_acc.info.nonce {
+                        continue;
+                    }
+                }
+
+                // warm code account and get the code.
+                // 6. Add the authority account to accessed_addresses
+                let (account, _) = context
+                    .evm
+                    .inner
+                    .journaled_state
+                    .load_code(authority, &mut context.evm.inner.db)?;
+                let code = account.info.code.clone();
+                let code_hash = account.info.code_hash;
+
+                // If code is empty no need to set code or add it to valid
+                // authorizations, as it is a noop operation.
+                if code_hash == KECCAK_EMPTY {
+                    continue;
+                }
+
+                // 5. Set the code of authority to code associated with address.
+                context.evm.inner.journaled_state.set_code_with_hash(
+                    authority,
+                    code.unwrap_or_default(),
+                    code_hash,
+                );
+
+                valid_auths.push(authority);
+            }
+
+            context.evm.inner.valid_authorizations = valid_auths;
+        }
     }
 
     context.evm.load_access_list()?;

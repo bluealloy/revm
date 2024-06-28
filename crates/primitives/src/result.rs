@@ -268,6 +268,10 @@ pub enum InvalidTransaction {
     BlobVersionNotSupported,
     /// EOF crate should have `to` address
     EofCrateShouldHaveToAddress,
+    /// EIP-7702 is not enabled.
+    AuthorizationListNotSupported,
+    /// EIP-7702 transaction has invalid fields set.
+    AuthorizationListInvalidFields,
     /// System transactions are not supported post-regolith hardfork.
     ///
     /// Before the Regolith hardfork, there was a special field in the `Deposit` transaction
@@ -359,6 +363,10 @@ impl fmt::Display for InvalidTransaction {
             }
             Self::BlobVersionNotSupported => write!(f, "blob version not supported"),
             Self::EofCrateShouldHaveToAddress => write!(f, "EOF crate should have `to` address"),
+            Self::AuthorizationListNotSupported => write!(f, "authorization list not supported"),
+            Self::AuthorizationListInvalidFields => {
+                write!(f, "authorization list tx has invalid fields")
+            }
             #[cfg(feature = "optimism")]
             Self::DepositSystemTxPostRegolith => {
                 write!(

@@ -15,7 +15,7 @@ use crate::{
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
-use std::{boxed::Box, sync::Arc};
+use std::{boxed::Box, sync::Arc, vec::Vec};
 
 /// EVM contexts contains data that EVM needs for execution.
 #[derive(Debug)]
@@ -29,6 +29,8 @@ pub struct InnerEvmContext<DB: Database> {
     pub db: DB,
     /// Error that happened during execution.
     pub error: Result<(), EVMError<DB::Error>>,
+    /// EIP-7702 Authorization list of accounts that needs to be cleared.
+    pub valid_authorizations: Vec<Address>,
     /// Used as temporary value holder to store L1 block info.
     #[cfg(feature = "optimism")]
     pub l1_block_info: Option<crate::optimism::L1BlockInfo>,
@@ -44,6 +46,7 @@ where
             journaled_state: self.journaled_state.clone(),
             db: self.db.clone(),
             error: self.error.clone(),
+            valid_authorizations: self.valid_authorizations.clone(),
             #[cfg(feature = "optimism")]
             l1_block_info: self.l1_block_info.clone(),
         }
@@ -57,6 +60,7 @@ impl<DB: Database> InnerEvmContext<DB> {
             journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
             db,
             error: Ok(()),
+            valid_authorizations: Default::default(),
             #[cfg(feature = "optimism")]
             l1_block_info: None,
         }
@@ -70,6 +74,7 @@ impl<DB: Database> InnerEvmContext<DB> {
             journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
             db,
             error: Ok(()),
+            valid_authorizations: Default::default(),
             #[cfg(feature = "optimism")]
             l1_block_info: None,
         }
@@ -85,6 +90,7 @@ impl<DB: Database> InnerEvmContext<DB> {
             journaled_state: self.journaled_state,
             db,
             error: Ok(()),
+            valid_authorizations: Default::default(),
             #[cfg(feature = "optimism")]
             l1_block_info: self.l1_block_info,
         }

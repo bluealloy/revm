@@ -61,7 +61,7 @@ pub enum InstructionResult {
     EOFFunctionStackOverflow,
     /// Aux data overflow, new aux data is larger tha u16 max size.
     EofAuxDataOverflow,
-    /// Aud data is smaller then already present data size.
+    /// Aux data is smaller then already present data size.
     EofAuxDataTooSmall,
     /// EXT*CALL target address needs to be padded with 0s.
     InvalidEXTCALLTarget,
