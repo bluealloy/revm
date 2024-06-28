@@ -6,13 +6,14 @@ use alloy_eips::BlockId;
 use alloy_provider::{Network, Provider};
 use alloy_transport::{Transport, TransportError};
 use std::future::IntoFuture;
+use tokio::runtime::{Handle, Runtime};
 
 use super::utils::HandleOrRuntime;
 
 /// An alloy-powered REVM [Database].
 ///
 /// When accessing the database, it'll use the given provider to fetch the corresponding account's data.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct AlloyDB<T: Transport + Clone, N: Network, P: Provider<T, N>> {
     /// The provider to fetch the data from.
     provider: P,

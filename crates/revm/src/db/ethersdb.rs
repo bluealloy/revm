@@ -2,14 +2,14 @@ use std::sync::Arc;
 
 use ethers_core::types::{Block, BlockId, TxHash, H160 as eH160, H256, U64 as eU64};
 use ethers_providers::Middleware;
-use tokio::runtime::Handle;
+use tokio::runtime::{Handle, Runtime};
 
 use crate::primitives::{AccountInfo, Address, Bytecode, B256, U256};
 use crate::{Database, DatabaseRef};
 
 use super::utils::HandleOrRuntime;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct EthersDB<M: Middleware> {
     client: Arc<M>,
     block_number: Option<BlockId>,
@@ -37,21 +37,21 @@ impl<M: Middleware> EthersDB<M> {
             })
         } else {
             let mut instance = Self {
-                client: client.clone(),
+                client: client,
                 block_number: None,
                 rt,
             };
             instance.block_number = Some(BlockId::from(
-                instance.block_on(client.get_block_number()).ok()?,
+                instance.block_on(instance.client.get_block_number()).ok()?,
             ));
             Some(instance)
         }
     }
 
-    // Create a new AlloyDB instance, with a provider and a block and a runtime.
+    // Create a new EthersDB instance, with a provider and a block (None for latest) and a runtime.
     //
     // Refer to [tokio::runtime::Builder] how to create a runtime if you are in synchronous world.
-    // If you are already using something like [tokio::main], call AlloyDB::new instead.
+    // If you are already using something like [tokio::main], call EthersDB::new instead.
     pub fn with_runtime(
         client: Arc<M>,
         block_number: Option<BlockId>,
@@ -65,7 +65,7 @@ impl<M: Middleware> EthersDB<M> {
         };
 
         instance.block_number = Some(BlockId::from(
-            instance.block_on(client.get_block_number()).ok()?,
+            instance.block_on(instance.client.get_block_number()).ok()?,
         ));
         Some(instance)
     }

@@ -1,6 +1,7 @@
 use tokio::runtime::{Handle, Runtime};
 
 // Hold a tokio runtime handle or full runtime
+#[derive(Debug)]
 pub(crate) enum HandleOrRuntime {
     Handle(Handle),
     Runtime(Runtime),
@@ -8,7 +9,7 @@ pub(crate) enum HandleOrRuntime {
 
 impl HandleOrRuntime {
     #[inline]
-    pub fn block_on<F>(&self, f: F) -> F::Output
+    pub(crate) fn block_on<F>(&self, f: F) -> F::Output
     where
         F: std::future::Future + Send,
         F::Output: Send,
