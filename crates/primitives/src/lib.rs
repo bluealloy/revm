@@ -12,6 +12,7 @@ mod constants;
 pub mod db;
 pub mod env;
 
+#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg;
 pub mod precompile;
 pub mod result;
@@ -37,9 +38,14 @@ cfg_if::cfg_if! {
     }
 }
 
+#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub use kzg::{EnvKzgSettings, KzgSettings};
 pub use precompile::*;
 pub use result::*;
 pub use specification::*;
 pub use state::*;
 pub use utilities::*;
+
+#[cfg(feature = "kzg-rs")]
+// silence lint
+use kzg_rs as _;

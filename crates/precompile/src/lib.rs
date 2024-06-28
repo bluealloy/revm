@@ -23,14 +23,20 @@ pub mod secp256k1;
 pub mod secp256r1;
 pub mod utilities;
 
-pub use fatal_precompile::fatal_precompile;
+#[cfg(feature = "kzg-rs")]
+// silence lint
+use kzg_rs as _;
 
-pub use primitives::{
+use core::hash::Hash;
+use once_cell::race::OnceBox;
+#[doc(hidden)]
+pub use revm_primitives as primitives;
+#[doc(hidden)]
+pub use revm_primitives as primitives;
+pub use revm_primitives::{
     precompile::{PrecompileError as Error, *},
     Address, Bytes, HashMap, HashSet, Log, B256,
 };
-#[doc(hidden)]
-pub use revm_primitives as primitives;
 
 use cfg_if::cfg_if;
 use core::hash::Hash;
