@@ -21,7 +21,7 @@ pub struct Contract {
     pub target_address: Address,
     /// Address of the account the bytecode was loaded from. This can be different from target_address
     /// in the case of DELEGATECALL or CALLCODE
-    pub bytecode_address: Address,
+    pub bytecode_address: Option<Address>,
     /// Caller of the EVM.
     pub caller: Address,
     /// Value send to contract from transaction or from CALL opcodes.
@@ -36,7 +36,7 @@ impl Contract {
         bytecode: Bytecode,
         hash: Option<B256>,
         target_address: Address,
-        bytecode_address: Address,
+        bytecode_address: Option<Address>,
         caller: Address,
         call_value: U256,
     ) -> Self {
@@ -65,7 +65,7 @@ impl Contract {
             bytecode,
             hash,
             contract_address,
-            contract_address,
+            None,
             env.tx.caller,
             env.tx.value,
         )
@@ -84,7 +84,7 @@ impl Contract {
             bytecode,
             hash,
             call_context.target_address,
-            call_context.bytecode_address,
+            Some(call_context.bytecode_address),
             call_context.caller,
             call_context.call_value(),
         )

@@ -113,7 +113,7 @@ impl Interpreter {
                 bytecode,
                 None,
                 crate::primitives::Address::default(),
-                crate::primitives::Address::default(),
+                None,
                 crate::primitives::Address::default(),
                 U256::ZERO,
             ),
