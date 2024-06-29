@@ -44,10 +44,10 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
         })
     }
 
-    // Create a new AlloyDB instance, with a provider and a block and a runtime.
-    //
-    // Refer to [tokio::runtime::Builder] on how to create a runtime if you are in synchronous world.
-    // If you are already using something like [tokio::main], call AlloyDB::new instead.
+    /// Create a new AlloyDB instance, with a provider and a block and a runtime.
+    ///
+    /// Refer to [tokio::runtime::Builder] on how to create a runtime if you are in synchronous world.
+    /// If you are already using something like [tokio::main], call AlloyDB::new instead.
     pub fn with_runtime(provider: P, block_number: BlockId, runtime: Runtime) -> Self {
         let rt = HandleOrRuntime::Runtime(runtime);
         Self {
@@ -58,10 +58,10 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
         }
     }
 
-    // Create a new AlloyDB instance, with a provider and a block and a runtime handle.
-    //
-    // This generally allows you to pass any valid runtime handle, refer to [tokio::runtime::Handle] on how
-    // to obtain a handle. If you are already in asynchronous world, like [tokio::main], use AlloyDB::new instead.
+    /// Create a new AlloyDB instance, with a provider and a block and a runtime handle.
+    ///
+    /// This generally allows you to pass any valid runtime handle, refer to [tokio::runtime::Handle] on how
+    /// to obtain a handle. If you are already in asynchronous world, like [tokio::main], use AlloyDB::new instead.
     pub fn with_handle(provider: P, block_number: BlockId, handle: Handle) -> Self {
         let rt = HandleOrRuntime::Handle(handle);
         Self {
