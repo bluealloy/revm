@@ -132,11 +132,10 @@ impl L1BlockInfo {
                 .wrapping_div(1_000_000);
         };
 
-        let mut rollup_data_gas_cost = cost_data.ones.get()
+        let mut rollup_data_gas_cost = cost_data
+            .ones
             .saturating_mul(NON_ZERO_BYTE_COST)
-            .saturating_add(
-                cost_data.zeroes.get().saturating_mul(ZERO_BYTE_COST),
-            );
+            .saturating_add(cost_data.zeroes.saturating_mul(ZERO_BYTE_COST));
 
         // Prior to regolith, an extra 68 non zero bytes were included in the rollup data costs.
         if !spec_id.is_enabled_in(SpecId::REGOLITH) {
@@ -150,7 +149,8 @@ impl L1BlockInfo {
     // This value is computed based on the following formula:
     // max(minTransactionSize, intercept + fastlzCoef*fastlzSize)
     fn tx_estimated_size_fjord(&self, cost_data: RollupCostData) -> u32 {
-        cost_data.fastlz_size
+        cost_data
+            .fastlz_size
             .saturating_mul(836_500)
             .saturating_sub(42_585_600)
             .max(100_000_000)
