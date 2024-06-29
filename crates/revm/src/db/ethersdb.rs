@@ -72,8 +72,8 @@ impl<M: Middleware> EthersDB<M> {
 
     // Create a new EthersDB instance, with a provider and a block (None for latest) and a handle.
     //
-    // Refer to [tokio::runtime::Builder] how to create a runtime if you are in synchronous world.
-    // If you are already using something like [tokio::main], call EthersDB::new instead.
+    // This generally allows you to pass any valid runtime handle, refer to [tokio::runtime::Handle] on how
+    // to obtain a handle. If you are already in asynchronous world, like [tokio::main], use EthersDB::new instead.
     pub fn with_handle(
         client: Arc<M>,
         block_number: Option<BlockId>,
