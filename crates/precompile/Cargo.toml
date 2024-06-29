@@ -49,6 +49,9 @@ c-kzg = { version = "1.0.2", default-features = false, optional = true }
 # BLS12-381 precompiles
 blst = { version = "0.3.12", optional = true }
 
+# ecAdd, ecMul, ecPairing
+bn = { package = "substrate-bn", version = "0.6", default-features = false, optional = true }
+
 # p256verify precompile
 p256 = { version = "0.13.2", optional = true, default-features = false, features = [
     "ecdsa",
@@ -63,11 +66,8 @@ serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 
-# ecAdd, ecMul, ecPairing
-bn = { package = "substrate-bn", version = "0.6", default-features = false }
-
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst", "bn"]
 std = [
     "revm-primitives/std",
     "k256/std",
@@ -79,6 +79,7 @@ std = [
 ]
 hashbrown = ["revm-primitives/hashbrown"]
 asm-keccak = ["revm-primitives/asm-keccak"]
+bn = ["dep:bn"]
 
 optimism = ["revm-primitives/optimism", "secp256r1"]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
