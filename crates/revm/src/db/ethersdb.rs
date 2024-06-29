@@ -70,6 +70,28 @@ impl<M: Middleware> EthersDB<M> {
         Some(instance)
     }
 
+    // Create a new EthersDB instance, with a provider and a block (None for latest) and a handle.
+    //
+    // Refer to [tokio::runtime::Builder] how to create a runtime if you are in synchronous world.
+    // If you are already using something like [tokio::main], call EthersDB::new instead.
+    pub fn with_handle(
+        client: Arc<M>,
+        block_number: Option<BlockId>,
+        handle: Handle,
+    ) -> Option<Self> {
+        let rt = HandleOrRuntime::Handle(handle);
+        let mut instance = Self {
+            client,
+            block_number,
+            rt,
+        };
+
+        instance.block_number = Some(BlockId::from(
+            instance.block_on(instance.client.get_block_number()).ok()?,
+        ));
+        Some(instance)
+    }
+
     /// Internal utility function to call tokio feature and wait for output
     #[inline]
     fn block_on<F>(&self, f: F) -> F::Output

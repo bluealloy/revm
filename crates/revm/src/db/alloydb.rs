@@ -46,10 +46,24 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
 
     // Create a new AlloyDB instance, with a provider and a block and a runtime.
     //
-    // Refer to [tokio::runtime::Builder] how to create a runtime if you are in synchronous world.
+    // Refer to [tokio::runtime::Builder] on how to create a runtime if you are in synchronous world.
     // If you are already using something like [tokio::main], call AlloyDB::new instead.
     pub fn with_runtime(provider: P, block_number: BlockId, runtime: Runtime) -> Self {
         let rt = HandleOrRuntime::Runtime(runtime);
+        Self {
+            provider,
+            block_number,
+            rt,
+            _marker: std::marker::PhantomData,
+        }
+    }
+
+    // Create a new AlloyDB instance, with a provider and a block and a runtime handle.
+    //
+    // Refer to [tokio::runtime::Builder] how to create a runtime if you are in synchronous world.
+    // If you are already using something like [tokio::main], call AlloyDB::new instead.
+    pub fn with_handle(provider: P, block_number: BlockId, handle: Handle) -> Self {
+        let rt = HandleOrRuntime::Handle(handle);
         Self {
             provider,
             block_number,
