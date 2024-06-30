@@ -310,6 +310,17 @@ impl AccountInfo {
             ..Default::default()
         }
     }
+
+    pub fn from_bytecode(bytecode: Bytecode) -> Self {
+        let hash = bytecode.hash_slow();
+
+        AccountInfo {
+            balance: U256::ZERO,
+            nonce: 1,
+            code: Some(bytecode),
+            code_hash: hash,
+        }
+    }
 }
 
 #[cfg(test)]
