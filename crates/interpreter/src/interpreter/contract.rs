@@ -60,12 +60,16 @@ impl Contract {
             TxKind::Call(caller) => caller,
             TxKind::Create => Address::ZERO,
         };
+        let bytecode_address = match env.tx.transact_to {
+            TxKind::Call(caller) => Some(caller),
+            TxKind::Create => None,
+        };
         Self::new(
             env.tx.data.clone(),
             bytecode,
             hash,
             contract_address,
-            None,
+            bytecode_address,
             env.tx.caller,
             env.tx.value,
         )
