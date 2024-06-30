@@ -6,40 +6,70 @@ use alloy_eips::BlockId;
 use alloy_provider::{Network, Provider};
 use alloy_transport::{Transport, TransportError};
 use std::future::IntoFuture;
-use tokio::runtime::Handle;
+use tokio::runtime::{Handle, Runtime};
+
+use super::utils::HandleOrRuntime;
 
 /// An alloy-powered REVM [Database].
 ///
 /// When accessing the database, it'll use the given provider to fetch the corresponding account's data.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct AlloyDB<T: Transport + Clone, N: Network, P: Provider<T, N>> {
     /// The provider to fetch the data from.
     provider: P,
     /// The block number on which the queries will be based on.
     block_number: BlockId,
     /// handle to the tokio runtime
-    handle: Handle,
+    rt: HandleOrRuntime,
     _marker: std::marker::PhantomData<fn() -> (T, N)>,
 }
 
 impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
-    /// Create a new AlloyDB instance, with a [Provider] and a block (Use None for latest).
+    /// Create a new AlloyDB instance, with a [Provider] and a block.
     ///
     /// Returns `None` if no tokio runtime is available or if the current runtime is a current-thread runtime.
     pub fn new(provider: P, block_number: BlockId) -> Option<Self> {
-        let handle = match Handle::try_current() {
+        let rt = match Handle::try_current() {
             Ok(handle) => match handle.runtime_flavor() {
                 tokio::runtime::RuntimeFlavor::CurrentThread => return None,
-                _ => handle,
+                _ => HandleOrRuntime::Handle(handle),
             },
             Err(_) => return None,
         };
         Some(Self {
             provider,
             block_number,
-            handle,
+            rt,
             _marker: std::marker::PhantomData,
         })
+    }
+
+    /// Create a new AlloyDB instance, with a provider and a block and a runtime.
+    ///
+    /// Refer to [tokio::runtime::Builder] on how to create a runtime if you are in synchronous world.
+    /// If you are already using something like [tokio::main], call AlloyDB::new instead.
+    pub fn with_runtime(provider: P, block_number: BlockId, runtime: Runtime) -> Self {
+        let rt = HandleOrRuntime::Runtime(runtime);
+        Self {
+            provider,
+            block_number,
+            rt,
+            _marker: std::marker::PhantomData,
+        }
+    }
+
+    /// Create a new AlloyDB instance, with a provider and a block and a runtime handle.
+    ///
+    /// This generally allows you to pass any valid runtime handle, refer to [tokio::runtime::Handle] on how
+    /// to obtain a handle. If you are already in asynchronous world, like [tokio::main], use AlloyDB::new instead.
+    pub fn with_handle(provider: P, block_number: BlockId, handle: Handle) -> Self {
+        let rt = HandleOrRuntime::Handle(handle);
+        Self {
+            provider,
+            block_number,
+            rt,
+            _marker: std::marker::PhantomData,
+        }
     }
 
     /// Internal utility function that allows us to block on a future regardless of the runtime flavor.
@@ -49,7 +79,7 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
         F: std::future::Future + Send,
         F::Output: Send,
     {
-        tokio::task::block_in_place(move || self.handle.block_on(f))
+        self.rt.block_on(f)
     }
 
     /// Set the block number on which the queries will be based on.
