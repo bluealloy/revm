@@ -345,6 +345,7 @@ impl<DB: Database> InnerEvmContext<DB> {
             Bytecode::Eof(Arc::new(initcode.clone())),
             None,
             created_address,
+            None,
             inputs.caller,
             inputs.value,
         );
@@ -484,6 +485,7 @@ impl<DB: Database> InnerEvmContext<DB> {
             bytecode,
             Some(init_code_hash),
             created_address,
+            None,
             inputs.caller,
             inputs.value,
         );
