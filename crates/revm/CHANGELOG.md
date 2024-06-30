@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-v10.0.0...revm-v11.0.0) - 2024-06-30
+
+### Added
+- *(Prague)* Add EIP-7702 ([#1565](https://github.com/bluealloy/revm/pull/1565))
+- *(EOF)* disallow ExtDelegateCall to legacy bytecode ([#1572](https://github.com/bluealloy/revm/pull/1572))
+- *(EOF)* Add target address expansion checks ([#1570](https://github.com/bluealloy/revm/pull/1570))
+
+### Other
+- store tokio::runtime::Handle in ethers/alloyDB ([#1557](https://github.com/bluealloy/revm/pull/1557))
+- use const blocks ([#1522](https://github.com/bluealloy/revm/pull/1522))
+- fix compile for alloydb ([#1559](https://github.com/bluealloy/revm/pull/1559))
+- replace AccessList with alloy version ([#1552](https://github.com/bluealloy/revm/pull/1552))
+- replace U256 with u64 in BLOCKHASH ([#1505](https://github.com/bluealloy/revm/pull/1505))
+
 ## [10.0.0](https://github.com/bluealloy/revm/compare/revm-v9.0.0...revm-v10.0.0) - 2024-06-20
 
 ### Added
