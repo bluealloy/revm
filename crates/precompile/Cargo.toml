@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm", "precompiles"]
 license = "MIT"
 name = "revm-precompile"
 repository = "https://github.com/bluealloy/revm"
-version = "8.0.0"
+version = "8.0.1"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -21,7 +21,7 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-revm-primitives = { path = "../primitives", version = "5.0.0", default-features = false }
+revm-primitives = { path = "../primitives", version = "6.0.0", default-features = false }
 once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
 
 # ecRecover

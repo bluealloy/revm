@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 bytes = "1.6"
 hex = "0.4"
-revm = { path = "../../crates/revm", version = "10.0.0", default-features=false }
+revm = { path = "../../crates/revm", version = "11.0.0", default-features=false }
 microbench = "0.5"
 alloy-sol-macro = "0.7.0"
 alloy-sol-types = "0.7.0"
