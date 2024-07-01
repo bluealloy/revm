@@ -31,21 +31,22 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
     // load coinbase
     // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
     if SPEC::enabled(SHANGHAI) {
-        context.evm.inner.journaled_state.initial_account_load(
-            context.evm.inner.env.block.coinbase,
-            [],
-            &mut context.evm.inner.db,
-        )?;
+        let coinbase = context.evm.inner.env.block.coinbase;
+        context
+            .evm
+            .journaled_state
+            .warm_preloaded_addresses
+            .insert(coinbase);
     }
 
     // Load blockhash storage address
     // EIP-2935: Serve historical block hashes from state
     if SPEC::enabled(PRAGUE) {
-        context.evm.inner.journaled_state.initial_account_load(
-            BLOCKHASH_STORAGE_ADDRESS,
-            [],
-            &mut context.evm.inner.db,
-        )?;
+        context
+            .evm
+            .journaled_state
+            .warm_preloaded_addresses
+            .insert(BLOCKHASH_STORAGE_ADDRESS);
     }
 
     // EIP-7702. Load bytecode to authorized accounts.
