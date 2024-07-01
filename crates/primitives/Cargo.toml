@@ -29,7 +29,7 @@ alloy-primitives = { version = "0.7.2", default-features = false, features = [
 hashbrown = "0.14"
 auto_impl = "1.2"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
-bitflags = { version = "2.5.0", default-features = false }
+bitflags = { version = "2.6.0", default-features = false }
 
 # For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
 c-kzg = { version = "1.0.2", default-features = false, optional = true }
