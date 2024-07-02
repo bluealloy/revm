@@ -1,8 +1,6 @@
 //! Precompiles for the "alt-bn128" curve.
 
-use crate::{Address, Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use eth_pairings::public_interface::eip196::EIP196Executor;
-use revm_primitives::PrecompileOutput;
+use crate::{Address, Precompile, PrecompileResult, PrecompileWithAddress};
 
 pub mod add {
     use super::*;
@@ -80,26 +78,22 @@ pub mod pair {
 pub const PAIR_ELEMENT_LEN: usize = 64 + 128;
 
 pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
-    if gas_cost > gas_limit {
-        return Err(Error::OutOfGas.into());
-    }
-
-    let res = EIP196Executor::add(input);
-    match res {
-        Ok(res) => Ok(PrecompileOutput::new(gas_cost, res.into())),
-        Err(e) => Err(Error::Other(e.to_string()).into()),
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "bn")] {
+            bn::run_add(input, gas_cost, gas_limit)
+        } else {
+            matter_labs::run_add(input, gas_cost, gas_limit)
+        }
     }
 }
 
 pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
-    if gas_cost > gas_limit {
-        return Err(Error::OutOfGas.into());
-    }
-
-    let res = EIP196Executor::mul(input);
-    match res {
-        Ok(res) => Ok(PrecompileOutput::new(gas_cost, res.into())),
-        Err(e) => Err(Error::Other(e.to_string()).into()),
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "bn")] {
+            bn::run_mul(input, gas_cost, gas_limit)
+        } else {
+            matter_labs::run_mul(input, gas_cost, gas_limit)
+        }
     }
 }
 
@@ -109,32 +103,83 @@ pub fn run_pair(
     pair_base_cost: u64,
     gas_limit: u64,
 ) -> PrecompileResult {
-    let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
-    if gas_used > gas_limit {
-        return Err(Error::OutOfGas.into());
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "bn")] {
+            bn::run_pair(input, pair_per_point_cost, pair_base_cost, gas_limit)
+        } else {
+            matter_labs::run_pair(input, pair_per_point_cost, pair_base_cost, gas_limit)
+        }
+    }
+}
+
+#[cfg(not(feature = "bn"))]
+mod matter_labs {
+    use super::PAIR_ELEMENT_LEN;
+    use crate::{Error, PrecompileOutput, PrecompileResult};
+    use eth_pairings::public_interface::eip196::EIP196Executor;
+
+    pub(crate) fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
+        if gas_cost > gas_limit {
+            return Err(Error::OutOfGas.into());
+        }
+
+        let res = EIP196Executor::add(input);
+        match res {
+            Ok(res) => Ok(PrecompileOutput::new(gas_cost, res.into())),
+            Err(e) => Err(Error::Other(e.to_string()).into()),
+        }
     }
 
-    if input.len() % PAIR_ELEMENT_LEN != 0 {
-        return Err(Error::Bn128PairLength.into());
+    pub(crate) fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
+        if gas_cost > gas_limit {
+            return Err(Error::OutOfGas.into());
+        }
+
+        let res = EIP196Executor::mul(input);
+        match res {
+            Ok(res) => Ok(PrecompileOutput::new(gas_cost, res.into())),
+            Err(e) => Err(Error::Other(e.to_string()).into()),
+        }
     }
 
-    let res = EIP196Executor::pair(input);
+    pub(crate) fn run_pair(
+        input: &[u8],
+        pair_per_point_cost: u64,
+        pair_base_cost: u64,
+        gas_limit: u64,
+    ) -> PrecompileResult {
+        let gas_used =
+            (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
+        if gas_used > gas_limit {
+            return Err(Error::OutOfGas.into());
+        }
 
-    let success = match res {
-        Ok(res) => res.into(),
-        Err(e) => return Err(Error::Other(e.to_string()).into()),
-    };
+        if input.len() % PAIR_ELEMENT_LEN != 0 {
+            return Err(Error::Bn128PairLength.into());
+        }
 
-    Ok(PrecompileOutput::new(gas_used, success))
+        let res = EIP196Executor::pair(input);
+
+        let success = match res {
+            Ok(res) => res.into(),
+            Err(e) => return Err(Error::Other(e.to_string()).into()),
+        };
+
+        Ok(PrecompileOutput::new(gas_used, success))
+    }
 }
 
 #[cfg(feature = "bn")]
 mod bn {
-    use crate::{utilities::{bool_to_bytes32, right_pad}, Error, PrecompileResult};
-    use revm_primitives::PrecompileOutput;
+    use super::PAIR_ELEMENT_LEN;
+    use crate::{
+        utilities::{bool_to_bytes32, right_pad},
+        Error, PrecompileOutput, PrecompileResult,
+    };
     use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 
-    use super::PAIR_ELEMENT_LEN;
+    // Silence the unused crate dependency warning.
+    use eth_pairings as _;
 
     /// Input length for the add operation.
     /// `ADD` takes two uncompressed G1 points (64 bytes each).
@@ -150,7 +195,7 @@ mod bn {
     ///
     /// Panics if the input is not at least 32 bytes long.
     #[inline]
-    pub fn read_fq(input: &[u8]) -> Result<Fq, Error> {
+    fn read_fq(input: &[u8]) -> Result<Fq, Error> {
         Fq::from_slice(&input[..32]).map_err(|_| Error::Bn128FieldPointNotAMember)
     }
 
@@ -160,14 +205,14 @@ mod bn {
     ///
     /// Panics if the input is not at least 64 bytes long.
     #[inline]
-    pub fn read_point(input: &[u8]) -> Result<G1, Error> {
+    fn read_point(input: &[u8]) -> Result<G1, Error> {
         let px = read_fq(&input[0..32])?;
         let py = read_fq(&input[32..64])?;
         new_g1_point(px, py)
     }
 
     /// Creates a new `G1` point from the given `x` and `y` coordinates.
-    pub fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
+    fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
         if px == Fq::zero() && py == Fq::zero() {
             Ok(G1::zero())
         } else {
@@ -177,7 +222,7 @@ mod bn {
         }
     }
 
-    pub fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
+    pub(crate) fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
         if gas_cost > gas_limit {
             return Err(Error::OutOfGas.into());
         }
@@ -195,7 +240,7 @@ mod bn {
         Ok(PrecompileOutput::new(gas_cost, output.into()))
     }
 
-    pub fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
+    pub(crate) fn run_mul(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
         if gas_cost > gas_limit {
             return Err(Error::OutOfGas.into());
         }
@@ -215,13 +260,14 @@ mod bn {
         Ok(PrecompileOutput::new(gas_cost, output.into()))
     }
 
-    pub fn run_pair(
+    pub(crate) fn run_pair(
         input: &[u8],
         pair_per_point_cost: u64,
         pair_base_cost: u64,
         gas_limit: u64,
     ) -> PrecompileResult {
-        let gas_used = (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
+        let gas_used =
+            (input.len() / PAIR_ELEMENT_LEN) as u64 * pair_per_point_cost + pair_base_cost;
         if gas_used > gas_limit {
             return Err(Error::OutOfGas.into());
         }
@@ -259,7 +305,9 @@ mod bn {
                     if ba.is_zero() && bb.is_zero() {
                         G2::zero()
                     } else {
-                        G2::from(AffineG2::new(ba, bb).map_err(|_| Error::Bn128AffineGFailedToCreate)?)
+                        G2::from(
+                            AffineG2::new(ba, bb).map_err(|_| Error::Bn128AffineGFailedToCreate)?,
+                        )
                     }
                 };
 
@@ -277,6 +325,7 @@ mod tests {
     use crate::bn128::add::BYZANTIUM_ADD_GAS_COST;
     use crate::bn128::mul::BYZANTIUM_MUL_GAS_COST;
     use crate::bn128::pair::{BYZANTIUM_PAIR_BASE, BYZANTIUM_PAIR_PER_POINT};
+    use crate::Error;
     use revm_primitives::{hex, PrecompileError, PrecompileErrors};
 
     use super::*;
@@ -357,10 +406,19 @@ mod tests {
         .unwrap();
 
         let res = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500);
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::Other(..)))
-        ));
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "bn")] {
+                assert!(matches!(
+                    res,
+                    Err(PrecompileErrors::Error(PrecompileError::Bn128AffineGFailedToCreate)),
+                ));
+            } else {
+                assert!(matches!(
+                    res,
+                    Err(PrecompileErrors::Error(PrecompileError::Other(..))),
+                ));
+            }
+        }
     }
 
     #[test]
@@ -434,10 +492,19 @@ mod tests {
         .unwrap();
 
         let res = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000);
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::Other(..)))
-        ));
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "bn")] {
+                assert!(matches!(
+                    res,
+                    Err(PrecompileErrors::Error(PrecompileError::Bn128AffineGFailedToCreate)),
+                ));
+            } else {
+                assert!(matches!(
+                    res,
+                    Err(PrecompileErrors::Error(PrecompileError::Other(..))),
+                ));
+            }
+        }
     }
 
     #[test]
@@ -495,6 +562,7 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             259_999,
         );
+
         assert!(matches!(res, Err(PrecompileErrors::Error(Error::OutOfGas))));
 
         // no input test
@@ -530,10 +598,20 @@ mod tests {
             BYZANTIUM_PAIR_BASE,
             260_000,
         );
-        assert!(matches!(
-            res,
-            Err(PrecompileErrors::Error(PrecompileError::Other(..)))
-        ));
+
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "bn")] {
+                assert!(matches!(
+                    res,
+                    Err(PrecompileErrors::Error(PrecompileError::Bn128AffineGFailedToCreate)),
+                ));
+            } else {
+                assert!(matches!(
+                    res,
+                    Err(PrecompileErrors::Error(PrecompileError::Other(..))),
+                ));
+            }
+        }
 
         // invalid input length
         let input = hex::decode(

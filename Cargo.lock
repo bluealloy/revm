@@ -3036,6 +3036,7 @@ dependencies = [
  "aurora-engine-modexp",
  "blst",
  "c-kzg",
+ "cfg-if",
  "criterion",
  "eth_pairings",
  "eyre",
