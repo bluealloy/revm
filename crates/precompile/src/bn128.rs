@@ -116,6 +116,7 @@ pub fn run_pair(
 mod matter_labs {
     use super::PAIR_ELEMENT_LEN;
     use crate::{Error, PrecompileOutput, PrecompileResult};
+    use std::string::ToString;
     use eth_pairings::public_interface::eip196::EIP196Executor;
 
     pub(crate) fn run_add(input: &[u8], gas_cost: u64, gas_limit: u64) -> PrecompileResult {
