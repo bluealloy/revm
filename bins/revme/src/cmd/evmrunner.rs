@@ -143,12 +143,15 @@ fn run_benchmark(bytecode_str: Cow<str>) {
         ..Default::default()
     };
     let mut criterion = criterion::Criterion::default();
+
     let mut criterion_group = criterion.benchmark_group("revme");
     criterion_group.bench_function("bytecode", |b| {
         b.iter(|| {
-            let mut interpreter = Interpreter::new(contract.clone(), u64::MAX, false);
-            let res = interpreter.run(EMPTY_SHARED_MEMORY, &instruction_table, &mut host.clone());
-            res
+            Interpreter::new(contract.clone(), u64::MAX, false).run(
+                EMPTY_SHARED_MEMORY,
+                &instruction_table,
+                &mut host.clone(),
+            );
         })
     });
     criterion_group.finish();
