@@ -152,8 +152,3 @@ required-features = ["std", "serde-json"]
 name = "bench"
 path = "benches/bench.rs"
 harness = false
-
-[[bench]]
-name = "bytecode_benchmark"
-path = "benches/bytecode.rs"
-harness = false

@@ -2,12 +2,15 @@ use revm::{
     db::BenchmarkDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
-    primitives::{Address, Bytecode, TxKind},
+    interpreter::{
+        analysis::to_analysed, opcode::make_instruction_table, Contract, DummyHost, Interpreter,
+        EMPTY_SHARED_MEMORY,
+    },
+    primitives::{address, Address, Bytecode, Bytes, ShanghaiSpec, TxKind},
     Evm,
 };
 use std::io::Error as IoError;
 use std::path::PathBuf;
-use std::time::Duration;
 use std::{borrow::Cow, fs};
 use structopt::StructOpt;
 
@@ -75,6 +78,12 @@ impl Cmd {
         let input = hex::decode(self.input.trim())
             .map_err(|_| Errors::InvalidInput)?
             .into();
+
+        if self.bench {
+            run_benchmark(bytecode_str);
+            return Ok(());
+        }
+
         // BenchmarkDB is dummy state that implements Database trait.
         // the bytecode is deployed at zero address.
         let mut evm = Evm::builder()
@@ -90,17 +99,6 @@ impl Cmd {
                 tx.data = input;
             })
             .build();
-
-        if self.bench {
-            // Microbenchmark
-            let bench_options = microbench::Options::default().time(Duration::from_secs(3));
-
-            microbench::bench(&bench_options, "Run bytecode", || {
-                let _ = evm.transact().unwrap();
-            });
-
-            return Ok(());
-        }
 
         let out = if self.trace {
             let mut evm = evm
@@ -124,4 +122,34 @@ impl Cmd {
 
         Ok(())
     }
+}
+
+fn run_benchmark(bytecode_str: Cow<str>) {
+    let evm = Evm::builder()
+        .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
+        .modify_tx_env(|tx| {
+            tx.caller = address!("1000000000000000000000000000000000000000");
+            tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
+        })
+        .build();
+
+    let host = DummyHost::new(*evm.context.evm.env.clone());
+    let instruction_table = make_instruction_table::<DummyHost, ShanghaiSpec>();
+    let contract = Contract {
+        input: Bytes::from(hex::decode("").unwrap()),
+        bytecode: to_analysed(Bytecode::new_raw(
+            hex::decode(bytecode_str.to_string()).unwrap().into(),
+        )),
+        ..Default::default()
+    };
+    let mut criterion = criterion::Criterion::default();
+    let mut criterion_group = criterion.benchmark_group("revme");
+    criterion_group.bench_function("bytecode", |b| {
+        b.iter(|| {
+            let mut interpreter = Interpreter::new(contract.clone(), u64::MAX, false);
+            let res = interpreter.run(EMPTY_SHARED_MEMORY, &instruction_table, &mut host.clone());
+            res
+        })
+    });
+    criterion_group.finish();
 }
