@@ -6,7 +6,7 @@ use revm::{
         analysis::to_analysed, opcode::make_instruction_table, Contract, DummyHost, Interpreter,
         EMPTY_SHARED_MEMORY,
     },
-    primitives::{address, Address, Bytecode, Bytes, ShanghaiSpec, TxKind},
+    primitives::{address, Address, Bytecode, Bytes, LatestSpec, TxKind},
     Evm,
 };
 use std::io::Error as IoError;
@@ -134,7 +134,7 @@ fn run_benchmark(bytecode_str: Cow<str>) {
         .build();
 
     let host = DummyHost::new(*evm.context.evm.env.clone());
-    let instruction_table = make_instruction_table::<DummyHost, ShanghaiSpec>();
+    let instruction_table = make_instruction_table::<DummyHost, LatestSpec>();
     let contract = Contract {
         input: Bytes::from(hex::decode("").unwrap()),
         bytecode: to_analysed(Bytecode::new_raw(
