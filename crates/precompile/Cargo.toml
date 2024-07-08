@@ -22,7 +22,7 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-revm-primitives = { path = "../primitives", version = "5.0.0", default-features = false }
+revm-primitives = { path = "../primitives", version = "6.0.0", default-features = false }
 once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
 
 # ecRecover
