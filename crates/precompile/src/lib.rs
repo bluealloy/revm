@@ -23,15 +23,14 @@ pub mod secp256k1;
 pub mod secp256r1;
 pub mod utilities;
 
-// silence lint
-use cfg_if as _;
+pub use fatal_precompile::fatal_precompile;
+
 #[cfg(feature = "kzg-rs")]
+// silence lint
 use kzg_rs as _;
 
 use core::hash::Hash;
 use once_cell::race::OnceBox;
-#[doc(hidden)]
-pub use revm_primitives as primitives;
 #[doc(hidden)]
 pub use revm_primitives as primitives;
 pub use revm_primitives::{
@@ -40,8 +39,6 @@ pub use revm_primitives::{
 };
 
 use cfg_if::cfg_if;
-use core::hash::Hash;
-use once_cell::race::OnceBox;
 use std::{boxed::Box, vec::Vec};
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {

@@ -46,6 +46,6 @@ pub use specification::*;
 pub use state::*;
 pub use utilities::*;
 
-#[cfg(feature = "kzg-rs")]
+#[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 // silence lint
 use kzg_rs as _;
