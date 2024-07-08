@@ -146,7 +146,7 @@ impl Precompiles {
                     let precompile = kzg_point_evaluation::POINT_EVALUATION.clone();
                 } else {
                     // TODO move constants to separate file.
-                    let precompile = fatal_precompile(u64_to_address(0x0A), "c-kzg feature is not enabled".to_string());
+                    let precompile = fatal_precompile(u64_to_address(0x0A), "c-kzg feature is not enabled".into());
                 }
             }
 
