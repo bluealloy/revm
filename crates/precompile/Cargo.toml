@@ -7,6 +7,7 @@ license = "MIT"
 name = "revm-precompile"
 repository = "https://github.com/bluealloy/revm"
 version = "8.0.0"
+readme = "../../README.md"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -53,6 +54,9 @@ blst = { version = "0.3.12", optional = true }
 p256 = { version = "0.13.2", optional = true, default-features = false, features = [
     "ecdsa",
 ] }
+
+# utils
+cfg-if = { version = "1.0", default-features = false }
 
 [dev-dependencies]
 criterion = "0.5"
