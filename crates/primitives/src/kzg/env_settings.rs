@@ -2,7 +2,6 @@ use super::{
     trusted_setup_points::{G1_POINTS, G2_POINTS},
     KzgSettings,
 };
-use core::hash::Hash;
 use once_cell::race::OnceBox;
 use std::{boxed::Box, sync::Arc};
 
@@ -10,7 +9,7 @@ cfg_if::cfg_if! {
     if #[cfg(feature = "c-kzg")] {
         /// KZG Settings that allow us to specify a custom trusted setup.
         /// or use hardcoded default settings.
-        #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+        #[derive(Debug, Clone, Default, PartialEq, Eq )]
         pub enum EnvKzgSettings {
             /// Default mainnet trusted setup
             #[default]

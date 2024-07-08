@@ -126,6 +126,7 @@ optional_beneficiary_reward = ["revm-interpreter/optional_beneficiary_reward"]
 # See comments in `revm-precompile`
 secp256k1 = ["revm-precompile/secp256k1"]
 c-kzg = ["revm-precompile/c-kzg"]
+kzg-rs = ["revm-precompile/kzg-rs"]
 blst = ["revm-precompile/blst"]
 
 [[example]]

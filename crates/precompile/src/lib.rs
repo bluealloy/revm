@@ -28,17 +28,16 @@ pub use fatal_precompile::fatal_precompile;
 #[cfg(feature = "kzg-rs")]
 // silence lint
 use kzg_rs as _;
-
-use core::hash::Hash;
-use once_cell::race::OnceBox;
-#[doc(hidden)]
-pub use revm_primitives as primitives;
-pub use revm_primitives::{
+pub use primitives::{
     precompile::{PrecompileError as Error, *},
     Address, Bytes, HashMap, HashSet, Log, B256,
 };
+#[doc(hidden)]
+pub use revm_primitives as primitives;
 
 use cfg_if::cfg_if;
+use core::hash::Hash;
+use once_cell::race::OnceBox;
 use std::{boxed::Box, vec::Vec};
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
