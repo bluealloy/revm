@@ -166,21 +166,6 @@ impl<DB: Database> EvmContext<DB> {
             return return_result(InstructionResult::CallTooDeep);
         }
 
-        let (account, _) = self
-            .inner
-            .journaled_state
-            .load_code(inputs.bytecode_address, &mut self.inner.db)?;
-
-        let code_hash = account.info.code_hash();
-        let bytecode = account.info.code.clone().unwrap_or_default();
-
-        // ExtDelegateCall is not allowed to call non-EOF contracts.
-        if inputs.scheme.is_ext_delegate_call()
-            && bytecode.bytes_slice().get(..2) != Some(&EOF_MAGIC_BYTES)
-        {
-            return return_result(InstructionResult::InvalidExtDelegateCallTarget);
-        }
-
         // Create subroutine checkpoint
         let checkpoint = self.journaled_state.checkpoint();
 
@@ -216,18 +201,39 @@ impl<DB: Database> EvmContext<DB> {
                 result,
                 inputs.return_memory_offset.clone(),
             ))
-        } else if !bytecode.is_empty() {
-            let contract =
-                Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
-            // Create interpreter and executes call and push new CallStackFrame.
-            Ok(FrameOrResult::new_call_frame(
-                inputs.return_memory_offset.clone(),
-                checkpoint,
-                Interpreter::new(contract, gas.limit(), inputs.is_static),
-            ))
         } else {
-            self.journaled_state.checkpoint_commit();
-            return_result(InstructionResult::Stop)
+            let (account, _) = self
+                .inner
+                .journaled_state
+                .load_code(inputs.bytecode_address, &mut self.inner.db)?;
+
+            let code_hash = account.info.code_hash();
+            let bytecode = account.info.code.clone().unwrap_or_default();
+
+            // ExtDelegateCall is not allowed to call non-EOF contracts.
+            if inputs.scheme.is_ext_delegate_call()
+                && bytecode.bytes_slice().get(..2) != Some(&EOF_MAGIC_BYTES)
+            {
+                return return_result(InstructionResult::InvalidExtDelegateCallTarget);
+            }
+
+            if !bytecode.is_empty() {
+                let contract = Contract::new_with_context(
+                    inputs.input.clone(),
+                    bytecode,
+                    Some(code_hash),
+                    inputs,
+                );
+                // Create interpreter and executes call and push new CallStackFrame.
+                Ok(FrameOrResult::new_call_frame(
+                    inputs.return_memory_offset.clone(),
+                    checkpoint,
+                    Interpreter::new(contract, gas.limit(), inputs.is_static),
+                ))
+            } else {
+                self.journaled_state.checkpoint_commit();
+                return_result(InstructionResult::Stop)
+            }
         }
     }
 }
@@ -323,7 +329,7 @@ mod tests {
     use crate::{
         db::{CacheDB, EmptyDB},
         primitives::{address, Bytecode},
-        Frame, JournalEntry,
+        Frame,
     };
     use std::boxed::Box;
     use test_utils::*;
@@ -367,7 +373,7 @@ mod tests {
             result.interpreter_result().result,
             InstructionResult::OutOfFunds
         );
-        let checkpointed = vec![vec![JournalEntry::AccountWarmed { address: contract }]];
+        let checkpointed = vec![vec![]];
         assert_eq!(evm_context.journaled_state.journal, checkpointed);
         assert_eq!(evm_context.journaled_state.depth, 0);
     }
