@@ -119,15 +119,15 @@ impl<DB: Database> ContextPrecompiles<DB> {
         &mut self,
         address: &Address,
         bytes: &Bytes,
-        gas_price: u64,
+        gas_limit: u64,
         evmctx: &mut InnerEvmContext<DB>,
     ) -> Option<PrecompileResult> {
         Some(match self.inner {
-            PrecompilesCow::StaticRef(p) => p.get(address)?.call_ref(bytes, gas_price, &evmctx.env),
+            PrecompilesCow::StaticRef(p) => p.get(address)?.call_ref(bytes, gas_limit, &evmctx.env),
             PrecompilesCow::Owned(ref mut owned) => match owned.get_mut(address)? {
-                ContextPrecompile::Ordinary(p) => p.call(bytes, gas_price, &evmctx.env),
-                ContextPrecompile::ContextStateful(p) => p.call(bytes, gas_price, evmctx),
-                ContextPrecompile::ContextStatefulMut(p) => p.call_mut(bytes, gas_price, evmctx),
+                ContextPrecompile::Ordinary(p) => p.call(bytes, gas_limit, &evmctx.env),
+                ContextPrecompile::ContextStateful(p) => p.call(bytes, gas_limit, evmctx),
+                ContextPrecompile::ContextStatefulMut(p) => p.call_mut(bytes, gas_limit, evmctx),
             },
         })
     }
@@ -199,7 +199,7 @@ pub trait ContextStatefulPrecompile<DB: Database>: Sync + Send {
     fn call(
         &self,
         bytes: &Bytes,
-        gas_price: u64,
+        gas_limit: u64,
         evmctx: &mut InnerEvmContext<DB>,
     ) -> PrecompileResult;
 }
@@ -210,7 +210,7 @@ pub trait ContextStatefulPrecompileMut<DB: Database>: DynClone + Send + Sync {
     fn call_mut(
         &mut self,
         bytes: &Bytes,
-        gas_price: u64,
+        gas_limit: u64,
         evmctx: &mut InnerEvmContext<DB>,
     ) -> PrecompileResult;
 }

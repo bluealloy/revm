@@ -612,7 +612,7 @@ mod test {
             fn call(
                 &self,
                 _input: &Bytes,
-                _gas_price: u64,
+                _gas_limit: u64,
                 _context: &mut InnerEvmContext<EmptyDB>,
             ) -> PrecompileResult {
                 Ok(PrecompileOutput::new(10, Bytes::new()))
