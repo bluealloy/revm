@@ -15,7 +15,7 @@ pub mod bn128;
 pub mod fatal_precompile;
 pub mod hash;
 pub mod identity;
-#[cfg(feature = "c-kzg")]
+#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
@@ -145,7 +145,7 @@ impl Precompiles {
 
             // EIP-4844: Shard Blob Transactions
             cfg_if! {
-                if #[cfg(feature = "c-kzg")] {
+                if #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))] {
                     let precompile = kzg_point_evaluation::POINT_EVALUATION.clone();
                 } else {
                     // TODO move constants to separate file.
