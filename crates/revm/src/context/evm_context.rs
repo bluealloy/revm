@@ -166,6 +166,12 @@ impl<DB: Database> EvmContext<DB> {
             return return_result(InstructionResult::CallTooDeep);
         }
 
+        // Make account warm and loaded
+        let _ = self
+            .inner
+            .journaled_state
+            .load_account(inputs.bytecode_address, &mut self.inner.db)?;
+
         // Create subroutine checkpoint
         let checkpoint = self.journaled_state.checkpoint();
 
@@ -217,23 +223,19 @@ impl<DB: Database> EvmContext<DB> {
                 return return_result(InstructionResult::InvalidExtDelegateCallTarget);
             }
 
-            if !bytecode.is_empty() {
-                let contract = Contract::new_with_context(
-                    inputs.input.clone(),
-                    bytecode,
-                    Some(code_hash),
-                    inputs,
-                );
-                // Create interpreter and executes call and push new CallStackFrame.
-                Ok(FrameOrResult::new_call_frame(
-                    inputs.return_memory_offset.clone(),
-                    checkpoint,
-                    Interpreter::new(contract, gas.limit(), inputs.is_static),
-                ))
-            } else {
+            if bytecode.is_empty() {
                 self.journaled_state.checkpoint_commit();
-                return_result(InstructionResult::Stop)
+                return return_result(InstructionResult::Stop);
             }
+
+            let contract =
+                Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
+            // Create interpreter and executes call and push new CallStackFrame.
+            Ok(FrameOrResult::new_call_frame(
+                inputs.return_memory_offset.clone(),
+                checkpoint,
+                Interpreter::new(contract, gas.limit(), inputs.is_static),
+            ))
         }
     }
 }
@@ -329,7 +331,7 @@ mod tests {
     use crate::{
         db::{CacheDB, EmptyDB},
         primitives::{address, Bytecode},
-        Frame,
+        Frame, JournalEntry,
     };
     use std::boxed::Box;
     use test_utils::*;
@@ -373,7 +375,7 @@ mod tests {
             result.interpreter_result().result,
             InstructionResult::OutOfFunds
         );
-        let checkpointed = vec![vec![]];
+        let checkpointed = vec![vec![JournalEntry::AccountWarmed { address: contract }]];
         assert_eq!(evm_context.journaled_state.journal, checkpointed);
         assert_eq!(evm_context.journaled_state.depth, 0);
     }
