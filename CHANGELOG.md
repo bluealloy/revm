@@ -1,5 +1,20 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v38 tag
+date: 08.07.2024
+
+* Add EIP-7702 for Prague.
+* Import AccessList from alloy-eips repo.
+* EOF fixes
+* Utility changes.
+
+Versions
+* revme: 0.6.0 -> 0.7.0
+* revm: 10.0.0 -> 11.0.0
+* revm-interpreter: 6.0.0 -> 7.0.0
+* revm-primitives: 5.0.0 -> 6.0.0
+* revm-precompile: 8.0.0 -> 9.0.0
+
 # v37 tag
 date: 20.06.2024
 

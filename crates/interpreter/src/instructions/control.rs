@@ -194,7 +194,7 @@ pub fn stop<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 
 /// Invalid opcode. This opcode halts the execution.
 pub fn invalid<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
-    interpreter.instruction_result = InstructionResult::InvalidEFOpcode;
+    interpreter.instruction_result = InstructionResult::InvalidFEOpcode;
 }
 
 /// Unknown opcode. This opcode halts the execution.

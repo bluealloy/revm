@@ -12,6 +12,7 @@ pub mod blake2;
 #[cfg(feature = "blst")]
 pub mod bls12_381;
 pub mod bn128;
+pub mod fatal_precompile;
 pub mod hash;
 pub mod identity;
 #[cfg(feature = "c-kzg")]
@@ -22,14 +23,18 @@ pub mod secp256k1;
 pub mod secp256r1;
 pub mod utilities;
 
-use core::hash::Hash;
-use once_cell::race::OnceBox;
-#[doc(hidden)]
-pub use revm_primitives as primitives;
-pub use revm_primitives::{
+pub use fatal_precompile::fatal_precompile;
+
+pub use primitives::{
     precompile::{PrecompileError as Error, *},
     Address, Bytes, HashMap, HashSet, Log, B256,
 };
+#[doc(hidden)]
+pub use revm_primitives as primitives;
+
+use cfg_if::cfg_if;
+use core::hash::Hash;
+use once_cell::race::OnceBox;
 use std::{boxed::Box, vec::Vec};
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
@@ -133,18 +138,21 @@ impl Precompiles {
     pub fn cancun() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let precompiles = Self::berlin().clone();
+            let mut precompiles = Self::berlin().clone();
 
-            // Don't include KZG point evaluation precompile in no_std builds.
-            #[cfg(feature = "c-kzg")]
-            let precompiles = {
-                let mut precompiles = precompiles;
-                precompiles.extend([
-                    // EIP-4844: Shard Blob Transactions
-                    kzg_point_evaluation::POINT_EVALUATION,
-                ]);
-                precompiles
-            };
+            // EIP-4844: Shard Blob Transactions
+            cfg_if! {
+                if #[cfg(feature = "c-kzg")] {
+                    let precompile = kzg_point_evaluation::POINT_EVALUATION.clone();
+                } else {
+                    // TODO move constants to separate file.
+                    let precompile = fatal_precompile(u64_to_address(0x0A), "c-kzg feature is not enabled".into());
+                }
+            }
+
+            precompiles.extend([
+                precompile,
+            ]);
 
             Box::new(precompiles)
         })

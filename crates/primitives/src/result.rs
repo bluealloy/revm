@@ -424,7 +424,7 @@ pub enum SuccessReason {
 pub enum HaltReason {
     OutOfGas(OutOfGasError),
     OpcodeNotFound,
-    InvalidEFOpcode,
+    InvalidFEOpcode,
     InvalidJump,
     NotActivated,
     StackUnderflow,
