@@ -1,5 +1,11 @@
 use crate::{Address, Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use c_kzg::{Bytes32, Bytes48, KzgProof, KzgSettings};
+cfg_if::cfg_if! {
+    if #[cfg(feature = "c-kzg")] {
+        use c_kzg::{Bytes32, Bytes48, KzgProof, KzgSettings};
+    } else if #[cfg(feature = "kzg-rs")] {
+        use kzg_rs::{Bytes32, Bytes48, KzgProof, KzgSettings};
+    }
+}
 use revm_primitives::{hex_literal::hex, Bytes, Env, PrecompileOutput};
 use sha2::{Digest, Sha256};
 

@@ -33,9 +33,11 @@ pub enum InstructionResult {
     PrecompileOOG,
     InvalidOperandOOG,
     OpcodeNotFound,
+    /// Transferring value with CALL/CALLCODE is not possible in static mode.
     CallNotAllowedInsideStatic,
+    /// State change attempted in static mode.
     StateChangeDuringStaticCall,
-    InvalidEFOpcode,
+    InvalidFEOpcode,
     InvalidJump,
     NotActivated,
     StackUnderflow,
@@ -89,7 +91,7 @@ impl From<HaltReason> for InstructionResult {
                 OutOfGasError::Precompile => Self::PrecompileOOG,
             },
             HaltReason::OpcodeNotFound => Self::OpcodeNotFound,
-            HaltReason::InvalidEFOpcode => Self::InvalidEFOpcode,
+            HaltReason::InvalidFEOpcode => Self::InvalidFEOpcode,
             HaltReason::InvalidJump => Self::InvalidJump,
             HaltReason::NotActivated => Self::NotActivated,
             HaltReason::StackOverflow => Self::StackOverflow,
@@ -149,7 +151,7 @@ macro_rules! return_error {
             | InstructionResult::OpcodeNotFound
             | InstructionResult::CallNotAllowedInsideStatic
             | InstructionResult::StateChangeDuringStaticCall
-            | InstructionResult::InvalidEFOpcode
+            | InstructionResult::InvalidFEOpcode
             | InstructionResult::InvalidJump
             | InstructionResult::NotActivated
             | InstructionResult::StackUnderflow
@@ -286,7 +288,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::StateChangeDuringStaticCall => {
                 Self::Halt(HaltReason::StateChangeDuringStaticCall)
             }
-            InstructionResult::InvalidEFOpcode => Self::Halt(HaltReason::InvalidEFOpcode),
+            InstructionResult::InvalidFEOpcode => Self::Halt(HaltReason::InvalidFEOpcode),
             InstructionResult::InvalidJump => Self::Halt(HaltReason::InvalidJump),
             InstructionResult::NotActivated => Self::Halt(HaltReason::NotActivated),
             InstructionResult::StackUnderflow => Self::Halt(HaltReason::StackUnderflow),
@@ -373,7 +375,7 @@ mod tests {
             InstructionResult::OpcodeNotFound,
             InstructionResult::CallNotAllowedInsideStatic,
             InstructionResult::StateChangeDuringStaticCall,
-            InstructionResult::InvalidEFOpcode,
+            InstructionResult::InvalidFEOpcode,
             InstructionResult::InvalidJump,
             InstructionResult::NotActivated,
             InstructionResult::StackUnderflow,

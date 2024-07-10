@@ -1,19 +1,17 @@
 use crate::{
     db::Database,
     interpreter::{
-        analysis::{to_analysed, validate_eof},
-        gas, return_ok, Contract, CreateInputs, EOFCreateInputs, EOFCreateKind, Gas,
-        InstructionResult, Interpreter, InterpreterResult, LoadAccountResult, SStoreResult,
-        SelfDestructResult, MAX_CODE_SIZE,
+        analysis::to_analysed, gas, return_ok, InstructionResult, InterpreterResult,
+        LoadAccountResult, SStoreResult, SelfDestructResult, MAX_CODE_SIZE,
     },
     journaled_state::JournaledState,
     primitives::{
-        keccak256, AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme,
-        EVMError, Env, Eof, HashSet, Spec,
+        AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, EVMError, Env, Eof,
+        HashSet, Spec,
         SpecId::{self, *},
         B256, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
     },
-    FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
+    JournalCheckpoint,
 };
 use std::{boxed::Box, sync::Arc, vec::Vec};
 
@@ -254,113 +252,6 @@ impl<DB: Database> InnerEvmContext<DB> {
             .selfdestruct(address, target, &mut self.db)
     }
 
-    /// Make create frame.
-    #[inline]
-    pub fn make_eofcreate_frame(
-        &mut self,
-        spec_id: SpecId,
-        inputs: &EOFCreateInputs,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-        let return_error = |e| {
-            Ok(FrameOrResult::new_eofcreate_result(
-                InterpreterResult {
-                    result: e,
-                    gas: Gas::new(inputs.gas_limit),
-                    output: Bytes::new(),
-                },
-                None,
-            ))
-        };
-
-        let (input, initcode, created_address) = match &inputs.kind {
-            EOFCreateKind::Opcode {
-                initcode,
-                input,
-                created_address,
-            } => (input.clone(), initcode.clone(), *created_address),
-            EOFCreateKind::Tx { initdata } => {
-                // Use nonce from tx (if set) or from account (if not).
-                // Nonce for call is bumped in deduct_caller
-                // TODO(make this part of nonce increment code)
-                let nonce = self.env.tx.nonce.unwrap_or_else(|| {
-                    let caller = self.env.tx.caller;
-                    self.load_account(caller)
-                        .map(|(a, _)| a.info.nonce)
-                        .unwrap_or_default()
-                });
-
-                // decode eof and init code.
-                let Ok((eof, input)) = Eof::decode_dangling(initdata.clone()) else {
-                    return return_error(InstructionResult::InvalidEOFInitCode);
-                };
-
-                if validate_eof(&eof).is_err() {
-                    // TODO (EOF) new error type.
-                    return return_error(InstructionResult::InvalidEOFInitCode);
-                }
-
-                (input, eof, self.env.tx.caller.create(nonce))
-            }
-        };
-
-        // Check depth
-        if self.journaled_state.depth() > CALL_STACK_LIMIT {
-            return return_error(InstructionResult::CallTooDeep);
-        }
-
-        // Fetch balance of caller.
-        let (caller_balance, _) = self.balance(inputs.caller)?;
-
-        // Check if caller has enough balance to send to the created contract.
-        if caller_balance < inputs.value {
-            return return_error(InstructionResult::OutOfFunds);
-        }
-
-        // Increase nonce of caller and check if it overflows
-        if self.journaled_state.inc_nonce(inputs.caller).is_none() {
-            // can't happen on mainnet.
-            return return_error(InstructionResult::Return);
-        }
-
-        // Load account so it needs to be marked as warm for access list.
-        self.journaled_state
-            .load_account(created_address, &mut self.db)?;
-
-        // create account, transfer funds and make the journal checkpoint.
-        let checkpoint = match self.journaled_state.create_account_checkpoint(
-            inputs.caller,
-            created_address,
-            inputs.value,
-            spec_id,
-        ) {
-            Ok(checkpoint) => checkpoint,
-            Err(e) => {
-                return return_error(e);
-            }
-        };
-
-        let contract = Contract::new(
-            input.clone(),
-            // fine to clone as it is Bytes.
-            Bytecode::Eof(Arc::new(initcode.clone())),
-            None,
-            created_address,
-            None,
-            inputs.caller,
-            inputs.value,
-        );
-
-        let mut interpreter = Interpreter::new(contract, inputs.gas_limit, false);
-        // EOF init will enable RETURNCONTRACT opcode.
-        interpreter.set_is_eof_init();
-
-        Ok(FrameOrResult::new_eofcreate_frame(
-            created_address,
-            checkpoint,
-            interpreter,
-        ))
-    }
-
     /// If error is present revert changes, otherwise save EOF bytecode.
     pub fn eofcreate_return<SPEC: Spec>(
         &mut self,
@@ -404,97 +295,6 @@ impl<DB: Database> InnerEvmContext<DB> {
         // eof bytecode is going to be hashed.
         self.journaled_state
             .set_code(address, Bytecode::Eof(Arc::new(bytecode)));
-    }
-
-    /// Make create frame.
-    #[inline]
-    pub fn make_create_frame(
-        &mut self,
-        spec_id: SpecId,
-        inputs: &CreateInputs,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-        let return_error = |e| {
-            Ok(FrameOrResult::new_create_result(
-                InterpreterResult {
-                    result: e,
-                    gas: Gas::new(inputs.gas_limit),
-                    output: Bytes::new(),
-                },
-                None,
-            ))
-        };
-
-        // Check depth
-        if self.journaled_state.depth() > CALL_STACK_LIMIT {
-            return return_error(InstructionResult::CallTooDeep);
-        }
-
-        // Prague EOF
-        if spec_id.is_enabled_in(PRAGUE_EOF) && inputs.init_code.get(..2) == Some(&EOF_MAGIC_BYTES)
-        {
-            return return_error(InstructionResult::CreateInitCodeStartingEF00);
-        }
-
-        // Fetch balance of caller.
-        let (caller_balance, _) = self.balance(inputs.caller)?;
-
-        // Check if caller has enough balance to send to the created contract.
-        if caller_balance < inputs.value {
-            return return_error(InstructionResult::OutOfFunds);
-        }
-
-        // Increase nonce of caller and check if it overflows
-        let old_nonce;
-        if let Some(nonce) = self.journaled_state.inc_nonce(inputs.caller) {
-            old_nonce = nonce - 1;
-        } else {
-            return return_error(InstructionResult::Return);
-        }
-
-        // Create address
-        let mut init_code_hash = B256::ZERO;
-        let created_address = match inputs.scheme {
-            CreateScheme::Create => inputs.caller.create(old_nonce),
-            CreateScheme::Create2 { salt } => {
-                init_code_hash = keccak256(&inputs.init_code);
-                inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
-            }
-        };
-
-        // Load account so it needs to be marked as warm for access list.
-        self.journaled_state
-            .load_account(created_address, &mut self.db)?;
-
-        // create account, transfer funds and make the journal checkpoint.
-        let checkpoint = match self.journaled_state.create_account_checkpoint(
-            inputs.caller,
-            created_address,
-            inputs.value,
-            spec_id,
-        ) {
-            Ok(checkpoint) => checkpoint,
-            Err(e) => {
-                return return_error(e);
-            }
-        };
-
-        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
-
-        let contract = Contract::new(
-            Bytes::new(),
-            bytecode,
-            Some(init_code_hash),
-            created_address,
-            None,
-            inputs.caller,
-            inputs.value,
-        );
-
-        Ok(FrameOrResult::new_create_frame(
-            created_address,
-            checkpoint,
-            Interpreter::new(contract, inputs.gas_limit, false),
-        ))
     }
 
     /// Handles call return.
