@@ -166,20 +166,11 @@ impl<DB: Database> EvmContext<DB> {
             return return_result(InstructionResult::CallTooDeep);
         }
 
-        let (account, _) = self
+        // Make account warm and loaded
+        let _ = self
             .inner
             .journaled_state
-            .load_code(inputs.bytecode_address, &mut self.inner.db)?;
-
-        let code_hash = account.info.code_hash();
-        let bytecode = account.info.code.clone().unwrap_or_default();
-
-        // ExtDelegateCall is not allowed to call non-EOF contracts.
-        if inputs.scheme.is_ext_delegate_call()
-            && bytecode.bytes_slice().get(..2) != Some(&EOF_MAGIC_BYTES)
-        {
-            return return_result(InstructionResult::InvalidExtDelegateCallTarget);
-        }
+            .load_account(inputs.bytecode_address, &mut self.inner.db)?;
 
         // Create subroutine checkpoint
         let checkpoint = self.journaled_state.checkpoint();
@@ -216,7 +207,27 @@ impl<DB: Database> EvmContext<DB> {
                 result,
                 inputs.return_memory_offset.clone(),
             ))
-        } else if !bytecode.is_empty() {
+        } else {
+            let (account, _) = self
+                .inner
+                .journaled_state
+                .load_code(inputs.bytecode_address, &mut self.inner.db)?;
+
+            let code_hash = account.info.code_hash();
+            let bytecode = account.info.code.clone().unwrap_or_default();
+
+            // ExtDelegateCall is not allowed to call non-EOF contracts.
+            if inputs.scheme.is_ext_delegate_call()
+                && bytecode.bytes_slice().get(..2) != Some(&EOF_MAGIC_BYTES)
+            {
+                return return_result(InstructionResult::InvalidExtDelegateCallTarget);
+            }
+
+            if bytecode.is_empty() {
+                self.journaled_state.checkpoint_commit();
+                return return_result(InstructionResult::Stop);
+            }
+
             let contract =
                 Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
             // Create interpreter and executes call and push new CallStackFrame.
@@ -225,9 +236,6 @@ impl<DB: Database> EvmContext<DB> {
                 checkpoint,
                 Interpreter::new(contract, gas.limit(), inputs.is_static),
             ))
-        } else {
-            self.journaled_state.checkpoint_commit();
-            return_result(InstructionResult::Stop)
         }
     }
 }
