@@ -126,6 +126,8 @@ optional_beneficiary_reward = ["revm-interpreter/optional_beneficiary_reward"]
 # See comments in `revm-precompile`
 secp256k1 = ["revm-precompile/secp256k1"]
 c-kzg = ["revm-precompile/c-kzg"]
+# `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
+kzg-rs = ["revm-precompile/kzg-rs"]
 blst = ["revm-precompile/blst"]
 
 [[example]]

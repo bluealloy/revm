@@ -22,7 +22,7 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-alloy-eips = { version = "0.1", default-features = false, features = ["k256"]}
+alloy-eips = { version = "0.1", default-features = false, features = ["k256"] }
 alloy-primitives = { version = "0.7.2", default-features = false, features = [
     "rlp",
 ] }
@@ -34,6 +34,11 @@ bitflags = { version = "2.6.0", default-features = false }
 # For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
 c-kzg = { version = "1.0.2", default-features = false, optional = true }
 once_cell = { version = "1.19", default-features = false, optional = true }
+
+# Optionally use `kzg-rs` for a pure Rust implementation of KZG.
+kzg-rs = { version = "0.1", default-features = false, features = [
+    'cache',
+], optional = true }
 
 # utility
 enumn = "0.1"
@@ -70,12 +75,13 @@ serde = [
     "bitvec/serde",
     "bitflags/serde",
     "c-kzg?/serde",
+    "kzg-rs?/serde",
 ]
 arbitrary = [
     "std",
     "alloy-eips/arbitrary",
     "alloy-primitives/arbitrary",
-    "bitflags/arbitrary"
+    "bitflags/arbitrary",
 ]
 asm-keccak = ["alloy-primitives/asm-keccak"]
 portable = ["c-kzg?/portable"]
@@ -105,3 +111,5 @@ rand = ["alloy-primitives/rand"]
 
 # See comments in `revm-precompile`
 c-kzg = ["dep:c-kzg", "dep:once_cell", "dep:derive_more"]
+# `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
+kzg-rs = ["dep:kzg-rs", "dep:once_cell", "dep:derive_more"]

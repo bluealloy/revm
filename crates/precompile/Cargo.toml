@@ -47,6 +47,11 @@ bn = { package = "substrate-bn", version = "0.6", default-features = false }
 # KZG point evaluation precompile
 c-kzg = { version = "1.0.2", default-features = false, optional = true }
 
+# Optionally use `kzg-rs` for a pure Rust implementation of KZG point evaluation.
+kzg-rs = { version = "0.1", default-features = false, features = [
+    'cache',
+], optional = true }
+
 # BLS12-381 precompiles
 blst = { version = "0.3.12", optional = true }
 
@@ -98,6 +103,9 @@ secp256r1 = ["dep:p256"]
 
 # Enables the KZG point evaluation precompile.
 c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
+# `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
+kzg-rs = ["dep:kzg-rs", "revm-primitives/kzg-rs"]
+
 portable = ["revm-primitives/portable", "c-kzg?/portable"]
 
 # Use `secp256k1` as a faster alternative to `k256`.
