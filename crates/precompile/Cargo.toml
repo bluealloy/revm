@@ -103,6 +103,7 @@ secp256r1 = ["dep:p256"]
 
 # Enables the KZG point evaluation precompile.
 c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
+# `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["dep:kzg-rs", "revm-primitives/kzg-rs"]
 
 portable = ["revm-primitives/portable", "c-kzg?/portable"]
