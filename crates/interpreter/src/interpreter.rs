@@ -329,6 +329,12 @@ impl Interpreter {
         &self.stack
     }
 
+    /// Returns a mutable reference to the interpreter's stack.
+    #[inline]
+    pub fn stack_mut(&mut self) -> &mut Stack {
+        &mut self.stack
+    }
+
     /// Returns the current program counter.
     #[inline]
     pub fn program_counter(&self) -> usize {

@@ -54,3 +54,4 @@ pub const PER_CONTRACT_CODE_BASE_COST: u64 = 2400;
 pub const INITCODE_WORD_COST: u64 = 2;
 
 pub const CALL_STIPEND: u64 = 2300;
+pub const MIN_CALLEE_GAS: u64 = CALL_STIPEND;

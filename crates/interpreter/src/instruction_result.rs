@@ -33,7 +33,9 @@ pub enum InstructionResult {
     PrecompileOOG,
     InvalidOperandOOG,
     OpcodeNotFound,
+    /// Transferring value with CALL/CALLCODE is not possible in static mode.
     CallNotAllowedInsideStatic,
+    /// State change attempted in static mode.
     StateChangeDuringStaticCall,
     InvalidFEOpcode,
     InvalidJump,
