@@ -265,10 +265,7 @@ impl JournaledState {
         // Bytecode is not empty.
         // Nonce is not zero
         // Account is not precompile.
-        if account.info.code_hash != KECCAK_EMPTY
-            || account.info.nonce != 0
-            || self.warm_preloaded_addresses.contains(&address)
-        {
+        if account.info.code_hash != KECCAK_EMPTY || account.info.nonce != 0 {
             self.checkpoint_revert(checkpoint);
             return Err(InstructionResult::CreateCollision);
         }

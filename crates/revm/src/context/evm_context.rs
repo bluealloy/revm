@@ -5,16 +5,21 @@ use super::inner_evm_context::InnerEvmContext;
 use crate::{
     db::Database,
     interpreter::{
-        return_ok, CallInputs, Contract, Gas, InstructionResult, Interpreter, InterpreterResult,
+        analysis::validate_eof, return_ok, CallInputs, Contract, CreateInputs, EOFCreateInputs,
+        EOFCreateKind, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
-    primitives::{Address, Bytes, EVMError, Env, EOF_MAGIC_BYTES, U256},
+    primitives::{
+        keccak256, Address, Bytecode, Bytes, CreateScheme, EVMError, Env, Eof,
+        SpecId::{self, *},
+        B256, EOF_MAGIC_BYTES, U256,
+    },
     ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
 use core::{
     fmt,
     ops::{Deref, DerefMut},
 };
-use std::boxed::Box;
+use std::{boxed::Box, sync::Arc};
 
 /// EVM context that contains the inner EVM context and precompiles.
 pub struct EvmContext<DB: Database> {
@@ -96,7 +101,9 @@ impl<DB: Database> EvmContext<DB> {
     #[inline]
     pub fn set_precompiles(&mut self, precompiles: ContextPrecompiles<DB>) {
         // set warm loaded addresses.
-        self.journaled_state.warm_preloaded_addresses = precompiles.addresses_set();
+        self.journaled_state
+            .warm_preloaded_addresses
+            .extend(precompiles.addresses_set());
         self.precompiles = precompiles;
     }
 
@@ -237,6 +244,214 @@ impl<DB: Database> EvmContext<DB> {
                 Interpreter::new(contract, gas.limit(), inputs.is_static),
             ))
         }
+    }
+
+    /// Make create frame.
+    #[inline]
+    pub fn make_create_frame(
+        &mut self,
+        spec_id: SpecId,
+        inputs: &CreateInputs,
+    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+        let return_error = |e| {
+            Ok(FrameOrResult::new_create_result(
+                InterpreterResult {
+                    result: e,
+                    gas: Gas::new(inputs.gas_limit),
+                    output: Bytes::new(),
+                },
+                None,
+            ))
+        };
+
+        // Check depth
+        if self.journaled_state.depth() > CALL_STACK_LIMIT {
+            return return_error(InstructionResult::CallTooDeep);
+        }
+
+        //self.precompiles
+
+        // Prague EOF
+        if spec_id.is_enabled_in(PRAGUE_EOF) && inputs.init_code.get(..2) == Some(&EOF_MAGIC_BYTES)
+        {
+            return return_error(InstructionResult::CreateInitCodeStartingEF00);
+        }
+
+        // Fetch balance of caller.
+        let (caller_balance, _) = self.balance(inputs.caller)?;
+
+        // Check if caller has enough balance to send to the created contract.
+        if caller_balance < inputs.value {
+            return return_error(InstructionResult::OutOfFunds);
+        }
+
+        // Increase nonce of caller and check if it overflows
+        let old_nonce;
+        if let Some(nonce) = self.journaled_state.inc_nonce(inputs.caller) {
+            old_nonce = nonce - 1;
+        } else {
+            return return_error(InstructionResult::Return);
+        }
+
+        // Create address
+        let mut init_code_hash = B256::ZERO;
+        let created_address = match inputs.scheme {
+            CreateScheme::Create => inputs.caller.create(old_nonce),
+            CreateScheme::Create2 { salt } => {
+                init_code_hash = keccak256(&inputs.init_code);
+                inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
+            }
+        };
+
+        // created address is not allowed to be a precompile.
+        if self.precompiles.contains(&created_address) {
+            return return_error(InstructionResult::CreateCollision);
+        }
+
+        // warm load account.
+        self.load_account(created_address)?;
+
+        // create account, transfer funds and make the journal checkpoint.
+        let checkpoint = match self.journaled_state.create_account_checkpoint(
+            inputs.caller,
+            created_address,
+            inputs.value,
+            spec_id,
+        ) {
+            Ok(checkpoint) => checkpoint,
+            Err(e) => {
+                return return_error(e);
+            }
+        };
+
+        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
+
+        let contract = Contract::new(
+            Bytes::new(),
+            bytecode,
+            Some(init_code_hash),
+            created_address,
+            None,
+            inputs.caller,
+            inputs.value,
+        );
+
+        Ok(FrameOrResult::new_create_frame(
+            created_address,
+            checkpoint,
+            Interpreter::new(contract, inputs.gas_limit, false),
+        ))
+    }
+
+    /// Make create frame.
+    #[inline]
+    pub fn make_eofcreate_frame(
+        &mut self,
+        spec_id: SpecId,
+        inputs: &EOFCreateInputs,
+    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+        let return_error = |e| {
+            Ok(FrameOrResult::new_eofcreate_result(
+                InterpreterResult {
+                    result: e,
+                    gas: Gas::new(inputs.gas_limit),
+                    output: Bytes::new(),
+                },
+                None,
+            ))
+        };
+
+        let (input, initcode, created_address) = match &inputs.kind {
+            EOFCreateKind::Opcode {
+                initcode,
+                input,
+                created_address,
+            } => (input.clone(), initcode.clone(), Some(*created_address)),
+            EOFCreateKind::Tx { initdata } => {
+                // decode eof and init code.
+                let Ok((eof, input)) = Eof::decode_dangling(initdata.clone()) else {
+                    return return_error(InstructionResult::InvalidEOFInitCode);
+                };
+
+                if validate_eof(&eof).is_err() {
+                    // TODO (EOF) new error type.
+                    return return_error(InstructionResult::InvalidEOFInitCode);
+                }
+
+                // Use nonce from tx (if set) to calculate address.
+                // If not set, use the nonce from the account.
+                let nonce = self
+                    .env
+                    .tx
+                    .nonce
+                    .map(|nonce| self.env.tx.caller.create(nonce));
+
+                (input, eof, nonce)
+            }
+        };
+
+        // Check depth
+        if self.journaled_state.depth() > CALL_STACK_LIMIT {
+            return return_error(InstructionResult::CallTooDeep);
+        }
+
+        // Fetch balance of caller.
+        let (caller_balance, _) = self.balance(inputs.caller)?;
+
+        // Check if caller has enough balance to send to the created contract.
+        if caller_balance < inputs.value {
+            return return_error(InstructionResult::OutOfFunds);
+        }
+
+        // Increase nonce of caller and check if it overflows
+        let Some(nonce) = self.journaled_state.inc_nonce(inputs.caller) else {
+            // can't happen on mainnet.
+            return return_error(InstructionResult::Return);
+        };
+
+        let created_address = created_address.unwrap_or_else(|| inputs.caller.create(nonce));
+
+        // created address is not allowed to be a precompile.
+        if self.precompiles.contains(&created_address) {
+            return return_error(InstructionResult::CreateCollision);
+        }
+
+        // Load account so it needs to be marked as warm for access list.
+        self.load_account(created_address)?;
+
+        // create account, transfer funds and make the journal checkpoint.
+        let checkpoint = match self.journaled_state.create_account_checkpoint(
+            inputs.caller,
+            created_address,
+            inputs.value,
+            spec_id,
+        ) {
+            Ok(checkpoint) => checkpoint,
+            Err(e) => {
+                return return_error(e);
+            }
+        };
+
+        let contract = Contract::new(
+            input.clone(),
+            // fine to clone as it is Bytes.
+            Bytecode::Eof(Arc::new(initcode.clone())),
+            None,
+            created_address,
+            None,
+            inputs.caller,
+            inputs.value,
+        );
+
+        let mut interpreter = Interpreter::new(contract, inputs.gas_limit, false);
+        // EOF init will enable RETURNCONTRACT opcode.
+        interpreter.set_is_eof_init();
+
+        Ok(FrameOrResult::new_eofcreate_frame(
+            created_address,
+            checkpoint,
+            interpreter,
+        ))
     }
 }
 
