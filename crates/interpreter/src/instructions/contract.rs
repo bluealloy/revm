@@ -3,7 +3,7 @@ mod call_helpers;
 pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
 
 use crate::{
-    gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD},
+    gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD, MIN_CALLEE_GAS},
     interpreter::Interpreter,
     primitives::{
         eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, B256, U256,
@@ -170,7 +170,6 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
         return None;
     };
 
-    // TODO(EOF) is_empty should only be checked on delegatecall
     let call_cost = gas::call_cost(
         BerlinSpec::SPEC_ID,
         transfers_value,
@@ -184,10 +183,17 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
     let gas_reduce = max(interpreter.gas.remaining() / 64, 5000);
     let gas_limit = interpreter.gas().remaining().saturating_sub(gas_reduce);
 
-    if gas_limit < 2300 {
-        interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
-        // TODO(EOF) error;
-        // interpreter.instruction_result = InstructionResult::CallGasTooLow;
+    // The MIN_CALLEE_GAS rule is a replacement for stipend:
+    // it simplifies the reasoning about the gas costs and is
+    // applied uniformly for all introduced EXT*CALL instructions.
+    //
+    // If Gas available to callee is less than MIN_CALLEE_GAS trigger light failure (Same as Revert).
+    if gas_limit < MIN_CALLEE_GAS {
+        // Push 1 to stack to indicate that call light failed.
+        // It is safe to ignore stack overflow error as we already popped multiple values from stack.
+        let _ = interpreter.stack_mut().push(U256::from(1));
+        interpreter.return_data_buffer.clear();
+        // Return none to continue execution.
         return None;
     }
 
@@ -226,11 +232,14 @@ pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
 
     pop!(interpreter, value);
     let has_transfer = value != U256::ZERO;
+    if interpreter.is_static && has_transfer {
+        interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
+        return;
+    }
 
     let Some(gas_limit) = extcall_gas_calc(interpreter, host, target_address, has_transfer) else {
         return;
     };
-    // TODO Check if static and value 0
 
     // Call host to interact with target contract
     interpreter.next_action = InterpreterAction::Call {
@@ -266,7 +275,6 @@ pub fn extdelegatecall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpret
     let Some(gas_limit) = extcall_gas_calc(interpreter, host, target_address, false) else {
         return;
     };
-    // TODO Check if static and value 0
 
     // Call host to interact with target contract
     interpreter.next_action = InterpreterAction::Call {
