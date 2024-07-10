@@ -111,3 +111,4 @@ rand = ["alloy-primitives/rand"]
 
 # See comments in `revm-precompile`
 c-kzg = ["dep:c-kzg", "dep:once_cell", "dep:derive_more"]
+kzg-rs = ["dep:kzg-rs", "dep:once_cell", "dep:derive_more"]

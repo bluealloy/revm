@@ -275,7 +275,7 @@ pub struct CfgEnv {
     /// Chain ID is introduced EIP-155
     pub chain_id: u64,
     /// KZG Settings for point evaluation precompile. By default, this is loaded from the ethereum mainnet trusted setup.
-    #[cfg(feature = "c-kzg")]
+    #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
     #[cfg_attr(feature = "serde", serde(skip))]
     pub kzg_settings: crate::kzg::EnvKzgSettings,
     /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
