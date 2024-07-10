@@ -183,19 +183,6 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
     let gas_reduce = max(interpreter.gas.remaining() / 64, 5000);
     let gas_limit = interpreter.gas().remaining().saturating_sub(gas_reduce);
 
-    // The MIN_CALLEE_GAS rule is a replacement for stipend:
-    // it simplifies the reasoning about the gas costs and is
-    // applied uniformly for all introduced EXT*CALL instructions.
-    //
-    // If Gas available to callee is less than MIN_CALLEE_GAS trigger light failure (Same as Revert).
-    if gas_limit < MIN_CALLEE_GAS {
-        // Push 1 to stack to indicate that call light failed.
-        // It is safe to ignore stack overflow error as we already popped multiple values from stack.
-        let _ = interpreter.stack_mut().push(U256::from(1));
-        // Return none to continue execution.
-        return None;
-    }
-
     gas!(interpreter, gas_limit, None);
     Some(gas_limit)
 }
