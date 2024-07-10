@@ -25,8 +25,8 @@ pub mod utilities;
 
 pub use fatal_precompile::fatal_precompile;
 
-#[cfg(feature = "kzg-rs")]
-// silence lint
+#[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
+// silence kzg-rs lint as c-kzg will be used as default if both are enabled.
 use kzg_rs as _;
 pub use primitives::{
     precompile::{PrecompileError as Error, *},
