@@ -101,7 +101,9 @@ impl<DB: Database> EvmContext<DB> {
     #[inline]
     pub fn set_precompiles(&mut self, precompiles: ContextPrecompiles<DB>) {
         // set warm loaded addresses.
-        self.journaled_state.warm_preloaded_addresses = precompiles.addresses_set();
+        self.journaled_state
+            .warm_preloaded_addresses
+            .extend(precompiles.addresses_set());
         self.precompiles = precompiles;
     }
 
@@ -364,18 +366,8 @@ impl<DB: Database> EvmContext<DB> {
                 initcode,
                 input,
                 created_address,
-            } => (input.clone(), initcode.clone(), *created_address),
+            } => (input.clone(), initcode.clone(), Some(*created_address)),
             EOFCreateKind::Tx { initdata } => {
-                // Use nonce from tx (if set) or from account (if not).
-                // Nonce for call is bumped in deduct_caller
-                // TODO(make this part of nonce increment code)
-                let nonce = self.env.tx.nonce.unwrap_or_else(|| {
-                    let caller = self.env.tx.caller;
-                    self.load_account(caller)
-                        .map(|(a, _)| a.info.nonce)
-                        .unwrap_or_default()
-                });
-
                 // decode eof and init code.
                 let Ok((eof, input)) = Eof::decode_dangling(initdata.clone()) else {
                     return return_error(InstructionResult::InvalidEOFInitCode);
@@ -386,7 +378,15 @@ impl<DB: Database> EvmContext<DB> {
                     return return_error(InstructionResult::InvalidEOFInitCode);
                 }
 
-                (input, eof, self.env.tx.caller.create(nonce))
+                // Use nonce from tx (if set) to calculate address.
+                // If not set, use the nonce from the account.
+                let nonce = self
+                    .env
+                    .tx
+                    .nonce
+                    .map(|nonce| self.env.tx.caller.create(nonce));
+
+                (input, eof, nonce)
             }
         };
 
@@ -404,10 +404,12 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         // Increase nonce of caller and check if it overflows
-        if self.journaled_state.inc_nonce(inputs.caller).is_none() {
+        let Some(nonce) = self.journaled_state.inc_nonce(inputs.caller) else {
             // can't happen on mainnet.
             return return_error(InstructionResult::Return);
-        }
+        };
+
+        let created_address = created_address.unwrap_or_else(|| inputs.caller.create(nonce));
 
         // created address is not allowed to be a precompile.
         if self.precompiles.contains(&created_address) {
