@@ -323,12 +323,10 @@ pub fn execute_test_suite(
 
         // post and execution
         for (spec_name, tests) in unit.post {
-            if matches!(
-                spec_name,
-                SpecName::ByzantiumToConstantinopleAt5
-                    | SpecName::Constantinople
-                    | SpecName::Unknown
-            ) {
+            // Constantinople was immediately extended by Petersburg.
+            // There isn't any production Constantinople transaction
+            // so we don't support it and skip right to Petersburg.
+            if spec_name == SpecName::Constantinople {
                 continue;
             }
 
