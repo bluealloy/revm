@@ -394,7 +394,7 @@ impl fmt::Display for InvalidTransaction {
                 write!(f, "authorization list tx has invalid fields")
             }
             #[cfg(feature = "optimism")]
-            Self::OptimismError(op_error) => write!(f, "{}", op_error),
+            Self::OptimismError(op_error) => op_error.fmt(f),
         }
     }
 }
