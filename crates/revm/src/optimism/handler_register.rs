@@ -9,7 +9,8 @@ use crate::{
     optimism,
     primitives::{
         db::Database, spec_to_generic, Account, EVMError, Env, ExecutionResult, HaltReason,
-        HashMap, InvalidTransaction, ResultAndState, Spec, SpecId, SpecId::REGOLITH, U256,
+        HashMap, InvalidTransaction, OptimismInvalidTransaction, ResultAndState, Spec, SpecId,
+        SpecId::REGOLITH, U256,
     },
     Context, ContextPrecompiles, FrameResult,
 };
@@ -51,7 +52,10 @@ pub fn validate_env<SPEC: Spec, DB: Database>(env: &Env) -> Result<(), EVMError<
     // Do not allow for a system transaction to be processed if Regolith is enabled.
     let tx = &env.tx.optimism;
     if tx.is_system_transaction.unwrap_or(false) && SPEC::enabled(SpecId::REGOLITH) {
-        return Err(InvalidTransaction::DepositSystemTxPostRegolith.into());
+        return Err(InvalidTransaction::OptimismError(
+            OptimismInvalidTransaction::DepositSystemTxPostRegolith,
+        )
+        .into());
     }
 
     env.validate_tx::<SPEC>()?;
@@ -298,9 +302,9 @@ pub fn output<SPEC: Spec, EXT, DB: Database>(
         // and the caller nonce will be incremented there.
         let is_deposit = context.evm.inner.env.tx.optimism.source_hash.is_some();
         if is_deposit && SPEC::enabled(REGOLITH) {
-            return Err(EVMError::Transaction(
-                InvalidTransaction::HaltedDepositPostRegolith,
-            ));
+            return Err(EVMError::Transaction(InvalidTransaction::OptimismError(
+                OptimismInvalidTransaction::HaltedDepositPostRegolith,
+            )));
         }
     }
     Ok(result)
@@ -611,9 +615,9 @@ mod tests {
         env.tx.optimism.is_system_transaction = Some(true);
         assert_eq!(
             validate_env::<RegolithSpec, EmptyDB>(&env),
-            Err(EVMError::Transaction(
-                InvalidTransaction::DepositSystemTxPostRegolith
-            ))
+            Err(EVMError::Transaction(InvalidTransaction::OptimismError(
+                OptimismInvalidTransaction::DepositSystemTxPostRegolith
+            )))
         );
 
         // Pre-regolith system transactions should be allowed.
