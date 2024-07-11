@@ -1,12 +1,14 @@
-use revm::primitives::{AccessList, Address, Bytes, HashMap, B256, U256};
+mod deserializer;
+mod eip7702;
+mod spec;
+
+use deserializer::*;
+use eip7702::TxEip7702;
+pub use spec::SpecName;
+
+use revm::primitives::{AccessList, Address, AuthorizationList, Bytes, HashMap, B256, U256};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-
-mod deserializer;
-use deserializer::*;
-
-mod spec;
-pub use self::spec::SpecName;
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct TestSuite(pub BTreeMap<String, TestUnit>);
@@ -45,6 +47,20 @@ pub struct Test {
 
     /// Tx bytes
     pub txbytes: Option<Bytes>,
+}
+
+impl Test {
+    pub fn eip7702_authorization_list(&self) -> Option<AuthorizationList> {
+        let txbytes = self.txbytes.as_ref()?;
+
+        if txbytes.get(0) == Some(&0x04) {
+            let mut txbytes = &txbytes[1..];
+            let tx = TxEip7702::decode(&mut txbytes).expect("Expect EIP-7702 tx bytes to decode");
+            return Some(AuthorizationList::Signed(tx.authorization_list).into_recovered());
+        }
+
+        None
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]

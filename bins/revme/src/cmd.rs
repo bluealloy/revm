@@ -1,4 +1,5 @@
 pub mod bytecode;
+pub mod eofvalidation;
 pub mod evmrunner;
 pub mod format_kzg_setup;
 pub mod statetest;
@@ -9,8 +10,10 @@ use structopt::{clap::AppSettings, StructOpt};
 #[structopt(setting = AppSettings::InferSubcommands)]
 #[allow(clippy::large_enum_variant)]
 pub enum MainCmd {
-    #[structopt(about = "Launch Ethereum state tests")]
+    #[structopt(about = "Execute Ethereum state tests")]
     Statetest(statetest::Cmd),
+    #[structopt(about = "Execute eof validation tests")]
+    EofValidation(eofvalidation::Cmd),
     #[structopt(
         about = "Format kzg settings from a trusted setup file (.txt) into binary format (.bin)"
     )]
@@ -31,12 +34,15 @@ pub enum Error {
     KzgErrors(#[from] format_kzg_setup::KzgErrors),
     #[error(transparent)]
     EvmRunnerErrors(#[from] evmrunner::Errors),
+    #[error("Custom error: {0}")]
+    Custom(&'static str),
 }
 
 impl MainCmd {
     pub fn run(&self) -> Result<(), Error> {
         match self {
             Self::Statetest(cmd) => cmd.run().map_err(Into::into),
+            Self::EofValidation(cmd) => cmd.run().map_err(Into::into),
             Self::FormatKzgSetup(cmd) => cmd.run().map_err(Into::into),
             Self::Evm(cmd) => cmd.run().map_err(Into::into),
             Self::Bytecode(cmd) => {

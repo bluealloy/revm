@@ -400,7 +400,7 @@ pub fn validate_initial_tx_gas(
 
     //   EIP-7702
     if spec_id.is_enabled_in(SpecId::PRAGUE) {
-        initial_gas += authorization_list_num * PER_CONTRACT_CODE_BASE_COST;
+        initial_gas += authorization_list_num * PER_AUTH_BASE_COST;
     }
 
     initial_gas

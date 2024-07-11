@@ -1,7 +1,7 @@
 pub mod eip7702;
 pub mod handler_cfg;
 
-pub use eip7702::AuthorizationList;
+pub use eip7702::{AuthorizationList, RecoveredAuthorization, Signature, SignedAuthorization};
 pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{

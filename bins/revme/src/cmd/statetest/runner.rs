@@ -352,6 +352,7 @@ pub fn execute_test_suite(
                     .and_then(Option::as_deref)
                     .cloned()
                     .unwrap_or_default();
+                env.tx.authorization_list = test.eip7702_authorization_list();
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),
@@ -360,10 +361,11 @@ pub fn execute_test_suite(
                 env.tx.transact_to = to;
 
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(
-                    spec_id,
-                    revm::primitives::SpecId::SPURIOUS_DRAGON,
-                ));
+                let is_spurious_dragon =
+                    SpecId::enabled(spec_id, revm::primitives::SpecId::SPURIOUS_DRAGON);
+                let is_prague = SpecId::enabled(spec_id, revm::primitives::SpecId::PRAGUE);
+                // Turn state clear after prague
+                cache.set_state_clear_flag(is_spurious_dragon && !is_prague);
                 let mut state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
