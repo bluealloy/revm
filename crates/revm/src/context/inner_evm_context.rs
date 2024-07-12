@@ -2,12 +2,12 @@ use crate::{
     db::Database,
     interpreter::{
         analysis::to_analysed, gas, return_ok, InstructionResult, InterpreterResult,
-        LoadAccountResult, SStoreResult, SelfDestructResult, MAX_CODE_SIZE,
+        LoadAccountResult, SStoreResult, SelfDestructResult,
     },
     journaled_state::JournaledState,
     primitives::{
-        AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, EVMError, Env, Eof,
-        HashSet, Spec,
+        AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, EVMError, Env,
+        Eof, HashSet, Spec,
         SpecId::{self, *},
         B256, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
     },
@@ -123,6 +123,11 @@ impl<DB: Database> InnerEvmContext<DB> {
     #[inline]
     pub fn env(&mut self) -> &mut Env {
         &mut self.env
+    }
+
+    /// Returns reference to [`CfgEnv`].
+    pub fn cfg(&self) -> &CfgEnv {
+        &self.env.cfg
     }
 
     /// Returns the error by replacing it with `Ok(())`, if any.
@@ -271,7 +276,7 @@ impl<DB: Database> InnerEvmContext<DB> {
             return;
         }
 
-        if interpreter_result.output.len() > MAX_CODE_SIZE {
+        if interpreter_result.output.len() > self.cfg().max_code_size() {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
             interpreter_result.result = InstructionResult::CreateContractSizeLimit;
             return;
@@ -329,10 +334,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         // if ok, check contract creation limit and calculate gas deduction on output len.
         //
         // EIP-3541: Reject new contract code starting with the 0xEF byte
-        if SPEC::enabled(LONDON)
-            && !interpreter_result.output.is_empty()
-            && interpreter_result.output.first() == Some(&0xEF)
-        {
+        if SPEC::enabled(LONDON) && interpreter_result.output.first() == Some(&0xEF) {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
             interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
             return;
@@ -341,12 +343,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         // EIP-170: Contract code size limit
         // By default limit is 0x6000 (~25kb)
         if SPEC::enabled(SPURIOUS_DRAGON)
-            && interpreter_result.output.len()
-                > self
-                    .env
-                    .cfg
-                    .limit_contract_code_size
-                    .unwrap_or(MAX_CODE_SIZE)
+            && interpreter_result.output.len() > self.cfg().max_code_size()
         {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
             interpreter_result.result = InstructionResult::CreateContractSizeLimit;
