@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v7.0.0...revm-interpreter-v7.1.0) - 2024-07-12
+
+### Added
+- use `kzg-rs` for kzg point evaluation ([#1558](https://github.com/bluealloy/revm/pull/1558))
+
+### Fixed
+- *(EOF)* MIN_CALLEE_GAS light failure, static-mode check ([#1599](https://github.com/bluealloy/revm/pull/1599))
+
 ## [7.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v6.0.0...revm-interpreter-v7.0.0) - 2024-07-08
 
 ### Added
