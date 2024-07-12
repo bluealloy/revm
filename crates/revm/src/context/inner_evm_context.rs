@@ -125,7 +125,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         &mut self.env
     }
 
-    /// Returns referecne to [`CfgEnv`].
+    /// Returns reference to [`CfgEnv`].
     pub fn cfg(&self) -> &CfgEnv {
         &self.env.cfg
     }
