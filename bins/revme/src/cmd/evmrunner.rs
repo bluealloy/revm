@@ -24,21 +24,9 @@ pub enum Errors {
     #[error("EVM Error")]
     EVMError,
     #[error(transparent)]
-    Io(IoError),
+    Io(#[from] IoError),
     #[error(transparent)]
-    EofError(EofDecodeError),
-}
-
-impl From<EofDecodeError> for Errors {
-    fn from(e: EofDecodeError) -> Self {
-        Errors::EofError(e)
-    }
-}
-
-impl From<IoError> for Errors {
-    fn from(e: IoError) -> Self {
-        Errors::Io(e)
-    }
+    EofError(#[from] EofDecodeError),
 }
 
 /// Evm runner command allows running arbitrary evm bytecode.
