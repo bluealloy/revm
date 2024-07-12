@@ -9,7 +9,7 @@ pub use types_section::TypesSection;
 
 use crate::{b256, bytes, Bytes, B256};
 use core::cmp::min;
-use std::{vec, vec::Vec};
+use std::{fmt, vec, vec::Vec};
 
 /// Hash of EF00 bytes that is used for EXTCODEHASH when called from legacy bytecode.
 pub const EOF_MAGIC_HASH: B256 =
@@ -156,6 +156,36 @@ pub enum EofDecodeError {
     /// Invalid container number.
     TooManyContainerSections,
 }
+
+impl fmt::Display for EofDecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            EofDecodeError::MissingInput => "Short input while processing EOF",
+            EofDecodeError::MissingBodyWithoutData => "Short body while processing EOF",
+            EofDecodeError::DanglingData => "Body size is more than specified in the header",
+            EofDecodeError::InvalidTypesSection => "Invalid types section data",
+            EofDecodeError::InvalidTypesSectionSize => "Invalid types section size",
+            EofDecodeError::InvalidEOFMagicNumber => "Invalid EOF magic number",
+            EofDecodeError::InvalidEOFVersion => "Invalid EOF version",
+            EofDecodeError::InvalidTypesKind => "Invalid number for types kind",
+            EofDecodeError::InvalidCodeKind => "Invalid number for code kind",
+            EofDecodeError::InvalidTerminalByte => "Invalid terminal code",
+            EofDecodeError::InvalidDataKind => "Invalid data kind",
+            EofDecodeError::InvalidKindAfterCode => "Invalid kind after code",
+            EofDecodeError::MismatchCodeAndTypesSize => "Mismatch of code and types sizes",
+            EofDecodeError::NonSizes => "There should be at least one size",
+            EofDecodeError::ShortInputForSizes => "Missing size",
+            EofDecodeError::ZeroSize => "Size cant be zero",
+            EofDecodeError::TooManyCodeSections => "Invalid code number",
+            EofDecodeError::ZeroCodeSections => "Invalid number of code sections",
+            EofDecodeError::TooManyContainerSections => "Invalid container number",
+        };
+        f.write_str(s)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for EofDecodeError {}
 
 #[cfg(test)]
 mod test {

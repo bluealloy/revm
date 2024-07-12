@@ -2,7 +2,7 @@ use revm::{
     db::BenchmarkDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
-    primitives::{Address, Bytecode, TxKind},
+    primitives::{eof::EofDecodeError, Address, Bytecode, TxKind},
     Evm,
 };
 use std::io::Error as IoError;
@@ -25,6 +25,14 @@ pub enum Errors {
     EVMError,
     #[error(transparent)]
     Io(IoError),
+    #[error(transparent)]
+    EofError(EofDecodeError),
+}
+
+impl From<EofDecodeError> for Errors {
+    fn from(e: EofDecodeError) -> Self {
+        Errors::EofError(e)
+    }
 }
 
 impl From<IoError> for Errors {
@@ -59,7 +67,7 @@ pub struct Cmd {
 }
 
 impl Cmd {
-    /// Run statetest command.
+    /// Run evm runner command.
     pub fn run(&self) -> Result<(), Errors> {
         let bytecode_str: Cow<'_, str> = if let Some(path) = &self.path {
             // check if path exists.
@@ -78,9 +86,9 @@ impl Cmd {
         // BenchmarkDB is dummy state that implements Database trait.
         // the bytecode is deployed at zero address.
         let mut evm = Evm::builder()
-            .with_db(BenchmarkDB::new_bytecode(Bytecode::new_raw(
+            .with_db(BenchmarkDB::new_bytecode(Bytecode::new_raw_checked(
                 bytecode.into(),
-            )))
+            )?))
             .modify_tx_env(|tx| {
                 // execution globals block hash/gas_limit/coinbase/timestamp..
                 tx.caller = "0x0000000000000000000000000000000000000001"
