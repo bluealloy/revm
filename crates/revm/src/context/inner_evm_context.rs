@@ -2,7 +2,7 @@ use crate::{
     db::Database,
     interpreter::{
         analysis::to_analysed, gas, return_ok, InstructionResult, InterpreterResult,
-        LoadAccountResult, SStoreResult, SelfDestructResult, MAX_CODE_SIZE,
+        LoadAccountResult, SStoreResult, SelfDestructResult,
     },
     journaled_state::JournaledState,
     primitives::{
@@ -276,8 +276,7 @@ impl<DB: Database> InnerEvmContext<DB> {
             return;
         }
 
-        let max_code_size = self.cfg().limit_contract_code_size.unwrap_or(MAX_CODE_SIZE);
-        if interpreter_result.output.len() > max_code_size {
+        if interpreter_result.output.len() > self.cfg().max_code_size() {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
             interpreter_result.result = InstructionResult::CreateContractSizeLimit;
             return;
@@ -335,10 +334,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         // if ok, check contract creation limit and calculate gas deduction on output len.
         //
         // EIP-3541: Reject new contract code starting with the 0xEF byte
-        if SPEC::enabled(LONDON)
-            && !interpreter_result.output.is_empty()
-            && interpreter_result.output.first() == Some(&0xEF)
-        {
+        if SPEC::enabled(LONDON) && interpreter_result.output.first() == Some(&0xEF) {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
             interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
             return;
@@ -346,8 +342,9 @@ impl<DB: Database> InnerEvmContext<DB> {
 
         // EIP-170: Contract code size limit
         // By default limit is 0x6000 (~25kb)
-        let max_code_size = self.cfg().limit_contract_code_size.unwrap_or(MAX_CODE_SIZE);
-        if SPEC::enabled(SPURIOUS_DRAGON) && interpreter_result.output.len() > max_code_size {
+        if SPEC::enabled(SPURIOUS_DRAGON)
+            && interpreter_result.output.len() > self.cfg().max_code_size()
+        {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
             interpreter_result.result = InstructionResult::CreateContractSizeLimit;
             return;

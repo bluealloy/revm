@@ -6,8 +6,8 @@ pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
     calc_blob_gasprice, AccessListItem, Account, Address, Bytes, InvalidHeader, InvalidTransaction,
-    Spec, SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE,
-    U256, VERSIONED_HASH_VERSION_KZG,
+    Spec, SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE,
+    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
 use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
@@ -323,6 +323,12 @@ pub struct CfgEnv {
 }
 
 impl CfgEnv {
+    /// Returns max code size from [`Self::limit_contract_code_size`] if set
+    /// or default [`MAX_CODE_SIZE`] value.
+    pub fn max_code_size(&self) -> usize {
+        self.limit_contract_code_size.unwrap_or(MAX_CODE_SIZE)
+    }
+
     pub fn with_chain_id(mut self, chain_id: u64) -> Self {
         self.chain_id = chain_id;
         self
