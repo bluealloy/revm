@@ -329,7 +329,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     /// When called, EvmBuilder will transition from SetGenericStage to HandlerStage.
     pub fn append_handler_register_box(
         mut self,
-        handle_register: register::HandleRegisterBox<EXT, DB>,
+        handle_register: register::HandleRegisterBox<'a, EXT, DB>,
     ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
         self.handler
             .append_handler_register(register::HandleRegisters::Box(handle_register));
