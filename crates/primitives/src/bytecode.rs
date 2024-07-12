@@ -1,6 +1,7 @@
 pub mod eof;
 pub mod legacy;
 
+use eof::EofDecodeError;
 pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
 use std::sync::Arc;
@@ -68,9 +69,25 @@ impl Bytecode {
     }
 
     /// Creates a new raw [`Bytecode`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if bytecode is EOF and has incorrect format.
     #[inline]
     pub fn new_raw(bytecode: Bytes) -> Self {
-        Self::LegacyRaw(bytecode)
+        Self::new_raw_checked(bytecode).expect("Expect correct EOF bytecode")
+    }
+
+    /// Creates a new raw [`Bytecode`].
+    ///
+    /// Returns an error on incorrect EOF format.
+    #[inline]
+    pub fn new_raw_checked(bytecode: Bytes) -> Result<Self, EofDecodeError> {
+        if bytecode.get(..2) == Some(&[0xEF, 00]) {
+            Ok(Self::Eof(Arc::new(Eof::decode(bytecode)?)))
+        } else {
+            Ok(Self::LegacyRaw(bytecode))
+        }
     }
 
     /// Create new checked bytecode.
