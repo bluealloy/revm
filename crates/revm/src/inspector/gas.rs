@@ -110,8 +110,8 @@ mod tests {
             self.gas_inspector.step(interp, context);
         }
 
-        fn log(&mut self, context: &mut EvmContext<DB>, log: &Log) {
-            self.gas_inspector.log(context, log);
+        fn log(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>, log: &Log) {
+            self.gas_inspector.log(interp, context, log);
         }
 
         fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
