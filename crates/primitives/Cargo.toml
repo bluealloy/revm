@@ -23,7 +23,7 @@ all = "warn"
 
 [dependencies]
 alloy-eips = { version = "0.1", default-features = false, features = ["k256"] }
-alloy-primitives = { version = "0.7.2", default-features = false, features = [
+alloy-primitives = { version = "0.7.7", default-features = false, features = [
     "rlp",
 ] }
 hashbrown = "0.14"
