@@ -66,7 +66,8 @@ pub trait Inspector<DB: Database> {
 
     /// Called when a log is emitted.
     #[inline]
-    fn log(&mut self, context: &mut EvmContext<DB>, log: &Log) {
+    fn log(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>, log: &Log) {
+        let _ = interp;
         let _ = context;
         let _ = log;
     }

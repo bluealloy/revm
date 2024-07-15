@@ -55,7 +55,9 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
                 // that log can be found as journaled_state.
                 let last_log = host.evm.journaled_state.logs.last().unwrap().clone();
                 // call Inspector
-                host.external.get_inspector().log(&mut host.evm, &last_log);
+                host.external
+                    .get_inspector()
+                    .log(interpreter, &mut host.evm, &last_log);
             }
         });
     }
