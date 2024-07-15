@@ -3,7 +3,7 @@ mod eip7702;
 mod spec;
 
 use deserializer::*;
-use eip7702::TxEip7702;
+use eip7702::{TestAuthorization, TxEip7702};
 pub use spec::SpecName;
 
 use revm::primitives::{AccessList, Address, AuthorizationList, Bytes, HashMap, B256, U256};
@@ -55,7 +55,8 @@ impl Test {
 
         if txbytes.get(0) == Some(&0x04) {
             let mut txbytes = &txbytes[1..];
-            let tx = TxEip7702::decode(&mut txbytes).expect("Expect EIP-7702 tx bytes to decode");
+            println!("txbytes:{:?}", hex::encode(txbytes));
+            let tx = TxEip7702::decode(&mut txbytes).expect("Valid TX");
             return Some(AuthorizationList::Signed(tx.authorization_list).into_recovered());
         }
 
@@ -102,7 +103,7 @@ pub struct Env {
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[serde(rename_all = "camelCase")]
 pub struct TransactionParts {
     pub data: Vec<Bytes>,
     pub gas_limit: Vec<U256>,
@@ -121,6 +122,8 @@ pub struct TransactionParts {
     #[serde(default)]
     pub access_lists: Vec<Option<AccessList>>,
 
+    //#[serde(default)]
+    //pub authorization_list: Vec<Option<Vec<TestAuthorization>>>,
     #[serde(default)]
     pub blob_versioned_hashes: Vec<B256>,
     pub max_fee_per_blob_gas: Option<U256>,

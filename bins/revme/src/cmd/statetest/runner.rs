@@ -3,14 +3,14 @@ use super::{
     models::{SpecName, Test, TestSuite},
     utils::recover_address,
 };
+use hashbrown::HashMap;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
     db::EmptyDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
     primitives::{
-        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, Eof,
-        ExecutionResult, SpecId, TxKind, B256, EOF_MAGIC_BYTES,
+        address, calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, Eof, ExecutionResult, SpecId, TxKind, B256, EOF_MAGIC_BYTES
     },
     Evm, State,
 };
@@ -135,7 +135,19 @@ fn check_evm_execution<EXT>(
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
-    let state_root = state_merkle_trie_root(evm.context.evm.db.cache.trie_account());
+    let mut accounts = evm
+        .context
+        .evm
+        .db
+        .cache
+        .trie_account()
+        .into_iter()
+        .collect::<HashMap<_, _>>();
+
+    println!("STATE: {:#?}", accounts);
+    //accounts.remove(&address!("2adc25665018aa1fe0e6bc666dac8fc2697ff9ba"));
+
+    let state_root = state_merkle_trie_root(accounts.into_iter());
 
     let print_json_output = |error: Option<String>| {
         if print_json_outcome {

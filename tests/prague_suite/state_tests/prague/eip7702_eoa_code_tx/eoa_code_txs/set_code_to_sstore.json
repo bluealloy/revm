@@ -47,6 +47,19 @@
             "accessLists": [
                 []
             ],
+            "authorizationList": [
+                {
+                    "chainId": "0x01",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "nonce": [
+                        "0x00"
+                    ],
+                    "v": "0x01",
+                    "r": "0x8171c0ded912d4f458b8115618c18f3f430f414919c73b4daa693c47fd325414",
+                    "s": "0x787741e1621bcb9cb58ece039ad73f41d9422aa259ed53c2b0bd30dc7ff09be7",
+                    "signer": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                }
+            ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f"
         },
@@ -65,11 +78,11 @@
             ]
         },
         "_info": {
-            "hash": "0x0cc03c9aed9cada7adbca617c938a399139f9528c32ef26036ac6958bab6e808",
+            "hash": "0xdf8f2cdee9d8d52a87dc80d03b0067c28f05da23e028a7733844e0b873c5fed1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L52",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L52",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "7357ff1f3f176aada6d350d6e42a292a3dec27f4"
         }
@@ -122,6 +135,19 @@
             "accessLists": [
                 []
             ],
+            "authorizationList": [
+                {
+                    "chainId": "0x01",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "nonce": [
+                        "0x00"
+                    ],
+                    "v": "0x01",
+                    "r": "0x8171c0ded912d4f458b8115618c18f3f430f414919c73b4daa693c47fd325414",
+                    "s": "0x787741e1621bcb9cb58ece039ad73f41d9422aa259ed53c2b0bd30dc7ff09be7",
+                    "signer": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                }
+            ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f"
         },
@@ -140,11 +166,11 @@
             ]
         },
         "_info": {
-            "hash": "0x75a7650a9ce6e1e35ebdeb9df51d7de3c6bf2d50a62aefe5b5266cfc3458ff5a",
+            "hash": "0x46cd99ca4b80a5ef641e7aa9a4de64b4077ecb445b26fd730bad415327e8c7c3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L52",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L52",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "7357ff1f3f176aada6d350d6e42a292a3dec27f4"
         }
@@ -197,6 +223,19 @@
             "accessLists": [
                 []
             ],
+            "authorizationList": [
+                {
+                    "chainId": "0x01",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "nonce": [
+                        "0x00"
+                    ],
+                    "v": "0x01",
+                    "r": "0x8171c0ded912d4f458b8115618c18f3f430f414919c73b4daa693c47fd325414",
+                    "s": "0x787741e1621bcb9cb58ece039ad73f41d9422aa259ed53c2b0bd30dc7ff09be7",
+                    "signer": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                }
+            ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f"
         },
@@ -215,11 +254,11 @@
             ]
         },
         "_info": {
-            "hash": "0x780048470f2ea7458765f8491e1c9ab105f7a1a5cc968da45e46f04e6ad5c742",
+            "hash": "0xd8aca30bcc9ac6492597f45d4ba1b05559f4717a5080c0f455ec8d5b8b2b02ab",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L52",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L52",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "7357ff1f3f176aada6d350d6e42a292a3dec27f4"
         }
@@ -272,6 +311,19 @@
             "accessLists": [
                 []
             ],
+            "authorizationList": [
+                {
+                    "chainId": "0x01",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "nonce": [
+                        "0x00"
+                    ],
+                    "v": "0x01",
+                    "r": "0x8171c0ded912d4f458b8115618c18f3f430f414919c73b4daa693c47fd325414",
+                    "s": "0x787741e1621bcb9cb58ece039ad73f41d9422aa259ed53c2b0bd30dc7ff09be7",
+                    "signer": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                }
+            ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f"
         },
@@ -290,11 +342,11 @@
             ]
         },
         "_info": {
-            "hash": "0x9619075389d4cac9f2b7e2fc8afb4b9c2e68fe0b1acdfc23f499ec7062bc0477",
+            "hash": "0xb692825710e281e196c4fe1c108a9eafb94198c50ebc68e3219939b33bdeb9fb",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L52",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L52",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "7357ff1f3f176aada6d350d6e42a292a3dec27f4"
         }

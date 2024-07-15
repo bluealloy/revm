@@ -47,6 +47,19 @@
             "accessLists": [
                 []
             ],
+            "authorizationList": [
+                {
+                    "chainId": "0x01",
+                    "address": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                    "nonce": [
+                        "0x00"
+                    ],
+                    "v": "0x01",
+                    "r": "0xeb2ba830040b6c3896eb38f95e85247cfd2a7c849df9f2a7845e5f966a21e0ad",
+                    "s": "0x6b4e8baf1414c2e2a014be90b1a666892cc9b7d1812ab7bfb0f893b597d483b7",
+                    "signer": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                }
+            ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f"
         },
@@ -65,11 +78,11 @@
             ]
         },
         "_info": {
-            "hash": "0xbaf5d003a2ba2f4f601664f59e388043140ac22cc3a77d60be441b15d26a39fb",
+            "hash": "0xa73dee40211060de793a73493d122b115c01a07c22474b36ac8491195eef9fbd",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an address that is deployed in the same transaction,\n    and test calling the set-code address and the deployed contract.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L672",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L672",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "7357ff1f3f176aada6d350d6e42a292a3dec27f4"
         }
@@ -122,6 +135,19 @@
             "accessLists": [
                 []
             ],
+            "authorizationList": [
+                {
+                    "chainId": "0x01",
+                    "address": "0x102f717aa86e21959b5a9777adf5145dba904e5f",
+                    "nonce": [
+                        "0x00"
+                    ],
+                    "v": "0x00",
+                    "r": "0x746207d0d2a4cabf79cf7df95cc3d8d994bdae9dd96b54ef4b12a062b1206fa1",
+                    "s": "0x54b873e67c85b390013dd971c708255679945d24182fca2d7cd8529a9c5459f8",
+                    "signer": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                }
+            ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f"
         },
@@ -140,11 +166,11 @@
             ]
         },
         "_info": {
-            "hash": "0xc5bbfd465f7fa435a861d80afc906286af11eef86f7fe7749a6f26286373d076",
+            "hash": "0x4d3674e03a046e607073766fa8c007ac89862d423a544aadbeb5094fdebc9763",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test setting the code of an account to an address that is deployed in the same transaction,\n    and test calling the set-code address and the deployed contract.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L672",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L672",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "7357ff1f3f176aada6d350d6e42a292a3dec27f4"
         }

@@ -1,4 +1,4 @@
-pub use alloy_eips::eip7702::{RecoveredAuthorization, SignedAuthorization};
+pub use alloy_eips::eip7702::{RecoveredAuthorization, Authorization, SignedAuthorization};
 pub use alloy_primitives::Signature;
 
 use std::{boxed::Box, vec::Vec};
@@ -18,6 +18,11 @@ impl AuthorizationList {
             Self::Signed(signed) => signed.len(),
             Self::Recovered(recovered) => recovered.len(),
         }
+    }
+
+    /// Return empty authorization list.
+    pub fn empty() -> Self {
+        Self::Recovered(Vec::new())
     }
 
     /// Returns true if the authorization list is empty.

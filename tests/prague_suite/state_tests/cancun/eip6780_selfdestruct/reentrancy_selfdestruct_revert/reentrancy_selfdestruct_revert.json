@@ -74,7 +74,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -154,7 +154,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -234,7 +234,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -314,7 +314,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -394,7 +394,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -474,7 +474,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -554,7 +554,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -634,7 +634,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -714,7 +714,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -794,7 +794,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -874,7 +874,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -954,7 +954,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -1034,7 +1034,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -1114,7 +1114,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -1194,7 +1194,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -1274,7 +1274,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -1354,7 +1354,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -1434,7 +1434,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -1515,7 +1515,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -1596,7 +1596,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -1677,7 +1677,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -1758,7 +1758,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -1839,7 +1839,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -1920,7 +1920,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -2001,7 +2001,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -2082,7 +2082,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -2163,7 +2163,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -2244,7 +2244,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -2325,7 +2325,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -2406,7 +2406,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -2487,7 +2487,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -2568,7 +2568,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -2649,7 +2649,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -2730,7 +2730,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -2811,7 +2811,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }
@@ -2892,7 +2892,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
         }

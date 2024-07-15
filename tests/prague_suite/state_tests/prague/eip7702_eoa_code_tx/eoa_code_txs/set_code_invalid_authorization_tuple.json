@@ -47,6 +47,19 @@
             "accessLists": [
                 []
             ],
+            "authorizationList": [
+                {
+                    "chainId": "0x00",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "nonce": [
+                        "0x01"
+                    ],
+                    "v": "0x00",
+                    "r": "0x9e833a19cf7ac609d713ffeb8d5cd327237ef5cb4ac9524c53195423e348629f",
+                    "s": "0x632893e4b18b32faf56972dc3568c3a3869dcf9eb9c282a637173475d19e8d2f",
+                    "signer": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                }
+            ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f"
         },
@@ -65,11 +78,11 @@
             ]
         },
         "_info": {
-            "hash": "0x1b3535dcc9623e769402925c83cfed2293fa40cc20d68041967f1dcfcc6d1a9b",
+            "hash": "0x75b6c9c6c9a874af5c2f605c1e9b186ba51991eb736f60e0f8e60ad8906ab3ef",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test attempting to set the code of an account with invalid authorization tuple.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L859",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L859",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "7357ff1f3f176aada6d350d6e42a292a3dec27f4"
         }
@@ -122,6 +135,20 @@
             "accessLists": [
                 []
             ],
+            "authorizationList": [
+                {
+                    "chainId": "0x00",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "nonce": [
+                        "0x00",
+                        "0x01"
+                    ],
+                    "v": "0x01",
+                    "r": "0xfa149db0a8876c59ae6e4c569560d373a63f8a42eb2bc895fb9d86f926e6d29d",
+                    "s": "0x38d38a3bd78dcc93096f644aff1c06748202af044eb67a698417c2d1a8ef631b",
+                    "signer": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                }
+            ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f"
         },
@@ -140,11 +167,11 @@
             ]
         },
         "_info": {
-            "hash": "0x36d33a95fc9e06f8b750fc4007b213c4c23f5532cb1c0b12563d377577dae65f",
+            "hash": "0x903820d68aefa8f92d8b119b0777d16faeffd1b24a82d86a9bab3c46017dff51",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test attempting to set the code of an account with invalid authorization tuple.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L859",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L859",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "7357ff1f3f176aada6d350d6e42a292a3dec27f4"
         }

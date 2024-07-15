@@ -47,6 +47,19 @@
             "accessLists": [
                 []
             ],
+            "authorizationList": [
+                {
+                    "chainId": "0x01",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "nonce": [
+                        "0x00"
+                    ],
+                    "v": "0x01",
+                    "r": "0x8171c0ded912d4f458b8115618c18f3f430f414919c73b4daa693c47fd325414",
+                    "s": "0x787741e1621bcb9cb58ece039ad73f41d9422aa259ed53c2b0bd30dc7ff09be7",
+                    "signer": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                }
+            ],
             "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
             "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f"
         },
@@ -65,11 +78,11 @@
             ]
         },
         "_info": {
-            "hash": "0x938d1409c0873498dcd879cca82bd2c8fcd323dfe158c765ab9edb9ac166cc3a",
+            "hash": "0xefa3d37e7860b8885b516be68701cfda4a5f0f395f1c6e5a68f240a7c5682125",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test codesize and codecopy operations on a set-code address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L612",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/prague/eip7702_eoa_code_tx/test_eoa_code_txs.py#L612",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "7357ff1f3f176aada6d350d6e42a292a3dec27f4"
         }

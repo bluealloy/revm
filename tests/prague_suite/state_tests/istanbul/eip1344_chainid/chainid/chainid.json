@@ -56,7 +56,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test CHAINID opcode.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1344.md",
             "reference-spec-version": "02e46aebc80e6e5006ab4d2daa41876139f9a9e2"
         }
@@ -118,7 +118,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test CHAINID opcode.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1344.md",
             "reference-spec-version": "02e46aebc80e6e5006ab4d2daa41876139f9a9e2"
         }
@@ -181,7 +181,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test CHAINID opcode.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1344.md",
             "reference-spec-version": "02e46aebc80e6e5006ab4d2daa41876139f9a9e2"
         }
@@ -245,7 +245,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test CHAINID opcode.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1344.md",
             "reference-spec-version": "02e46aebc80e6e5006ab4d2daa41876139f9a9e2"
         }
@@ -309,7 +309,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test CHAINID opcode.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1344.md",
             "reference-spec-version": "02e46aebc80e6e5006ab4d2daa41876139f9a9e2"
         }
@@ -374,7 +374,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test CHAINID opcode.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1344.md",
             "reference-spec-version": "02e46aebc80e6e5006ab4d2daa41876139f9a9e2"
         }
@@ -439,7 +439,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
             "description": "Test function documentation:\n\n    Test CHAINID opcode.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.2.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/istanbul/eip1344_chainid/test_chainid.py#L15",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1344.md",
             "reference-spec-version": "02e46aebc80e6e5006ab4d2daa41876139f9a9e2"
         }

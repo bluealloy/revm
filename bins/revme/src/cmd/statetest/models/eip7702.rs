@@ -1,5 +1,16 @@
 use alloy_rlp::{Decodable, Error as RlpError, Header};
-use revm::primitives::{AccessList, Bytes, Signature, SignedAuthorization, TxKind, U256};
+use revm::primitives::{AccessList, Address, Bytes, Signature, SignedAuthorization, TxKind, U256};
+
+/// A recovered authorization.
+#[derive(Debug, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct TestAuthorization {
+    pub chain_id: u64,
+    pub address: Address,
+    pub nonce: Vec<u64>,
+    #[serde(flatten)]
+    signature: Signature,
+    signer: Option<Address>,
+}
 
 /// [EIP-7702 Set Code Transaction](https://eips.ethereum.org/EIPS/eip-7702)
 ///
@@ -122,4 +133,14 @@ mod tests {
         let tx = TxEip7702::decode(&mut tx_bytes.as_slice()).unwrap();
         assert_eq!(tx.authorization_list.len(), 1);
     }
+
+    #[test]
+    fn test_eip7702_tx() {
+        let tx_bytes = hex::decode("f8c2018080078398968094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85df85b80940000000000000000000000000000000000001000c10180a09e833a19cf7ac609d713ffeb8d5cd327237ef5cb4ac9524c53195423e348629fa0632893e4b18b32faf56972dc3568c3a3869dcf9eb9c282a637173475d19e8d2f01a05d6eea7691335a6bb066613d5c33a27bd1cbc89feb472b6dd437aca6aec73282a013c492943ea0fce77a20b1d554eac087fee37fa27b0f8294b13fb3162a0fb175").unwrap();
+        let tx = TxEip7702::decode(&mut tx_bytes.as_slice()).unwrap();
+        assert_eq!(tx.authorization_list.len(), 1);
+    }
 }
+
+//["0x01","0x","0x","0x07","0x989680","0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b","0x","0x",[],[["0x"  ,"0x0000000000000000000000000000000000001000",["0x","0x01"],"0x01","0xfa149db0a8876c59ae6e4c569560d373a63f8a42eb2bc895fb9d86f926e6d29d","0x38d38a3bd78dcc93096f644aff1c06748202af044eb67a698417c2d1a8ef631b"]],"0x01","0x2f4e3a130331eefbf5401a60a4fc6e9162e3d2a3e054e50c41cedbfa0955bcae","0x5784cb6ab144a67b3eece63d6ece778f6aa182b5326ccd673e03ecec5fc3a9ff"]
+//["0x01","0x","0x","0x07","0x989680","0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b","0x","0x",[],[["0x01","0x0000000000000000000000000000000000001000",["0x"],"0x01","0x8171c0ded912d4f458b8115618c18f3f430f414919c73b4daa693c47fd325414","0x787741e1621bcb9cb58ece039ad73f41d9422aa259ed53c2b0bd30dc7ff09be7"]],"0x","0x0e6c8f4d73b175887e1f21cc00bf0f8243af18aed208ec0a4562ee60e7f85736","0x3f8e8f1b01fcd6d3a988877e80dc17fad16274447f4211ed74b41e8789ae70cd"]
