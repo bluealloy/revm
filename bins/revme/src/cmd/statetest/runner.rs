@@ -357,10 +357,10 @@ pub fn execute_test_suite(
                 env.tx.transact_to = to;
 
                 let mut cache = cache_state.clone();
-                let is_spurious_dragon =
-                    SpecId::enabled(spec_id, revm::primitives::SpecId::SPURIOUS_DRAGON);
-                // Turn state clear after prague
-                cache.set_state_clear_flag(is_spurious_dragon);
+                cache.set_state_clear_flag(SpecId::enabled(
+                    spec_id,
+                    revm::primitives::SpecId::SPURIOUS_DRAGON,
+                ));
                 let mut state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
