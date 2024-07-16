@@ -11,10 +11,10 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
-/// Statetest command
+/// Eof validation command.
 #[derive(StructOpt, Debug)]
 pub struct Cmd {
-    /// Input path to the kzg trusted setup file.
+    /// Input path to eof validation test
     #[structopt(required = true)]
     path: PathBuf,
 }
@@ -29,12 +29,6 @@ impl Cmd {
         run_test(&self.path);
         Ok(())
     }
-}
-
-#[test]
-fn eof_validation_eip4200() {
-    let eof_tests = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/EOFTests/EIP4200");
-    run_test(&eof_tests);
 }
 
 pub fn run_test(path: &Path) {
