@@ -13,6 +13,18 @@ pub enum AuthorizationList {
     Recovered(Vec<RecoveredAuthorization>),
 }
 
+impl From<Vec<SignedAuthorization>> for AuthorizationList {
+    fn from(signed: Vec<SignedAuthorization>) -> Self {
+        Self::Signed(signed)
+    }
+}
+
+impl From<Vec<RecoveredAuthorization>> for AuthorizationList {
+    fn from(recovered: Vec<RecoveredAuthorization>) -> Self {
+        Self::Recovered(recovered)
+    }
+}
+
 impl AuthorizationList {
     /// Returns length of the authorization list.
     pub fn len(&self) -> usize {
