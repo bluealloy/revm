@@ -57,7 +57,7 @@ impl Test {
             return Ok(None);
         };
 
-        if txbytes.get(0) == Some(&0x04) {
+        if txbytes.first() == Some(&0x04) {
             let mut txbytes = &txbytes[1..];
             let tx = TxEip7702::decode(&mut txbytes)?;
             return Ok(Some(

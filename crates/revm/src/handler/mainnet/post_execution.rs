@@ -46,17 +46,17 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
 
     // touch beneficiary account only if we are going to transfer ethers to it.
     //if !coinbase_gas_price.is_zero() {
-        let (coinbase_account, _) = context
-            .evm
-            .inner
-            .journaled_state
-            .load_account(beneficiary, &mut context.evm.inner.db)?;
+    let (coinbase_account, _) = context
+        .evm
+        .inner
+        .journaled_state
+        .load_account(beneficiary, &mut context.evm.inner.db)?;
 
-        coinbase_account.mark_touch();
-        coinbase_account.info.balance = coinbase_account
-            .info
-            .balance
-            .saturating_add(coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64));
+    coinbase_account.mark_touch();
+    coinbase_account.info.balance = coinbase_account
+        .info
+        .balance
+        .saturating_add(coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64));
     //}
     Ok(())
 }
