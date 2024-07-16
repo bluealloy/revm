@@ -6,6 +6,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.0.0](https://github.com/bluealloy/revm/compare/revm-v11.0.0...revm-v12.0.0) - 2024-07-16
+
+### Added
+- pass interpreter into Inspector::log ([#1610](https://github.com/bluealloy/revm/pull/1610))
+- *(EOF)* Bytecode::new_raw supports EOF, new_raw_checked added ([#1607](https://github.com/bluealloy/revm/pull/1607))
+- use `kzg-rs` for kzg point evaluation ([#1558](https://github.com/bluealloy/revm/pull/1558))
+
+### Fixed
+- *(eip7702)* Add tests and fix some bugs ([#1605](https://github.com/bluealloy/revm/pull/1605))
+- correctly calculate eofcreate address ([#1619](https://github.com/bluealloy/revm/pull/1619))
+- allow non-static lifetime in HandleRegisterBox ([#1608](https://github.com/bluealloy/revm/pull/1608))
+- *(EOF)* Use cfg code size limit for eofcreate ([#1606](https://github.com/bluealloy/revm/pull/1606))
+
+### Other
+- bump alloy deps ([#1623](https://github.com/bluealloy/revm/pull/1623))
+- *(deps)* bump alloy-sol-types from 0.7.6 to 0.7.7 ([#1614](https://github.com/bluealloy/revm/pull/1614))
+- group optimism invalid txn errors ([#1604](https://github.com/bluealloy/revm/pull/1604))
+- load_account -> warm_preloaded_addresses ([#1584](https://github.com/bluealloy/revm/pull/1584))
+- Refactor code, and check if precompile for create collision ([#1600](https://github.com/bluealloy/revm/pull/1600))
+- *(revm)* defer bytecode load ([#1588](https://github.com/bluealloy/revm/pull/1588))
+- Rename gas_price to gas_limit for precompile args ([#1593](https://github.com/bluealloy/revm/pull/1593))
+
 ## [11.0.0](https://github.com/bluealloy/revm/compare/revm-v10.0.0...revm-v11.0.0) - 2024-07-08
 
 ### Added

@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v9.0.0...revm-precompile-v9.1.0) - 2024-07-16
+
+### Added
+- use `kzg-rs` for kzg point evaluation ([#1558](https://github.com/bluealloy/revm/pull/1558))
+
+### Other
+- main CHANGELOG ([#1592](https://github.com/bluealloy/revm/pull/1592))
+
 ## [9.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v8.0.0...revm-precompile-v8.1.0) - 2024-07-08
 
 ### Added

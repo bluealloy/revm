@@ -6,6 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v6.0.0...revm-primitives-v7.0.0) - 2024-07-16
+
+### Added
+- *(EOF)* Bytecode::new_raw supports EOF, new_raw_checked added ([#1607](https://github.com/bluealloy/revm/pull/1607))
+- use `kzg-rs` for kzg point evaluation ([#1558](https://github.com/bluealloy/revm/pull/1558))
+
+### Fixed
+- *(eip7702)* Add tests and fix some bugs ([#1605](https://github.com/bluealloy/revm/pull/1605))
+- *(EOF)* Use cfg code size limit for eofcreate ([#1606](https://github.com/bluealloy/revm/pull/1606))
+- missing kzg_settings if kzg-rs feature enabled ([#1601](https://github.com/bluealloy/revm/pull/1601))
+
+### Other
+- bump alloy deps ([#1623](https://github.com/bluealloy/revm/pull/1623))
+- *(deps)* bump alloy-primitives from 0.7.6 to 0.7.7 ([#1612](https://github.com/bluealloy/revm/pull/1612))
+- group optimism invalid txn errors ([#1604](https://github.com/bluealloy/revm/pull/1604))
+- *(deps)* bump bitflags from 2.5.0 to 2.6.0 ([#1583](https://github.com/bluealloy/revm/pull/1583))
+- Rename gas_price to gas_limit for precompile args ([#1593](https://github.com/bluealloy/revm/pull/1593))
+
 ## [6.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v5.0.0...revm-primitives-v6.0.0) - 2024-07-08
 
 ### Added
