@@ -3005,7 +3005,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "12.0.0"
+version = "12.1.0"
 dependencies = [
  "alloy-eips",
  "alloy-provider",
@@ -3031,7 +3031,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "8.0.0"
+version = "8.1.0"
 dependencies = [
  "bincode",
  "paste",
