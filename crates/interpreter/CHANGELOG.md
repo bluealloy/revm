@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.1](https://github.com/bluealloy/revm/compare/revm-interpreter-v8.0.0...revm-interpreter-v8.0.1) - 2024-07-16
+
+### Fixed
+- *(eof)* don't fail if offset overflows usize ([#1627](https://github.com/bluealloy/revm/pull/1627))
+
 ## [8.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v7.0.0...revm-interpreter-v8.0.0) - 2024-07-16
 
 ### Added
