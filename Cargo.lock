@@ -3005,7 +3005,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "11.0.0"
+version = "12.0.0"
 dependencies = [
  "alloy-eips",
  "alloy-provider",
@@ -3031,7 +3031,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "7.0.0"
+version = "8.0.0"
 dependencies = [
  "bincode",
  "paste",
@@ -3044,7 +3044,7 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "9.0.0"
+version = "9.1.0"
 dependencies = [
  "aurora-engine-modexp",
  "blst",
@@ -3070,7 +3070,7 @@ dependencies = [
 
 [[package]]
 name = "revm-primitives"
-version = "6.0.0"
+version = "7.0.0"
 dependencies = [
  "alloy-eips",
  "alloy-primitives",
@@ -3105,7 +3105,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "alloy-rlp",
  "hash-db",
