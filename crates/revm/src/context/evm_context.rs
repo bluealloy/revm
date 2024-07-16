@@ -270,8 +270,6 @@ impl<DB: Database> EvmContext<DB> {
             return return_error(InstructionResult::CallTooDeep);
         }
 
-        //self.precompiles
-
         // Prague EOF
         if spec_id.is_enabled_in(PRAGUE_EOF) && inputs.init_code.get(..2) == Some(&EOF_MAGIC_BYTES)
         {
@@ -325,7 +323,7 @@ impl<DB: Database> EvmContext<DB> {
             }
         };
 
-        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
+        let bytecode = Bytecode::new_legacy(inputs.init_code.clone());
 
         let contract = Contract::new(
             Bytes::new(),

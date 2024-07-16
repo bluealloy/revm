@@ -68,6 +68,12 @@ impl Bytecode {
         matches!(self, Self::Eof(_))
     }
 
+    /// Creates a new legacy [`Bytecode`].
+    #[inline]
+    pub fn new_legacy(raw: Bytes) -> Self {
+        Self::LegacyRaw(raw)
+    }
+
     /// Creates a new raw [`Bytecode`].
     ///
     /// # Panics
