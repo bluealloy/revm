@@ -35,7 +35,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
 
             let memory_size = interp.shared_memory.len();
 
-            #[cfg(feature = "debug_print")]
+            #[cfg(feature = "debug-print")]
             println!(
                 "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
                 context.journaled_state.depth(),

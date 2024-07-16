@@ -1,24 +1,10 @@
 #[cfg(feature = "rwasm")]
-use crate::journal_db_wrapper::JournalDbWrapper;
-#[cfg(feature = "rwasm")]
-use crate::primitives::hex;
+use crate::rwasm::RwasmDbWrapper;
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
-    interpreter::{
-        analysis::validate_eof,
-        CallInputs,
-        CreateInputs,
-        EOFCreateInputs,
-        EOFCreateOutcome,
-        Gas,
-        Host,
-        InstructionResult,
-        InterpreterAction,
-        InterpreterResult,
-        SharedMemory,
-    },
+    interpreter::{Gas, Host, InstructionResult, InterpreterResult},
     primitives::{
         specification::SpecId,
         BlockEnv,
@@ -47,8 +33,10 @@ use fluentbase_core::{
     loader::{_loader_call, _loader_create},
 };
 use fluentbase_sdk::{
+    runtime::{RuntimeContextWrapper, TestingContext},
     types::{EvmCallMethodInput, EvmCreateMethodInput},
     ContractInput,
+    SovereignAPI,
 };
 use fluentbase_types::{Address, ExitCode};
 use revm_interpreter::{CallOutcome, CreateOutcome};
@@ -116,6 +104,8 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     #[inline]
     #[cfg(not(feature = "rwasm"))]
     pub fn run_the_loop(&mut self, first_frame: Frame) -> Result<FrameResult, EVMError<DB::Error>> {
+        use revm_interpreter::InterpreterAction;
+
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
 
@@ -123,7 +113,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         let mut shared_memory =
             SharedMemory::new_with_memory_limit(self.context.evm.env.cfg.memory_limit);
         #[cfg(not(feature = "memory_limit"))]
-        let mut shared_memory = SharedMemory::new();
+        let mut shared_memory = revm_interpreter::SharedMemory::new();
 
         shared_memory.new_context();
 
@@ -442,6 +432,13 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             }
             #[cfg(not(feature = "rwasm"))]
             {
+                use revm_interpreter::{
+                    analysis::validate_eof,
+                    CallInputs,
+                    CreateInputs,
+                    EOFCreateInputs,
+                    EOFCreateOutcome,
+                };
                 let exec = self.handler.execution();
                 // call inner handling of call/create
                 let first_frame_or_result = match ctx.evm.env.tx.transact_to {
@@ -572,8 +569,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         };
 
         let contract_input = self.input_from_env(&mut gas, caller_address, Address::ZERO, value);
-        let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
-        let create_output = _loader_create(&contract_input, &am, method_data);
+        let sdk = RuntimeContextWrapper::new();
+        let sdk = RwasmDbWrapper::new(RefCell::new(&mut self.context.evm), contract_input, sdk);
+        let create_output = _loader_create(&sdk, method_data);
 
         // let (output_buffer, exit_code) = self.exec_rwasm_binary(
         //     &mut gas,
@@ -647,10 +645,14 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             depth: 0,
         };
         let contract_input = self.input_from_env(&mut gas, caller_address, callee_address, value);
-        let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
-        let call_output = _loader_call(&contract_input, &am, method_input);
+        let sdk = TestingContext::new();
+        let sdk = RwasmDbWrapper::new(RefCell::new(&mut self.context.evm), contract_input, sdk);
+        let call_output = _loader_call(&sdk, method_input);
 
-        #[cfg(feature = "debug_print")]
+        // let gam = GuestAccountManager::default();
+        // gam.exec_hash();
+
+        #[cfg(feature = "debug-print")]
         {
             println!("executed ECL call:");
             println!(" - caller: 0x{}", hex::encode(caller_address));

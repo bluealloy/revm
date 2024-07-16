@@ -313,7 +313,7 @@ fn check_evm_execution<EXT1, EXT2>(
         assert_eq!(v.bytecode(), v2.bytecode(), "EVM bytecode mismatch");
     }
     for (address, v1) in evm.context.evm.db.cache.accounts.iter() {
-        if cfg!(feature = "debug_print") {
+        if cfg!(feature = "debug-print") {
             println!("comparing account (0x{})...", hex::encode(address));
         }
         let v2 = evm2.context.evm.db.cache.accounts.get(address);
@@ -331,12 +331,12 @@ fn check_evm_execution<EXT1, EXT2>(
             //     v1,
             //     v2.unwrap()
             // );
-            // assert_eq!(a1.balance, a2.balance, "EVM account balance mismatch");
+            assert_eq!(a1.balance, a2.balance, "EVM account balance mismatch");
             if cfg!(feature = "debug_print") {
                 println!(" - nonce: {}", a1.nonce);
             }
             assert_eq!(a1.nonce, a2.nonce, "EVM <> FLUENT account nonce mismatch");
-            if cfg!(feature = "debug_print") {
+            if cfg!(feature = "debug-print") {
                 println!(" - code_hash: {}", hex::encode(a1.code_hash));
             }
             assert_eq!(
@@ -348,7 +348,7 @@ fn check_evm_execution<EXT1, EXT2>(
                 a2.code.as_ref().map(|b| b.original_bytes()),
                 "EVM <> FLUENT account code mismatch",
             );
-            if cfg!(feature = "debug_print") {
+            if cfg!(feature = "debug-print") {
                 println!(" - storage:");
             }
             if let Some(s1) = v1.account.as_ref().map(|v| &v.storage) {
@@ -387,7 +387,7 @@ fn check_evm_execution<EXT1, EXT2>(
                     assert_eq!(
                         *value1,
                         *value2,
-                        "EVM storage value ({}) mismatch",
+                        "EVM <> FLUENT storage value ({}) mismatch",
                         hex::encode(&slot.to_be_bytes::<32>())
                     );
                 }
@@ -406,7 +406,7 @@ fn check_evm_execution<EXT1, EXT2>(
     );
 
     for (address, v1) in evm.context.evm.db.cache.accounts.iter() {
-        if cfg!(feature = "debug_print") {
+        if cfg!(feature = "debug-print") {
             println!("comparing balances (0x{})...", hex::encode(address));
         }
         let v2 = evm2.context.evm.db.cache.accounts.get(address);
@@ -417,7 +417,7 @@ fn check_evm_execution<EXT1, EXT2>(
                 .as_ref()
                 .map(|v| &v.info)
                 .expect("missing FLUENT account");
-            if cfg!(feature = "debug_print") {
+            if cfg!(feature = "debug-print") {
                 println!(" - balance1: {}", a1.balance);
                 println!(" - balance2: {}", a2.balance);
             }
@@ -481,7 +481,7 @@ pub fn execute_test_suite(
         let mut cache_state = revm::CacheState::new(false);
         let mut cache_state2 = revm_fluent::CacheState::new(false);
 
-        let mut evm_storage: PlainStorage = PlainStorage::default();
+        let evm_storage: PlainStorage = PlainStorage::default();
         let mut genesis_addresses: HashSet<Address> = Default::default();
         for (address, info) in &devnet_genesis.alloc {
             let code_hash = info
@@ -739,10 +739,10 @@ pub fn execute_test_suite(
                     (e, res)
                 } else {
                     let timer = Instant::now();
-                    #[cfg(feature = "debug_print")]
+                    #[cfg(feature = "debug-print")]
                     println!("\n\nORIGINAL transact_commit:");
                     let res = evm.transact_commit();
-                    #[cfg(feature = "debug_print")]
+                    #[cfg(feature = "debug-print")]
                     println!("\n\nFLUENT transact_commit:");
                     let res2 = evm2.transact_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();

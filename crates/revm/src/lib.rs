@@ -22,11 +22,11 @@ mod evm;
 mod frame;
 pub mod handler;
 mod inspector;
-#[cfg(feature = "rwasm")]
-mod journal_db_wrapper;
 mod journaled_state;
 #[cfg(feature = "optimism")]
 pub mod optimism;
+#[cfg(feature = "rwasm")]
+mod rwasm;
 
 // Export items.
 
@@ -67,8 +67,6 @@ pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RE
 
 // Reexport libraries
 extern crate core;
-#[cfg(feature = "rwasm")]
-pub extern crate revm_interpreter_fluent as revm_interpreter;
 
 #[doc(inline)]
 pub use revm_interpreter as interpreter;

@@ -249,7 +249,8 @@ impl PartialEq for AccountInfo {
                 && self.nonce == other.nonce
                 && self.code_hash == other.code_hash
         };
-        #[cfg(feature = "rwasm")] {
+        #[cfg(feature = "rwasm")]
+        {
             res &= self.rwasm_code_hash == other.rwasm_code_hash;
         }
 

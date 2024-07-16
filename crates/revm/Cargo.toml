@@ -24,10 +24,8 @@ all = "warn"
 [dependencies]
 # revm
 #revm-interpreter = { path = "../interpreter", default-features = false, optional = true }
-#revm-interpreter-fluent = { path = "../interpreter_fluent", default-features = false, optional = true }
 #revm-precompile = { path = "../precompile", default-features = false }
 revm-interpreter = { package = "revm-interpreter", path = "../interpreter", default-features = false, optional = true }
-revm-interpreter-fluent = { package = "revm-interpreter-fluent", path = "../interpreter_fluent", default-features = false, optional = true }
 revm-precompile = { package = "revm-precompile", path = "../precompile", default-features = false, optional = true }
 
 fluentbase-types = { path = "../../../crates/types", default-features = false }
@@ -156,8 +154,8 @@ secp256k1 = ["revm-precompile/secp256k1"]
 c-kzg = ["revm-precompile/c-kzg"]
 blst = ["revm-precompile/blst"]
 
-debug_print = [
-    "revm-interpreter/debug_print"
+debug-print = [
+    "revm-interpreter/debug-print"
 ]
 rwasm = [
     #    "e2e",

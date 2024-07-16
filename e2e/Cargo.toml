@@ -69,14 +69,14 @@ paste = { version = "1.0", default-features = false }
 
 [features]
 default = [
-    #    "debug_print",
+    #    "debug-print",
 ]
 e2e = [
     "revm-fluent/e2e",
 ]
 debug_use_fluent_storage = []
-debug_print = [
+debug-print = [
     #    "e2e",
-    "revm/debug_print",
-    "revm-fluent/debug_print",
+    "revm/debug-print",
+    "revm-fluent/debug-print",
 ]

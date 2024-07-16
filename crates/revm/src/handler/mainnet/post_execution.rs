@@ -1,3 +1,4 @@
+use fluentbase_core::helpers::exit_code_from_evm_error;
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
@@ -13,7 +14,6 @@ use crate::{
     Context,
     FrameResult,
 };
-use fluentbase_core::helpers::exit_code_from_evm_error;
 use fluentbase_types::ExitCode;
 
 /// Mainnet end handle does not change the output.

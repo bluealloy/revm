@@ -1,5 +1,5 @@
 use crate::{utilities::right_pad, Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use revm_primitives::{alloy_primitives::B512, Bytes, PrecompileOutput, B256, PrecompileErrors, PrecompileError};
+use revm_primitives::{alloy_primitives::B512, Bytes, PrecompileOutput, B256};
 
 pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(1),
@@ -43,14 +43,14 @@ mod secp256k1 {
 #[cfg(feature = "secp256k1")]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
+    // Silence the unused crate dependency warning.
+    use k256 as _;
     use revm_primitives::{alloy_primitives::B512, keccak256, B256};
     use secp256k1::{
         ecdsa::{RecoverableSignature, RecoveryId},
-        Message, Secp256k1,
+        Message,
+        Secp256k1,
     };
-
-    // Silence the unused crate dependency warning.
-    use k256 as _;
 
     pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, secp256k1::Error> {
         let recid = RecoveryId::from_i32(recid as i32).expect("recovery ID is valid");
@@ -105,6 +105,7 @@ extern "C" {
 
 #[cfg(not(feature = "std"))]
 pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+    use revm_primitives::PrecompileError;
     const ECRECOVER_BASE: u64 = 3_000;
     if ECRECOVER_BASE > gas_limit {
         return Err(PrecompileErrors::Error(PrecompileError::OutOfGas));
@@ -112,7 +113,7 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let input = right_pad::<128>(input);
     // `v` must be a 32-byte big-endian integer equal to 27 or 28.
     if !(input[32..63].iter().all(|&b| b == 0) && matches!(input[63], 27 | 28)) {
-        return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()))
+        return Ok(PrecompileOutput::new(ECRECOVER_BASE, Bytes::new()));
     }
     let mut public_key: [u8; 65] = [0u8; 65];
     let mut hash: B256 = B256::ZERO;

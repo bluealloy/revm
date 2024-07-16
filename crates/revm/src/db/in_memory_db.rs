@@ -15,7 +15,7 @@ use crate::{
     Database,
 };
 use core::convert::Infallible;
-use fluentbase_sdk::{LowLevelSDK, SharedAPI};
+use fluentbase_sdk::SharedAPI;
 use fluentbase_types::POSEIDON_EMPTY;
 use std::vec::Vec;
 
@@ -85,15 +85,15 @@ impl<ExtDB> CacheDB<ExtDB> {
                     .or_insert_with(|| code.clone());
             }
         }
-        #[cfg(feature = "rwasm")]
         if let Some(rwasm_code) = &account.rwasm_code {
             if !rwasm_code.is_empty() {
                 if account.rwasm_code_hash == POSEIDON_EMPTY {
-                    LowLevelSDK::poseidon(
-                        rwasm_code.bytes().as_ptr(),
-                        rwasm_code.len() as u32,
-                        account.rwasm_code_hash.as_mut_ptr(),
-                    );
+                    unreachable!("poseidon hash can't be empty");
+                    // LowLevelSDK::poseidon(
+                    //     rwasm_code.bytes().as_ptr(),
+                    //     rwasm_code.len() as u32,
+                    //     account.rwasm_code_hash.as_mut_ptr(),
+                    // );
                 }
                 self.contracts
                     .entry(account.rwasm_code_hash)
@@ -103,7 +103,6 @@ impl<ExtDB> CacheDB<ExtDB> {
         if account.code_hash == B256::ZERO {
             account.code_hash = KECCAK_EMPTY;
         }
-        #[cfg(feature = "rwasm")]
         if account.rwasm_code_hash == B256::ZERO {
             account.rwasm_code_hash = POSEIDON_EMPTY;
         }

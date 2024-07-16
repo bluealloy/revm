@@ -1,24 +1,10 @@
 #[cfg(feature = "rwasm")]
-use crate::journal_db_wrapper::JournalDbWrapper;
-#[cfg(feature = "rwasm")]
-use crate::primitives::hex;
+use crate::rwasm::RwasmDbWrapper;
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
-    interpreter::{
-        analysis::validate_eof,
-        CallInputs,
-        CreateInputs,
-        EOFCreateInputs,
-        EOFCreateOutcome,
-        Gas,
-        Host,
-        InstructionResult,
-        InterpreterAction,
-        InterpreterResult,
-        SharedMemory,
-    },
+    interpreter::{Gas, Host, InstructionResult, InterpreterResult},
     primitives::{
         specification::SpecId,
         BlockEnv,
@@ -37,20 +23,20 @@ use crate::{
     },
     Context,
     ContextWithHandlerCfg,
-    Frame,
-    FrameOrResult,
     FrameResult,
 };
 use core::{cell::RefCell, fmt};
 use fluentbase_core::{
+    helpers::evm_error_from_exit_code,
     loader::{_loader_call, _loader_create},
 };
-use fluentbase_sdk::{types::{EvmCallMethodInput, EvmCreateMethodInput}, ContractInput, GuestAccountManager, AccountManager};
-use fluentbase_types::{Address, ExitCode};
+use fluentbase_sdk::{
+    runtime::{RuntimeContextWrapper, TestingContext},
+    types::{EvmCallMethodInput, EvmCreateMethodInput},
+    ContractInput,
+};
+use fluentbase_types::Address;
 use revm_interpreter::{CallOutcome, CreateOutcome};
-use std::vec::Vec;
-use fluentbase_core::helpers::evm_error_from_exit_code;
-use fluentbase_sdk::contracts::call_system_contract;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -114,6 +100,8 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     #[inline]
     #[cfg(not(feature = "rwasm"))]
     pub fn run_the_loop(&mut self, first_frame: Frame) -> Result<FrameResult, EVMError<DB::Error>> {
+        use revm_interpreter::InterpreterAction;
+
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
 
@@ -121,7 +109,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         let mut shared_memory =
             SharedMemory::new_with_memory_limit(self.context.evm.env.cfg.memory_limit);
         #[cfg(not(feature = "memory_limit"))]
-        let mut shared_memory = SharedMemory::new();
+        let mut shared_memory = revm_interpreter::SharedMemory::new();
 
         shared_memory.new_context();
 
@@ -440,6 +428,13 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             }
             #[cfg(not(feature = "rwasm"))]
             {
+                use revm_interpreter::{
+                    analysis::validate_eof,
+                    CallInputs,
+                    CreateInputs,
+                    EOFCreateInputs,
+                    EOFCreateOutcome,
+                };
                 let exec = self.handler.execution();
                 // call inner handling of call/create
                 let first_frame_or_result = match ctx.evm.env.tx.transact_to {
@@ -570,8 +565,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         };
 
         let contract_input = self.input_from_env(&mut gas, caller_address, Address::ZERO, value);
-        let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
-        let create_output = _loader_create(&contract_input, &am, method_data);
+        let sdk = RuntimeContextWrapper::new();
+        let sdk = RwasmDbWrapper::new(RefCell::new(&mut self.context.evm), sdk);
+        let create_output = _loader_create(&contract_input, &sdk, method_data);
 
         // let (output_buffer, exit_code) = self.exec_rwasm_binary(
         //     &mut gas,
@@ -645,18 +641,17 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             depth: 0,
         };
         let contract_input = self.input_from_env(&mut gas, caller_address, callee_address, value);
-        let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
-        let call_output = _loader_call(&contract_input, &am, method_input);
+        let sdk = TestingContext::new();
+        let sdk = RwasmDbWrapper::new(RefCell::new(&mut self.context.evm), sdk);
+        let call_output = _loader_call(&contract_input, &sdk, method_input);
 
-        // let gam = GuestAccountManager::default();
-        // gam.exec_hash();
-
-        #[cfg(feature = "debug_print")]
+        #[cfg(feature = "debug-print")]
         {
+            use core::str::from_utf8;
             println!("executed ECL call:");
-            println!(" - caller: 0x{}", hex::encode(caller_address));
-            println!(" - callee: 0x{}", hex::encode(callee_address));
-            println!(" - value: 0x{}", hex::encode(&value.to_be_bytes::<32>()));
+            println!(" - caller: 0x{}", caller_address);
+            println!(" - callee: 0x{}", callee_address);
+            println!(" - value: 0x{}", value);
             println!(
                 " - call_output.gas_remaining: {}",
                 call_output.gas_remaining
@@ -679,7 +674,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             } else {
                 println!(
                     " - output message: {}",
-                    format!("0x{}", hex::encode(&call_output.output))
+                    format!("0x{}", &call_output.output)
                 );
             }
         }

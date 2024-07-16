@@ -4,7 +4,6 @@ use super::{
     CacheAccount,
     PlainAccount,
 };
-use fluentbase_sdk::{LowLevelSDK, SharedAPI};
 use fluentbase_types::{KECCAK_EMPTY, POSEIDON_EMPTY};
 use revm_interpreter::primitives::{
     Account,
@@ -100,11 +99,12 @@ impl CacheState {
         if let Some(rwasm_code) = &info.rwasm_code {
             if !rwasm_code.is_empty() {
                 if info.rwasm_code_hash == POSEIDON_EMPTY {
-                    LowLevelSDK::poseidon(
-                        rwasm_code.bytes().as_ptr(),
-                        rwasm_code.len() as u32,
-                        info.rwasm_code_hash.as_mut_ptr(),
-                    );
+                    unreachable!("poseidon hash can't be empty");
+                    // LowLevelSDK::poseidon(
+                    //     rwasm_code.bytes().as_ptr(),
+                    //     rwasm_code.len() as u32,
+                    //     info.rwasm_code_hash.as_mut_ptr(),
+                    // );
                 }
                 self.contracts
                     .entry(info.rwasm_code_hash)

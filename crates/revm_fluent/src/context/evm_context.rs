@@ -1,21 +1,27 @@
-use revm_interpreter::CallValue;
-use revm_precompile::PrecompileErrors;
-
 use super::inner_evm_context::InnerEvmContext;
 use crate::{
     db::Database,
     interpreter::{
-        return_ok, CallInputs, Contract, Gas, InstructionResult, Interpreter, InterpreterResult,
+        return_ok,
+        CallInputs,
+        Contract,
+        Gas,
+        InstructionResult,
+        Interpreter,
+        InterpreterResult,
     },
     primitives::{Address, Bytes, EVMError, Env, U256},
-    ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
+    ContextPrecompiles,
+    FrameOrResult,
+    CALL_STACK_LIMIT,
 };
 use core::{
     fmt,
     ops::{Deref, DerefMut},
 };
+use revm_interpreter::CallValue;
+use revm_precompile::PrecompileErrors;
 use std::boxed::Box;
-use std::borrow::BorrowMut;
 
 /// EVM context that contains the inner EVM context and precompiles.
 pub struct EvmContext<DB: Database> {
@@ -189,7 +195,7 @@ impl<DB: Database> EvmContext<DB> {
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         match inputs.value {
-            // if transfer value is zero, do the touch.
+            // if the transfer value is zero, do the touch.
             CallValue::Transfer(value) if value == U256::ZERO => {
                 self.load_account(inputs.target_address)?;
                 self.journaled_state.touch(&inputs.target_address);
@@ -325,7 +331,8 @@ mod tests {
     use crate::{
         db::{CacheDB, EmptyDB},
         primitives::{address, Bytecode},
-        Frame, JournalEntry,
+        Frame,
+        JournalEntry,
     };
     use std::boxed::Box;
     use test_utils::*;

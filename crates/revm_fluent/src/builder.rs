@@ -2,9 +2,19 @@ use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
     handler::register,
     primitives::{
-        BlockEnv, CfgEnv, CfgEnvWithHandlerCfg, Env, EnvWithHandlerCfg, HandlerCfg, SpecId, TxEnv,
+        BlockEnv,
+        CfgEnv,
+        CfgEnvWithHandlerCfg,
+        Env,
+        EnvWithHandlerCfg,
+        HandlerCfg,
+        SpecId,
+        TxEnv,
     },
-    Context, ContextWithHandlerCfg, Evm, Handler,
+    Context,
+    ContextWithHandlerCfg,
+    Evm,
+    Handler,
 };
 use core::marker::PhantomData;
 use std::boxed::Box;
@@ -278,7 +288,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     ///
     /// # Example
     /// ```rust
-    /// use revm::{EvmBuilder, Handler, primitives::{SpecId, HandlerCfg}};
+    /// use revm_fluent::{EvmBuilder, Handler, primitives::{SpecId, HandlerCfg}};
     /// use revm_interpreter::primitives::CancunSpec;
     /// let builder = EvmBuilder::default();
     ///
@@ -444,9 +454,21 @@ mod test {
         inspector::inspector_handle_register,
         inspectors::NoOpInspector,
         primitives::{
-            address, AccountInfo, Address, Bytecode, Bytes, PrecompileResult, TransactTo, U256,
+            address,
+            AccountInfo,
+            Address,
+            Bytecode,
+            Bytes,
+            PrecompileResult,
+            TransactTo,
+            U256,
         },
-        Context, ContextPrecompile, ContextStatefulPrecompile, Evm, InMemoryDB, InnerEvmContext,
+        Context,
+        ContextPrecompile,
+        ContextStatefulPrecompile,
+        Evm,
+        InMemoryDB,
+        InnerEvmContext,
     };
     use revm_interpreter::{gas, Host, Interpreter};
     use revm_precompile::PrecompileOutput;

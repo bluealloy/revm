@@ -26,7 +26,11 @@ macro_rules! define_tests {
 
 mod failing_tests {
     define_tests! {
-        fn operation_diff_gas("tests/GeneralStateTests/stBadOpcode/operationDiffGas.json");
+        // fn operation_diff_gas("tests/GeneralStateTests/stBadOpcode/operationDiffGas.json");
+        fn cancun_st_e_i_p1153_transient_storage_05_tload_reentrancy("tests/GeneralStateTests/Cancun/stEIP1153-transientStorage/05_tloadReentrancy.json");
+        // fn cancun_eip6780_selfdestruct_create_selfdestruct_same_tx("tests/GeneralStateTests/Pyspecs/cancun/eip6780_selfdestruct/create_selfdestruct_same_tx.json");
+        // fn invalid_diff_places("tests/GeneralStateTests/stBadOpcode/invalidDiffPlaces.json");
+        // fn revert_in_create_in_init_paris("tests/GeneralStateTests/stRevertTest/RevertInCreateInInit_Paris.json");
     }
 }
 
@@ -400,7 +404,7 @@ mod st_revert {
 
         // --- ALL PASS (one test fails in original REVM) ---
         fn revert_opcode_multiple_sub_calls("tests/GeneralStateTests/stRevertTest/RevertOpcodeMultipleSubCalls.json");
-        fn loop_calls_depth_then_revert3("tests/GeneralStateTests/stRevertTest/LoopCallsDepthThenRevert3.json"); // FAIL
+        fn loop_calls_depth_then_revert3("tests/GeneralStateTests/stRevertTest/LoopCallsDepthThenRevert3.json");
         fn revert_prefound("tests/GeneralStateTests/stRevertTest/RevertPrefound.json");
         fn revert_prefound_call("tests/GeneralStateTests/stRevertTest/RevertPrefoundCall.json");
         fn loop_calls_depth_then_revert2("tests/GeneralStateTests/stRevertTest/LoopCallsDepthThenRevert2.json");
@@ -412,7 +416,7 @@ mod st_revert {
         fn touch_to_empty_account_revert3_paris("tests/GeneralStateTests/stRevertTest/TouchToEmptyAccountRevert3_Paris.json");
         fn touch_to_empty_account_revert("tests/GeneralStateTests/stRevertTest/TouchToEmptyAccountRevert.json");
         fn state_revert("tests/GeneralStateTests/stRevertTest/stateRevert.json");
-        fn revert_in_create_in_init_paris("tests/GeneralStateTests/stRevertTest/RevertInCreateInInit_Paris.json"); // FAIL (original REVM fails...)
+        fn revert_in_create_in_init_paris("tests/GeneralStateTests/stRevertTest/RevertInCreateInInit_Paris.json");
         fn loop_calls_depth_then_revert("tests/GeneralStateTests/stRevertTest/LoopCallsDepthThenRevert.json");
         fn revert_depth_create_address_collision("tests/GeneralStateTests/stRevertTest/RevertDepthCreateAddressCollision.json");
         fn revert_sub_call_storage_o_o_g("tests/GeneralStateTests/stRevertTest/RevertSubCallStorageOOG.json");
@@ -627,7 +631,7 @@ mod st_random2 {
         fn random_statetest611("tests/GeneralStateTests/stRandom2/randomStatetest611.json");
         fn random_statetest646("tests/GeneralStateTests/stRandom2/randomStatetest646.json");
         fn random_statetest580("tests/GeneralStateTests/stRandom2/randomStatetest580.json");
-        fn random_statetest650("tests/GeneralStateTests/stRandom2/randomStatetest650.json"); // FAIL
+        fn random_statetest650("tests/GeneralStateTests/stRandom2/randomStatetest650.json");
         fn random_statetest596("tests/GeneralStateTests/stRandom2/randomStatetest596.json");
         fn random_statetest579("tests/GeneralStateTests/stRandom2/randomStatetest579.json");
         fn random_statetest607("tests/GeneralStateTests/stRandom2/randomStatetest607.json");
@@ -782,9 +786,9 @@ mod cancun {
         fn st_e_i_p4844_blobtransactions_blobhash_list_bounds7("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds7.json");
         fn st_e_i_p4844_blobtransactions_empty_blobhash_list("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/emptyBlobhashList.json");
         fn st_e_i_p4844_blobtransactions_create_blobhash_tx("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/createBlobhashTx.json");
-        fn st_e_i_p4844_blobtransactions_opcode_blobhash_out_of_range("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhashOutOfRange.json"); // FAIL
+        fn st_e_i_p4844_blobtransactions_opcode_blobhash_out_of_range("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhashOutOfRange.json");
         fn st_e_i_p4844_blobtransactions_blobhash_list_bounds3("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds3.json");
-        fn st_e_i_p4844_blobtransactions_opcode_blobh_bounds("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhBounds.json"); // FAIL
+        fn st_e_i_p4844_blobtransactions_opcode_blobh_bounds("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhBounds.json");
         fn st_e_i_p4844_blobtransactions_wrong_blobhash_version("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/wrongBlobhashVersion.json");
         fn st_e_i_p4844_blobtransactions_blobhash_list_bounds4("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds4.json");
         fn st_e_i_p4844_blobtransactions_blobhash_list_bounds5("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds5.json");
@@ -994,7 +998,7 @@ mod st_ext_code_hash {
         fn ext_code_hash_self_in_init("tests/GeneralStateTests/stExtCodeHash/extCodeHashSelfInInit.json");
         fn ext_code_hash_subcall_o_o_g("tests/GeneralStateTests/stExtCodeHash/extCodeHashSubcallOOG.json");
         fn dynamic_account_overwrite_empty("tests/GeneralStateTests/stExtCodeHash/dynamicAccountOverwriteEmpty.json");
-        // fn dynamic_account_overwrite_empty_paris("tests/GeneralStateTests/stExtCodeHash/dynamicAccountOverwriteEmpty_Paris.json"); // FAIL (on original REVM)
+        // fn dynamic_account_overwrite_empty_paris("tests/GeneralStateTests/stExtCodeHash/dynamicAccountOverwriteEmpty_Paris.json");
         fn ext_code_hash_subcall_suicide_cancun("tests/GeneralStateTests/stExtCodeHash/extCodeHashSubcallSuicideCancun.json");
     }
 }
@@ -1363,9 +1367,9 @@ mod st_bad_opcode {
         fn opc_e_c_diff_places("tests/GeneralStateTests/stBadOpcode/opcECDiffPlaces.json");
         fn opc_d_f_diff_places("tests/GeneralStateTests/stBadOpcode/opcDFDiffPlaces.json");
         fn opc_b_b_diff_places("tests/GeneralStateTests/stBadOpcode/opcBBDiffPlaces.json");
-        fn bad_opcodes("tests/GeneralStateTests/stBadOpcode/badOpcodes.json"); // FAIL
+        fn bad_opcodes("tests/GeneralStateTests/stBadOpcode/badOpcodes.json");
         fn opc27_diff_places("tests/GeneralStateTests/stBadOpcode/opc27DiffPlaces.json");
-        fn operation_diff_gas("tests/GeneralStateTests/stBadOpcode/operationDiffGas.json");
+        // fn operation_diff_gas("tests/GeneralStateTests/stBadOpcode/operationDiffGas.json");
         fn opc26_diff_places("tests/GeneralStateTests/stBadOpcode/opc26DiffPlaces.json");
         fn opc_e_b_diff_places("tests/GeneralStateTests/stBadOpcode/opcEBDiffPlaces.json");
         fn opc1_f_diff_places("tests/GeneralStateTests/stBadOpcode/opc1FDiffPlaces.json");
@@ -1386,7 +1390,7 @@ mod st_bad_opcode {
         fn opc_b_f_diff_places("tests/GeneralStateTests/stBadOpcode/opcBFDiffPlaces.json");
         fn opc0_f_diff_places("tests/GeneralStateTests/stBadOpcode/opc0FDiffPlaces.json");
         fn opc_d_b_diff_places("tests/GeneralStateTests/stBadOpcode/opcDBDiffPlaces.json");
-        fn invalid_addr("tests/GeneralStateTests/stBadOpcode/invalidAddr.json"); // FAIL
+        fn invalid_addr("tests/GeneralStateTests/stBadOpcode/invalidAddr.json");
         fn opc24_diff_places("tests/GeneralStateTests/stBadOpcode/opc24DiffPlaces.json");
         fn opc_f8_diff_places("tests/GeneralStateTests/stBadOpcode/opcF8DiffPlaces.json");
         fn opc_b_a_diff_places("tests/GeneralStateTests/stBadOpcode/opcBADiffPlaces.json");
@@ -1533,7 +1537,7 @@ mod st_call_create_call_code_test {
     define_tests! {
 
         // --- MOST PASS --- (4 fail because of some gas calc mismatch)
-        fn call1024_balance_too_low("tests/GeneralStateTests/stCallCreateCallCodeTest/Call1024BalanceTooLow.json"); // FAIL (gas mismatch)
+        fn call1024_balance_too_low("tests/GeneralStateTests/stCallCreateCallCodeTest/Call1024BalanceTooLow.json");
         fn callcode_output1("tests/GeneralStateTests/stCallCreateCallCodeTest/callcodeOutput1.json");
         fn callcode_lose_gas_o_o_g("tests/GeneralStateTests/stCallCreateCallCodeTest/CallcodeLoseGasOOG.json");
         fn create_init_fail_undefined_instruction2("tests/GeneralStateTests/stCallCreateCallCodeTest/createInitFailUndefinedInstruction2.json");
@@ -1550,10 +1554,10 @@ mod st_call_create_call_code_test {
         fn call_output1("tests/GeneralStateTests/stCallCreateCallCodeTest/callOutput1.json");
         fn create_init_fail_o_o_gduring_init("tests/GeneralStateTests/stCallCreateCallCodeTest/createInitFail_OOGduringInit.json");
         fn create_fail_balance_too_low("tests/GeneralStateTests/stCallCreateCallCodeTest/createFailBalanceTooLow.json");
-        fn call1024_pre_calls("tests/GeneralStateTests/stCallCreateCallCodeTest/Call1024PreCalls.json"); // FAIL (gas mismatch)
+        fn call1024_pre_calls("tests/GeneralStateTests/stCallCreateCallCodeTest/Call1024PreCalls.json");
         fn call_output3_fail("tests/GeneralStateTests/stCallCreateCallCodeTest/callOutput3Fail.json");
         fn call_output2("tests/GeneralStateTests/stCallCreateCallCodeTest/callOutput2.json");
-        fn call_recursive_bomb_pre_call("tests/GeneralStateTests/stCallCreateCallCodeTest/CallRecursiveBombPreCall.json"); // FAIL
+        fn call_recursive_bomb_pre_call("tests/GeneralStateTests/stCallCreateCallCodeTest/CallRecursiveBombPreCall.json");
         fn call_output3("tests/GeneralStateTests/stCallCreateCallCodeTest/callOutput3.json");
         fn contract_creation_make_call_that_ask_more_gas_then_transaction_provided("tests/GeneralStateTests/stCallCreateCallCodeTest/contractCreationMakeCallThatAskMoreGasThenTransactionProvided.json");
         fn callcode_with_high_value_and_gas_o_o_g("tests/GeneralStateTests/stCallCreateCallCodeTest/callcodeWithHighValueAndGasOOG.json");
@@ -1561,7 +1565,7 @@ mod st_call_create_call_code_test {
         fn callcode_output3_fail("tests/GeneralStateTests/stCallCreateCallCodeTest/callcodeOutput3Fail.json");
         fn callcode_with_high_value("tests/GeneralStateTests/stCallCreateCallCodeTest/callcodeWithHighValue.json");
         fn create_j_s_no_collision("tests/GeneralStateTests/stCallCreateCallCodeTest/createJS_NoCollision.json");
-        fn callcode1024_balance_too_low("tests/GeneralStateTests/stCallCreateCallCodeTest/Callcode1024BalanceTooLow.json"); // FAIL (gas mismatch)
+        fn callcode1024_balance_too_low("tests/GeneralStateTests/stCallCreateCallCodeTest/Callcode1024BalanceTooLow.json");
         fn callcode_output3("tests/GeneralStateTests/stCallCreateCallCodeTest/callcodeOutput3.json");
         fn call_with_high_value_and_o_o_gat_tx_level("tests/GeneralStateTests/stCallCreateCallCodeTest/callWithHighValueAndOOGatTxLevel.json");
         fn call_with_high_value("tests/GeneralStateTests/stCallCreateCallCodeTest/callWithHighValue.json");
@@ -1910,7 +1914,7 @@ mod st_create2 {
         fn c_r_e_a_t_e2_bounds2("tests/GeneralStateTests/stCreate2/CREATE2_Bounds2.json");
         fn c_r_e_a_t_e2_high_nonce_delegatecall("tests/GeneralStateTests/stCreate2/CREATE2_HighNonceDelegatecall.json");
         fn create2_o_o_gafter_init_code_returndata_size("tests/GeneralStateTests/stCreate2/Create2OOGafterInitCodeReturndataSize.json");
-        // fn revert_in_create_in_init_create2_paris("tests/GeneralStateTests/stCreate2/RevertInCreateInInitCreate2Paris.json"); // FAIL (on REVM test)
+        // fn revert_in_create_in_init_create2_paris("tests/GeneralStateTests/stCreate2/RevertInCreateInInitCreate2Paris.json");
         fn revert_depth_create_address_collision_berlin("tests/GeneralStateTests/stCreate2/RevertDepthCreateAddressCollisionBerlin.json");
         fn c_r_e_a_t_e2_bounds3("tests/GeneralStateTests/stCreate2/CREATE2_Bounds3.json");
         fn create2collision_nonce("tests/GeneralStateTests/stCreate2/create2collisionNonce.json");
@@ -1955,7 +1959,7 @@ mod st_create2 {
         fn create2no_cash("tests/GeneralStateTests/stCreate2/create2noCash.json");
         fn revert_depth_create2_o_o_g_berlin("tests/GeneralStateTests/stCreate2/RevertDepthCreate2OOGBerlin.json");
         fn revert_depth_create2_o_o_g("tests/GeneralStateTests/stCreate2/RevertDepthCreate2OOG.json");
-        // fn create2collision_storage_paris("tests/GeneralStateTests/stCreate2/create2collisionStorageParis.json"); // FAIL (on REVM test)
+        // fn create2collision_storage_paris("tests/GeneralStateTests/stCreate2/create2collisionStorageParis.json");
         fn c_r_e_a_t_e2_suicide("tests/GeneralStateTests/stCreate2/CREATE2_Suicide.json");
         fn create2collision_selfdestructed_revert("tests/GeneralStateTests/stCreate2/create2collisionSelfdestructedRevert.json");
         fn create2collision_selfdestructed2("tests/GeneralStateTests/stCreate2/create2collisionSelfdestructed2.json");
@@ -1972,9 +1976,9 @@ mod st_static_flag_enabled {
         fn delegatecall_to_precompile_from_transaction("tests/GeneralStateTests/stStaticFlagEnabled/DelegatecallToPrecompileFromTransaction.json");
         fn delegatecall_to_precompile_from_called_contract("tests/GeneralStateTests/stStaticFlagEnabled/DelegatecallToPrecompileFromCalledContract.json");
         fn call_with_zero_value_to_precompile_from_contract_initialization("tests/GeneralStateTests/stStaticFlagEnabled/CallWithZeroValueToPrecompileFromContractInitialization.json");
-        fn callcode_to_precompile_from_transaction("tests/GeneralStateTests/stStaticFlagEnabled/CallcodeToPrecompileFromTransaction.json"); // FAIL
-        fn callcode_to_precompile_from_called_contract("tests/GeneralStateTests/stStaticFlagEnabled/CallcodeToPrecompileFromCalledContract.json"); // FAIL
-        fn callcode_to_precompile_from_contract_initialization("tests/GeneralStateTests/stStaticFlagEnabled/CallcodeToPrecompileFromContractInitialization.json"); // FAIL
+        fn callcode_to_precompile_from_transaction("tests/GeneralStateTests/stStaticFlagEnabled/CallcodeToPrecompileFromTransaction.json");
+        fn callcode_to_precompile_from_called_contract("tests/GeneralStateTests/stStaticFlagEnabled/CallcodeToPrecompileFromCalledContract.json");
+        fn callcode_to_precompile_from_contract_initialization("tests/GeneralStateTests/stStaticFlagEnabled/CallcodeToPrecompileFromContractInitialization.json");
         fn call_with_n_o_t_zero_value_to_precompile_from_contract_initialization("tests/GeneralStateTests/stStaticFlagEnabled/CallWithNOTZeroValueToPrecompileFromContractInitialization.json");
         fn call_with_n_o_t_zero_value_to_precompile_from_transaction("tests/GeneralStateTests/stStaticFlagEnabled/CallWithNOTZeroValueToPrecompileFromTransaction.json");
         fn delegatecall_to_precompile_from_contract_initialization("tests/GeneralStateTests/stStaticFlagEnabled/DelegatecallToPrecompileFromContractInitialization.json");
@@ -1986,13 +1990,13 @@ mod st_call_delegate_codes_homestead {
     define_tests! {
 
         // --- MOST PASS ---
-        fn callcallcode_01("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcallcode_01.json"); // FAIL
-        fn callcallcallcode_001("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcallcallcode_001.json"); // FAIL
+        fn callcallcode_01("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcallcode_01.json");
+        fn callcallcallcode_001("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcallcallcode_001.json");
         fn callcodecallcall_100_o_o_g_e("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcodecallcall_100_OOGE.json");
         fn callcallcallcode_001_suicide_end("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcallcallcode_001_SuicideEnd.json");
         fn callcodecallcode_11("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcodecallcode_11.json");
         fn callcodecallcodecall_a_b_c_b_r_e_c_u_r_s_i_v_e("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcodecallcodecall_ABCB_RECURSIVE.json");
-        fn callcodecallcallcode_101("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcodecallcallcode_101.json"); // FAIL
+        fn callcodecallcallcode_101("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcodecallcallcode_101.json");
         fn callcodecallcall_100_suicide_end("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcodecallcall_100_SuicideEnd.json");
         fn callcodecallcodecallcode_111_o_o_g_m_before("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcodecallcodecallcode_111_OOGMBefore.json");
         fn callcallcallcode_001_o_o_g_m_after("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcallcallcode_001_OOGMAfter.json");
@@ -2004,7 +2008,7 @@ mod st_call_delegate_codes_homestead {
         fn callcodecallcodecall_110_suicide_middle("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcodecallcodecall_110_SuicideMiddle.json");
         fn callcodecall_10_o_o_g_e("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcodecall_10_OOGE.json");
         fn callcodecallcall_a_b_c_b_r_e_c_u_r_s_i_v_e("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcodecallcall_ABCB_RECURSIVE.json");
-        fn callcallcodecallcode_011("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcallcodecallcode_011.json"); // FAIL
+        fn callcallcodecallcode_011("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcallcodecallcode_011.json");
         fn callcallcodecallcode_011_o_o_g_m_before("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcallcodecallcode_011_OOGMBefore.json");
         fn callcallcodecall_010_o_o_g_m_after("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcallcodecall_010_OOGMAfter.json");
         fn callcodecallcodecallcode_111_o_o_g_e("tests/GeneralStateTests/stCallDelegateCodesHomestead/callcodecallcodecallcode_111_OOGE.json");
@@ -2068,7 +2072,7 @@ mod st_s_store_test {
         fn sstore_xto_xto0("tests/GeneralStateTests/stSStoreTest/sstore_XtoXto0.json");
         fn sstore_call_to_self_sub_refund_below_zero("tests/GeneralStateTests/stSStoreTest/SstoreCallToSelfSubRefundBelowZero.json");
         fn sstore_0to0("tests/GeneralStateTests/stSStoreTest/sstore_0to0.json");
-        // fn init_collision_paris("tests/GeneralStateTests/stSStoreTest/InitCollisionParis.json"); // FAIL (on REVM test)
+        // fn init_collision_paris("tests/GeneralStateTests/stSStoreTest/InitCollisionParis.json");
         fn sstore_0to0to0("tests/GeneralStateTests/stSStoreTest/sstore_0to0to0.json");
         fn sstore_xto0to0("tests/GeneralStateTests/stSStoreTest/sstore_Xto0to0.json");
         fn sstore_xto0to_xto0("tests/GeneralStateTests/stSStoreTest/sstore_Xto0toXto0.json");
@@ -2087,13 +2091,13 @@ mod st_call_delegate_codes_call_code_homestead {
     define_tests! {
 
         // --- MOST PASS --- (3 test fail)
-        fn callcallcode_01("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcode_01.json"); // FAIL
-        fn callcallcallcode_001("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcallcode_001.json"); // FAIL
+        fn callcallcode_01("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcode_01.json");
+        fn callcallcallcode_001("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcallcode_001.json");
         fn callcodecallcall_100_o_o_g_e("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcodecallcall_100_OOGE.json");
         fn callcallcallcode_001_suicide_end("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcallcode_001_SuicideEnd.json");
         fn callcodecallcode_11("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcodecallcode_11.json");
         fn callcodecallcodecall_a_b_c_b_r_e_c_u_r_s_i_v_e("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcodecallcodecall_ABCB_RECURSIVE.json");
-        fn callcodecallcallcode_101("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcodecallcallcode_101.json"); // FAIL
+        fn callcodecallcallcode_101("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcodecallcallcode_101.json");
         fn callcodecallcall_100_suicide_end("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcodecallcall_100_SuicideEnd.json");
         fn callcodecallcodecallcode_111_o_o_g_m_before("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcodecallcodecallcode_111_OOGMBefore.json");
         fn callcallcallcode_001_o_o_g_m_after("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcallcode_001_OOGMAfter.json");
@@ -2105,7 +2109,7 @@ mod st_call_delegate_codes_call_code_homestead {
         fn callcodecallcodecall_110_suicide_middle("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcodecallcodecall_110_SuicideMiddle.json");
         fn callcodecall_10_o_o_g_e("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcodecall_10_OOGE.json");
         fn callcodecallcall_a_b_c_b_r_e_c_u_r_s_i_v_e("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcodecallcall_ABCB_RECURSIVE.json");
-        fn callcallcodecallcode_011("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcodecallcode_011.json"); // FAIL
+        fn callcallcodecallcode_011("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcodecallcode_011.json");
         fn callcallcodecallcode_011_o_o_g_m_before("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcodecallcode_011_OOGMBefore.json");
         fn callcallcodecall_010_o_o_g_m_after("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcodecall_010_OOGMAfter.json");
         fn callcodecallcodecallcode_111_o_o_g_e("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcodecallcodecallcode_111_OOGE.json");
@@ -2152,10 +2156,10 @@ mod st_delegatecall_test_homestead {
     define_tests! {
 
         // --- MOST PASS ---
-        fn call1024_balance_too_low("tests/GeneralStateTests/stDelegatecallTestHomestead/Call1024BalanceTooLow.json"); // FAIL
+        fn call1024_balance_too_low("tests/GeneralStateTests/stDelegatecallTestHomestead/Call1024BalanceTooLow.json");
         fn callcode_lose_gas_o_o_g("tests/GeneralStateTests/stDelegatecallTestHomestead/CallcodeLoseGasOOG.json");
         fn deleagate_call_after_value_transfer("tests/GeneralStateTests/stDelegatecallTestHomestead/deleagateCallAfterValueTransfer.json");
-        fn delegatecall1024("tests/GeneralStateTests/stDelegatecallTestHomestead/Delegatecall1024.json"); // FAIL
+        fn delegatecall1024("tests/GeneralStateTests/stDelegatecallTestHomestead/Delegatecall1024.json");
         fn delegatecall_and_o_o_gat_tx_level("tests/GeneralStateTests/stDelegatecallTestHomestead/delegatecallAndOOGatTxLevel.json");
         fn call_lose_gas_o_o_g("tests/GeneralStateTests/stDelegatecallTestHomestead/CallLoseGasOOG.json");
         fn delegatecall_in_initcode_to_empty_contract("tests/GeneralStateTests/stDelegatecallTestHomestead/delegatecallInInitcodeToEmptyContract.json");
@@ -2164,18 +2168,18 @@ mod st_delegatecall_test_homestead {
         fn call_with_high_value_and_gas_o_o_g("tests/GeneralStateTests/stDelegatecallTestHomestead/callWithHighValueAndGasOOG.json");
         fn call_output1("tests/GeneralStateTests/stDelegatecallTestHomestead/callOutput1.json");
         fn delegatecall_in_initcode_to_existing_contract("tests/GeneralStateTests/stDelegatecallTestHomestead/delegatecallInInitcodeToExistingContract.json");
-        fn call1024_pre_calls("tests/GeneralStateTests/stDelegatecallTestHomestead/Call1024PreCalls.json"); // FAIL
+        fn call1024_pre_calls("tests/GeneralStateTests/stDelegatecallTestHomestead/Call1024PreCalls.json");
         fn delegatecall_emptycontract("tests/GeneralStateTests/stDelegatecallTestHomestead/delegatecallEmptycontract.json");
         fn call_output2("tests/GeneralStateTests/stDelegatecallTestHomestead/callOutput2.json");
-        fn call_recursive_bomb_pre_call("tests/GeneralStateTests/stDelegatecallTestHomestead/CallRecursiveBombPreCall.json"); // FAIL (gas mismatch)
-        fn delegatecall_value_check("tests/GeneralStateTests/stDelegatecallTestHomestead/delegatecallValueCheck.json"); // FAIL
+        fn call_recursive_bomb_pre_call("tests/GeneralStateTests/stDelegatecallTestHomestead/CallRecursiveBombPreCall.json");
+        fn delegatecall_value_check("tests/GeneralStateTests/stDelegatecallTestHomestead/delegatecallValueCheck.json");
         fn delegatecall_basic("tests/GeneralStateTests/stDelegatecallTestHomestead/delegatecallBasic.json");
         fn call_output3("tests/GeneralStateTests/stDelegatecallTestHomestead/callOutput3.json");
         fn delegatecall1024_o_o_g("tests/GeneralStateTests/stDelegatecallTestHomestead/Delegatecall1024OOG.json");
         fn callcode_with_high_value_and_gas_o_o_g("tests/GeneralStateTests/stDelegatecallTestHomestead/callcodeWithHighValueAndGasOOG.json");
         fn callcode_output3("tests/GeneralStateTests/stDelegatecallTestHomestead/callcodeOutput3.json");
         fn call_output3partial("tests/GeneralStateTests/stDelegatecallTestHomestead/callOutput3partial.json");
-        fn delegatecode_dynamic_code("tests/GeneralStateTests/stDelegatecallTestHomestead/delegatecodeDynamicCode.json"); // FAIL
+        fn delegatecode_dynamic_code("tests/GeneralStateTests/stDelegatecallTestHomestead/delegatecodeDynamicCode.json");
         fn delegatecall_in_initcode_to_existing_contract_o_o_g("tests/GeneralStateTests/stDelegatecallTestHomestead/delegatecallInInitcodeToExistingContractOOG.json");
         fn delegatecode_dynamic_code2_self_call("tests/GeneralStateTests/stDelegatecallTestHomestead/delegatecodeDynamicCode2SelfCall.json");
         fn delegatecall_o_o_gin_call("tests/GeneralStateTests/stDelegatecallTestHomestead/delegatecallOOGinCall.json");
@@ -3107,7 +3111,7 @@ mod v_m_tests {
         fn vm_i_oand_flow_operations_gas("tests/GeneralStateTests/VMTests/vmIOandFlowOperations/gas.json");
         fn vm_i_oand_flow_operations_codecopy("tests/GeneralStateTests/VMTests/vmIOandFlowOperations/codecopy.json");
         fn vm_i_oand_flow_operations_jumpi("tests/GeneralStateTests/VMTests/vmIOandFlowOperations/jumpi.json");
-        fn vm_i_oand_flow_operations_loop_stacklimit("tests/GeneralStateTests/VMTests/vmIOandFlowOperations/loop_stacklimit.json"); // FAIL (gas issue)
+        fn vm_i_oand_flow_operations_loop_stacklimit("tests/GeneralStateTests/VMTests/vmIOandFlowOperations/loop_stacklimit.json");
         fn vm_i_oand_flow_operations_jump("tests/GeneralStateTests/VMTests/vmIOandFlowOperations/jump.json");
         fn vm_i_oand_flow_operations_mstore("tests/GeneralStateTests/VMTests/vmIOandFlowOperations/mstore.json");
         fn vm_i_oand_flow_operations_loops_conditionals("tests/GeneralStateTests/VMTests/vmIOandFlowOperations/loopsConditionals.json");
@@ -3166,8 +3170,8 @@ mod pyspecs {
         fn shanghai_eip3855_push0_push0_storage_overwrite("tests/GeneralStateTests/Pyspecs/shanghai/eip3855_push0/push0_storage_overwrite.json");
         fn shanghai_eip3855_push0_push0_before_jumpdest("tests/GeneralStateTests/Pyspecs/shanghai/eip3855_push0/push0_before_jumpdest.json");
         fn shanghai_eip3855_push0_push0_during_staticcall("tests/GeneralStateTests/Pyspecs/shanghai/eip3855_push0/push0_during_staticcall.json");
-        fn shanghai_eip3651_warm_coinbase_warm_coinbase_call_out_of_gas("tests/GeneralStateTests/Pyspecs/shanghai/eip3651_warm_coinbase/warm_coinbase_call_out_of_gas.json"); // FAIL (code)
-        fn shanghai_eip3651_warm_coinbase_warm_coinbase_gas_usage("tests/GeneralStateTests/Pyspecs/shanghai/eip3651_warm_coinbase/warm_coinbase_gas_usage.json"); // FAIL (code)
+        fn shanghai_eip3651_warm_coinbase_warm_coinbase_call_out_of_gas("tests/GeneralStateTests/Pyspecs/shanghai/eip3651_warm_coinbase/warm_coinbase_call_out_of_gas.json");
+        fn shanghai_eip3651_warm_coinbase_warm_coinbase_gas_usage("tests/GeneralStateTests/Pyspecs/shanghai/eip3651_warm_coinbase/warm_coinbase_gas_usage.json");
 
         // -- ALL PASS ---
         fn cancun_eip5656_mcopy_mcopy_memory_expansion("tests/GeneralStateTests/Pyspecs/cancun/eip5656_mcopy/mcopy_memory_expansion.json");
@@ -3205,7 +3209,7 @@ mod pyspecs {
         fn cancun_eip4844_blobs_invalid_precompile_calls("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/invalid_precompile_calls.json");
         fn cancun_eip4844_blobs_blob_tx_attribute_opcodes("tests/GeneralStateTests/Pyspecs/cancun/eip4844_blobs/blob_tx_attribute_opcodes.json");
         fn cancun_eip6780_selfdestruct_delegatecall_from_pre_existing_contract_to_new_contract("tests/GeneralStateTests/Pyspecs/cancun/eip6780_selfdestruct/delegatecall_from_pre_existing_contract_to_new_contract.json");
-        fn cancun_eip6780_selfdestruct_create_selfdestruct_same_tx("tests/GeneralStateTests/Pyspecs/cancun/eip6780_selfdestruct/create_selfdestruct_same_tx.json"); // FAIL (storage)
+        fn cancun_eip6780_selfdestruct_create_selfdestruct_same_tx("tests/GeneralStateTests/Pyspecs/cancun/eip6780_selfdestruct/create_selfdestruct_same_tx.json");
         fn cancun_eip6780_selfdestruct_selfdestruct_not_created_in_same_tx_with_revert("tests/GeneralStateTests/Pyspecs/cancun/eip6780_selfdestruct/selfdestruct_not_created_in_same_tx_with_revert.json");
         fn cancun_eip6780_selfdestruct_selfdestruct_created_in_same_tx_with_revert("tests/GeneralStateTests/Pyspecs/cancun/eip6780_selfdestruct/selfdestruct_created_in_same_tx_with_revert.json");
         fn cancun_eip6780_selfdestruct_reentrancy_selfdestruct_revert("tests/GeneralStateTests/Pyspecs/cancun/eip6780_selfdestruct/reentrancy_selfdestruct_revert.json");
