@@ -3044,7 +3044,7 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "9.1.0"
+version = "9.2.0"
 dependencies = [
  "aurora-engine-modexp",
  "blst",
@@ -3070,7 +3070,7 @@ dependencies = [
 
 [[package]]
 name = "revm-primitives"
-version = "7.0.0"
+version = "7.1.0"
 dependencies = [
  "alloy-eips",
  "alloy-primitives",
