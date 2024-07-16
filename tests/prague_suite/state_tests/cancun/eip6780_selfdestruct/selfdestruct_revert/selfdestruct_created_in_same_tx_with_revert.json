@@ -1,0 +1,428 @@
+{
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py::test_selfdestruct_created_in_same_tx_with_revert[fork_Cancun-state_test-no_outer_selfdestruct]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x610027600081600b8239f35f35805f14601c57600114600f57005b6001805401600155611234ff5b60015f54015f555f80f3",
+                "storage": {}
+            },
+            "0x00000000000000000000000000000000deadbeef": {
+                "nonce": "0x00",
+                "balance": "0x03",
+                "code": "0x5f356001815f1460385750600114601257005b60015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f15f80fd5b5f80525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f1505f525f80602081803045f1507364e2ebd6405af8cb348aec519084d3fff42ebba6316001555f80f3",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x60326000600073000000000000000000000000000000000000abcd3c603260006000f0600055600060006000600060007300000000000000000000000000000000deadbeef45f1"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0xe8ded278b2b58cce2f338c978a1031b828d6a0b0716e9c259bd3b562f99627af",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf895800a8405f5e1008080b84760326000600073000000000000000000000000000000000000abcd3c603260006000f0600055600060006000600060007300000000000000000000000000000000deadbeef45f11ca0e69939e52ef67a8bf383b6dc5c9a3a49082cb9f4ecaf35833b07a3bc632ba2daa045ad1da5dab6b6dfbdd13d15f4d7edb376dc722864052dc7505e35b8a3fc6119",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xc82bbac0e5cd31b65523a87e13dfc12c7482c5362008546a503678fdb596bd48",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Given:\n        Contract A which has methods to receive balance and selfdestruct, and was created in current tx\n    Test the following call sequence:\n         Transfer value to A and call A.selfdestruct.\n         Recurse into a new call from transfers value to A, calls A.selfdestruct, and reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py#L203",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py::test_selfdestruct_created_in_same_tx_with_revert[fork_Cancun-state_test-outer_selfdestruct_before_inner_call]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x610027600081600b8239f35f35805f14601c57600114600f57005b6001805401600155611234ff5b60015f54015f555f80f3",
+                "storage": {}
+            },
+            "0x00000000000000000000000000000000deadbeef": {
+                "nonce": "0x00",
+                "balance": "0x03",
+                "code": "0x5f356001815f1460385750600114601257005b60015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f15f80fd5b60015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f1505f80525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f1505f525f80602081803045f1507364e2ebd6405af8cb348aec519084d3fff42ebba6316001555f80f3",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x60326000600073000000000000000000000000000000000000abcd3c603260006000f0600055600060006000600060007300000000000000000000000000000000deadbeef45f1"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0xaf572f7d9c643a8d889489059639e2026716d5470496ea559057bfdcb0d5650a",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf895800a8405f5e1008080b84760326000600073000000000000000000000000000000000000abcd3c603260006000f0600055600060006000600060007300000000000000000000000000000000deadbeef45f11ca0e69939e52ef67a8bf383b6dc5c9a3a49082cb9f4ecaf35833b07a3bc632ba2daa045ad1da5dab6b6dfbdd13d15f4d7edb376dc722864052dc7505e35b8a3fc6119",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xe5647af9d014834d2bfd42cbab13e27859153ebe28c5fc50ea760cfe201817af",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Given:\n        Contract A which has methods to receive balance and selfdestruct, and was created in current tx\n    Test the following call sequence:\n         Transfer value to A and call A.selfdestruct.\n         Recurse into a new call from transfers value to A, calls A.selfdestruct, and reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py#L203",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py::test_selfdestruct_created_in_same_tx_with_revert[fork_Cancun-state_test-outer_selfdestruct_after_inner_call]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x610027600081600b8239f35f35805f14601c57600114600f57005b6001805401600155611234ff5b60015f54015f555f80f3",
+                "storage": {}
+            },
+            "0x00000000000000000000000000000000deadbeef": {
+                "nonce": "0x00",
+                "balance": "0x03",
+                "code": "0x5f356001815f1460385750600114601257005b60015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f15f80fd5b5f80525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f1505f525f80602081803045f1507364e2ebd6405af8cb348aec519084d3fff42ebba63160015560015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f15f80f3",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x60326000600073000000000000000000000000000000000000abcd3c603260006000f0600055600060006000600060007300000000000000000000000000000000deadbeef45f1"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x04a65bdb65e8279ada0081afb26741c3989343925dc66847de3c66c6e5597973",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf895800a8405f5e1008080b84760326000600073000000000000000000000000000000000000abcd3c603260006000f0600055600060006000600060007300000000000000000000000000000000deadbeef45f11ca0e69939e52ef67a8bf383b6dc5c9a3a49082cb9f4ecaf35833b07a3bc632ba2daa045ad1da5dab6b6dfbdd13d15f4d7edb376dc722864052dc7505e35b8a3fc6119",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x2b2c60a963305f24a4634e1279d0384cb3adfba58cabe88679b4898f186e6832",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Given:\n        Contract A which has methods to receive balance and selfdestruct, and was created in current tx\n    Test the following call sequence:\n         Transfer value to A and call A.selfdestruct.\n         Recurse into a new call from transfers value to A, calls A.selfdestruct, and reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py#L203",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py::test_selfdestruct_created_in_same_tx_with_revert[fork_Prague-state_test-no_outer_selfdestruct]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x610027600081600b8239f35f35805f14601c57600114600f57005b6001805401600155611234ff5b60015f54015f555f80f3",
+                "storage": {}
+            },
+            "0x00000000000000000000000000000000deadbeef": {
+                "nonce": "0x00",
+                "balance": "0x03",
+                "code": "0x5f356001815f1460385750600114601257005b60015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f15f80fd5b5f80525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f1505f525f80602081803045f1507364e2ebd6405af8cb348aec519084d3fff42ebba6316001555f80f3",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x60326000600073000000000000000000000000000000000000abcd3c603260006000f0600055600060006000600060007300000000000000000000000000000000deadbeef45f1"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xe8ded278b2b58cce2f338c978a1031b828d6a0b0716e9c259bd3b562f99627af",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf895800a8405f5e1008080b84760326000600073000000000000000000000000000000000000abcd3c603260006000f0600055600060006000600060007300000000000000000000000000000000deadbeef45f11ca0e69939e52ef67a8bf383b6dc5c9a3a49082cb9f4ecaf35833b07a3bc632ba2daa045ad1da5dab6b6dfbdd13d15f4d7edb376dc722864052dc7505e35b8a3fc6119",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xe46858b461b64a3ef8d7279053b623da1206ccb2542c2dd86ed62cb155f21a80",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Given:\n        Contract A which has methods to receive balance and selfdestruct, and was created in current tx\n    Test the following call sequence:\n         Transfer value to A and call A.selfdestruct.\n         Recurse into a new call from transfers value to A, calls A.selfdestruct, and reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py#L203",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py::test_selfdestruct_created_in_same_tx_with_revert[fork_Prague-state_test-outer_selfdestruct_before_inner_call]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x610027600081600b8239f35f35805f14601c57600114600f57005b6001805401600155611234ff5b60015f54015f555f80f3",
+                "storage": {}
+            },
+            "0x00000000000000000000000000000000deadbeef": {
+                "nonce": "0x00",
+                "balance": "0x03",
+                "code": "0x5f356001815f1460385750600114601257005b60015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f15f80fd5b60015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f1505f80525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f1505f525f80602081803045f1507364e2ebd6405af8cb348aec519084d3fff42ebba6316001555f80f3",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x60326000600073000000000000000000000000000000000000abcd3c603260006000f0600055600060006000600060007300000000000000000000000000000000deadbeef45f1"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xaf572f7d9c643a8d889489059639e2026716d5470496ea559057bfdcb0d5650a",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf895800a8405f5e1008080b84760326000600073000000000000000000000000000000000000abcd3c603260006000f0600055600060006000600060007300000000000000000000000000000000deadbeef45f11ca0e69939e52ef67a8bf383b6dc5c9a3a49082cb9f4ecaf35833b07a3bc632ba2daa045ad1da5dab6b6dfbdd13d15f4d7edb376dc722864052dc7505e35b8a3fc6119",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x254f43ae86af9adf862aefece37b9a3f6455e2d94b8c7c9e6b62dbfdae2d2720",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Given:\n        Contract A which has methods to receive balance and selfdestruct, and was created in current tx\n    Test the following call sequence:\n         Transfer value to A and call A.selfdestruct.\n         Recurse into a new call from transfers value to A, calls A.selfdestruct, and reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py#L203",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py::test_selfdestruct_created_in_same_tx_with_revert[fork_Prague-state_test-outer_selfdestruct_after_inner_call]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x610027600081600b8239f35f35805f14601c57600114600f57005b6001805401600155611234ff5b60015f54015f555f80f3",
+                "storage": {}
+            },
+            "0x00000000000000000000000000000000deadbeef": {
+                "nonce": "0x00",
+                "balance": "0x03",
+                "code": "0x5f356001815f1460385750600114601257005b60015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f15f80fd5b5f80525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f1505f525f80602081803045f1507364e2ebd6405af8cb348aec519084d3fff42ebba63160015560015f525f8060208160017364e2ebd6405af8cb348aec519084d3fff42ebba645f15f80f3",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x60326000600073000000000000000000000000000000000000abcd3c603260006000f0600055600060006000600060007300000000000000000000000000000000deadbeef45f1"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x04a65bdb65e8279ada0081afb26741c3989343925dc66847de3c66c6e5597973",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf895800a8405f5e1008080b84760326000600073000000000000000000000000000000000000abcd3c603260006000f0600055600060006000600060007300000000000000000000000000000000deadbeef45f11ca0e69939e52ef67a8bf383b6dc5c9a3a49082cb9f4ecaf35833b07a3bc632ba2daa045ad1da5dab6b6dfbdd13d15f4d7edb376dc722864052dc7505e35b8a3fc6119",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xd47c2d68a94490a11fd259da969d269d7627f9bc1ee2d056dfffd951dd27d281",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Given:\n        Contract A which has methods to receive balance and selfdestruct, and was created in current tx\n    Test the following call sequence:\n         Transfer value to A and call A.selfdestruct.\n         Recurse into a new call from transfers value to A, calls A.selfdestruct, and reverts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct_revert.py#L203",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    }
+}

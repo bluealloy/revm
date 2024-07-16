@@ -48,4 +48,6 @@ jobs:
             ethtests/EIPTests/StateTests/stEIP1153-transientStorage/ \
             ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/ \
             ethtests/EIPTests/StateTests/stEIP2537/ \
+            tests/eof_suite/state_tests \
+            tests/prague_suite/state_tests
 

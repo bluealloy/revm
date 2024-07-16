@@ -1,7 +1,7 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, EVMError, ExecutionResult, ResultAndState, Spec, SpecId::LONDON,
+        db::Database, Bytecode, EVMError, ExecutionResult, ResultAndState, Spec, SpecId::LONDON,
         KECCAK_EMPTY, U256,
     },
     Context, FrameResult,
@@ -103,9 +103,8 @@ pub fn output<EXT, DB: Database>(
         let account = state
             .get_mut(&authorized)
             .expect("Authorized account must exist");
-        account.info.code = None;
+        account.info.code = Some(Bytecode::default());
         account.info.code_hash = KECCAK_EMPTY;
-        account.storage.clear();
     }
 
     let result = match instruction_result.result.into() {

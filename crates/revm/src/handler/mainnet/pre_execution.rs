@@ -93,7 +93,7 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
                     .evm
                     .inner
                     .journaled_state
-                    .load_code(authority, &mut context.evm.inner.db)?;
+                    .load_code(authorization.address, &mut context.evm.inner.db)?;
                 let code = account.info.code.clone();
                 let code_hash = account.info.code_hash;
 
