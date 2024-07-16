@@ -408,8 +408,9 @@ impl<DB: Database> EvmContext<DB> {
             // can't happen on mainnet.
             return return_error(InstructionResult::Return);
         };
+        let old_nonce = nonce - 1;
 
-        let created_address = created_address.unwrap_or_else(|| inputs.caller.create(nonce));
+        let created_address = created_address.unwrap_or_else(|| inputs.caller.create(old_nonce));
 
         // created address is not allowed to be a precompile.
         if self.precompiles.contains(&created_address) {
