@@ -55,7 +55,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         .info
         .balance
         .saturating_add(coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64));
-    
+
     Ok(())
 }
 
