@@ -22,7 +22,7 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-alloy-eips = { version = "0.1", default-features = false, features = ["k256"] }
+alloy-eips = { version = "0.2", default-features = false, features = ["k256"] }
 alloy-primitives = { version = "0.7.7", default-features = false, features = [
     "rlp",
 ] }

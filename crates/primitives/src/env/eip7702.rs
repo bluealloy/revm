@@ -33,9 +33,11 @@ impl AuthorizationList {
     /// Returns iterator of recovered Authorizations.
     pub fn recovered_iter<'a>(&'a self) -> Box<dyn Iterator<Item = RecoveredAuthorization> + 'a> {
         match self {
-            Self::Signed(signed) => {
-                Box::new(signed.iter().map(|signed| signed.clone().into_recovered()))
-            }
+            Self::Signed(signed) => Box::new(
+                signed
+                    .iter()
+                    .filter_map(|signed| signed.clone().try_into_recovered().ok()),
+            ),
             Self::Recovered(recovered) => Box::new(recovered.clone().into_iter()),
         }
     }
@@ -48,7 +50,7 @@ impl AuthorizationList {
         Self::Recovered(
             signed
                 .into_iter()
-                .map(|signed| signed.into_recovered())
+                .filter_map(|signed| signed.try_into_recovered().ok())
                 .collect(),
         )
     }

@@ -55,9 +55,7 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
             let mut valid_auths = Vec::with_capacity(authorization_list.len());
             for authorization in authorization_list.recovered_iter() {
                 // 1. recover authority and authorized addresses.
-                let Some(authority) = authorization.authority() else {
-                    continue;
-                };
+                let authority = authorization.authority();
 
                 // 2. Verify the chain id is either 0 or the chain's current ID.
                 if authorization.chain_id() != 0
