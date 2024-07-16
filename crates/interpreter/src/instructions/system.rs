@@ -162,7 +162,7 @@ pub fn returndataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &m
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, offset);
-    let offset_usize = as_usize_or_fail!(interpreter, offset);
+    let offset_usize = as_usize_saturated!(offset);
 
     let mut output = [0u8; 32];
     if let Some(available) = interpreter
