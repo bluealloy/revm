@@ -49,7 +49,6 @@ impl CacheState {
     /// Used inside tests to generate merkle tree.
     pub fn trie_account(&self) -> impl IntoIterator<Item = (Address, &PlainAccount)> {
         self.accounts.iter().filter_map(|(address, account)| {
-            println!("{:?} : {:?}", address, account);
             account
                 .account
                 .as_ref()

@@ -3,14 +3,14 @@ use super::{
     models::{SpecName, Test, TestSuite},
     utils::recover_address,
 };
-use hashbrown::HashMap;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
     db::EmptyDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
     primitives::{
-        address, calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, Eof, ExecutionResult, SpecId, TxKind, B256, EOF_MAGIC_BYTES
+        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, Eof,
+        ExecutionResult, SpecId, TxKind, B256, EOF_MAGIC_BYTES,
     },
     Evm, State,
 };
@@ -135,19 +135,7 @@ fn check_evm_execution<EXT>(
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
-    let mut accounts = evm
-        .context
-        .evm
-        .db
-        .cache
-        .trie_account()
-        .into_iter()
-        .collect::<HashMap<_, _>>();
-
-    println!("STATE: {:#?}", accounts);
-    //accounts.remove(&address!("2adc25665018aa1fe0e6bc666dac8fc2697ff9ba"));
-
-    let state_root = state_merkle_trie_root(accounts.into_iter());
+    let state_root = state_merkle_trie_root(evm.context.evm.db.cache.trie_account());
 
     let print_json_output = |error: Option<String>| {
         if print_json_outcome {
@@ -364,7 +352,10 @@ pub fn execute_test_suite(
                     .and_then(Option::as_deref)
                     .cloned()
                     .unwrap_or_default();
-                env.tx.authorization_list = test.eip7702_authorization_list();
+                let Ok(auth_list) = test.eip7702_authorization_list() else {
+                    continue;
+                };
+                env.tx.authorization_list = auth_list;
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),
@@ -375,9 +366,8 @@ pub fn execute_test_suite(
                 let mut cache = cache_state.clone();
                 let is_spurious_dragon =
                     SpecId::enabled(spec_id, revm::primitives::SpecId::SPURIOUS_DRAGON);
-                let is_prague = SpecId::enabled(spec_id, revm::primitives::SpecId::PRAGUE);
                 // Turn state clear after prague
-                cache.set_state_clear_flag(is_spurious_dragon && !is_prague);
+                cache.set_state_clear_flag(is_spurious_dragon);
                 let mut state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()

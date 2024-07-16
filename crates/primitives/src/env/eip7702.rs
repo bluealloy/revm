@@ -1,4 +1,4 @@
-pub use alloy_eips::eip7702::{RecoveredAuthorization, Authorization, SignedAuthorization};
+pub use alloy_eips::eip7702::{Authorization, RecoveredAuthorization, SignedAuthorization};
 pub use alloy_primitives::Signature;
 
 use std::{boxed::Box, vec::Vec};
@@ -42,14 +42,14 @@ impl AuthorizationList {
 
     /// Returns recovered authorizations list.
     pub fn into_recovered(self) -> Self {
-        match self {
-            Self::Signed(signed) => Self::Recovered(
-                signed
-                    .into_iter()
-                    .map(|signed| signed.into_recovered())
-                    .collect(),
-            ),
-            a @ Self::Recovered(_) => a,
-        }
+        let Self::Signed(signed) = self else {
+            return self;
+        };
+        Self::Recovered(
+            signed
+                .into_iter()
+                .map(|signed| signed.into_recovered())
+                .collect(),
+        )
     }
 }

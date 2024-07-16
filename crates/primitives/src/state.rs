@@ -41,8 +41,6 @@ bitflags! {
         /// used only for pre spurious dragon hardforks where existing and empty were two separate states.
         /// it became same state after EIP-161: State trie clearing
         const LoadedAsNotExisting = 0b0001000;
-        /// EIP-7702 authorized account.
-        const Authorized = 0b00100000;
         /// used to mark account as cold
         const Cold = 0b0010000;
     }

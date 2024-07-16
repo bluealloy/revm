@@ -1,16 +1,6 @@
 use alloy_rlp::{Decodable, Error as RlpError, Header};
-use revm::primitives::{AccessList, Address, Bytes, Signature, SignedAuthorization, TxKind, U256};
-
-/// A recovered authorization.
-#[derive(Debug, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct TestAuthorization {
-    pub chain_id: u64,
-    pub address: Address,
-    pub nonce: Vec<u64>,
-    #[serde(flatten)]
-    signature: Signature,
-    signer: Option<Address>,
-}
+use revm::primitives::{AccessList, Bytes, Signature, SignedAuthorization, TxKind, U256};
+use std::vec::Vec;
 
 /// [EIP-7702 Set Code Transaction](https://eips.ethereum.org/EIPS/eip-7702)
 ///

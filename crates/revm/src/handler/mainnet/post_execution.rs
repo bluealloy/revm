@@ -45,7 +45,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
     };
 
     // touch beneficiary account only if we are going to transfer ethers to it.
-    if !coinbase_gas_price.is_zero() {
+    //if !coinbase_gas_price.is_zero() {
         let (coinbase_account, _) = context
             .evm
             .inner
@@ -57,7 +57,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
             .info
             .balance
             .saturating_add(coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64));
-    }
+    //}
     Ok(())
 }
 

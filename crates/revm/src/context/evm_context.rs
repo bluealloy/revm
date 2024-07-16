@@ -184,13 +184,14 @@ impl<DB: Database> EvmContext<DB> {
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         match inputs.value {
-            // if transfer value is zero, do the touch.
+            // if transfer value is zero, load account and force the touch.
             CallValue::Transfer(value) if value == U256::ZERO => {
                 self.load_account(inputs.target_address)?;
                 self.journaled_state.touch(&inputs.target_address);
             }
             CallValue::Transfer(value) => {
-                // Transfer value from caller to called account
+                // Transfer value from caller to called account. As value get transferred
+                // target gets touched.
                 if let Some(result) = self.inner.journaled_state.transfer(
                     &inputs.caller,
                     &inputs.target_address,

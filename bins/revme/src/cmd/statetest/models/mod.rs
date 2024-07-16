@@ -3,7 +3,7 @@ mod eip7702;
 mod spec;
 
 use deserializer::*;
-use eip7702::{TestAuthorization, TxEip7702};
+pub use eip7702::TxEip7702;
 pub use spec::SpecName;
 
 use revm::primitives::{AccessList, Address, AuthorizationList, Bytes, HashMap, B256, U256};
@@ -50,17 +50,22 @@ pub struct Test {
 }
 
 impl Test {
-    pub fn eip7702_authorization_list(&self) -> Option<AuthorizationList> {
-        let txbytes = self.txbytes.as_ref()?;
+    pub fn eip7702_authorization_list(
+        &self,
+    ) -> Result<Option<AuthorizationList>, alloy_rlp::Error> {
+        let Some(txbytes) = self.txbytes.as_ref() else {
+            return Ok(None);
+        };
 
         if txbytes.get(0) == Some(&0x04) {
             let mut txbytes = &txbytes[1..];
-            println!("txbytes:{:?}", hex::encode(txbytes));
-            let tx = TxEip7702::decode(&mut txbytes).expect("Valid TX");
-            return Some(AuthorizationList::Signed(tx.authorization_list).into_recovered());
+            let tx = TxEip7702::decode(&mut txbytes)?;
+            return Ok(Some(
+                AuthorizationList::Signed(tx.authorization_list).into_recovered(),
+            ));
         }
 
-        None
+        Ok(None)
     }
 }
 
@@ -123,6 +128,7 @@ pub struct TransactionParts {
     pub access_lists: Vec<Option<AccessList>>,
 
     //#[serde(default)]
+    // TODO EIP-7702 when added enable serde `deny_unknown_fields`.
     //pub authorization_list: Vec<Option<Vec<TestAuthorization>>>,
     #[serde(default)]
     pub blob_versioned_hashes: Vec<B256>,
