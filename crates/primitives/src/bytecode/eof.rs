@@ -21,13 +21,9 @@ pub const EOF_MAGIC: u16 = 0xEF00;
 /// EOF magic number in array form.
 pub static EOF_MAGIC_BYTES: Bytes = bytes!("ef00");
 
-/// EOF - Ethereum Object Format.
+/// EVM Object Format (EOF) container.
 ///
-/// It consist of a header, body and raw original bytes Specified in EIP.
-/// Most of body contain Bytes so it references to the raw bytes.
-///
-/// If there is a need to create new EOF from scratch, it is recommended to use `EofBody` and
-/// use `encode` function to create full [`Eof`] object.
+/// It consists of a header, body and the raw original bytes.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eof {
@@ -42,7 +38,7 @@ impl Default for Eof {
             // types section with zero inputs, zero outputs and zero max stack size.
             types_section: vec![TypesSection::default()],
             // One code section with a STOP byte.
-            code_section: vec![[0x00].into()],
+            code_section: vec![Bytes::from_static(&[0x00])],
             container_section: vec![],
             data_section: Bytes::new(),
             is_data_filled: true,
@@ -52,6 +48,11 @@ impl Default for Eof {
 }
 
 impl Eof {
+    /// Creates a new EOF container from the given body.
+    pub fn new(body: EofBody) -> Self {
+        body.into_eof()
+    }
+
     /// Returns len of the header and body in bytes.
     pub fn size(&self) -> usize {
         self.header.size() + self.header.body_size()
@@ -88,22 +89,15 @@ impl Eof {
 
     /// Decode EOF that have additional dangling bytes.
     /// Assume that data section is fully filled.
-    pub fn decode_dangling(mut eof: Bytes) -> Result<(Self, Bytes), EofDecodeError> {
-        let (header, _) = EofHeader::decode(&eof)?;
+    pub fn decode_dangling(mut raw: Bytes) -> Result<(Self, Bytes), EofDecodeError> {
+        let (header, _) = EofHeader::decode(&raw)?;
         let eof_size = header.body_size() + header.size();
-        if eof_size > eof.len() {
+        if eof_size > raw.len() {
             return Err(EofDecodeError::MissingInput);
         }
-        let dangling_data = eof.split_off(eof_size);
-        let body = EofBody::decode(&eof, &header)?;
-        Ok((
-            Self {
-                header,
-                body,
-                raw: eof,
-            },
-            dangling_data,
-        ))
+        let dangling_data = raw.split_off(eof_size);
+        let body = EofBody::decode(&raw, &header)?;
+        Ok((Self { header, body, raw }, dangling_data))
     }
 
     /// Decode EOF from raw bytes.
