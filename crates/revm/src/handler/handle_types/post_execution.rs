@@ -36,12 +36,12 @@ pub type EndHandle<'a, EXT, DB> = Arc<
 >;
 
 /// Clear handle, doesn't have output, its purpose is to clear the
-/// context. It will be always called even on failed validation.
+/// context. It will always be called even on failed validation.
 pub type ClearHandle<'a, EXT, DB> = Arc<dyn Fn(&mut Context<EXT, DB>) + 'a>;
 
 /// Handles related to post execution after the stack loop is finished.
 pub struct PostExecutionHandler<'a, EXT, DB: Database> {
-    /// Reimburse the caller with ethereum it didn't spent.
+    /// Reimburse the caller with ethereum it didn't spend.
     pub reimburse_caller: ReimburseCallerHandle<'a, EXT, DB>,
     /// Reward the beneficiary with caller fee.
     pub reward_beneficiary: RewardBeneficiaryHandle<'a, EXT, DB>,

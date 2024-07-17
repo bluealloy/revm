@@ -72,7 +72,7 @@ async fn main() -> anyhow::Result<()> {
     // Use the previous block state as the db with caching
     let prev_id: BlockId = previous_block_number.into();
     // SAFETY: This cannot fail since this is in the top-level tokio runtime
-    let state_db = EthersDB::new(Arc::clone(&client), Some(prev_id)).expect("panic");
+    let state_db = EthersDB::new(client, Some(prev_id)).expect("panic");
     let cache_db: CacheDB<EthersDB<Provider<Http>>> = CacheDB::new(state_db);
     let mut state = StateBuilder::new_with_database(cache_db).build();
     let mut evm = Evm::builder()

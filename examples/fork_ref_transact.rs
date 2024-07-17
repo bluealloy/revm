@@ -43,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
     let encoded = getReservesCall::new(()).abi_encode();
 
     // initialize new EthersDB
-    let mut ethersdb = EthersDB::new(Arc::clone(&client), None).unwrap();
+    let mut ethersdb = EthersDB::new(client, None).unwrap();
 
     // query basic properties of an account incl bytecode
     let acc_info = ethersdb.basic(pool_address).unwrap().unwrap();
@@ -89,7 +89,7 @@ async fn main() -> anyhow::Result<()> {
             output: Output::Call(value),
             ..
         } => value,
-        result => panic!("Execution failed: {result:?}"),
+        _ => panic!("Execution failed: {result:?}"),
     };
 
     // decode bytes to reserves + ts via alloy's abi decode

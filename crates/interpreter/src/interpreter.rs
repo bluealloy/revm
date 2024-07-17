@@ -93,7 +93,7 @@ impl Interpreter {
         }
     }
 
-    /// Set set is_eof_init to true, this is used to enable `RETURNCONTRACT` opcode.
+    /// Set is_eof_init to true, this is used to enable `RETURNCONTRACT` opcode.
     #[inline]
     pub fn set_is_eof_init(&mut self) {
         self.is_eof_init = true;
