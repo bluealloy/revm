@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.2.1](https://github.com/bluealloy/revm/compare/revm-precompile-v9.2.0...revm-precompile-v9.2.1) - 2024-07-17
+
+### Other
+- updated the following local packages: revm-primitives
+
 ## [9.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v9.0.0...revm-precompile-v9.1.0) - 2024-07-16
 
 ### Added
