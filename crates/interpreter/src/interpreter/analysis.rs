@@ -1,17 +1,16 @@
-use revm_primitives::{eof::EofDecodeError, HashSet};
-
 use crate::{
     instructions::utility::{read_i16, read_u16},
     opcode,
     primitives::{
         bitvec::prelude::{bitvec, BitVec, Lsb0},
-        eof::TypesSection,
+        eof::{EofDecodeError, TypesSection},
         legacy::JumpTable,
-        Bytecode, Bytes, Eof, LegacyAnalyzedBytecode,
+        Bytecode, Bytes, Eof, HashSet, LegacyAnalyzedBytecode,
     },
     OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
 };
-use std::{sync::Arc, vec, vec::Vec};
+use core::convert::identity;
+use std::{borrow::Cow, sync::Arc, vec, vec::Vec};
 
 const EOF_NON_RETURNING_FUNCTION: u8 = 0x80;
 
@@ -66,33 +65,36 @@ fn analyze(code: &[u8]) -> JumpTable {
     JumpTable(Arc::new(jumps))
 }
 
-pub fn validate_raw_eof(bytecode: Bytes) -> Result<Eof, EofError> {
-    let eof = Eof::decode(bytecode)?;
+/// Decodes `raw` into an [`Eof`] container and validates it.
+pub fn validate_raw_eof(raw: Bytes) -> Result<Eof, EofError> {
+    let eof = Eof::decode(raw)?;
     validate_eof(&eof)?;
     Ok(eof)
 }
 
-/// Validate Eof structures.
+/// Fully validates an [`Eof`] container.
 pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
-    // clone is cheap as it is Bytes and a header.
-    let mut queue = vec![eof.clone()];
+    if eof.body.container_section.is_empty() {
+        validate_eof_codes(eof)?;
+        return Ok(());
+    }
 
-    while let Some(eof) = queue.pop() {
-        // iterate over types
+    let mut stack = Vec::with_capacity(4);
+    stack.push(Cow::Borrowed(eof));
+    while let Some(eof) = stack.pop() {
+        // Validate the current container.
         validate_eof_codes(&eof)?;
-        // iterate over containers, convert them to Eof and add to analyze_eof
-        for container in eof.body.container_section {
-            queue.push(Eof::decode(container)?);
+        // Decode subcontainers and push them to the stack.
+        for container in &eof.body.container_section {
+            stack.push(Cow::Owned(Eof::decode(container.clone())?));
         }
     }
 
-    // Eof is valid
     Ok(())
 }
 
-/// Validate EOF
+/// Validates an [`Eof`] structure, without recursing into containers.
 pub fn validate_eof_codes(eof: &Eof) -> Result<(), EofValidationError> {
-    let mut queued_codes = vec![false; eof.body.code_section.len()];
     if eof.body.code_section.len() != eof.body.types_section.len() {
         return Err(EofValidationError::InvalidTypesSection);
     }
@@ -101,8 +103,6 @@ pub fn validate_eof_codes(eof: &Eof) -> Result<(), EofValidationError> {
         // no code sections. This should be already checked in decode.
         return Err(EofValidationError::NoCodeSections);
     }
-    // first section is default one.
-    queued_codes[0] = true;
 
     // the first code section must have a type signature
     // (0, 0x80, max_stack_height) (0 inputs non-returning function)
@@ -111,11 +111,16 @@ pub fn validate_eof_codes(eof: &Eof) -> Result<(), EofValidationError> {
         return Err(EofValidationError::InvalidTypesSection);
     }
 
+    // first section is default one.
+    let mut code_sections_accessed = vec![false; eof.body.code_section.len()];
+    code_sections_accessed[0] = true;
+
     // start validation from code section 0.
-    let mut queue = vec![0];
-    while let Some(index) = queue.pop() {
+    let mut stack = Vec::with_capacity(16);
+    stack.push(0);
+    while let Some(index) = stack.pop() {
         let code = &eof.body.code_section[index];
-        let accessed_codes = validate_eof_code(
+        let accessed = validate_eof_code(
             code,
             eof.header.data_size as usize,
             index,
@@ -124,15 +129,15 @@ pub fn validate_eof_codes(eof: &Eof) -> Result<(), EofValidationError> {
         )?;
 
         // queue accessed codes.
-        accessed_codes.into_iter().for_each(|i| {
-            if !queued_codes[i] {
-                queued_codes[i] = true;
-                queue.push(i);
+        accessed.into_iter().for_each(|i| {
+            if !code_sections_accessed[i] {
+                code_sections_accessed[i] = true;
+                stack.push(i);
             }
         });
     }
     // iterate over accessed codes and check if all are accessed.
-    if queued_codes.into_iter().any(|x| !x) {
+    if !code_sections_accessed.into_iter().all(identity) {
         return Err(EofValidationError::CodeSectionNotAccessed);
     }
 
