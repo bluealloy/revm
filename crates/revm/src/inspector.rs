@@ -28,17 +28,14 @@ pub mod inspectors {
 }
 
 /// EVM [Interpreter] callbacks.
-#[auto_impl(&mut, Box)]
+#[auto_impl(& mut, Box)]
 pub trait Inspector<DB: Database> {
     /// Called before the interpreter is initialized.
     ///
     /// If `interp.instruction_result` is set to anything other than [crate::interpreter::InstructionResult::Continue] then the execution of the interpreter
     /// is skipped.
     #[inline]
-    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
-        let _ = interp;
-        let _ = context;
-    }
+    fn initialize_interp(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<DB>) {}
 
     /// Called on each step of the interpreter.
     ///
@@ -49,28 +46,18 @@ pub trait Inspector<DB: Database> {
     ///
     /// To get the current opcode, use `interp.current_opcode()`.
     #[inline]
-    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
-        let _ = interp;
-        let _ = context;
-    }
+    fn step(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<DB>) {}
 
     /// Called after `step` when the instruction has been executed.
     ///
     /// Setting `interp.instruction_result` to anything other than [crate::interpreter::InstructionResult::Continue] alters the execution
     /// of the interpreter.
     #[inline]
-    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
-        let _ = interp;
-        let _ = context;
-    }
+    fn step_end(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<DB>) {}
 
     /// Called when a log is emitted.
     #[inline]
-    fn log(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>, log: &Log) {
-        let _ = interp;
-        let _ = context;
-        let _ = log;
-    }
+    fn log(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<DB>, _log: &Log) {}
 
     /// Called whenever a call to a contract is about to start.
     ///
@@ -78,11 +65,9 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn call(
         &mut self,
-        context: &mut EvmContext<DB>,
-        inputs: &mut CallInputs,
+        _context: &mut EvmContext<DB>,
+        _inputs: &mut CallInputs,
     ) -> Option<CallOutcome> {
-        let _ = context;
-        let _ = inputs;
         None
     }
 
@@ -94,12 +79,10 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn call_end(
         &mut self,
-        context: &mut EvmContext<DB>,
-        inputs: &CallInputs,
+        _context: &mut EvmContext<DB>,
+        _inputs: &CallInputs,
         outcome: CallOutcome,
     ) -> CallOutcome {
-        let _ = context;
-        let _ = inputs;
         outcome
     }
 
@@ -111,11 +94,9 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn create(
         &mut self,
-        context: &mut EvmContext<DB>,
-        inputs: &mut CreateInputs,
+        _context: &mut EvmContext<DB>,
+        _inputs: &mut CreateInputs,
     ) -> Option<CreateOutcome> {
-        let _ = context;
-        let _ = inputs;
         None
     }
 
@@ -126,12 +107,10 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn create_end(
         &mut self,
-        context: &mut EvmContext<DB>,
-        inputs: &CreateInputs,
+        _context: &mut EvmContext<DB>,
+        _inputs: &CreateInputs,
         outcome: CreateOutcome,
     ) -> CreateOutcome {
-        let _ = context;
-        let _ = inputs;
         outcome
     }
 
@@ -140,31 +119,23 @@ pub trait Inspector<DB: Database> {
     /// This can happen from create TX or from EOFCREATE opcode.
     fn eofcreate(
         &mut self,
-        context: &mut EvmContext<DB>,
-        inputs: &mut EOFCreateInputs,
+        _context: &mut EvmContext<DB>,
+        _inputs: &mut EOFCreateInputs,
     ) -> Option<CreateOutcome> {
-        let _ = context;
-        let _ = inputs;
         None
     }
 
     /// Called when eof creating has ended.
     fn eofcreate_end(
         &mut self,
-        context: &mut EvmContext<DB>,
-        inputs: &EOFCreateInputs,
+        _context: &mut EvmContext<DB>,
+        _inputs: &EOFCreateInputs,
         outcome: CreateOutcome,
     ) -> CreateOutcome {
-        let _ = context;
-        let _ = inputs;
         outcome
     }
 
     /// Called when a contract has been self-destructed with funds transferred to target.
     #[inline]
-    fn selfdestruct(&mut self, contract: Address, target: Address, value: U256) {
-        let _ = contract;
-        let _ = target;
-        let _ = value;
-    }
+    fn selfdestruct(&mut self, _contract: Address, _target: Address, _value: U256) {}
 }
