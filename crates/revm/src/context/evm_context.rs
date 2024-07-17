@@ -226,7 +226,7 @@ impl<DB: Database> EvmContext<DB> {
 
             // ExtDelegateCall is not allowed to call non-EOF contracts.
             if inputs.scheme.is_ext_delegate_call()
-                && bytecode.bytes_slice().get(..2) != Some(&EOF_MAGIC_BYTES)
+                && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES)
             {
                 return return_result(InstructionResult::InvalidExtDelegateCallTarget);
             }
@@ -271,8 +271,7 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         // Prague EOF
-        if spec_id.is_enabled_in(PRAGUE_EOF) && inputs.init_code.get(..2) == Some(&EOF_MAGIC_BYTES)
-        {
+        if spec_id.is_enabled_in(PRAGUE_EOF) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
             return return_error(InstructionResult::CreateInitCodeStartingEF00);
         }
 
