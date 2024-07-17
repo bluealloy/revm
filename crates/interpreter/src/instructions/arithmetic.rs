@@ -40,7 +40,7 @@ pub fn sdiv<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 pub fn rem<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
-    if !(*op2).is_zero() {
+    if !op2.is_zero() {
         *op2 = op1.wrapping_rem(*op2);
     }
 }
