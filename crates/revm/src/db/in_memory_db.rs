@@ -71,7 +71,7 @@ impl<ExtDB> CacheDB<ExtDB> {
                     .or_insert_with(|| code.clone());
             }
         }
-        if account.code_hash == B256::ZERO {
+        if account.code_hash.is_zero() {
             account.code_hash = KECCAK_EMPTY;
         }
     }

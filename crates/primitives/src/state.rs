@@ -273,8 +273,8 @@ impl AccountInfo {
     /// - balance is zero
     /// - nonce is zero
     pub fn is_empty(&self) -> bool {
-        let code_empty = self.is_empty_code_hash() || self.code_hash == B256::ZERO;
-        code_empty && self.balance == U256::ZERO && self.nonce == 0
+        let code_empty = self.is_empty_code_hash() || self.code_hash.is_zero();
+        code_empty && self.balance.is_zero() && self.nonce == 0
     }
 
     /// Returns `true` if the account is not empty.
