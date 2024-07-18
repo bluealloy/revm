@@ -99,7 +99,7 @@ impl L1BlockInfo {
 
             // Check if the L1 fee scalars are empty. If so, we use the Bedrock cost function. The L1 fee overhead is
             // only necessary if `empty_scalars` is true, as it was deprecated in Ecotone.
-            let empty_scalars = l1_blob_base_fee == U256::ZERO
+            let empty_scalars = l1_blob_base_fee.is_zero()
                 && l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
                     == EMPTY_SCALARS;
             let l1_fee_overhead = empty_scalars

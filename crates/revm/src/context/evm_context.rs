@@ -11,7 +11,7 @@ use crate::{
     primitives::{
         keccak256, Address, Bytecode, Bytes, CreateScheme, EVMError, Env, Eof,
         SpecId::{self, *},
-        B256, EOF_MAGIC_BYTES, U256,
+        B256, EOF_MAGIC_BYTES,
     },
     ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
@@ -185,7 +185,7 @@ impl<DB: Database> EvmContext<DB> {
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         match inputs.value {
             // if transfer value is zero, load account and force the touch.
-            CallValue::Transfer(value) if value == U256::ZERO => {
+            CallValue::Transfer(value) if value.is_zero() => {
                 self.load_account(inputs.target_address)?;
                 self.journaled_state.touch(&inputs.target_address);
             }
@@ -458,6 +458,7 @@ impl<DB: Database> EvmContext<DB> {
 #[cfg(any(test, feature = "test-utils"))]
 pub(crate) mod test_utils {
     use super::*;
+    use crate::primitives::U256;
     use crate::{
         db::{CacheDB, EmptyDB},
         journaled_state::JournaledState,
@@ -542,6 +543,7 @@ pub(crate) mod test_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::primitives::U256;
     use crate::{
         db::{CacheDB, EmptyDB},
         primitives::{address, Bytecode},

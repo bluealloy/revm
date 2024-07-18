@@ -231,7 +231,7 @@ pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
     };
 
     pop!(interpreter, value);
-    let has_transfer = value != U256::ZERO;
+    let has_transfer = !value.is_zero();
     if interpreter.is_static && has_transfer {
         interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
         return;
@@ -406,7 +406,7 @@ pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
     pop!(interpreter, value);
-    let has_transfer = value != U256::ZERO;
+    let has_transfer = !value.is_zero();
     if interpreter.is_static && has_transfer {
         interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
         return;
@@ -474,7 +474,7 @@ pub fn call_code<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
     let Some(mut gas_limit) = calc_call_gas::<SPEC>(
         interpreter,
         is_cold,
-        value != U256::ZERO,
+        !value.is_zero(),
         false,
         local_gas_limit,
     ) else {
@@ -484,7 +484,7 @@ pub fn call_code<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
     gas!(interpreter, gas_limit);
 
     // add call stipend if there is value to be transferred.
-    if value != U256::ZERO {
+    if !value.is_zero() {
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }
 

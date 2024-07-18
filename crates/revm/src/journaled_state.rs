@@ -399,7 +399,7 @@ impl JournaledState {
                     had_value,
                 } => {
                     let tkey = (address, key);
-                    if had_value == U256::ZERO {
+                    if had_value.is_zero() {
                         // if previous value is zero, remove it
                         transient_storage.remove(&tkey);
                     } else {
@@ -525,7 +525,7 @@ impl JournaledState {
         };
 
         Ok(SelfDestructResult {
-            had_value: balance != U256::ZERO,
+            had_value: !balance.is_zero(),
             is_cold: load_result.is_cold,
             target_exists: !load_result.is_empty,
             previously_destroyed,
@@ -762,7 +762,7 @@ impl JournaledState {
     /// EIP-1153: Transient storage opcodes
     #[inline]
     pub fn tstore(&mut self, address: Address, key: U256, new: U256) {
-        let had_value = if new == U256::ZERO {
+        let had_value = if new.is_zero() {
             // if new values is zero, remove entry from transient storage.
             // if previous values was some insert it inside journal.
             // If it is none nothing should be inserted.

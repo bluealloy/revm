@@ -29,15 +29,15 @@ pub fn sstore_refund(spec_id: SpecId, original: U256, current: U256, new: U256) 
         if current == new {
             0
         } else {
-            if original == current && new == U256::ZERO {
+            if original == current && new.is_zero() {
                 sstore_clears_schedule
             } else {
                 let mut refund = 0;
 
-                if original != U256::ZERO {
-                    if current == U256::ZERO {
+                if !original.is_zero() {
+                    if current.is_zero() {
                         refund -= sstore_clears_schedule;
-                    } else if new == U256::ZERO {
+                    } else if new.is_zero() {
                         refund += sstore_clears_schedule;
                     }
                 }
@@ -48,7 +48,7 @@ pub fn sstore_refund(spec_id: SpecId, original: U256, current: U256, new: U256) 
                     } else {
                         (SSTORE_RESET, sload_cost(spec_id, false))
                     };
-                    if original == U256::ZERO {
+                    if original.is_zero() {
                         refund += (SSTORE_SET - gas_sload) as i64;
                     } else {
                         refund += (gas_sstore_reset - gas_sload) as i64;
@@ -59,7 +59,7 @@ pub fn sstore_refund(spec_id: SpecId, original: U256, current: U256, new: U256) 
             }
         }
     } else {
-        if current != U256::ZERO && new == U256::ZERO {
+        if !current.is_zero() && new.is_zero() {
             REFUND_SSTORE_CLEARS
         } else {
             0
@@ -99,7 +99,7 @@ const fn log2floor(value: U256) -> u64 {
 /// `EXP` opcode cost calculation.
 #[inline]
 pub fn exp_cost(spec_id: SpecId, power: U256) -> Option<u64> {
-    if power == U256::ZERO {
+    if power.is_zero() {
         Some(EXP)
     } else {
         // EIP-160: EXP cost increase
@@ -230,7 +230,7 @@ fn istanbul_sstore_cost<const SLOAD_GAS: u64, const SSTORE_RESET_GAS: u64>(
 ) -> u64 {
     if new == current {
         SLOAD_GAS
-    } else if original == current && original == U256::ZERO {
+    } else if original == current && original.is_zero() {
         SSTORE_SET
     } else if original == current {
         SSTORE_RESET_GAS
@@ -242,7 +242,7 @@ fn istanbul_sstore_cost<const SLOAD_GAS: u64, const SSTORE_RESET_GAS: u64>(
 /// Frontier sstore cost just had two cases set and reset values.
 #[inline]
 fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
-    if current == U256::ZERO && new != U256::ZERO {
+    if current.is_zero() && !new.is_zero() {
         SSTORE_SET
     } else {
         SSTORE_RESET
