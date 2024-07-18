@@ -2,8 +2,6 @@ use revm_interpreter::CallValue;
 use revm_precompile::PrecompileErrors;
 
 use super::inner_evm_context::InnerEvmContext;
-#[cfg(any(test, feature = "test-utils"))]
-use crate::primitives::U256;
 use crate::{
     db::Database,
     interpreter::{
@@ -460,6 +458,7 @@ impl<DB: Database> EvmContext<DB> {
 #[cfg(any(test, feature = "test-utils"))]
 pub(crate) mod test_utils {
     use super::*;
+    use crate::primitives::U256;
     use crate::{
         db::{CacheDB, EmptyDB},
         journaled_state::JournaledState,
@@ -544,6 +543,7 @@ pub(crate) mod test_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::primitives::U256;
     use crate::{
         db::{CacheDB, EmptyDB},
         primitives::{address, Bytecode},
