@@ -4,27 +4,17 @@ use crate::{
     EvmContext,
     JournalEntry,
 };
-use core::{cell::RefCell, fmt::Debug};
+use core::cell::RefCell;
 use fluentbase_core::helpers::exit_code_from_evm_error;
 use fluentbase_sdk::{
-    runtime::ContextReaderWrapper,
     Account,
     AccountCheckpoint,
     AccountStatus,
-    ContractInput,
     SovereignAPI,
     JZKT_ACCOUNT_RWASM_CODE_HASH_FIELD,
     JZKT_ACCOUNT_SOURCE_CODE_HASH_FIELD,
 };
-use fluentbase_types::{
-    AccountAPI,
-    ContextReader,
-    EmptyJournalTrie,
-    ExitCode,
-    Fuel,
-    SharedAPI,
-    F254,
-};
+use fluentbase_types::{EmptyJournalTrie, ExitCode, Fuel, SharedAPI, F254};
 use revm_interpreter::{Gas, InstructionResult};
 
 pub(crate) struct RwasmDbWrapper<'a, SDK: SharedAPI, DB: Database> {
@@ -38,60 +28,6 @@ impl<'a, SDK: SharedAPI, DB: Database> RwasmDbWrapper<'a, SDK, DB> {
         sdk: SDK,
     ) -> RwasmDbWrapper<'a, SDK, DB> {
         RwasmDbWrapper { ctx, sdk }
-    }
-}
-
-impl<'a, SDK: SharedAPI, DB: Database> AccountAPI for RwasmDbWrapper<'a, SDK, DB> {
-    fn account(&self, address: &Address) -> (Account, bool) {
-        let mut ctx = self.ctx.borrow_mut();
-        let (account, is_cold) = ctx
-            .load_account(*address)
-            .map_err(|_| panic!("database error"))
-            .unwrap();
-        let mut account = Account::from(account.info.clone());
-        account.address = *address;
-        (account, is_cold)
-    }
-
-    fn preimage_size(&self, hash: &B256) -> u32 {
-        self.ctx
-            .borrow_mut()
-            .db
-            .code_by_hash(*hash)
-            .map(|b| b.bytecode().len() as u32)
-            .unwrap_or_default()
-    }
-
-    fn preimage_copy(&self, target: &mut [u8], hash: &B256) {
-        let mut ctx = self.ctx.borrow_mut();
-        let code = ctx
-            .code_by_hash(*hash)
-            .map_err(|_| panic!("failed to get bytecode by hash"))
-            .unwrap();
-        target.copy_from_slice(code.as_ref());
-    }
-
-    fn preimage(&self, hash: &B256) -> Bytes {
-        let mut ctx = self.ctx.borrow_mut();
-        ctx.code_by_hash(*hash)
-            .map_err(|_| panic!("failed to get bytecode by hash"))
-            .unwrap()
-    }
-
-    fn log(&self, address: &Address, data: Bytes, topics: &[B256]) {
-        let mut ctx = self.ctx.borrow_mut();
-        ctx.journaled_state.log(Log {
-            address: *address,
-            data: LogData::new_unchecked(topics.into(), data),
-        });
-    }
-
-    fn system_call(&self, address: &Address, input: &[u8], fuel: &mut Fuel) -> (Bytes, ExitCode) {
-        self.sdk.system_call(address, input, fuel)
-    }
-
-    fn debug(&self, msg: &[u8]) {
-        self.sdk.debug(msg)
     }
 }
 
@@ -150,6 +86,58 @@ impl<'a, SDK: SharedAPI, DB: Database> SharedAPI for RwasmDbWrapper<'a, SDK, DB>
 
     fn charge_fuel(&self, fuel: &mut Fuel) {
         self.sdk.charge_fuel(fuel)
+    }
+
+    fn account(&self, address: &Address) -> (Account, bool) {
+        let mut ctx = self.ctx.borrow_mut();
+        let (account, is_cold) = ctx
+            .load_account(*address)
+            .map_err(|_| panic!("database error"))
+            .unwrap();
+        let mut account = Account::from(account.info.clone());
+        account.address = *address;
+        (account, is_cold)
+    }
+
+    fn preimage_size(&self, hash: &B256) -> u32 {
+        self.ctx
+            .borrow_mut()
+            .db
+            .code_by_hash(*hash)
+            .map(|b| b.bytecode().len() as u32)
+            .unwrap_or_default()
+    }
+
+    fn preimage_copy(&self, target: &mut [u8], hash: &B256) {
+        let mut ctx = self.ctx.borrow_mut();
+        let code = ctx
+            .code_by_hash(*hash)
+            .map_err(|_| panic!("failed to get bytecode by hash"))
+            .unwrap();
+        target.copy_from_slice(code.as_ref());
+    }
+
+    fn preimage(&self, hash: &B256) -> Bytes {
+        let mut ctx = self.ctx.borrow_mut();
+        ctx.code_by_hash(*hash)
+            .map_err(|_| panic!("failed to get bytecode by hash"))
+            .unwrap()
+    }
+
+    fn log(&self, address: &Address, data: Bytes, topics: &[B256]) {
+        let mut ctx = self.ctx.borrow_mut();
+        ctx.journaled_state.log(Log {
+            address: *address,
+            data: LogData::new_unchecked(topics.into(), data),
+        });
+    }
+
+    fn system_call(&self, address: &Address, input: &[u8], fuel: &mut Fuel) -> (Bytes, ExitCode) {
+        self.sdk.system_call(address, input, fuel)
+    }
+
+    fn debug(&self, msg: &[u8]) {
+        self.sdk.debug(msg)
     }
 }
 

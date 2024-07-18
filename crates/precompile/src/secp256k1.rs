@@ -105,7 +105,7 @@ extern "C" {
 
 #[cfg(not(feature = "std"))]
 pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
-    use revm_primitives::PrecompileError;
+    use revm_primitives::{PrecompileError, PrecompileErrors};
     const ECRECOVER_BASE: u64 = 3_000;
     if ECRECOVER_BASE > gas_limit {
         return Err(PrecompileErrors::Error(PrecompileError::OutOfGas));

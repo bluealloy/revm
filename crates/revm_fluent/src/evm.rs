@@ -31,7 +31,6 @@ use fluentbase_core::{
     loader::{_loader_call, _loader_create},
 };
 use fluentbase_sdk::{
-    runtime::{RuntimeContextWrapper, TestingContext},
     types::{EvmCallMethodInput, EvmCreateMethodInput},
     ContractInput,
 };
@@ -565,6 +564,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         };
 
         let contract_input = self.input_from_env(&mut gas, caller_address, Address::ZERO, value);
+        use fluentbase_sdk::runtime::RuntimeContextWrapper;
         let sdk = RuntimeContextWrapper::new();
         let sdk = RwasmDbWrapper::new(RefCell::new(&mut self.context.evm), sdk);
         let create_output = _loader_create(&contract_input, &sdk, method_data);
@@ -641,7 +641,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             depth: 0,
         };
         let contract_input = self.input_from_env(&mut gas, caller_address, callee_address, value);
-        let sdk = TestingContext::new();
+        let sdk = fluentbase_sdk::runtime::TestingContext::new();
         let sdk = RwasmDbWrapper::new(RefCell::new(&mut self.context.evm), sdk);
         let call_output = _loader_call(&contract_input, &sdk, method_input);
 
