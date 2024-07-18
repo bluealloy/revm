@@ -179,7 +179,7 @@ pub fn run_pair(
     } else {
         let elements = input.len() / PAIR_ELEMENT_LEN;
 
-        let mut points = vec![];
+        let mut points = Vec::with_capacity(elements);
 
         // read points
         for idx in 0..elements {
