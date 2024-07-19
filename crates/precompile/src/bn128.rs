@@ -4,6 +4,7 @@ use crate::{
 };
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 use revm_primitives::PrecompileOutput;
+use std::vec::Vec;
 
 pub mod add {
     use super::*;
@@ -179,7 +180,9 @@ pub fn run_pair(
     } else {
         let elements = input.len() / PAIR_ELEMENT_LEN;
 
-        let mut mul = Gt::one();
+        let mut points = Vec::with_capacity(elements);
+
+        // read points
         for idx in 0..elements {
             let read_fq_at = |n: usize| {
                 debug_assert!(n < PAIR_ELEMENT_LEN / 32);
@@ -200,6 +203,7 @@ pub fn run_pair(
             let b = {
                 let ba = Fq2::new(bax, bay);
                 let bb = Fq2::new(bbx, bby);
+                // TODO: check whether or not we need these zero checks
                 if ba.is_zero() && bb.is_zero() {
                     G2::zero()
                 } else {
@@ -207,8 +211,10 @@ pub fn run_pair(
                 }
             };
 
-            mul = mul * bn::pairing(a, b);
+            points.push((a, b));
         }
+
+        let mul = bn::pairing_batch(&points);
 
         mul == Gt::one()
     };
