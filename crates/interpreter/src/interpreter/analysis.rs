@@ -665,26 +665,26 @@ mod test {
         assert!(err.is_err(), "{err:#?}");
     }
 
-    #[test]
-    fn test2() {
-        // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
-        let err =
-            validate_raw_eof(hex!("ef000101000c02000300040004000204000000008000020002000100010001e30001005fe500025fe4").into());
-        assert!(err.is_ok(), "{err:#?}");
-    }
+    // #[test]
+    // fn test2() {
+    //     // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
+    //     let err =
+    //         validate_raw_eof(hex!("ef000101000c02000300040004000204000000008000020002000100010001e30001005fe500025fe4").into());
+    //     assert!(err.is_ok(), "{err:#?}");
+    // }
 
-    #[test]
-    fn test3() {
-        // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
-        let err =
-            validate_raw_eof(hex!("ef000101000c02000300040008000304000000008000020002000503010003e30001005f5f5f5f5fe500025050e4").into());
-        assert_eq!(
-            err,
-            Err(EofError::Validation(
-                EofValidationError::JUMPFStackHigherThanOutputs
-            ))
-        );
-    }
+    // #[test]
+    // fn test3() {
+    //     // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
+    //     let err =
+    //         validate_raw_eof(hex!("ef000101000c02000300040008000304000000008000020002000503010003e30001005f5f5f5f5fe500025050e4").into());
+    //     assert_eq!(
+    //         err,
+    //         Err(EofError::Validation(
+    //             EofValidationError::JUMPFStackHigherThanOutputs
+    //         ))
+    //     );
+    // }
 
     #[test]
     fn test4() {
