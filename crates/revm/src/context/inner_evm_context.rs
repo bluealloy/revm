@@ -190,7 +190,7 @@ impl<DB: Database> InnerEvmContext<DB> {
                 if code.is_eof() {
                     (EOF_MAGIC_BYTES.clone(), is_cold)
                 } else {
-                    (code.original_bytes().clone(), is_cold)
+                    (code.original_bytes(), is_cold)
                 }
             })
     }
