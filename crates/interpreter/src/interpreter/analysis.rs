@@ -274,8 +274,8 @@ impl AccessTracker {
     pub fn new(this_code_type: CodeType, codes_size: usize, subcontainers_size: usize) -> Self {
         Self {
             this_container_code_type: this_code_type,
-            codes: Vec::with_capacity(codes_size),
-            subcontainers: Vec::with_capacity(subcontainers_size),
+            codes: vec![false; codes_size],
+            subcontainers: vec![None; subcontainers_size],
         }
     }
 
