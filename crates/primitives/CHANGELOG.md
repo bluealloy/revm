@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.1.1](https://github.com/bluealloy/revm/compare/revm-primitives-v7.1.0...revm-primitives-v7.1.1) - 2024-07-19
+
+### Other
+- Renamed some city name ([#1645](https://github.com/bluealloy/revm/pull/1645))
+- use `is_zero` for `U256` and `B256` ([#1638](https://github.com/bluealloy/revm/pull/1638))
+- fix some typos & remove useless Arc::clone ([#1621](https://github.com/bluealloy/revm/pull/1621))
+- *(eof)* avoid some allocations ([#1632](https://github.com/bluealloy/revm/pull/1632))
+- *(eof)* simplify magic checks ([#1633](https://github.com/bluealloy/revm/pull/1633))
+
 ## [7.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v6.0.0...revm-primitives-v7.0.0) - 2024-07-16
 
 ### Added
