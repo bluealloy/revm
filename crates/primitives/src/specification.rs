@@ -28,8 +28,8 @@ pub enum SpecId {
     MERGE = 15,           // Paris/Merge            15537394 (TTD: 58750000000000000000000)
     SHANGHAI = 16,        // Shanghai               17034870 (Timestamp: 1681338455)
     CANCUN = 17,          // Cancun                 19426587 (Timestamp: 1710338135)
-    PRAGUE = 18,          // Praque                 TBD
-    PRAGUE_EOF = 19,      // Praque+EOF             TBD
+    PRAGUE = 18,          // Prague                 TBD
+    PRAGUE_EOF = 19,      // Prague+EOF             TBD
     #[default]
     LATEST = u8::MAX,
 }
