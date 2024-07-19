@@ -54,7 +54,7 @@ pub fn codecopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) 
         memory_offset,
         code_offset,
         len,
-        &interpreter.contract.bytecode.original_bytes(),
+        interpreter.contract.bytecode.original_byte_slice(),
     );
 }
 
