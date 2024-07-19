@@ -5,7 +5,7 @@ use crate::{
         bitvec::prelude::{bitvec, BitVec, Lsb0},
         eof::{EofDecodeError, TypesSection},
         legacy::JumpTable,
-        Bytecode, Bytes, Eof, HashSet, LegacyAnalyzedBytecode,
+        Bytecode, Bytes, Eof, LegacyAnalyzedBytecode,
     },
     OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
 };
@@ -73,20 +73,32 @@ pub fn validate_raw_eof(raw: Bytes) -> Result<Eof, EofError> {
 }
 
 /// Fully validates an [`Eof`] container.
+///
+/// Only place where validation happen is in Creating Transaction.
+/// Because of that we are assuming CodeType is ReturnContract.
+///
+/// Note: If neeed we can make a flag that would assume ReturnOrStop CodeType.
+#[inline]
 pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
     if eof.body.container_section.is_empty() {
-        validate_eof_codes(eof)?;
+        validate_eof_codes(eof, CodeType::ReturnContract)?;
         return Ok(());
     }
 
     let mut stack = Vec::with_capacity(4);
-    stack.push(Cow::Borrowed(eof));
-    while let Some(eof) = stack.pop() {
+    stack.push((Cow::Borrowed(eof), CodeType::ReturnContract));
+
+    while let Some((eof, code_type)) = stack.pop() {
         // Validate the current container.
-        validate_eof_codes(&eof)?;
+        let tracker_containers = validate_eof_codes(&eof, code_type)?;
         // Decode subcontainers and push them to the stack.
-        for container in &eof.body.container_section {
-            stack.push(Cow::Owned(Eof::decode(container.clone())?));
+        for (container, code_type) in eof
+            .body
+            .container_section
+            .iter()
+            .zip(tracker_containers.into_iter())
+        {
+            stack.push((Cow::Owned(Eof::decode(container.clone())?), code_type));
         }
     }
 
@@ -94,7 +106,13 @@ pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
 }
 
 /// Validates an [`Eof`] structure, without recursing into containers.
-pub fn validate_eof_codes(eof: &Eof) -> Result<(), EofValidationError> {
+///
+/// Returns a list of all sub containers that are accessed.
+#[inline]
+pub fn validate_eof_codes(
+    eof: &Eof,
+    this_code_type: CodeType,
+) -> Result<Vec<CodeType>, EofValidationError> {
     if eof.body.code_section.len() != eof.body.types_section.len() {
         return Err(EofValidationError::InvalidTypesSection);
     }
@@ -111,37 +129,39 @@ pub fn validate_eof_codes(eof: &Eof) -> Result<(), EofValidationError> {
         return Err(EofValidationError::InvalidTypesSection);
     }
 
-    // first section is default one.
-    let mut code_sections_accessed = vec![false; eof.body.code_section.len()];
-    code_sections_accessed[0] = true;
+    // tracking access of code and sub containers.
+    let mut tracker: AccessTracker = AccessTracker::new(
+        this_code_type,
+        eof.body.code_section.len(),
+        eof.body.container_section.len(),
+    );
+    // first code section is accessed by default.
+    tracker.codes[0] = true;
 
-    // start validation from code section 0.
-    let mut stack = Vec::with_capacity(16);
-    stack.push(0);
-    while let Some(index) = stack.pop() {
-        let code = &eof.body.code_section[index];
-        let accessed = validate_eof_code(
+    for (index, code) in eof.body.code_section.iter().enumerate() {
+        validate_eof_code(
             code,
             eof.header.data_size as usize,
             index,
             eof.body.container_section.len(),
             &eof.body.types_section,
+            &mut tracker,
         )?;
-
-        // queue accessed codes.
-        accessed.into_iter().for_each(|i| {
-            if !code_sections_accessed[i] {
-                code_sections_accessed[i] = true;
-                stack.push(i);
-            }
-        });
     }
     // iterate over accessed codes and check if all are accessed.
-    if !code_sections_accessed.into_iter().all(identity) {
+    if !tracker.codes.into_iter().all(identity) {
         return Err(EofValidationError::CodeSectionNotAccessed);
     }
+    // iterate over all accessed subcontainers and check if all are accessed.
+    if !tracker.subcontainers.iter().any(|i| i.is_some()) {
+        return Err(EofValidationError::SubContainerNotAccessed);
+    }
 
-    Ok(())
+    Ok(tracker
+        .subcontainers
+        .into_iter()
+        .map(|i| i.unwrap())
+        .collect())
 }
 
 /// EOF Error.
@@ -227,6 +247,67 @@ pub enum EofValidationError {
     MaxStackMismatch,
     /// No code sections present
     NoCodeSections,
+    /// Sub container called in two different modes.
+    /// Check [`CodeType`] for more information.
+    SubContainerCalledInTwoModes,
+    /// Sub container not accessed.
+    SubContainerNotAccessed,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct AccessTracker {
+    /// This code type
+    pub this_container_code_type: CodeType,
+    /// Vector of accessed codes.
+    pub codes: Vec<bool>,
+    /// Code accessed by subcontainer and expected subcontainer first code type.
+    /// EOF code can be invoked in EOFCREATE mode or used in RETURNCONTRACT opcode.
+    /// if SubContainer is called from EOFCREATE it needs to be ReturnContract type.
+    /// If SubContainer is called from RETURNCONTRACT it needs to be ReturnOrStop type.
+    ///
+    /// None means it is not accessed.
+    pub subcontainers: Vec<Option<CodeType>>,
+}
+
+impl AccessTracker {
+    /// Returns a new instance of `CodeSubContainerAccess`.
+    pub fn new(this_code_type: CodeType, codes_size: usize, subcontainers_size: usize) -> Self {
+        Self {
+            this_container_code_type: this_code_type,
+            codes: Vec::with_capacity(codes_size),
+            subcontainers: Vec::with_capacity(subcontainers_size),
+        }
+    }
+
+    pub fn set_subcontainer_type(
+        &mut self,
+        index: usize,
+        new_code_type: CodeType,
+    ) -> Result<(), EofValidationError> {
+        let Some(container) = self.subcontainers.get_mut(index) else {
+            panic!("It should not be possible")
+        };
+
+        let Some(code_type) = container else {
+            *container = Some(new_code_type);
+            return Ok(());
+        };
+
+        if *code_type != new_code_type {
+            return Err(EofValidationError::SubContainerCalledInTwoModes);
+        }
+        Ok(())
+    }
+}
+
+/// Types of code sections. It is a error if container to contain
+/// both RETURNCONTRACT and either of RETURN or STOP.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum CodeType {
+    /// Return contract code.
+    ReturnContract,
+    /// Return or Stop opcodes.
+    ReturnOrStop,
 }
 
 /// Validates that:
@@ -235,24 +316,14 @@ pub enum EofValidationError {
 /// * All instructions are accessed by forward jumps or .
 ///
 /// Validate stack requirements and if all codes sections are used.
-///
-/// TODO mark accessed Types/Codes
-///
-/// Preconditions:
-/// * Jump destinations are valid.
-/// * All instructions are valid and well formed.
-/// * All instruction is accessed by forward jumps.
-/// * Bytecode is valid and ends with terminating instruction.
-///
-/// Preconditions are checked in `validate_eof_bytecode`.
 pub fn validate_eof_code(
     code: &[u8],
     data_size: usize,
     this_types_index: usize,
     num_of_containers: usize,
     types: &[TypesSection],
-) -> Result<HashSet<usize>, EofValidationError> {
-    let mut accessed_codes = HashSet::<usize>::new();
+    tracker: &mut AccessTracker,
+) -> Result<(), EofValidationError> {
     let this_types = &types[this_types_index];
 
     #[derive(Debug, Copy, Clone)]
@@ -402,7 +473,7 @@ pub fn validate_eof_code(
                 // stack diff depends on input/output of the called code.
                 stack_io_diff = target_types.io_diff();
                 // mark called code as accessed.
-                accessed_codes.insert(section_i);
+                tracker.codes[section_i] = true;
 
                 // we decrement by `types.inputs` as they are considered as send
                 // to the called code and included in types.max_stack_size.
@@ -430,7 +501,7 @@ pub fn validate_eof_code(
                     // stack overflow
                     return Err(EofValidationError::StackOverflow);
                 }
-                accessed_codes.insert(target_index);
+                tracker.codes[target_index] = true;
 
                 if target_types.outputs == EOF_NON_RETURNING_FUNCTION {
                     // if it is not returning
@@ -460,6 +531,26 @@ pub fn validate_eof_code(
                 if index >= num_of_containers {
                     // code section out of bounds.
                     return Err(EofValidationError::EOFCREATEInvalidIndex);
+                }
+                tracker.set_subcontainer_type(index, CodeType::ReturnContract)?;
+            }
+            opcode::RETURNCONTRACT => {
+                let index = code[i + 1] as usize;
+                if index >= num_of_containers {
+                    // code section out of bounds.
+                    // TODO custom error
+                    return Err(EofValidationError::EOFCREATEInvalidIndex);
+                }
+                if tracker.this_container_code_type != CodeType::ReturnContract {
+                    // TODO make custom error
+                    return Err(EofValidationError::SubContainerCalledInTwoModes);
+                }
+                tracker.set_subcontainer_type(index, CodeType::ReturnOrStop)?;
+            }
+            opcode::RETURN | opcode::STOP => {
+                if tracker.this_container_code_type != CodeType::ReturnOrStop {
+                    // TODO make custom error
+                    return Err(EofValidationError::SubContainerCalledInTwoModes);
                 }
             }
             opcode::DATALOADN => {
@@ -558,7 +649,7 @@ pub fn validate_eof_code(
         return Err(EofValidationError::MaxStackMismatch);
     }
 
-    Ok(accessed_codes)
+    Ok(())
 }
 
 #[cfg(test)]
