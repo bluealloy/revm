@@ -11,7 +11,7 @@ use crate::{
     },
     OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
 };
-use std::{error::Error, fmt, sync::Arc, vec, vec::Vec};
+use std::{fmt, sync::Arc, vec, vec::Vec};
 
 const EOF_NON_RETURNING_FUNCTION: u8 = 0x80;
 
