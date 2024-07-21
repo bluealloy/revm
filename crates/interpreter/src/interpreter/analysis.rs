@@ -11,7 +11,7 @@ use crate::{
     },
     OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
 };
-use std::{sync::Arc, vec, vec::Vec};
+use std::{error::Error, fmt, sync::Arc, vec, vec::Vec};
 
 const EOF_NON_RETURNING_FUNCTION: u8 = 0x80;
 
@@ -223,6 +223,68 @@ pub enum EofValidationError {
     /// No code sections present
     NoCodeSections,
 }
+
+impl fmt::Display for EofValidationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                EofValidationError::FalsePossitive => "False positive",
+                EofValidationError::UnknownOpcode => "Opcode is not known",
+                EofValidationError::OpcodeDisabled => "Opcode is disabled",
+                EofValidationError::InstructionNotForwardAccessed => "Should have forward jump",
+                EofValidationError::MissingImmediateBytes => "Bytecode is missing bytes",
+                EofValidationError::MissingRJUMPVImmediateBytes => {
+                    "Bytecode is missing bytes after RJUMPV opcode"
+                }
+                EofValidationError::JumpToImmediateBytes => "Invalid jump",
+                EofValidationError::BackwardJumpToImmediateBytes => "Invalid backward jump",
+                EofValidationError::RJUMPVZeroMaxIndex => "Used RJUMPV with zero as MaxIndex",
+                EofValidationError::JumpZeroOffset => "Used JUMP with zero as offset",
+                EofValidationError::EOFCREATEInvalidIndex =>
+                    "EOFCREATE points to out of bound index",
+                EofValidationError::CodeSectionOutOfBounds => "CALLF index is out of bounds",
+                EofValidationError::CALLFNonReturningFunction => {
+                    "CALLF was used on non-returning function"
+                }
+                EofValidationError::StackOverflow => "CALLF stack overflow",
+                EofValidationError::JUMPFEnoughOutputs => "JUMPF needs more outputs",
+                EofValidationError::JUMPFStackHigherThanOutputs => {
+                    "JUMPF stack is too high for outputs"
+                }
+                EofValidationError::DataLoadOutOfBounds => "DATALOAD is out of bounds",
+                EofValidationError::RETFBiggestStackNumMoreThenOutputs => {
+                    "RETF biggest stack num is more than outputs"
+                }
+                EofValidationError::StackUnderflow =>
+                    "Stack requirement is above smallest stack items",
+                EofValidationError::TypesStackUnderflow => {
+                    "Smallest stack items is more than output type"
+                }
+                EofValidationError::JumpUnderflow => "Jump destination is too low",
+                EofValidationError::JumpOverflow => "Jump destination is too high",
+                EofValidationError::BackwardJumpBiggestNumMismatch => {
+                    "Backward jump has different biggest stack item"
+                }
+                EofValidationError::BackwardJumpSmallestNumMismatch => {
+                    "Backward jump has different smallest stack item"
+                }
+                EofValidationError::LastInstructionNotTerminating => {
+                    "Last instruction of bytecode is not terminating"
+                }
+                EofValidationError::CodeSectionNotAccessed => "Code section was not accessed",
+                EofValidationError::InvalidTypesSection => "Invalid types section",
+                EofValidationError::InvalidFirstTypesSection => "Invalid first types section",
+                EofValidationError::MaxStackMismatch => "Max stack element mismatchs",
+                EofValidationError::NoCodeSections => "No code sections",
+            }
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for EofValidationError {}
 
 /// Validates that:
 /// * All instructions are valid.
