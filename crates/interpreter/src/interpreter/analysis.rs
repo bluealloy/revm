@@ -165,14 +165,10 @@ impl From<EofValidationError> for EofError {
 
 impl fmt::Display for EofError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                EofError::Decode(e) => format!("Bytecode decode error: {}", e),
-                EofError::Validation(e) => format!("Bytecode validation error: {}", e),
-            }
-        )
+        match self {
+            EofError::Decode(e) => write!(f, "Bytecode decode error: {}", e),
+            EofError::Validation(e) => write!(f, "Bytecode validation error: {}", e),
+        }
     }
 }
 
