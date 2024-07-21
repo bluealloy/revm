@@ -1,5 +1,26 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v40 tag
+date 17.07.2024
+
+EOF bugfix.
+
+* revm: 12.0.0 -> 12.1.0
+* revm-interpreter: 8.0.0 -> 8.1.0
+* revm-primitives: 7.0.0 -> 7.1.0
+* revm-precompile: 9.1.0 -> 8.2.0
+
+# v39 tag
+date: 16.07.2024
+
+Fixes for eip7702 and EOF. Kzg precompile alternative kzg-rs added. 
+
+* revme: 0.7.0 -> 0.8.0
+* revm: 11.0.0 -> 12.0.0
+* revm-interpreter: 7.0.0 -> 8.0.0
+* revm-primitives: 6.0.0 -> 7.0.0
+* revm-precompile: 9.0.0 -> 9.1.0
+
 # v38 tag
 date: 08.07.2024
 

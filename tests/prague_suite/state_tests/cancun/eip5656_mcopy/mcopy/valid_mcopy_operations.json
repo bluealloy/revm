@@ -1,0 +1,2732 @@
+{
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-zero_inputs]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x3ac000422196c4b132917ff94c2d9d027525b91b5dba6ec242e69be789b125bc",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000025a0ec5a03c8f1fb15797a21a198c4ca09629b606ddbb99c6468fc2ebdfef2304a9fa015550926fa5408728d66cbfa9ef06627719773ed62317bae35abcb654a742405",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xa876c0be3c300e08dd1cd4ae491ce6b65a1d269fdda115fa44f9c6c26fd8cd4c",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-zero_length_out_of_bounds_destination]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x769c0c9388a5df8b818551a0ff7b6bf1b9dacc2b6d792fa43e628af56f57177a",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b860ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000026a00bc44e02665e7668a860515157cab26b86a87f474ca44b7bb6ac6148cfbf0de0a023ca5c4a27c20b918dd9cdefa3abc9d3c832b3504bd1220b487839d6605f217f",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x2e59afd4b30a21f105f2f42dabcab7dc7dccfb6e4b62fabb178a17c3fa093017",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-single_byte_rewrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x72e2e9f0273abb2412ae2a0c0b2b3df676cd7ad395f0473035630013344ce347",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000125a0a7c1e9f4593d5d5d55714a71455212987b11ce014c41abfd875a03e94af37622a001a23b2d379ad108df2e1995691a53163d591fc1103a4e368999e61f3f75a12b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xe89b0d9f2e67ea05f3b7154cc4da8b3decab26b2c226b8e08a3dbf6a07d055ec",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-full_word_rewrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x72e2e9f0273abb2412ae2a0c0b2b3df676cd7ad395f0473035630013344ce347",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002025a05f859b051f45844f45ad5c57e3e48daabb6d4547e79f6c78a243d3393739e815a0371f3fd850fcb3542df3e98aa7bf7b84305850558a76bbc383a313c894acbc22",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x615cfa685011461a77a26415df95b5598fb97addf7bb67a6537c7b2d2ab6e48d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-single_byte_forward_overwrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0xa7479b4dd8cc3410a8d6b2e29162d4c9b083a14f869ec3956302880b9b4186d5",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000126a00166ab512315b848c39785a850cf020470c060c03659d4b1fd216bd621b3d436a0567219e47dd148fa1063bb5cbd71aa12c991bc880873526d1fb4abe758167a24",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x3b029cbe007d5f5c5e832e7d45b50639864f71ed6698cbcd1d680e73bd5600a6",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-full_word_forward_overwrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x4493cd5fcaeb71f54d3721b886c61119b26d5fe36c67ec5066d4495ee8369c71",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002025a0f6bec80266a09fe3f11b662e571d9d4b452cc3eff0a0a8451144c067774c9101a02303095b5d924de02de7c3cc6bf16424eca071924b12d4fc025c111ce36f53f3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x52950f90fc79f7cedf5bc9dc93cdde87a16887e240bbbf39a57f64e4160c2cb5",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-mid_word_single_byte_rewrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000001100000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000001"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x0bfcf89e3421e39a363641782a5fb06b94006e5c19fb55b9a7223e82e3f05281",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000011000000000000000000000000000000000000000000000000000000000000000125a0640c7647977fbe542ebfbb8f5903befcc530459b0799aee8ee8cc53c49792728a007d961a468d42c5d8a0838c0484b8e60ba4411352bac0b09fe4bbd900337fca0",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x56049f7954c83a685343ca16c0e54577d8d37c80fbd98e562d40922e9993e6f2",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-mid_word_single_word_rewrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000001100000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000020"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x0bfcf89e3421e39a363641782a5fb06b94006e5c19fb55b9a7223e82e3f05281",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000011000000000000000000000000000000000000000000000000000000000000002026a01fa1f82fd7ae1d4f3c609ed954febc10b06aaf0f1927d34663c45ce497180802a01dd76fb5ee3d439fcbdb57ebcec21a8e421bcac29064a366e1a5611ede076fcc",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x46f4df25d7cde9ac732973fcc6f9292772fd1df31baf207139d4b05f2a795143",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-mid_word_multi_word_rewrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000001100000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000040"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0xff683f271c3bbfdb07904c76d2006692e94b1493555f1dc23bda47120ebad8bd",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000011000000000000000000000000000000000000000000000000000000000000004026a031257f38da8770fdd0c256debf6cbaa35e57c72bf3e0420d50364c1b54056a86a061969c81b9bcc59193cfb8a4f1a37b08f0dde2c2e3cf5287b487d5d669263ddf",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x29d9759fb5a14fcc3ae853c7e3fa3815112ab05ad810c5349cc32c9e4a170402",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-two_words_forward_overwrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x3123dd0fb16fafface9ad06018a90ef770e8a13db62e45d1826190c47af9c20c",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004025a0d84ffd0716db32cdf81c0123f9d54f6efe4213b0b3b556166899c0fb1ea2485fa01c7e0ba32f2fc10ab212abfd940ea118301978577e67c9401e5b61ab55070206",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x905c0e605fbf69f6d32ea81ecea7501ddc22720f39a26426f18f334a749d6126",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-two_words_backward_overwrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000040"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0xeba5e47d7b49dcb847bae31bc31b67f73328bf5fdb3db0ce5245257e361ea1e2",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000004025a0b78b12875c179e7c2cce2bea531304acae3f7e8ef271a39321db7a153700ff94a02b547f4715e0a83f3297fa68a544bffc08d1bc9fa60ed6d3da86f92149488c7e",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x8fbf9d0cddf072c5e1ec482b0b0d343e4da8f662598133402a370efa0fb3fb56",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-two_words_backward_overwrite_single_byte_offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000f00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000040"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x6bd847d0b5b628668c1248ae04d55f06267e2cf9fd3d7448d402d3da6b4c9f22",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b860000000000000000000000000000000000000000000000000000000000000000f0000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000004025a0210474d4af4a4b459ec820c4fa55cc5ff31c52b5285c51862587a1d3f2870497a05c8055710bf1bdcfef90ded9445c6994f03c2644c05e479b472d53103ae07dc8",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x34a743ce64ba92a02e063cba8293d8730b3b0c46b81ce6b61f2ac5a30de2366a",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-single_byte_memory_extension]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a5561010051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0xe8b8beb7ffcb0571a35b99749d44df478feacef075eadd0dfc02110e3cb4f073",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000125a07967732597b78e5a04efc6439878b1edb05b244cbb4276781c7aadf667424060a0629ba30982f363c99cee78006f47b5f9149b8a4edf76ec49edfa43cb3566f668",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x48dd5b0350985a7650fe1d530fe45e000a7192c01935eec9e495055721fbec64",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-single_word_memory_extension]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a5561010051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000020"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0xad5f59c9c243aaf6f347f52cd8bb67c4573cd96c9fcf3fb4bc1ba06759f4b49d",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002026a0eba318d83c9c650af5deebb81592c901e100b08074fab159bf880ebcd6042f9aa025d7deaf5518f964a9d9583f8001edb44c75dc5d46ae0af7f2a047442ebb9b30",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x3dddf4b979ad8c4422b59645ca0de7b3fd4474115307a0efa9186a969156b8c0",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-single_word_minus_one_byte_memory_extension]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a5561010051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x00000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000001f"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x8619bea8e88db0b865e1e1ca1fceec63428ce46d1c22d2fb454d014e86ec7040",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000001f25a070eee9a191fe4ce42e7815285fc3a9fd300854f4660576f1a9226f8fcda1de0fa0194c643d8d08585daeed71c366a426f497bcdf0ef721ad1ede47880a5fce5861",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x1eb7d13251de08b2f371baa9e6c6fc30c9be23600e1c99302c2d7dc2fb2ddef3",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-single_word_plus_one_byte_memory_extension]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a5561012051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000021"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0xc96caacadcc026bb17c146077ec393e4d7b9245de4f47914d16f1be59dd23f46",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002125a097a1acb5abe5574bd296e9f493a5c7a16d2d7b37d2f4162b35648f981865e13da0449e9d51352fdf190c668161f7506f35665c1843c573f46e09cef434bb4be7d8",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xa70ce1b61c0b7c447475018b5da8d7baeb596e7d7b2f68b3afb7bf463c550d2e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-full_memory_rewrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x4732fa80ea7b06ec85366400549fbc1a7b07ffb55a9017d92eab497c58a31486",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c0800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010025a0ee0abc457d3f0ac7de764e83960ee9314c52170d7859c113e2b39d6efd9999e09f1e98c974e21b4d9ccc1ff041539bd892b25921a64b0fb352a6f1e22adc6848",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x9c9961ba019e88b3123fc2fdbbd41205e54f73649f1901892b239b3764cbae20",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-full_memory_copy]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a556101e051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x739f546143eff892a6efc51a16848d5a40a00b7d74afda2e8c41ba340b55b31f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010025a04db41ca95165d19369124e948ab63c2c8ab33e4896a9518a8085249ce74a8c9aa03943c4c014508652f1e7af302102fa0b5184b1436cb9b310bfb9418d21958639",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x58fde09d758e157a0320623355e3336c95d9a8c144f6c2aa76369bdcafb90bb8",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-full_memory_copy_offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a556102e051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0xb08fc0aeadac2c3378da0f6c23b6f4de33578cd8def3f6cb9df7fce726c22a47",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010026a092da99fc4acd63241ba92469f33aa24a72dadfd8e25ca62636d0c70a56cd134aa073d2184f9f3ac629b6083169d6f4433a6cbb97d583309963a78c190e99e8f9a2",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xbc73ad6ee44d446812cc717c9addd210dbe240e1255cd6c33bae8a8a8400cf3e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-full_memory_clean]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a556101e051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0xafefeb5ac29fefcba489fe5d6b13159ea2dbcd9ef724fdc091471cc630e6332c",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010025a0c5ab9d51c75d6662a950c5f832a5d11ce12a0b73a4836a94ed63c88cdb29697ea04e0e2cd05219129c0bb8c655b6e4e009d9146325b2ed5bd14bc4f759cc5ba2e1",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xee8bf7d00209cef8dc8493c1af34c29a34857f08b187328982e85f09aac32c77",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Cancun-state_test-out_of_bounds_memory_extension]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a5561010051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000001"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x57ce4262ac19eeebcf99f37f15678ee9d42d640baf454fdcdd6966df773141cb",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000126a09a3efe672cdbd478afb173e76a497daa9162e5bdd41ab5ac9709a00c344516d0a05f712c7f9cb813f05dcf90672d2592d4834438a012ab4cf7cc4f398ce5a7fb76",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x00625aeec3a6e581717e40a1b75235662c1d912c0222a656283c7a8f9638b558",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-zero_inputs]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x3ac000422196c4b132917ff94c2d9d027525b91b5dba6ec242e69be789b125bc",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000025a0ec5a03c8f1fb15797a21a198c4ca09629b606ddbb99c6468fc2ebdfef2304a9fa015550926fa5408728d66cbfa9ef06627719773ed62317bae35abcb654a742405",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x0a71585f506ac3f0a3f79a8264c4c4fa9ad5b964cd0c1c23b140954377647031",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-zero_length_out_of_bounds_destination]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x769c0c9388a5df8b818551a0ff7b6bf1b9dacc2b6d792fa43e628af56f57177a",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b860ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000026a00bc44e02665e7668a860515157cab26b86a87f474ca44b7bb6ac6148cfbf0de0a023ca5c4a27c20b918dd9cdefa3abc9d3c832b3504bd1220b487839d6605f217f",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xb0482f6cb09173eeb8cfc01ef26c96d1f381e4ae0016681bac7c20077266c077",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-single_byte_rewrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x72e2e9f0273abb2412ae2a0c0b2b3df676cd7ad395f0473035630013344ce347",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000125a0a7c1e9f4593d5d5d55714a71455212987b11ce014c41abfd875a03e94af37622a001a23b2d379ad108df2e1995691a53163d591fc1103a4e368999e61f3f75a12b",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xa61f6ee864cd15c6a1c19c170757d02c73f7038c3b3de3637d3c13882edf9509",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-full_word_rewrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x72e2e9f0273abb2412ae2a0c0b2b3df676cd7ad395f0473035630013344ce347",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002025a05f859b051f45844f45ad5c57e3e48daabb6d4547e79f6c78a243d3393739e815a0371f3fd850fcb3542df3e98aa7bf7b84305850558a76bbc383a313c894acbc22",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x354a228eca1f5f2ac8f6de7d396b20c0419213ced65ddeb718f61f442f871c98",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-single_byte_forward_overwrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xa7479b4dd8cc3410a8d6b2e29162d4c9b083a14f869ec3956302880b9b4186d5",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000126a00166ab512315b848c39785a850cf020470c060c03659d4b1fd216bd621b3d436a0567219e47dd148fa1063bb5cbd71aa12c991bc880873526d1fb4abe758167a24",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xcbb8254e62f4e92ff1c77ab59362a9091a718c83916291a698b0a7713ecb6f10",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-full_word_forward_overwrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x4493cd5fcaeb71f54d3721b886c61119b26d5fe36c67ec5066d4495ee8369c71",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002025a0f6bec80266a09fe3f11b662e571d9d4b452cc3eff0a0a8451144c067774c9101a02303095b5d924de02de7c3cc6bf16424eca071924b12d4fc025c111ce36f53f3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x630862a5e70ffe8542aab303569fbec7b6940c36bb2abc432de656329b73472f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-mid_word_single_byte_rewrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000001100000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000001"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x0bfcf89e3421e39a363641782a5fb06b94006e5c19fb55b9a7223e82e3f05281",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000011000000000000000000000000000000000000000000000000000000000000000125a0640c7647977fbe542ebfbb8f5903befcc530459b0799aee8ee8cc53c49792728a007d961a468d42c5d8a0838c0484b8e60ba4411352bac0b09fe4bbd900337fca0",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x49ae1d0d70bd39983f037bb86bea6416f7cfaef4ad470331cb49f68d1593899a",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-mid_word_single_word_rewrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000001100000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000020"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x0bfcf89e3421e39a363641782a5fb06b94006e5c19fb55b9a7223e82e3f05281",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000011000000000000000000000000000000000000000000000000000000000000002026a01fa1f82fd7ae1d4f3c609ed954febc10b06aaf0f1927d34663c45ce497180802a01dd76fb5ee3d439fcbdb57ebcec21a8e421bcac29064a366e1a5611ede076fcc",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xf2257b7858bc69d7bb7bb5988d9c20f861c91ae142fa907270f5721d5fd28050",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-mid_word_multi_word_rewrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000001100000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000040"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xff683f271c3bbfdb07904c76d2006692e94b1493555f1dc23bda47120ebad8bd",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000011000000000000000000000000000000000000000000000000000000000000004026a031257f38da8770fdd0c256debf6cbaa35e57c72bf3e0420d50364c1b54056a86a061969c81b9bcc59193cfb8a4f1a37b08f0dde2c2e3cf5287b487d5d669263ddf",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x3b9c01c98e703582b46ee6d14be3b7aa71574feb3363abc1b58cfbe041f24e1f",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-two_words_forward_overwrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x3123dd0fb16fafface9ad06018a90ef770e8a13db62e45d1826190c47af9c20c",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004025a0d84ffd0716db32cdf81c0123f9d54f6efe4213b0b3b556166899c0fb1ea2485fa01c7e0ba32f2fc10ab212abfd940ea118301978577e67c9401e5b61ab55070206",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x75c781aa2291e8d7a4a69faeaa41537cf4406b3990bb4eb0d6d5d4fff5577bfe",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-two_words_backward_overwrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000040"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xeba5e47d7b49dcb847bae31bc31b67f73328bf5fdb3db0ce5245257e361ea1e2",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000004025a0b78b12875c179e7c2cce2bea531304acae3f7e8ef271a39321db7a153700ff94a02b547f4715e0a83f3297fa68a544bffc08d1bc9fa60ed6d3da86f92149488c7e",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x828e99fed5ad9dab2d0bb5d96eb989aa1b78e9f8a6264008d3156c1fe8e46253",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-two_words_backward_overwrite_single_byte_offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000f00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000040"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x6bd847d0b5b628668c1248ae04d55f06267e2cf9fd3d7448d402d3da6b4c9f22",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b860000000000000000000000000000000000000000000000000000000000000000f0000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000004025a0210474d4af4a4b459ec820c4fa55cc5ff31c52b5285c51862587a1d3f2870497a05c8055710bf1bdcfef90ded9445c6994f03c2644c05e479b472d53103ae07dc8",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xd5436f3bb1333e34b28fe7869539adb8dce3135fb8c5959c0bcbb3abd3167786",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-single_byte_memory_extension]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a5561010051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xe8b8beb7ffcb0571a35b99749d44df478feacef075eadd0dfc02110e3cb4f073",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000125a07967732597b78e5a04efc6439878b1edb05b244cbb4276781c7aadf667424060a0629ba30982f363c99cee78006f47b5f9149b8a4edf76ec49edfa43cb3566f668",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xe5300135a110ffca76ba849358306d0270d543711e81fcc2950f83713bb7585b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-single_word_memory_extension]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a5561010051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000020"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xad5f59c9c243aaf6f347f52cd8bb67c4573cd96c9fcf3fb4bc1ba06759f4b49d",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002026a0eba318d83c9c650af5deebb81592c901e100b08074fab159bf880ebcd6042f9aa025d7deaf5518f964a9d9583f8001edb44c75dc5d46ae0af7f2a047442ebb9b30",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x0f9727f3bdf6ae8789f020be0258c9e92208808fa59a18a88266bcda93122f1d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-single_word_minus_one_byte_memory_extension]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a5561010051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x00000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000001f"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x8619bea8e88db0b865e1e1ca1fceec63428ce46d1c22d2fb454d014e86ec7040",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000001f25a070eee9a191fe4ce42e7815285fc3a9fd300854f4660576f1a9226f8fcda1de0fa0194c643d8d08585daeed71c366a426f497bcdf0ef721ad1ede47880a5fce5861",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xcace4ee5831491b5faaabe3947e376ce9dae89824fa9348613b661763217bc04",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-single_word_plus_one_byte_memory_extension]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a5561012051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000021"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xc96caacadcc026bb17c146077ec393e4d7b9245de4f47914d16f1be59dd23f46",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002125a097a1acb5abe5574bd296e9f493a5c7a16d2d7b37d2f4162b35648f981865e13da0449e9d51352fdf190c668161f7506f35665c1843c573f46e09cef434bb4be7d8",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xcdd2c0d07e87bd8755a381a4ccaaf40e28c44fa8c48fbed53826d11f9adbd206",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-full_memory_rewrite]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x4732fa80ea7b06ec85366400549fbc1a7b07ffb55a9017d92eab497c58a31486",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c0800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010025a0ee0abc457d3f0ac7de764e83960ee9314c52170d7859c113e2b39d6efd9999e09f1e98c974e21b4d9ccc1ff041539bd892b25921a64b0fb352a6f1e22adc6848",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xb21da4d2ccec7d6aca7c1921e1597b52f2a9eb33dd649c393185030f07df60f6",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-full_memory_copy]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a556101e051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x739f546143eff892a6efc51a16848d5a40a00b7d74afda2e8c41ba340b55b31f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010025a04db41ca95165d19369124e948ab63c2c8ab33e4896a9518a8085249ce74a8c9aa03943c4c014508652f1e7af302102fa0b5184b1436cb9b310bfb9418d21958639",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x142a02df0a3f1e369457ae030af4b279db2fbb53f3fd85b52edaa998eadc8f54",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-full_memory_copy_offset]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a556102e051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xb08fc0aeadac2c3378da0f6c23b6f4de33578cd8def3f6cb9df7fce726c22a47",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010026a092da99fc4acd63241ba92469f33aa24a72dadfd8e25ca62636d0c70a56cd134aa073d2184f9f3ac629b6083169d6f4433a6cbb97d583309963a78c190e99e8f9a2",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x38138c5a8e007f953bd35f0b87fc42e8c66eaa9ff7eb2246c5f7453e82c054be",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-full_memory_clean]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a556101e051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xafefeb5ac29fefcba489fe5d6b13159ea2dbcd9ef724fdc091471cc630e6332c",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010025a0c5ab9d51c75d6662a950c5f832a5d11ce12a0b73a4836a94ed63c88cdb29697ea04e0e2cd05219129c0bb8c655b6e4e009d9146325b2ed5bd14bc4f759cc5ba2e1",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xee5a53d155534fc4886827e1f3d13b0601cbcbc57567afd6608ab334ef3e4e88",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    },
+    "tests/cancun/eip5656_mcopy/test_mcopy.py::test_valid_mcopy_operations[fork_Prague-state_test-out_of_bounds_memory_extension]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x1d6329f1c35ca4bfabb9f5610000000000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000000100": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596001555960002060025560005160035560205160045560405160055560605160065560805160075560a05160085560c05160095560e051600a5561010051600b55",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0f4240"
+            ],
+            "to": "0x0000000000000000000000000000000000000100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000001"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x57ce4262ac19eeebcf99f37f15678ee9d42d640baf454fdcdd6966df773141cb",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf8c1800a830f424094000000000000000000000000000000000000010080b86000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000126a09a3efe672cdbd478afb173e76a497daa9162e5bdd41ab5ac9709a00c344516d0a05f712c7f9cb813f05dcf90672d2592d4834438a012ab4cf7cc4f398ce5a7fb76",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xd2ef5331315e2d47a00d59cf06d41d0de8f39d56139ea51b20de86ec8f5f09a9",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L130",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
+            "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
+        }
+    }
+}

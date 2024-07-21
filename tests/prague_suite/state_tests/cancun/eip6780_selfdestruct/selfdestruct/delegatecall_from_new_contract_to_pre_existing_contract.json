@@ -1,0 +1,982 @@
+{
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_delegatecall_from_new_contract_to_pre_existing_contract[fork_Shanghai-state_test-create_opcode_CREATE-selfdestruct_contract_initial_balance_0-call_times_1-delegatecall]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x61001f600081600b8239f360006000600060007311111111111111111111111111111111111111115af4",
+                "storage": {}
+            },
+            "0x1111111111111111111111111111111111111111": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x600160005401600055730000000000000000000000000000000000001234ff6000600055",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001234": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x6000600055",
+                "storage": {
+                    "0x00": "0x01"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x0186a0"
+            ],
+            "data": [
+                "0x602a6000600073000000000000000000000000000000000000abcd3c602a60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602af3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Shanghai": [
+                {
+                    "hash": "0xeace402b95a9e447e4278ff6630aab8d724912d18f4f8ceaa9e5f2a65637264b",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf9011d800a8405f5e10080830186a0b8cc602a6000600073000000000000000000000000000000000000abcd3c602a60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602af31ca072d01161e04b2ff33bbd4f71d61525c457f7e3574b4b33d79f687f3b9f93d0b8a017996ea6a8750c705ab9131e42e5c0da3f6abcd41df40828508db9458d66a60a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x163546ccc425f19e8396ecf9271e16dc94ea2ae49f30aa76b4e771529c4f1d24",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Test that if an account created in the current transaction delegate-call a previously created\n    account that executes self-destruct, the calling account is deleted.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1012",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_delegatecall_from_new_contract_to_pre_existing_contract[fork_Shanghai-state_test-create_opcode_CREATE-selfdestruct_contract_initial_balance_0-call_times_1-callcode]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x610021600081600b8239f3600060006000600060007311111111111111111111111111111111111111115af2",
+                "storage": {}
+            },
+            "0x1111111111111111111111111111111111111111": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x600160005401600055730000000000000000000000000000000000001234ff6000600055",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001234": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x6000600055",
+                "storage": {
+                    "0x00": "0x01"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x0186a0"
+            ],
+            "data": [
+                "0x602c6000600073000000000000000000000000000000000000abcd3c602c60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602cf3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Shanghai": [
+                {
+                    "hash": "0x6e4869763155caf4e4a2bffa0c01c3081a5210f44be2c071a9a81de480f259db",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf9011d800a8405f5e10080830186a0b8cc602c6000600073000000000000000000000000000000000000abcd3c602c60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602cf31ba008a10b1f0af436c0cae9a5d8c094f5eeff0e17d4468685c8be568b8321e5b2eea05b20c82094572dd38268aea4716f9d5c49097a5b18c14e68c14709e2b64e1043",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xca3a143f8a4e22f488537f7aabf77b9999cdbb4b84c080fe985a5b682f519fd3",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Test that if an account created in the current transaction delegate-call a previously created\n    account that executes self-destruct, the calling account is deleted.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1012",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_delegatecall_from_new_contract_to_pre_existing_contract[fork_Shanghai-state_test-create_opcode_CREATE-selfdestruct_contract_initial_balance_1-call_times_1-delegatecall]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x61001f600081600b8239f360006000600060007311111111111111111111111111111111111111115af4",
+                "storage": {}
+            },
+            "0x64e2ebd6405af8cb348aec519084d3fff42ebba6": {
+                "nonce": "0x00",
+                "balance": "0x01",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x1111111111111111111111111111111111111111": {
+                "nonce": "0x00",
+                "balance": "0x01",
+                "code": "0x600160005401600055730000000000000000000000000000000000001234ff6000600055",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001234": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x6000600055",
+                "storage": {
+                    "0x00": "0x01"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x0186a0"
+            ],
+            "data": [
+                "0x602a6000600073000000000000000000000000000000000000abcd3c602a60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602af3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Shanghai": [
+                {
+                    "hash": "0x428854e0db903650c61d1ea47dbf581b4e8237a346d210643bffc11e3ddb326e",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf9011d800a8405f5e10080830186a0b8cc602a6000600073000000000000000000000000000000000000abcd3c602a60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602af31ca072d01161e04b2ff33bbd4f71d61525c457f7e3574b4b33d79f687f3b9f93d0b8a017996ea6a8750c705ab9131e42e5c0da3f6abcd41df40828508db9458d66a60a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x3735e9eaa9a66bfd241bca543673717327a141d60a2bfb436d2e8c4eaafcae56",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Test that if an account created in the current transaction delegate-call a previously created\n    account that executes self-destruct, the calling account is deleted.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1012",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_delegatecall_from_new_contract_to_pre_existing_contract[fork_Shanghai-state_test-create_opcode_CREATE-selfdestruct_contract_initial_balance_1-call_times_1-callcode]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x610021600081600b8239f3600060006000600060007311111111111111111111111111111111111111115af2",
+                "storage": {}
+            },
+            "0x64e2ebd6405af8cb348aec519084d3fff42ebba6": {
+                "nonce": "0x00",
+                "balance": "0x01",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x1111111111111111111111111111111111111111": {
+                "nonce": "0x00",
+                "balance": "0x01",
+                "code": "0x600160005401600055730000000000000000000000000000000000001234ff6000600055",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001234": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x6000600055",
+                "storage": {
+                    "0x00": "0x01"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x0186a0"
+            ],
+            "data": [
+                "0x602c6000600073000000000000000000000000000000000000abcd3c602c60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602cf3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Shanghai": [
+                {
+                    "hash": "0xdfa666248dce787dd06574a264e850af262b5d8a9ed0e12be9bb2d9447a958be",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf9011d800a8405f5e10080830186a0b8cc602c6000600073000000000000000000000000000000000000abcd3c602c60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602cf31ba008a10b1f0af436c0cae9a5d8c094f5eeff0e17d4468685c8be568b8321e5b2eea05b20c82094572dd38268aea4716f9d5c49097a5b18c14e68c14709e2b64e1043",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xb2397210a9addbabeab6d153dff0dffb0b4a74f7413f4bc8bb28a78ea6755b16",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Test that if an account created in the current transaction delegate-call a previously created\n    account that executes self-destruct, the calling account is deleted.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1012",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_delegatecall_from_new_contract_to_pre_existing_contract[fork_Cancun-state_test-create_opcode_CREATE-selfdestruct_contract_initial_balance_0-call_times_1-delegatecall]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x61001f600081600b8239f360006000600060007311111111111111111111111111111111111111115af4",
+                "storage": {}
+            },
+            "0x1111111111111111111111111111111111111111": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x600160005401600055730000000000000000000000000000000000001234ff6000600055",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001234": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x6000600055",
+                "storage": {
+                    "0x00": "0x01"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x0186a0"
+            ],
+            "data": [
+                "0x602a6000600073000000000000000000000000000000000000abcd3c602a60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602af3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0xeace402b95a9e447e4278ff6630aab8d724912d18f4f8ceaa9e5f2a65637264b",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf9011d800a8405f5e10080830186a0b8cc602a6000600073000000000000000000000000000000000000abcd3c602a60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602af31ca072d01161e04b2ff33bbd4f71d61525c457f7e3574b4b33d79f687f3b9f93d0b8a017996ea6a8750c705ab9131e42e5c0da3f6abcd41df40828508db9458d66a60a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x21dd4f35597440099bfa51ca492aae89e61739799d32dfc061c7084eb32bed0d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Test that if an account created in the current transaction delegate-call a previously created\n    account that executes self-destruct, the calling account is deleted.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1012",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_delegatecall_from_new_contract_to_pre_existing_contract[fork_Cancun-state_test-create_opcode_CREATE-selfdestruct_contract_initial_balance_0-call_times_1-callcode]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x610021600081600b8239f3600060006000600060007311111111111111111111111111111111111111115af2",
+                "storage": {}
+            },
+            "0x1111111111111111111111111111111111111111": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x600160005401600055730000000000000000000000000000000000001234ff6000600055",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001234": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x6000600055",
+                "storage": {
+                    "0x00": "0x01"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x0186a0"
+            ],
+            "data": [
+                "0x602c6000600073000000000000000000000000000000000000abcd3c602c60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602cf3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x6e4869763155caf4e4a2bffa0c01c3081a5210f44be2c071a9a81de480f259db",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf9011d800a8405f5e10080830186a0b8cc602c6000600073000000000000000000000000000000000000abcd3c602c60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602cf31ba008a10b1f0af436c0cae9a5d8c094f5eeff0e17d4468685c8be568b8321e5b2eea05b20c82094572dd38268aea4716f9d5c49097a5b18c14e68c14709e2b64e1043",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x76cfc8b088963659e7ec01ad5a4721989f78424ebfc944428efc953eb6dead7c",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Test that if an account created in the current transaction delegate-call a previously created\n    account that executes self-destruct, the calling account is deleted.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1012",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_delegatecall_from_new_contract_to_pre_existing_contract[fork_Cancun-state_test-create_opcode_CREATE-selfdestruct_contract_initial_balance_1-call_times_1-delegatecall]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x61001f600081600b8239f360006000600060007311111111111111111111111111111111111111115af4",
+                "storage": {}
+            },
+            "0x64e2ebd6405af8cb348aec519084d3fff42ebba6": {
+                "nonce": "0x00",
+                "balance": "0x01",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x1111111111111111111111111111111111111111": {
+                "nonce": "0x00",
+                "balance": "0x01",
+                "code": "0x600160005401600055730000000000000000000000000000000000001234ff6000600055",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001234": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x6000600055",
+                "storage": {
+                    "0x00": "0x01"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x0186a0"
+            ],
+            "data": [
+                "0x602a6000600073000000000000000000000000000000000000abcd3c602a60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602af3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0x428854e0db903650c61d1ea47dbf581b4e8237a346d210643bffc11e3ddb326e",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf9011d800a8405f5e10080830186a0b8cc602a6000600073000000000000000000000000000000000000abcd3c602a60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602af31ca072d01161e04b2ff33bbd4f71d61525c457f7e3574b4b33d79f687f3b9f93d0b8a017996ea6a8750c705ab9131e42e5c0da3f6abcd41df40828508db9458d66a60a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x579e7b3eacecc95fb98640d283cae00c64ec9640e7b6f4de4b3a704cf5b07a95",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Test that if an account created in the current transaction delegate-call a previously created\n    account that executes self-destruct, the calling account is deleted.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1012",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_delegatecall_from_new_contract_to_pre_existing_contract[fork_Cancun-state_test-create_opcode_CREATE-selfdestruct_contract_initial_balance_1-call_times_1-callcode]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x610021600081600b8239f3600060006000600060007311111111111111111111111111111111111111115af2",
+                "storage": {}
+            },
+            "0x64e2ebd6405af8cb348aec519084d3fff42ebba6": {
+                "nonce": "0x00",
+                "balance": "0x01",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x1111111111111111111111111111111111111111": {
+                "nonce": "0x00",
+                "balance": "0x01",
+                "code": "0x600160005401600055730000000000000000000000000000000000001234ff6000600055",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001234": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x6000600055",
+                "storage": {
+                    "0x00": "0x01"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x0186a0"
+            ],
+            "data": [
+                "0x602c6000600073000000000000000000000000000000000000abcd3c602c60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602cf3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Cancun": [
+                {
+                    "hash": "0xdfa666248dce787dd06574a264e850af262b5d8a9ed0e12be9bb2d9447a958be",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf9011d800a8405f5e10080830186a0b8cc602c6000600073000000000000000000000000000000000000abcd3c602c60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602cf31ba008a10b1f0af436c0cae9a5d8c094f5eeff0e17d4468685c8be568b8321e5b2eea05b20c82094572dd38268aea4716f9d5c49097a5b18c14e68c14709e2b64e1043",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xc8de1bbeff5c75fdd57cd504f00d75ddfcdc5249d1bd97428d798ee463d51bd8",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Test that if an account created in the current transaction delegate-call a previously created\n    account that executes self-destruct, the calling account is deleted.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1012",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_delegatecall_from_new_contract_to_pre_existing_contract[fork_Prague-state_test-create_opcode_CREATE-selfdestruct_contract_initial_balance_0-call_times_1-delegatecall]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x61001f600081600b8239f360006000600060007311111111111111111111111111111111111111115af4",
+                "storage": {}
+            },
+            "0x1111111111111111111111111111111111111111": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x600160005401600055730000000000000000000000000000000000001234ff6000600055",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001234": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x6000600055",
+                "storage": {
+                    "0x00": "0x01"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x0186a0"
+            ],
+            "data": [
+                "0x602a6000600073000000000000000000000000000000000000abcd3c602a60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602af3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xeace402b95a9e447e4278ff6630aab8d724912d18f4f8ceaa9e5f2a65637264b",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf9011d800a8405f5e10080830186a0b8cc602a6000600073000000000000000000000000000000000000abcd3c602a60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602af31ca072d01161e04b2ff33bbd4f71d61525c457f7e3574b4b33d79f687f3b9f93d0b8a017996ea6a8750c705ab9131e42e5c0da3f6abcd41df40828508db9458d66a60a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x5de00210db2daaf7cf7592b59ae474a17be0d360ff3d5dec03ef10dcd2a4dfd3",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Test that if an account created in the current transaction delegate-call a previously created\n    account that executes self-destruct, the calling account is deleted.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1012",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_delegatecall_from_new_contract_to_pre_existing_contract[fork_Prague-state_test-create_opcode_CREATE-selfdestruct_contract_initial_balance_0-call_times_1-callcode]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x610021600081600b8239f3600060006000600060007311111111111111111111111111111111111111115af2",
+                "storage": {}
+            },
+            "0x1111111111111111111111111111111111111111": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x600160005401600055730000000000000000000000000000000000001234ff6000600055",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001234": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x6000600055",
+                "storage": {
+                    "0x00": "0x01"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x0186a0"
+            ],
+            "data": [
+                "0x602c6000600073000000000000000000000000000000000000abcd3c602c60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602cf3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x6e4869763155caf4e4a2bffa0c01c3081a5210f44be2c071a9a81de480f259db",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf9011d800a8405f5e10080830186a0b8cc602c6000600073000000000000000000000000000000000000abcd3c602c60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602cf31ba008a10b1f0af436c0cae9a5d8c094f5eeff0e17d4468685c8be568b8321e5b2eea05b20c82094572dd38268aea4716f9d5c49097a5b18c14e68c14709e2b64e1043",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x18388f9d89edc3b5cdbf256d1f23789515eeb848390c57d2ae26433717aa0a21",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Test that if an account created in the current transaction delegate-call a previously created\n    account that executes self-destruct, the calling account is deleted.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1012",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_delegatecall_from_new_contract_to_pre_existing_contract[fork_Prague-state_test-create_opcode_CREATE-selfdestruct_contract_initial_balance_1-call_times_1-delegatecall]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x61001f600081600b8239f360006000600060007311111111111111111111111111111111111111115af4",
+                "storage": {}
+            },
+            "0x64e2ebd6405af8cb348aec519084d3fff42ebba6": {
+                "nonce": "0x00",
+                "balance": "0x01",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x1111111111111111111111111111111111111111": {
+                "nonce": "0x00",
+                "balance": "0x01",
+                "code": "0x600160005401600055730000000000000000000000000000000000001234ff6000600055",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001234": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x6000600055",
+                "storage": {
+                    "0x00": "0x01"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x0186a0"
+            ],
+            "data": [
+                "0x602a6000600073000000000000000000000000000000000000abcd3c602a60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602af3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x428854e0db903650c61d1ea47dbf581b4e8237a346d210643bffc11e3ddb326e",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf9011d800a8405f5e10080830186a0b8cc602a6000600073000000000000000000000000000000000000abcd3c602a60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602af31ca072d01161e04b2ff33bbd4f71d61525c457f7e3574b4b33d79f687f3b9f93d0b8a017996ea6a8750c705ab9131e42e5c0da3f6abcd41df40828508db9458d66a60a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x34715baf5d3bfbef2a68b756a85fdb3cf402d74db10770c2679c9a30a0ae4ebe",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Test that if an account created in the current transaction delegate-call a previously created\n    account that executes self-destruct, the calling account is deleted.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1012",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    },
+    "tests/cancun/eip6780_selfdestruct/test_selfdestruct.py::test_delegatecall_from_new_contract_to_pre_existing_contract[fork_Prague-state_test-create_opcode_CREATE-selfdestruct_contract_initial_balance_1-call_times_1-callcode]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x056bc75e2d63100000",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x000000000000000000000000000000000000abcd": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x610021600081600b8239f3600060006000600060007311111111111111111111111111111111111111115af2",
+                "storage": {}
+            },
+            "0x64e2ebd6405af8cb348aec519084d3fff42ebba6": {
+                "nonce": "0x00",
+                "balance": "0x01",
+                "code": "0x",
+                "storage": {}
+            },
+            "0x1111111111111111111111111111111111111111": {
+                "nonce": "0x00",
+                "balance": "0x01",
+                "code": "0x600160005401600055730000000000000000000000000000000000001234ff6000600055",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001234": {
+                "nonce": "0x00",
+                "balance": "0x00",
+                "code": "0x6000600055",
+                "storage": {
+                    "0x00": "0x01"
+                }
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "value": [
+                "0x0186a0"
+            ],
+            "data": [
+                "0x602c6000600073000000000000000000000000000000000000abcd3c602c60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602cf3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to": ""
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xdfa666248dce787dd06574a264e850af262b5d8a9ed0e12be9bb2d9447a958be",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf9011d800a8405f5e10080830186a0b8cc602c6000600073000000000000000000000000000000000000abcd3c602c60006000f06001557364e2ebd6405af8cb348aec519084d3fff42ebba63b6002557364e2ebd6405af8cb348aec519084d3fff42ebba63f600355600060006000600060007364e2ebd6405af8cb348aec519084d3fff42ebba645f16004557364e2ebd6405af8cb348aec519084d3fff42ebba6316005557364e2ebd6405af8cb348aec519084d3fff42ebba63b6006557364e2ebd6405af8cb348aec519084d3fff42ebba63f6007556001602cf31ba008a10b1f0af436c0cae9a5d8c094f5eeff0e17d4468685c8be568b8321e5b2eea05b20c82094572dd38268aea4716f9d5c49097a5b18c14e68c14709e2b64e1043",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xe95e8f2f5d9ecec3cfe014b1f0839416007d5a257a554ae8141f7915e41ddbbc",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "evm version 1.14.6-unstable-7e5dd44a-20240705",
+            "description": "Test function documentation:\n\n    Test that if an account created in the current transaction delegate-call a previously created\n    account that executes self-destruct, the calling account is deleted.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/devnet-1@v1.3.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1012",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
+            "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
+        }
+    }
+}

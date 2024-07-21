@@ -219,7 +219,7 @@ pub struct AccountInfo {
     /// code hash,
     pub code_hash: B256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
-    /// inside of `revm`.
+    /// inside `revm`.
     pub code: Option<Bytecode>,
 }
 
@@ -273,8 +273,8 @@ impl AccountInfo {
     /// - balance is zero
     /// - nonce is zero
     pub fn is_empty(&self) -> bool {
-        let code_empty = self.is_empty_code_hash() || self.code_hash == B256::ZERO;
-        code_empty && self.balance == U256::ZERO && self.nonce == 0
+        let code_empty = self.is_empty_code_hash() || self.code_hash.is_zero();
+        code_empty && self.balance.is_zero() && self.nonce == 0
     }
 
     /// Returns `true` if the account is not empty.
@@ -288,7 +288,7 @@ impl AccountInfo {
     }
 
     /// Return bytecode hash associated with this account.
-    /// If account does not have code, it return's `KECCAK_EMPTY` hash.
+    /// If account does not have code, it returns `KECCAK_EMPTY` hash.
     pub fn code_hash(&self) -> B256 {
         self.code_hash
     }

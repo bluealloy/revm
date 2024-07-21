@@ -605,7 +605,7 @@ impl BundleState {
             for (key, slot) in account.storage {
                 // If storage was destroyed that means that storage was wiped.
                 // In that case we need to check if present storage value is different then ZERO.
-                let destroyed_and_not_zero = was_destroyed && slot.present_value != U256::ZERO;
+                let destroyed_and_not_zero = was_destroyed && !slot.present_value.is_zero();
 
                 // If account is not destroyed check if original values was changed,
                 // so we can update it.

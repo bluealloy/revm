@@ -39,7 +39,7 @@ pub fn eq<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 pub fn iszero<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1);
-    *op1 = U256::from(*op1 == U256::ZERO);
+    *op1 = U256::from(op1.is_zero());
 }
 
 pub fn bitand<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {

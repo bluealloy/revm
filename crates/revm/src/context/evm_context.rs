@@ -11,7 +11,7 @@ use crate::{
     primitives::{
         keccak256, Address, Bytecode, Bytes, CreateScheme, EVMError, Env, Eof,
         SpecId::{self, *},
-        B256, EOF_MAGIC_BYTES, U256,
+        B256, EOF_MAGIC_BYTES,
     },
     ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
@@ -184,13 +184,14 @@ impl<DB: Database> EvmContext<DB> {
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         match inputs.value {
-            // if transfer value is zero, do the touch.
-            CallValue::Transfer(value) if value == U256::ZERO => {
+            // if transfer value is zero, load account and force the touch.
+            CallValue::Transfer(value) if value.is_zero() => {
                 self.load_account(inputs.target_address)?;
                 self.journaled_state.touch(&inputs.target_address);
             }
             CallValue::Transfer(value) => {
-                // Transfer value from caller to called account
+                // Transfer value from caller to called account. As value get transferred
+                // target gets touched.
                 if let Some(result) = self.inner.journaled_state.transfer(
                     &inputs.caller,
                     &inputs.target_address,
@@ -225,7 +226,7 @@ impl<DB: Database> EvmContext<DB> {
 
             // ExtDelegateCall is not allowed to call non-EOF contracts.
             if inputs.scheme.is_ext_delegate_call()
-                && bytecode.bytes_slice().get(..2) != Some(&EOF_MAGIC_BYTES)
+                && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES)
             {
                 return return_result(InstructionResult::InvalidExtDelegateCallTarget);
             }
@@ -269,11 +270,8 @@ impl<DB: Database> EvmContext<DB> {
             return return_error(InstructionResult::CallTooDeep);
         }
 
-        //self.precompiles
-
         // Prague EOF
-        if spec_id.is_enabled_in(PRAGUE_EOF) && inputs.init_code.get(..2) == Some(&EOF_MAGIC_BYTES)
-        {
+        if spec_id.is_enabled_in(PRAGUE_EOF) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
             return return_error(InstructionResult::CreateInitCodeStartingEF00);
         }
 
@@ -324,7 +322,7 @@ impl<DB: Database> EvmContext<DB> {
             }
         };
 
-        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
+        let bytecode = Bytecode::new_legacy(inputs.init_code.clone());
 
         let contract = Contract::new(
             Bytes::new(),
@@ -408,8 +406,9 @@ impl<DB: Database> EvmContext<DB> {
             // can't happen on mainnet.
             return return_error(InstructionResult::Return);
         };
+        let old_nonce = nonce - 1;
 
-        let created_address = created_address.unwrap_or_else(|| inputs.caller.create(nonce));
+        let created_address = created_address.unwrap_or_else(|| inputs.caller.create(old_nonce));
 
         // created address is not allowed to be a precompile.
         if self.precompiles.contains(&created_address) {
@@ -459,6 +458,7 @@ impl<DB: Database> EvmContext<DB> {
 #[cfg(any(test, feature = "test-utils"))]
 pub(crate) mod test_utils {
     use super::*;
+    use crate::primitives::U256;
     use crate::{
         db::{CacheDB, EmptyDB},
         journaled_state::JournaledState,
@@ -543,6 +543,7 @@ pub(crate) mod test_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::primitives::U256;
     use crate::{
         db::{CacheDB, EmptyDB},
         primitives::{address, Bytecode},

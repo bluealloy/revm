@@ -62,7 +62,7 @@ pub fn jump<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 pub fn jumpi<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::HIGH);
     pop!(interpreter, target, cond);
-    if cond != U256::ZERO {
+    if !cond.is_zero() {
         jump_inner(interpreter, target);
     }
 }

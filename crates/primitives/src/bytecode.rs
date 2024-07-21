@@ -68,6 +68,12 @@ impl Bytecode {
         matches!(self, Self::Eof(_))
     }
 
+    /// Creates a new legacy [`Bytecode`].
+    #[inline]
+    pub fn new_legacy(raw: Bytes) -> Self {
+        Self::LegacyRaw(raw)
+    }
+
     /// Creates a new raw [`Bytecode`].
     ///
     /// # Panics
@@ -83,7 +89,7 @@ impl Bytecode {
     /// Returns an error on incorrect EOF format.
     #[inline]
     pub fn new_raw_checked(bytecode: Bytes) -> Result<Self, EofDecodeError> {
-        if bytecode.get(..2) == Some(&[0xEF, 00]) {
+        if bytecode.starts_with(&EOF_MAGIC_BYTES) {
             Ok(Self::Eof(Arc::new(Eof::decode(bytecode)?)))
         } else {
             Ok(Self::LegacyRaw(bytecode))

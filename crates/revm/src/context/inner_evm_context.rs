@@ -190,7 +190,7 @@ impl<DB: Database> InnerEvmContext<DB> {
                 if code.is_eof() {
                     (EOF_MAGIC_BYTES.clone(), is_cold)
                 } else {
-                    (code.original_bytes().clone(), is_cold)
+                    (code.original_bytes(), is_cold)
                 }
             })
     }
@@ -368,9 +368,9 @@ impl<DB: Database> InnerEvmContext<DB> {
 
         // Do analysis of bytecode straight away.
         let bytecode = match self.env.cfg.perf_analyse_created_bytecodes {
-            AnalysisKind::Raw => Bytecode::new_raw(interpreter_result.output.clone()),
+            AnalysisKind::Raw => Bytecode::new_legacy(interpreter_result.output.clone()),
             AnalysisKind::Analyse => {
-                to_analysed(Bytecode::new_raw(interpreter_result.output.clone()))
+                to_analysed(Bytecode::new_legacy(interpreter_result.output.clone()))
             }
         };
 
