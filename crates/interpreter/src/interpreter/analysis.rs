@@ -158,6 +158,22 @@ impl From<EofValidationError> for EofError {
     }
 }
 
+impl fmt::Display for EofError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                EofError::Decode(e) => format!("Bytecode decode error: {}", e),
+                EofError::Validation(e) => format!("Bytecode validation error: {}", e),
+            }
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for EofError {}
+
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum EofValidationError {
     FalsePossitive,
