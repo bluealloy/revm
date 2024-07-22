@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1](https://github.com/bluealloy/revm/compare/revme-v0.8.0...revme-v0.8.1) - 2024-07-22
+
+### Other
+- use `is_zero` for `U256` and `B256` ([#1638](https://github.com/bluealloy/revm/pull/1638))
+- bump versions bcs of primitives ([#1631](https://github.com/bluealloy/revm/pull/1631))
+
 ## [0.8.0](https://github.com/bluealloy/revm/compare/revme-v0.7.0...revme-v0.8.0) - 2024-07-16
 
 ### Added

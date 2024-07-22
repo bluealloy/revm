@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.3.0](https://github.com/bluealloy/revm/compare/revm-precompile-v9.2.0...revm-precompile-v9.3.0) - 2024-07-22
+
+### Added
+- use batch bn256 pair operation ([#1643](https://github.com/bluealloy/revm/pull/1643))
+
+### Other
+- use `is_zero` for `U256` and `B256` ([#1638](https://github.com/bluealloy/revm/pull/1638))
+
 ## [9.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v9.0.0...revm-precompile-v9.1.0) - 2024-07-16
 
 ### Added
