@@ -12,8 +12,8 @@ use crate::{
     interpreter::{
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
     },
-    primitives::{db::Database, Address, ChainSpec, Log, U256},
-    EvmContext,
+    primitives::{db::Database, Address, Log, U256},
+    ChainSpec, EvmContext,
 };
 use auto_impl::auto_impl;
 

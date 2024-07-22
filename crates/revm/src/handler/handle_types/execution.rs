@@ -2,8 +2,8 @@ use crate::{
     frame::EOFCreateFrame,
     handler::mainnet,
     interpreter::{CallInputs, CreateInputs, SharedMemory},
-    primitives::{db::Database, ChainSpec, EVMResultGeneric, Spec},
-    CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
+    primitives::{db::Database, EVMResultGeneric, Spec},
+    CallFrame, ChainSpec, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use revm_interpreter::{
     opcode::InstructionTables, CallOutcome, CreateOutcome, EOFCreateInputs, InterpreterAction,

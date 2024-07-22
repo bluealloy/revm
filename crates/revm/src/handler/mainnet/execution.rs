@@ -5,8 +5,8 @@ use crate::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
     },
-    primitives::{ChainSpec, EVMError, EVMResultGeneric, Env, Spec, SpecId, Transaction},
-    CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
+    primitives::{EVMError, EVMResultGeneric, Env, Spec, SpecId, Transaction},
+    CallFrame, ChainSpec, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use core::mem;
 use revm_interpreter::{

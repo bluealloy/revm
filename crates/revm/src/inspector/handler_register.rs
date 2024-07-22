@@ -2,8 +2,8 @@ use crate::{
     db::Database,
     handler::register::EvmHandler,
     interpreter::{opcode, InstructionResult, Interpreter},
-    primitives::{ChainSpec, EVMResultGeneric},
-    Context, FrameOrResult, FrameResult, Inspector, JournalEntry,
+    primitives::EVMResultGeneric,
+    ChainSpec, Context, FrameOrResult, FrameResult, Inspector, JournalEntry,
 };
 use core::cell::RefCell;
 use revm_interpreter::opcode::DynInstruction;
@@ -262,13 +262,10 @@ mod tests {
     use crate::{
         inspectors::NoOpInspector,
         interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome},
-        Evm, EvmContext,
+        primitives, Evm, EvmContext,
     };
 
-    #[cfg(feature = "optimism")]
-    type TestChainSpec = crate::optimism::OptimismChainSpec;
-    #[cfg(not(feature = "optimism"))]
-    type TestChainSpec = crate::primitives::EthChainSpec;
+    type TestChainSpec = primitives::EthChainSpec;
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -381,22 +378,11 @@ mod tests {
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
             .with_external_context(StackInspector::default())
             .modify_tx_env(|tx| {
-                *tx = <TestChainSpec as ChainSpec>::Transaction::default();
+                *tx = <TestChainSpec as primitives::ChainSpec>::Transaction::default();
 
-                #[cfg(feature = "optimism")]
-                let (caller, transact_to, gas_limit) = (
-                    &mut tx.base.caller,
-                    &mut tx.base.transact_to,
-                    &mut tx.base.gas_limit,
-                );
-
-                #[cfg(not(feature = "optimism"))]
-                let (caller, transact_to, gas_limit) =
-                    (&mut tx.caller, &mut tx.transact_to, &mut tx.gas_limit);
-
-                *caller = address!("1000000000000000000000000000000000000000");
-                *transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
-                *gas_limit = 21100;
+                tx.caller = address!("1000000000000000000000000000000000000000");
+                tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
+                tx.gas_limit = 21100;
             })
             .append_handler_register(inspector_handle_register)
             .build();

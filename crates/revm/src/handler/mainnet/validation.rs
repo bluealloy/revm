@@ -2,10 +2,10 @@ use revm_interpreter::gas;
 
 use crate::{
     primitives::{
-        db::Database, ChainSpec, EVMError, EVMResultGeneric, Env, InvalidTransaction, Spec,
-        Transaction, TransactionValidation,
+        db::Database, EVMError, EVMResultGeneric, Env, InvalidTransaction, Spec, Transaction,
+        TransactionValidation,
     },
-    Context,
+    ChainSpec, Context,
 };
 
 /// Validate environment for the mainnet.

@@ -14,6 +14,7 @@ mod context;
 #[cfg(any(test, feature = "test-utils"))]
 pub mod test_utils;
 
+mod chain_spec;
 pub mod db;
 mod evm;
 mod frame;
@@ -26,6 +27,7 @@ pub mod optimism;
 // Export items.
 
 pub use builder::EvmBuilder;
+pub use chain_spec::ChainSpec;
 pub use context::{
     Context, ContextPrecompile, ContextPrecompiles, ContextStatefulPrecompile,
     ContextStatefulPrecompileArc, ContextStatefulPrecompileBox, ContextStatefulPrecompileMut,

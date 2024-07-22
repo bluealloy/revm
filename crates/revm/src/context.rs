@@ -6,6 +6,7 @@ pub use context_precompiles::{
     ContextPrecompile, ContextPrecompiles, ContextStatefulPrecompile, ContextStatefulPrecompileArc,
     ContextStatefulPrecompileBox, ContextStatefulPrecompileMut,
 };
+use derive_where::derive_where;
 pub use evm_context::EvmContext;
 pub use inner_evm_context::InnerEvmContext;
 use revm_interpreter::as_usize_saturated;
@@ -14,33 +15,19 @@ use crate::{
     db::{Database, EmptyDB},
     interpreter::{Host, LoadAccountResult, SStoreResult, SelfDestructResult},
     primitives::{
-        Address, Block as _, Bytes, ChainSpec, Env, EthChainSpec, Log, B256, BLOCK_HASH_HISTORY,
-        U256,
+        Address, Block as _, Bytes, Env, EthChainSpec, Log, B256, BLOCK_HASH_HISTORY, U256,
     },
+    ChainSpec,
 };
 use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
+#[derive_where(Clone; ChainSpecT::Block, ChainSpecT::Context, ChainSpecT::Transaction, DB, DB::Error, EXT)]
 pub struct Context<ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Evm Context (internal context).
     pub evm: EvmContext<ChainSpecT, DB>,
     /// External contexts.
     pub external: EXT,
-}
-
-impl<ChainSpecT, EXT, DB> Clone for Context<ChainSpecT, EXT, DB>
-where
-    DB::Error: Clone,
-    ChainSpecT: ChainSpec<Block: Clone, Transaction: Clone>,
-    EXT: Clone,
-    DB: Database<Error: Clone> + Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            evm: self.evm.clone(),
-            external: self.external.clone(),
-        }
-    }
 }
 
 impl Default for Context<EthChainSpec, (), EmptyDB> {
@@ -84,6 +71,7 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> Context<ChainSpecT, EXT, DB> {
 }
 
 /// Context with handler configuration.
+#[derive_where(Clone; ChainSpecT::Block, ChainSpecT::Context, ChainSpecT::Transaction, DB, DB::Error, EXT)]
 pub struct ContextWithChainSpec<ChainSpecT: ChainSpec, EXT, DB: Database> {
     /// Context of execution.
     pub context: Context<ChainSpecT, EXT, DB>,
@@ -95,20 +83,6 @@ impl<ChainSpecT: ChainSpec, EXT, DB: Database> ContextWithChainSpec<ChainSpecT, 
     /// Creates new context with handler configuration.
     pub fn new(context: Context<ChainSpecT, EXT, DB>, spec_id: ChainSpecT::Hardfork) -> Self {
         Self { spec_id, context }
-    }
-}
-
-impl<ChainSpecT, EXT, DB> Clone for ContextWithChainSpec<ChainSpecT, EXT, DB>
-where
-    ChainSpecT: ChainSpec<Block: Clone, Transaction: Clone>,
-    EXT: Clone,
-    DB: Database<Error: Clone> + Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            context: self.context.clone(),
-            spec_id: self.spec_id,
-        }
     }
 }
 

@@ -5,10 +5,10 @@
 use crate::{
     precompile::PrecompileSpecId,
     primitives::{
-        db::Database, Account, Block, ChainSpec, EVMError, EVMResultGeneric, Env, Spec, SpecId,
+        db::Database, Account, Block, EVMError, EVMResultGeneric, Env, Spec, SpecId,
         Transaction as _, BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256,
     },
-    Context, ContextPrecompiles,
+    ChainSpec, Context, ContextPrecompiles,
 };
 use std::vec::Vec;
 

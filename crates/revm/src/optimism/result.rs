@@ -37,10 +37,6 @@ pub enum OptimismInvalidTransaction {
     /// are cause for non-inclusion, so a special [HaltReason] variant was introduced to handle this
     /// case for failed deposit transactions.
     HaltedDepositPostRegolith,
-    /// L1 block info is missing for a non-deposit transaction.
-    MissingL1BlockInfo,
-    /// L1 block info is provided for a deposit transaction.
-    UnexpectedL1BlockInfo,
 }
 
 impl Display for OptimismInvalidTransaction {
@@ -58,12 +54,6 @@ impl Display for OptimismInvalidTransaction {
                     f,
                     "deposit transaction halted post-regolith; error will be bubbled up to main return handler"
                 )
-            }
-            Self::MissingL1BlockInfo => {
-                write!(f, "non-deposit transaction is missing L1 block info")
-            }
-            Self::UnexpectedL1BlockInfo => {
-                write!(f, "deposit transaction has unexpected L1 block info")
             }
         }
     }

@@ -1,8 +1,8 @@
 // Includes.
 use crate::{
     handler::mainnet,
-    primitives::{db::Database, ChainSpec, EVMResultGeneric, Spec},
-    Context, ContextPrecompiles,
+    primitives::{db::Database, EVMResultGeneric, Spec},
+    ChainSpec, Context, ContextPrecompiles,
 };
 use std::sync::Arc;
 

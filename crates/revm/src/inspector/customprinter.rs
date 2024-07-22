@@ -8,8 +8,8 @@ use revm_interpreter::OpCode;
 use crate::{
     inspectors::GasInspector,
     interpreter::{CallInputs, CreateInputs, Interpreter},
-    primitives::{Address, ChainSpec, U256},
-    Database, EvmContext, Inspector,
+    primitives::{Address, U256},
+    ChainSpec, Database, EvmContext, Inspector,
 };
 
 /// Custom print [Inspector], it has step level information of execution.

@@ -1,85 +1,9 @@
-use crate::{
-    primitives::{
-        db::Database, AccessListItem, Address, AuthorizationList, BlobExcessGasAndPrice, Block,
-        BlockEnv, Bytes, Transaction, TransactionValidation, TxEnv, TxKind, B256, U256,
-    },
-    L1BlockInfo,
+use crate::primitives::{
+    AccessListItem, Address, AuthorizationList, Bytes, Transaction, TransactionValidation, TxEnv,
+    TxKind, B256, U256,
 };
 
-use super::{OptimismInvalidTransaction, OptimismSpecId};
-
-/// The Optimism block environment.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct OptimismBlock {
-    pub base: BlockEnv,
-    /// L1 block info used to compute the L1-cost fee.
-    ///
-    /// Needs to be provided for Optimism non-deposit transactions.
-    l1_block_info: Option<L1BlockInfo>,
-}
-
-impl OptimismBlock {
-    /// Constructs a new instance.
-    pub fn new(base: BlockEnv, l1_block_info: Option<L1BlockInfo>) -> Self {
-        Self {
-            base,
-            l1_block_info,
-        }
-    }
-
-    /// Create a new Optimism block environment.
-    pub fn with_l1_block_info<DB: Database>(
-        base: BlockEnv,
-        db: &mut DB,
-        spec_id: OptimismSpecId,
-    ) -> Result<Self, DB::Error> {
-        let l1_block_info = L1BlockInfo::try_fetch(db, spec_id)?;
-
-        Ok(Self {
-            base,
-            l1_block_info: Some(l1_block_info),
-        })
-    }
-
-    /// Retrieves the L1 block info.
-    pub fn l1_block_info(&self) -> Option<&L1BlockInfo> {
-        self.l1_block_info.as_ref()
-    }
-}
-
-impl Block for OptimismBlock {
-    fn number(&self) -> &U256 {
-        self.base.number()
-    }
-
-    fn coinbase(&self) -> &Address {
-        self.base.coinbase()
-    }
-
-    fn timestamp(&self) -> &U256 {
-        self.base.timestamp()
-    }
-
-    fn gas_limit(&self) -> &U256 {
-        self.base.gas_limit()
-    }
-
-    fn basefee(&self) -> &U256 {
-        self.base.basefee()
-    }
-
-    fn difficulty(&self) -> &U256 {
-        self.base.difficulty()
-    }
-
-    fn prevrandao(&self) -> Option<&B256> {
-        self.base.prevrandao()
-    }
-
-    fn blob_excess_gas_and_price(&self) -> Option<&BlobExcessGasAndPrice> {
-        self.base.blob_excess_gas_and_price()
-    }
-}
+use super::OptimismInvalidTransaction;
 
 /// The Optimism transaction environment.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

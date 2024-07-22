@@ -6,10 +6,10 @@ use crate::{
     handler::{EnvWithChainSpec, Handler},
     interpreter::{CallInputs, CreateInputs, EOFCreateInputs, InterpreterAction, SharedMemory},
     primitives::{
-        CfgEnv, ChainSpec, EVMError, EVMResult, EVMResultGeneric, EthChainSpec, ExecutionResult,
+        CfgEnv, EVMError, EVMResult, EVMResultGeneric, EthChainSpec, ExecutionResult,
         ResultAndState, SpecId, Transaction as _, TxKind, EOF_MAGIC_BYTES,
     },
-    Context, ContextWithChainSpec, Frame, FrameOrResult, FrameResult,
+    ChainSpec, Context, ContextWithChainSpec, Frame, FrameOrResult, FrameResult,
 };
 use core::fmt::{self, Debug};
 use std::{boxed::Box, vec::Vec};
@@ -29,7 +29,7 @@ pub struct Evm<'a, ChainSpecT: ChainSpec, EXT, DB: Database> {
 
 impl<ChainSpecT, EXT, DB> Debug for Evm<'_, ChainSpecT, EXT, DB>
 where
-    ChainSpecT: ChainSpec<Block: Debug, Transaction: Debug>,
+    ChainSpecT: ChainSpec<Block: Debug, Context: Debug, Transaction: Debug>,
     EXT: Debug,
     DB: Database<Error: Debug> + Debug,
 {

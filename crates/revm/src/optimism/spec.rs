@@ -1,20 +1,45 @@
 use revm_precompile::PrecompileSpecId;
 
-use crate::primitives::{ChainSpec, Spec, SpecId};
-
-use super::{
-    env::{OptimismBlock, OptimismTransaction},
-    OptimismHaltReason,
+use crate::{
+    handler::register::HandleRegisters,
+    primitives::{db::Database, BlockEnv, Spec, SpecId},
+    ChainSpec, EvmHandler, L1BlockInfo,
 };
+
+use super::{env::OptimismTransaction, OptimismHaltReason};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct OptimismChainSpec;
 
-impl ChainSpec for OptimismChainSpec {
-    type Block = OptimismBlock;
+impl crate::primitives::ChainSpec for OptimismChainSpec {
+    type Block = BlockEnv;
     type Hardfork = OptimismSpecId;
     type HaltReason = OptimismHaltReason;
     type Transaction = OptimismTransaction;
+}
+
+impl ChainSpec for OptimismChainSpec {
+    type Context = Context;
+
+    fn handler<'evm, EXT, DB>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self, EXT, DB>
+    where
+        DB: Database,
+    {
+        let mut handler = EvmHandler::mainnet_with_spec(hardfork);
+
+        handler.append_handler_register(HandleRegisters::Plain(
+            crate::optimism::optimism_handle_register::<DB, EXT>,
+        ));
+
+        handler
+    }
+}
+
+/// Context for the Optimism chain.
+#[derive(Default)]
+pub struct Context {
+    /// Cached L1 block information.
+    pub l1_block_info: Option<L1BlockInfo>,
 }
 
 /// Specification IDs for the optimism blockchain.

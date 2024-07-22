@@ -10,19 +10,20 @@ use crate::{
         EOFCreateKind, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
     primitives::{
-        keccak256, Address, Bytecode, Bytes, ChainSpec, CreateScheme, EVMError, EVMResultGeneric,
-        Env, Eof,
+        keccak256, Address, Bytecode, Bytes, CreateScheme, EVMError, EVMResultGeneric, Env, Eof,
         SpecId::{self, *},
         Transaction as _, B256, EOF_MAGIC_BYTES,
     },
-    ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
+    ChainSpec, ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
 };
 use core::ops::{Deref, DerefMut};
 use std::{boxed::Box, sync::Arc};
 
 /// EVM context that contains the inner EVM context and precompiles.
-#[derive_where(Clone, Debug; ChainSpecT::Block, ChainSpecT::Transaction, DB, DB::Error)]
+#[derive_where(Clone, Debug; ChainSpecT::Block, ChainSpecT::Context, ChainSpecT::Transaction, DB, DB::Error)]
 pub struct EvmContext<ChainSpecT: ChainSpec, DB: Database> {
+    /// The context that's unique to the chain type.
+    pub chain: ChainSpecT::Context,
     /// Inner EVM context.
     pub inner: InnerEvmContext<ChainSpecT, DB>,
     /// Precompiles that are available for evm.
@@ -51,17 +52,23 @@ where
     /// Create new context with database.
     pub fn new(db: DB) -> Self {
         Self {
+            chain: ChainSpecT::Context::default(),
             inner: InnerEvmContext::new(db),
             precompiles: ContextPrecompiles::default(),
         }
     }
 }
 
-impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
+impl<ChainSpecT, DB> EvmContext<ChainSpecT, DB>
+where
+    ChainSpecT: ChainSpec,
+    DB: Database,
+{
     /// Creates a new context with the given environment and database.
     #[inline]
     pub fn new_with_env(db: DB, env: Box<Env<ChainSpecT>>) -> Self {
         Self {
+            chain: ChainSpecT::Context::default(),
             inner: InnerEvmContext::new_with_env(db, env),
             precompiles: ContextPrecompiles::default(),
         }
@@ -73,6 +80,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> EvmContext<ChainSpecT, DB> {
     #[inline]
     pub fn with_db<ODB: Database>(self, db: ODB) -> EvmContext<ChainSpecT, ODB> {
         EvmContext {
+            chain: self.chain,
             inner: self.inner.with_db(db),
             precompiles: ContextPrecompiles::default(),
         }
@@ -494,6 +502,7 @@ pub(crate) mod test_utils {
         db: CacheDB<EmptyDB>,
     ) -> EvmContext<ChainSpecT, CacheDB<EmptyDB>> {
         EvmContext {
+            chain: ChainSpecT::Context::default(),
             inner: InnerEvmContext {
                 env,
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
@@ -511,6 +520,7 @@ pub(crate) mod test_utils {
         db: EmptyDB,
     ) -> EvmContext<ChainSpecT, EmptyDB> {
         EvmContext {
+            chain: ChainSpecT::Context::default(),
             inner: InnerEvmContext {
                 env,
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),

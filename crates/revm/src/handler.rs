@@ -12,10 +12,9 @@ pub use handle_types::*;
 use crate::{
     interpreter::{opcode::InstructionTables, Host, InterpreterAction, SharedMemory},
     primitives::{
-        db::Database, spec_to_generic, ChainSpec, EVMResultGeneric, InvalidTransaction,
-        TransactionValidation,
+        db::Database, spec_to_generic, EVMResultGeneric, InvalidTransaction, TransactionValidation,
     },
-    Context, Frame,
+    ChainSpec, Context, Frame,
 };
 use core::mem;
 use register::{EvmHandler, HandleRegisters};
@@ -159,7 +158,7 @@ where
         let out = self.registers.pop();
         if out.is_some() {
             let registers = core::mem::take(&mut self.registers);
-            let mut base_handler = Handler::mainnet_with_spec(self.spec_id);
+            let mut base_handler = ChainSpecT::handler::<'a, EXT, DB>(self.spec_id);
             // apply all registers to default handler and raw mainnet instruction table.
             for register in registers {
                 base_handler.append_handler_register(register)
@@ -177,7 +176,7 @@ where
 
         let registers = core::mem::take(&mut self.registers);
         // register for optimism is added as a register, so we need to create mainnet handler here.
-        let mut handler = Handler::mainnet_with_spec(spec_id);
+        let mut handler = ChainSpecT::handler::<'a, EXT, DB>(spec_id);
         // apply all registers to default handler and raw mainnet instruction table.
         for register in registers {
             handler.append_handler_register(register)
@@ -191,7 +190,10 @@ where
 mod test {
     use core::cell::RefCell;
 
-    use crate::{db::EmptyDB, primitives::EVMError};
+    use crate::{
+        db::EmptyDB,
+        primitives::{self, EVMError},
+    };
     use std::{rc::Rc, sync::Arc};
 
     use super::*;
@@ -199,7 +201,7 @@ mod test {
     #[cfg(feature = "optimism")]
     type TestChainSpec = crate::optimism::OptimismChainSpec;
     #[cfg(not(feature = "optimism"))]
-    type TestChainSpec = crate::primitives::EthChainSpec;
+    type TestChainSpec = primitives::EthChainSpec;
 
     #[test]
     fn test_handler_register_pop() {
@@ -214,7 +216,7 @@ mod test {
             };
 
         let mut handler = EvmHandler::<'_, TestChainSpec, (), EmptyDB>::mainnet_with_spec(
-            <TestChainSpec as ChainSpec>::Hardfork::default(),
+            <TestChainSpec as primitives::ChainSpec>::Hardfork::default(),
         );
         let test = Rc::new(RefCell::new(0));
 

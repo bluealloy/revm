@@ -1,10 +1,9 @@
 use crate::{
     handler::mainnet,
     primitives::{
-        db::Database, ChainSpec, EVMResultGeneric, Env, InvalidTransaction, Spec,
-        TransactionValidation,
+        db::Database, EVMResultGeneric, Env, InvalidTransaction, Spec, TransactionValidation,
     },
-    Context,
+    ChainSpec, Context,
 };
 use std::sync::Arc;
 

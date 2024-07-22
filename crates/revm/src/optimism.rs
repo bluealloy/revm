@@ -2,13 +2,11 @@
 
 mod env;
 mod fast_lz;
-mod handler;
 mod handler_register;
 mod l1block;
 mod result;
 mod spec;
 
-pub use env::OptimismBlock;
 pub use handler_register::{
     deduct_caller, end, last_frame_return, load_precompiles, optimism_handle_register, output,
     reward_beneficiary, validate_env, validate_tx_against_state,

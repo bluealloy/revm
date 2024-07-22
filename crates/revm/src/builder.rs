@@ -1,11 +1,8 @@
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
-    handler::{
-        register::{self, EvmHandler},
-        CfgEnvWithChainSpec, EnvWithChainSpec,
-    },
-    primitives::{CfgEnv, ChainSpec, Env, EthChainSpec, InvalidTransaction, TransactionValidation},
-    Context, ContextWithChainSpec, Evm, EvmContext, Handler,
+    handler::{register, CfgEnvWithChainSpec, EnvWithChainSpec},
+    primitives::{self, CfgEnv, Env, EthChainSpec, InvalidTransaction, TransactionValidation},
+    ChainSpec, Context, ContextWithChainSpec, Evm, EvmContext, Handler,
 };
 use core::marker::PhantomData;
 use std::boxed::Box;
@@ -33,8 +30,8 @@ impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthChainSpec, (), EmptyDB> 
     fn default() -> Self {
         Self {
             context: Context::default(),
-            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(
-                <EthChainSpec as ChainSpec>::Hardfork::default(),
+            handler: EthChainSpec::handler::<'a, (), EmptyDB>(
+                <EthChainSpec as primitives::ChainSpec>::Hardfork::default(),
             ),
             phantom: PhantomData,
         }
@@ -59,9 +56,7 @@ where
 
         EvmBuilder {
             context: Context::new(EvmContext::new(evm.inner.db), external),
-            handler: EvmBuilder::<'_, SetGenericStage, NewChainSpecT, _, _>::handler(
-                NewChainSpecT::Hardfork::default(),
-            ),
+            handler: NewChainSpecT::handler::<'a, EXT, DB>(NewChainSpecT::Hardfork::default()),
             phantom: PhantomData,
         }
     }
@@ -79,7 +74,7 @@ where
                 self.context.evm.with_db(EmptyDB::default()),
                 self.context.external,
             ),
-            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
+            handler: ChainSpecT::handler::<'a, EXT, EmptyDB>(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -90,7 +85,7 @@ where
     ) -> EvmBuilder<'a, SetGenericStage, ChainSpecT, EXT, ODB> {
         EvmBuilder {
             context: Context::new(self.context.evm.with_db(db), self.context.external),
-            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
+            handler: ChainSpecT::handler::<'a, EXT, ODB>(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -104,7 +99,7 @@ where
                 self.context.evm.with_db(WrapDatabaseRef(db)),
                 self.context.external,
             ),
-            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
+            handler: ChainSpecT::handler::<'a, EXT, WrapDatabaseRef<ODB>>(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -116,7 +111,7 @@ where
     ) -> EvmBuilder<'a, SetGenericStage, ChainSpecT, OEXT, DB> {
         EvmBuilder {
             context: Context::new(self.context.evm, external),
-            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
+            handler: ChainSpecT::handler::<'a, OEXT, DB>(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -130,7 +125,7 @@ where
         self.context.evm.env = env;
         EvmBuilder {
             context: self.context,
-            handler: EvmBuilder::<'_, HandlerStage, _, _, _>::handler(spec_id),
+            handler: ChainSpecT::handler::<'a, EXT, DB>(spec_id),
             phantom: PhantomData,
         }
     }
@@ -142,9 +137,7 @@ where
     ) -> EvmBuilder<'a, HandlerStage, ChainSpecT, OEXT, ODB> {
         EvmBuilder {
             context: context_with_handler_cfg.context,
-            handler: EvmBuilder::<'_, HandlerStage, _, _, _>::handler(
-                context_with_handler_cfg.spec_id,
-            ),
+            handler: ChainSpecT::handler::<'a, OEXT, ODB>(context_with_handler_cfg.spec_id),
             phantom: PhantomData,
         }
     }
@@ -158,7 +151,7 @@ where
 
         EvmBuilder {
             context: self.context,
-            handler: EvmBuilder::<'_, HandlerStage, _, _, _>::handler(cfg_env_and_spec_id.spec_id),
+            handler: ChainSpecT::handler::<'a, EXT, DB>(cfg_env_and_spec_id.spec_id),
             phantom: PhantomData,
         }
     }
@@ -194,7 +187,7 @@ where
                 self.context.evm.with_db(EmptyDB::default()),
                 self.context.external,
             ),
-            handler: EvmBuilder::<'_, HandlerStage, _, _, _>::handler(self.handler.spec_id()),
+            handler: ChainSpecT::handler::<'a, EXT, EmptyDB>(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -207,7 +200,7 @@ where
     ) -> EvmBuilder<'a, SetGenericStage, ChainSpecT, EXT, ODB> {
         EvmBuilder {
             context: Context::new(self.context.evm.with_db(db), self.context.external),
-            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
+            handler: ChainSpecT::handler::<'a, EXT, ODB>(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -223,7 +216,7 @@ where
                 self.context.evm.with_db(WrapDatabaseRef(db)),
                 self.context.external,
             ),
-            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
+            handler: ChainSpecT::handler::<'a, EXT, WrapDatabaseRef<ODB>>(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -236,7 +229,7 @@ where
     ) -> EvmBuilder<'a, SetGenericStage, ChainSpecT, OEXT, DB> {
         EvmBuilder {
             context: Context::new(self.context.evm, external),
-            handler: EvmBuilder::<'_, SetGenericStage, _, _, _>::handler(self.handler.spec_id()),
+            handler: ChainSpecT::handler::<'a, OEXT, DB>(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -410,13 +403,6 @@ where
     ChainSpecT:
         ChainSpec<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
 {
-    /// Creates the default handler.
-    ///
-    /// This is useful for adding optimism handle register.
-    fn handler(spec_id: ChainSpecT::Hardfork) -> EvmHandler<'a, ChainSpecT, EXT, DB> {
-        Handler::mainnet_with_spec(spec_id)
-    }
-
     /// Sets specification Id , that will mark the version of EVM.
     /// It represent the hard fork of ethereum.
     ///
@@ -436,7 +422,7 @@ where
 
     /// Resets [`Handler`] to default mainnet.
     pub fn reset_handler(mut self) -> Self {
-        self.handler = Self::handler(self.handler.spec_id());
+        self.handler = ChainSpecT::handler::<'a, EXT, DB>(self.handler.spec_id());
         self
     }
 }
@@ -456,9 +442,6 @@ mod test {
     use revm_precompile::PrecompileOutput;
     use std::{cell::RefCell, rc::Rc, sync::Arc};
 
-    #[cfg(feature = "optimism")]
-    type TestChainSpec = crate::optimism::OptimismChainSpec;
-    #[cfg(not(feature = "optimism"))]
     type TestChainSpec = crate::primitives::EthChainSpec;
 
     /// Custom evm context
@@ -485,9 +468,6 @@ mod test {
                 db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
             })
             .modify_tx_env(|tx| {
-                #[cfg(feature = "optimism")]
-                let transact_to = &mut tx.base.transact_to;
-                #[cfg(not(feature = "optimism"))]
                 let transact_to = &mut tx.transact_to;
 
                 *transact_to = TxKind::Call(to_addr)
@@ -543,9 +523,6 @@ mod test {
                 db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
             })
             .modify_tx_env(|tx| {
-                #[cfg(feature = "optimism")]
-                let transact_to = &mut tx.base.transact_to;
-                #[cfg(not(feature = "optimism"))]
                 let transact_to = &mut tx.transact_to;
 
                 *transact_to = TxKind::Call(to_addr)
@@ -594,49 +571,21 @@ mod test {
         Evm::builder()
             .with_chain_spec::<TestChainSpec>()
             .with_empty_db()
-            .modify_tx_env(|tx| {
-                #[cfg(feature = "optimism")]
-                let gas_limit = &mut tx.base.gas_limit;
-                #[cfg(not(feature = "optimism"))]
-                let gas_limit = &mut tx.gas_limit;
-
-                *gas_limit = 10
-            })
+            .modify_tx_env(|tx| tx.gas_limit = 10)
             .build();
         Evm::builder()
             .with_chain_spec::<TestChainSpec>()
-            .modify_tx_env(|tx| {
-                #[cfg(feature = "optimism")]
-                let gas_limit = &mut tx.base.gas_limit;
-                #[cfg(not(feature = "optimism"))]
-                let gas_limit = &mut tx.gas_limit;
-
-                *gas_limit = 10
-            })
+            .modify_tx_env(|tx| tx.gas_limit = 10)
             .build();
         Evm::builder()
             .with_chain_spec::<TestChainSpec>()
             .with_empty_db()
-            .modify_tx_env(|tx| {
-                #[cfg(feature = "optimism")]
-                let gas_limit = &mut tx.base.gas_limit;
-                #[cfg(not(feature = "optimism"))]
-                let gas_limit = &mut tx.gas_limit;
-
-                *gas_limit = 10
-            })
+            .modify_tx_env(|tx| tx.gas_limit = 10)
             .build();
         Evm::builder()
             .with_chain_spec::<TestChainSpec>()
             .with_empty_db()
-            .modify_tx_env(|tx| {
-                #[cfg(feature = "optimism")]
-                let gas_limit = &mut tx.base.gas_limit;
-                #[cfg(not(feature = "optimism"))]
-                let gas_limit = &mut tx.gas_limit;
-
-                *gas_limit = 10
-            })
+            .modify_tx_env(|tx| tx.gas_limit = 10)
             .build();
 
         // with inspector handle
@@ -691,9 +640,6 @@ mod test {
             }
         }
 
-        #[cfg(feature = "optimism")]
-        let spec_id = crate::optimism::OptimismSpecId::HOMESTEAD;
-        #[cfg(not(feature = "optimism"))]
         let spec_id = crate::primitives::SpecId::HOMESTEAD;
 
         let mut evm = Evm::builder()

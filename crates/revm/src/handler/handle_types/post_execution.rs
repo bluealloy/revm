@@ -2,8 +2,8 @@
 use crate::{
     handler::mainnet,
     interpreter::Gas,
-    primitives::{db::Database, ChainSpec, EVMResultGeneric, ResultAndState, Spec},
-    Context, FrameResult,
+    primitives::{db::Database, EVMResultGeneric, ResultAndState, Spec},
+    ChainSpec, Context, FrameResult,
 };
 use std::sync::Arc;
 

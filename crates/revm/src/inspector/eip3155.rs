@@ -3,8 +3,8 @@ use crate::{
     interpreter::{
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
     },
-    primitives::{db::Database, hex, ChainSpec, HashMap, Transaction, B256, U256},
-    EvmContext, Inspector,
+    primitives::{db::Database, hex, HashMap, Transaction, B256, U256},
+    ChainSpec, EvmContext, Inspector,
 };
 use revm_interpreter::OpCode;
 use serde::Serialize;

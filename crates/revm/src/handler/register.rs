@@ -1,4 +1,4 @@
-use crate::{db::Database, handler::Handler, primitives::ChainSpec, Context};
+use crate::{db::Database, handler::Handler, ChainSpec, Context};
 use std::boxed::Box;
 
 /// EVM Handler
