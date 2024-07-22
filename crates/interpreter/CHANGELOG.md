@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.2.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v8.1.0...revm-interpreter-v8.2.0) - 2024-07-22
+
+### Added
+- *(EOF)* implement std::error::Error trait for EofValidationError and EofError ([#1649](https://github.com/bluealloy/revm/pull/1649))
+- *(interpreter)* derive traits on FunctionStack ([#1640](https://github.com/bluealloy/revm/pull/1640))
+
+### Fixed
+- *(eof)* deny static context in EOFCREATE ([#1644](https://github.com/bluealloy/revm/pull/1644))
+
+### Other
+- avoid cloning original_bytes ([#1646](https://github.com/bluealloy/revm/pull/1646))
+- use `is_zero` for `U256` and `B256` ([#1638](https://github.com/bluealloy/revm/pull/1638))
+- fix some typos & remove useless Arc::clone ([#1621](https://github.com/bluealloy/revm/pull/1621))
+- *(eof)* avoid some allocations ([#1632](https://github.com/bluealloy/revm/pull/1632))
+- bump versions bcs of primitives ([#1631](https://github.com/bluealloy/revm/pull/1631))
+
 ## [8.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v7.0.0...revm-interpreter-v8.0.0) - 2024-07-16
 
 ### Added
