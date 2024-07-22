@@ -1,16 +1,16 @@
 use crate::primitives::{
-    AccessListItem, Address, AuthorizationList, Bytes, Transaction, TransactionValidation, TxEnv,
-    TxKind, B256, U256,
+    AccessListItem, Address, AuthorizationList, Bytes, Transaction, TransactionValidation, TxKind,
+    B256, U256,
 };
 
-use super::OptimismInvalidTransaction;
+use super::{OptimismInvalidTransaction, OptimismTransaction};
 
 /// The Optimism transaction environment.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct OptimismTransaction {
+pub struct TxEnv {
     #[cfg_attr(feature = "serde", serde(flatten))]
-    pub base: TxEnv,
+    pub base: crate::primitives::TxEnv,
 
     /// The source hash is used to make sure that deposit transactions do
     /// not have identical hashes.
@@ -38,7 +38,7 @@ pub struct OptimismTransaction {
     pub enveloped_tx: Option<Bytes>,
 }
 
-impl Transaction for OptimismTransaction {
+impl Transaction for TxEnv {
     fn caller(&self) -> &Address {
         self.base.caller()
     }
@@ -92,6 +92,24 @@ impl Transaction for OptimismTransaction {
     }
 }
 
-impl TransactionValidation for OptimismTransaction {
+impl OptimismTransaction for TxEnv {
+    fn source_hash(&self) -> Option<&B256> {
+        self.source_hash.as_ref()
+    }
+
+    fn mint(&self) -> Option<&u128> {
+        self.mint.as_ref()
+    }
+
+    fn is_system_transaction(&self) -> Option<bool> {
+        self.is_system_transaction.clone()
+    }
+
+    fn enveloped_tx(&self) -> Option<Bytes> {
+        self.enveloped_tx.clone()
+    }
+}
+
+impl TransactionValidation for TxEnv {
     type ValidationError = OptimismInvalidTransaction;
 }

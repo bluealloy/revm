@@ -199,7 +199,7 @@ mod test {
     use super::*;
 
     #[cfg(feature = "optimism")]
-    type TestChainSpec = crate::optimism::OptimismChainSpec;
+    type TestChainSpec = crate::optimism::ChainSpec;
     #[cfg(not(feature = "optimism"))]
     type TestChainSpec = primitives::EthChainSpec;
 
