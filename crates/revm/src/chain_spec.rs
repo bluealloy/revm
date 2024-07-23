@@ -4,6 +4,7 @@ use crate::{
     primitives::{db::Database, spec_to_generic, EthChainSpec},
     EvmHandler,
 };
+use std::vec::Vec;
 
 pub trait ChainSpec: crate::primitives::ChainSpec {
     /// The type that contains all context information for the chain's EVM execution.
