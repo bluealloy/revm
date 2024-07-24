@@ -258,8 +258,8 @@ mod tests {
     }
 
     #[test]
-    fn cut_header() {
+    fn short_input() {
         let input = hex!("ef0001010000028000");
-        let _ = EofHeader::decode(&input).unwrap();
+        assert_eq!(EofHeader::decode(&input), Err(EofDecodeError::ShortInputForSizes));
     }
 }
