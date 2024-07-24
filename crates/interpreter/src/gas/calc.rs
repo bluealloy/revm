@@ -118,7 +118,7 @@ pub fn exp_cost(spec_id: SpecId, power: U256) -> Option<u64> {
 /// `*COPY` opcodes cost calculation.
 #[inline]
 pub const fn verylowcopy_cost(len: u64) -> Option<u64> {
-    VERYLOW.checked_add(tri!(cost_per_word(len, COPY)))
+    copy_cost(VERYLOW, len, COPY)
 }
 
 /// `EXTCODECOPY` opcode cost calculation.
@@ -131,7 +131,12 @@ pub const fn extcodecopy_cost(spec_id: SpecId, len: u64, is_cold: bool) -> Optio
     } else {
         20
     };
-    base_gas.checked_add(tri!(cost_per_word(len, COPY)))
+    copy_cost(base_gas, len, COPY)
+}
+
+#[inline]
+pub const fn copy_cost(base_cost: u64, len: u64, copy_cost_per_word: u64) -> Option<u64> {
+    base_cost.checked_add(tri!(cost_per_word(len, copy_cost_per_word)))
 }
 
 /// `LOG` opcode cost calculation.
