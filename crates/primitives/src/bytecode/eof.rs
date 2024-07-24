@@ -149,30 +149,33 @@ pub enum EofDecodeError {
     ZeroCodeSections,
     /// Invalid container number.
     TooManyContainerSections,
+    /// Invalid initcode size.
+    InvalidEOFSize,
 }
 
 impl fmt::Display for EofDecodeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            EofDecodeError::MissingInput => "Short input while processing EOF",
-            EofDecodeError::MissingBodyWithoutData => "Short body while processing EOF",
-            EofDecodeError::DanglingData => "Body size is more than specified in the header",
-            EofDecodeError::InvalidTypesSection => "Invalid types section data",
-            EofDecodeError::InvalidTypesSectionSize => "Invalid types section size",
-            EofDecodeError::InvalidEOFMagicNumber => "Invalid EOF magic number",
-            EofDecodeError::InvalidEOFVersion => "Invalid EOF version",
-            EofDecodeError::InvalidTypesKind => "Invalid number for types kind",
-            EofDecodeError::InvalidCodeKind => "Invalid number for code kind",
-            EofDecodeError::InvalidTerminalByte => "Invalid terminal code",
-            EofDecodeError::InvalidDataKind => "Invalid data kind",
-            EofDecodeError::InvalidKindAfterCode => "Invalid kind after code",
-            EofDecodeError::MismatchCodeAndTypesSize => "Mismatch of code and types sizes",
-            EofDecodeError::NonSizes => "There should be at least one size",
-            EofDecodeError::ShortInputForSizes => "Missing size",
-            EofDecodeError::ZeroSize => "Size cant be zero",
-            EofDecodeError::TooManyCodeSections => "Invalid code number",
-            EofDecodeError::ZeroCodeSections => "Invalid number of code sections",
-            EofDecodeError::TooManyContainerSections => "Invalid container number",
+            Self::MissingInput => "Short input while processing EOF",
+            Self::MissingBodyWithoutData => "Short body while processing EOF",
+            Self::DanglingData => "Body size is more than specified in the header",
+            Self::InvalidTypesSection => "Invalid types section data",
+            Self::InvalidTypesSectionSize => "Invalid types section size",
+            Self::InvalidEOFMagicNumber => "Invalid EOF magic number",
+            Self::InvalidEOFVersion => "Invalid EOF version",
+            Self::InvalidTypesKind => "Invalid number for types kind",
+            Self::InvalidCodeKind => "Invalid number for code kind",
+            Self::InvalidTerminalByte => "Invalid terminal code",
+            Self::InvalidDataKind => "Invalid data kind",
+            Self::InvalidKindAfterCode => "Invalid kind after code",
+            Self::MismatchCodeAndTypesSize => "Mismatch of code and types sizes",
+            Self::NonSizes => "There should be at least one size",
+            Self::ShortInputForSizes => "Missing size",
+            Self::ZeroSize => "Size cant be zero",
+            Self::TooManyCodeSections => "Invalid code number",
+            Self::ZeroCodeSections => "Invalid number of code sections",
+            Self::TooManyContainerSections => "Invalid container number",
+            Self::InvalidEOFSize => "Invalid initcode size",
         };
         f.write_str(s)
     }

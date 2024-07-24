@@ -1,3 +1,5 @@
+use revm_primitives::MAX_INITCODE_SIZE;
+
 use crate::{
     instructions::utility::{read_i16, read_u16},
     opcode,
@@ -5,7 +7,7 @@ use crate::{
         bitvec::prelude::{bitvec, BitVec, Lsb0},
         eof::{EofDecodeError, TypesSection},
         legacy::JumpTable,
-        Bytecode, Bytes, Eof, HashSet, LegacyAnalyzedBytecode,
+        Bytecode, Bytes, Eof, LegacyAnalyzedBytecode,
     },
     OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
 };
@@ -67,26 +69,58 @@ fn analyze(code: &[u8]) -> JumpTable {
 
 /// Decodes `raw` into an [`Eof`] container and validates it.
 pub fn validate_raw_eof(raw: Bytes) -> Result<Eof, EofError> {
+    validate_raw_eof_inner(raw, Some(CodeType::ReturnContract))
+}
+
+/// Decodes `raw` into an [`Eof`] container and validates it.
+#[inline]
+pub fn validate_raw_eof_inner(
+    raw: Bytes,
+    first_code_type: Option<CodeType>,
+) -> Result<Eof, EofError> {
+    if raw.len() > MAX_INITCODE_SIZE {
+        return Err(EofError::Decode(EofDecodeError::InvalidEOFSize));
+    }
     let eof = Eof::decode(raw)?;
-    validate_eof(&eof)?;
+    validate_eof_inner(&eof, first_code_type)?;
     Ok(eof)
 }
 
 /// Fully validates an [`Eof`] container.
+///
+/// Only place where validation happen is in Creating Transaction.
+/// Because of that we are assuming CodeType is ReturnContract.
+///
+/// Note: If neeed we can make a flag that would assume ReturnContract CodeType.
 pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
+    validate_eof_inner(eof, Some(CodeType::ReturnContract))
+}
+
+#[inline]
+pub fn validate_eof_inner(eof: &Eof, first_code_type: Option<CodeType>) -> Result<(), EofError> {
+    // data needs to be filled first first container.
+    if !eof.body.is_data_filled {
+        return Err(EofError::Validation(EofValidationError::DataNotFilled));
+    }
     if eof.body.container_section.is_empty() {
-        validate_eof_codes(eof)?;
+        validate_eof_codes(eof, first_code_type)?;
         return Ok(());
     }
 
     let mut stack = Vec::with_capacity(4);
-    stack.push(Cow::Borrowed(eof));
-    while let Some(eof) = stack.pop() {
+    stack.push((Cow::Borrowed(eof), first_code_type));
+
+    while let Some((eof, code_type)) = stack.pop() {
         // Validate the current container.
-        validate_eof_codes(&eof)?;
+        let tracker_containers = validate_eof_codes(&eof, code_type)?;
         // Decode subcontainers and push them to the stack.
-        for container in &eof.body.container_section {
-            stack.push(Cow::Owned(Eof::decode(container.clone())?));
+        for (container, code_type) in eof
+            .body
+            .container_section
+            .iter()
+            .zip(tracker_containers.into_iter())
+        {
+            stack.push((Cow::Owned(Eof::decode(container.clone())?), Some(code_type)));
         }
     }
 
@@ -94,7 +128,13 @@ pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
 }
 
 /// Validates an [`Eof`] structure, without recursing into containers.
-pub fn validate_eof_codes(eof: &Eof) -> Result<(), EofValidationError> {
+///
+/// Returns a list of all sub containers that are accessed.
+#[inline]
+pub fn validate_eof_codes(
+    eof: &Eof,
+    this_code_type: Option<CodeType>,
+) -> Result<Vec<CodeType>, EofValidationError> {
     if eof.body.code_section.len() != eof.body.types_section.len() {
         return Err(EofValidationError::InvalidTypesSection);
     }
@@ -111,37 +151,45 @@ pub fn validate_eof_codes(eof: &Eof) -> Result<(), EofValidationError> {
         return Err(EofValidationError::InvalidTypesSection);
     }
 
-    // first section is default one.
-    let mut code_sections_accessed = vec![false; eof.body.code_section.len()];
-    code_sections_accessed[0] = true;
+    // tracking access of code and sub containers.
+    let mut tracker: AccessTracker = AccessTracker::new(
+        this_code_type,
+        eof.body.code_section.len(),
+        eof.body.container_section.len(),
+    );
+    // first code section is accessed by default.
+    tracker.codes[0] = true;
 
-    // start validation from code section 0.
-    let mut stack = Vec::with_capacity(16);
-    stack.push(0);
-    while let Some(index) = stack.pop() {
-        let code = &eof.body.code_section[index];
-        let accessed = validate_eof_code(
+    for (index, code) in eof.body.code_section.iter().enumerate() {
+        validate_eof_code(
             code,
             eof.header.data_size as usize,
             index,
             eof.body.container_section.len(),
             &eof.body.types_section,
+            &mut tracker,
         )?;
-
-        // queue accessed codes.
-        accessed.into_iter().for_each(|i| {
-            if !code_sections_accessed[i] {
-                code_sections_accessed[i] = true;
-                stack.push(i);
-            }
-        });
     }
     // iterate over accessed codes and check if all are accessed.
-    if !code_sections_accessed.into_iter().all(identity) {
+    if !tracker.codes.into_iter().all(identity) {
         return Err(EofValidationError::CodeSectionNotAccessed);
     }
+    // iterate over all accessed subcontainers and check if all are accessed.
+    if !tracker.subcontainers.iter().all(|i| i.is_some()) {
+        return Err(EofValidationError::SubContainerNotAccessed);
+    }
 
-    Ok(())
+    if tracker.this_container_code_type == Some(CodeType::ReturnContract)
+        && !eof.body.is_data_filled
+    {
+        return Err(EofValidationError::DataNotFilled);
+    }
+
+    Ok(tracker
+        .subcontainers
+        .into_iter()
+        .map(|i| i.unwrap())
+        .collect())
 }
 
 /// EOF Error.
@@ -239,6 +287,80 @@ pub enum EofValidationError {
     MaxStackMismatch,
     /// No code sections present
     NoCodeSections,
+    /// Sub container called in two different modes.
+    /// Check [`CodeType`] for more information.
+    SubContainerCalledInTwoModes,
+    /// Sub container not accessed.
+    SubContainerNotAccessed,
+    /// Data size needs to be filled for ReturnContract type.
+    DataNotFilled,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct AccessTracker {
+    /// This code type
+    pub this_container_code_type: Option<CodeType>,
+    /// Vector of accessed codes.
+    pub codes: Vec<bool>,
+    /// Code accessed by subcontainer and expected subcontainer first code type.
+    /// EOF code can be invoked in EOFCREATE mode or used in RETURNCONTRACT opcode.
+    /// if SubContainer is called from EOFCREATE it needs to be ReturnContract type.
+    /// If SubContainer is called from RETURNCONTRACT it needs to be ReturnOrStop type.
+    ///
+    /// None means it is not accessed.
+    pub subcontainers: Vec<Option<CodeType>>,
+}
+
+impl AccessTracker {
+    /// Returns a new instance of `CodeSubContainerAccess`.
+    pub fn new(
+        this_container_code_type: Option<CodeType>,
+        codes_size: usize,
+        subcontainers_size: usize,
+    ) -> Self {
+        Self {
+            this_container_code_type,
+            codes: vec![false; codes_size],
+            subcontainers: vec![None; subcontainers_size],
+        }
+    }
+
+    pub fn set_subcontainer_type(
+        &mut self,
+        index: usize,
+        new_code_type: CodeType,
+    ) -> Result<(), EofValidationError> {
+        let Some(container) = self.subcontainers.get_mut(index) else {
+            panic!("It should not be possible")
+        };
+
+        let Some(code_type) = container else {
+            *container = Some(new_code_type);
+            return Ok(());
+        };
+
+        if *code_type != new_code_type {
+            return Err(EofValidationError::SubContainerCalledInTwoModes);
+        }
+        Ok(())
+    }
+}
+
+/// Types of code sections. It is a error if container to contain
+/// both RETURNCONTRACT and either of RETURN or STOP.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum CodeType {
+    /// Return contract code.
+    ReturnContract,
+    /// Return or Stop opcodes.
+    ReturnOrStop,
+}
+
+impl CodeType {
+    /// Returns true of the code is initcode.
+    pub fn is_initcode(&self) -> bool {
+        matches!(self, CodeType::ReturnContract)
+    }
 }
 
 impl fmt::Display for EofValidationError {
@@ -247,54 +369,55 @@ impl fmt::Display for EofValidationError {
             f,
             "{}",
             match self {
-                EofValidationError::FalsePossitive => "False positive",
-                EofValidationError::UnknownOpcode => "Opcode is not known",
-                EofValidationError::OpcodeDisabled => "Opcode is disabled",
-                EofValidationError::InstructionNotForwardAccessed => "Should have forward jump",
-                EofValidationError::MissingImmediateBytes => "Bytecode is missing bytes",
-                EofValidationError::MissingRJUMPVImmediateBytes => {
+                Self::FalsePossitive => "False positive",
+                Self::UnknownOpcode => "Opcode is not known",
+                Self::OpcodeDisabled => "Opcode is disabled",
+                Self::InstructionNotForwardAccessed => "Should have forward jump",
+                Self::MissingImmediateBytes => "Bytecode is missing bytes",
+                Self::MissingRJUMPVImmediateBytes => {
                     "Bytecode is missing bytes after RJUMPV opcode"
                 }
-                EofValidationError::JumpToImmediateBytes => "Invalid jump",
-                EofValidationError::BackwardJumpToImmediateBytes => "Invalid backward jump",
-                EofValidationError::RJUMPVZeroMaxIndex => "Used RJUMPV with zero as MaxIndex",
-                EofValidationError::JumpZeroOffset => "Used JUMP with zero as offset",
-                EofValidationError::EOFCREATEInvalidIndex =>
-                    "EOFCREATE points to out of bound index",
-                EofValidationError::CodeSectionOutOfBounds => "CALLF index is out of bounds",
-                EofValidationError::CALLFNonReturningFunction => {
+                Self::JumpToImmediateBytes => "Invalid jump",
+                Self::BackwardJumpToImmediateBytes => "Invalid backward jump",
+                Self::RJUMPVZeroMaxIndex => "Used RJUMPV with zero as MaxIndex",
+                Self::JumpZeroOffset => "Used JUMP with zero as offset",
+                Self::EOFCREATEInvalidIndex => "EOFCREATE points to out of bound index",
+                Self::CodeSectionOutOfBounds => "CALLF index is out of bounds",
+                Self::CALLFNonReturningFunction => {
                     "CALLF was used on non-returning function"
                 }
-                EofValidationError::StackOverflow => "CALLF stack overflow",
-                EofValidationError::JUMPFEnoughOutputs => "JUMPF needs more outputs",
-                EofValidationError::JUMPFStackHigherThanOutputs => {
+                Self::StackOverflow => "CALLF stack overflow",
+                Self::JUMPFEnoughOutputs => "JUMPF needs more outputs",
+                Self::JUMPFStackHigherThanOutputs => {
                     "JUMPF stack is too high for outputs"
                 }
-                EofValidationError::DataLoadOutOfBounds => "DATALOAD is out of bounds",
-                EofValidationError::RETFBiggestStackNumMoreThenOutputs => {
+                Self::DataLoadOutOfBounds => "DATALOAD is out of bounds",
+                Self::RETFBiggestStackNumMoreThenOutputs => {
                     "RETF biggest stack num is more than outputs"
                 }
-                EofValidationError::StackUnderflow =>
-                    "Stack requirement is above smallest stack items",
-                EofValidationError::TypesStackUnderflow => {
+                Self::StackUnderflow => "Stack requirement is above smallest stack items",
+                Self::TypesStackUnderflow => {
                     "Smallest stack items is more than output type"
                 }
-                EofValidationError::JumpUnderflow => "Jump destination is too low",
-                EofValidationError::JumpOverflow => "Jump destination is too high",
-                EofValidationError::BackwardJumpBiggestNumMismatch => {
+                Self::JumpUnderflow => "Jump destination is too low",
+                Self::JumpOverflow => "Jump destination is too high",
+                Self::BackwardJumpBiggestNumMismatch => {
                     "Backward jump has different biggest stack item"
                 }
-                EofValidationError::BackwardJumpSmallestNumMismatch => {
+                Self::BackwardJumpSmallestNumMismatch => {
                     "Backward jump has different smallest stack item"
                 }
-                EofValidationError::LastInstructionNotTerminating => {
+                Self::LastInstructionNotTerminating => {
                     "Last instruction of bytecode is not terminating"
                 }
-                EofValidationError::CodeSectionNotAccessed => "Code section was not accessed",
-                EofValidationError::InvalidTypesSection => "Invalid types section",
-                EofValidationError::InvalidFirstTypesSection => "Invalid first types section",
-                EofValidationError::MaxStackMismatch => "Max stack element mismatchs",
-                EofValidationError::NoCodeSections => "No code sections",
+                Self::CodeSectionNotAccessed => "Code section was not accessed",
+                Self::InvalidTypesSection => "Invalid types section",
+                Self::InvalidFirstTypesSection => "Invalid first types section",
+                Self::MaxStackMismatch => "Max stack element mismatchs",
+                Self::NoCodeSections => "No code sections",
+                Self::SubContainerCalledInTwoModes => "Sub container called in two modes",
+                Self::SubContainerNotAccessed => "Sub container not accessed",
+                Self::DataNotFilled => "Data not filled",
             }
         )
     }
@@ -309,24 +432,14 @@ impl std::error::Error for EofValidationError {}
 /// * All instructions are accessed by forward jumps or .
 ///
 /// Validate stack requirements and if all codes sections are used.
-///
-/// TODO mark accessed Types/Codes
-///
-/// Preconditions:
-/// * Jump destinations are valid.
-/// * All instructions are valid and well formed.
-/// * All instruction is accessed by forward jumps.
-/// * Bytecode is valid and ends with terminating instruction.
-///
-/// Preconditions are checked in `validate_eof_bytecode`.
 pub fn validate_eof_code(
     code: &[u8],
     data_size: usize,
     this_types_index: usize,
     num_of_containers: usize,
     types: &[TypesSection],
-) -> Result<HashSet<usize>, EofValidationError> {
-    let mut accessed_codes = HashSet::<usize>::new();
+    tracker: &mut AccessTracker,
+) -> Result<(), EofValidationError> {
     let this_types = &types[this_types_index];
 
     #[derive(Debug, Copy, Clone)]
@@ -476,7 +589,7 @@ pub fn validate_eof_code(
                 // stack diff depends on input/output of the called code.
                 stack_io_diff = target_types.io_diff();
                 // mark called code as accessed.
-                accessed_codes.insert(section_i);
+                tracker.codes[section_i] = true;
 
                 // we decrement by `types.inputs` as they are considered as send
                 // to the called code and included in types.max_stack_size.
@@ -504,7 +617,7 @@ pub fn validate_eof_code(
                     // stack overflow
                     return Err(EofValidationError::StackOverflow);
                 }
-                accessed_codes.insert(target_index);
+                tracker.codes[target_index] = true;
 
                 if target_types.outputs == EOF_NON_RETURNING_FUNCTION {
                     // if it is not returning
@@ -534,6 +647,33 @@ pub fn validate_eof_code(
                 if index >= num_of_containers {
                     // code section out of bounds.
                     return Err(EofValidationError::EOFCREATEInvalidIndex);
+                }
+                tracker.set_subcontainer_type(index, CodeType::ReturnContract)?;
+            }
+            opcode::RETURNCONTRACT => {
+                let index = code[i + 1] as usize;
+                if index >= num_of_containers {
+                    // code section out of bounds.
+                    // TODO custom error
+                    return Err(EofValidationError::EOFCREATEInvalidIndex);
+                }
+                if *tracker
+                    .this_container_code_type
+                    .get_or_insert(CodeType::ReturnContract)
+                    != CodeType::ReturnContract
+                {
+                    // TODO make custom error
+                    return Err(EofValidationError::SubContainerCalledInTwoModes);
+                }
+                tracker.set_subcontainer_type(index, CodeType::ReturnOrStop)?;
+            }
+            opcode::RETURN | opcode::STOP => {
+                if *tracker
+                    .this_container_code_type
+                    .get_or_insert(CodeType::ReturnOrStop)
+                    != CodeType::ReturnOrStop
+                {
+                    return Err(EofValidationError::SubContainerCalledInTwoModes);
                 }
             }
             opcode::DATALOADN => {
@@ -632,7 +772,7 @@ pub fn validate_eof_code(
         return Err(EofValidationError::MaxStackMismatch);
     }
 
-    Ok(accessed_codes)
+    Ok(())
 }
 
 #[cfg(test)]
@@ -652,7 +792,7 @@ mod test {
     fn test2() {
         // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
         let err =
-            validate_raw_eof(hex!("ef000101000c02000300040004000204000000008000020002000100010001e30001005fe500025fe4").into());
+            validate_raw_eof_inner(hex!("ef000101000c02000300040004000204000000008000020002000100010001e30001005fe500025fe4").into(),None);
         assert!(err.is_ok(), "{err:#?}");
     }
 
@@ -660,7 +800,7 @@ mod test {
     fn test3() {
         // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
         let err =
-            validate_raw_eof(hex!("ef000101000c02000300040008000304000000008000020002000503010003e30001005f5f5f5f5fe500025050e4").into());
+            validate_raw_eof_inner(hex!("ef000101000c02000300040008000304000000008000020002000503010003e30001005f5f5f5f5fe500025050e4").into(),None);
         assert_eq!(
             err,
             Err(EofError::Validation(
@@ -682,5 +822,25 @@ mod test {
                 EofValidationError::BackwardJumpBiggestNumMismatch
             ))
         );
+    }
+
+    #[test]
+    fn test5() {
+        let err = validate_raw_eof(hex!("ef000101000402000100030400000000800000e5ffff").into());
+        assert_eq!(
+            err,
+            Err(EofError::Validation(
+                EofValidationError::CodeSectionOutOfBounds
+            ))
+        );
+    }
+
+    #[test]
+    fn size_limit() {
+        let eof = validate_raw_eof_inner(
+            hex!("ef00010100040200010003040001000080000130500000").into(),
+            Some(CodeType::ReturnOrStop),
+        );
+        assert!(eof.is_ok());
     }
 }

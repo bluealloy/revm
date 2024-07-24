@@ -14,9 +14,10 @@ pub struct TestUnit {
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TestVector {
     pub code: Bytes,
+    pub container_kind: Option<String>,
     pub results: PragueTestResult,
 }
 

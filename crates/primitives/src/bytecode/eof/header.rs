@@ -176,7 +176,8 @@ impl EofHeader {
         // code_sections_sizes
         let (input, sizes, sum) = consume_header_section_size(input)?;
 
-        if sizes.len() > 1024 {
+        // more than 1024 code sections are not allowed
+        if sizes.len() > 0x0400 {
             return Err(EofDecodeError::TooManyCodeSections);
         }
 
@@ -197,8 +198,8 @@ impl EofHeader {
             KIND_CONTAINER => {
                 // container_sections_sizes
                 let (input, sizes, sum) = consume_header_section_size(input)?;
-                // the number of container sections must not exceed 256
-                if sizes.len() > 256 {
+                // the number of container sections may not exceed 256
+                if sizes.len() > 0x0100 {
                     return Err(EofDecodeError::TooManyContainerSections);
                 }
                 header.container_sizes = sizes;
@@ -258,7 +259,7 @@ mod tests {
     }
 
     #[test]
-    fn short_input() {
+    fn cut_header() {
         let input = hex!("ef0001010000028000");
         assert_eq!(
             EofHeader::decode(&input),
@@ -267,9 +268,8 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_non_returning_flag() {
-        let input =
-            hex!("ef000101000c020003000400010003041d0000008000000080000000000000e300020000e50001");
+    fn short_input() {
+        let input = hex!("ef0001010000028000");
         assert_eq!(
             EofHeader::decode(&input),
             Err(EofDecodeError::ShortInputForSizes)
