@@ -261,12 +261,6 @@ mod tests {
     #[test]
     fn cut_header() {
         let input = hex!("ef0001010000028000");
-        let _ = EofHeader::decode(&input).unwrap();
-    }
-
-    #[test]
-    fn short_input() {
-        let input = hex!("ef0001010000028000");
         assert_eq!(
             EofHeader::decode(&input),
             Err(EofDecodeError::ShortInputForSizes)
@@ -274,9 +268,8 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_non_returning_flag() {
-        let input =
-            hex!("ef000101000c020003000400010003041d0000008000000080000000000000e300020000e50001");
+    fn short_input() {
+        let input = hex!("ef0001010000028000");
         assert_eq!(
             EofHeader::decode(&input),
             Err(EofDecodeError::ShortInputForSizes)

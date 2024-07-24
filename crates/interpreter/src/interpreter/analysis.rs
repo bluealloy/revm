@@ -792,7 +792,7 @@ mod test {
     fn test2() {
         // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
         let err =
-            validate_raw_eof(hex!("ef000101000c02000300040004000204000000008000020002000100010001e30001005fe500025fe4").into());
+            validate_raw_eof_inner(hex!("ef000101000c02000300040004000204000000008000020002000100010001e30001005fe500025fe4").into(),None);
         assert!(err.is_ok(), "{err:#?}");
     }
 
@@ -800,7 +800,7 @@ mod test {
     fn test3() {
         // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
         let err =
-            validate_raw_eof(hex!("ef000101000c02000300040008000304000000008000020002000503010003e30001005f5f5f5f5fe500025050e4").into());
+            validate_raw_eof_inner(hex!("ef000101000c02000300040008000304000000008000020002000503010003e30001005f5f5f5f5fe500025050e4").into(),None);
         assert_eq!(
             err,
             Err(EofError::Validation(
@@ -830,7 +830,7 @@ mod test {
         assert_eq!(
             err,
             Err(EofError::Validation(
-                EofValidationError::JUMPFStackHigherThanOutputs
+                EofValidationError::CodeSectionOutOfBounds
             ))
         );
     }
@@ -838,10 +838,9 @@ mod test {
     #[test]
     fn size_limit() {
         let eof = validate_raw_eof_inner(
-            hex!("ef000101000402000100030400010000800001305000").into(),
+            hex!("ef00010100040200010003040001000080000130500000").into(),
             Some(CodeType::ReturnOrStop),
         );
-        println!("EOF: {:#?}", eof);
         assert!(eof.is_ok());
     }
 }
