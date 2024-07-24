@@ -98,7 +98,7 @@ pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
 
 #[inline]
 pub fn validate_eof_inner(eof: &Eof, first_code_type: Option<CodeType>) -> Result<(), EofError> {
-    // data needs to be filled for return contract type.
+    // data needs to be filled first first container.
     if !eof.body.is_data_filled {
         return Err(EofError::Validation(EofValidationError::DataNotFilled));
     }

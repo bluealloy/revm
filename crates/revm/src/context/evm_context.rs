@@ -367,6 +367,7 @@ impl<DB: Database> EvmContext<DB> {
             } => (input.clone(), initcode.clone(), Some(*created_address)),
             EOFCreateKind::Tx { initdata } => {
                 // decode eof and init code.
+                // TODO handle inc_nonce handling more gracefully.
                 let Ok((eof, input)) = Eof::decode_dangling(initdata.clone()) else {
                     self.journaled_state.inc_nonce(inputs.caller);
                     return return_error(InstructionResult::InvalidEOFInitCode);

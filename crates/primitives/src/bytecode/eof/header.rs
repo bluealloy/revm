@@ -1,5 +1,3 @@
-use crate::MAX_INITCODE_SIZE;
-
 use super::{
     decode_helpers::{consume_u16, consume_u8},
     EofDecodeError,

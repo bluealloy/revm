@@ -3,10 +3,7 @@ mod test_suite;
 pub use test_suite::{PragueTestResult, TestResult, TestSuite, TestUnit, TestVector};
 
 use crate::{cmd::Error, dir_utils::find_all_json_tests};
-use revm::{
-    interpreter::analysis::{validate_raw_eof, validate_raw_eof_inner, CodeType, EofError},
-    primitives::Eof,
-};
+use revm::interpreter::analysis::{validate_raw_eof_inner, CodeType, EofError};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
@@ -55,9 +52,8 @@ pub fn run_test(path: &Path) {
                 };
                 let res = validate_raw_eof_inner(test_vector.code.clone(), kind);
                 if res.is_ok() != test_vector.results.prague.result {
-                    //let eof = Eof::decode(test_vector.code.clone());
                     println!(
-                        "\nTest failed: {} - {}\nresult:{:?}\nrevm err_result:{:#?}\nbytes:{:?}\n,eof:",
+                        "\nTest failed: {} - {}\nresult:{:?}\nrevm err_result:{:#?}\nbytes:{:?}\n",
                         name,
                         vector_name,
                         test_vector.results.prague,
