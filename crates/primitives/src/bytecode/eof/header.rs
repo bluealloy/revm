@@ -44,9 +44,9 @@ fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize),
     if input.len() < byte_size {
         return Err(EofDecodeError::ShortInputForSizes);
     }
-    let mut sizes = Vec::with_capacity(num_sections as usize);
+    let mut sizes = Vec::with_capacity(num_sections);
     let mut sum = 0;
-    for i in 0..num_sections as usize {
+    for i in 0..num_sections {
         // size	2 bytes	0x0001-0xFFFF
         // 16-bit unsigned big-endian integer denoting the length of the section content
         let code_size = u16::from_be_bytes([input[i * 2], input[i * 2 + 1]]);
@@ -262,5 +262,24 @@ mod tests {
     fn cut_header() {
         let input = hex!("ef0001010000028000");
         let _ = EofHeader::decode(&input).unwrap();
+    }
+
+    #[test]
+    fn short_input() {
+        let input = hex!("ef0001010000028000");
+        assert_eq!(
+            EofHeader::decode(&input),
+            Err(EofDecodeError::ShortInputForSizes)
+        );
+    }
+
+    #[test]
+    fn test_invalid_non_returning_flag() {
+        let input =
+            hex!("ef000101000c020003000400010003041d0000008000000080000000000000e300020000e50001");
+        assert_eq!(
+            EofHeader::decode(&input),
+            Err(EofDecodeError::ShortInputForSizes)
+        );
     }
 }
