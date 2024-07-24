@@ -39,7 +39,8 @@ fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize),
     if num_sections == 0 {
         return Err(EofDecodeError::NonSizes);
     }
-    let byte_size = (num_sections * 2) as usize;
+    let num_sections = num_sections as usize;
+    let byte_size = num_sections * 2;
     if input.len() < byte_size {
         return Err(EofDecodeError::ShortInputForSizes);
     }
@@ -253,6 +254,12 @@ mod tests {
     #[test]
     fn failing_test() {
         let input = hex!("ef00010100040200010006030001001404000200008000016000e0000000ef000101000402000100010400000000800000fe");
+        let _ = EofHeader::decode(&input).unwrap();
+    }
+
+    #[test]
+    fn cut_header() {
+        let input = hex!("ef0001010000028000");
         let _ = EofHeader::decode(&input).unwrap();
     }
 }
