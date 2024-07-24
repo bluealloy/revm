@@ -1,3 +1,5 @@
+use revm_primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
+
 use crate::{
     instructions::utility::{read_i16, read_u16},
     opcode,
@@ -67,8 +69,20 @@ fn analyze(code: &[u8]) -> JumpTable {
 
 /// Decodes `raw` into an [`Eof`] container and validates it.
 pub fn validate_raw_eof(raw: Bytes) -> Result<Eof, EofError> {
+    validate_raw_eof_inner(raw, Some(CodeType::ReturnContract))
+}
+
+/// Decodes `raw` into an [`Eof`] container and validates it.
+#[inline]
+pub fn validate_raw_eof_inner(
+    raw: Bytes,
+    first_code_type: Option<CodeType>,
+) -> Result<Eof, EofError> {
+    if raw.len() > MAX_INITCODE_SIZE {
+        return Err(EofError::Decode(EofDecodeError::InvalidEOFSize));
+    }
     let eof = Eof::decode(raw)?;
-    validate_eof(&eof)?;
+    validate_eof_inner(&eof, first_code_type)?;
     Ok(eof)
 }
 
@@ -77,16 +91,24 @@ pub fn validate_raw_eof(raw: Bytes) -> Result<Eof, EofError> {
 /// Only place where validation happen is in Creating Transaction.
 /// Because of that we are assuming CodeType is ReturnContract.
 ///
-/// Note: If neeed we can make a flag that would assume ReturnOrStop CodeType.
-#[inline]
+/// Note: If neeed we can make a flag that would assume ReturnContract CodeType.
 pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
+    validate_eof_inner(eof, Some(CodeType::ReturnContract))
+}
+
+#[inline]
+pub fn validate_eof_inner(eof: &Eof, first_code_type: Option<CodeType>) -> Result<(), EofError> {
+    // data needs to be filled for return contract type.
+    if !eof.body.is_data_filled {
+        return Err(EofError::Validation(EofValidationError::DataNotFilled));
+    }
     if eof.body.container_section.is_empty() {
-        validate_eof_codes(eof, CodeType::ReturnContract)?;
+        validate_eof_codes(eof, first_code_type)?;
         return Ok(());
     }
 
     let mut stack = Vec::with_capacity(4);
-    stack.push((Cow::Borrowed(eof), CodeType::ReturnContract));
+    stack.push((Cow::Borrowed(eof), first_code_type));
 
     while let Some((eof, code_type)) = stack.pop() {
         // Validate the current container.
@@ -98,7 +120,7 @@ pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
             .iter()
             .zip(tracker_containers.into_iter())
         {
-            stack.push((Cow::Owned(Eof::decode(container.clone())?), code_type));
+            stack.push((Cow::Owned(Eof::decode(container.clone())?), Some(code_type)));
         }
     }
 
@@ -111,7 +133,7 @@ pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
 #[inline]
 pub fn validate_eof_codes(
     eof: &Eof,
-    this_code_type: CodeType,
+    this_code_type: Option<CodeType>,
 ) -> Result<Vec<CodeType>, EofValidationError> {
     if eof.body.code_section.len() != eof.body.types_section.len() {
         return Err(EofValidationError::InvalidTypesSection);
@@ -153,8 +175,14 @@ pub fn validate_eof_codes(
         return Err(EofValidationError::CodeSectionNotAccessed);
     }
     // iterate over all accessed subcontainers and check if all are accessed.
-    if !tracker.subcontainers.iter().any(|i| i.is_some()) {
+    if !tracker.subcontainers.iter().all(|i| i.is_some()) {
         return Err(EofValidationError::SubContainerNotAccessed);
+    }
+
+    if tracker.this_container_code_type == Some(CodeType::ReturnContract)
+        && !eof.body.is_data_filled
+    {
+        return Err(EofValidationError::DataNotFilled);
     }
 
     Ok(tracker
@@ -252,12 +280,14 @@ pub enum EofValidationError {
     SubContainerCalledInTwoModes,
     /// Sub container not accessed.
     SubContainerNotAccessed,
+    /// Data size needs to be filled for ReturnContract type.
+    DataNotFilled,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AccessTracker {
     /// This code type
-    pub this_container_code_type: CodeType,
+    pub this_container_code_type: Option<CodeType>,
     /// Vector of accessed codes.
     pub codes: Vec<bool>,
     /// Code accessed by subcontainer and expected subcontainer first code type.
@@ -271,9 +301,13 @@ pub struct AccessTracker {
 
 impl AccessTracker {
     /// Returns a new instance of `CodeSubContainerAccess`.
-    pub fn new(this_code_type: CodeType, codes_size: usize, subcontainers_size: usize) -> Self {
+    pub fn new(
+        this_container_code_type: Option<CodeType>,
+        codes_size: usize,
+        subcontainers_size: usize,
+    ) -> Self {
         Self {
-            this_container_code_type: this_code_type,
+            this_container_code_type,
             codes: vec![false; codes_size],
             subcontainers: vec![None; subcontainers_size],
         }
@@ -308,6 +342,13 @@ pub enum CodeType {
     ReturnContract,
     /// Return or Stop opcodes.
     ReturnOrStop,
+}
+
+impl CodeType {
+    /// Returns true of the code is initcode.
+    pub fn is_initcode(&self) -> bool {
+        matches!(self, CodeType::ReturnContract)
+    }
 }
 
 /// Validates that:
@@ -541,15 +582,22 @@ pub fn validate_eof_code(
                     // TODO custom error
                     return Err(EofValidationError::EOFCREATEInvalidIndex);
                 }
-                if tracker.this_container_code_type != CodeType::ReturnContract {
+                if *tracker
+                    .this_container_code_type
+                    .get_or_insert(CodeType::ReturnContract)
+                    != CodeType::ReturnContract
+                {
                     // TODO make custom error
                     return Err(EofValidationError::SubContainerCalledInTwoModes);
                 }
                 tracker.set_subcontainer_type(index, CodeType::ReturnOrStop)?;
             }
             opcode::RETURN | opcode::STOP => {
-                if tracker.this_container_code_type != CodeType::ReturnOrStop {
-                    // TODO make custom error
+                if *tracker
+                    .this_container_code_type
+                    .get_or_insert(CodeType::ReturnOrStop)
+                    != CodeType::ReturnOrStop
+                {
                     return Err(EofValidationError::SubContainerCalledInTwoModes);
                 }
             }
@@ -665,26 +713,26 @@ mod test {
         assert!(err.is_err(), "{err:#?}");
     }
 
-    // #[test]
-    // fn test2() {
-    //     // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
-    //     let err =
-    //         validate_raw_eof(hex!("ef000101000c02000300040004000204000000008000020002000100010001e30001005fe500025fe4").into());
-    //     assert!(err.is_ok(), "{err:#?}");
-    // }
+    #[test]
+    fn test2() {
+        // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
+        let err =
+            validate_raw_eof(hex!("ef000101000c02000300040004000204000000008000020002000100010001e30001005fe500025fe4").into());
+        assert!(err.is_ok(), "{err:#?}");
+    }
 
-    // #[test]
-    // fn test3() {
-    //     // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
-    //     let err =
-    //         validate_raw_eof(hex!("ef000101000c02000300040008000304000000008000020002000503010003e30001005f5f5f5f5fe500025050e4").into());
-    //     assert_eq!(
-    //         err,
-    //         Err(EofError::Validation(
-    //             EofValidationError::JUMPFStackHigherThanOutputs
-    //         ))
-    //     );
-    // }
+    #[test]
+    fn test3() {
+        // result:Result { result: false, exception: Some("EOF_InvalidNumberOfOutputs") }
+        let err =
+            validate_raw_eof(hex!("ef000101000c02000300040008000304000000008000020002000503010003e30001005f5f5f5f5fe500025050e4").into());
+        assert_eq!(
+            err,
+            Err(EofError::Validation(
+                EofValidationError::JUMPFStackHigherThanOutputs
+            ))
+        );
+    }
 
     #[test]
     fn test4() {
@@ -699,5 +747,26 @@ mod test {
                 EofValidationError::BackwardJumpBiggestNumMismatch
             ))
         );
+    }
+
+    #[test]
+    fn test5() {
+        let err = validate_raw_eof(hex!("ef000101000402000100030400000000800000e5ffff").into());
+        assert_eq!(
+            err,
+            Err(EofError::Validation(
+                EofValidationError::JUMPFStackHigherThanOutputs
+            ))
+        );
+    }
+
+    #[test]
+    fn size_limit() {
+        let eof = validate_raw_eof_inner(
+            hex!("ef000101000402000100030400010000800001305000").into(),
+            Some(CodeType::ReturnOrStop),
+        );
+        println!("EOF: {:#?}", eof);
+        assert!(eof.is_ok());
     }
 }

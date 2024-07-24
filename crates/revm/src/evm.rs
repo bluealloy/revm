@@ -365,7 +365,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 }
             }
         };
-
         // Starts the main running loop.
         let mut result = match first_frame_or_result {
             FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,

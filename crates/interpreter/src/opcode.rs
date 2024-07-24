@@ -777,6 +777,22 @@ mod tests {
     }
 
     #[test]
+    fn count_opcodes() {
+        let mut opcode_num = 0;
+        let mut eof_opcode_num = 0;
+        for opcode in OPCODE_INFO_JUMPTABLE {
+            if let Some(opcode) = opcode {
+                opcode_num += 1;
+                if !opcode.is_disabled_in_eof() {
+                    eof_opcode_num += 1;
+                }
+            }
+        }
+        assert_eq!(opcode_num, 168);
+        assert_eq!(eof_opcode_num, 152);
+    }
+
+    #[test]
     fn test_terminating_opcodes() {
         let terminating = [
             RETF,
