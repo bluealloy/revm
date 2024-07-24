@@ -1,4 +1,4 @@
-use revm_primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
+use revm_primitives::MAX_INITCODE_SIZE;
 
 use crate::{
     instructions::utility::{read_i16, read_u16},
@@ -369,54 +369,55 @@ impl fmt::Display for EofValidationError {
             f,
             "{}",
             match self {
-                EofValidationError::FalsePossitive => "False positive",
-                EofValidationError::UnknownOpcode => "Opcode is not known",
-                EofValidationError::OpcodeDisabled => "Opcode is disabled",
-                EofValidationError::InstructionNotForwardAccessed => "Should have forward jump",
-                EofValidationError::MissingImmediateBytes => "Bytecode is missing bytes",
-                EofValidationError::MissingRJUMPVImmediateBytes => {
+                Self::FalsePossitive => "False positive",
+                Self::UnknownOpcode => "Opcode is not known",
+                Self::OpcodeDisabled => "Opcode is disabled",
+                Self::InstructionNotForwardAccessed => "Should have forward jump",
+                Self::MissingImmediateBytes => "Bytecode is missing bytes",
+                Self::MissingRJUMPVImmediateBytes => {
                     "Bytecode is missing bytes after RJUMPV opcode"
                 }
-                EofValidationError::JumpToImmediateBytes => "Invalid jump",
-                EofValidationError::BackwardJumpToImmediateBytes => "Invalid backward jump",
-                EofValidationError::RJUMPVZeroMaxIndex => "Used RJUMPV with zero as MaxIndex",
-                EofValidationError::JumpZeroOffset => "Used JUMP with zero as offset",
-                EofValidationError::EOFCREATEInvalidIndex =>
-                    "EOFCREATE points to out of bound index",
-                EofValidationError::CodeSectionOutOfBounds => "CALLF index is out of bounds",
-                EofValidationError::CALLFNonReturningFunction => {
+                Self::JumpToImmediateBytes => "Invalid jump",
+                Self::BackwardJumpToImmediateBytes => "Invalid backward jump",
+                Self::RJUMPVZeroMaxIndex => "Used RJUMPV with zero as MaxIndex",
+                Self::JumpZeroOffset => "Used JUMP with zero as offset",
+                Self::EOFCREATEInvalidIndex => "EOFCREATE points to out of bound index",
+                Self::CodeSectionOutOfBounds => "CALLF index is out of bounds",
+                Self::CALLFNonReturningFunction => {
                     "CALLF was used on non-returning function"
                 }
-                EofValidationError::StackOverflow => "CALLF stack overflow",
-                EofValidationError::JUMPFEnoughOutputs => "JUMPF needs more outputs",
-                EofValidationError::JUMPFStackHigherThanOutputs => {
+                Self::StackOverflow => "CALLF stack overflow",
+                Self::JUMPFEnoughOutputs => "JUMPF needs more outputs",
+                Self::JUMPFStackHigherThanOutputs => {
                     "JUMPF stack is too high for outputs"
                 }
-                EofValidationError::DataLoadOutOfBounds => "DATALOAD is out of bounds",
-                EofValidationError::RETFBiggestStackNumMoreThenOutputs => {
+                Self::DataLoadOutOfBounds => "DATALOAD is out of bounds",
+                Self::RETFBiggestStackNumMoreThenOutputs => {
                     "RETF biggest stack num is more than outputs"
                 }
-                EofValidationError::StackUnderflow =>
-                    "Stack requirement is above smallest stack items",
-                EofValidationError::TypesStackUnderflow => {
+                Self::StackUnderflow => "Stack requirement is above smallest stack items",
+                Self::TypesStackUnderflow => {
                     "Smallest stack items is more than output type"
                 }
-                EofValidationError::JumpUnderflow => "Jump destination is too low",
-                EofValidationError::JumpOverflow => "Jump destination is too high",
-                EofValidationError::BackwardJumpBiggestNumMismatch => {
+                Self::JumpUnderflow => "Jump destination is too low",
+                Self::JumpOverflow => "Jump destination is too high",
+                Self::BackwardJumpBiggestNumMismatch => {
                     "Backward jump has different biggest stack item"
                 }
-                EofValidationError::BackwardJumpSmallestNumMismatch => {
+                Self::BackwardJumpSmallestNumMismatch => {
                     "Backward jump has different smallest stack item"
                 }
-                EofValidationError::LastInstructionNotTerminating => {
+                Self::LastInstructionNotTerminating => {
                     "Last instruction of bytecode is not terminating"
                 }
-                EofValidationError::CodeSectionNotAccessed => "Code section was not accessed",
-                EofValidationError::InvalidTypesSection => "Invalid types section",
-                EofValidationError::InvalidFirstTypesSection => "Invalid first types section",
-                EofValidationError::MaxStackMismatch => "Max stack element mismatchs",
-                EofValidationError::NoCodeSections => "No code sections",
+                Self::CodeSectionNotAccessed => "Code section was not accessed",
+                Self::InvalidTypesSection => "Invalid types section",
+                Self::InvalidFirstTypesSection => "Invalid first types section",
+                Self::MaxStackMismatch => "Max stack element mismatchs",
+                Self::NoCodeSections => "No code sections",
+                Self::SubContainerCalledInTwoModes => "Sub container called in two modes",
+                Self::SubContainerNotAccessed => "Sub container not accessed",
+                Self::DataNotFilled => "Data not filled",
             }
         )
     }

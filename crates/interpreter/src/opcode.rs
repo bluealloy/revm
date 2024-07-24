@@ -780,12 +780,10 @@ mod tests {
     fn count_opcodes() {
         let mut opcode_num = 0;
         let mut eof_opcode_num = 0;
-        for opcode in OPCODE_INFO_JUMPTABLE {
-            if let Some(opcode) = opcode {
-                opcode_num += 1;
-                if !opcode.is_disabled_in_eof() {
-                    eof_opcode_num += 1;
-                }
+        for opcode in OPCODE_INFO_JUMPTABLE.into_iter().flatten() {
+            opcode_num += 1;
+            if !opcode.is_disabled_in_eof() {
+                eof_opcode_num += 1;
             }
         }
         assert_eq!(opcode_num, 168);
