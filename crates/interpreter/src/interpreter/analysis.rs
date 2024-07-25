@@ -11,7 +11,7 @@ use crate::{
     },
     OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
 };
-use core::convert::identity;
+use core::{convert::identity, mem};
 use std::{borrow::Cow, fmt, sync::Arc, vec, vec::Vec};
 
 const EOF_NON_RETURNING_FUNCTION: u8 = 0x80;
@@ -157,13 +157,9 @@ pub fn validate_eof_codes(
         eof.body.code_section.len(),
         eof.body.container_section.len(),
     );
-    // first code section is accessed by default.
-    tracker.codes[0] = true;
 
-    // start validation from code section 0.
-    let mut stack = Vec::with_capacity(16);
-    stack.push(0);
-    while let Some(index) = stack.pop() {
+    while let Some(index) = tracker.processing_stack.pop() {
+        // assume index is correct.
         let code = &eof.body.code_section[index];
         validate_eof_code(
             code,
@@ -175,16 +171,6 @@ pub fn validate_eof_codes(
         )?;
     }
 
-    for (index, code) in eof.body.code_section.iter().enumerate() {
-        validate_eof_code(
-            code,
-            eof.header.data_size as usize,
-            index,
-            eof.body.container_section.len(),
-            &eof.body.types_section,
-            &mut tracker,
-        )?;
-    }
     // iterate over accessed codes and check if all are accessed.
     if !tracker.codes.into_iter().all(identity) {
         return Err(EofValidationError::CodeSectionNotAccessed);
@@ -358,9 +344,11 @@ impl AccessTracker {
     /// Mark code as accessed.
     ///
     /// If code was not accessed before, it will be added to the processing stack.
+    ///
+    /// Assumes that index is valid.
     pub fn access_code(&mut self, index: usize) {
-        if !self.codes[index] {
-            self.codes[index] = true;
+        let was_accessed = mem::replace(&mut self.codes[index], true);
+        if !was_accessed {
             self.processing_stack.push(index);
         }
     }
@@ -899,12 +887,15 @@ mod test {
     #[test]
     fn unreachable_code_section() {
         let eof = validate_raw_eof_inner(
-            hex!("ef00010100040200010001040000000080000000").into(),
+            hex!("ef000101000c02000300030001000304000000008000000080000000800000e50001fee50002")
+                .into(),
             None,
         );
         assert_eq!(
             eof,
-            Err(EofError::Validation(EofValidationError::DataNotFilled))
+            Err(EofError::Validation(
+                EofValidationError::CodeSectionNotAccessed
+            ))
         );
     }
 }
