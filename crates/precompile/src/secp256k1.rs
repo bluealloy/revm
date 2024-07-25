@@ -1,5 +1,5 @@
 use crate::{utilities::right_pad, Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use revm_primitives::{alloy_primitives::B512, Bytes, PrecompileOutput, B256};
+use revm_primitives::{Bytes, PrecompileOutput, B256};
 
 pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(1),
@@ -68,6 +68,8 @@ mod secp256k1 {
 
 #[cfg(feature = "std")]
 pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+    use revm_primitives::alloy_primitives::B512;
+
     const ECRECOVER_BASE: u64 = 3_000;
 
     if ECRECOVER_BASE > gas_limit {
