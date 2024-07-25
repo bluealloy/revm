@@ -43,13 +43,7 @@ pub fn codecopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) 
     // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
     assume!(!interpreter.contract.bytecode.is_eof());
     let source = interpreter.contract.bytecode.original_byte_slice().to_vec();
-    copy_to_memory(
-        interpreter,
-        memory_offset,
-        code_offset,
-        len,
-        &source,
-    );
+    copy_to_memory(interpreter, memory_offset, code_offset, len, &source);
 }
 
 pub fn calldataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -90,13 +84,7 @@ pub fn calldatacopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut
     let len = as_usize_or_fail!(interpreter, len);
     let data_offset = as_usize_saturated!(data_offset);
     let source = interpreter.contract.input.to_vec();
-    copy_to_memory(
-        interpreter,
-        memory_offset,
-        data_offset,
-        len,
-        &source,
-    );
+    copy_to_memory(interpreter, memory_offset, data_offset, len, &source);
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
@@ -126,13 +114,7 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
     }
 
     let source = interpreter.return_data_buffer.to_vec();
-    copy_to_memory(
-        interpreter,
-        memory_offset,
-        data_offset,
-        len,
-        &source,
-    );
+    copy_to_memory(interpreter, memory_offset, data_offset, len, &source);
 }
 
 /// Part of EOF `<https://eips.ethereum.org/EIPS/eip-7069>`.
@@ -173,12 +155,9 @@ fn copy_to_memory(
     resize_memory!(interpreter, memory_offset, len);
 
     // Note: this can't panic because we resized memory to fit.
-    interpreter.shared_memory.set_data(
-        memory_offset,
-        data_offset,
-        len,
-        source,
-    );
+    interpreter
+        .shared_memory
+        .set_data(memory_offset, data_offset, len, source);
 }
 
 pub fn gas<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
