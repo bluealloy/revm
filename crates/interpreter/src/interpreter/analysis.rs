@@ -11,7 +11,7 @@ use crate::{
     },
     OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
 };
-use core::convert::identity;
+use core::{convert::identity, mem};
 use std::{borrow::Cow, fmt, sync::Arc, vec, vec::Vec};
 
 const EOF_NON_RETURNING_FUNCTION: u8 = 0x80;
@@ -157,10 +157,10 @@ pub fn validate_eof_codes(
         eof.body.code_section.len(),
         eof.body.container_section.len(),
     );
-    // first code section is accessed by default.
-    tracker.codes[0] = true;
 
-    for (index, code) in eof.body.code_section.iter().enumerate() {
+    while let Some(index) = tracker.processing_stack.pop() {
+        // assume index is correct.
+        let code = &eof.body.code_section[index];
         validate_eof_code(
             code,
             eof.header.data_size as usize,
@@ -170,6 +170,7 @@ pub fn validate_eof_codes(
             &mut tracker,
         )?;
     }
+
     // iterate over accessed codes and check if all are accessed.
     if !tracker.codes.into_iter().all(identity) {
         return Err(EofValidationError::CodeSectionNotAccessed);
@@ -302,6 +303,8 @@ pub struct AccessTracker {
     pub this_container_code_type: Option<CodeType>,
     /// Vector of accessed codes.
     pub codes: Vec<bool>,
+    /// Stack of codes section that needs to be processed.
+    pub processing_stack: Vec<usize>,
     /// Code accessed by subcontainer and expected subcontainer first code type.
     /// EOF code can be invoked in EOFCREATE mode or used in RETURNCONTRACT opcode.
     /// if SubContainer is called from EOFCREATE it needs to be ReturnContract type.
@@ -313,15 +316,40 @@ pub struct AccessTracker {
 
 impl AccessTracker {
     /// Returns a new instance of `CodeSubContainerAccess`.
+    ///
+    /// Mark first code section as accessed and push first it to the stack.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `codes_size` is zero.
     pub fn new(
         this_container_code_type: Option<CodeType>,
         codes_size: usize,
         subcontainers_size: usize,
     ) -> Self {
-        Self {
+        if codes_size == 0 {
+            panic!("There should be at least one code section");
+        }
+        let mut this = Self {
             this_container_code_type,
             codes: vec![false; codes_size],
+            processing_stack: Vec::with_capacity(4),
             subcontainers: vec![None; subcontainers_size],
+        };
+        this.codes[0] = true;
+        this.processing_stack.push(0);
+        this
+    }
+
+    /// Mark code as accessed.
+    ///
+    /// If code was not accessed before, it will be added to the processing stack.
+    ///
+    /// Assumes that index is valid.
+    pub fn access_code(&mut self, index: usize) {
+        let was_accessed = mem::replace(&mut self.codes[index], true);
+        if !was_accessed {
+            self.processing_stack.push(index);
         }
     }
 
@@ -589,7 +617,7 @@ pub fn validate_eof_code(
                 // stack diff depends on input/output of the called code.
                 stack_io_diff = target_types.io_diff();
                 // mark called code as accessed.
-                tracker.codes[section_i] = true;
+                tracker.access_code(section_i);
 
                 // we decrement by `types.inputs` as they are considered as send
                 // to the called code and included in types.max_stack_size.
@@ -617,7 +645,7 @@ pub fn validate_eof_code(
                     // stack overflow
                     return Err(EofValidationError::StackOverflow);
                 }
-                tracker.codes[target_index] = true;
+                tracker.access_code(target_index);
 
                 if target_types.outputs == EOF_NON_RETURNING_FUNCTION {
                     // if it is not returning
@@ -842,5 +870,32 @@ mod test {
             Some(CodeType::ReturnOrStop),
         );
         assert!(eof.is_ok());
+    }
+
+    #[test]
+    fn test() {
+        let eof = validate_raw_eof_inner(
+            hex!("ef0001010004020001000504ff0300008000023a60cbee1800").into(),
+            None,
+        );
+        assert_eq!(
+            eof,
+            Err(EofError::Validation(EofValidationError::DataNotFilled))
+        );
+    }
+
+    #[test]
+    fn unreachable_code_section() {
+        let eof = validate_raw_eof_inner(
+            hex!("ef000101000c02000300030001000304000000008000000080000000800000e50001fee50002")
+                .into(),
+            None,
+        );
+        assert_eq!(
+            eof,
+            Err(EofError::Validation(
+                EofValidationError::CodeSectionNotAccessed
+            ))
+        );
     }
 }
