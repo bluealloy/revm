@@ -27,13 +27,14 @@ impl Cmd {
             return;
         }
         if bytes[0] == 0xEF {
-            let Ok(eof) = Eof::decode(bytes) else {
-                eprintln!("Invalid EOF bytecode");
-                return;
-            };
-            println!("Decode: {:#?}", eof);
-            let res = validate_eof_inner(&eof, None);
-            println!("Validation: {:#?}", res);
+            match Eof::decode(bytes) {
+                Ok(eof) => {
+                    println!("Decoding: {:#?}", eof);
+                    let res = validate_eof_inner(&eof, None);
+                    println!("Validation: {:#?}", res);
+                }
+                Err(e) => eprintln!("Decoding Error: {:#?}", e),
+            }
         } else {
             print_eof_code(&bytes)
         }

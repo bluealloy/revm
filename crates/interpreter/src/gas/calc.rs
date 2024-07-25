@@ -287,7 +287,7 @@ pub const fn selfdestruct_cost(spec_id: SpecId, res: SelfDestructResult) -> u64 
 /// * Account access gas. after berlin it can be cold or warm.
 /// * Transfer value gas. If value is transferred and balance of target account is updated.
 /// * If account is not existing and needs to be created. After Spurious dragon
-/// this is only accounted if value is transferred.
+///   this is only accounted if value is transferred.
 #[inline]
 pub const fn call_cost(
     spec_id: SpecId,
