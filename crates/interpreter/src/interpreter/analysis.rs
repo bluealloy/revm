@@ -160,6 +160,21 @@ pub fn validate_eof_codes(
     // first code section is accessed by default.
     tracker.codes[0] = true;
 
+    // start validation from code section 0.
+    let mut stack = Vec::with_capacity(16);
+    stack.push(0);
+    while let Some(index) = stack.pop() {
+        let code = &eof.body.code_section[index];
+        validate_eof_code(
+            code,
+            eof.header.data_size as usize,
+            index,
+            eof.body.container_section.len(),
+            &eof.body.types_section,
+            &mut tracker,
+        )?;
+    }
+
     for (index, code) in eof.body.code_section.iter().enumerate() {
         validate_eof_code(
             code,
@@ -302,6 +317,8 @@ pub struct AccessTracker {
     pub this_container_code_type: Option<CodeType>,
     /// Vector of accessed codes.
     pub codes: Vec<bool>,
+    /// Stack of codes section that needs to be processed.
+    pub processing_stack: Vec<usize>,
     /// Code accessed by subcontainer and expected subcontainer first code type.
     /// EOF code can be invoked in EOFCREATE mode or used in RETURNCONTRACT opcode.
     /// if SubContainer is called from EOFCREATE it needs to be ReturnContract type.
@@ -313,15 +330,38 @@ pub struct AccessTracker {
 
 impl AccessTracker {
     /// Returns a new instance of `CodeSubContainerAccess`.
+    ///
+    /// Mark first code section as accessed and push first it to the stack.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `codes_size` is zero.
     pub fn new(
         this_container_code_type: Option<CodeType>,
         codes_size: usize,
         subcontainers_size: usize,
     ) -> Self {
-        Self {
+        if codes_size == 0 {
+            panic!("There should be at least one code section");
+        }
+        let mut this = Self {
             this_container_code_type,
             codes: vec![false; codes_size],
+            processing_stack: Vec::with_capacity(4),
             subcontainers: vec![None; subcontainers_size],
+        };
+        this.codes[0] = true;
+        this.processing_stack.push(0);
+        this
+    }
+
+    /// Mark code as accessed.
+    ///
+    /// If code was not accessed before, it will be added to the processing stack.
+    pub fn access_code(&mut self, index: usize) {
+        if !self.codes[index] {
+            self.codes[index] = true;
+            self.processing_stack.push(index);
         }
     }
 
@@ -842,5 +882,29 @@ mod test {
             Some(CodeType::ReturnOrStop),
         );
         assert!(eof.is_ok());
+    }
+
+    #[test]
+    fn test() {
+        let eof = validate_raw_eof_inner(
+            hex!("ef0001010004020001000504ff0300008000023a60cbee1800").into(),
+            None,
+        );
+        assert_eq!(
+            eof,
+            Err(EofError::Validation(EofValidationError::DataNotFilled))
+        );
+    }
+
+    #[test]
+    fn unreachable_code_section() {
+        let eof = validate_raw_eof_inner(
+            hex!("ef00010100040200010001040000000080000000").into(),
+            None,
+        );
+        assert_eq!(
+            eof,
+            Err(EofError::Validation(EofValidationError::DataNotFilled))
+        );
     }
 }
