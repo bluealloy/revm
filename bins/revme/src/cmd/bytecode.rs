@@ -1,5 +1,5 @@
 use revm::{
-    interpreter::opcode::eof_printer::print_eof_code,
+    interpreter::{analysis::validate_eof_inner, opcode::eof_printer::print_eof_code},
     primitives::{Bytes, Eof},
 };
 use structopt::StructOpt;
@@ -7,7 +7,7 @@ use structopt::StructOpt;
 /// Statetest command
 #[derive(StructOpt, Debug)]
 pub struct Cmd {
-    /// EOF bytecode in hex format. It bytes start with 0xFE it will be interpreted as a EOF.
+    /// Bytecode in hex format. If bytes start with 0xFE it will be interpreted as a EOF.
     /// Otherwise, it will be interpreted as a EOF bytecode.
     #[structopt(required = true)]
     bytes: String,
@@ -31,7 +31,9 @@ impl Cmd {
                 eprintln!("Invalid EOF bytecode");
                 return;
             };
-            println!("{:#?}", eof);
+            println!("Decode: {:#?}", eof);
+            let res = validate_eof_inner(&eof, None);
+            println!("Validation: {:#?}", res);
         } else {
             print_eof_code(&bytes)
         }
