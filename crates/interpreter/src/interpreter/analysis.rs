@@ -617,7 +617,7 @@ pub fn validate_eof_code(
                 // stack diff depends on input/output of the called code.
                 stack_io_diff = target_types.io_diff();
                 // mark called code as accessed.
-                tracker.codes[section_i] = true;
+                tracker.access_code(section_i);
 
                 // we decrement by `types.inputs` as they are considered as send
                 // to the called code and included in types.max_stack_size.
@@ -645,7 +645,7 @@ pub fn validate_eof_code(
                     // stack overflow
                     return Err(EofValidationError::StackOverflow);
                 }
-                tracker.codes[target_index] = true;
+                tracker.access_code(target_index);
 
                 if target_types.outputs == EOF_NON_RETURNING_FUNCTION {
                     // if it is not returning
