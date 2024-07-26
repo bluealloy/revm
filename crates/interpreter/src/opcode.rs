@@ -220,6 +220,7 @@ impl OpCode {
                 | OpCode::CALLCODE
                 | OpCode::DELEGATECALL
                 | OpCode::STATICCALL
+                | OpCode::DATACOPY
         )
     }
 }
