@@ -14,8 +14,6 @@ use crate::{
 use core::{convert::identity, mem};
 use std::{borrow::Cow, fmt, sync::Arc, vec, vec::Vec};
 
-const EOF_NON_RETURNING_FUNCTION: u8 = 0x80;
-
 /// Perform bytecode analysis.
 ///
 /// The analysis finds and caches valid jump destinations for later execution as an optimization step.
@@ -147,7 +145,7 @@ pub fn validate_eof_codes(
     // the first code section must have a type signature
     // (0, 0x80, max_stack_height) (0 inputs non-returning function)
     let first_types = &eof.body.types_section[0];
-    if first_types.inputs != 0 || first_types.outputs != EOF_NON_RETURNING_FUNCTION {
+    if first_types.inputs != 0 || !first_types.is_non_returning() {
         return Err(EofValidationError::InvalidTypesSection);
     }
 
@@ -295,6 +293,11 @@ pub enum EofValidationError {
     SubContainerNotAccessed,
     /// Data size needs to be filled for ReturnContract type.
     DataNotFilled,
+    /// RETF opcode found in non returning section.
+    RETFInNonReturningSection,
+    /// JUMPF opcode found in non returning section and it does
+    /// not jumps to non returning section
+    JUMPFInNonReturningSection,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -446,6 +449,8 @@ impl fmt::Display for EofValidationError {
                 Self::SubContainerCalledInTwoModes => "Sub container called in two modes",
                 Self::SubContainerNotAccessed => "Sub container not accessed",
                 Self::DataNotFilled => "Data not filled",
+                Self::RETFInNonReturningSection => "RETF in non returning code section",
+                Self::JUMPFInNonReturningSection => "JUMPF in non returning code section",
             }
         )
     }
@@ -602,14 +607,14 @@ pub fn validate_eof_code(
                 absolute_jumpdest = jumps
             }
             opcode::CALLF => {
-                let section_i = unsafe { read_u16(code.as_ptr().add(i + 1)) } as usize;
+                let section_i: usize = unsafe { read_u16(code.as_ptr().add(i + 1)) } as usize;
                 let Some(target_types) = types.get(section_i) else {
                     // code section out of bounds.
                     return Err(EofValidationError::CodeSectionOutOfBounds);
                 };
 
-                if target_types.outputs == EOF_NON_RETURNING_FUNCTION {
-                    // callf to non returning function is not allowed
+                // CALLF operand must not point to to a section with 0x80 as outputs (non-returning)
+                if target_types.is_non_returning() {
                     return Err(EofValidationError::CALLFNonReturningFunction);
                 }
                 // stack input for this opcode is the input of the called code.
@@ -647,7 +652,13 @@ pub fn validate_eof_code(
                 }
                 tracker.access_code(target_index);
 
-                if target_types.outputs == EOF_NON_RETURNING_FUNCTION {
+                // TODO check if this is correct.
+                if target_types.is_non_returning() != this_types.is_non_returning() {
+                    // JUMPF in non returning code section and it does not jumps to non returning section
+                    return Err(EofValidationError::JUMPFInNonReturningSection);
+                }
+
+                if target_types.is_non_returning() {
                     // if it is not returning
                     stack_requirement = target_types.inputs as i32;
                 } else {
@@ -713,6 +724,11 @@ pub fn validate_eof_code(
             }
             opcode::RETF => {
                 stack_requirement = this_types.outputs as i32;
+
+                if this_types.is_non_returning() {
+                    return Err(EofValidationError::RETFInNonReturningSection);
+                }
+
                 if this_instruction.biggest > stack_requirement {
                     return Err(EofValidationError::RETFBiggestStackNumMoreThenOutputs);
                 }
@@ -895,6 +911,36 @@ mod test {
             eof,
             Err(EofError::Validation(
                 EofValidationError::CodeSectionNotAccessed
+            ))
+        );
+    }
+
+    #[test]
+    fn non_returning_sections() {
+        let eof = validate_raw_eof_inner(
+            hex!("ef000101000c02000300040001000304000000008000000080000000000000e300020000e50001")
+                .into(),
+            Some(CodeType::ReturnOrStop),
+        );
+        assert_eq!(
+            eof,
+            Err(EofError::Validation(
+                EofValidationError::JUMPFInNonReturningSection
+            ))
+        );
+    }
+
+    #[test]
+    fn incompatible_container_kind() {
+        let eof = validate_raw_eof_inner(
+            hex!("ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000")
+                .into(),
+            Some(CodeType::ReturnOrStop),
+        );
+        assert_eq!(
+            eof,
+            Err(EofError::Validation(
+                EofValidationError::SubContainerCalledInTwoModes
             ))
         );
     }
