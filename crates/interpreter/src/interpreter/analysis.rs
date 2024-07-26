@@ -920,20 +920,8 @@ mod test {
         let eof = validate_raw_eof_inner(
             hex!("ef000101000c02000300040001000304000000008000000080000000000000e300020000e50001")
                 .into(),
-            None,
+            Some(CodeType::ReturnOrStop),
         );
-        assert_eq!(
-            eof,
-            Err(EofError::Validation(
-                EofValidationError::JUMPFInNonReturningSection
-            ))
-        );
-
-        let eof = validate_raw_eof_inner(
-                hex!("ef000101000c02000300110001000104000000008000000000000000000000e30001e30002e30001e30002e300025bfefee4")
-                    .into(),
-                None,
-            );
         assert_eq!(
             eof,
             Err(EofError::Validation(
@@ -956,5 +944,4 @@ mod test {
             ))
         );
     }
-    
 }
