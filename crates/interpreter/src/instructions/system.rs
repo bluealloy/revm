@@ -42,8 +42,8 @@ pub fn codecopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) 
     let len = as_usize_or_fail!(interpreter, len);
     // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
     assume!(!interpreter.contract.bytecode.is_eof());
-    let source = interpreter.contract.bytecode.original_byte_slice().as_ptr();
-    copy_to_memory(interpreter, memory_offset, code_offset, len, source);
+    let source = interpreter.contract.bytecode.original_byte_slice();
+    copy_to_memory(interpreter, memory_offset, code_offset, len, source as *const [u8]);
 }
 
 pub fn calldataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -83,8 +83,8 @@ pub fn calldatacopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut
     pop!(interpreter, memory_offset, data_offset, len);
     let len = as_usize_or_fail!(interpreter, len);
     let data_offset = as_usize_saturated!(data_offset);
-    let source = interpreter.contract.input.as_ptr();
-    copy_to_memory(interpreter, memory_offset, data_offset, len, source);
+    let source = interpreter.contract.input.as_ref();
+    copy_to_memory(interpreter, memory_offset, data_offset, len, source as *const [u8]);
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
@@ -113,8 +113,8 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
         return;
     }
 
-    let source = interpreter.return_data_buffer.as_ptr();
-    copy_to_memory(interpreter, memory_offset, data_offset, len, source);
+    let source = interpreter.return_data_buffer.as_ref();
+    copy_to_memory(interpreter, memory_offset, data_offset, len, source as *const [u8]);
 }
 
 /// Part of EOF `<https://eips.ethereum.org/EIPS/eip-7069>`.
@@ -145,7 +145,7 @@ fn copy_to_memory(
     memory_offset: U256,
     data_offset: usize,
     len: usize,
-    source: *const u8,
+    source: *const [u8],
 ) {
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
     if len == 0 {
@@ -160,7 +160,7 @@ fn copy_to_memory(
             memory_offset,
             data_offset,
             len,
-            std::slice::from_raw_parts(source, len),
+            &*source
         );
     }
 }
