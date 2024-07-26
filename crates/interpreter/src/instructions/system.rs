@@ -156,9 +156,12 @@ fn copy_to_memory(
 
     // Note: this can't panic because we resized memory to fit.
     unsafe {
-        interpreter
-            .shared_memory
-            .set_data(memory_offset, data_offset, len, std::slice::from_raw_parts(source, len));
+        interpreter.shared_memory.set_data(
+            memory_offset,
+            data_offset,
+            len,
+            std::slice::from_raw_parts(source, len),
+        );
     }
 }
 
