@@ -221,6 +221,11 @@ impl OpCode {
                 | OpCode::DELEGATECALL
                 | OpCode::STATICCALL
                 | OpCode::DATACOPY
+                | OpCode::EOFCREATE
+                | OpCode::RETURNCONTRACT
+                | OpCode::EXTCALL
+                | OpCode::EXTDELEGATECALL
+                | OpCode::EXTSTATICCALL
         )
     }
 }
