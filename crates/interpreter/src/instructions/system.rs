@@ -43,7 +43,13 @@ pub fn codecopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) 
     // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
     assume!(!interpreter.contract.bytecode.is_eof());
     let source = interpreter.contract.bytecode.original_byte_slice();
-    copy_to_memory(interpreter, memory_offset, code_offset, len, source as *const [u8]);
+    copy_to_memory(
+        interpreter,
+        memory_offset,
+        code_offset,
+        len,
+        source as *const [u8],
+    );
 }
 
 pub fn calldataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -84,7 +90,13 @@ pub fn calldatacopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut
     let len = as_usize_or_fail!(interpreter, len);
     let data_offset = as_usize_saturated!(data_offset);
     let source = interpreter.contract.input.as_ref();
-    copy_to_memory(interpreter, memory_offset, data_offset, len, source as *const [u8]);
+    copy_to_memory(
+        interpreter,
+        memory_offset,
+        data_offset,
+        len,
+        source as *const [u8],
+    );
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
@@ -114,7 +126,13 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
     }
 
     let source = interpreter.return_data_buffer.as_ref();
-    copy_to_memory(interpreter, memory_offset, data_offset, len, source as *const [u8]);
+    copy_to_memory(
+        interpreter,
+        memory_offset,
+        data_offset,
+        len,
+        source as *const [u8],
+    );
 }
 
 /// Part of EOF `<https://eips.ethereum.org/EIPS/eip-7069>`.
@@ -156,12 +174,9 @@ fn copy_to_memory(
 
     // Note: this can't panic because we resized memory to fit.
     unsafe {
-        interpreter.shared_memory.set_data(
-            memory_offset,
-            data_offset,
-            len,
-            &*source
-        );
+        interpreter
+            .shared_memory
+            .set_data(memory_offset, data_offset, len, &*source);
     }
 }
 
