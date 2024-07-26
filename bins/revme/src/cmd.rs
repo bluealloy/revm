@@ -34,6 +34,11 @@ pub enum Error {
     KzgErrors(#[from] format_kzg_setup::KzgErrors),
     #[error(transparent)]
     EvmRunnerErrors(#[from] evmrunner::Errors),
+    #[error("Eof validation failed: {:?}/{total_tests}", total_tests-failed_test)]
+    EofValidation {
+        failed_test: usize,
+        total_tests: usize,
+    },
     #[error("Custom error: {0}")]
     Custom(&'static str),
 }

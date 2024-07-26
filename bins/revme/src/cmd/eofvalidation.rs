@@ -23,12 +23,11 @@ impl Cmd {
         if !self.path.exists() {
             return Err(Error::Custom("The specified path does not exist"));
         }
-        run_test(&self.path);
-        Ok(())
+        run_test(&self.path)
     }
 }
 
-pub fn run_test(path: &Path) {
+pub fn run_test(path: &Path) -> Result<(), Error> {
     let test_files = find_all_json_tests(path);
     let mut test_sum = 0;
     let mut passed_tests = 0;
@@ -73,6 +72,14 @@ pub fn run_test(path: &Path) {
             }
         }
     }
-    println!("Types of error: {:#?}", types_of_error);
     println!("Passed tests: {}/{}", passed_tests, test_sum);
+    if passed_tests != test_sum {
+        println!("Types of error: {:#?}", types_of_error);
+        Err(Error::EofValidation {
+            failed_test: test_sum - passed_tests,
+            total_tests: test_sum,
+        })
+    } else {
+        Ok(())
+    }
 }

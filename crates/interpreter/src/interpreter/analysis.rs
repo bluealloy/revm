@@ -293,11 +293,9 @@ pub enum EofValidationError {
     SubContainerNotAccessed,
     /// Data size needs to be filled for ReturnContract type.
     DataNotFilled,
-    /// RETF opcode found in non returning section.
-    RETFInNonReturningSection,
-    /// JUMPF opcode found in non returning section and it does
-    /// not jumps to non returning section
-    JUMPFInNonReturningSection,
+    /// Section is marked as non-returning but has either RETF or
+    /// JUMPF to returning section opcodes.
+    NonReturningSectionIsReturning,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -449,8 +447,7 @@ impl fmt::Display for EofValidationError {
                 Self::SubContainerCalledInTwoModes => "Sub container called in two modes",
                 Self::SubContainerNotAccessed => "Sub container not accessed",
                 Self::DataNotFilled => "Data not filled",
-                Self::RETFInNonReturningSection => "RETF in non returning code section",
-                Self::JUMPFInNonReturningSection => "JUMPF in non returning code section",
+                Self::NonReturningSectionIsReturning => "Non returning section is returning",
             }
         )
     }
@@ -517,6 +514,8 @@ pub fn validate_eof_code(
 
     let mut next_smallest = this_types.inputs as i32;
     let mut next_biggest = this_types.inputs as i32;
+
+    let mut is_returning = false;
 
     let mut i = 0;
     // We can check validity and jump destinations in one pass.
@@ -652,16 +651,11 @@ pub fn validate_eof_code(
                 }
                 tracker.access_code(target_index);
 
-                // TODO check if this is correct.
-                if target_types.is_non_returning() != this_types.is_non_returning() {
-                    // JUMPF in non returning code section and it does not jumps to non returning section
-                    return Err(EofValidationError::JUMPFInNonReturningSection);
-                }
-
                 if target_types.is_non_returning() {
                     // if it is not returning
                     stack_requirement = target_types.inputs as i32;
                 } else {
+                    is_returning = true;
                     // check if target code produces enough outputs.
                     if this_types.outputs < target_types.outputs {
                         return Err(EofValidationError::JUMPFEnoughOutputs);
@@ -724,10 +718,8 @@ pub fn validate_eof_code(
             }
             opcode::RETF => {
                 stack_requirement = this_types.outputs as i32;
-
-                if this_types.is_non_returning() {
-                    return Err(EofValidationError::RETFInNonReturningSection);
-                }
+                // mark section as returning.
+                is_returning = true;
 
                 if this_instruction.biggest > stack_requirement {
                     return Err(EofValidationError::RETFBiggestStackNumMoreThenOutputs);
@@ -798,6 +790,12 @@ pub fn validate_eof_code(
 
         // additional immediate are from RJUMPV vtable.
         i += 1 + opcode.immediate_size() as usize + rjumpv_additional_immediates;
+    }
+
+    // error if section is returning but marked as non-returning.
+    if is_returning == this_types.is_non_returning() {
+        // wrong termination.
+        return Err(EofValidationError::NonReturningSectionIsReturning);
     }
 
     // last opcode should be terminating
@@ -925,7 +923,7 @@ mod test {
         assert_eq!(
             eof,
             Err(EofError::Validation(
-                EofValidationError::JUMPFInNonReturningSection
+                EofValidationError::NonReturningSectionIsReturning
             ))
         );
     }
