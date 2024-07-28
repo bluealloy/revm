@@ -8,6 +8,7 @@ use revm::{
     db::EmptyDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
+    interpreter::analysis::to_analysed,
     primitives::{
         calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, ExecutionResult,
         SpecId, TxKind, B256,
@@ -258,7 +259,7 @@ pub fn execute_test_suite(
         let mut cache_state = revm::CacheState::new(false);
         for (address, info) in unit.pre {
             let code_hash = keccak256(&info.code);
-            let bytecode = Bytecode::new_raw(info.code);
+            let bytecode = to_analysed(Bytecode::new_raw(info.code));
             let acc_info = revm::primitives::AccountInfo {
                 balance: info.balance,
                 code_hash,
