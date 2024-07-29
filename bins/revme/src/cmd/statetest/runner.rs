@@ -28,9 +28,6 @@ use std::{
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 
-#[cfg(feature = "optimism")]
-type TestChainSpec = revm::optimism::OptimismChainSpec;
-#[cfg(not(feature = "optimism"))]
 type TestChainSpec = revm::primitives::EthChainSpec;
 
 #[derive(Debug, Error)]

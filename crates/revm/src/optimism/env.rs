@@ -102,7 +102,7 @@ impl OptimismTransaction for TxEnv {
     }
 
     fn is_system_transaction(&self) -> Option<bool> {
-        self.is_system_transaction.clone()
+        self.is_system_transaction
     }
 
     fn enveloped_tx(&self) -> Option<Bytes> {
