@@ -20,7 +20,7 @@ use std::sync::Arc;
 
 use super::{
     OptimismContext, OptimismHaltReason, OptimismInvalidTransaction, OptimismSpec, OptimismSpecId,
-    OptimismTransaction as _, OptimismWiring,
+    OptimismTransaction, OptimismWiring,
 };
 
 pub fn optimism_handle_register<EvmWiringT, DB, EXT>(

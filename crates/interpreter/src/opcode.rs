@@ -427,32 +427,32 @@ macro_rules! opcodes {
 opcodes! {
     0x00 => STOP => control::stop => stack_io(0, 0), terminating;
 
-    0x01 => ADD        => arithmetic::add                        => stack_io(2, 1);
-    0x02 => MUL        => arithmetic::mul                        => stack_io(2, 1);
-    0x03 => SUB        => arithmetic::sub                        => stack_io(2, 1);
-    0x04 => DIV        => arithmetic::div                        => stack_io(2, 1);
-    0x05 => SDIV       => arithmetic::sdiv                       => stack_io(2, 1);
-    0x06 => MOD        => arithmetic::rem                        => stack_io(2, 1);
-    0x07 => SMOD       => arithmetic::smod                       => stack_io(2, 1);
-    0x08 => ADDMOD     => arithmetic::addmod                     => stack_io(3, 1);
-    0x09 => MULMOD     => arithmetic::mulmod                     => stack_io(3, 1);
+    0x01 => ADD        => arithmetic::add            => stack_io(2, 1);
+    0x02 => MUL        => arithmetic::mul            => stack_io(2, 1);
+    0x03 => SUB        => arithmetic::sub            => stack_io(2, 1);
+    0x04 => DIV        => arithmetic::div            => stack_io(2, 1);
+    0x05 => SDIV       => arithmetic::sdiv           => stack_io(2, 1);
+    0x06 => MOD        => arithmetic::rem            => stack_io(2, 1);
+    0x07 => SMOD       => arithmetic::smod           => stack_io(2, 1);
+    0x08 => ADDMOD     => arithmetic::addmod         => stack_io(3, 1);
+    0x09 => MULMOD     => arithmetic::mulmod         => stack_io(3, 1);
     0x0A => EXP        => arithmetic::exp::<H, SPEC> => stack_io(2, 1);
-    0x0B => SIGNEXTEND => arithmetic::signextend                 => stack_io(2, 1);
+    0x0B => SIGNEXTEND => arithmetic::signextend     => stack_io(2, 1);
     // 0x0C
     // 0x0D
     // 0x0E
     // 0x0F
-    0x10 => LT     => bitwise::lt                         => stack_io(2, 1);
-    0x11 => GT     => bitwise::gt                         => stack_io(2, 1);
-    0x12 => SLT    => bitwise::slt                        => stack_io(2, 1);
-    0x13 => SGT    => bitwise::sgt                        => stack_io(2, 1);
-    0x14 => EQ     => bitwise::eq                         => stack_io(2, 1);
-    0x15 => ISZERO => bitwise::iszero                     => stack_io(1, 1);
-    0x16 => AND    => bitwise::bitand                     => stack_io(2, 1);
-    0x17 => OR     => bitwise::bitor                      => stack_io(2, 1);
-    0x18 => XOR    => bitwise::bitxor                     => stack_io(2, 1);
-    0x19 => NOT    => bitwise::not                        => stack_io(1, 1);
-    0x1A => BYTE   => bitwise::byte                       => stack_io(2, 1);
+    0x10 => LT     => bitwise::lt             => stack_io(2, 1);
+    0x11 => GT     => bitwise::gt             => stack_io(2, 1);
+    0x12 => SLT    => bitwise::slt            => stack_io(2, 1);
+    0x13 => SGT    => bitwise::sgt            => stack_io(2, 1);
+    0x14 => EQ     => bitwise::eq             => stack_io(2, 1);
+    0x15 => ISZERO => bitwise::iszero         => stack_io(1, 1);
+    0x16 => AND    => bitwise::bitand         => stack_io(2, 1);
+    0x17 => OR     => bitwise::bitor          => stack_io(2, 1);
+    0x18 => XOR    => bitwise::bitxor         => stack_io(2, 1);
+    0x19 => NOT    => bitwise::not            => stack_io(1, 1);
+    0x1A => BYTE   => bitwise::byte           => stack_io(2, 1);
     0x1B => SHL    => bitwise::shl::<H, SPEC> => stack_io(2, 1);
     0x1C => SHR    => bitwise::shr::<H, SPEC> => stack_io(2, 1);
     0x1D => SAR    => bitwise::sar::<H, SPEC> => stack_io(2, 1);
@@ -474,18 +474,18 @@ opcodes! {
     // 0x2D
     // 0x2E
     // 0x2F
-    0x30 => ADDRESS      => system::address                      => stack_io(0, 1);
+    0x30 => ADDRESS      => system::address          => stack_io(0, 1);
     0x31 => BALANCE      => host::balance::<H, SPEC> => stack_io(1, 1);
-    0x32 => ORIGIN       => host_env::origin                     => stack_io(0, 1);
-    0x33 => CALLER       => system::caller                       => stack_io(0, 1);
-    0x34 => CALLVALUE    => system::callvalue                    => stack_io(0, 1);
-    0x35 => CALLDATALOAD => system::calldataload                 => stack_io(1, 1);
-    0x36 => CALLDATASIZE => system::calldatasize                 => stack_io(0, 1);
-    0x37 => CALLDATACOPY => system::calldatacopy                 => stack_io(3, 0);
-    0x38 => CODESIZE     => system::codesize                     => stack_io(0, 1), not_eof;
-    0x39 => CODECOPY     => system::codecopy                     => stack_io(3, 0), not_eof;
+    0x32 => ORIGIN       => host_env::origin         => stack_io(0, 1);
+    0x33 => CALLER       => system::caller           => stack_io(0, 1);
+    0x34 => CALLVALUE    => system::callvalue        => stack_io(0, 1);
+    0x35 => CALLDATALOAD => system::calldataload     => stack_io(1, 1);
+    0x36 => CALLDATASIZE => system::calldatasize     => stack_io(0, 1);
+    0x37 => CALLDATACOPY => system::calldatacopy     => stack_io(3, 0);
+    0x38 => CODESIZE     => system::codesize         => stack_io(0, 1), not_eof;
+    0x39 => CODECOPY     => system::codecopy         => stack_io(3, 0), not_eof;
 
-    0x3A => GASPRICE       => host_env::gasprice                            => stack_io(0, 1);
+    0x3A => GASPRICE       => host_env::gasprice                => stack_io(0, 1);
     0x3B => EXTCODESIZE    => host::extcodesize::<H, SPEC>      => stack_io(1, 1), not_eof;
     0x3C => EXTCODECOPY    => host::extcodecopy::<H, SPEC>      => stack_io(4, 0), not_eof;
     0x3D => RETURNDATASIZE => system::returndatasize::<H, SPEC> => stack_io(0, 1);
@@ -507,10 +507,10 @@ opcodes! {
     // 0x4D
     // 0x4E
     // 0x4F
-    0x50 => POP      => stack::pop                           => stack_io(1, 0);
-    0x51 => MLOAD    => memory::mload                        => stack_io(1, 1);
-    0x52 => MSTORE   => memory::mstore                       => stack_io(2, 0);
-    0x53 => MSTORE8  => memory::mstore8                      => stack_io(2, 0);
+    0x50 => POP      => stack::pop               => stack_io(1, 0);
+    0x51 => MLOAD    => memory::mload            => stack_io(1, 1);
+    0x52 => MSTORE   => memory::mstore           => stack_io(2, 0);
+    0x53 => MSTORE8  => memory::mstore8          => stack_io(2, 0);
     0x54 => SLOAD    => host::sload::<H, SPEC>   => stack_io(1, 1);
     0x55 => SSTORE   => host::sstore::<H, SPEC>  => stack_io(2, 0);
     0x56 => JUMP     => control::jump            => stack_io(1, 0), not_eof;
@@ -674,7 +674,7 @@ opcodes! {
     0xF0 => CREATE       => contract::create::<false, H, SPEC> => stack_io(3, 1), not_eof;
     0xF1 => CALL         => contract::call::<H, SPEC>          => stack_io(7, 1), not_eof;
     0xF2 => CALLCODE     => contract::call_code::<H, SPEC>     => stack_io(7, 1), not_eof;
-    0xF3 => RETURN       => control::ret                                   => stack_io(2, 0), terminating;
+    0xF3 => RETURN       => control::ret                       => stack_io(2, 0), terminating;
     0xF4 => DELEGATECALL => contract::delegate_call::<H, SPEC> => stack_io(6, 1), not_eof;
     0xF5 => CREATE2      => contract::create::<true, H, SPEC>  => stack_io(4, 1), not_eof;
     // 0xF6
@@ -685,7 +685,7 @@ opcodes! {
     0xFB => EXTSTATICCALL   => contract::extstaticcall               => stack_io(3, 1);
     // 0xFC
     0xFD => REVERT       => control::revert::<H, SPEC>    => stack_io(2, 0), terminating;
-    0xFE => INVALID      => control::invalid                          => stack_io(0, 0), terminating;
+    0xFE => INVALID      => control::invalid              => stack_io(0, 0), terminating;
     0xFF => SELFDESTRUCT => host::selfdestruct::<H, SPEC> => stack_io(1, 0), not_eof, terminating;
 }
 

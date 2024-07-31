@@ -146,7 +146,7 @@ required-features = ["std", "serde-json"]
 [[example]]
 name = "custom_opcodes"
 path = "../../examples/custom_opcodes.rs"
-required-features = ["enumn"]
+required-features = []
 
 [[bench]]
 name = "bench"

@@ -1,13 +1,12 @@
-use revm_interpreter::{
-    gas,
-    opcode::{make_instruction_table, InstructionTable, InstructionTables},
-    Host, Interpreter,
-};
-
 use revm::{
-    handler::register::EvmHandler,
-    primitives::{db::Database, EvmWiring, HaltReason, Spec, SpecId},
+    interpreter::{
+        gas,
+        opcode::{make_instruction_table, InstructionTable},
+        Host, Interpreter,
+    },
+    primitives::{BlockEnv, EvmWiring, HaltReason, Spec, SpecId, TxEnv},
 };
+use revm_interpreter::DummyHost;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct CustomOpcodeEvmWiring;
@@ -15,11 +14,13 @@ pub struct CustomOpcodeEvmWiring;
 impl EvmWiring for CustomOpcodeEvmWiring {
     type Hardfork = CustomOpcodeSpecId;
     type HaltReason = HaltReason;
+    type Block = BlockEnv;
+    type Transaction = TxEnv;
 }
 
 /// Specification IDs for the optimism blockchain.
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, enumn::N)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 pub enum CustomOpcodeSpecId {
@@ -228,7 +229,7 @@ macro_rules! custom_opcode_spec_to_generic {
 //     }
 // }
 
-fn make_custom_instruction_table<
+pub fn make_custom_instruction_table<
     EvmWiringT: EvmWiring,
     H: Host + ?Sized,
     SPEC: CustomOpcodeSpec,
@@ -257,4 +258,14 @@ fn custom_opcode_handler<H: Host + ?Sized, SPEC: CustomOpcodeSpec>(
 
 pub fn main() {
     println!("Example is in code compilation");
+    let spec_id = CustomOpcodeSpecId::INTRODUCES_OPCODE;
+
+    let _instructions = custom_opcode_spec_to_generic!(
+        spec_id,
+        make_custom_instruction_table::<
+            CustomOpcodeEvmWiring,
+            DummyHost<CustomOpcodeEvmWiring>,
+            SPEC,
+        >()
+    );
 }

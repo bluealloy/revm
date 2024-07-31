@@ -5,8 +5,8 @@
 use crate::{
     precompile::PrecompileSpecId,
     primitives::{
-        db::Database, Account, Block, EVMError, EVMResultGeneric, Env, Spec, SpecId,
-        Transaction as _, BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256,
+        db::Database, Account, Block, EVMError, EVMResultGeneric, Env, Spec, SpecId, Transaction,
+        BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256,
     },
     Context, ContextPrecompiles, EvmWiring,
 };

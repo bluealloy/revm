@@ -1,6 +1,6 @@
 use revm_primitives::EvmWiring;
 
-use crate::primitives::{Address, Bytes, Eof, Transaction as _, U256};
+use crate::primitives::{Address, Bytes, Eof, Transaction, U256};
 
 /// EOF create can be called from two places:
 /// * EOFCREATE opcode

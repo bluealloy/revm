@@ -11,7 +11,7 @@ use crate::{
         AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, Env, Eof,
         EvmWiring, HashSet, Spec,
         SpecId::{self, *},
-        Transaction as _, B256, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
+        Transaction, B256, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
     },
     JournalCheckpoint,
 };

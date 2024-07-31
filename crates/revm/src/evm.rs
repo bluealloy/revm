@@ -7,7 +7,7 @@ use crate::{
     interpreter::{CallInputs, CreateInputs, EOFCreateInputs, InterpreterAction, SharedMemory},
     primitives::{
         CfgEnv, EVMError, EVMResult, EVMResultGeneric, EthereumWiring, ExecutionResult,
-        ResultAndState, SpecId, Transaction as _, TxKind, EOF_MAGIC_BYTES,
+        ResultAndState, SpecId, Transaction, TxKind, EOF_MAGIC_BYTES,
     },
     Context, ContextWithEvmWiring, EvmWiring, Frame, FrameOrResult, FrameResult,
 };

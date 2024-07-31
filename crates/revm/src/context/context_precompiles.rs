@@ -25,9 +25,9 @@ pub enum ContextPrecompile<EvmWiringT: EvmWiring, DB: Database> {
 impl<EvmWiringT: EvmWiring, DB: Database> Debug for ContextPrecompile<EvmWiringT, DB> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            Self::Ordinary(arg0) => f.debug_tuple("Ordinary").field(arg0).finish(),
-            Self::ContextStateful(_arg0) => f.debug_tuple("ContextStateful").finish(),
-            Self::ContextStatefulMut(_arg0) => f.debug_tuple("ContextStatefulMut").finish(),
+            Self::Ordinary(p) => f.debug_tuple("Ordinary").field(p).finish(),
+            Self::ContextStateful(_) => f.debug_tuple("ContextStateful").finish(),
+            Self::ContextStatefulMut(_) => f.debug_tuple("ContextStatefulMut").finish(),
         }
     }
 }

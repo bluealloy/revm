@@ -12,7 +12,7 @@ use crate::{
     primitives::{
         keccak256, Address, Bytecode, Bytes, CreateScheme, EVMError, EVMResultGeneric, Env, Eof,
         SpecId::{self, *},
-        Transaction as _, B256, EOF_MAGIC_BYTES,
+        Transaction, B256, EOF_MAGIC_BYTES,
     },
     ContextPrecompiles, EvmWiring, FrameOrResult, CALL_STACK_LIMIT,
 };
