@@ -5,15 +5,15 @@ use crate::{
         db::Database, EVMError, EVMResultGeneric, Env, InvalidTransaction, Spec, Transaction,
         TransactionValidation,
     },
-    ChainSpec, Context,
+    Context, EvmWiring,
 };
 
 /// Validate environment for the mainnet.
-pub fn validate_env<ChainSpecT: ChainSpec, SPEC: Spec, DB: Database>(
-    env: &Env<ChainSpecT>,
-) -> EVMResultGeneric<(), ChainSpecT, DB::Error>
+pub fn validate_env<EvmWiringT: EvmWiring, SPEC: Spec, DB: Database>(
+    env: &Env<EvmWiringT>,
+) -> EVMResultGeneric<(), EvmWiringT, DB::Error>
 where
-    <ChainSpecT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
+    <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
 {
     // Important: validate block before tx.
     env.validate_block_env::<SPEC>()?;
@@ -23,11 +23,11 @@ where
 }
 
 /// Validates transaction against the state.
-pub fn validate_tx_against_state<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<ChainSpecT, EXT, DB>,
-) -> EVMResultGeneric<(), ChainSpecT, DB::Error>
+pub fn validate_tx_against_state<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EvmWiringT, EXT, DB>,
+) -> EVMResultGeneric<(), EvmWiringT, DB::Error>
 where
-    <ChainSpecT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
+    <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
 {
     // load acc
     let tx_caller = context.evm.env.tx.caller();
@@ -49,11 +49,11 @@ where
 }
 
 /// Validate initial transaction gas.
-pub fn validate_initial_tx_gas<ChainSpecT: ChainSpec, SPEC: Spec, DB: Database>(
-    env: &Env<ChainSpecT>,
-) -> EVMResultGeneric<u64, ChainSpecT, DB::Error>
+pub fn validate_initial_tx_gas<EvmWiringT: EvmWiring, SPEC: Spec, DB: Database>(
+    env: &Env<EvmWiringT>,
+) -> EVMResultGeneric<u64, EvmWiringT, DB::Error>
 where
-    <ChainSpecT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
+    <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
 {
     let input = &env.tx.data();
     let is_create = env.tx.kind().is_create();

@@ -8,22 +8,22 @@ use crate::{
         db::Database, Account, Block, EVMError, EVMResultGeneric, Env, Spec, SpecId,
         Transaction as _, BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256,
     },
-    ChainSpec, Context, ContextPrecompiles,
+    Context, ContextPrecompiles, EvmWiring,
 };
 use std::vec::Vec;
 
 /// Main precompile load
 #[inline]
-pub fn load_precompiles<ChainSpecT: ChainSpec, SPEC: Spec, DB: Database>(
-) -> ContextPrecompiles<ChainSpecT, DB> {
+pub fn load_precompiles<EvmWiringT: EvmWiring, SPEC: Spec, DB: Database>(
+) -> ContextPrecompiles<EvmWiringT, DB> {
     ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
 }
 
 /// Main load handle
 #[inline]
-pub fn load_accounts<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<ChainSpecT, EXT, DB>,
-) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
+pub fn load_accounts<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EvmWiringT, EXT, DB>,
+) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
     // set journaling state flag.
     context.evm.journaled_state.set_spec_id(SPEC::SPEC_ID);
 
@@ -125,9 +125,9 @@ pub fn load_accounts<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
 
 /// Helper function that deducts the caller balance.
 #[inline]
-pub fn deduct_caller_inner<ChainSpecT: ChainSpec, SPEC: Spec>(
+pub fn deduct_caller_inner<EvmWiringT: EvmWiring, SPEC: Spec>(
     caller_account: &mut Account,
-    env: &Env<ChainSpecT>,
+    env: &Env<EvmWiringT>,
 ) {
     // Subtract gas costs from the caller's account.
     // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
@@ -154,9 +154,9 @@ pub fn deduct_caller_inner<ChainSpecT: ChainSpec, SPEC: Spec>(
 
 /// Deducts the caller balance to the transaction limit.
 #[inline]
-pub fn deduct_caller<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<ChainSpecT, EXT, DB>,
-) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
+pub fn deduct_caller<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EvmWiringT, EXT, DB>,
+) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
     // load caller's account.
     let (caller_account, _) = context
         .evm
@@ -169,7 +169,7 @@ pub fn deduct_caller<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
         .map_err(EVMError::Database)?;
 
     // deduct gas cost from caller's account.
-    deduct_caller_inner::<ChainSpecT, SPEC>(caller_account, &context.evm.inner.env);
+    deduct_caller_inner::<EvmWiringT, SPEC>(caller_account, &context.evm.inner.env);
 
     Ok(())
 }

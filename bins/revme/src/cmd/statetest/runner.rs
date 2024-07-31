@@ -28,7 +28,7 @@ use std::{
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 
-type TestChainSpec = revm::primitives::EthChainSpec;
+type TestEvmWiring = revm::primitives::EthEvmWiring;
 
 #[derive(Debug, Error)]
 #[error("Test {name} failed: {kind}")]
@@ -132,8 +132,8 @@ fn check_evm_execution<EXT>(
     test: &Test,
     expected_output: Option<&Bytes>,
     test_name: &str,
-    exec_result: &EVMResultGeneric<ExecutionResult<TestChainSpec>, TestChainSpec, Infallible>,
-    evm: &Evm<'_, TestChainSpec, EXT, &mut State<EmptyDB>>,
+    exec_result: &EVMResultGeneric<ExecutionResult<TestEvmWiring>, TestEvmWiring, Infallible>,
+    evm: &Evm<'_, TestEvmWiring, EXT, &mut State<EmptyDB>>,
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
@@ -270,7 +270,7 @@ pub fn execute_test_suite(
             cache_state.insert_account_with_storage(address, acc_info, info.storage);
         }
 
-        let mut env = Box::<Env<TestChainSpec>>::default();
+        let mut env = Box::<Env<TestEvmWiring>>::default();
         // for mainnet
         env.cfg.chain_id = 1;
         // env.cfg.spec_id is set down the road

@@ -3,23 +3,23 @@ use crate::{
     handler::register::EvmHandler,
     interpreter::{opcode, InstructionResult, Interpreter},
     primitives::EVMResultGeneric,
-    ChainSpec, Context, FrameOrResult, FrameResult, Inspector, JournalEntry,
+    Context, EvmWiring, FrameOrResult, FrameResult, Inspector, JournalEntry,
 };
 use core::cell::RefCell;
 use revm_interpreter::opcode::DynInstruction;
 use std::{rc::Rc, sync::Arc, vec::Vec};
 
 /// Provides access to an `Inspector` instance.
-pub trait GetInspector<ChainSpecT: ChainSpec, DB: Database> {
+pub trait GetInspector<EvmWiringT: EvmWiring, DB: Database> {
     /// Returns the associated `Inspector`.
-    fn get_inspector(&mut self) -> &mut impl Inspector<ChainSpecT, DB>;
+    fn get_inspector(&mut self) -> &mut impl Inspector<EvmWiringT, DB>;
 }
 
-impl<ChainSpecT: ChainSpec, DB: Database, INSP: Inspector<ChainSpecT, DB>>
-    GetInspector<ChainSpecT, DB> for INSP
+impl<EvmWiringT: EvmWiring, DB: Database, INSP: Inspector<EvmWiringT, DB>>
+    GetInspector<EvmWiringT, DB> for INSP
 {
     #[inline]
-    fn get_inspector(&mut self) -> &mut impl Inspector<ChainSpecT, DB> {
+    fn get_inspector(&mut self) -> &mut impl Inspector<EvmWiringT, DB> {
         self
     }
 }
@@ -37,11 +37,11 @@ impl<ChainSpecT: ChainSpec, DB: Database, INSP: Inspector<ChainSpecT, DB>>
 /// and in case of Logs and Selfdestruct wrapper is wrapped again for the
 /// `log` and `selfdestruct` calls.
 pub fn inspector_handle_register<
-    ChainSpecT: ChainSpec,
+    EvmWiringT: EvmWiring,
     DB: Database,
-    EXT: GetInspector<ChainSpecT, DB>,
+    EXT: GetInspector<EvmWiringT, DB>,
 >(
-    handler: &mut EvmHandler<'_, ChainSpecT, EXT, DB>,
+    handler: &mut EvmHandler<'_, EvmWiringT, EXT, DB>,
 ) {
     let table = &mut handler.instruction_table;
 
@@ -96,7 +96,7 @@ pub fn inspector_handle_register<
     let create_input_stack_inner = create_input_stack.clone();
     let prev_handle = handler.execution.create.clone();
     handler.execution.create = Arc::new(
-        move |ctx, mut inputs| -> EVMResultGeneric<FrameOrResult, ChainSpecT, DB::Error> {
+        move |ctx, mut inputs| -> EVMResultGeneric<FrameOrResult, EvmWiringT, DB::Error> {
             let inspector = ctx.external.get_inspector();
             // call inspector create to change input or return outcome.
             if let Some(outcome) = inspector.create(&mut ctx.evm, &mut inputs) {
@@ -223,13 +223,13 @@ pub fn inspector_handle_register<
     });
 }
 
-fn inspector_instruction<ChainSpecT, INSP, DB>(
-    prev: &DynInstruction<'_, Context<ChainSpecT, INSP, DB>>,
+fn inspector_instruction<EvmWiringT, INSP, DB>(
+    prev: &DynInstruction<'_, Context<EvmWiringT, INSP, DB>>,
     interpreter: &mut Interpreter,
-    host: &mut Context<ChainSpecT, INSP, DB>,
+    host: &mut Context<EvmWiringT, INSP, DB>,
 ) where
-    ChainSpecT: ChainSpec,
-    INSP: GetInspector<ChainSpecT, DB>,
+    EvmWiringT: EvmWiring,
+    INSP: GetInspector<EvmWiringT, DB>,
     DB: Database,
 {
     // SAFETY: as the PC was already incremented we need to subtract 1 to preserve the
@@ -265,7 +265,7 @@ mod tests {
         primitives, Evm, EvmContext,
     };
 
-    type TestChainSpec = primitives::EthChainSpec;
+    type TestEvmWiring = primitives::EthEvmWiring;
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -276,11 +276,11 @@ mod tests {
         call_end: bool,
     }
 
-    impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for StackInspector {
+    impl<EvmWiringT: EvmWiring, DB: Database> Inspector<EvmWiringT, DB> for StackInspector {
         fn initialize_interp(
             &mut self,
             _interp: &mut Interpreter,
-            _context: &mut EvmContext<ChainSpecT, DB>,
+            _context: &mut EvmContext<EvmWiringT, DB>,
         ) {
             if self.initialize_interp_called {
                 unreachable!("initialize_interp should not be called twice")
@@ -288,21 +288,21 @@ mod tests {
             self.initialize_interp_called = true;
         }
 
-        fn step(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<ChainSpecT, DB>) {
+        fn step(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<EvmWiringT, DB>) {
             self.step += 1;
         }
 
         fn step_end(
             &mut self,
             _interp: &mut Interpreter,
-            _context: &mut EvmContext<ChainSpecT, DB>,
+            _context: &mut EvmContext<EvmWiringT, DB>,
         ) {
             self.step_end += 1;
         }
 
         fn call(
             &mut self,
-            context: &mut EvmContext<ChainSpecT, DB>,
+            context: &mut EvmContext<EvmWiringT, DB>,
             _call: &mut CallInputs,
         ) -> Option<CallOutcome> {
             if self.call {
@@ -315,7 +315,7 @@ mod tests {
 
         fn call_end(
             &mut self,
-            context: &mut EvmContext<ChainSpecT, DB>,
+            context: &mut EvmContext<EvmWiringT, DB>,
             _inputs: &CallInputs,
             outcome: CallOutcome,
         ) -> CallOutcome {
@@ -329,7 +329,7 @@ mod tests {
 
         fn create(
             &mut self,
-            context: &mut EvmContext<ChainSpecT, DB>,
+            context: &mut EvmContext<EvmWiringT, DB>,
             _call: &mut CreateInputs,
         ) -> Option<CreateOutcome> {
             assert_eq!(context.journaled_state.depth(), 0);
@@ -338,7 +338,7 @@ mod tests {
 
         fn create_end(
             &mut self,
-            context: &mut EvmContext<ChainSpecT, DB>,
+            context: &mut EvmContext<EvmWiringT, DB>,
             _inputs: &CreateInputs,
             outcome: CreateOutcome,
         ) -> CreateOutcome {
@@ -374,11 +374,11 @@ mod tests {
         let bytecode = Bytecode::new_raw(contract_data);
 
         let mut evm = Evm::builder()
-            .with_chain_spec::<TestChainSpec>()
+            .with_chain_spec::<TestEvmWiring>()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
             .with_external_context(StackInspector::default())
             .modify_tx_env(|tx| {
-                *tx = <TestChainSpec as primitives::ChainSpec>::Transaction::default();
+                *tx = <TestEvmWiring as primitives::EvmWiring>::Transaction::default();
 
                 tx.caller = address!("1000000000000000000000000000000000000000");
                 tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));

@@ -9,16 +9,16 @@ use crate::{
 use super::{env::TxEnv, OptimismContext, OptimismHaltReason};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ChainSpec;
+pub struct EvmWiring;
 
-impl crate::primitives::ChainSpec for ChainSpec {
+impl crate::primitives::EvmWiring for EvmWiring {
     type Block = BlockEnv;
     type Hardfork = OptimismSpecId;
     type HaltReason = OptimismHaltReason;
     type Transaction = TxEnv;
 }
 
-impl crate::ChainSpec for ChainSpec {
+impl crate::EvmWiring for EvmWiring {
     type Context = Context;
 
     fn handler<'evm, EXT, DB>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self, EXT, DB>

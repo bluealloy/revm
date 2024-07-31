@@ -1,4 +1,4 @@
-use revm_primitives::ChainSpec;
+use revm_primitives::EvmWiring;
 
 use super::analysis::to_analysed;
 use crate::{
@@ -55,8 +55,8 @@ impl Contract {
 
     /// Creates a new contract from the given [`Env`].
     #[inline]
-    pub fn new_env<ChainSpecT: ChainSpec>(
-        env: &Env<ChainSpecT>,
+    pub fn new_env<EvmWiringT: EvmWiring>(
+        env: &Env<EvmWiringT>,
         bytecode: Bytecode,
         hash: Option<B256>,
     ) -> Self {

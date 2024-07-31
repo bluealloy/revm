@@ -9,7 +9,7 @@ use crate::{
     inspectors::GasInspector,
     interpreter::{CallInputs, CreateInputs, Interpreter},
     primitives::{Address, U256},
-    ChainSpec, Database, EvmContext, Inspector,
+    Database, EvmContext, EvmWiring, Inspector,
 };
 
 /// Custom print [Inspector], it has step level information of execution.
@@ -20,18 +20,18 @@ pub struct CustomPrintTracer {
     gas_inspector: GasInspector,
 }
 
-impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for CustomPrintTracer {
+impl<EvmWiringT: EvmWiring, DB: Database> Inspector<EvmWiringT, DB> for CustomPrintTracer {
     fn initialize_interp(
         &mut self,
         interp: &mut Interpreter,
-        context: &mut EvmContext<ChainSpecT, DB>,
+        context: &mut EvmContext<EvmWiringT, DB>,
     ) {
         self.gas_inspector.initialize_interp(interp, context);
     }
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<ChainSpecT, DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT, DB>) {
         let opcode = interp.current_opcode();
         let name = OpCode::name_by_op(opcode);
 
@@ -56,13 +56,13 @@ impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for CustomPr
         self.gas_inspector.step(interp, context);
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<ChainSpecT, DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT, DB>) {
         self.gas_inspector.step_end(interp, context);
     }
 
     fn call_end(
         &mut self,
-        context: &mut EvmContext<ChainSpecT, DB>,
+        context: &mut EvmContext<EvmWiringT, DB>,
         inputs: &CallInputs,
         outcome: CallOutcome,
     ) -> CallOutcome {
@@ -71,7 +71,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for CustomPr
 
     fn create_end(
         &mut self,
-        context: &mut EvmContext<ChainSpecT, DB>,
+        context: &mut EvmContext<EvmWiringT, DB>,
         inputs: &CreateInputs,
         outcome: CreateOutcome,
     ) -> CreateOutcome {
@@ -80,7 +80,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for CustomPr
 
     fn call(
         &mut self,
-        _context: &mut EvmContext<ChainSpecT, DB>,
+        _context: &mut EvmContext<EvmWiringT, DB>,
         inputs: &mut CallInputs,
     ) -> Option<CallOutcome> {
         println!(
@@ -97,7 +97,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for CustomPr
 
     fn create(
         &mut self,
-        _context: &mut EvmContext<ChainSpecT, DB>,
+        _context: &mut EvmContext<EvmWiringT, DB>,
         inputs: &mut CreateInputs,
     ) -> Option<CreateOutcome> {
         println!(

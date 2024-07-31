@@ -27,11 +27,11 @@ pub mod optimism;
 // Export items.
 
 pub use builder::EvmBuilder;
-pub use chain_spec::ChainSpec;
+pub use chain_spec::EvmWiring;
 pub use context::{
     Context, ContextPrecompile, ContextPrecompiles, ContextStatefulPrecompile,
     ContextStatefulPrecompileArc, ContextStatefulPrecompileBox, ContextStatefulPrecompileMut,
-    ContextWithChainSpec, EvmContext, InnerEvmContext,
+    ContextWithEvmWiring, EvmContext, InnerEvmContext,
 };
 pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,

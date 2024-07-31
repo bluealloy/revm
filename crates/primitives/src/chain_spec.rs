@@ -32,7 +32,7 @@ pub trait TransactionValidation {
     }
 }
 
-pub trait ChainSpec: Sized + 'static {
+pub trait EvmWiring: Sized + 'static {
     /// The type that contains all block information.
     type Block: Block;
 
@@ -47,9 +47,9 @@ pub trait ChainSpec: Sized + 'static {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EthChainSpec;
+pub struct EthEvmWiring;
 
-impl ChainSpec for EthChainSpec {
+impl EvmWiring for EthEvmWiring {
     type Block = crate::BlockEnv;
     type Hardfork = SpecId;
     type HaltReason = crate::HaltReason;

@@ -8,8 +8,8 @@ use crate::{
     },
     journaled_state::JournaledState,
     primitives::{
-        AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, ChainSpec, Env,
-        Eof, HashSet, Spec,
+        AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, Env, Eof,
+        EvmWiring, HashSet, Spec,
         SpecId::{self, *},
         Transaction as _, B256, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
     },
@@ -18,11 +18,11 @@ use crate::{
 use std::{boxed::Box, sync::Arc, vec::Vec};
 
 /// EVM contexts contains data that EVM needs for execution.
-#[derive_where(Clone, Debug; ChainSpecT::Block, ChainSpecT::Transaction, DB, DB::Error)]
-pub struct InnerEvmContext<ChainSpecT: ChainSpec, DB: Database> {
+#[derive_where(Clone, Debug; EvmWiringT::Block, EvmWiringT::Transaction, DB, DB::Error)]
+pub struct InnerEvmContext<EvmWiringT: EvmWiring, DB: Database> {
     /// EVM Environment contains all the information about config, block and transaction that
     /// evm needs.
-    pub env: Box<Env<ChainSpecT>>,
+    pub env: Box<Env<EvmWiringT>>,
     /// EVM State with journaling support.
     pub journaled_state: JournaledState,
     /// Database to load data from.
@@ -33,9 +33,9 @@ pub struct InnerEvmContext<ChainSpecT: ChainSpec, DB: Database> {
     pub valid_authorizations: Vec<Address>,
 }
 
-impl<ChainSpecT, DB> InnerEvmContext<ChainSpecT, DB>
+impl<EvmWiringT, DB> InnerEvmContext<EvmWiringT, DB>
 where
-    ChainSpecT: ChainSpec<Block: Default, Transaction: Default>,
+    EvmWiringT: EvmWiring<Block: Default, Transaction: Default>,
     DB: Database,
 {
     pub fn new(db: DB) -> Self {
@@ -49,10 +49,10 @@ where
     }
 }
 
-impl<ChainSpecT: ChainSpec, DB: Database> InnerEvmContext<ChainSpecT, DB> {
+impl<EvmWiringT: EvmWiring, DB: Database> InnerEvmContext<EvmWiringT, DB> {
     /// Creates a new context with the given environment and database.
     #[inline]
-    pub fn new_with_env(db: DB, env: Box<Env<ChainSpecT>>) -> Self {
+    pub fn new_with_env(db: DB, env: Box<Env<EvmWiringT>>) -> Self {
         Self {
             env,
             journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
@@ -66,7 +66,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> InnerEvmContext<ChainSpecT, DB> {
     ///
     /// Note that this will ignore the previous `error` if set.
     #[inline]
-    pub fn with_db<ODB: Database>(self, db: ODB) -> InnerEvmContext<ChainSpecT, ODB> {
+    pub fn with_db<ODB: Database>(self, db: ODB) -> InnerEvmContext<EvmWiringT, ODB> {
         InnerEvmContext {
             env: self.env,
             journaled_state: self.journaled_state,
@@ -103,7 +103,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> InnerEvmContext<ChainSpecT, DB> {
 
     /// Return environment.
     #[inline]
-    pub fn env(&mut self) -> &mut Env<ChainSpecT> {
+    pub fn env(&mut self) -> &mut Env<EvmWiringT> {
         &mut self.env
     }
 

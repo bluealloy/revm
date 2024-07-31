@@ -15,33 +15,33 @@ use crate::{
     db::{Database, EmptyDB},
     interpreter::{Host, LoadAccountResult, SStoreResult, SelfDestructResult},
     primitives::{
-        Address, Block as _, Bytes, Env, EthChainSpec, Log, B256, BLOCK_HASH_HISTORY, U256,
+        Address, Block as _, Bytes, Env, EthEvmWiring, Log, B256, BLOCK_HASH_HISTORY, U256,
     },
-    ChainSpec,
+    EvmWiring,
 };
 use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
-#[derive_where(Clone; ChainSpecT::Block, ChainSpecT::Context, ChainSpecT::Transaction, DB, DB::Error, EXT)]
-pub struct Context<ChainSpecT: ChainSpec, EXT, DB: Database> {
+#[derive_where(Clone; EvmWiringT::Block, EvmWiringT::Context, EvmWiringT::Transaction, DB, DB::Error, EXT)]
+pub struct Context<EvmWiringT: EvmWiring, EXT, DB: Database> {
     /// Evm Context (internal context).
-    pub evm: EvmContext<ChainSpecT, DB>,
+    pub evm: EvmContext<EvmWiringT, DB>,
     /// External contexts.
     pub external: EXT,
 }
 
-impl Default for Context<EthChainSpec, (), EmptyDB> {
+impl Default for Context<EthEvmWiring, (), EmptyDB> {
     fn default() -> Self {
         Self::new_empty()
     }
 }
 
-impl<ChainSpecT> Context<ChainSpecT, (), EmptyDB>
+impl<EvmWiringT> Context<EvmWiringT, (), EmptyDB>
 where
-    ChainSpecT: ChainSpec<Block: Default, Transaction: Default>,
+    EvmWiringT: EvmWiring<Block: Default, Transaction: Default>,
 {
     /// Creates empty context. This is useful for testing.
-    pub fn new_empty() -> Context<ChainSpecT, (), EmptyDB> {
+    pub fn new_empty() -> Context<EvmWiringT, (), EmptyDB> {
         Context {
             evm: EvmContext::new(EmptyDB::new()),
             external: (),
@@ -49,13 +49,13 @@ where
     }
 }
 
-impl<ChainSpecT, DB> Context<ChainSpecT, (), DB>
+impl<EvmWiringT, DB> Context<EvmWiringT, (), DB>
 where
-    ChainSpecT: ChainSpec<Block: Default, Transaction: Default>,
+    EvmWiringT: EvmWiring<Block: Default, Transaction: Default>,
     DB: Database,
 {
     /// Creates new context with database.
-    pub fn new_with_db(db: DB) -> Context<ChainSpecT, (), DB> {
+    pub fn new_with_db(db: DB) -> Context<EvmWiringT, (), DB> {
         Context {
             evm: EvmContext::new_with_env(db, Box::default()),
             external: (),
@@ -63,39 +63,39 @@ where
     }
 }
 
-impl<ChainSpecT: ChainSpec, EXT, DB: Database> Context<ChainSpecT, EXT, DB> {
+impl<EvmWiringT: EvmWiring, EXT, DB: Database> Context<EvmWiringT, EXT, DB> {
     /// Creates new context with external and database.
-    pub fn new(evm: EvmContext<ChainSpecT, DB>, external: EXT) -> Context<ChainSpecT, EXT, DB> {
+    pub fn new(evm: EvmContext<EvmWiringT, DB>, external: EXT) -> Context<EvmWiringT, EXT, DB> {
         Context { evm, external }
     }
 }
 
 /// Context with handler configuration.
-#[derive_where(Clone; ChainSpecT::Block, ChainSpecT::Context, ChainSpecT::Transaction, DB, DB::Error, EXT)]
-pub struct ContextWithChainSpec<ChainSpecT: ChainSpec, EXT, DB: Database> {
+#[derive_where(Clone; EvmWiringT::Block, EvmWiringT::Context, EvmWiringT::Transaction, DB, DB::Error, EXT)]
+pub struct ContextWithEvmWiring<EvmWiringT: EvmWiring, EXT, DB: Database> {
     /// Context of execution.
-    pub context: Context<ChainSpecT, EXT, DB>,
+    pub context: Context<EvmWiringT, EXT, DB>,
     /// Handler configuration.
-    pub spec_id: ChainSpecT::Hardfork,
+    pub spec_id: EvmWiringT::Hardfork,
 }
 
-impl<ChainSpecT: ChainSpec, EXT, DB: Database> ContextWithChainSpec<ChainSpecT, EXT, DB> {
+impl<EvmWiringT: EvmWiring, EXT, DB: Database> ContextWithEvmWiring<EvmWiringT, EXT, DB> {
     /// Creates new context with handler configuration.
-    pub fn new(context: Context<ChainSpecT, EXT, DB>, spec_id: ChainSpecT::Hardfork) -> Self {
+    pub fn new(context: Context<EvmWiringT, EXT, DB>, spec_id: EvmWiringT::Hardfork) -> Self {
         Self { spec_id, context }
     }
 }
 
-impl<ChainSpecT: ChainSpec, EXT, DB: Database> Host for Context<ChainSpecT, EXT, DB> {
-    type ChainSpecT = ChainSpecT;
+impl<EvmWiringT: EvmWiring, EXT, DB: Database> Host for Context<EvmWiringT, EXT, DB> {
+    type EvmWiringT = EvmWiringT;
 
     /// Returns reference to Environment.
     #[inline]
-    fn env(&self) -> &Env<ChainSpecT> {
+    fn env(&self) -> &Env<EvmWiringT> {
         &self.evm.env
     }
 
-    fn env_mut(&mut self) -> &mut Env<ChainSpecT> {
+    fn env_mut(&mut self) -> &mut Env<EvmWiringT> {
         &mut self.evm.env
     }
 

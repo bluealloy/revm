@@ -4,21 +4,21 @@ use crate::{
         db::Database, Block, Bytecode, EVMError, EVMResultGeneric, ExecutionResult, ResultAndState,
         Spec, SpecId::LONDON, Transaction, KECCAK_EMPTY, U256,
     },
-    ChainSpec, Context, FrameResult,
+    Context, EvmWiring, FrameResult,
 };
 
 /// Mainnet end handle does not change the output.
 #[inline]
-pub fn end<ChainSpecT: ChainSpec, EXT, DB: Database>(
-    _context: &mut Context<ChainSpecT, EXT, DB>,
-    evm_output: EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, DB::Error>,
-) -> EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, DB::Error> {
+pub fn end<EvmWiringT: EvmWiring, EXT, DB: Database>(
+    _context: &mut Context<EvmWiringT, EXT, DB>,
+    evm_output: EVMResultGeneric<ResultAndState<EvmWiringT>, EvmWiringT, DB::Error>,
+) -> EVMResultGeneric<ResultAndState<EvmWiringT>, EvmWiringT, DB::Error> {
     evm_output
 }
 
 /// Clear handle clears error and journal state.
 #[inline]
-pub fn clear<ChainSpecT: ChainSpec, EXT, DB: Database>(context: &mut Context<ChainSpecT, EXT, DB>) {
+pub fn clear<EvmWiringT: EvmWiring, EXT, DB: Database>(context: &mut Context<EvmWiringT, EXT, DB>) {
     // clear error and journaled state.
     let _ = context.evm.take_error();
     context.evm.inner.journaled_state.clear();
@@ -29,10 +29,10 @@ pub fn clear<ChainSpecT: ChainSpec, EXT, DB: Database>(context: &mut Context<Cha
 
 /// Reward beneficiary with gas fee.
 #[inline]
-pub fn reward_beneficiary<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<ChainSpecT, EXT, DB>,
+pub fn reward_beneficiary<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EvmWiringT, EXT, DB>,
     gas: &Gas,
-) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
+) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
     let beneficiary = *context.evm.env.block.coinbase();
     let effective_gas_price = context.evm.env.effective_gas_price();
 
@@ -61,10 +61,10 @@ pub fn reward_beneficiary<ChainSpecT: ChainSpec, SPEC: Spec, EXT, DB: Database>(
 }
 
 #[inline]
-pub fn reimburse_caller<ChainSpecT: ChainSpec, EXT, DB: Database>(
-    context: &mut Context<ChainSpecT, EXT, DB>,
+pub fn reimburse_caller<EvmWiringT: EvmWiring, EXT, DB: Database>(
+    context: &mut Context<EvmWiringT, EXT, DB>,
     gas: &Gas,
-) -> EVMResultGeneric<(), ChainSpecT, DB::Error> {
+) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
     let caller = context.evm.env.tx.caller();
     let effective_gas_price = context.evm.env.effective_gas_price();
 
@@ -86,10 +86,10 @@ pub fn reimburse_caller<ChainSpecT: ChainSpec, EXT, DB: Database>(
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
-pub fn output<ChainSpecT: ChainSpec, EXT, DB: Database>(
-    context: &mut Context<ChainSpecT, EXT, DB>,
+pub fn output<EvmWiringT: EvmWiring, EXT, DB: Database>(
+    context: &mut Context<EvmWiringT, EXT, DB>,
     result: FrameResult,
-) -> EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, DB::Error> {
+) -> EVMResultGeneric<ResultAndState<EvmWiringT>, EvmWiringT, DB::Error> {
     context.evm.take_error().map_err(EVMError::Database)?;
 
     // used gas with refund calculated.
@@ -110,7 +110,7 @@ pub fn output<ChainSpecT: ChainSpec, EXT, DB: Database>(
         account.info.code_hash = KECCAK_EMPTY;
     }
 
-    let result = match SuccessOrHalt::<ChainSpecT>::from(instruction_result.result) {
+    let result = match SuccessOrHalt::<EvmWiringT>::from(instruction_result.result) {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {
             reason,
             gas_used: final_gas_used,

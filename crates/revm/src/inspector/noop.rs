@@ -1,7 +1,7 @@
-use crate::{ChainSpec, Database, Inspector};
+use crate::{Database, EvmWiring, Inspector};
 
 /// Dummy [Inspector], helpful as standalone replacement.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NoOpInspector;
 
-impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for NoOpInspector {}
+impl<EvmWiringT: EvmWiring, DB: Database> Inspector<EvmWiringT, DB> for NoOpInspector {}

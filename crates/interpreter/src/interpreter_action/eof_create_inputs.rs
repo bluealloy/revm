@@ -1,4 +1,4 @@
-use revm_primitives::ChainSpec;
+use revm_primitives::EvmWiring;
 
 use crate::primitives::{Address, Bytes, Eof, Transaction as _, U256};
 
@@ -75,7 +75,7 @@ impl EOFCreateInputs {
     }
 
     /// Creates new EOFCreateInputs from transaction.
-    pub fn new_tx<ChainSpecT: ChainSpec>(tx: &ChainSpecT::Transaction, gas_limit: u64) -> Self {
+    pub fn new_tx<EvmWiringT: EvmWiring>(tx: &EvmWiringT::Transaction, gas_limit: u64) -> Self {
         EOFCreateInputs::new(
             *tx.caller(),
             *tx.value(),

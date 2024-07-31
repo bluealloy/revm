@@ -1,12 +1,12 @@
 use crate::{
     handler::{ExecutionHandler, PostExecutionHandler, PreExecutionHandler, ValidationHandler},
     interpreter::opcode::InstructionTables,
-    primitives::{db::Database, spec_to_generic, EthChainSpec},
+    primitives::{db::Database, spec_to_generic, EthEvmWiring},
     EvmHandler,
 };
 use std::vec::Vec;
 
-pub trait ChainSpec: crate::primitives::ChainSpec {
+pub trait EvmWiring: crate::primitives::EvmWiring {
     /// The type that contains all context information for the chain's EVM execution.
     type Context: Default;
 
@@ -16,7 +16,7 @@ pub trait ChainSpec: crate::primitives::ChainSpec {
         DB: Database;
 }
 
-impl ChainSpec for EthChainSpec {
+impl EvmWiring for EthEvmWiring {
     type Context = ();
 
     fn handler<'evm, EXT, DB>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self, EXT, DB>

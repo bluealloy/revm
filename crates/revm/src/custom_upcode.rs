@@ -6,13 +6,13 @@ use revm_interpreter::{
 
 use crate::{
     handler::register::EvmHandler,
-    primitives::{db::Database, ChainSpec, HaltReason, Spec, SpecId},
+    primitives::{db::Database, EvmWiring, HaltReason, Spec, SpecId},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct CustomOpcodeChainSpec;
+pub struct CustomOpcodeEvmWiring;
 
-impl ChainSpec for CustomOpcodeChainSpec {
+impl EvmWiring for CustomOpcodeEvmWiring {
     type Hardfork = CustomOpcodeSpecId;
     type HaltReason = HaltReason;
 }
@@ -215,7 +215,7 @@ macro_rules! custom_opcode_spec_to_generic {
     }};
 }
 
-impl<EXT, DB: Database> EvmHandler<'_, CustomOpcodeChainSpec, EXT, DB> {
+impl<EXT, DB: Database> EvmHandler<'_, CustomOpcodeEvmWiring, EXT, DB> {
     pub fn custom_opcode_with_spec(spec_id: CustomOpcodeSpecId) -> Self {
         let mut handler = Self::mainnet_with_spec(spec_id);
 
@@ -229,7 +229,7 @@ impl<EXT, DB: Database> EvmHandler<'_, CustomOpcodeChainSpec, EXT, DB> {
 }
 
 fn make_custom_instruction_table<
-    ChainSpecT: ChainSpec,
+    EvmWiringT: EvmWiring,
     H: Host + ?Sized,
     SPEC: CustomOpcodeSpec,
 >() -> InstructionTable<H> {
@@ -242,7 +242,7 @@ fn make_custom_instruction_table<
 }
 
 fn custom_opcode_handler<
-    ChainSpecT: ChainSpec,
+    EvmWiringT: EvmWiring,
     H: Host + ?Sized,
     SPEC: CustomOpcodeSpec,
 >(

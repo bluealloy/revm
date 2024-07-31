@@ -1,35 +1,35 @@
 use derive_where::derive_where;
 
-use crate::{Address, Bytes, ChainSpec, EvmState, Log, TransactionValidation, U256};
+use crate::{Address, Bytes, EvmState, EvmWiring, Log, TransactionValidation, U256};
 use core::fmt::{self, Debug};
 use std::{boxed::Box, string::String, vec::Vec};
 
 /// Result of EVM execution.
-pub type EVMResult<ChainSpecT, DBError> =
-    EVMResultGeneric<ResultAndState<ChainSpecT>, ChainSpecT, DBError>;
+pub type EVMResult<EvmWiringT, DBError> =
+    EVMResultGeneric<ResultAndState<EvmWiringT>, EvmWiringT, DBError>;
 
 /// Generic result of EVM execution. Used to represent error and generic output.
-pub type EVMResultGeneric<T, ChainSpecT, DBError> =
-    core::result::Result<T, EVMErrorForChain<DBError, ChainSpecT>>;
+pub type EVMResultGeneric<T, EvmWiringT, DBError> =
+    core::result::Result<T, EVMErrorForChain<DBError, EvmWiringT>>;
 
 /// EVM error type for a specific chain.
-pub type EVMErrorForChain<DBError, ChainSpecT> = EVMError<
+pub type EVMErrorForChain<DBError, EvmWiringT> = EVMError<
     DBError,
-    <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
+    <<EvmWiringT as EvmWiring>::Transaction as TransactionValidation>::ValidationError,
 >;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ResultAndState<ChainSpecT: ChainSpec> {
+pub struct ResultAndState<EvmWiringT: EvmWiring> {
     /// Status of execution
-    pub result: ExecutionResult<ChainSpecT>,
+    pub result: ExecutionResult<EvmWiringT>,
     /// State that got updated
     pub state: EvmState,
 }
 
 /// Result of a transaction execution.
 #[derive(Debug, PartialEq, Eq, Hash)]
-#[derive_where(Clone; ChainSpecT::HaltReason)]
-pub enum ExecutionResult<ChainSpecT: ChainSpec> {
+#[derive_where(Clone; EvmWiringT::HaltReason)]
+pub enum ExecutionResult<EvmWiringT: EvmWiring> {
     /// Returned successfully
     Success {
         reason: SuccessReason,
@@ -42,13 +42,13 @@ pub enum ExecutionResult<ChainSpecT: ChainSpec> {
     Revert { gas_used: u64, output: Bytes },
     /// Reverted for various reasons and spend all gas.
     Halt {
-        reason: ChainSpecT::HaltReason,
+        reason: EvmWiringT::HaltReason,
         /// Halting will spend all the gas, and will be equal to gas_limit.
         gas_used: u64,
     },
 }
 
-impl<ChainSpecT: ChainSpec> ExecutionResult<ChainSpecT> {
+impl<EvmWiringT: EvmWiring> ExecutionResult<EvmWiringT> {
     /// Returns if transaction execution is successful.
     /// 1 indicates success, 0 indicates revert.
     /// <https://eips.ethereum.org/EIPS/eip-658>

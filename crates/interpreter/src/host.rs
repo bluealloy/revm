@@ -2,18 +2,18 @@ use crate::primitives::{Address, Bytes, Env, Log, B256, U256};
 
 mod dummy;
 pub use dummy::DummyHost;
-use revm_primitives::ChainSpec;
+use revm_primitives::EvmWiring;
 
 /// EVM context host.
 pub trait Host {
     /// Chain specification.
-    type ChainSpecT: ChainSpec;
+    type EvmWiringT: EvmWiring;
 
     /// Returns a reference to the environment.
-    fn env(&self) -> &Env<Self::ChainSpecT>;
+    fn env(&self) -> &Env<Self::EvmWiringT>;
 
     /// Returns a mutable reference to the environment.
-    fn env_mut(&mut self) -> &mut Env<Self::ChainSpecT>;
+    fn env_mut(&mut self) -> &mut Env<Self::EvmWiringT>;
 
     /// Load an account.
     ///
@@ -88,7 +88,7 @@ pub struct SelfDestructResult {
 
 #[cfg(test)]
 mod tests {
-    use revm_primitives::EthChainSpec;
+    use revm_primitives::EthEvmWiring;
 
     use super::*;
 
@@ -96,7 +96,7 @@ mod tests {
 
     #[test]
     fn object_safety() {
-        assert_host::<DummyHost<EthChainSpec>>();
-        assert_host::<dyn Host<ChainSpecT = EthChainSpec>>();
+        assert_host::<DummyHost<EthEvmWiring>>();
+        assert_host::<dyn Host<EvmWiringT = EthEvmWiring>>();
     }
 }

@@ -5,7 +5,7 @@ pub mod mainnet;
 pub mod register;
 
 // Exports.
-pub use cfg::{CfgEnvWithChainSpec, EnvWithChainSpec};
+pub use cfg::{CfgEnvWithEvmWiring, EnvWithEvmWiring};
 pub use handle_types::*;
 
 // Includes.
@@ -14,7 +14,7 @@ use crate::{
     primitives::{
         db::Database, spec_to_generic, EVMResultGeneric, InvalidTransaction, TransactionValidation,
     },
-    ChainSpec, Context, Frame,
+    Context, EvmWiring, Frame,
 };
 use core::mem;
 use register::{EvmHandler, HandleRegisters};
@@ -25,31 +25,31 @@ use self::register::{HandleRegister, HandleRegisterBox};
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
-pub struct Handler<'a, ChainSpecT: ChainSpec, H: Host + 'a, EXT, DB: Database> {
+pub struct Handler<'a, EvmWiringT: EvmWiring, H: Host + 'a, EXT, DB: Database> {
     /// Handler hardfork
-    pub spec_id: ChainSpecT::Hardfork,
+    pub spec_id: EvmWiringT::Hardfork,
     /// Instruction table type.
     pub instruction_table: InstructionTables<'a, H>,
     /// Registers that will be called on initialization.
-    pub registers: Vec<HandleRegisters<'a, ChainSpecT, EXT, DB>>,
+    pub registers: Vec<HandleRegisters<'a, EvmWiringT, EXT, DB>>,
     /// Validity handles.
-    pub validation: ValidationHandler<'a, ChainSpecT, EXT, DB>,
+    pub validation: ValidationHandler<'a, EvmWiringT, EXT, DB>,
     /// Pre execution handle.
-    pub pre_execution: PreExecutionHandler<'a, ChainSpecT, EXT, DB>,
+    pub pre_execution: PreExecutionHandler<'a, EvmWiringT, EXT, DB>,
     /// Post Execution handle.
-    pub post_execution: PostExecutionHandler<'a, ChainSpecT, EXT, DB>,
+    pub post_execution: PostExecutionHandler<'a, EvmWiringT, EXT, DB>,
     /// Execution loop that handles frames.
-    pub execution: ExecutionHandler<'a, ChainSpecT, EXT, DB>,
+    pub execution: ExecutionHandler<'a, EvmWiringT, EXT, DB>,
 }
 
-impl<'a, ChainSpecT, EXT, DB> EvmHandler<'a, ChainSpecT, EXT, DB>
+impl<'a, EvmWiringT, EXT, DB> EvmHandler<'a, EvmWiringT, EXT, DB>
 where
-    ChainSpecT:
-        ChainSpec<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
+    EvmWiringT:
+        EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
     DB: Database,
 {
     /// Creates a base/vanilla Ethereum handler with the provided spec id.
-    pub fn mainnet_with_spec(spec_id: ChainSpecT::Hardfork) -> Self {
+    pub fn mainnet_with_spec(spec_id: EvmWiringT::Hardfork) -> Self {
         spec_to_generic!(
             spec_id.into(),
             Self {
@@ -65,13 +65,13 @@ where
     }
 }
 
-impl<'a, ChainSpecT, EXT, DB> EvmHandler<'a, ChainSpecT, EXT, DB>
+impl<'a, EvmWiringT, EXT, DB> EvmHandler<'a, EvmWiringT, EXT, DB>
 where
-    ChainSpecT: ChainSpec,
+    EvmWiringT: EvmWiring,
     DB: Database,
 {
     /// Returns the specification ID.
-    pub fn spec_id(&self) -> ChainSpecT::Hardfork {
+    pub fn spec_id(&self) -> EvmWiringT::Hardfork {
         self.spec_id
     }
 
@@ -80,8 +80,8 @@ where
         &self,
         frame: &mut Frame,
         shared_memory: &mut SharedMemory,
-        context: &mut Context<ChainSpecT, EXT, DB>,
-    ) -> EVMResultGeneric<InterpreterAction, ChainSpecT, DB::Error> {
+        context: &mut Context<EvmWiringT, EXT, DB>,
+    ) -> EVMResultGeneric<InterpreterAction, EvmWiringT, DB::Error> {
         self.execution
             .execute_frame(frame, shared_memory, &self.instruction_table, context)
     }
@@ -89,7 +89,7 @@ where
     /// Take instruction table.
     pub fn take_instruction_table(
         &mut self,
-    ) -> InstructionTables<'a, Context<ChainSpecT, EXT, DB>> {
+    ) -> InstructionTables<'a, Context<EvmWiringT, EXT, DB>> {
         let spec_id = self.spec_id();
         mem::replace(
             &mut self.instruction_table,
@@ -100,39 +100,39 @@ where
     /// Set instruction table.
     pub fn set_instruction_table(
         &mut self,
-        table: InstructionTables<'a, Context<ChainSpecT, EXT, DB>>,
+        table: InstructionTables<'a, Context<EvmWiringT, EXT, DB>>,
     ) {
         self.instruction_table = table;
     }
 
     /// Returns reference to pre execution handler.
-    pub fn pre_execution(&self) -> &PreExecutionHandler<'a, ChainSpecT, EXT, DB> {
+    pub fn pre_execution(&self) -> &PreExecutionHandler<'a, EvmWiringT, EXT, DB> {
         &self.pre_execution
     }
 
     /// Returns reference to pre execution handler.
-    pub fn post_execution(&self) -> &PostExecutionHandler<'a, ChainSpecT, EXT, DB> {
+    pub fn post_execution(&self) -> &PostExecutionHandler<'a, EvmWiringT, EXT, DB> {
         &self.post_execution
     }
 
     /// Returns reference to frame handler.
-    pub fn execution(&self) -> &ExecutionHandler<'a, ChainSpecT, EXT, DB> {
+    pub fn execution(&self) -> &ExecutionHandler<'a, EvmWiringT, EXT, DB> {
         &self.execution
     }
 
     /// Returns reference to validation handler.
-    pub fn validation(&self) -> &ValidationHandler<'a, ChainSpecT, EXT, DB> {
+    pub fn validation(&self) -> &ValidationHandler<'a, EvmWiringT, EXT, DB> {
         &self.validation
     }
 
     /// Append handle register.
-    pub fn append_handler_register(&mut self, register: HandleRegisters<'a, ChainSpecT, EXT, DB>) {
+    pub fn append_handler_register(&mut self, register: HandleRegisters<'a, EvmWiringT, EXT, DB>) {
         register.register(self);
         self.registers.push(register);
     }
 
     /// Append plain handle register.
-    pub fn append_handler_register_plain(&mut self, register: HandleRegister<ChainSpecT, EXT, DB>) {
+    pub fn append_handler_register_plain(&mut self, register: HandleRegister<EvmWiringT, EXT, DB>) {
         register(self);
         self.registers.push(HandleRegisters::Plain(register));
     }
@@ -140,25 +140,25 @@ where
     /// Append boxed handle register.
     pub fn append_handler_register_box(
         &mut self,
-        register: HandleRegisterBox<'a, ChainSpecT, EXT, DB>,
+        register: HandleRegisterBox<'a, EvmWiringT, EXT, DB>,
     ) {
         register(self);
         self.registers.push(HandleRegisters::Box(register));
     }
 }
 
-impl<'a, ChainSpecT, EXT, DB> EvmHandler<'a, ChainSpecT, EXT, DB>
+impl<'a, EvmWiringT, EXT, DB> EvmHandler<'a, EvmWiringT, EXT, DB>
 where
-    ChainSpecT:
-        ChainSpec<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
+    EvmWiringT:
+        EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
     DB: Database,
 {
     /// Pop last handle register and reapply all registers that are left.
-    pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<'a, ChainSpecT, EXT, DB>> {
+    pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<'a, EvmWiringT, EXT, DB>> {
         let out = self.registers.pop();
         if out.is_some() {
             let registers = core::mem::take(&mut self.registers);
-            let mut base_handler = ChainSpecT::handler::<'a, EXT, DB>(self.spec_id);
+            let mut base_handler = EvmWiringT::handler::<'a, EXT, DB>(self.spec_id);
             // apply all registers to default handler and raw mainnet instruction table.
             for register in registers {
                 base_handler.append_handler_register(register)
@@ -169,14 +169,14 @@ where
     }
 
     /// Creates the Handler with variable SpecId, inside it will call function with Generic Spec.
-    pub fn modify_spec_id(&mut self, spec_id: ChainSpecT::Hardfork) {
+    pub fn modify_spec_id(&mut self, spec_id: EvmWiringT::Hardfork) {
         if self.spec_id == spec_id {
             return;
         }
 
         let registers = core::mem::take(&mut self.registers);
         // register for optimism is added as a register, so we need to create mainnet handler here.
-        let mut handler = ChainSpecT::handler::<'a, EXT, DB>(spec_id);
+        let mut handler = EvmWiringT::handler::<'a, EXT, DB>(spec_id);
         // apply all registers to default handler and raw mainnet instruction table.
         for register in registers {
             handler.append_handler_register(register)
@@ -199,14 +199,14 @@ mod test {
     use super::*;
 
     #[cfg(feature = "optimism")]
-    type TestChainSpec = crate::optimism::ChainSpec;
+    type TestEvmWiring = crate::optimism::EvmWiring;
     #[cfg(not(feature = "optimism"))]
-    type TestChainSpec = primitives::EthChainSpec;
+    type TestEvmWiring = primitives::EthEvmWiring;
 
     #[test]
     fn test_handler_register_pop() {
         let register =
-            |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<'_, TestChainSpec, (), EmptyDB> {
+            |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<'_, TestEvmWiring, (), EmptyDB> {
                 let inner = inner.clone();
                 Box::new(move |h| {
                     *inner.borrow_mut() += 1;
@@ -215,8 +215,8 @@ mod test {
                 })
             };
 
-        let mut handler = EvmHandler::<'_, TestChainSpec, (), EmptyDB>::mainnet_with_spec(
-            <TestChainSpec as primitives::ChainSpec>::Hardfork::default(),
+        let mut handler = EvmHandler::<'_, TestEvmWiring, (), EmptyDB>::mainnet_with_spec(
+            <TestEvmWiring as primitives::EvmWiring>::Hardfork::default(),
         );
         let test = Rc::new(RefCell::new(0));
 

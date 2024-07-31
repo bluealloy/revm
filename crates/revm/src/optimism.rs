@@ -53,8 +53,8 @@ pub trait OptimismTransaction {
 }
 
 /// Trait for an Optimism chain spec.
-pub trait OptimismChainSpec:
-    crate::ChainSpec<
+pub trait OptimismEvmWiring:
+    crate::EvmWiring<
     Context: OptimismContext,
     Hardfork = OptimismSpecId,
     HaltReason = OptimismHaltReason,
@@ -64,8 +64,8 @@ pub trait OptimismChainSpec:
 {
 }
 
-impl<ChainSpecT> OptimismChainSpec for ChainSpecT where
-    ChainSpecT: crate::ChainSpec<
+impl<EvmWiringT> OptimismEvmWiring for EvmWiringT where
+    EvmWiringT: crate::EvmWiring<
         Context: OptimismContext,
         Hardfork = OptimismSpecId,
         HaltReason = OptimismHaltReason,

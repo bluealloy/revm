@@ -6,32 +6,32 @@ use std::boxed::Box;
 
 use derive_where::derive_where;
 
-use crate::primitives::{CfgEnv, ChainSpec, Env};
+use crate::primitives::{CfgEnv, Env, EvmWiring};
 
 /// Configuration environment with the chain spec id.
 #[derive(Debug, Eq, PartialEq)]
-#[derive_where(Clone; ChainSpecT::Hardfork)]
-pub struct CfgEnvWithChainSpec<ChainSpecT: ChainSpec> {
+#[derive_where(Clone; EvmWiringT::Hardfork)]
+pub struct CfgEnvWithEvmWiring<EvmWiringT: EvmWiring> {
     /// Configuration environment.
     pub cfg_env: CfgEnv,
     /// Handler configuration fields.
-    pub spec_id: ChainSpecT::Hardfork,
+    pub spec_id: EvmWiringT::Hardfork,
 }
 
-impl<ChainSpecT: ChainSpec> CfgEnvWithChainSpec<ChainSpecT> {
+impl<EvmWiringT: EvmWiring> CfgEnvWithEvmWiring<EvmWiringT> {
     /// Returns new instance of `CfgEnvWithHandlerCfg`.
-    pub fn new(cfg_env: CfgEnv, spec_id: ChainSpecT::Hardfork) -> Self {
+    pub fn new(cfg_env: CfgEnv, spec_id: EvmWiringT::Hardfork) -> Self {
         Self { cfg_env, spec_id }
     }
 }
 
-impl<ChainSpecT: ChainSpec> DerefMut for CfgEnvWithChainSpec<ChainSpecT> {
+impl<EvmWiringT: EvmWiring> DerefMut for CfgEnvWithEvmWiring<EvmWiringT> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.cfg_env
     }
 }
 
-impl<ChainSpecT: ChainSpec> Deref for CfgEnvWithChainSpec<ChainSpecT> {
+impl<EvmWiringT: EvmWiring> Deref for CfgEnvWithEvmWiring<EvmWiringT> {
     type Target = CfgEnv;
 
     fn deref(&self) -> &Self::Target {
@@ -40,55 +40,55 @@ impl<ChainSpecT: ChainSpec> Deref for CfgEnvWithChainSpec<ChainSpecT> {
 }
 
 /// Evm environment with the chain spec id.
-#[derive_where(Clone, Debug; ChainSpecT::Block, ChainSpecT::Hardfork, ChainSpecT::Transaction)]
-pub struct EnvWithChainSpec<ChainSpecT>
+#[derive_where(Clone, Debug; EvmWiringT::Block, EvmWiringT::Hardfork, EvmWiringT::Transaction)]
+pub struct EnvWithEvmWiring<EvmWiringT>
 where
-    ChainSpecT: ChainSpec,
+    EvmWiringT: EvmWiring,
 {
     /// Evm enironment.
-    pub env: Box<Env<ChainSpecT>>,
+    pub env: Box<Env<EvmWiringT>>,
     /// Handler configuration fields.
-    pub spec_id: ChainSpecT::Hardfork,
+    pub spec_id: EvmWiringT::Hardfork,
 }
 
-impl<ChainSpecT> EnvWithChainSpec<ChainSpecT>
+impl<EvmWiringT> EnvWithEvmWiring<EvmWiringT>
 where
-    ChainSpecT: ChainSpec<Transaction: Clone + Debug>,
+    EvmWiringT: EvmWiring<Transaction: Clone + Debug>,
 {
     /// Returns new `EnvWithHandlerCfg` instance.
-    pub fn new(env: Box<Env<ChainSpecT>>, spec_id: ChainSpecT::Hardfork) -> Self {
+    pub fn new(env: Box<Env<EvmWiringT>>, spec_id: EvmWiringT::Hardfork) -> Self {
         Self { env, spec_id }
     }
 
     /// Takes `CfgEnvWithHandlerCfg` and returns new `EnvWithHandlerCfg` instance.
     pub fn new_with_cfg_env(
-        cfg: CfgEnvWithChainSpec<ChainSpecT>,
-        block: ChainSpecT::Block,
-        tx: ChainSpecT::Transaction,
+        cfg: CfgEnvWithEvmWiring<EvmWiringT>,
+        block: EvmWiringT::Block,
+        tx: EvmWiringT::Transaction,
     ) -> Self {
         Self::new(Env::boxed(cfg.cfg_env, block, tx), cfg.spec_id)
     }
 
     /// Returns the specification id.
-    pub const fn spec_id(&self) -> ChainSpecT::Hardfork {
+    pub const fn spec_id(&self) -> EvmWiringT::Hardfork {
         self.spec_id
     }
 }
 
-impl<ChainSpecT> DerefMut for EnvWithChainSpec<ChainSpecT>
+impl<EvmWiringT> DerefMut for EnvWithEvmWiring<EvmWiringT>
 where
-    ChainSpecT: ChainSpec<Transaction: Clone + Debug>,
+    EvmWiringT: EvmWiring<Transaction: Clone + Debug>,
 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.env
     }
 }
 
-impl<ChainSpecT> Deref for EnvWithChainSpec<ChainSpecT>
+impl<EvmWiringT> Deref for EnvWithEvmWiring<EvmWiringT>
 where
-    ChainSpecT: ChainSpec<Transaction: Clone + Debug>,
+    EvmWiringT: EvmWiring<Transaction: Clone + Debug>,
 {
-    type Target = Env<ChainSpecT>;
+    type Target = Env<EvmWiringT>;
 
     fn deref(&self) -> &Self::Target {
         &self.env

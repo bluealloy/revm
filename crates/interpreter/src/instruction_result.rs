@@ -1,7 +1,7 @@
 use core::fmt::Debug;
 
 use derive_where::derive_where;
-use revm_primitives::ChainSpec;
+use revm_primitives::EvmWiring;
 
 use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
 
@@ -213,16 +213,16 @@ pub enum InternalResult {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
-#[derive_where(Debug; ChainSpecT::HaltReason)]
-pub enum SuccessOrHalt<ChainSpecT: ChainSpec> {
+#[derive_where(Debug; EvmWiringT::HaltReason)]
+pub enum SuccessOrHalt<EvmWiringT: EvmWiring> {
     Success(SuccessReason),
     Revert,
-    Halt(ChainSpecT::HaltReason),
+    Halt(EvmWiringT::HaltReason),
     FatalExternalError,
     Internal(InternalResult),
 }
 
-impl<ChainSpecT: ChainSpec> SuccessOrHalt<ChainSpecT> {
+impl<EvmWiringT: EvmWiring> SuccessOrHalt<EvmWiringT> {
     /// Returns true if the transaction returned successfully without halts.
     #[inline]
     pub fn is_success(self) -> bool {
@@ -252,7 +252,7 @@ impl<ChainSpecT: ChainSpec> SuccessOrHalt<ChainSpecT> {
 
     /// Returns the [HaltReason] value the EVM has experienced an exceptional halt
     #[inline]
-    pub fn to_halt(self) -> Option<ChainSpecT::HaltReason> {
+    pub fn to_halt(self) -> Option<EvmWiringT::HaltReason> {
         match self {
             SuccessOrHalt::Halt(reason) => Some(reason),
             _ => None,
@@ -260,7 +260,7 @@ impl<ChainSpecT: ChainSpec> SuccessOrHalt<ChainSpecT> {
     }
 }
 
-impl<ChainSpecT: ChainSpec> From<InstructionResult> for SuccessOrHalt<ChainSpecT> {
+impl<EvmWiringT: EvmWiring> From<InstructionResult> for SuccessOrHalt<EvmWiringT> {
     fn from(result: InstructionResult) -> Self {
         match result {
             InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), // used only in interpreter loop

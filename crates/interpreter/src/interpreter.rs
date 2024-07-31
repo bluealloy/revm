@@ -469,21 +469,21 @@ pub fn resize_memory(memory: &mut SharedMemory, gas: &mut Gas, new_size: usize) 
 mod tests {
     use super::*;
     use crate::{opcode::InstructionTable, DummyHost};
-    use revm_primitives::{CancunSpec, EthChainSpec};
+    use revm_primitives::{CancunSpec, EthEvmWiring};
 
     #[test]
     fn object_safety() {
         let mut interp = Interpreter::new(Contract::default(), u64::MAX, false);
 
-        let mut host = crate::DummyHost::<EthChainSpec>::default();
-        let table: &InstructionTable<DummyHost<EthChainSpec>> =
-            &crate::opcode::make_instruction_table::<DummyHost<EthChainSpec>, CancunSpec>();
+        let mut host = crate::DummyHost::<EthEvmWiring>::default();
+        let table: &InstructionTable<DummyHost<EthEvmWiring>> =
+            &crate::opcode::make_instruction_table::<DummyHost<EthEvmWiring>, CancunSpec>();
         let _ = interp.run(EMPTY_SHARED_MEMORY, table, &mut host);
 
-        let host: &mut dyn Host<ChainSpecT = EthChainSpec> =
-            &mut host as &mut dyn Host<ChainSpecT = EthChainSpec>;
-        let table: &InstructionTable<dyn Host<ChainSpecT = EthChainSpec>> =
-            &crate::opcode::make_instruction_table::<dyn Host<ChainSpecT = EthChainSpec>, CancunSpec>(
+        let host: &mut dyn Host<EvmWiringT = EthEvmWiring> =
+            &mut host as &mut dyn Host<EvmWiringT = EthEvmWiring>;
+        let table: &InstructionTable<dyn Host<EvmWiringT = EthEvmWiring>> =
+            &crate::opcode::make_instruction_table::<dyn Host<EvmWiringT = EthEvmWiring>, CancunSpec>(
             );
         let _ = interp.run(EMPTY_SHARED_MEMORY, table, host);
     }

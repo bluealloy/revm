@@ -125,7 +125,7 @@ pub fn sar<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
 mod tests {
     use crate::instructions::bitwise::{byte, sar, shl, shr};
     use crate::{Contract, DummyHost, Interpreter};
-    use revm_primitives::{uint, Env, EthChainSpec, LatestSpec, U256};
+    use revm_primitives::{uint, Env, EthEvmWiring, LatestSpec, U256};
 
     #[test]
     fn test_shift_left() {
@@ -202,7 +202,7 @@ mod tests {
             host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shl::<DummyHost<EthChainSpec>, LatestSpec>(&mut interpreter, &mut host);
+            shl::<DummyHost<EthEvmWiring>, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, test.expected);
         }
@@ -283,7 +283,7 @@ mod tests {
             host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shr::<DummyHost<EthChainSpec>, LatestSpec>(&mut interpreter, &mut host);
+            shr::<DummyHost<EthEvmWiring>, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, test.expected);
         }
@@ -389,7 +389,7 @@ mod tests {
             host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            sar::<DummyHost<EthChainSpec>, LatestSpec>(&mut interpreter, &mut host);
+            sar::<DummyHost<EthEvmWiring>, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, test.expected);
         }
@@ -403,7 +403,7 @@ mod tests {
             expected: U256,
         }
 
-        let mut host = DummyHost::new(Env::<EthChainSpec>::default());
+        let mut host = DummyHost::new(Env::<EthEvmWiring>::default());
         let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
 
         let input_value = U256::from(0x1234567890abcdef1234567890abcdef_u128);

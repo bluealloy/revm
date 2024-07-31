@@ -4,7 +4,7 @@ use crate::{
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
     },
     primitives::{db::Database, hex, HashMap, Transaction, B256, U256},
-    ChainSpec, EvmContext, Inspector,
+    EvmContext, EvmWiring, Inspector,
 };
 use revm_interpreter::OpCode;
 use serde::Serialize;
@@ -162,10 +162,10 @@ impl TracerEip3155 {
         self.output.flush()
     }
 
-    fn print_summary<ChainSpecT: ChainSpec, DB: Database>(
+    fn print_summary<EvmWiringT: EvmWiring, DB: Database>(
         &mut self,
         result: &InterpreterResult,
-        context: &mut EvmContext<ChainSpecT, DB>,
+        context: &mut EvmContext<EvmWiringT, DB>,
     ) {
         if self.print_summary {
             let spec_name: &str = context.spec_id().into();
@@ -184,16 +184,16 @@ impl TracerEip3155 {
     }
 }
 
-impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for TracerEip3155 {
+impl<EvmWiringT: EvmWiring, DB: Database> Inspector<EvmWiringT, DB> for TracerEip3155 {
     fn initialize_interp(
         &mut self,
         interp: &mut Interpreter,
-        context: &mut EvmContext<ChainSpecT, DB>,
+        context: &mut EvmContext<EvmWiringT, DB>,
     ) {
         self.gas_inspector.initialize_interp(interp, context);
     }
 
-    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<ChainSpecT, DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT, DB>) {
         self.gas_inspector.step(interp, context);
         self.stack.clone_from(interp.stack.data());
         self.memory = if self.include_memory {
@@ -208,7 +208,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for TracerEi
         self.refunded = interp.gas.refunded();
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<ChainSpecT, DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT, DB>) {
         self.gas_inspector.step_end(interp, context);
         if self.skip {
             self.skip = false;
@@ -241,7 +241,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for TracerEi
 
     fn call_end(
         &mut self,
-        context: &mut EvmContext<ChainSpecT, DB>,
+        context: &mut EvmContext<EvmWiringT, DB>,
         inputs: &CallInputs,
         outcome: CallOutcome,
     ) -> CallOutcome {
@@ -258,7 +258,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for TracerEi
 
     fn create_end(
         &mut self,
-        context: &mut EvmContext<ChainSpecT, DB>,
+        context: &mut EvmContext<EvmWiringT, DB>,
         inputs: &CreateInputs,
         outcome: CreateOutcome,
     ) -> CreateOutcome {

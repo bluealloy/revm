@@ -2,7 +2,7 @@ use derive_where::derive_where;
 
 use crate::{
     primitives::{
-        hash_map::Entry, Address, Bytes, ChainSpec, Env, HashMap, Log, B256, KECCAK_EMPTY, U256,
+        hash_map::Entry, Address, Bytes, Env, EvmWiring, HashMap, Log, B256, KECCAK_EMPTY, U256,
     },
     Host, SStoreResult, SelfDestructResult,
 };
@@ -11,24 +11,24 @@ use std::vec::Vec;
 use super::LoadAccountResult;
 
 /// A dummy [Host] implementation.
-#[derive_where(Clone, Debug, Default; ChainSpecT::Block, ChainSpecT::Transaction)]
-pub struct DummyHost<ChainSpecT>
+#[derive_where(Clone, Debug, Default; EvmWiringT::Block, EvmWiringT::Transaction)]
+pub struct DummyHost<EvmWiringT>
 where
-    ChainSpecT: ChainSpec,
+    EvmWiringT: EvmWiring,
 {
-    pub env: Env<ChainSpecT>,
+    pub env: Env<EvmWiringT>,
     pub storage: HashMap<U256, U256>,
     pub transient_storage: HashMap<U256, U256>,
     pub log: Vec<Log>,
 }
 
-impl<ChainSpecT> DummyHost<ChainSpecT>
+impl<EvmWiringT> DummyHost<EvmWiringT>
 where
-    ChainSpecT: ChainSpec,
+    EvmWiringT: EvmWiring,
 {
     /// Create a new dummy host with the given [`Env`].
     #[inline]
-    pub fn new(env: Env<ChainSpecT>) -> Self {
+    pub fn new(env: Env<EvmWiringT>) -> Self {
         Self {
             env,
             storage: HashMap::new(),
@@ -45,19 +45,19 @@ where
     }
 }
 
-impl<ChainSpecT> Host for DummyHost<ChainSpecT>
+impl<EvmWiringT> Host for DummyHost<EvmWiringT>
 where
-    ChainSpecT: ChainSpec,
+    EvmWiringT: EvmWiring,
 {
-    type ChainSpecT = ChainSpecT;
+    type EvmWiringT = EvmWiringT;
 
     #[inline]
-    fn env(&self) -> &Env<ChainSpecT> {
+    fn env(&self) -> &Env<EvmWiringT> {
         &self.env
     }
 
     #[inline]
-    fn env_mut(&mut self) -> &mut Env<ChainSpecT> {
+    fn env_mut(&mut self) -> &mut Env<EvmWiringT> {
         &mut self.env
     }
 

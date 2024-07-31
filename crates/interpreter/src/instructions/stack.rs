@@ -89,13 +89,13 @@ mod test {
     use super::*;
     use crate::{
         opcode::{make_instruction_table, DUPN, EXCHANGE, SWAPN},
-        primitives::{Bytecode, Bytes, EthChainSpec, PragueSpec},
+        primitives::{Bytecode, Bytes, EthEvmWiring, PragueSpec},
         DummyHost, Gas, InstructionResult,
     };
 
     #[test]
     fn dupn() {
-        let table = make_instruction_table::<DummyHost<EthChainSpec>, PragueSpec>();
+        let table = make_instruction_table::<DummyHost<EthEvmWiring>, PragueSpec>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
             DUPN, 0x00, DUPN, 0x01, DUPN, 0x02,
@@ -115,7 +115,7 @@ mod test {
 
     #[test]
     fn swapn() {
-        let table = make_instruction_table::<DummyHost<EthChainSpec>, PragueSpec>();
+        let table = make_instruction_table::<DummyHost<EthEvmWiring>, PragueSpec>();
         let mut host = DummyHost::default();
         let mut interp =
             Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([SWAPN, 0x00, SWAPN, 0x01])));
@@ -135,7 +135,7 @@ mod test {
 
     #[test]
     fn exchange() {
-        let table = make_instruction_table::<DummyHost<EthChainSpec>, PragueSpec>();
+        let table = make_instruction_table::<DummyHost<EthEvmWiring>, PragueSpec>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
             EXCHANGE, 0x00, EXCHANGE, 0x11,

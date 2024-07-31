@@ -5,7 +5,7 @@ use revm_interpreter::CallOutcome;
 use crate::{
     interpreter::{CallInputs, CreateInputs, CreateOutcome},
     primitives::db::Database,
-    ChainSpec, EvmContext, Inspector,
+    EvmContext, EvmWiring, Inspector,
 };
 
 /// Helper [Inspector] that keeps track of gas.
@@ -26,11 +26,11 @@ impl GasInspector {
     }
 }
 
-impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for GasInspector {
+impl<EvmWiringT: EvmWiring, DB: Database> Inspector<EvmWiringT, DB> for GasInspector {
     fn initialize_interp(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<ChainSpecT, DB>,
+        _context: &mut EvmContext<EvmWiringT, DB>,
     ) {
         self.gas_remaining = interp.gas.limit();
     }
@@ -38,7 +38,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for GasInspe
     fn step(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<ChainSpecT, DB>,
+        _context: &mut EvmContext<EvmWiringT, DB>,
     ) {
         self.gas_remaining = interp.gas.remaining();
     }
@@ -46,7 +46,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for GasInspe
     fn step_end(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<ChainSpecT, DB>,
+        _context: &mut EvmContext<EvmWiringT, DB>,
     ) {
         let remaining = interp.gas.remaining();
         self.last_gas_cost = self.gas_remaining.saturating_sub(remaining);
@@ -55,7 +55,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for GasInspe
 
     fn call_end(
         &mut self,
-        _context: &mut EvmContext<ChainSpecT, DB>,
+        _context: &mut EvmContext<EvmWiringT, DB>,
         _inputs: &CallInputs,
         mut outcome: CallOutcome,
     ) -> CallOutcome {
@@ -68,7 +68,7 @@ impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for GasInspe
 
     fn create_end(
         &mut self,
-        _context: &mut EvmContext<ChainSpecT, DB>,
+        _context: &mut EvmContext<EvmWiringT, DB>,
         _inputs: &CreateInputs,
         mut outcome: CreateOutcome,
     ) -> CreateOutcome {
@@ -89,7 +89,7 @@ mod tests {
         primitives::{self, Log},
     };
 
-    type TestChainSpec = primitives::EthChainSpec;
+    type TestEvmWiring = primitives::EthEvmWiring;
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -98,16 +98,16 @@ mod tests {
         gas_remaining_steps: Vec<(usize, u64)>,
     }
 
-    impl<ChainSpecT: ChainSpec, DB: Database> Inspector<ChainSpecT, DB> for StackInspector {
+    impl<EvmWiringT: EvmWiring, DB: Database> Inspector<EvmWiringT, DB> for StackInspector {
         fn initialize_interp(
             &mut self,
             interp: &mut Interpreter,
-            context: &mut EvmContext<ChainSpecT, DB>,
+            context: &mut EvmContext<EvmWiringT, DB>,
         ) {
             self.gas_inspector.initialize_interp(interp, context);
         }
 
-        fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<ChainSpecT, DB>) {
+        fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT, DB>) {
             self.pc = interp.program_counter();
             self.gas_inspector.step(interp, context);
         }
@@ -115,13 +115,13 @@ mod tests {
         fn log(
             &mut self,
             interp: &mut Interpreter,
-            context: &mut EvmContext<ChainSpecT, DB>,
+            context: &mut EvmContext<EvmWiringT, DB>,
             log: &Log,
         ) {
             self.gas_inspector.log(interp, context, log);
         }
 
-        fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<ChainSpecT, DB>) {
+        fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT, DB>) {
             self.gas_inspector.step_end(interp, context);
             self.gas_remaining_steps
                 .push((self.pc, self.gas_inspector.gas_remaining()));
@@ -129,7 +129,7 @@ mod tests {
 
         fn call(
             &mut self,
-            context: &mut EvmContext<ChainSpecT, DB>,
+            context: &mut EvmContext<EvmWiringT, DB>,
             call: &mut CallInputs,
         ) -> Option<CallOutcome> {
             self.gas_inspector.call(context, call)
@@ -137,7 +137,7 @@ mod tests {
 
         fn call_end(
             &mut self,
-            context: &mut EvmContext<ChainSpecT, DB>,
+            context: &mut EvmContext<EvmWiringT, DB>,
             inputs: &CallInputs,
             outcome: CallOutcome,
         ) -> CallOutcome {
@@ -146,7 +146,7 @@ mod tests {
 
         fn create(
             &mut self,
-            context: &mut EvmContext<ChainSpecT, DB>,
+            context: &mut EvmContext<EvmWiringT, DB>,
             call: &mut CreateInputs,
         ) -> Option<CreateOutcome> {
             self.gas_inspector.create(context, call);
@@ -155,7 +155,7 @@ mod tests {
 
         fn create_end(
             &mut self,
-            context: &mut EvmContext<ChainSpecT, DB>,
+            context: &mut EvmContext<EvmWiringT, DB>,
             inputs: &CreateInputs,
             outcome: CreateOutcome,
         ) -> CreateOutcome {
@@ -191,11 +191,11 @@ mod tests {
         let bytecode = Bytecode::new_raw(contract_data);
 
         let mut evm = Evm::builder()
-            .with_chain_spec::<TestChainSpec>()
+            .with_chain_spec::<TestEvmWiring>()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
             .with_external_context(StackInspector::default())
             .modify_tx_env(|tx| {
-                *tx = <TestChainSpec as primitives::ChainSpec>::Transaction::default();
+                *tx = <TestEvmWiring as primitives::EvmWiring>::Transaction::default();
 
                 tx.caller = address!("1000000000000000000000000000000000000000");
                 tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));

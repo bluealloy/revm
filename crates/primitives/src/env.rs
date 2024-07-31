@@ -5,7 +5,7 @@ pub use eip7702::{
 };
 
 use crate::{
-    calc_blob_gasprice, AccessListItem, Account, Address, Block, Bytes, ChainSpec, InvalidHeader,
+    calc_blob_gasprice, AccessListItem, Account, Address, Block, Bytes, EvmWiring, InvalidHeader,
     InvalidTransaction, Spec, SpecId, Transaction, TransactionValidation, B256, KECCAK_EMPTY,
     MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
@@ -18,21 +18,21 @@ use std::boxed::Box;
 use std::vec::Vec;
 
 /// EVM environment configuration.
-#[derive_where(Clone, Debug, Default; ChainSpecT::Block, ChainSpecT::Transaction)]
+#[derive_where(Clone, Debug, Default; EvmWiringT::Block, EvmWiringT::Transaction)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Env<ChainSpecT: ChainSpec> {
+pub struct Env<EvmWiringT: EvmWiring> {
     /// Configuration of the EVM itself.
     pub cfg: CfgEnv,
     /// Configuration of the block the transaction is in.
-    pub block: ChainSpecT::Block,
+    pub block: EvmWiringT::Block,
     /// Configuration of the transaction that is being executed.
-    pub tx: ChainSpecT::Transaction,
+    pub tx: EvmWiringT::Transaction,
 }
 
-impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
+impl<EvmWiringT: EvmWiring> Env<EvmWiringT> {
     /// Create boxed [Env].
     #[inline]
-    pub fn boxed(cfg: CfgEnv, block: ChainSpecT::Block, tx: ChainSpecT::Transaction) -> Box<Self> {
+    pub fn boxed(cfg: CfgEnv, block: EvmWiringT::Block, tx: EvmWiringT::Transaction) -> Box<Self> {
         Box::new(Self { cfg, block, tx })
     }
 
@@ -264,7 +264,7 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
     }
 }
 
-impl<ChainSpecT: ChainSpec<Block: Default, Transaction: Default>> Env<ChainSpecT> {
+impl<EvmWiringT: EvmWiring<Block: Default, Transaction: Default>> Env<EvmWiringT> {
     /// Resets environment to default values.
     #[inline]
     pub fn clear(&mut self) {
@@ -767,13 +767,13 @@ pub enum AnalysisKind {
 
 #[cfg(test)]
 mod tests {
-    use crate::EthChainSpec;
+    use crate::EthEvmWiring;
 
     use super::*;
 
     #[test]
     fn test_validate_tx_chain_id() {
-        let mut env = Env::<EthChainSpec>::default();
+        let mut env = Env::<EthEvmWiring>::default();
         env.tx.chain_id = Some(1);
         env.cfg.chain_id = 2;
         assert_eq!(
@@ -784,7 +784,7 @@ mod tests {
 
     #[test]
     fn test_validate_tx_access_list() {
-        let mut env = Env::<EthChainSpec>::default();
+        let mut env = Env::<EthEvmWiring>::default();
         env.tx.access_list = vec![AccessListItem {
             address: Address::ZERO,
             storage_keys: vec![],
