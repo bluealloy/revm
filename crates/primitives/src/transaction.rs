@@ -54,12 +54,11 @@ pub trait Transaction {
     ///
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
     fn authorization_list(&self) -> Option<&AuthorizationList>;
-}
 
-/// See [EIP-4844], [`crate::Env::calc_data_fee`], and [`crate::Env::calc_max_data_fee`].
-///
-/// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-#[inline]
-pub fn get_total_blob_gas(transaction: &impl Transaction) -> u64 {
-    GAS_PER_BLOB * transaction.blob_hashes().len() as u64
+    /// See [EIP-4844], [`crate::Env::calc_data_fee`], and [`crate::Env::calc_max_data_fee`].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    fn get_total_blob_gas(&self) -> u64 {
+        GAS_PER_BLOB * self.blob_hashes().len() as u64
+    }
 }

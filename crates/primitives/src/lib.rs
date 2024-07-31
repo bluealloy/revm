@@ -7,13 +7,13 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
-mod bytecode;
-mod constants;
+pub mod block;
 pub mod db;
 pub mod env;
 
-pub mod block;
+mod bytecode;
 mod chain_spec;
+mod constants;
 #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg;
 pub mod precompile;

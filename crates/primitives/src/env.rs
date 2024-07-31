@@ -5,10 +5,9 @@ pub use eip7702::{
 };
 
 use crate::{
-    block, calc_blob_gasprice, transaction, AccessListItem, Account, Address, Block, Bytes,
-    ChainSpec, InvalidHeader, InvalidTransaction, Spec, SpecId, Transaction, TransactionValidation,
-    B256, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256,
-    VERSIONED_HASH_VERSION_KZG,
+    calc_blob_gasprice, AccessListItem, Account, Address, Block, Bytes, ChainSpec, InvalidHeader,
+    InvalidTransaction, Spec, SpecId, Transaction, TransactionValidation, B256, KECCAK_EMPTY,
+    MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
 use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
@@ -55,9 +54,8 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
     pub fn calc_data_fee(&self) -> Option<U256> {
-        block::get_blob_gasprice(&self.block).map(|blob_gas_price| {
-            U256::from(*blob_gas_price)
-                .saturating_mul(U256::from(transaction::get_total_blob_gas(&self.tx)))
+        self.block.get_blob_gasprice().map(|blob_gas_price| {
+            U256::from(*blob_gas_price).saturating_mul(U256::from(self.tx.get_total_blob_gas()))
         })
     }
 
@@ -70,8 +68,7 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
     /// <https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#execution-layer-validation>
     pub fn calc_max_data_fee(&self) -> Option<U256> {
         self.tx.max_fee_per_blob_gas().map(|max_fee_per_blob_gas| {
-            max_fee_per_blob_gas
-                .saturating_mul(U256::from(transaction::get_total_blob_gas(&self.tx)))
+            max_fee_per_blob_gas.saturating_mul(U256::from(self.tx.get_total_blob_gas()))
         })
     }
 
@@ -152,7 +149,7 @@ impl<ChainSpecT: ChainSpec> Env<ChainSpecT> {
         // Presence of max_fee_per_blob_gas means that this is blob transaction.
         if let Some(max) = self.tx.max_fee_per_blob_gas() {
             // ensure that the user was willing to at least pay the current blob gasprice
-            let price = block::get_blob_gasprice(&self.block).expect("already checked");
+            let price = self.block.get_blob_gasprice().expect("already checked");
             if U256::from(*price) > *max {
                 return Err(InvalidTransaction::BlobGasPriceGreaterThanMax);
             }

@@ -1,6 +1,6 @@
 use crate::{
     gas,
-    primitives::{block, Block, Spec, SpecId::*, Transaction, U256},
+    primitives::{Block, Spec, SpecId::*, Transaction, U256},
     Host, Interpreter,
 };
 
@@ -76,7 +76,9 @@ pub fn blob_basefee<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter,
     push!(
         interpreter,
         U256::from(
-            block::get_blob_gasprice(&host.env().block)
+            host.env()
+                .block
+                .get_blob_gasprice()
                 .copied()
                 .unwrap_or_default()
         )

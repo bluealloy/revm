@@ -43,24 +43,22 @@ pub trait Block {
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     fn blob_excess_gas_and_price(&self) -> Option<&BlobExcessGasAndPrice>;
-}
 
-/// See [EIP-4844] and [`crate::calc_blob_gasprice`].
-///
-/// Returns `None` if `Cancun` is not enabled. This is enforced in [`crate::Env::validate_block_env`].
-///
-/// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-#[inline]
-pub fn get_blob_gasprice(block: &impl Block) -> Option<&u128> {
-    block.blob_excess_gas_and_price().map(|a| &a.blob_gasprice)
-}
+    /// See [EIP-4844] and [`crate::calc_blob_gasprice`].
+    ///
+    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`crate::Env::validate_block_env`].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    fn get_blob_gasprice(&self) -> Option<&u128> {
+        self.blob_excess_gas_and_price().map(|a| &a.blob_gasprice)
+    }
 
-/// Return `blob_excess_gas` header field. See [EIP-4844].
-///
-/// Returns `None` if `Cancun` is not enabled. This is enforced in [`crate::Env::validate_block_env`].
-///
-/// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-#[inline]
-pub fn get_blob_excess_gas(block: &impl Block) -> Option<u64> {
-    block.blob_excess_gas_and_price().map(|a| a.excess_blob_gas)
+    /// Return `blob_excess_gas` header field. See [EIP-4844].
+    ///
+    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`crate::Env::validate_block_env`].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    fn get_blob_excess_gas(&self) -> Option<u64> {
+        self.blob_excess_gas_and_price().map(|a| a.excess_blob_gas)
+    }
 }
