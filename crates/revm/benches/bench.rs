@@ -4,7 +4,7 @@ use criterion::{
 use revm::{
     db::BenchmarkDB,
     interpreter::{analysis::to_analysed, Contract, DummyHost, Interpreter},
-    primitives::{address, bytes, hex, BerlinSpec, Bytecode, Bytes, EthEvmWiring, TxKind, U256},
+    primitives::{address, bytes, hex, BerlinSpec, Bytecode, Bytes, EthereumWiring, TxKind, U256},
     Evm,
 };
 use revm_interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
@@ -83,7 +83,7 @@ fn transfer(c: &mut Criterion) {
 
 fn bench_transact<EXT>(
     g: &mut BenchmarkGroup<'_, WallTime>,
-    evm: &mut Evm<'_, EthEvmWiring, EXT, BenchmarkDB>,
+    evm: &mut Evm<'_, EthereumWiring, EXT, BenchmarkDB>,
 ) {
     let state = match evm.context.evm.db.0 {
         Bytecode::LegacyRaw(_) => "raw",
@@ -96,7 +96,7 @@ fn bench_transact<EXT>(
 
 fn bench_eval(
     g: &mut BenchmarkGroup<'_, WallTime>,
-    evm: &mut Evm<'static, EthEvmWiring, (), BenchmarkDB>,
+    evm: &mut Evm<'static, EthereumWiring, (), BenchmarkDB>,
 ) {
     g.bench_function("eval", |b| {
         let contract = Contract {
@@ -106,7 +106,7 @@ fn bench_eval(
         };
         let mut shared_memory = SharedMemory::new();
         let mut host = DummyHost::new(*evm.context.evm.env.clone());
-        let instruction_table = make_instruction_table::<DummyHost<EthEvmWiring>, BerlinSpec>();
+        let instruction_table = make_instruction_table::<DummyHost<EthereumWiring>, BerlinSpec>();
         b.iter(move || {
             // replace memory with empty memory to use it inside interpreter.
             // Later return memory back.

@@ -539,7 +539,7 @@ mod tests {
     use crate::primitives::U256;
     use crate::{
         db::{CacheDB, EmptyDB},
-        primitives::{address, Bytecode, EthEvmWiring},
+        primitives::{address, Bytecode, EthereumWiring},
         Frame, JournalEntry,
     };
     use std::boxed::Box;
@@ -549,7 +549,7 @@ mod tests {
     // call stack is too deep.
     #[test]
     fn test_make_call_frame_stack_too_deep() {
-        let env = Env::<EthEvmWiring>::default();
+        let env = Env::<EthereumWiring>::default();
         let db = EmptyDB::default();
         let mut context = test_utils::create_empty_evm_context(Box::new(env), db);
         context.journaled_state.depth = CALL_STACK_LIMIT as usize + 1;
@@ -570,7 +570,7 @@ mod tests {
     // checkpointed on the journaled state correctly.
     #[test]
     fn test_make_call_frame_transfer_revert() {
-        let env = Env::<EthEvmWiring>::default();
+        let env = Env::<EthereumWiring>::default();
         let db = EmptyDB::default();
         let mut evm_context = test_utils::create_empty_evm_context(Box::new(env), db);
         let contract = address!("dead10000000000000000000000000000001dead");
@@ -591,7 +591,7 @@ mod tests {
 
     #[test]
     fn test_make_call_frame_missing_code_context() {
-        let env = Env::<EthEvmWiring>::default();
+        let env = Env::<EthereumWiring>::default();
         let cdb = CacheDB::new(EmptyDB::default());
         let bal = U256::from(3_000_000_000_u128);
         let mut context = create_cache_db_evm_context_with_balance(Box::new(env), cdb, bal);
@@ -606,7 +606,7 @@ mod tests {
 
     #[test]
     fn test_make_call_frame_succeeds() {
-        let env = Env::<EthEvmWiring>::default();
+        let env = Env::<EthereumWiring>::default();
         let mut cdb = CacheDB::new(EmptyDB::default());
         let bal = U256::from(3_000_000_000_u128);
         let by = Bytecode::new_raw(Bytes::from(vec![0x60, 0x00, 0x60, 0x00]));

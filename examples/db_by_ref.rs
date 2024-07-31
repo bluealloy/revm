@@ -3,7 +3,7 @@ use revm::{
     handler::register::HandleRegister,
     inspector_handle_register,
     inspectors::{NoOpInspector, TracerEip3155},
-    primitives::{EthEvmWiring, ResultAndState},
+    primitives::{EthereumWiring, ResultAndState},
     DatabaseCommit, DatabaseRef, Evm,
 };
 use std::error::Error;
@@ -23,8 +23,8 @@ where
 fn run_transaction<EXT, DB: DatabaseRefDebugError>(
     db: DB,
     ext: EXT,
-    register_handles_fn: HandleRegister<EthEvmWiring, EXT, WrapDatabaseRef<DB>>,
-) -> anyhow::Result<(ResultAndState<EthEvmWiring>, DB)> {
+    register_handles_fn: HandleRegister<EthereumWiring, EXT, WrapDatabaseRef<DB>>,
+) -> anyhow::Result<(ResultAndState<EthereumWiring>, DB)> {
     let mut evm = Evm::builder()
         .with_ref_db(db)
         .with_external_context(ext)
@@ -38,7 +38,7 @@ fn run_transaction<EXT, DB: DatabaseRefDebugError>(
 fn run_transaction_and_commit_with_ext<EXT, DB: DatabaseRefDebugError + DatabaseCommit>(
     db: DB,
     ext: EXT,
-    register_handles_fn: HandleRegister<EthEvmWiring, EXT, WrapDatabaseRef<DB>>,
+    register_handles_fn: HandleRegister<EthereumWiring, EXT, WrapDatabaseRef<DB>>,
 ) -> anyhow::Result<()> {
     // To circumvent borrow checker issues, we need to move the database into the
     // transaction and return it after the transaction is done.

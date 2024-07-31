@@ -1,7 +1,7 @@
 use crate::{
     handler::{ExecutionHandler, PostExecutionHandler, PreExecutionHandler, ValidationHandler},
     interpreter::opcode::InstructionTables,
-    primitives::{db::Database, spec_to_generic, EthEvmWiring},
+    primitives::{db::Database, spec_to_generic, EthereumWiring},
     EvmHandler,
 };
 use std::vec::Vec;
@@ -16,7 +16,7 @@ pub trait EvmWiring: crate::primitives::EvmWiring {
         DB: Database;
 }
 
-impl EvmWiring for EthEvmWiring {
+impl EvmWiring for EthereumWiring {
     type Context = ();
 
     fn handler<'evm, EXT, DB>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self, EXT, DB>

@@ -1,7 +1,7 @@
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
     handler::{register, CfgEnvWithEvmWiring, EnvWithEvmWiring},
-    primitives::{self, CfgEnv, Env, EthEvmWiring, InvalidTransaction, TransactionValidation},
+    primitives::{self, CfgEnv, Env, EthereumWiring, InvalidTransaction, TransactionValidation},
     Context, ContextWithEvmWiring, Evm, EvmContext, EvmWiring, Handler,
 };
 use core::marker::PhantomData;
@@ -26,12 +26,12 @@ pub struct SetGenericStage;
 /// Requires the database and external context to be set.
 pub struct HandlerStage;
 
-impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthEvmWiring, (), EmptyDB> {
+impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthereumWiring, (), EmptyDB> {
     fn default() -> Self {
         Self {
             context: Context::default(),
-            handler: EthEvmWiring::handler::<'a, (), EmptyDB>(
-                <EthEvmWiring as primitives::EvmWiring>::Hardfork::default(),
+            handler: EthereumWiring::handler::<'a, (), EmptyDB>(
+                <EthereumWiring as primitives::EvmWiring>::Hardfork::default(),
             ),
             phantom: PhantomData,
         }
@@ -243,12 +243,12 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring, EXT, DB: Database>
     ///
     /// # Example
     /// ```rust
-    /// use revm::{EvmBuilder, EvmHandler, db::EmptyDB, primitives::{EthEvmWiring, SpecId}};
+    /// use revm::{EvmBuilder, EvmHandler, db::EmptyDB, primitives::{EthereumWiring, SpecId}};
     /// use revm_interpreter::primitives::CancunSpec;
     /// let builder = EvmBuilder::default();
     ///
     /// // get the desired handler
-    /// let mainnet = EvmHandler::<'_, EthEvmWiring, (), EmptyDB>::mainnet_with_spec(SpecId::CANCUN);
+    /// let mainnet = EvmHandler::<'_, EthereumWiring, (), EmptyDB>::mainnet_with_spec(SpecId::CANCUN);
     /// let builder = builder.with_handler(mainnet);
     ///
     /// // build the EVM
@@ -442,7 +442,7 @@ mod test {
     use revm_precompile::PrecompileOutput;
     use std::{cell::RefCell, rc::Rc, sync::Arc};
 
-    type TestEvmWiring = crate::primitives::EthEvmWiring;
+    type TestEvmWiring = crate::primitives::EthereumWiring;
 
     /// Custom evm context
     #[derive(Default, Clone, Debug)]

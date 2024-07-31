@@ -88,7 +88,7 @@ pub struct SelfDestructResult {
 
 #[cfg(test)]
 mod tests {
-    use revm_primitives::EthEvmWiring;
+    use revm_primitives::EthereumWiring;
 
     use super::*;
 
@@ -96,7 +96,7 @@ mod tests {
 
     #[test]
     fn object_safety() {
-        assert_host::<DummyHost<EthEvmWiring>>();
-        assert_host::<dyn Host<EvmWiringT = EthEvmWiring>>();
+        assert_host::<DummyHost<EthereumWiring>>();
+        assert_host::<dyn Host<EvmWiringT = EthereumWiring>>();
     }
 }

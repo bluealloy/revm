@@ -15,7 +15,7 @@ use crate::{
     db::{Database, EmptyDB},
     interpreter::{Host, LoadAccountResult, SStoreResult, SelfDestructResult},
     primitives::{
-        Address, Block as _, Bytes, Env, EthEvmWiring, Log, B256, BLOCK_HASH_HISTORY, U256,
+        Address, Block as _, Bytes, Env, EthereumWiring, Log, B256, BLOCK_HASH_HISTORY, U256,
     },
     EvmWiring,
 };
@@ -30,7 +30,7 @@ pub struct Context<EvmWiringT: EvmWiring, EXT, DB: Database> {
     pub external: EXT,
 }
 
-impl Default for Context<EthEvmWiring, (), EmptyDB> {
+impl Default for Context<EthereumWiring, (), EmptyDB> {
     fn default() -> Self {
         Self::new_empty()
     }

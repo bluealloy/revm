@@ -201,7 +201,7 @@ mod test {
     #[cfg(feature = "optimism")]
     type TestEvmWiring = crate::optimism::EvmWiring;
     #[cfg(not(feature = "optimism"))]
-    type TestEvmWiring = primitives::EthEvmWiring;
+    type TestEvmWiring = primitives::EthereumWiring;
 
     #[test]
     fn test_handler_register_pop() {

@@ -212,13 +212,13 @@ pub fn insert_eofcreate_outcome<EvmWiringT: EvmWiring, EXT, DB: Database>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::EthEvmWiring;
+    use crate::primitives::EthereumWiring;
     use revm_interpreter::primitives::CancunSpec;
     use revm_precompile::Bytes;
 
     /// Creates frame result.
     fn call_last_frame_return(instruction_result: InstructionResult, gas: Gas) -> Gas {
-        let mut env = Env::<EthEvmWiring>::default();
+        let mut env = Env::<EthereumWiring>::default();
         env.tx.gas_limit = 100;
 
         let mut first_frame = FrameResult::Call(CallOutcome::new(
@@ -229,7 +229,7 @@ mod tests {
             },
             0..0,
         ));
-        frame_return_with_refund_flag::<EthEvmWiring, CancunSpec>(&env, &mut first_frame, true);
+        frame_return_with_refund_flag::<EthereumWiring, CancunSpec>(&env, &mut first_frame, true);
         *first_frame.gas()
     }
 

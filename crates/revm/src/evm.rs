@@ -6,7 +6,7 @@ use crate::{
     handler::{EnvWithEvmWiring, Handler},
     interpreter::{CallInputs, CreateInputs, EOFCreateInputs, InterpreterAction, SharedMemory},
     primitives::{
-        CfgEnv, EVMError, EVMResult, EVMResultGeneric, EthEvmWiring, ExecutionResult,
+        CfgEnv, EVMError, EVMResult, EVMResultGeneric, EthereumWiring, ExecutionResult,
         ResultAndState, SpecId, Transaction as _, TxKind, EOF_MAGIC_BYTES,
     },
     Context, ContextWithEvmWiring, EvmWiring, Frame, FrameOrResult, FrameResult,
@@ -51,9 +51,9 @@ impl<EXT, EvmWiringT: EvmWiring, DB: Database + DatabaseCommit> Evm<'_, EvmWirin
     }
 }
 
-impl<'a> Evm<'a, EthEvmWiring, (), EmptyDB> {
+impl<'a> Evm<'a, EthereumWiring, (), EmptyDB> {
     /// Returns evm builder with the mainnet chain spec, empty database, and empty external context.
-    pub fn builder() -> EvmBuilder<'a, SetGenericStage, EthEvmWiring, (), EmptyDB> {
+    pub fn builder() -> EvmBuilder<'a, SetGenericStage, EthereumWiring, (), EmptyDB> {
         EvmBuilder::default()
     }
 }

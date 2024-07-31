@@ -47,9 +47,9 @@ pub trait EvmWiring: Sized + 'static {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EthEvmWiring;
+pub struct EthereumWiring;
 
-impl EvmWiring for EthEvmWiring {
+impl EvmWiring for EthereumWiring {
     type Block = crate::BlockEnv;
     type Hardfork = SpecId;
     type HaltReason = crate::HaltReason;

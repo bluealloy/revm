@@ -19,14 +19,14 @@ use std::string::ToString;
 use std::sync::Arc;
 
 use super::{
-    OptimismContext, OptimismEvmWiring, OptimismHaltReason, OptimismInvalidTransaction,
-    OptimismSpec, OptimismSpecId, OptimismTransaction as _,
+    OptimismContext, OptimismHaltReason, OptimismInvalidTransaction, OptimismSpec, OptimismSpecId,
+    OptimismTransaction as _, OptimismWiring,
 };
 
 pub fn optimism_handle_register<EvmWiringT, DB, EXT>(
     handler: &mut EvmHandler<'_, EvmWiringT, EXT, DB>,
 ) where
-    EvmWiringT: OptimismEvmWiring,
+    EvmWiringT: OptimismWiring,
     DB: Database,
 {
     optimism_spec_to_generic!(handler.spec_id, {
@@ -54,7 +54,7 @@ pub fn optimism_handle_register<EvmWiringT, DB, EXT>(
 }
 
 /// Validate environment for the Optimism chain.
-pub fn validate_env<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, DB: Database>(
+pub fn validate_env<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, DB: Database>(
     env: &Env<EvmWiringT>,
 ) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
     // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
@@ -80,7 +80,7 @@ pub fn validate_env<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, DB: Datab
 
 /// Don not perform any extra validation for deposit transactions, they are pre-verified on L1.
 pub fn validate_tx_against_state<
-    EvmWiringT: OptimismEvmWiring,
+    EvmWiringT: OptimismWiring,
     SPEC: OptimismSpec,
     EXT,
     DB: Database,
@@ -95,7 +95,7 @@ pub fn validate_tx_against_state<
 
 /// Handle output of the transaction
 #[inline]
-pub fn last_frame_return<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, EXT, DB: Database>(
+pub fn last_frame_return<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EvmWiringT, EXT, DB>,
     frame_result: &mut FrameResult,
 ) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
@@ -167,7 +167,7 @@ pub fn last_frame_return<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, EXT,
 
 /// Load precompiles for Optimism chain.
 #[inline]
-pub fn load_precompiles<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, EXT, DB: Database>(
+pub fn load_precompiles<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
 ) -> ContextPrecompiles<EvmWiringT, DB> {
     let mut precompiles = ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID));
 
@@ -183,7 +183,7 @@ pub fn load_precompiles<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, EXT, 
 
 /// Load account (make them warm) and l1 data from database.
 #[inline]
-fn load_accounts<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, EXT, DB: Database>(
+fn load_accounts<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EvmWiringT, EXT, DB>,
 ) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
     // the L1-cost fee is only computed for Optimism non-deposit transactions.
@@ -202,7 +202,7 @@ fn load_accounts<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, EXT, DB: Dat
 
 /// Deduct max balance from caller
 #[inline]
-pub fn deduct_caller<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, EXT, DB: Database>(
+pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EvmWiringT, EXT, DB>,
 ) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
     // load caller's account.
@@ -259,7 +259,7 @@ pub fn deduct_caller<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, EXT, DB:
 
 /// Reward beneficiary with gas fee.
 #[inline]
-pub fn reward_beneficiary<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, EXT, DB: Database>(
+pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EvmWiringT, EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
@@ -318,7 +318,7 @@ pub fn reward_beneficiary<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, EXT
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
-pub fn output<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, EXT, DB: Database>(
+pub fn output<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EvmWiringT, EXT, DB>,
     frame_result: FrameResult,
 ) -> Result<ResultAndState<EvmWiringT>, EVMError<DB::Error, OptimismInvalidTransaction>> {
@@ -340,7 +340,7 @@ pub fn output<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, EXT, DB: Databa
 /// Optimism end handle changes output if the transaction is a deposit transaction.
 /// Deposit transaction can't be reverted and is always successful.
 #[inline]
-pub fn end<EvmWiringT: OptimismEvmWiring, SPEC: OptimismSpec, EXT, DB: Database>(
+pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
     context: &mut Context<EvmWiringT, EXT, DB>,
     evm_output: Result<ResultAndState<EvmWiringT>, EVMError<DB::Error, OptimismInvalidTransaction>>,
 ) -> Result<ResultAndState<EvmWiringT>, EVMError<DB::Error, OptimismInvalidTransaction>> {

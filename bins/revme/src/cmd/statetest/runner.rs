@@ -28,7 +28,7 @@ use std::{
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 
-type TestEvmWiring = revm::primitives::EthEvmWiring;
+type TestEvmWiring = revm::primitives::EthereumWiring;
 
 #[derive(Debug, Error)]
 #[error("Test {name} failed: {kind}")]

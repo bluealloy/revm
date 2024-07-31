@@ -265,7 +265,7 @@ mod tests {
         primitives, Evm, EvmContext,
     };
 
-    type TestEvmWiring = primitives::EthEvmWiring;
+    type TestEvmWiring = primitives::EthereumWiring;
 
     #[derive(Default, Debug)]
     struct StackInspector {

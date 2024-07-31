@@ -767,13 +767,13 @@ pub enum AnalysisKind {
 
 #[cfg(test)]
 mod tests {
-    use crate::EthEvmWiring;
+    use crate::EthereumWiring;
 
     use super::*;
 
     #[test]
     fn test_validate_tx_chain_id() {
-        let mut env = Env::<EthEvmWiring>::default();
+        let mut env = Env::<EthereumWiring>::default();
         env.tx.chain_id = Some(1);
         env.cfg.chain_id = 2;
         assert_eq!(
@@ -784,7 +784,7 @@ mod tests {
 
     #[test]
     fn test_validate_tx_access_list() {
-        let mut env = Env::<EthEvmWiring>::default();
+        let mut env = Env::<EthereumWiring>::default();
         env.tx.access_list = vec![AccessListItem {
             address: Address::ZERO,
             storage_keys: vec![],

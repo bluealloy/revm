@@ -89,7 +89,7 @@ mod tests {
         primitives::{self, Log},
     };
 
-    type TestEvmWiring = primitives::EthEvmWiring;
+    type TestEvmWiring = primitives::EthereumWiring;
 
     #[derive(Default, Debug)]
     struct StackInspector {

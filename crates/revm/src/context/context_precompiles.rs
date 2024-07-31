@@ -228,14 +228,14 @@ impl<EvmWiringT: EvmWiring, DB: Database> From<Precompile> for ContextPrecompile
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{db::EmptyDB, primitives::EthEvmWiring};
+    use crate::{db::EmptyDB, primitives::EthereumWiring};
 
     #[test]
     fn test_precompiles_context() {
         let custom_address = Address::with_last_byte(0xff);
 
         let mut precompiles =
-            ContextPrecompiles::<EthEvmWiring, EmptyDB>::new(PrecompileSpecId::HOMESTEAD);
+            ContextPrecompiles::<EthereumWiring, EmptyDB>::new(PrecompileSpecId::HOMESTEAD);
         assert_eq!(precompiles.addresses().count(), 4);
         assert!(matches!(precompiles.inner, PrecompilesCow::StaticRef(_)));
         assert!(!precompiles.contains(&custom_address));
