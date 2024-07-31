@@ -4,68 +4,93 @@ use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InstructionResult {
-    // success codes
+    // Success Codes
     #[default]
+    /// Execution should continue to the next.
     Continue = 0x00,
+    /// Halt execution.
     Stop,
+    /// Return from the current call.
     Return,
+    /// Self-destruct the current contract.
     SelfDestruct,
+    /// Return a contract (used in contract creation).
     ReturnContract,
 
-    // revert codes
-    Revert = 0x10, // revert opcode
+    // Revert Codes
+    /// Revert the transaction.
+    Revert = 0x10,
+    /// Exceeded maximum call depth.
     CallTooDeep,
+    /// Insufficient funds for transfer.
     OutOfFunds,
-    /// Revert if CREATE/CREATE2 starts with 0xEF00
+    /// Invalid CREATE/CREATE2 init code starting with `0xEF00`.
     CreateInitCodeStartingEF00,
-    /// Invalid EOF initcode,
+    /// Invalid EOF (Ethereum Object Format) init code.
     InvalidEOFInitCode,
-    /// ExtDelegateCall calling a non EOF contract.
+    /// Invalid target for `EXTDELEGATECALL` (non-EOF contract).
     InvalidExtDelegateCallTarget,
 
-    // Actions
+    // Action Codes
+    /// Indicates a call or contract creation.
     CallOrCreate = 0x20,
 
-    // error codes
+    // Error Codes
+    /// Insufficient gas for operation.
     OutOfGas = 0x50,
+    /// Out of gas during memory expansion.
     MemoryOOG,
+    /// Exceeded memory limit (out of gas).
     MemoryLimitOOG,
+    /// Out of gas in precompiled contract.
     PrecompileOOG,
+    /// Invalid operand (out of gas).
     InvalidOperandOOG,
+    /// Unknown or invalid opcode.
     OpcodeNotFound,
-    /// Transferring value with CALL/CALLCODE is not possible in static mode.
+    /// `CALL` with value transfer in static context.
     CallNotAllowedInsideStatic,
-    /// State change attempted in static mode.
+    /// State modification in static call.
     StateChangeDuringStaticCall,
+    /// Invalid opcode in EOF code section.
     InvalidFEOpcode,
+    /// Invalid jump destination.
     InvalidJump,
+    /// Feature or opcode not activated.
     NotActivated,
+    /// Stack underflow.
     StackUnderflow,
+    /// Stack overflow.
     StackOverflow,
+    /// Invalid memory or storage offset.
     OutOfOffset,
+    /// Address collision during contract creation.
     CreateCollision,
+    /// Payment amount overflow.
     OverflowPayment,
+    /// Error in precompiled contract execution.
     PrecompileError,
+    /// Nonce overflow.
     NonceOverflow,
-    /// Create init code size exceeds limit (runtime).
+    /// Exceeded contract size limit during creation.
     CreateContractSizeLimit,
-    /// Error on created contract that begins with EF
+    /// Created contract starts with invalid bytes (`0xEF`).
     CreateContractStartingWithEF,
-    /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
+    /// Exceeded init code size limit (EIP-3860).
     CreateInitCodeSizeLimit,
-    /// Fatal external error. Returned by database.
+    /// Critical error from external source (e.g., database).
     FatalExternalError,
-    /// RETURNCONTRACT called in not init eof code.
+    /// `RETURNCONTRACT` called outside init EOF code.
     ReturnContractInNotInitEOF,
-    /// Legacy contract is calling opcode that is enabled only in EOF.
+    /// EOF-only opcode used in legacy contract.
     EOFOpcodeDisabledInLegacy,
-    /// EOF function stack overflow
+    /// Stack overflow in EOF function.
     EOFFunctionStackOverflow,
-    /// Aux data overflow, new aux data is larger tha u16 max size.
+    /// Auxiliary data overflow (`> u16::MAX`).
     EofAuxDataOverflow,
-    /// Aux data is smaller then already present data size.
+    /// Insufficient auxiliary data size.
     EofAuxDataTooSmall,
-    /// EXT*CALL target address needs to be padded with 0s.
+    /// `EXT*CALL` target address not properly zero-padded.
     InvalidEXTCALLTarget,
 }
 
