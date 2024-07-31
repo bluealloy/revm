@@ -12,12 +12,17 @@ impl<HardforkT> HardforkTrait for HardforkT where
 {
 }
 
-/// The type that enumerates chain-specific halt reasons.
-pub trait HaltReasonTrait: Clone + Debug + PartialEq + Eq + From<crate::HaltReason> {}
+cfg_if! {
+    if #[cfg(feature = "serde")] {
+        pub trait HaltReasonTrait:  Clone + Debug + PartialEq + Eq + From<crate::HaltReason> + for<'a> serde::Deserialize<'a> + serde::Serialize {}
 
-impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
-    HaltReasonT: Clone + Debug + PartialEq + Eq + From<crate::HaltReason>
-{
+        impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
+        HaltReasonT: Clone + Debug + PartialEq + Eq + From<crate::HaltReason> + for<'a>  serde::Deserialize<'a> + serde::Serialize {}
+    } else {
+        pub trait HaltReasonTrait: Clone + Debug + PartialEq + Eq + From<crate::HaltReason>  {}
+        impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
+        HaltReasonT: Clone + Debug + PartialEq + Eq + From<crate::HaltReason> {}
+    }
 }
 
 pub trait TransactionValidation {

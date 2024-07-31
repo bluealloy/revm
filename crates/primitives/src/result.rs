@@ -19,6 +19,7 @@ pub type EVMErrorForChain<DBError, EvmWiringT> = EVMError<
 >;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ResultAndState<EvmWiringT: EvmWiring> {
     /// Status of execution
     pub result: ExecutionResult<EvmWiringT>,
@@ -29,6 +30,7 @@ pub struct ResultAndState<EvmWiringT: EvmWiring> {
 /// Result of a transaction execution.
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[derive_where(Clone; EvmWiringT::HaltReason)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExecutionResult<EvmWiringT: EvmWiring> {
     /// Returned successfully
     Success {
@@ -145,6 +147,7 @@ impl Output {
 
 /// Main EVM error.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EVMError<DBError, TransactionValidationErrorT> {
     /// Transaction validation error.
     Transaction(TransactionValidationErrorT),
