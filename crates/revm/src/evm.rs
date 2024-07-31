@@ -1,5 +1,3 @@
-#[cfg(feature = "rwasm")]
-use crate::rwasm::RwasmDbWrapper;
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
@@ -23,24 +21,20 @@ use crate::{
     },
     Context,
     ContextWithHandlerCfg,
-    Frame,
-    FrameOrResult,
     FrameResult,
 };
-use core::{cell::RefCell, fmt};
+use core::{cell::RefCell, fmt, mem::take};
 use fluentbase_core::{
     helpers::evm_error_from_exit_code,
     loader::{_loader_call, _loader_create},
 };
 use fluentbase_sdk::{
-    runtime::{RuntimeContextWrapper, TestingContext},
+    journal::{JournalState, JournalStateBuilder},
+    runtime::RuntimeContextWrapper,
     types::{EvmCallMethodInput, EvmCreateMethodInput},
-    ContractInput,
-    SovereignAPI,
 };
-use fluentbase_types::{Address, ExitCode};
+use fluentbase_types::{Account, Address, BlockContext, TxContext};
 use revm_interpreter::{CallOutcome, CreateOutcome};
-use std::vec::Vec;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -103,7 +97,11 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     /// Runs main call loop.
     #[inline]
     #[cfg(not(feature = "rwasm"))]
-    pub fn run_the_loop(&mut self, first_frame: Frame) -> Result<FrameResult, EVMError<DB::Error>> {
+    pub fn run_the_loop(
+        &mut self,
+        first_frame: crate::Frame,
+    ) -> Result<FrameResult, EVMError<DB::Error>> {
+        use crate::{Frame, FrameOrResult};
         use revm_interpreter::InterpreterAction;
 
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
@@ -353,38 +351,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         ContextWithHandlerCfg::new(self.context, self.handler.cfg)
     }
 
-    fn input_from_env(
-        &self,
-        gas: &Gas,
-        caller_address: Address,
-        callee_address: Address,
-        value: U256,
-    ) -> ContractInput {
-        ContractInput {
-            contract_gas_limit: gas.remaining(),
-            contract_address: callee_address,
-            contract_caller: caller_address,
-            contract_value: value,
-            contract_is_static: false,
-            block_chain_id: self.context.evm.env.cfg.chain_id,
-            block_coinbase: self.context.evm.env.block.coinbase,
-            block_timestamp: self.context.evm.env.block.timestamp.as_limbs()[0],
-            block_number: self.context.evm.env.block.number.as_limbs()[0],
-            block_difficulty: self.context.evm.env.block.difficulty.as_limbs()[0],
-            block_prevrandao: self.context.evm.env.block.prevrandao.unwrap_or_default(),
-            block_gas_limit: self.context.evm.env.block.gas_limit.as_limbs()[0],
-            block_base_fee: self.context.evm.env.block.basefee,
-            tx_gas_limit: self.context.evm.env.tx.gas_limit,
-            tx_nonce: self.context.evm.env.tx.nonce.unwrap_or_default(),
-            tx_gas_price: self.context.evm.env.tx.gas_price,
-            tx_gas_priority_fee: self.context.evm.env.tx.gas_priority_fee,
-            tx_caller: self.context.evm.env.tx.caller,
-            tx_access_list: self.context.evm.env.tx.access_list.clone(),
-            tx_blob_hashes: self.context.evm.env.tx.blob_hashes.clone(),
-            tx_max_fee_per_blob_gas: self.context.evm.env.tx.max_fee_per_blob_gas,
-        }
-    }
-
     /// Transact pre-verified transaction.
     fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
         let spec_id = self.spec_id();
@@ -432,6 +398,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             }
             #[cfg(not(feature = "rwasm"))]
             {
+                use crate::FrameOrResult;
                 use revm_interpreter::{
                     analysis::validate_eof,
                     CallInputs,
@@ -530,7 +497,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         post_exec.output(ctx, result)
     }
 
-    /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
+    /// EVM create opcode for both initial CREATE and CREATE2 opcodes.
     #[cfg(feature = "rwasm")]
     fn create_inner(
         &mut self,
@@ -561,49 +528,17 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         }
 
         let method_data = EvmCreateMethodInput {
+            caller: caller_address,
             bytecode: input,
             value,
             gas_limit: gas.remaining(),
             salt: None,
             depth: 0,
+            is_static: false,
         };
 
-        let contract_input = self.input_from_env(&mut gas, caller_address, Address::ZERO, value);
-        let sdk = RuntimeContextWrapper::new();
-        let sdk = RwasmDbWrapper::new(RefCell::new(&mut self.context.evm), contract_input, sdk);
-        let create_output = _loader_create(&sdk, method_data);
-
-        // let (output_buffer, exit_code) = self.exec_rwasm_binary(
-        //     &mut gas,
-        //     caller_account,
-        //     &mut middleware_account,
-        //     None,
-        //     core_input.into(),
-        //     value,
-        // );
-
-        // let create_output = if exit_code == ExitCode::Ok {
-        //     let mut buffer_decoder = BufferDecoder::new(output_buffer.as_ref());
-        //     let mut create_output = EvmCreateMethodOutput::default();
-        //     EvmCreateMethodOutput::decode_body(&mut buffer_decoder, 0, &mut create_output);
-        //     create_output
-        // } else {
-        //     EvmCreateMethodOutput::from_exit_code(exit_code).with_gas(gas.remaining())
-        // };
-
-        // let created_address = if exit_code == ExitCode::Ok {
-        //     if output_buffer.len() != 20 {
-        //         return return_result(ExitCode::CreateError, gas);
-        //     }
-        //     assert_eq!(
-        //         output_buffer.len(),
-        //         20,
-        //         "output buffer is not 20 bytes after create/create2"
-        //     );
-        //     Some(Address::from_slice(output_buffer.as_ref()))
-        // } else {
-        //     None
-        // };
+        let mut sdk = self.create_sdk()?;
+        let create_output = _loader_create(&mut sdk, method_data);
 
         let mut gas = Gas::new(create_output.gas);
         gas.record_refund(create_output.gas_refund);
@@ -618,6 +553,60 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         })
     }
 
+    fn create_sdk(&mut self) -> Result<JournalState<RuntimeContextWrapper>, EVMError<DB::Error>> {
+        let mut builder = JournalStateBuilder::default();
+        let mut accounts_to_load = Vec::new();
+
+        // fill coinbase, signer and recipient
+        accounts_to_load.push(self.context.evm.env.block.coinbase);
+        accounts_to_load.push(self.context.evm.env.tx.caller);
+        if let TransactTo::Call(recipient) = self.context.evm.env.tx.transact_to {
+            accounts_to_load.push(recipient);
+        }
+
+        // fill SDK account/storage/preimage data from an access list
+        let access_list = take(&mut self.context.evm.env.tx.access_list);
+        for (address, slots) in access_list.iter() {
+            accounts_to_load.push(*address);
+            for slot in slots.iter() {
+                let (value, _) = self.context.evm.sload(*address, *slot)?;
+                builder.add_storage(*address, *slot, value);
+            }
+        }
+
+        // return access list we borrowed
+        self.context.evm.env.tx.access_list = access_list;
+
+        for address in accounts_to_load.into_iter() {
+            let (account, _) = self.context.evm.load_account_with_code(address)?;
+            builder.add_account(address, account.info.clone());
+            builder.add_preimage(
+                account.info.code_hash,
+                account
+                    .info
+                    .code
+                    .as_ref()
+                    .map(|v| v.original_bytes())
+                    .unwrap_or_default(),
+            );
+            builder.add_preimage(
+                account.info.rwasm_code_hash,
+                account
+                    .info
+                    .rwasm_code
+                    .as_ref()
+                    .map(|v| v.original_bytes())
+                    .unwrap_or_default(),
+            );
+        }
+
+        // fill contexts
+        builder.add_block_context(BlockContext::from(self.context.evm.env.as_ref()));
+        builder.add_tx_context(TxContext::from(self.context.evm.env.as_ref()));
+
+        Ok(JournalState::builder(RuntimeContextWrapper::new(), builder))
+    }
+
     /// Main contract call of the EVM.
     #[cfg(feature = "rwasm")]
     fn call_inner(
@@ -629,7 +618,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         tx_gas_limit: u64,
         gas_limit: u64,
     ) -> Result<CallOutcome, EVMError<DB::Error>> {
-        let mut gas = Gas::new(tx_gas_limit);
+        let gas = Gas::new(tx_gas_limit);
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         if value == U256::ZERO {
@@ -638,26 +627,26 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         }
 
         let method_input = EvmCallMethodInput {
-            callee: callee_address,
+            caller: caller_address,
+            address: callee_address,
+            bytecode_address: callee_address,
             value,
+            apparent_value: value,
             input,
             gas_limit,
             depth: 0,
+            is_static: false,
         };
-        let contract_input = self.input_from_env(&mut gas, caller_address, callee_address, value);
-        let sdk = TestingContext::new();
-        let sdk = RwasmDbWrapper::new(RefCell::new(&mut self.context.evm), contract_input, sdk);
-        let call_output = _loader_call(&sdk, method_input);
 
-        // let gam = GuestAccountManager::default();
-        // gam.exec_hash();
+        let mut sdk = self.create_sdk()?;
+        let call_output = _loader_call(&mut sdk, method_input);
 
         #[cfg(feature = "debug-print")]
         {
             println!("executed ECL call:");
-            println!(" - caller: 0x{}", hex::encode(caller_address));
-            println!(" - callee: 0x{}", hex::encode(callee_address));
-            println!(" - value: 0x{}", hex::encode(&value.to_be_bytes::<32>()));
+            println!(" - caller: 0x{}", caller_address);
+            println!(" - callee: 0x{}", callee_address);
+            println!(" - value: 0x{}", value);
             println!(
                 " - call_output.gas_remaining: {}",
                 call_output.gas_remaining
@@ -675,12 +664,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             if call_output.output.iter().all(|c| c.is_ascii()) {
                 println!(
                     " - output message: {}",
-                    from_utf8(&call_output.output).unwrap()
+                    core::str::from_utf8(&call_output.output).unwrap()
                 );
             } else {
                 println!(
                     " - output message: {}",
-                    format!("0x{}", hex::encode(&call_output.output))
+                    format!("0x{}", &call_output.output)
                 );
             }
         }

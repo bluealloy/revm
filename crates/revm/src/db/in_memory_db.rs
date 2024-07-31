@@ -15,7 +15,6 @@ use crate::{
     Database,
 };
 use core::convert::Infallible;
-use fluentbase_sdk::SharedAPI;
 use fluentbase_types::POSEIDON_EMPTY;
 use std::vec::Vec;
 

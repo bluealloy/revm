@@ -14,134 +14,70 @@ use fluentbase_sdk::{
     JZKT_ACCOUNT_RWASM_CODE_HASH_FIELD,
     JZKT_ACCOUNT_SOURCE_CODE_HASH_FIELD,
 };
-use fluentbase_types::{EmptyJournalTrie, ExitCode, Fuel, SharedAPI, F254};
+use fluentbase_types::{
+    BlockContext,
+    BytecodeType,
+    EmptyJournalTrie,
+    ExitCode,
+    Fuel,
+    IsColdAccess,
+    NativeAPI,
+    TxContext,
+};
 use revm_interpreter::{Gas, InstructionResult};
 
-pub(crate) struct RwasmDbWrapper<'a, SDK: SharedAPI, DB: Database> {
+pub(crate) struct RwasmDbWrapper<'a, API: NativeAPI, DB: Database> {
     ctx: RefCell<&'a mut EvmContext<DB>>,
-    sdk: SDK,
+    native_sdk: &'a mut API,
 }
 
-impl<'a, SDK: SharedAPI, DB: Database> RwasmDbWrapper<'a, SDK, DB> {
+impl<'a, API: NativeAPI, DB: Database> RwasmDbWrapper<'a, API, DB> {
     pub(crate) fn new(
         ctx: RefCell<&'a mut EvmContext<DB>>,
-        sdk: SDK,
-    ) -> RwasmDbWrapper<'a, SDK, DB> {
-        RwasmDbWrapper { ctx, sdk }
+        native_sdk: &'a mut API,
+    ) -> RwasmDbWrapper<'a, API, DB> {
+        RwasmDbWrapper { ctx, native_sdk }
     }
 }
 
-impl<'a, SDK: SharedAPI, DB: Database> SharedAPI for RwasmDbWrapper<'a, SDK, DB> {
-    fn keccak256(data: &[u8]) -> B256 {
-        SDK::keccak256(data)
-    }
-
-    fn poseidon(data: &[u8]) -> F254 {
-        SDK::poseidon(data)
-    }
-
-    fn poseidon_hash(fa: &F254, fb: &F254, fd: &F254) -> F254 {
-        SDK::poseidon_hash(fa, fb, fd)
-    }
-
-    fn ec_recover(digest: &B256, sig: &[u8; 64], rec_id: u8) -> [u8; 65] {
-        SDK::ec_recover(digest, sig, rec_id)
-    }
-
-    fn read(&self, target: &mut [u8], offset: u32) {
-        self.sdk.read(target, offset)
-    }
-
-    fn input_size(&self) -> u32 {
-        self.sdk.input_size()
-    }
-
-    fn write(&self, value: &[u8]) {
-        self.sdk.write(value)
-    }
-
-    fn forward_output(&self, offset: u32, len: u32) {
-        self.sdk.forward_output(offset, len)
-    }
-
-    fn exit(&self, exit_code: i32) -> ! {
-        self.sdk.exit(exit_code)
-    }
-
-    fn output_size(&self) -> u32 {
-        self.sdk.output_size()
-    }
-
-    fn read_output(&self, target: &mut [u8], offset: u32) {
-        self.sdk.read_output(target, offset)
-    }
-
-    fn state(&self) -> u32 {
-        self.sdk.state()
-    }
-
-    fn read_context(&self, target: &mut [u8], offset: u32) {
-        self.sdk.read_context(target, offset)
-    }
-
-    fn charge_fuel(&self, fuel: &mut Fuel) {
-        self.sdk.charge_fuel(fuel)
-    }
-
-    fn account(&self, address: &Address) -> (Account, bool) {
+impl<'a, SDK: NativeAPI, DB: Database> RwasmDbWrapper<'a, SDK, DB> {
+    fn self_destruct(&self, address: Address, target: Address) -> [bool; 4] {
         let mut ctx = self.ctx.borrow_mut();
-        let (account, is_cold) = ctx
-            .load_account(*address)
-            .map_err(|_| panic!("database error"))
+        let result = ctx
+            .selfdestruct(address, target)
+            .map_err(|_| "unexpected EVM self destruct error")
             .unwrap();
-        let mut account = Account::from(account.info.clone());
-        account.address = *address;
-        (account, is_cold)
+        [
+            result.had_value,
+            result.target_exists,
+            result.is_cold,
+            result.previously_destroyed,
+        ]
     }
 
-    fn preimage_size(&self, hash: &B256) -> u32 {
-        self.ctx
-            .borrow_mut()
-            .db
-            .code_by_hash(*hash)
-            .map(|b| b.bytecode().len() as u32)
-            .unwrap_or_default()
-    }
-
-    fn preimage_copy(&self, target: &mut [u8], hash: &B256) {
+    fn block_hash(&self, number: U256) -> B256 {
         let mut ctx = self.ctx.borrow_mut();
-        let code = ctx
-            .code_by_hash(*hash)
-            .map_err(|_| panic!("failed to get bytecode by hash"))
-            .unwrap();
-        target.copy_from_slice(code.as_ref());
-    }
-
-    fn preimage(&self, hash: &B256) -> Bytes {
-        let mut ctx = self.ctx.borrow_mut();
-        ctx.code_by_hash(*hash)
-            .map_err(|_| panic!("failed to get bytecode by hash"))
+        ctx.block_hash(number)
+            .map_err(|_| "unexpected EVM error")
             .unwrap()
     }
 
-    fn log(&self, address: &Address, data: Bytes, topics: &[B256]) {
+    fn write_transient_storage(&self, address: Address, index: U256, value: U256) {
         let mut ctx = self.ctx.borrow_mut();
-        ctx.journaled_state.log(Log {
-            address: *address,
-            data: LogData::new_unchecked(topics.into(), data),
-        });
+        ctx.tstore(address, index, value)
     }
 
-    fn system_call(&self, address: &Address, input: &[u8], fuel: &mut Fuel) -> (Bytes, ExitCode) {
-        self.sdk.system_call(address, input, fuel)
-    }
-
-    fn debug(&self, msg: &[u8]) {
-        self.sdk.debug(msg)
+    fn transient_storage(&self, address: Address, index: U256) -> U256 {
+        let mut ctx = self.ctx.borrow_mut();
+        ctx.tload(address, index)
     }
 }
 
-impl<'a, SDK: SharedAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, SDK, DB> {
+impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, DB> {
+    fn native_sdk(&self) -> &impl NativeAPI {
+        self.native_sdk
+    }
+
     fn checkpoint(&self) -> AccountCheckpoint {
         let mut ctx = self.ctx.borrow_mut();
         let (a, b) = ctx.journaled_state.checkpoint().into();
@@ -193,34 +129,32 @@ impl<'a, SDK: SharedAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, SDK, 
         ctx.journaled_state.touch(&account.address);
     }
 
-    fn update_preimage(&self, key: &[u8; 32], field: u32, preimage: &[u8]) {
+    fn write_preimage(&mut self, hash: B256, preimage: Bytes) {
         let mut ctx = self.ctx.borrow_mut();
-        let address = Address::from_slice(&key[12..]);
+        let address = Address::from_slice(&hash[12..]);
         // debug_log!("am: update_preimage for address {}", address);
-        if field == JZKT_ACCOUNT_SOURCE_CODE_HASH_FIELD && !preimage.is_empty() {
-            ctx.journaled_state.set_code(
-                address,
-                Bytecode::new_raw(Bytes::copy_from_slice(preimage)),
-                None,
-            );
-        } else if field == JZKT_ACCOUNT_RWASM_CODE_HASH_FIELD && !preimage.is_empty() {
-            ctx.journaled_state.set_rwasm_code(
-                address,
-                Bytecode::new_raw(Bytes::copy_from_slice(preimage)),
-                None,
-            );
+        match BytecodeType::from_slice(preimage.as_ref()) {
+            BytecodeType::EVM => {
+                ctx.journaled_state
+                    .set_code(address, Bytecode::new_raw(preimage), None)
+            }
+            BytecodeType::WASM => {
+                ctx.journaled_state
+                    .set_rwasm_code(address, Bytecode::new_raw(preimage), None)
+            }
         }
     }
 
     fn context_call(
-        &self,
-        address: &Address,
-        input: &[u8],
-        context: &[u8],
+        &mut self,
+        caller: Address,
+        address: Address,
+        value: U256,
         fuel: &mut Fuel,
+        input: &[u8],
         state: u32,
     ) -> (Bytes, ExitCode) {
-        let (callee, _) = self.account(address);
+        let (callee, _) = self.account(&address);
         let rwasm_bytecode = self.preimage(&callee.rwasm_code_hash);
         if rwasm_bytecode.is_empty() {
             return (Bytes::default(), ExitCode::Ok);
@@ -358,34 +292,63 @@ impl<'a, SDK: SharedAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, SDK, 
         Ok(())
     }
 
-    fn self_destruct(&self, address: Address, target: Address) -> [bool; 4] {
+    fn account(&self, address: &Address) -> (Account, bool) {
         let mut ctx = self.ctx.borrow_mut();
-        let result = ctx
-            .selfdestruct(address, target)
-            .map_err(|_| "unexpected EVM self destruct error")
+        let (account, is_cold) = ctx
+            .load_account(*address)
+            .map_err(|_| panic!("database error"))
             .unwrap();
-        [
-            result.had_value,
-            result.target_exists,
-            result.is_cold,
-            result.previously_destroyed,
-        ]
+        let mut account = Account::from(account.info.clone());
+        account.address = *address;
+        (account, is_cold)
     }
 
-    fn block_hash(&self, number: U256) -> B256 {
+    fn preimage_size(&self, hash: &B256) -> u32 {
+        self.ctx
+            .borrow_mut()
+            .db
+            .code_by_hash(*hash)
+            .map(|b| b.bytecode().len() as u32)
+            .unwrap_or_default()
+    }
+
+    fn preimage_copy(&self, target: &mut [u8], hash: &B256) {
         let mut ctx = self.ctx.borrow_mut();
-        ctx.block_hash(number)
-            .map_err(|_| "unexpected EVM error")
+        let code = ctx
+            .code_by_hash(*hash)
+            .map_err(|_| panic!("failed to get bytecode by hash"))
+            .unwrap();
+        target.copy_from_slice(code.as_ref());
+    }
+
+    fn preimage(&self, hash: &B256) -> Bytes {
+        let mut ctx = self.ctx.borrow_mut();
+        ctx.code_by_hash(*hash)
+            .map_err(|_| panic!("failed to get bytecode by hash"))
             .unwrap()
     }
 
-    fn write_transient_storage(&self, address: Address, index: U256, value: U256) {
+    fn log(&self, address: &Address, data: Bytes, topics: &[B256]) {
         let mut ctx = self.ctx.borrow_mut();
-        ctx.tstore(address, index, value)
+        ctx.journaled_state.log(Log {
+            address: *address,
+            data: LogData::new_unchecked(topics.into(), data),
+        });
     }
 
-    fn transient_storage(&self, address: Address, index: U256) -> U256 {
-        let mut ctx = self.ctx.borrow_mut();
-        ctx.tload(address, index)
+    fn block_context(&self) -> &BlockContext {
+        todo!()
+    }
+
+    fn tx_context(&self) -> &TxContext {
+        todo!()
+    }
+
+    fn account_committed(&self, address: &Address) -> (Account, IsColdAccess) {
+        todo!()
+    }
+
+    fn committed_storage(&self, address: Address, slot: U256) -> (U256, IsColdAccess) {
+        todo!()
     }
 }
