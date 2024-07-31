@@ -198,9 +198,6 @@ mod test {
 
     use super::*;
 
-    #[cfg(feature = "optimism")]
-    type TestEvmWiring = crate::optimism::EvmWiring;
-    #[cfg(not(feature = "optimism"))]
     type TestEvmWiring = primitives::EthereumWiring;
 
     #[test]
