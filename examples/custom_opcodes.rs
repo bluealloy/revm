@@ -4,7 +4,7 @@ use revm_interpreter::{
     Host, Interpreter,
 };
 
-use crate::{
+use revm::{
     handler::register::EvmHandler,
     primitives::{db::Database, EvmWiring, HaltReason, Spec, SpecId},
 };
@@ -215,18 +215,18 @@ macro_rules! custom_opcode_spec_to_generic {
     }};
 }
 
-impl<EXT, DB: Database> EvmHandler<'_, CustomOpcodeEvmWiring, EXT, DB> {
-    pub fn custom_opcode_with_spec(spec_id: CustomOpcodeSpecId) -> Self {
-        let mut handler = Self::mainnet_with_spec(spec_id);
+// impl<EXT, DB: Database> EvmHandler<'_, CustomOpcodeEvmWiring, EXT, DB> {
+//     pub fn custom_opcode_with_spec(spec_id: CustomOpcodeSpecId) -> Self {
+//         let mut handler = Self::mainnet_with_spec(spec_id);
 
-        custom_opcode_spec_to_generic!(spec_id, {
-            let table = make_custom_instruction_table::<_, SPEC>();
-            handler.set_instruction_table(InstructionTables::Plain(table));
-        });
+//         custom_opcode_spec_to_generic!(spec_id, {
+//             let table = make_custom_instruction_table::<_, SPEC>();
+//             handler.set_instruction_table(InstructionTables::Plain(table));
+//         });
 
-        handler
-    }
-}
+//         handler
+//     }
+// }
 
 fn make_custom_instruction_table<
     EvmWiringT: EvmWiring,
@@ -241,11 +241,7 @@ fn make_custom_instruction_table<
     table
 }
 
-fn custom_opcode_handler<
-    EvmWiringT: EvmWiring,
-    H: Host + ?Sized,
-    SPEC: CustomOpcodeSpec,
->(
+fn custom_opcode_handler<H: Host + ?Sized, SPEC: CustomOpcodeSpec>(
     interpreter: &mut Interpreter,
     _host: &mut H,
 ) {
@@ -257,4 +253,8 @@ fn custom_opcode_handler<
     }
 
     // logic
+}
+
+pub fn main() {
+    println!("Example is in code compilation");
 }

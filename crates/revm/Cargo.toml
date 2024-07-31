@@ -143,6 +143,11 @@ required-features = ["std", "serde-json"]
 #path = "../../examples/uniswap_v2_usdc_swap.rs"
 #required-features = ["alloydb"]
 
+[[example]]
+name = "custom_opcodes"
+path = "../../examples/custom_opcodes.rs"
+required-features = ["enumn"]
+
 [[bench]]
 name = "bench"
 path = "benches/bench.rs"
