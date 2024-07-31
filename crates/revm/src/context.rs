@@ -91,7 +91,7 @@ impl<EvmWiringT: EvmWiring, EXT, DB: Database> Host for Context<EvmWiringT, EXT,
 
     /// Returns reference to Environment.
     #[inline]
-    fn env(&self) -> &Env<EvmWiringT> {
+    fn env(&self) -> &Env<Self::EvmWiringT> {
         &self.evm.env
     }
 

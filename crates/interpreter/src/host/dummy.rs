@@ -52,12 +52,12 @@ where
     type EvmWiringT = EvmWiringT;
 
     #[inline]
-    fn env(&self) -> &Env<EvmWiringT> {
+    fn env(&self) -> &Env<Self::EvmWiringT> {
         &self.env
     }
 
     #[inline]
-    fn env_mut(&mut self) -> &mut Env<EvmWiringT> {
+    fn env_mut(&mut self) -> &mut Env<Self::EvmWiringT> {
         &mut self.env
     }
 
