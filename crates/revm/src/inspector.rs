@@ -12,7 +12,7 @@ use crate::{
     interpreter::{
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
     },
-    primitives::{db::Database, Address, Log, U256},
+    primitives::{Address, Log, U256},
     EvmContext, EvmWiring,
 };
 use auto_impl::auto_impl;

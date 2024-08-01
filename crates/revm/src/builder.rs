@@ -18,6 +18,9 @@ pub struct EvmBuilder<'a, BuilderStage, EvmWiringT: EvmWiring> {
     phantom: PhantomData<BuilderStage>,
 }
 
+/// Zero stage of the builder 
+pub struct WiringStage;
+
 /// First stage of the builder allows setting generic variables.
 /// Generic variables are database and external context.
 pub struct SetGenericStage;
@@ -60,27 +63,24 @@ where
     }
 }
 
-impl<'a, EvmWiringT, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EvmWiringT, EXT, DB>
+impl<'a, EvmWiringT> EvmBuilder<'a, SetGenericStage, EvmWiringT>
 where
     EvmWiringT:
         EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
 {
     /// Sets the [`EmptyDB`] as the [`Database`] that will be used by [`Evm`].
-    pub fn with_empty_db(self) -> EvmBuilder<'a, SetGenericStage, EvmWiringT, EXT, EmptyDB> {
+    pub fn with_empty_db(self) -> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
         EvmBuilder {
             context: Context::new(
                 self.context.evm.with_db(EmptyDB::default()),
                 self.context.external,
             ),
-            handler: EvmWiringT::handler::<'a, EXT, EmptyDB>(self.handler.spec_id()),
+            handler: EvmWiringT::handler::<'a>(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
     /// Sets the [`Database`] that will be used by [`Evm`].
-    pub fn with_db<ODB: Database>(
-        self,
-        db: ODB,
-    ) -> EvmBuilder<'a, SetGenericStage, EvmWiringT, EXT, ODB> {
+    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
         EvmBuilder {
             context: Context::new(self.context.evm.with_db(db), self.context.external),
             handler: EvmWiringT::handler::<'a, EXT, ODB>(self.handler.spec_id()),
@@ -88,10 +88,10 @@ where
         }
     }
     /// Sets the [`DatabaseRef`] that will be used by [`Evm`].
-    pub fn with_ref_db<ODB: DatabaseRef>(
+    pub fn with_ref_db<OWire: EvmWiring<ExternalContext = EvmWiringT::ExternalContext,>(
         self,
         db: ODB,
-    ) -> EvmBuilder<'a, SetGenericStage, EvmWiringT, EXT, WrapDatabaseRef<ODB>> {
+    ) -> EvmBuilder<'a, SetGenericStage, EvmWiringT<ExternalContext = EXT>, EXT, WrapDatabaseRef<ODB>> {
         EvmBuilder {
             context: Context::new(
                 self.context.evm.with_db(WrapDatabaseRef(db)),
@@ -118,7 +118,7 @@ where
     pub fn with_env_with_handler_cfg(
         mut self,
         env_with_handler_cfg: EnvWithEvmWiring<EvmWiringT>,
-    ) -> EvmBuilder<'a, HandlerStage, EvmWiringT, EXT, DB> {
+    ) -> EvmBuilder<'a, HandlerStage, EvmWiringT> {
         let EnvWithEvmWiring { env, spec_id } = env_with_handler_cfg;
         self.context.evm.env = env;
         EvmBuilder {
@@ -175,15 +175,13 @@ where
         EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
 {
     /// Sets the [`EmptyDB`] and resets the [`Handler`] to default mainnet.
-    pub fn reset_handler_with_empty_db(
-        self,
-    ) -> EvmBuilder<'a, HandlerStage, EvmWiringT, EXT, EmptyDB> {
+    pub fn reset_handler_with_empty_db(self) -> EvmBuilder<'a, HandlerStage, EvmWiringT> {
         EvmBuilder {
             context: Context::new(
                 self.context.evm.with_db(EmptyDB::default()),
                 self.context.external,
             ),
-            handler: EvmWiringT::handler::<'a, EXT, EmptyDB>(self.handler.spec_id()),
+            handler: EvmWiringT::handler::<'a>(self.handler.spec_id()),
             phantom: PhantomData,
         }
     }
@@ -231,9 +229,7 @@ where
     }
 }
 
-impl<'a, BuilderStage, EvmWiringT: EvmWiring, EXT, DB: Database>
-    EvmBuilder<'a, BuilderStage, EvmWiringT, EXT, DB>
-{
+impl<'a, BuilderStage, EvmWiringT: EvmWiring> EvmBuilder<'a, BuilderStage, EvmWiringT> {
     /// This modifies the [EvmBuilder] to make it easy to construct an [`Evm`] with a _specific_
     /// handler.
     ///
@@ -252,8 +248,8 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring, EXT, DB: Database>
     /// ```
     pub fn with_handler(
         self,
-        handler: Handler<'a, EvmWiringT, Context<EvmWiringT>, EXT, DB>,
-    ) -> EvmBuilder<'a, BuilderStage, EvmWiringT, EXT, DB> {
+        handler: Handler<'a, EvmWiringT, Context<EvmWiringT>>,
+    ) -> EvmBuilder<'a, BuilderStage, EvmWiringT> {
         EvmBuilder {
             context: self.context,
             handler,
@@ -262,7 +258,7 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring, EXT, DB: Database>
     }
 
     /// Builds the [`Evm`].
-    pub fn build(self) -> Evm<'a, EvmWiringT, EXT, DB> {
+    pub fn build(self) -> Evm<'a, EvmWiringT> {
         Evm::new(self.context, self.handler)
     }
 
@@ -272,8 +268,8 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring, EXT, DB: Database>
     /// When called, EvmBuilder will transition from SetGenericStage to HandlerStage.
     pub fn append_handler_register(
         mut self,
-        handle_register: register::HandleRegister<EvmWiringT, EXT, DB>,
-    ) -> EvmBuilder<'a, HandlerStage, EvmWiringT, EXT, DB> {
+        handle_register: register::HandleRegister<EvmWiringT>,
+    ) -> EvmBuilder<'a, HandlerStage, EvmWiringT> {
         self.handler
             .append_handler_register(register::HandleRegisters::Plain(handle_register));
         EvmBuilder {
@@ -290,8 +286,8 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring, EXT, DB: Database>
     /// When called, EvmBuilder will transition from SetGenericStage to HandlerStage.
     pub fn append_handler_register_box(
         mut self,
-        handle_register: register::HandleRegisterBox<'a, EvmWiringT, EXT, DB>,
-    ) -> EvmBuilder<'a, HandlerStage, EvmWiringT, EXT, DB> {
+        handle_register: register::HandleRegisterBox<'a, EvmWiringT>,
+    ) -> EvmBuilder<'a, HandlerStage, EvmWiringT> {
         self.handler
             .append_handler_register(register::HandleRegisters::Box(handle_register));
         EvmBuilder {
@@ -303,13 +299,16 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring, EXT, DB: Database>
     }
 
     /// Allows modification of Evm Database.
-    pub fn modify_db(mut self, f: impl FnOnce(&mut DB)) -> Self {
+    pub fn modify_db(mut self, f: impl FnOnce(&mut EvmWiringT::Database)) -> Self {
         f(&mut self.context.evm.db);
         self
     }
 
     /// Allows modification of external context.
-    pub fn modify_external_context(mut self, f: impl FnOnce(&mut EXT)) -> Self {
+    pub fn modify_external_context(
+        mut self,
+        f: impl FnOnce(&mut EvmWiringT::ExternalContext),
+    ) -> Self {
         f(&mut self.context.external);
         self
     }
@@ -357,10 +356,9 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring, EXT, DB: Database>
     }
 }
 
-impl<'a, BuilderStage, EvmWiringT, EXT, DB> EvmBuilder<'a, BuilderStage, EvmWiringT, EXT, DB>
+impl<'a, BuilderStage, EvmWiringT> EvmBuilder<'a, BuilderStage, EvmWiringT>
 where
     EvmWiringT: EvmWiring<Block: Default>,
-    DB: Database,
 {
     /// Clears Block environment of EVM.
     pub fn with_clear_block_env(mut self) -> Self {
@@ -369,10 +367,9 @@ where
     }
 }
 
-impl<'a, BuilderStage, EvmWiringT, EXT, DB> EvmBuilder<'a, BuilderStage, EvmWiringT, EXT, DB>
+impl<'a, BuilderStage, EvmWiringT> EvmBuilder<'a, BuilderStage, EvmWiringT>
 where
     EvmWiringT: EvmWiring<Transaction: Default>,
-    DB: Database,
 {
     /// Clears Transaction environment of EVM.
     pub fn with_clear_tx_env(mut self) -> Self {
@@ -381,10 +378,9 @@ where
     }
 }
 
-impl<'a, BuilderStage, EvmWiringT, EXT, DB> EvmBuilder<'a, BuilderStage, EvmWiringT, EXT, DB>
+impl<'a, BuilderStage, EvmWiringT> EvmBuilder<'a, BuilderStage, EvmWiringT>
 where
     EvmWiringT: EvmWiring<Block: Default, Transaction: Default>,
-    DB: Database,
 {
     /// Clears Environment of EVM.
     pub fn with_clear_env(mut self) -> Self {
@@ -417,8 +413,7 @@ where
 
     /// Resets [`Handler`] to default mainnet.
     pub fn reset_handler(mut self) -> Self {
-        self.handler =
-            EvmWiringT::<ExternalContext: EXT, Database: DB>::handler::<'a>(self.handler.spec_id());
+        self.handler = EvmWiringT::handler::<'a>(self.handler.spec_id());
         self
     }
 }
@@ -475,8 +470,7 @@ mod test {
 
                 // we need to use a box to capture the custom context in the instruction
                 let custom_instruction = Box::new(
-                    move |_interp: &mut Interpreter,
-                          _host: &mut Context<TestEvmWiring, (), InMemoryDB>| {
+                    move |_interp: &mut Interpreter, _host: &mut Context<TestEvmWiring>| {
                         // modify the value
                         let mut inner = custom_context.inner.borrow_mut();
                         *inner += 1;
@@ -625,12 +619,12 @@ mod test {
     fn build_custom_precompile() {
         struct CustomPrecompile;
 
-        impl ContextStatefulPrecompile<TestEvmWiring, EmptyDB> for CustomPrecompile {
+        impl ContextStatefulPrecompile<TestEvmWiring> for CustomPrecompile {
             fn call(
                 &self,
                 _input: &Bytes,
                 _gas_limit: u64,
-                _context: &mut InnerEvmContext<TestEvmWiring, EmptyDB>,
+                _context: &mut InnerEvmContext<TestEvmWiring>,
             ) -> PrecompileResult {
                 Ok(PrecompileOutput::new(10, Bytes::new()))
             }

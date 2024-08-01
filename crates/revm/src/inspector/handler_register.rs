@@ -219,7 +219,7 @@ pub fn inspector_handle_register<
     });
 }
 
-fn inspector_instruction<EvmWiringT, DB>(
+fn inspector_instruction<EvmWiringT>(
     prev: &DynInstruction<'_, Context<EvmWiringT>>,
     interpreter: &mut Interpreter,
     host: &mut Context<EvmWiringT>,
