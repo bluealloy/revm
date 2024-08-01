@@ -1,5 +1,6 @@
 use super::{
-    plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
+    plain_account::PlainStorage, transition_account::TransitionAccount, AccountStatus,
+    CacheAccount, PlainAccount,
 };
 use revm_interpreter::primitives::{
     Account, AccountInfo, Address, Bytecode, EvmState, HashMap, B256,
@@ -123,6 +124,16 @@ impl CacheState {
 
         let is_created = account.is_created();
         let is_empty = account.is_empty();
+
+        // EIP-7702 possible to have Changed/Loaded state that goes to empty state.
+        if is_empty
+            && matches!(
+                this_account.status,
+                AccountStatus::Loaded | AccountStatus::Changed | AccountStatus::DestroyedChanged
+            )
+        {
+            return this_account.selfdestruct();
+        }
 
         // transform evm storage to storage with previous value.
         let changed_storage = account
