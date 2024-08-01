@@ -6,7 +6,7 @@ use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
 pub enum InstructionResult {
     // Success Codes
     #[default]
-    /// Execution should continue to the next.
+    /// Execution should continue to the next one.
     Continue = 0x00,
     /// Halt execution.
     Stop,
@@ -24,11 +24,11 @@ pub enum InstructionResult {
     CallTooDeep,
     /// Insufficient funds for transfer.
     OutOfFunds,
-    /// Invalid CREATE/CREATE2 init code starting with `0xEF00`.
+    /// Revert if `CREATE`/`CREATE2` starts with `0xEF00`.
     CreateInitCodeStartingEF00,
-    /// Invalid EOF (Ethereum Object Format) init code.
+    /// Invalid Ethereum Object Format (EOF) init code.
     InvalidEOFInitCode,
-    /// Invalid target for `EXTDELEGATECALL` (non-EOF contract).
+    /// `ExtDelegateCall` calling a non EOF contract.
     InvalidExtDelegateCallTarget,
 
     // Action Codes
@@ -36,31 +36,29 @@ pub enum InstructionResult {
     CallOrCreate = 0x20,
 
     // Error Codes
-    /// Insufficient gas for operation.
     OutOfGas = 0x50,
-    /// Out of gas during memory expansion.
+    /// Out of gas error encountered during memory expansion.
     MemoryOOG,
-    /// Exceeded memory limit (out of gas).
+    /// The memory limit of the EVM has been exceeded.
     MemoryLimitOOG,
-    /// Out of gas in precompiled contract.
+    /// Out of gas error encountered during the execution of a precompiled contract.
     PrecompileOOG,
-    /// Invalid operand (out of gas).
+    /// Out of gas error encountered while calling an invalid operand.
     InvalidOperandOOG,
     /// Unknown or invalid opcode.
     OpcodeNotFound,
-    /// `CALL` with value transfer in static context.
+    /// Invalid `CALL` with value transfer in static context.
     CallNotAllowedInsideStatic,
-    /// State modification in static call.
+    /// Invalid state modification in static call.
     StateChangeDuringStaticCall,
-    /// Invalid opcode in EOF code section.
+    /// An undefined bytecode value encountered during execution.
     InvalidFEOpcode,
-    /// Invalid jump destination.
     InvalidJump,
-    /// Feature or opcode not activated.
+    /// The feature or opcode is not activated in this version of the EVM.
     NotActivated,
-    /// Stack underflow.
+    /// Attempting to pop a value from an empty stack.
     StackUnderflow,
-    /// Stack overflow.
+    /// Attempting to push a value onto a full stack.
     StackOverflow,
     /// Invalid memory or storage offset.
     OutOfOffset,
@@ -78,19 +76,19 @@ pub enum InstructionResult {
     CreateContractStartingWithEF,
     /// Exceeded init code size limit (EIP-3860).
     CreateInitCodeSizeLimit,
-    /// Critical error from external source (e.g., database).
+    /// Fatal external error. Returned by database.
     FatalExternalError,
-    /// `RETURNCONTRACT` called outside init EOF code.
+    /// `RETURNCONTRACT` called outside init Ethereum Object Format code.
     ReturnContractInNotInitEOF,
-    /// EOF-only opcode used in legacy contract.
+    /// Legacy contract is calling opcode that is enabled only in Ethereum Object Format.
     EOFOpcodeDisabledInLegacy,
-    /// Stack overflow in EOF function.
+    /// Stack overflow in Ethereum Object Format function.
     EOFFunctionStackOverflow,
-    /// Auxiliary data overflow (`> u16::MAX`).
+    /// Aux data overflow, new aux data is larger than `u16` max size.
     EofAuxDataOverflow,
-    /// Insufficient auxiliary data size.
+    /// Aux data is smaller then already present data size.
     EofAuxDataTooSmall,
-    /// `EXT*CALL` target address not properly zero-padded.
+    /// `EXT*CALL` target address needs to be padded with 0s.
     InvalidEXTCALLTarget,
 }
 
