@@ -1,20 +1,18 @@
 use derive_where::derive_where;
 
-use crate::{Address, Bytes, EvmState, EvmWiring, Log, TransactionValidation, U256};
+use crate::{db::Database, Address, Bytes, EvmState, EvmWiring, Log, TransactionValidation, U256};
 use core::fmt::{self, Debug};
 use std::{boxed::Box, string::String, vec::Vec};
 
 /// Result of EVM execution.
-pub type EVMResult<EvmWiringT, DBError> =
-    EVMResultGeneric<ResultAndState<EvmWiringT>, EvmWiringT, DBError>;
+pub type EVMResult<EvmWiringT> = EVMResultGeneric<ResultAndState<EvmWiringT>, EvmWiringT>;
 
 /// Generic result of EVM execution. Used to represent error and generic output.
-pub type EVMResultGeneric<T, EvmWiringT, DBError> =
-    core::result::Result<T, EVMErrorForChain<DBError, EvmWiringT>>;
+pub type EVMResultGeneric<T, EvmWiringT> = core::result::Result<T, EVMErrorForChain<EvmWiringT>>;
 
 /// EVM error type for a specific chain.
-pub type EVMErrorForChain<DBError, EvmWiringT> = EVMError<
-    DBError,
+pub type EVMErrorForChain<EvmWiringT> = EVMError<
+    <<EvmWiringT as EvmWiring>::Database as Database>::Error,
     <<EvmWiringT as EvmWiring>::Transaction as TransactionValidation>::ValidationError,
 >;
 

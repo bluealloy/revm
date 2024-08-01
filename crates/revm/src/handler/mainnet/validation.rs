@@ -2,16 +2,16 @@ use revm_interpreter::gas;
 
 use crate::{
     primitives::{
-        db::Database, EVMError, EVMResultGeneric, Env, InvalidTransaction, Spec, Transaction,
+        EVMError, EVMResultGeneric, Env, InvalidTransaction, Spec, Transaction,
         TransactionValidation,
     },
     Context, EvmWiring,
 };
 
 /// Validate environment for the mainnet.
-pub fn validate_env<EvmWiringT: EvmWiring, SPEC: Spec, DB: Database>(
+pub fn validate_env<EvmWiringT: EvmWiring, SPEC: Spec>(
     env: &Env<EvmWiringT>,
-) -> EVMResultGeneric<(), EvmWiringT, DB::Error>
+) -> EVMResultGeneric<(), EvmWiringT>
 where
     <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
 {
@@ -23,9 +23,9 @@ where
 }
 
 /// Validates transaction against the state.
-pub fn validate_tx_against_state<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
-) -> EVMResultGeneric<(), EvmWiringT, DB::Error>
+pub fn validate_tx_against_state<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
+) -> EVMResultGeneric<(), EvmWiringT>
 where
     <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
 {
@@ -49,9 +49,9 @@ where
 }
 
 /// Validate initial transaction gas.
-pub fn validate_initial_tx_gas<EvmWiringT: EvmWiring, SPEC: Spec, DB: Database>(
+pub fn validate_initial_tx_gas<EvmWiringT: EvmWiring, SPEC: Spec>(
     env: &Env<EvmWiringT>,
-) -> EVMResultGeneric<u64, EvmWiringT, DB::Error>
+) -> EVMResultGeneric<u64, EvmWiringT>
 where
     <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
 {

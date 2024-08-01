@@ -1,25 +1,18 @@
 use crate::{
     handler::{ExecutionHandler, PostExecutionHandler, PreExecutionHandler, ValidationHandler},
     interpreter::opcode::InstructionTables,
-    primitives::{db::Database, spec_to_generic, EthereumWiring},
+    primitives::{db::Database, spec_to_generic, EthereumWiring, EvmWiring as PrimitiveEvmWiring},
     EvmHandler,
 };
 use std::vec::Vec;
 
-pub trait EvmWiring: crate::primitives::EvmWiring {
-    /// The type that contains all context information for the chain's EVM execution.
-    type Context: Default;
-
+pub trait EvmWiring: PrimitiveEvmWiring {
     /// Creates a new handler with the given hardfork.
-    fn handler<'evm, EXT, DB>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self, EXT, DB>
-    where
-        DB: Database;
+    fn handler<'evm>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self>;
 }
 
-impl EvmWiring for EthereumWiring {
-    type Context = ();
-
-    fn handler<'evm, EXT, DB>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self, EXT, DB>
+impl<DB: Database, EXT> EvmWiring for EthereumWiring<DB, EXT> {
+    fn handler<'evm>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self>
     where
         DB: Database,
     {

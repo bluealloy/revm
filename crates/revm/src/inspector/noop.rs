@@ -1,7 +1,7 @@
-use crate::{Database, EvmWiring, Inspector};
+use crate::{EvmWiring, Inspector};
 
 /// Dummy [Inspector], helpful as standalone replacement.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NoOpInspector;
 
-impl<EvmWiringT: EvmWiring, DB: Database> Inspector<EvmWiringT, DB> for NoOpInspector {}
+impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for NoOpInspector {}

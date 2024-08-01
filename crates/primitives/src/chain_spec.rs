@@ -1,6 +1,6 @@
 use cfg_if::cfg_if;
 
-use crate::{Block, SpecId, Transaction};
+use crate::{db::Database, Block, SpecId, Transaction};
 
 use core::{fmt::Debug, hash::Hash};
 
@@ -37,7 +37,13 @@ pub trait TransactionValidation {
     }
 }
 
-pub trait EvmWiring: Sized + 'static {
+
+pub trait EvmWiring: Sized {
+    /// External type
+    type ExternalContext: Sized;
+    /// Database type.
+    type Database: Database;
+
     /// The type that contains all block information.
     type Block: Block;
 
@@ -49,14 +55,21 @@ pub trait EvmWiring: Sized + 'static {
 
     /// Halt reason type.
     type HaltReason: HaltReasonTrait;
+
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EthereumWiring;
+pub struct EthereumWiring<DB: Database, EXT> {
+    phantom: core::marker::PhantomData<(DB, EXT)>,
+}
 
-impl EvmWiring for EthereumWiring {
+impl<DB: Database, EXT> EvmWiring for EthereumWiring<DB, EXT> {
+    type Database = DB;
+    type ExternalContext = EXT;
     type Block = crate::BlockEnv;
     type Hardfork = SpecId;
     type HaltReason = crate::HaltReason;
     type Transaction = crate::TxEnv;
 }
+
+pub type DefaultEthereumWiring = EthereumWiring<crate::db::EmptyDB, ()>;

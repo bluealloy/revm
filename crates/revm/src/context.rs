@@ -22,26 +22,16 @@ use crate::{
 use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
-#[derive_where(Clone; EvmWiringT::Block, EvmWiringT::Context, EvmWiringT::Transaction, DB, DB::Error, EXT)]
-pub struct Context<EvmWiringT: EvmWiring, EXT, DB: Database> {
+#[derive_where(Clone; EvmWiringT::Block, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error, EvmWiringT::ExternalContext)]
+pub struct Context<EvmWiringT: EvmWiring> {
     /// Evm Context (internal context).
-    pub evm: EvmContext<EvmWiringT, DB>,
+    pub evm: EvmContext<EvmWiringT>,
     /// External contexts.
-    pub external: EXT,
+    pub external: EvmWiringT::ExternalContext,
 }
 
-impl Default for Context<EthereumWiring, (), EmptyDB> {
+impl Default for Context<EthereumWiring<EmptyDB, ()>> {
     fn default() -> Self {
-        Self::new_empty()
-    }
-}
-
-impl<EvmWiringT> Context<EvmWiringT, (), EmptyDB>
-where
-    EvmWiringT: EvmWiring<Block: Default, Transaction: Default>,
-{
-    /// Creates empty context. This is useful for testing.
-    pub fn new_empty() -> Context<EvmWiringT, (), EmptyDB> {
         Context {
             evm: EvmContext::new(EmptyDB::new()),
             external: (),
@@ -49,13 +39,13 @@ where
     }
 }
 
-impl<EvmWiringT, DB> Context<EvmWiringT, (), DB>
+impl<EvmWiringT> Context<EvmWiringT>
 where
-    EvmWiringT: EvmWiring<Block: Default, Transaction: Default>,
-    DB: Database,
+    EvmWiringT:
+        EvmWiring<Block: Default, Transaction: Default, ExternalContext = (), Database = EmptyDB>,
 {
     /// Creates new context with database.
-    pub fn new_with_db(db: DB) -> Context<EvmWiringT, (), DB> {
+    pub fn new_with_db(db: EvmWiringT::Database) -> Context<EvmWiringT> {
         Context {
             evm: EvmContext::new_with_env(db, Box::default()),
             external: (),
@@ -63,30 +53,33 @@ where
     }
 }
 
-impl<EvmWiringT: EvmWiring, EXT, DB: Database> Context<EvmWiringT, EXT, DB> {
+impl<EvmWiringT: EvmWiring> Context<EvmWiringT> {
     /// Creates new context with external and database.
-    pub fn new(evm: EvmContext<EvmWiringT, DB>, external: EXT) -> Context<EvmWiringT, EXT, DB> {
+    pub fn new(
+        evm: EvmContext<EvmWiringT>,
+        external: EvmWiringT::ExternalContext,
+    ) -> Context<EvmWiringT> {
         Context { evm, external }
     }
 }
 
 /// Context with handler configuration.
-#[derive_where(Clone; EvmWiringT::Block, EvmWiringT::Context, EvmWiringT::Transaction, DB, DB::Error, EXT)]
-pub struct ContextWithEvmWiring<EvmWiringT: EvmWiring, EXT, DB: Database> {
+#[derive_where(Clone; EvmWiringT::Block , EvmWiringT::Transaction,EvmWiringT::Database, <EvmWiringT::Database as Database>::Error, EvmWiringT::ExternalContext)]
+pub struct ContextWithEvmWiring<EvmWiringT: EvmWiring> {
     /// Context of execution.
-    pub context: Context<EvmWiringT, EXT, DB>,
+    pub context: Context<EvmWiringT>,
     /// Handler configuration.
     pub spec_id: EvmWiringT::Hardfork,
 }
 
-impl<EvmWiringT: EvmWiring, EXT, DB: Database> ContextWithEvmWiring<EvmWiringT, EXT, DB> {
+impl<EvmWiringT: EvmWiring> ContextWithEvmWiring<EvmWiringT> {
     /// Creates new context with handler configuration.
-    pub fn new(context: Context<EvmWiringT, EXT, DB>, spec_id: EvmWiringT::Hardfork) -> Self {
+    pub fn new(context: Context<EvmWiringT>, spec_id: EvmWiringT::Hardfork) -> Self {
         Self { spec_id, context }
     }
 }
 
-impl<EvmWiringT: EvmWiring, EXT, DB: Database> Host for Context<EvmWiringT, EXT, DB> {
+impl<EvmWiringT: EvmWiring> Host for Context<EvmWiringT> {
     type EvmWiringT = EvmWiringT;
 
     /// Returns reference to Environment.

@@ -5,7 +5,6 @@ mod utils;
 
 #[cfg(feature = "alloydb")]
 mod alloydb;
-pub mod emptydb;
 #[cfg(feature = "ethersdb")]
 mod ethersdb;
 pub mod in_memory_db;
@@ -14,7 +13,7 @@ pub mod states;
 pub use crate::primitives::db::*;
 #[cfg(feature = "alloydb")]
 pub use alloydb::AlloyDB;
-pub use emptydb::{EmptyDB, EmptyDBTyped};
+pub use crate::primitives::db::{EmptyDB, EmptyDBTyped};
 #[cfg(feature = "ethersdb")]
 pub use ethersdb::EthersDB;
 pub use in_memory_db::*;

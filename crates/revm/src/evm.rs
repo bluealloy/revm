@@ -19,19 +19,19 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 
 /// EVM instance containing both internal EVM context and external context
 /// and the handler that dictates the logic of EVM (or hardfork specification).
-pub struct Evm<'a, EvmWiringT: EvmWiring, EXT, DB: Database> {
+pub struct Evm<'a, EvmWiringT: EvmWiring> {
     /// Context of execution, containing both EVM and external context.
-    pub context: Context<EvmWiringT, EXT, DB>,
+    pub context: Context<EvmWiringT>,
     /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
     /// and it different depending on the specified fork.
-    pub handler: Handler<'a, EvmWiringT, Context<EvmWiringT, EXT, DB>, EXT, DB>,
+    pub handler: Handler<'a, EvmWiringT, Context<EvmWiringT>>,
 }
 
-impl<EvmWiringT, EXT, DB> Debug for Evm<'_, EvmWiringT, EXT, DB>
+impl<EvmWiringT> Debug for Evm<'_, EvmWiringT>
 where
-    EvmWiringT: EvmWiring<Block: Debug, Context: Debug, Transaction: Debug>,
-    EXT: Debug,
-    DB: Database<Error: Debug> + Debug,
+    EvmWiringT:
+        EvmWiring<Block: Debug, Transaction: Debug, Database: Debug, ExternalContext: Debug>,
+    <EvmWiringT::Database as Database>::Error: Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Evm")
@@ -40,30 +40,28 @@ where
     }
 }
 
-impl<EXT, EvmWiringT: EvmWiring, DB: Database + DatabaseCommit> Evm<'_, EvmWiringT, EXT, DB> {
+impl<EvmWiringT: EvmWiring<Database: DatabaseCommit>> Evm<'_, EvmWiringT> {
     /// Commit the changes to the database.
-    pub fn transact_commit(
-        &mut self,
-    ) -> EVMResultGeneric<ExecutionResult<EvmWiringT>, EvmWiringT, DB::Error> {
+    pub fn transact_commit(&mut self) -> EVMResultGeneric<ExecutionResult<EvmWiringT>, EvmWiringT> {
         let ResultAndState { result, state } = self.transact()?;
         self.context.evm.db.commit(state);
         Ok(result)
     }
 }
 
-impl<'a> Evm<'a, EthereumWiring, (), EmptyDB> {
+impl<'a> Evm<'a, EthereumWiring<EmptyDB, ()>> {
     /// Returns evm builder with the mainnet chain spec, empty database, and empty external context.
-    pub fn builder() -> EvmBuilder<'a, SetGenericStage, EthereumWiring, (), EmptyDB> {
+    pub fn builder() -> EvmBuilder<'a, SetGenericStage, EthereumWiring<EmptyDB, ()>> {
         EvmBuilder::default()
     }
 }
 
-impl<'a, EvmWiringT: EvmWiring, EXT, DB: Database> Evm<'a, EvmWiringT, EXT, DB> {
+impl<'a, EvmWiringT: EvmWiring> Evm<'a, EvmWiringT> {
     /// Create new EVM.
     pub fn new(
-        mut context: Context<EvmWiringT, EXT, DB>,
-        handler: Handler<'a, EvmWiringT, Context<EvmWiringT, EXT, DB>, EXT, DB>,
-    ) -> Evm<'a, EvmWiringT, EXT, DB> {
+        mut context: Context<EvmWiringT>,
+        handler: Handler<'a, EvmWiringT, Context<EvmWiringT>>,
+    ) -> Evm<'a, EvmWiringT> {
         context
             .evm
             .journaled_state
@@ -73,7 +71,7 @@ impl<'a, EvmWiringT: EvmWiring, EXT, DB: Database> Evm<'a, EvmWiringT, EXT, DB> 
 
     /// Allow for evm setting to be modified by feeding current evm
     /// into the builder for modifications.
-    pub fn modify(self) -> EvmBuilder<'a, HandlerStage, EvmWiringT, EXT, DB> {
+    pub fn modify(self) -> EvmBuilder<'a, HandlerStage, EvmWiringT> {
         EvmBuilder::new(self)
     }
 
@@ -82,7 +80,7 @@ impl<'a, EvmWiringT: EvmWiring, EXT, DB: Database> Evm<'a, EvmWiringT, EXT, DB> 
     pub fn run_the_loop(
         &mut self,
         first_frame: Frame,
-    ) -> EVMResultGeneric<FrameResult, EvmWiringT, DB::Error> {
+    ) -> EVMResultGeneric<FrameResult, EvmWiringT> {
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
 
@@ -176,7 +174,7 @@ impl<'a, EvmWiringT: EvmWiring, EXT, DB: Database> Evm<'a, EvmWiringT, EXT, DB> 
     }
 }
 
-impl<EvmWiringT: EvmWiring, EXT, DB: Database> Evm<'_, EvmWiringT, EXT, DB> {
+impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
     /// Returns specification (hardfork) that the EVM is instanced with.
     ///
     /// SpecId depends on the handler.
@@ -187,7 +185,7 @@ impl<EvmWiringT: EvmWiring, EXT, DB: Database> Evm<'_, EvmWiringT, EXT, DB> {
     /// Pre verify transaction by checking Environment, initial gas spend and if caller
     /// has enough balance to pay for the gas.
     #[inline]
-    pub fn preverify_transaction(&mut self) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
+    pub fn preverify_transaction(&mut self) -> EVMResultGeneric<(), EvmWiringT> {
         let output = self.preverify_transaction_inner().map(|_| ());
         self.clear();
         output
@@ -202,7 +200,7 @@ impl<EvmWiringT: EvmWiring, EXT, DB: Database> Evm<'_, EvmWiringT, EXT, DB> {
     ///
     /// This function will not validate the transaction.
     #[inline]
-    pub fn transact_preverified(&mut self) -> EVMResult<EvmWiringT, DB::Error> {
+    pub fn transact_preverified(&mut self) -> EVMResult<EvmWiringT> {
         let initial_gas_spend = self
             .handler
             .validation()
@@ -219,7 +217,7 @@ impl<EvmWiringT: EvmWiring, EXT, DB: Database> Evm<'_, EvmWiringT, EXT, DB> {
 
     /// Pre verify transaction inner.
     #[inline]
-    fn preverify_transaction_inner(&mut self) -> EVMResultGeneric<u64, EvmWiringT, DB::Error> {
+    fn preverify_transaction_inner(&mut self) -> EVMResultGeneric<u64, EvmWiringT> {
         self.handler.validation().env(&self.context.evm.env)?;
         let initial_gas_spend = self
             .handler
@@ -235,7 +233,7 @@ impl<EvmWiringT: EvmWiring, EXT, DB: Database> Evm<'_, EvmWiringT, EXT, DB> {
     ///
     /// This function will validate the transaction.
     #[inline]
-    pub fn transact(&mut self) -> EVMResult<EvmWiringT, DB::Error> {
+    pub fn transact(&mut self) -> EVMResult<EvmWiringT> {
         let initial_gas_spend = self.preverify_transaction_inner().map_err(|e| {
             self.clear();
             e
@@ -273,13 +271,13 @@ impl<EvmWiringT: EvmWiring, EXT, DB: Database> Evm<'_, EvmWiringT, EXT, DB> {
 
     /// Returns the reference of database
     #[inline]
-    pub fn db(&self) -> &DB {
+    pub fn db(&self) -> &EvmWiringT::Database {
         &self.context.evm.db
     }
 
     /// Returns the mutable reference of database
     #[inline]
-    pub fn db_mut(&mut self) -> &mut DB {
+    pub fn db_mut(&mut self) -> &mut EvmWiringT::Database {
         &mut self.context.evm.db
     }
 
@@ -297,13 +295,15 @@ impl<EvmWiringT: EvmWiring, EXT, DB: Database> Evm<'_, EvmWiringT, EXT, DB> {
 
     /// Returns internal database and external struct.
     #[inline]
-    pub fn into_context(self) -> Context<EvmWiringT, EXT, DB> {
+    pub fn into_context(self) -> Context<EvmWiringT> {
         self.context
     }
 
     /// Returns database and [`EnvWithEvmWiring`].
     #[inline]
-    pub fn into_db_and_env_with_handler_cfg(self) -> (DB, EnvWithEvmWiring<EvmWiringT>) {
+    pub fn into_db_and_env_with_handler_cfg(
+        self,
+    ) -> (EvmWiringT::Database, EnvWithEvmWiring<EvmWiringT>) {
         (
             self.context.evm.inner.db,
             EnvWithEvmWiring {
@@ -315,15 +315,12 @@ impl<EvmWiringT: EvmWiring, EXT, DB: Database> Evm<'_, EvmWiringT, EXT, DB> {
 
     /// Returns [Context] and hardfork.
     #[inline]
-    pub fn into_context_with_spec_id(self) -> ContextWithEvmWiring<EvmWiringT, EXT, DB> {
+    pub fn into_context_with_spec_id(self) -> ContextWithEvmWiring<EvmWiringT> {
         ContextWithEvmWiring::new(self.context, self.handler.spec_id)
     }
 
     /// Transact pre-verified transaction.
-    fn transact_preverified_inner(
-        &mut self,
-        initial_gas_spend: u64,
-    ) -> EVMResult<EvmWiringT, DB::Error> {
+    fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<EvmWiringT> {
         let spec_id = self.spec_id();
         let ctx = &mut self.context;
         let pre_exec = self.handler.pre_execution();

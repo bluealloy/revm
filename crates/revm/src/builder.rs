@@ -10,10 +10,10 @@ use std::boxed::Box;
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that changes underlying structures
 /// will reset the registered handler to default mainnet.
-pub struct EvmBuilder<'a, BuilderStage, EvmWiringT: EvmWiring, EXT, DB: Database> {
-    context: Context<EvmWiringT, EXT, DB>,
+pub struct EvmBuilder<'a, BuilderStage, EvmWiringT: EvmWiring> {
+    context: Context<EvmWiringT>,
     /// Handler that will be used by EVM. It contains handle registers
-    handler: Handler<'a, EvmWiringT, Context<EvmWiringT, EXT, DB>, EXT, DB>,
+    handler: Handler<'a, EvmWiringT, Context<EvmWiringT>>,
     /// Phantom data to mark the stage of the builder.
     phantom: PhantomData<BuilderStage>,
 }
@@ -26,26 +26,24 @@ pub struct SetGenericStage;
 /// Requires the database and external context to be set.
 pub struct HandlerStage;
 
-impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthereumWiring, (), EmptyDB> {
+impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthereumWiring<EmptyDB, ()>> {
     fn default() -> Self {
         Self {
             context: Context::default(),
-            handler: EthereumWiring::handler::<'a, (), EmptyDB>(
-                <EthereumWiring as primitives::EvmWiring>::Hardfork::default(),
+            handler: EthereumWiring::handler::<'a>(
+                <EthereumWiring<EmptyDB, ()> as primitives::EvmWiring>::Hardfork::default(),
             ),
             phantom: PhantomData,
         }
     }
 }
 
-impl<'a, EvmWiringT, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EvmWiringT, EXT, DB>
+impl<'a, EvmWiringT> EvmBuilder<'a, SetGenericStage, EvmWiringT>
 where
     EvmWiringT: EvmWiring,
 {
     /// Sets the [`EvmWiring`] that will be used by [`Evm`].
-    pub fn with_chain_spec<NewEvmWiringT>(
-        self,
-    ) -> EvmBuilder<'a, SetGenericStage, NewEvmWiringT, EXT, DB>
+    pub fn with_chain_spec<NewEvmWiringT>(self) -> EvmBuilder<'a, SetGenericStage, NewEvmWiringT>
     where
         NewEvmWiringT: EvmWiring<
             Block: Default,
@@ -56,7 +54,7 @@ where
 
         EvmBuilder {
             context: Context::new(EvmContext::new(evm.inner.db), external),
-            handler: NewEvmWiringT::handler::<'a, EXT, DB>(NewEvmWiringT::Hardfork::default()),
+            handler: NewEvmWiringT::handler::<'a>(NewEvmWiringT::Hardfork::default()),
             phantom: PhantomData,
         }
     }
@@ -146,25 +144,23 @@ where
     pub fn with_cfg_env_with_handler_cfg(
         mut self,
         cfg_env_and_spec_id: CfgEnvWithEvmWiring<EvmWiringT>,
-    ) -> EvmBuilder<'a, HandlerStage, EvmWiringT, EXT, DB> {
+    ) -> EvmBuilder<'a, HandlerStage, EvmWiringT> {
         self.context.evm.env.cfg = cfg_env_and_spec_id.cfg_env;
 
         EvmBuilder {
             context: self.context,
-            handler: EvmWiringT::handler::<'a, EXT, DB>(cfg_env_and_spec_id.spec_id),
+            handler: EvmWiringT::handler::<'a>(cfg_env_and_spec_id.spec_id),
             phantom: PhantomData,
         }
     }
 }
 
-impl<'a, EvmWiringT: EvmWiring, EXT, DB: Database>
-    EvmBuilder<'a, HandlerStage, EvmWiringT, EXT, DB>
-{
+impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, HandlerStage, EvmWiringT> {
     /// Creates new builder from Evm, Evm is consumed and all field are moved to Builder.
     /// It will preserve set handler and context.
     ///
     /// Builder is in HandlerStage and both database and external are set.
-    pub fn new(evm: Evm<'a, EvmWiringT, EXT, DB>) -> Self {
+    pub fn new(evm: Evm<'a, EvmWiringT>) -> Self {
         Self {
             context: evm.context,
             handler: evm.handler,
@@ -173,7 +169,7 @@ impl<'a, EvmWiringT: EvmWiring, EXT, DB: Database>
     }
 }
 
-impl<'a, EvmWiringT: EvmWiring, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EvmWiringT, EXT, DB>
+impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, HandlerStage, EvmWiringT>
 where
     EvmWiringT:
         EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
@@ -256,7 +252,7 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring, EXT, DB: Database>
     /// ```
     pub fn with_handler(
         self,
-        handler: Handler<'a, EvmWiringT, Context<EvmWiringT, EXT, DB>, EXT, DB>,
+        handler: Handler<'a, EvmWiringT, Context<EvmWiringT>, EXT, DB>,
     ) -> EvmBuilder<'a, BuilderStage, EvmWiringT, EXT, DB> {
         EvmBuilder {
             context: self.context,
@@ -397,8 +393,7 @@ where
     }
 }
 
-impl<'a, BuilderStage, EvmWiringT: EvmWiring, EXT, DB: Database>
-    EvmBuilder<'a, BuilderStage, EvmWiringT, EXT, DB>
+impl<'a, BuilderStage, EvmWiringT: EvmWiring> EvmBuilder<'a, BuilderStage, EvmWiringT>
 where
     EvmWiringT:
         EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
@@ -422,7 +417,8 @@ where
 
     /// Resets [`Handler`] to default mainnet.
     pub fn reset_handler(mut self) -> Self {
-        self.handler = EvmWiringT::handler::<'a, EXT, DB>(self.handler.spec_id());
+        self.handler =
+            EvmWiringT::<ExternalContext: EXT, Database: DB>::handler::<'a>(self.handler.spec_id());
         self
     }
 }
@@ -442,7 +438,7 @@ mod test {
     use revm_precompile::PrecompileOutput;
     use std::{cell::RefCell, rc::Rc, sync::Arc};
 
-    type TestEvmWiring = crate::primitives::EthereumWiring;
+    type TestEvmWiring = crate::primitives::DefaultEthereumWiring;
 
     /// Custom evm context
     #[derive(Default, Clone, Debug)]

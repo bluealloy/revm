@@ -165,7 +165,7 @@ impl TracerEip3155 {
     fn print_summary<EvmWiringT: EvmWiring, DB: Database>(
         &mut self,
         result: &InterpreterResult,
-        context: &mut EvmContext<EvmWiringT, DB>,
+        context: &mut EvmContext<EvmWiringT>,
     ) {
         if self.print_summary {
             let spec_name: &str = context.spec_id().into();
@@ -184,16 +184,16 @@ impl TracerEip3155 {
     }
 }
 
-impl<EvmWiringT: EvmWiring, DB: Database> Inspector<EvmWiringT, DB> for TracerEip3155 {
+impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for TracerEip3155 {
     fn initialize_interp(
         &mut self,
         interp: &mut Interpreter,
-        context: &mut EvmContext<EvmWiringT, DB>,
+        context: &mut EvmContext<EvmWiringT>,
     ) {
         self.gas_inspector.initialize_interp(interp, context);
     }
 
-    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT, DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>) {
         self.gas_inspector.step(interp, context);
         self.stack.clone_from(interp.stack.data());
         self.memory = if self.include_memory {
@@ -208,7 +208,7 @@ impl<EvmWiringT: EvmWiring, DB: Database> Inspector<EvmWiringT, DB> for TracerEi
         self.refunded = interp.gas.refunded();
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT, DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>) {
         self.gas_inspector.step_end(interp, context);
         if self.skip {
             self.skip = false;
@@ -241,7 +241,7 @@ impl<EvmWiringT: EvmWiring, DB: Database> Inspector<EvmWiringT, DB> for TracerEi
 
     fn call_end(
         &mut self,
-        context: &mut EvmContext<EvmWiringT, DB>,
+        context: &mut EvmContext<EvmWiringT>,
         inputs: &CallInputs,
         outcome: CallOutcome,
     ) -> CallOutcome {
@@ -258,7 +258,7 @@ impl<EvmWiringT: EvmWiring, DB: Database> Inspector<EvmWiringT, DB> for TracerEi
 
     fn create_end(
         &mut self,
-        context: &mut EvmContext<EvmWiringT, DB>,
+        context: &mut EvmContext<EvmWiringT>,
         inputs: &CreateInputs,
         outcome: CreateOutcome,
     ) -> CreateOutcome {

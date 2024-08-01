@@ -36,6 +36,19 @@ impl<EvmWiringT: EvmWiring> Env<EvmWiringT> {
         Box::new(Self { cfg, block, tx })
     }
 
+    /// Transforms Evn to different Wiring with has same block and transaction.
+    pub fn into_evm_wiring<
+        OWiring: EvmWiring<Block = EvmWiringT::Block, Transaction = EvmWiringT::Transaction>,
+    >(
+        self,
+    ) -> Env<OWiring> {
+        Env {
+            cfg: self.cfg,
+            block: self.block,
+            tx: self.tx,
+        }
+    }
+
     /// Calculates the effective gas price of the transaction.
     #[inline]
     pub fn effective_gas_price(&self) -> U256 {
@@ -767,13 +780,13 @@ pub enum AnalysisKind {
 
 #[cfg(test)]
 mod tests {
-    use crate::EthereumWiring;
+    use crate::{db::EmptyDB, EthereumWiring};
 
     use super::*;
 
     #[test]
     fn test_validate_tx_chain_id() {
-        let mut env = Env::<EthereumWiring>::default();
+        let mut env = Env::<EthereumWiring<EmptyDB, ()>>::default();
         env.tx.chain_id = Some(1);
         env.cfg.chain_id = 2;
         assert_eq!(
@@ -784,7 +797,7 @@ mod tests {
 
     #[test]
     fn test_validate_tx_access_list() {
-        let mut env = Env::<EthereumWiring>::default();
+        let mut env = Env::<EthereumWiring<EmptyDB, ()>>::default();
         env.tx.access_list = vec![AccessListItem {
             address: Address::ZERO,
             storage_keys: vec![],

@@ -85,7 +85,7 @@ pub fn validate_tx_against_state<
     EXT,
     DB: Database,
 >(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+    context: &mut Context<EvmWiringT>,
 ) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
     if context.evm.inner.env.tx.source_hash().is_some() {
         return Ok(());
@@ -96,7 +96,7 @@ pub fn validate_tx_against_state<
 /// Handle output of the transaction
 #[inline]
 pub fn last_frame_return<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+    context: &mut Context<EvmWiringT>,
     frame_result: &mut FrameResult,
 ) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
     let env = context.evm.inner.env();
@@ -184,7 +184,7 @@ pub fn load_precompiles<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB:
 /// Load account (make them warm) and l1 data from database.
 #[inline]
 fn load_accounts<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+    context: &mut Context<EvmWiringT>,
 ) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
     // the L1-cost fee is only computed for Optimism non-deposit transactions.
 
@@ -203,7 +203,7 @@ fn load_accounts<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Databa
 /// Deduct max balance from caller
 #[inline]
 pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+    context: &mut Context<EvmWiringT>,
 ) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
     // load caller's account.
     let (caller_account, _) = context
@@ -260,7 +260,7 @@ pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Da
 /// Reward beneficiary with gas fee.
 #[inline]
 pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+    context: &mut Context<EvmWiringT>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
     let is_deposit = context.evm.inner.env.tx.source_hash().is_some();
@@ -319,7 +319,7 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, D
 /// Main return handle, returns the output of the transaction.
 #[inline]
 pub fn output<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+    context: &mut Context<EvmWiringT>,
     frame_result: FrameResult,
 ) -> Result<ResultAndState<EvmWiringT>, EVMError<DB::Error, OptimismInvalidTransaction>> {
     let result = mainnet::output::<EvmWiringT, EXT, DB>(context, frame_result)?;
@@ -341,7 +341,7 @@ pub fn output<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>
 /// Deposit transaction can't be reverted and is always successful.
 #[inline]
 pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+    context: &mut Context<EvmWiringT>,
     evm_output: Result<ResultAndState<EvmWiringT>, EVMError<DB::Error, OptimismInvalidTransaction>>,
 ) -> Result<ResultAndState<EvmWiringT>, EVMError<DB::Error, OptimismInvalidTransaction>> {
     evm_output.or_else(|err| {

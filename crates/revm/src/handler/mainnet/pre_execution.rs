@@ -5,7 +5,7 @@
 use crate::{
     precompile::PrecompileSpecId,
     primitives::{
-        db::Database, Account, Block, EVMError, EVMResultGeneric, Env, Spec, SpecId, Transaction,
+        Account, Block, EVMError, EVMResultGeneric, Env, Spec, SpecId, Transaction,
         BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256,
     },
     Context, ContextPrecompiles, EvmWiring,
@@ -14,16 +14,15 @@ use std::vec::Vec;
 
 /// Main precompile load
 #[inline]
-pub fn load_precompiles<EvmWiringT: EvmWiring, SPEC: Spec, DB: Database>(
-) -> ContextPrecompiles<EvmWiringT, DB> {
+pub fn load_precompiles<EvmWiringT: EvmWiring, SPEC: Spec>() -> ContextPrecompiles<EvmWiringT> {
     ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
 }
 
 /// Main load handle
 #[inline]
-pub fn load_accounts<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
-) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
+pub fn load_accounts<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
+) -> EVMResultGeneric<(), EvmWiringT> {
     // set journaling state flag.
     context.evm.journaled_state.set_spec_id(SPEC::SPEC_ID);
 
@@ -154,9 +153,9 @@ pub fn deduct_caller_inner<EvmWiringT: EvmWiring, SPEC: Spec>(
 
 /// Deducts the caller balance to the transaction limit.
 #[inline]
-pub fn deduct_caller<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
-) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
+pub fn deduct_caller<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
+) -> EVMResultGeneric<(), EvmWiringT> {
     // load caller's account.
     let (caller_account, _) = context
         .evm

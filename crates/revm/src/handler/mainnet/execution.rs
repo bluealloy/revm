@@ -1,5 +1,4 @@
 use crate::{
-    db::Database,
     frame::EOFCreateFrame,
     interpreter::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
@@ -17,12 +16,12 @@ use std::boxed::Box;
 
 /// Execute frame
 #[inline]
-pub fn execute_frame<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
+pub fn execute_frame<EvmWiringT: EvmWiring, SPEC: Spec>(
     frame: &mut Frame,
     shared_memory: &mut SharedMemory,
-    instruction_tables: &InstructionTables<'_, Context<EvmWiringT, EXT, DB>>,
-    context: &mut Context<EvmWiringT, EXT, DB>,
-) -> EVMResultGeneric<InterpreterAction, EvmWiringT, DB::Error> {
+    instruction_tables: &InstructionTables<'_, Context<EvmWiringT>>,
+    context: &mut Context<EvmWiringT>,
+) -> EVMResultGeneric<InterpreterAction, EvmWiringT> {
     let interpreter = frame.interpreter_mut();
     let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
     let next_action = match instruction_tables {
@@ -73,29 +72,29 @@ pub fn frame_return_with_refund_flag<EvmWiringT: EvmWiring, SPEC: Spec>(
 
 /// Handle output of the transaction
 #[inline]
-pub fn last_frame_return<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+pub fn last_frame_return<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
     frame_result: &mut FrameResult,
-) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
+) -> EVMResultGeneric<(), EvmWiringT> {
     frame_return_with_refund_flag::<EvmWiringT, SPEC>(&context.evm.env, frame_result, true);
     Ok(())
 }
 
 /// Handle frame sub call.
 #[inline]
-pub fn call<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+pub fn call<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
     inputs: Box<CallInputs>,
-) -> EVMResultGeneric<FrameOrResult, EvmWiringT, DB::Error> {
+) -> EVMResultGeneric<FrameOrResult, EvmWiringT> {
     context.evm.make_call_frame(&inputs)
 }
 
 #[inline]
-pub fn call_return<EvmWiringT: EvmWiring, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+pub fn call_return<EvmWiringT: EvmWiring>(
+    context: &mut Context<EvmWiringT>,
     frame: Box<CallFrame>,
     interpreter_result: InterpreterResult,
-) -> EVMResultGeneric<CallOutcome, EvmWiringT, DB::Error> {
+) -> EVMResultGeneric<CallOutcome, EvmWiringT> {
     context
         .evm
         .call_return(&interpreter_result, frame.frame_data.checkpoint);
@@ -106,12 +105,12 @@ pub fn call_return<EvmWiringT: EvmWiring, EXT, DB: Database>(
 }
 
 #[inline]
-pub fn insert_call_outcome<EvmWiringT: EvmWiring, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+pub fn insert_call_outcome<EvmWiringT: EvmWiring>(
+    context: &mut Context<EvmWiringT>,
     frame: &mut Frame,
     shared_memory: &mut SharedMemory,
     outcome: CallOutcome,
-) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
+) -> EVMResultGeneric<(), EvmWiringT> {
     context.evm.take_error().map_err(EVMError::Database)?;
 
     frame
@@ -123,10 +122,10 @@ pub fn insert_call_outcome<EvmWiringT: EvmWiring, EXT, DB: Database>(
 
 /// Handle frame sub create.
 #[inline]
-pub fn create<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+pub fn create<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
     inputs: Box<CreateInputs>,
-) -> EVMResultGeneric<FrameOrResult, EvmWiringT, DB::Error> {
+) -> EVMResultGeneric<FrameOrResult, EvmWiringT> {
     context
         .evm
         .make_create_frame(SPEC::SPEC_ID, &inputs)
@@ -134,11 +133,11 @@ pub fn create<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
 }
 
 #[inline]
-pub fn create_return<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+pub fn create_return<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
     frame: Box<CreateFrame>,
     mut interpreter_result: InterpreterResult,
-) -> EVMResultGeneric<CreateOutcome, EvmWiringT, DB::Error> {
+) -> EVMResultGeneric<CreateOutcome, EvmWiringT> {
     context.evm.create_return::<SPEC>(
         &mut interpreter_result,
         frame.created_address,
@@ -151,11 +150,11 @@ pub fn create_return<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
 }
 
 #[inline]
-pub fn insert_create_outcome<EvmWiringT: EvmWiring, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+pub fn insert_create_outcome<EvmWiringT: EvmWiring>(
+    context: &mut Context<EvmWiringT>,
     frame: &mut Frame,
     outcome: CreateOutcome,
-) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
+) -> EVMResultGeneric<(), EvmWiringT> {
     context.evm.take_error().map_err(EVMError::Database)?;
 
     frame
@@ -167,10 +166,10 @@ pub fn insert_create_outcome<EvmWiringT: EvmWiring, EXT, DB: Database>(
 
 /// Handle frame sub create.
 #[inline]
-pub fn eofcreate<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+pub fn eofcreate<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
     inputs: Box<EOFCreateInputs>,
-) -> EVMResultGeneric<FrameOrResult, EvmWiringT, DB::Error> {
+) -> EVMResultGeneric<FrameOrResult, EvmWiringT> {
     context
         .evm
         .make_eofcreate_frame(SPEC::SPEC_ID, &inputs)
@@ -178,11 +177,11 @@ pub fn eofcreate<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
 }
 
 #[inline]
-pub fn eofcreate_return<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+pub fn eofcreate_return<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
     frame: Box<EOFCreateFrame>,
     mut interpreter_result: InterpreterResult,
-) -> EVMResultGeneric<CreateOutcome, EvmWiringT, DB::Error> {
+) -> EVMResultGeneric<CreateOutcome, EvmWiringT> {
     context.evm.eofcreate_return::<SPEC>(
         &mut interpreter_result,
         frame.created_address,
@@ -195,11 +194,11 @@ pub fn eofcreate_return<EvmWiringT: EvmWiring, SPEC: Spec, EXT, DB: Database>(
 }
 
 #[inline]
-pub fn insert_eofcreate_outcome<EvmWiringT: EvmWiring, EXT, DB: Database>(
-    context: &mut Context<EvmWiringT, EXT, DB>,
+pub fn insert_eofcreate_outcome<EvmWiringT: EvmWiring>(
+    context: &mut Context<EvmWiringT>,
     frame: &mut Frame,
     outcome: CreateOutcome,
-) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
+) -> EVMResultGeneric<(), EvmWiringT> {
     core::mem::replace(&mut context.evm.error, Ok(())).map_err(EVMError::Database)?;
 
     frame
@@ -212,13 +211,13 @@ pub fn insert_eofcreate_outcome<EvmWiringT: EvmWiring, EXT, DB: Database>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::EthereumWiring;
+    use crate::primitives::DefaultEthereumWiring;
     use revm_interpreter::primitives::CancunSpec;
     use revm_precompile::Bytes;
 
     /// Creates frame result.
     fn call_last_frame_return(instruction_result: InstructionResult, gas: Gas) -> Gas {
-        let mut env = Env::<EthereumWiring>::default();
+        let mut env = Env::<DefaultEthereumWiring>::default();
         env.tx.gas_limit = 100;
 
         let mut first_frame = FrameResult::Call(CallOutcome::new(
@@ -229,7 +228,11 @@ mod tests {
             },
             0..0,
         ));
-        frame_return_with_refund_flag::<EthereumWiring, CancunSpec>(&env, &mut first_frame, true);
+        frame_return_with_refund_flag::<DefaultEthereumWiring, CancunSpec>(
+            &env,
+            &mut first_frame,
+            true,
+        );
         *first_frame.gas()
     }
 
