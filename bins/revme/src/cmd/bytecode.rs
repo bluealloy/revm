@@ -8,6 +8,7 @@ use revm::{
 };
 use revm::interpreter::analysis::CodeType::ReturnOrStop;
 use revm::interpreter::analysis::EofError;
+use revm::interpreter::MAX_CODE_SIZE;
 
 /// Statetest command
 #[derive(StructOpt, Debug)]
@@ -43,6 +44,10 @@ impl Cmd {
                     return;
                 };
                 let bytes: Bytes = bytes.into();
+                if bytes.len() > MAX_CODE_SIZE {
+                    println!("err: bytes exceeds max code size");
+                    continue;
+                }
                 match Eof::decode(bytes) {
                     Ok(eof) => {
                         match validate_eof_inner(&eof, Option::from(ReturnOrStop)) {
