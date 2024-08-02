@@ -2,13 +2,13 @@ use std::io;
 
 use structopt::StructOpt;
 
+use revm::interpreter::analysis::CodeType::ReturnOrStop;
+use revm::interpreter::analysis::EofError;
+use revm::primitives::MAX_INITCODE_SIZE;
 use revm::{
     interpreter::{analysis::validate_eof_inner, opcode::eof_printer::print_eof_code},
     primitives::{Bytes, Eof},
 };
-use revm::interpreter::analysis::CodeType::ReturnOrStop;
-use revm::interpreter::analysis::EofError;
-use revm::interpreter::MAX_CODE_SIZE;
 
 /// Statetest command
 #[derive(StructOpt, Debug)]
@@ -18,7 +18,6 @@ pub struct Cmd {
     /// If not provided, it will operate in interactive EOF validation mode.
     #[structopt(default_value = "")]
     bytes: String,
-
 }
 
 impl Cmd {
@@ -44,24 +43,29 @@ impl Cmd {
                     return;
                 };
                 let bytes: Bytes = bytes.into();
-                if bytes.len() > MAX_CODE_SIZE {
-                    println!("err: bytes exceeds max code size");
+                if bytes.len() > MAX_INITCODE_SIZE {
+                    println!(
+                        "err: bytes exceeds max code size {} > {}",
+                        bytes.len(),
+                        MAX_INITCODE_SIZE
+                    );
                     continue;
                 }
                 match Eof::decode(bytes) {
-                    Ok(eof) => {
-                        match validate_eof_inner(&eof, Option::from(ReturnOrStop)) {
-                            Ok(_) => {
-                                println!("OK {}/{}/{}", eof.body.code_section.len(), eof.body.container_section.len(), eof.body.data_section.len());
-                            }
-                            Err(eof_error) => {
-                                match eof_error {
-                                    EofError::Decode(e) => println!("err decode: {}", e),
-                                    EofError::Validation(e) => println!("err validation: {}", e),
-                                }
-                            }
+                    Ok(eof) => match validate_eof_inner(&eof, Option::from(ReturnOrStop)) {
+                        Ok(_) => {
+                            println!(
+                                "OK {}/{}/{}",
+                                eof.body.code_section.len(),
+                                eof.body.container_section.len(),
+                                eof.body.data_section.len()
+                            );
                         }
-                    }
+                        Err(eof_error) => match eof_error {
+                            EofError::Decode(e) => println!("err decode: {}", e),
+                            EofError::Validation(e) => println!("err validation: {}", e),
+                        },
+                    },
                     Err(e) => println!("err: {:#?}", e),
                 }
             }
