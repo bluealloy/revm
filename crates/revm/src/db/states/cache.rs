@@ -125,7 +125,8 @@ impl CacheState {
         let is_created = account.is_created();
         let is_empty = account.is_empty();
 
-        // EIP-7702 possible to have Changed/Loaded state that goes to empty state.
+        // first version of EIP-7702 makes it possible to have Changed/Loaded state that goes to empty state.
+        // If Delegated contract sends all balance to other account.
         if is_empty
             && matches!(
                 this_account.status,
