@@ -23,7 +23,7 @@ use crate::{
     ContextWithHandlerCfg,
     FrameResult,
 };
-use core::{cell::RefCell, fmt, mem::take};
+use core::{fmt, mem::take};
 use fluentbase_core::{
     helpers::evm_error_from_exit_code,
     loader::{_loader_call, _loader_create},
@@ -33,8 +33,9 @@ use fluentbase_sdk::{
     runtime::RuntimeContextWrapper,
     types::{EvmCallMethodInput, EvmCreateMethodInput},
 };
-use fluentbase_types::{Account, Address, BlockContext, TxContext};
-use revm_interpreter::{CallOutcome, CreateOutcome};
+use fluentbase_types::{Address, BlockContext, ContractContext, TxContext};
+use revm_interpreter::{CallOutcome, Contract, CreateOutcome};
+use std::vec::Vec;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -537,7 +538,13 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             is_static: false,
         };
 
-        let mut sdk = self.create_sdk()?;
+        let mut sdk = self.create_sdk(Some(ContractContext {
+            gas_limit,
+            address: Address::ZERO,
+            caller: caller_address,
+            is_static: false,
+            value,
+        }))?;
         let create_output = _loader_create(&mut sdk, method_data);
 
         let mut gas = Gas::new(create_output.gas);
@@ -553,7 +560,10 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         })
     }
 
-    fn create_sdk(&mut self) -> Result<JournalState<RuntimeContextWrapper>, EVMError<DB::Error>> {
+    fn create_sdk(
+        &mut self,
+        contract_context: Option<ContractContext>,
+    ) -> Result<JournalState<RuntimeContextWrapper>, EVMError<DB::Error>> {
         let mut builder = JournalStateBuilder::default();
         let mut accounts_to_load = Vec::new();
 
@@ -603,6 +613,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         // fill contexts
         builder.add_block_context(BlockContext::from(self.context.evm.env.as_ref()));
         builder.add_tx_context(TxContext::from(self.context.evm.env.as_ref()));
+        if let Some(contract_context) = contract_context {
+            builder.add_contract_context(contract_context);
+        }
 
         Ok(JournalState::builder(RuntimeContextWrapper::new(), builder))
     }
@@ -638,7 +651,13 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             is_static: false,
         };
 
-        let mut sdk = self.create_sdk()?;
+        let mut sdk = self.create_sdk(Some(ContractContext {
+            gas_limit,
+            address: callee_address,
+            caller: caller_address,
+            is_static: false,
+            value,
+        }))?;
         let call_output = _loader_call(&mut sdk, method_input);
 
         #[cfg(feature = "debug-print")]
