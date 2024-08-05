@@ -70,9 +70,9 @@ dependencies = [
 
 [[package]]
 name = "alloy-eips"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d32a3e14fa0d152d00bd8daf605eb74ad397efb0f54bd7155585823dddb4401e"
+checksum = "d9431c99a3b3fe606ede4b3d4043bdfbcb780c45b8d8d226c3804e2b75cfbe68"
 dependencies = [
  "alloy-primitives",
  "alloy-rlp",
@@ -81,6 +81,7 @@ dependencies = [
  "c-kzg",
  "k256",
  "once_cell",
+ "rand",
  "serde",
  "sha2",
 ]
