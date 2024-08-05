@@ -12,18 +12,20 @@ impl<HardforkT> HardforkTrait for HardforkT where
 {
 }
 
-cfg_if! {
-    if #[cfg(feature = "serde")] {
-        pub trait HaltReasonTrait:  Clone + Debug + PartialEq + Eq + From<crate::HaltReason> + for<'a> serde::Deserialize<'a> + serde::Serialize {}
+// cfg_if! {
+//     if #[cfg(feature = "serde")] {
+//         pub trait HaltReasonTrait:  Clone + Debug + PartialEq + Eq + From<crate::HaltReason> + for<'a> serde::Deserialize<'a> + serde::Serialize {}
 
-        impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
-        HaltReasonT: Clone + Debug + PartialEq + Eq + From<crate::HaltReason> + for<'a>  serde::Deserialize<'a> + serde::Serialize {}
-    } else {
-        pub trait HaltReasonTrait: Clone + Debug + PartialEq + Eq + From<crate::HaltReason>  {}
-        impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
-        HaltReasonT: Clone + Debug + PartialEq + Eq + From<crate::HaltReason> {}
-    }
+//         impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
+//         HaltReasonT: Clone + Debug + PartialEq + Eq + From<crate::HaltReason> + for<'a>  serde::Deserialize<'a> + serde::Serialize {}
+//     } else {
+pub trait HaltReasonTrait: Clone + Debug + PartialEq + Eq + From<crate::HaltReason> {}
+impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
+    HaltReasonT: Clone + Debug + PartialEq + Eq + From<crate::HaltReason>
+{
 }
+//     }
+// }
 
 pub trait TransactionValidation {
     cfg_if! {
@@ -37,10 +39,9 @@ pub trait TransactionValidation {
     }
 }
 
-
 pub trait EvmWiring: Sized {
     /// External type
-    type ExternalContext: Sized;
+    type ExternalContext: Sized + Debug;
     /// Database type.
     type Database: Database;
 
@@ -55,7 +56,6 @@ pub trait EvmWiring: Sized {
 
     /// Halt reason type.
     type HaltReason: HaltReasonTrait;
-
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -63,7 +63,7 @@ pub struct EthereumWiring<DB: Database, EXT> {
     phantom: core::marker::PhantomData<(DB, EXT)>,
 }
 
-impl<DB: Database, EXT> EvmWiring for EthereumWiring<DB, EXT> {
+impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
     type Database = DB;
     type ExternalContext = EXT;
     type Block = crate::BlockEnv;

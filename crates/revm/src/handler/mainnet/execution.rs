@@ -4,7 +4,7 @@ use crate::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
     },
-    primitives::{EVMError, EVMResultGeneric, Env, Spec, SpecId, Transaction},
+    primitives::{EVMError, EVMResultGeneric, EnvWiring, Spec, SpecId, Transaction},
     CallFrame, Context, CreateFrame, EvmWiring, Frame, FrameOrResult, FrameResult,
 };
 use core::mem;
@@ -37,7 +37,7 @@ pub fn execute_frame<EvmWiringT: EvmWiring, SPEC: Spec>(
 /// Helper function called inside [`last_frame_return`]
 #[inline]
 pub fn frame_return_with_refund_flag<EvmWiringT: EvmWiring, SPEC: Spec>(
-    env: &Env<EvmWiringT>,
+    env: &EnvWiring<EvmWiringT>,
     frame_result: &mut FrameResult,
     refund_enabled: bool,
 ) {
@@ -217,7 +217,7 @@ mod tests {
 
     /// Creates frame result.
     fn call_last_frame_return(instruction_result: InstructionResult, gas: Gas) -> Gas {
-        let mut env = Env::<DefaultEthereumWiring>::default();
+        let mut env = EnvWiring::<DefaultEthereumWiring>::default();
         env.tx.gas_limit = 100;
 
         let mut first_frame = FrameResult::Call(CallOutcome::new(

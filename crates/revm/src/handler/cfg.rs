@@ -1,12 +1,10 @@
+use crate::primitives::{CfgEnv, Env, EnvWiring, EvmWiring};
 use core::{
     fmt::Debug,
     ops::{Deref, DerefMut},
 };
-use std::boxed::Box;
-
 use derive_where::derive_where;
-
-use crate::primitives::{CfgEnv, Env, EvmWiring};
+use std::boxed::Box;
 
 /// Configuration environment with the chain spec id.
 #[derive(Debug, Eq, PartialEq)]
@@ -46,7 +44,7 @@ where
     EvmWiringT: EvmWiring,
 {
     /// Evm enironment.
-    pub env: Box<Env<EvmWiringT>>,
+    pub env: Box<EnvWiring<EvmWiringT>>,
     /// Handler configuration fields.
     pub spec_id: EvmWiringT::Hardfork,
 }
@@ -56,7 +54,7 @@ where
     EvmWiringT: EvmWiring<Transaction: Clone + Debug>,
 {
     /// Returns new `EnvWithHandlerCfg` instance.
-    pub fn new(env: Box<Env<EvmWiringT>>, spec_id: EvmWiringT::Hardfork) -> Self {
+    pub fn new(env: Box<EnvWiring<EvmWiringT>>, spec_id: EvmWiringT::Hardfork) -> Self {
         Self { env, spec_id }
     }
 
@@ -88,7 +86,7 @@ impl<EvmWiringT> Deref for EnvWithEvmWiring<EvmWiringT>
 where
     EvmWiringT: EvmWiring<Transaction: Clone + Debug>,
 {
-    type Target = Env<EvmWiringT>;
+    type Target = EnvWiring<EvmWiringT>;
 
     fn deref(&self) -> &Self::Target {
         &self.env

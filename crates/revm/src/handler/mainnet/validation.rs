@@ -2,7 +2,7 @@ use revm_interpreter::gas;
 
 use crate::{
     primitives::{
-        EVMError, EVMResultGeneric, Env, InvalidTransaction, Spec, Transaction,
+        EVMError, EVMResultGeneric, EnvWiring, InvalidTransaction, Spec, Transaction,
         TransactionValidation,
     },
     Context, EvmWiring,
@@ -10,7 +10,7 @@ use crate::{
 
 /// Validate environment for the mainnet.
 pub fn validate_env<EvmWiringT: EvmWiring, SPEC: Spec>(
-    env: &Env<EvmWiringT>,
+    env: &EnvWiring<EvmWiringT>,
 ) -> EVMResultGeneric<(), EvmWiringT>
 where
     <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
@@ -50,7 +50,7 @@ where
 
 /// Validate initial transaction gas.
 pub fn validate_initial_tx_gas<EvmWiringT: EvmWiring, SPEC: Spec>(
-    env: &Env<EvmWiringT>,
+    env: &EnvWiring<EvmWiringT>,
 ) -> EVMResultGeneric<u64, EvmWiringT>
 where
     <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,

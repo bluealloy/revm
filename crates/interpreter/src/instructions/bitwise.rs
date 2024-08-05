@@ -403,7 +403,7 @@ mod tests {
             expected: U256,
         }
 
-        let mut host = DummyHost::new(Env::<DefaultEthereumWiring>::default());
+        let mut host = DummyHost::<DefaultEthereumWiring>::new(Env::default());
         let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
 
         let input_value = U256::from(0x1234567890abcdef1234567890abcdef_u128);

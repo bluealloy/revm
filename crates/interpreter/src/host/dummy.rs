@@ -1,4 +1,5 @@
 use derive_where::derive_where;
+use revm_primitives::EnvWiring;
 
 use crate::{
     primitives::{
@@ -16,7 +17,7 @@ pub struct DummyHost<EvmWiringT>
 where
     EvmWiringT: EvmWiring,
 {
-    pub env: Env<EvmWiringT>,
+    pub env: Env<EvmWiringT::Block, EvmWiringT::Transaction>,
     pub storage: HashMap<U256, U256>,
     pub transient_storage: HashMap<U256, U256>,
     pub log: Vec<Log>,
@@ -28,7 +29,7 @@ where
 {
     /// Create a new dummy host with the given [`Env`].
     #[inline]
-    pub fn new(env: Env<EvmWiringT>) -> Self {
+    pub fn new(env: EnvWiring<EvmWiringT>) -> Self {
         Self {
             env,
             storage: HashMap::new(),
@@ -52,12 +53,12 @@ where
     type EvmWiringT = EvmWiringT;
 
     #[inline]
-    fn env(&self) -> &Env<Self::EvmWiringT> {
+    fn env(&self) -> &EnvWiring<Self::EvmWiringT> {
         &self.env
     }
 
     #[inline]
-    fn env_mut(&mut self) -> &mut Env<Self::EvmWiringT> {
+    fn env_mut(&mut self) -> &mut EnvWiring<Self::EvmWiringT> {
         &mut self.env
     }
 

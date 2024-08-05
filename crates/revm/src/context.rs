@@ -15,7 +15,7 @@ use crate::{
     db::{Database, EmptyDB},
     interpreter::{Host, LoadAccountResult, SStoreResult, SelfDestructResult},
     primitives::{
-        Address, Block as _, Bytes, Env, EthereumWiring, Log, B256, BLOCK_HASH_HISTORY, U256,
+        Address, Block as _, Bytes, EnvWiring, EthereumWiring, Log, B256, BLOCK_HASH_HISTORY, U256,
     },
     EvmWiring,
 };
@@ -84,11 +84,11 @@ impl<EvmWiringT: EvmWiring> Host for Context<EvmWiringT> {
 
     /// Returns reference to Environment.
     #[inline]
-    fn env(&self) -> &Env<Self::EvmWiringT> {
+    fn env(&self) -> &EnvWiring<Self::EvmWiringT> {
         &self.evm.env
     }
 
-    fn env_mut(&mut self) -> &mut Env<EvmWiringT> {
+    fn env_mut(&mut self) -> &mut EnvWiring<EvmWiringT> {
         &mut self.evm.env
     }
 

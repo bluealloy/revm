@@ -8,7 +8,7 @@ use crate::{
     },
     journaled_state::JournaledState,
     primitives::{
-        AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, Env, Eof,
+        AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, EnvWiring, Eof,
         EvmWiring, HashSet, Spec,
         SpecId::{self, *},
         Transaction, B256, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
@@ -22,7 +22,7 @@ use std::{boxed::Box, sync::Arc, vec::Vec};
 pub struct InnerEvmContext<EvmWiringT: EvmWiring> {
     /// EVM Environment contains all the information about config, block and transaction that
     /// evm needs.
-    pub env: Box<Env<EvmWiringT>>,
+    pub env: Box<EnvWiring<EvmWiringT>>,
     /// EVM State with journaling support.
     pub journaled_state: JournaledState,
     /// Database to load data from.
@@ -51,7 +51,7 @@ where
 impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
     /// Creates a new context with the given environment and database.
     #[inline]
-    pub fn new_with_env(db: EvmWiringT::Database, env: Box<Env<EvmWiringT>>) -> Self {
+    pub fn new_with_env(db: EvmWiringT::Database, env: Box<EnvWiring<EvmWiringT>>) -> Self {
         Self {
             env,
             journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
@@ -72,7 +72,7 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
         db: OWiring::Database,
     ) -> InnerEvmContext<OWiring> {
         InnerEvmContext {
-            env: Box::new(self.env.into_evm_wiring::<OWiring>()),
+            env: self.env,
             journaled_state: self.journaled_state,
             db,
             error: Ok(()),
@@ -107,7 +107,7 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
 
     /// Return environment.
     #[inline]
-    pub fn env(&mut self) -> &mut Env<EvmWiringT> {
+    pub fn env(&mut self) -> &mut EnvWiring<EvmWiringT> {
         &mut self.env
     }
 

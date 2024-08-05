@@ -1,15 +1,16 @@
 use revm_interpreter::Host as _;
 
 use crate::{
-    builder::{EvmBuilder, HandlerStage, SetGenericStage},
-    db::{Database, DatabaseCommit, EmptyDB},
+    builder::{EvmBuilder, SetGenericStage},
+    db::{Database, DatabaseCommit},
     handler::{EnvWithEvmWiring, Handler},
     interpreter::{CallInputs, CreateInputs, EOFCreateInputs, InterpreterAction, SharedMemory},
     primitives::{
-        CfgEnv, EVMError, EVMResult, EVMResultGeneric, EthereumWiring, ExecutionResult,
-        ResultAndState, SpecId, Transaction, TxKind, EOF_MAGIC_BYTES,
+        CfgEnv, EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState, SpecId,
+        Transaction, TxKind, EOF_MAGIC_BYTES,
     },
-    Context, ContextWithEvmWiring, EvmWiring, Frame, FrameOrResult, FrameResult,
+    Context, ContextWithEvmWiring, EvmContext, EvmWiring, Frame, FrameOrResult, FrameResult,
+    InnerEvmContext,
 };
 use core::fmt::{self, Debug};
 use std::{boxed::Box, vec::Vec};
@@ -42,7 +43,9 @@ where
 
 impl<EvmWiringT: EvmWiring<Database: DatabaseCommit>> Evm<'_, EvmWiringT> {
     /// Commit the changes to the database.
-    pub fn transact_commit(&mut self) -> EVMResultGeneric<ExecutionResult<EvmWiringT>, EvmWiringT> {
+    pub fn transact_commit(
+        &mut self,
+    ) -> EVMResultGeneric<ExecutionResult<EvmWiringT::HaltReason>, EvmWiringT> {
         let ResultAndState { result, state } = self.transact()?;
         self.context.evm.db.commit(state);
         Ok(result)
@@ -52,7 +55,7 @@ impl<EvmWiringT: EvmWiring<Database: DatabaseCommit>> Evm<'_, EvmWiringT> {
 impl<'a, EvmWiringT: EvmWiring> Evm<'a, EvmWiringT> {
     /// Returns evm builder with the mainnet chain spec, empty database, and empty external context.
     pub fn builder() -> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
-        EvmBuilder::new_wiring()
+        EvmBuilder::new()
     }
 }
 
@@ -71,8 +74,24 @@ impl<'a, EvmWiringT: EvmWiring> Evm<'a, EvmWiringT> {
 
     /// Allow for evm setting to be modified by feeding current evm
     /// into the builder for modifications.
-    pub fn modify(self) -> EvmBuilder<'a, HandlerStage, EvmWiringT> {
-        EvmBuilder::new(self)
+    pub fn modify(self) -> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
+        let Evm {
+            context:
+                Context {
+                    evm:
+                        EvmContext {
+                            inner: InnerEvmContext { db, env, .. },
+                            ..
+                        },
+                    external,
+                },
+            handler,
+        } = self;
+        // let handler = self.handler;
+        // let db = self.context.evm.db;
+        // let ext = self.context.external;
+        // let env = self.context.evm.env;
+        EvmBuilder::<'a>::new_with(db, external, env, handler)
     }
 
     /// Runs main call loop.

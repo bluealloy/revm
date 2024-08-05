@@ -1,11 +1,13 @@
-use derive_where::derive_where;
-
-use crate::{db::Database, Address, Bytes, EvmState, EvmWiring, Log, TransactionValidation, U256};
+use crate::{
+    db::Database, Address, Bytes, EvmState, EvmWiring, HaltReasonTrait, Log, TransactionValidation,
+    U256,
+};
 use core::fmt::{self, Debug};
 use std::{boxed::Box, string::String, vec::Vec};
 
 /// Result of EVM execution.
-pub type EVMResult<EvmWiringT> = EVMResultGeneric<ResultAndState<EvmWiringT>, EvmWiringT>;
+pub type EVMResult<EvmWiringT> =
+    EVMResultGeneric<ResultAndState<<EvmWiringT as EvmWiring>::HaltReason>, EvmWiringT>;
 
 /// Generic result of EVM execution. Used to represent error and generic output.
 pub type EVMResultGeneric<T, EvmWiringT> = core::result::Result<T, EVMErrorForChain<EvmWiringT>>;
@@ -18,18 +20,17 @@ pub type EVMErrorForChain<EvmWiringT> = EVMError<
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ResultAndState<EvmWiringT: EvmWiring> {
+pub struct ResultAndState<HaltReasonT: HaltReasonTrait> {
     /// Status of execution
-    pub result: ExecutionResult<EvmWiringT>,
+    pub result: ExecutionResult<HaltReasonT>,
     /// State that got updated
     pub state: EvmState,
 }
 
 /// Result of a transaction execution.
-#[derive(Debug, PartialEq, Eq, Hash)]
-#[derive_where(Clone; EvmWiringT::HaltReason)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ExecutionResult<EvmWiringT: EvmWiring> {
+pub enum ExecutionResult<HaltReasonT: HaltReasonTrait> {
     /// Returned successfully
     Success {
         reason: SuccessReason,
@@ -42,13 +43,13 @@ pub enum ExecutionResult<EvmWiringT: EvmWiring> {
     Revert { gas_used: u64, output: Bytes },
     /// Reverted for various reasons and spend all gas.
     Halt {
-        reason: EvmWiringT::HaltReason,
+        reason: HaltReasonT,
         /// Halting will spend all the gas, and will be equal to gas_limit.
         gas_used: u64,
     },
 }
 
-impl<EvmWiringT: EvmWiring> ExecutionResult<EvmWiringT> {
+impl<HaltReasonT: HaltReasonTrait> ExecutionResult<HaltReasonT> {
     /// Returns if transaction execution is successful.
     /// 1 indicates success, 0 indicates revert.
     /// <https://eips.ethereum.org/EIPS/eip-658>

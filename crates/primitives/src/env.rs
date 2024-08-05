@@ -13,40 +13,30 @@ use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
 use core::fmt::Debug;
 use core::hash::Hash;
-use derive_where::derive_where;
 use std::boxed::Box;
 use std::vec::Vec;
 
+/// Subtype
+pub type EnvWiring<EvmWiringT> =
+    Env<<EvmWiringT as EvmWiring>::Block, <EvmWiringT as EvmWiring>::Transaction>;
+
+#[derive(Clone, Debug, Default)]
 /// EVM environment configuration.
-#[derive_where(Clone, Debug, Default; EvmWiringT::Block, EvmWiringT::Transaction)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Env<EvmWiringT: EvmWiring> {
+pub struct Env<BlockT: Block, TxT: Transaction> {
     /// Configuration of the EVM itself.
     pub cfg: CfgEnv,
     /// Configuration of the block the transaction is in.
-    pub block: EvmWiringT::Block,
+    pub block: BlockT,
     /// Configuration of the transaction that is being executed.
-    pub tx: EvmWiringT::Transaction,
+    pub tx: TxT,
 }
 
-impl<EvmWiringT: EvmWiring> Env<EvmWiringT> {
+impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
     /// Create boxed [Env].
     #[inline]
-    pub fn boxed(cfg: CfgEnv, block: EvmWiringT::Block, tx: EvmWiringT::Transaction) -> Box<Self> {
+    pub fn boxed(cfg: CfgEnv, block: BlockT, tx: TxT) -> Box<Self> {
         Box::new(Self { cfg, block, tx })
-    }
-
-    /// Transforms Evn to different Wiring with has same block and transaction.
-    pub fn into_evm_wiring<
-        OWiring: EvmWiring<Block = EvmWiringT::Block, Transaction = EvmWiringT::Transaction>,
-    >(
-        self,
-    ) -> Env<OWiring> {
-        Env {
-            cfg: self.cfg,
-            block: self.block,
-            tx: self.tx,
-        }
     }
 
     /// Calculates the effective gas price of the transaction.
@@ -277,7 +267,7 @@ impl<EvmWiringT: EvmWiring> Env<EvmWiringT> {
     }
 }
 
-impl<EvmWiringT: EvmWiring<Block: Default, Transaction: Default>> Env<EvmWiringT> {
+impl<BlockT: Block + Default, TxT: Transaction + Default> Env<BlockT, TxT> {
     /// Resets environment to default values.
     #[inline]
     pub fn clear(&mut self) {
@@ -780,13 +770,11 @@ pub enum AnalysisKind {
 
 #[cfg(test)]
 mod tests {
-    use crate::{db::EmptyDB, EthereumWiring};
-
     use super::*;
 
     #[test]
     fn test_validate_tx_chain_id() {
-        let mut env = Env::<EthereumWiring<EmptyDB, ()>>::default();
+        let mut env = Env::<BlockEnv, TxEnv>::default();
         env.tx.chain_id = Some(1);
         env.cfg.chain_id = 2;
         assert_eq!(
@@ -797,7 +785,7 @@ mod tests {
 
     #[test]
     fn test_validate_tx_access_list() {
-        let mut env = Env::<EthereumWiring<EmptyDB, ()>>::default();
+        let mut env = Env::<BlockEnv, TxEnv>::default();
         env.tx.access_list = vec![AccessListItem {
             address: Address::ZERO,
             storage_keys: vec![],

@@ -3092,7 +3092,6 @@ dependencies = [
  "bitvec",
  "c-kzg",
  "cfg-if",
- "derive-where",
  "derive_more",
  "dyn-clone",
  "enumn",

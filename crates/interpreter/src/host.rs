@@ -1,8 +1,8 @@
-use crate::primitives::{Address, Bytes, Env, Log, B256, U256};
+use crate::primitives::{Address, Bytes, Log, B256, U256};
 
 mod dummy;
 pub use dummy::DummyHost;
-use revm_primitives::EvmWiring;
+use revm_primitives::{EnvWiring, EvmWiring};
 
 /// EVM context host.
 pub trait Host {
@@ -10,10 +10,10 @@ pub trait Host {
     type EvmWiringT: EvmWiring;
 
     /// Returns a reference to the environment.
-    fn env(&self) -> &Env<Self::EvmWiringT>;
+    fn env(&self) -> &EnvWiring<Self::EvmWiringT>;
 
     /// Returns a mutable reference to the environment.
-    fn env_mut(&mut self) -> &mut Env<Self::EvmWiringT>;
+    fn env_mut(&mut self) -> &mut EnvWiring<Self::EvmWiringT>;
 
     /// Load an account.
     ///

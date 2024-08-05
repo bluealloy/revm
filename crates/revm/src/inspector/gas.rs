@@ -4,7 +4,6 @@ use revm_interpreter::CallOutcome;
 
 use crate::{
     interpreter::{CallInputs, CreateInputs, CreateOutcome},
-    primitives::db::Database,
     EvmContext, EvmWiring, Inspector,
 };
 
@@ -86,7 +85,7 @@ mod tests {
 
     use crate::{
         interpreter::Interpreter,
-        primitives::{self, Log},
+        primitives::{self, EthereumWiring, Log},
     };
 
     type TestEvmWiring = primitives::DefaultEthereumWiring;
@@ -190,10 +189,9 @@ mod tests {
         ]);
         let bytecode = Bytecode::new_raw(contract_data);
 
-        let mut evm = Evm::builder()
-            .with_chain_spec::<TestEvmWiring>()
+        let mut evm = Evm::<EthereumWiring<BenchmarkDB, StackInspector>>::builder()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
-            .with_external_context(StackInspector::default())
+            .with_default_ext_ctx()
             .modify_tx_env(|tx| {
                 *tx = <TestEvmWiring as primitives::EvmWiring>::Transaction::default();
 

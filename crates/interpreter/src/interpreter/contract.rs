@@ -1,8 +1,8 @@
-use revm_primitives::EvmWiring;
+use revm_primitives::{EnvWiring, EvmWiring};
 
 use super::analysis::to_analysed;
 use crate::{
-    primitives::{Address, Bytecode, Bytes, Env, Transaction, TxKind, B256, U256},
+    primitives::{Address, Bytecode, Bytes, Transaction, TxKind, B256, U256},
     CallInputs,
 };
 
@@ -56,7 +56,7 @@ impl Contract {
     /// Creates a new contract from the given [`Env`].
     #[inline]
     pub fn new_env<EvmWiringT: EvmWiring>(
-        env: &Env<EvmWiringT>,
+        env: &EnvWiring<EvmWiringT>,
         bytecode: Bytecode,
         hash: Option<B256>,
     ) -> Self {

@@ -83,7 +83,7 @@ pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
 
 #[cfg(test)]
 mod test {
-    use revm_primitives::{b256, bytes, Bytecode, Bytes, Eof, DefaultEthereumWiring, PragueSpec};
+    use revm_primitives::{b256, bytes, Bytecode, Bytes, DefaultEthereumWiring, Eof, PragueSpec};
     use std::sync::Arc;
 
     use super::*;

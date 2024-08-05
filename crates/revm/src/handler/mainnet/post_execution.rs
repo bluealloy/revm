@@ -1,8 +1,8 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        Block, Bytecode, EVMError, EVMResultGeneric, ExecutionResult, ResultAndState, Spec,
-        SpecId::LONDON, Transaction, KECCAK_EMPTY, U256,
+        Block, Bytecode, EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState,
+        Spec, SpecId::LONDON, Transaction, KECCAK_EMPTY, U256,
     },
     Context, EvmWiring, FrameResult,
 };
@@ -11,8 +11,8 @@ use crate::{
 #[inline]
 pub fn end<EvmWiringT: EvmWiring>(
     _context: &mut Context<EvmWiringT>,
-    evm_output: EVMResultGeneric<ResultAndState<EvmWiringT>, EvmWiringT>,
-) -> EVMResultGeneric<ResultAndState<EvmWiringT>, EvmWiringT> {
+    evm_output: EVMResult<EvmWiringT>,
+) -> EVMResult<EvmWiringT> {
     evm_output
 }
 
@@ -89,7 +89,7 @@ pub fn reimburse_caller<EvmWiringT: EvmWiring>(
 pub fn output<EvmWiringT: EvmWiring>(
     context: &mut Context<EvmWiringT>,
     result: FrameResult,
-) -> EVMResultGeneric<ResultAndState<EvmWiringT>, EvmWiringT> {
+) -> EVMResult<EvmWiringT> {
     context.evm.take_error().map_err(EVMError::Database)?;
 
     // used gas with refund calculated.

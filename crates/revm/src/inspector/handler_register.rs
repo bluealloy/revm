@@ -1,5 +1,4 @@
 use crate::{
-    db::Database,
     handler::register::EvmHandler,
     interpreter::{opcode, InstructionResult, Interpreter},
     primitives::EVMResultGeneric,
@@ -257,7 +256,8 @@ mod tests {
     use crate::{
         inspectors::NoOpInspector,
         interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome},
-        primitives, Evm, EvmContext,
+        primitives::{self, db::EmptyDB, EthereumWiring},
+        Evm, EvmContext,
     };
 
     type TestEvmWiring = primitives::DefaultEthereumWiring;
@@ -364,8 +364,8 @@ mod tests {
         ]);
         let bytecode = Bytecode::new_raw(contract_data);
 
-        let mut evm = Evm::builder()
-            .with_chain_spec::<TestEvmWiring>()
+        let mut evm = Evm::<EthereumWiring<BenchmarkDB, StackInspector>>::builder()
+            .with_default_ext_ctx()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
             .with_external_context(StackInspector::default())
             .modify_tx_env(|tx| {
@@ -393,7 +393,7 @@ mod tests {
     #[test]
     fn test_inspector_reg() {
         let mut noop = NoOpInspector;
-        let _evm = Evm::builder()
+        let _evm: Evm<'_, EthereumWiring<EmptyDB, &mut NoOpInspector>> = Evm::builder()
             .with_external_context(&mut noop)
             .append_handler_register(inspector_handle_register)
             .build();

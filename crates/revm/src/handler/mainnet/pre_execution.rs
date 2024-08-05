@@ -5,7 +5,7 @@
 use crate::{
     precompile::PrecompileSpecId,
     primitives::{
-        Account, Block, EVMError, EVMResultGeneric, Env, Spec, SpecId, Transaction,
+        Account, Block, EVMError, EVMResultGeneric, EnvWiring, Spec, SpecId, Transaction,
         BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256,
     },
     Context, ContextPrecompiles, EvmWiring,
@@ -126,7 +126,7 @@ pub fn load_accounts<EvmWiringT: EvmWiring, SPEC: Spec>(
 #[inline]
 pub fn deduct_caller_inner<EvmWiringT: EvmWiring, SPEC: Spec>(
     caller_account: &mut Account,
-    env: &Env<EvmWiringT>,
+    env: &EnvWiring<EvmWiringT>,
 ) {
     // Subtract gas costs from the caller's account.
     // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.

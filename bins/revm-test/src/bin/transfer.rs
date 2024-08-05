@@ -1,14 +1,16 @@
 use revm::{
     db::BenchmarkDB,
-    primitives::{Bytecode, TxKind, U256},
+    primitives::{Bytecode, EthereumWiring, TxKind, U256},
     Evm,
 };
 
 use std::time::Duration;
 
+type EthereumBenchmarkWire = EthereumWiring<BenchmarkDB, ()>;
+
 fn main() {
     // BenchmarkDB is dummy state that implements Database trait.
-    let mut evm = Evm::builder()
+    let mut evm = Evm::<EthereumBenchmarkWire>::builder()
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
         .modify_tx_env(|tx| {
             // execution globals block hash/gas_limit/coinbase/timestamp..

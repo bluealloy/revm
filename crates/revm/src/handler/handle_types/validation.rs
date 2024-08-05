@@ -1,13 +1,13 @@
 use crate::{
     handler::mainnet,
-    primitives::{EVMResultGeneric, Env, InvalidTransaction, Spec, TransactionValidation},
+    primitives::{EVMResultGeneric, EnvWiring, InvalidTransaction, Spec, TransactionValidation},
     Context, EvmWiring,
 };
 use std::sync::Arc;
 
 /// Handle that validates env.
 pub type ValidateEnvHandle<'a, EvmWiringT> =
-    Arc<dyn Fn(&Env<EvmWiringT>) -> EVMResultGeneric<(), EvmWiringT> + 'a>;
+    Arc<dyn Fn(&EnvWiring<EvmWiringT>) -> EVMResultGeneric<(), EvmWiringT> + 'a>;
 
 /// Handle that validates transaction environment against the state.
 /// Second parametar is initial gas.
@@ -16,7 +16,7 @@ pub type ValidateTxEnvAgainstState<'a, EvmWiringT> =
 
 /// Initial gas calculation handle
 pub type ValidateInitialTxGasHandle<'a, EvmWiringT> =
-    Arc<dyn Fn(&Env<EvmWiringT>) -> EVMResultGeneric<u64, EvmWiringT> + 'a>;
+    Arc<dyn Fn(&EnvWiring<EvmWiringT>) -> EVMResultGeneric<u64, EvmWiringT> + 'a>;
 
 /// Handles related to validation.
 pub struct ValidationHandler<'a, EvmWiringT: EvmWiring> {
@@ -44,12 +44,12 @@ where
 
 impl<'a, EvmWiringT: EvmWiring> ValidationHandler<'a, EvmWiringT> {
     /// Validate env.
-    pub fn env(&self, env: &Env<EvmWiringT>) -> EVMResultGeneric<(), EvmWiringT> {
+    pub fn env(&self, env: &EnvWiring<EvmWiringT>) -> EVMResultGeneric<(), EvmWiringT> {
         (self.env)(env)
     }
 
     /// Initial gas
-    pub fn initial_tx_gas(&self, env: &Env<EvmWiringT>) -> EVMResultGeneric<u64, EvmWiringT> {
+    pub fn initial_tx_gas(&self, env: &EnvWiring<EvmWiringT>) -> EVMResultGeneric<u64, EvmWiringT> {
         (self.initial_tx_gas)(env)
     }
 

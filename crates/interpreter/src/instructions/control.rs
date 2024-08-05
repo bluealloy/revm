@@ -206,7 +206,9 @@ pub fn unknown<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 mod test {
     use std::sync::Arc;
 
-    use revm_primitives::{bytes, eof::TypesSection, Bytecode, Eof, DefaultEthereumWiring, PragueSpec};
+    use revm_primitives::{
+        bytes, eof::TypesSection, Bytecode, DefaultEthereumWiring, Eof, PragueSpec,
+    };
 
     use super::*;
     use crate::{

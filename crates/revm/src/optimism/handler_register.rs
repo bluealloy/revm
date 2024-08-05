@@ -55,7 +55,7 @@ pub fn optimism_handle_register<EvmWiringT, DB, EXT>(
 
 /// Validate environment for the Optimism chain.
 pub fn validate_env<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, DB: Database>(
-    env: &Env<EvmWiringT>,
+    env: &EnvWiring<EvmWiringT>,
 ) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
     // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
     if env.tx.source_hash().is_some() {

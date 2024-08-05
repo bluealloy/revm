@@ -10,7 +10,8 @@ use crate::{
         EOFCreateKind, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
     primitives::{
-        keccak256, Address, Bytecode, Bytes, CreateScheme, EVMError, EVMResultGeneric, Env, Eof,
+        keccak256, Address, Bytecode, Bytes, CreateScheme, EVMError, EVMResultGeneric, EnvWiring,
+        Eof,
         SpecId::{self, *},
         Transaction, B256, EOF_MAGIC_BYTES,
     },
@@ -61,7 +62,7 @@ where
 {
     /// Creates a new context with the given environment and database.
     #[inline]
-    pub fn new_with_env(db: EvmWiringT::Database, env: Box<Env<EvmWiringT>>) -> Self {
+    pub fn new_with_env(db: EvmWiringT::Database, env: Box<EnvWiring<EvmWiringT>>) -> Self {
         Self {
             inner: InnerEvmContext::new_with_env(db, env),
             precompiles: ContextPrecompiles::default(),
@@ -480,7 +481,7 @@ pub(crate) mod test_utils {
     pub fn create_cache_db_evm_context_with_balance<
         EvmWiringT: EvmWiring<Database = CacheDB<EmptyDB>>,
     >(
-        env: Box<Env<EvmWiringT>>,
+        env: Box<EnvWiring<EvmWiringT>>,
         mut db: CacheDB<EmptyDB>,
         balance: U256,
     ) -> EvmContext<EvmWiringT> {
@@ -498,7 +499,7 @@ pub(crate) mod test_utils {
 
     /// Creates a cached db evm context.
     pub fn create_cache_db_evm_context<EvmWiringT: EvmWiring<Database = CacheDB<EmptyDB>>>(
-        env: Box<Env<EvmWiringT>>,
+        env: Box<EnvWiring<EvmWiringT>>,
         db: CacheDB<EmptyDB>,
     ) -> EvmContext<EvmWiringT> {
         EvmContext {
@@ -515,7 +516,7 @@ pub(crate) mod test_utils {
 
     /// Returns a new `EvmContext` with an empty journaled state.
     pub fn create_empty_evm_context<EvmWiringT: EvmWiring<Database = EmptyDB>>(
-        env: Box<Env<EvmWiringT>>,
+        env: Box<EnvWiring<EvmWiringT>>,
         db: EmptyDB,
     ) -> EvmContext<EvmWiringT> {
         EvmContext {
@@ -547,9 +548,10 @@ mod tests {
     // call stack is too deep.
     #[test]
     fn test_make_call_frame_stack_too_deep() {
-        let env = Env::<DefaultEthereumWiring>::default();
+        let env = EnvWiring::<DefaultEthereumWiring>::default();
         let db = EmptyDB::default();
-        let mut context = test_utils::create_empty_evm_context(Box::new(env), db);
+        let mut context =
+            test_utils::create_empty_evm_context::<DefaultEthereumWiring>(Box::new(env), db);
         context.journaled_state.depth = CALL_STACK_LIMIT as usize + 1;
         let contract = address!("dead10000000000000000000000000000001dead");
         let call_inputs = test_utils::create_mock_call_inputs(contract);
@@ -568,9 +570,10 @@ mod tests {
     // checkpointed on the journaled state correctly.
     #[test]
     fn test_make_call_frame_transfer_revert() {
-        let env = Env::<DefaultEthereumWiring>::default();
+        let env = EnvWiring::<DefaultEthereumWiring>::default();
         let db = EmptyDB::default();
-        let mut evm_context = test_utils::create_empty_evm_context(Box::new(env), db);
+        let mut evm_context =
+            test_utils::create_empty_evm_context::<DefaultEthereumWiring>(Box::new(env), db);
         let contract = address!("dead10000000000000000000000000000001dead");
         let mut call_inputs = test_utils::create_mock_call_inputs(contract);
         call_inputs.value = CallValue::Transfer(U256::from(1));
@@ -589,10 +592,12 @@ mod tests {
 
     #[test]
     fn test_make_call_frame_missing_code_context() {
-        let env = Env::<EthereumWiring<_, ()>>::default();
+        type CacheEthWiring = EthereumWiring<CacheDB<EmptyDB>, ()>;
+        let env = EnvWiring::<CacheEthWiring>::default();
         let cdb = CacheDB::new(EmptyDB::default());
         let bal = U256::from(3_000_000_000_u128);
-        let mut context = create_cache_db_evm_context_with_balance(Box::new(env), cdb, bal);
+        let mut context =
+            create_cache_db_evm_context_with_balance::<CacheEthWiring>(Box::new(env), cdb, bal);
         let contract = address!("dead10000000000000000000000000000001dead");
         let call_inputs = test_utils::create_mock_call_inputs(contract);
         let res = context.make_call_frame(&call_inputs);
@@ -604,7 +609,8 @@ mod tests {
 
     #[test]
     fn test_make_call_frame_succeeds() {
-        let env = Env::<EthereumWiring<_, ()>>::default();
+        type CacheEthWiring = EthereumWiring<CacheDB<EmptyDB>, ()>;
+        let env = EnvWiring::<CacheEthWiring>::default();
         let mut cdb = CacheDB::new(EmptyDB::default());
         let bal = U256::from(3_000_000_000_u128);
         let by = Bytecode::new_raw(Bytes::from(vec![0x60, 0x00, 0x60, 0x00]));
@@ -618,7 +624,8 @@ mod tests {
                 code: Some(by),
             },
         );
-        let mut evm_context = create_cache_db_evm_context_with_balance(Box::new(env), cdb, bal);
+        let mut evm_context =
+            create_cache_db_evm_context_with_balance::<CacheEthWiring>(Box::new(env), cdb, bal);
         let call_inputs = test_utils::create_mock_call_inputs(contract);
         let res = evm_context.make_call_frame(&call_inputs);
         let Ok(FrameOrResult::Frame(Frame::Call(call_frame))) = res else {

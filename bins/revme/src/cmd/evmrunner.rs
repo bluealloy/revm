@@ -2,7 +2,7 @@ use revm::{
     db::BenchmarkDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
-    primitives::{address, eof::EofDecodeError, Address, Bytecode, TxKind},
+    primitives::{address, eof::EofDecodeError, Address, Bytecode, EthereumWiring, TxKind},
     Database, Evm,
 };
 use std::io::Error as IoError;
@@ -80,7 +80,7 @@ impl Cmd {
 
         // BenchmarkDB is dummy state that implements Database trait.
         // the bytecode is deployed at zero address.
-        let mut evm = Evm::builder()
+        let mut evm = Evm::<EthereumWiring<BenchmarkDB, TracerEip3155>>::builder()
             .with_db(db)
             .modify_tx_env(|tx| {
                 // execution globals block hash/gas_limit/coinbase/timestamp..
@@ -105,9 +105,7 @@ impl Cmd {
         let out = if self.trace {
             let mut evm = evm
                 .modify()
-                .reset_handler_with_external_context(TracerEip3155::new(
-                    Box::new(std::io::stdout()),
-                ))
+                .with_external_context(TracerEip3155::new(Box::new(std::io::stdout())))
                 .append_handler_register(inspector_handle_register)
                 .build();
 

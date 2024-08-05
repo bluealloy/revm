@@ -4,6 +4,7 @@ use crate::{
     primitives::{db::Database, spec_to_generic, EthereumWiring, EvmWiring as PrimitiveEvmWiring},
     EvmHandler,
 };
+use std::fmt::Debug;
 use std::vec::Vec;
 
 pub trait EvmWiring: PrimitiveEvmWiring {
@@ -11,7 +12,7 @@ pub trait EvmWiring: PrimitiveEvmWiring {
     fn handler<'evm>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self>;
 }
 
-impl<DB: Database, EXT> EvmWiring for EthereumWiring<DB, EXT> {
+impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
     fn handler<'evm>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self>
     where
         DB: Database,
