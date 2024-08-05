@@ -377,7 +377,7 @@ impl AccessTracker {
 
 /// Types of code sections. It is a error if container to contain
 /// both RETURNCONTRACT and either of RETURN or STOP.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CodeType {
     /// Return contract code.
     ReturnContract,
