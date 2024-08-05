@@ -47,6 +47,22 @@ pub mod pair {
 
     const ADDRESS: Address = crate::u64_to_address(8);
 
+    pub const GRANITE_MAX_INPUT_SIZE: usize = 112687;
+    pub const GRANITE: PrecompileWithAddress = PrecompileWithAddress(
+        ADDRESS,
+        Precompile::Standard(|input, gas_limit| {
+            if input.len() > GRANITE_MAX_INPUT_SIZE {
+                return Err(Error::Bn128PairLength.into());
+            }
+            run_pair(
+                input,
+                ISTANBUL_PAIR_PER_POINT,
+                ISTANBUL_PAIR_BASE,
+                gas_limit,
+            )
+        }),
+    );
+
     pub const ISTANBUL_PAIR_PER_POINT: u64 = 34_000;
     pub const ISTANBUL_PAIR_BASE: u64 = 45_000;
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(

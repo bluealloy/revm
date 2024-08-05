@@ -15,7 +15,7 @@ use crate::{
     Context, ContextPrecompiles, FrameResult,
 };
 use core::ops::Mul;
-use revm_precompile::{secp256r1, PrecompileSpecId};
+use revm_precompile::{bn128, secp256r1, PrecompileSpecId};
 use std::string::ToString;
 use std::sync::Arc;
 
@@ -153,6 +153,13 @@ pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> ContextPrecompiles<D
         precompiles.extend([
             // EIP-7212: secp256r1 P256verify
             secp256r1::P256VERIFY,
+        ])
+    }
+
+    if SPEC::enabled(SpecId::GRANITE) {
+        precompiles.extend([
+            // Restrict bn256Pairing input size
+            bn128::pair::GRANITE,
         ])
     }
 
