@@ -1,8 +1,8 @@
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
-    handler::{register, CfgEnvWithEvmWiring, EnvWithEvmWiring},
+    handler::{register},
     primitives::{self, CfgEnv, Env, EthereumWiring, InvalidTransaction, TransactionValidation},
-    Context, ContextWithEvmWiring, Evm, EvmContext, EvmWiring, Handler,
+    Context, Evm, EvmContext, EvmWiring, Handler,
 };
 use core::marker::PhantomData;
 use std::boxed::Box;
@@ -11,7 +11,9 @@ use std::boxed::Box;
 /// Note that some of the methods that changes underlying structures
 /// will reset the registered handler to default mainnet.
 pub struct EvmBuilder<'a, BuilderStage, EvmWiringT: EvmWiring> {
-    context: Context<EvmWiringT>,
+    database: Option<EvmWiringT::Database>,
+    external_context: Option<EvmWiringT::ExternalContext>,
+    env: Option<Box<Env<EvmWiringT>>>,
     /// Handler that will be used by EVM. It contains handle registers
     handler: Handler<'a, EvmWiringT, Context<EvmWiringT>>,
     /// Phantom data to mark the stage of the builder.
@@ -29,10 +31,12 @@ pub struct SetGenericStage;
 /// Requires the database and external context to be set.
 pub struct HandlerStage;
 
-impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthereumWiring<EmptyDB, ()>> {
+impl<'a> Default for EvmBuilder<'a, WiringStage, EthereumWiring<EmptyDB, ()>> {
     fn default() -> Self {
         Self {
-            context: Context::default(),
+            database: None,
+            external_context: None,
+            env: None,
             handler: EthereumWiring::handler::<'a>(
                 <EthereumWiring<EmptyDB, ()> as primitives::EvmWiring>::Hardfork::default(),
             ),
@@ -41,23 +45,16 @@ impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthereumWiring<EmptyDB, ()>
     }
 }
 
-impl<'a, EvmWiringT> EvmBuilder<'a, SetGenericStage, EvmWiringT>
-where
-    EvmWiringT: EvmWiring,
+impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT>
 {
     /// Sets the [`EvmWiring`] that will be used by [`Evm`].
-    pub fn with_chain_spec<NewEvmWiringT>(self) -> EvmBuilder<'a, SetGenericStage, NewEvmWiringT>
-    where
-        NewEvmWiringT: EvmWiring<
-            Block: Default,
-            Transaction: Default + TransactionValidation<ValidationError: From<InvalidTransaction>>,
-        >,
+    pub fn new_wiring() -> EvmBuilder<'a, SetGenericStage, EvmWiringT>
     {
-        let Context { evm, external } = self.context;
-
         EvmBuilder {
-            context: Context::new(EvmContext::new(evm.inner.db), external),
-            handler: NewEvmWiringT::handler::<'a>(NewEvmWiringT::Hardfork::default()),
+            database: None,
+            external_context: None,
+            env: None,
+            handler: EvmWiringT::handler::<'a>(EvmWiringT::Hardfork::default()),
             phantom: PhantomData,
         }
     }

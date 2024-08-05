@@ -49,10 +49,10 @@ impl<EvmWiringT: EvmWiring<Database: DatabaseCommit>> Evm<'_, EvmWiringT> {
     }
 }
 
-impl<'a> Evm<'a, EthereumWiring<EmptyDB, ()>> {
+impl<'a, EvmWiringT: EvmWiring> Evm<'a, EvmWiringT> {
     /// Returns evm builder with the mainnet chain spec, empty database, and empty external context.
-    pub fn builder() -> EvmBuilder<'a, SetGenericStage, EthereumWiring<EmptyDB, ()>> {
-        EvmBuilder::default()
+    pub fn builder() -> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
+        EvmBuilder::new_wiring()
     }
 }
 
