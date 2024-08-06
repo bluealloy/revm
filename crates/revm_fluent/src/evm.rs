@@ -27,6 +27,7 @@ use crate::{
         EVMError,
         EVMResult,
         EnvWithHandlerCfg,
+        ExecutionEnvironment,
         ExecutionResult,
         HandlerCfg,
         InvalidTransaction,
@@ -43,14 +44,19 @@ use crate::{
 };
 use core::{cell::RefCell, fmt};
 use fluentbase_core::{
+    helpers::evm_error_from_exit_code,
     loader::{_loader_call, _loader_create},
 };
-use fluentbase_sdk::{types::{EvmCallMethodInput, EvmCreateMethodInput}, ContractInput, GuestAccountManager, AccountManager};
+use fluentbase_sdk::{
+    contracts::call_system_contract,
+    types::{EvmCallMethodInput, EvmCreateMethodInput},
+    AccountManager,
+    ContractInput,
+    GuestAccountManager,
+};
 use fluentbase_types::{Address, ExitCode};
 use revm_interpreter::{CallOutcome, CreateOutcome};
 use std::vec::Vec;
-use fluentbase_core::helpers::evm_error_from_exit_code;
-use fluentbase_sdk::contracts::call_system_contract;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -394,6 +400,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// Transact pre-verified transaction.
+
     fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
         let spec_id = self.spec_id();
         let ctx = &mut self.context;
@@ -420,7 +427,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 // ctx.evm.touch(&EVM_STORAGE_ADDRESS);
                 let tx_gas_limit = ctx.evm.env.tx.gas_limit;
 
-                match ctx.evm.env.tx.transact_to {
+                match ctx.evm.env.tx.transact_to.clone() {
                     TransactTo::Call(address) => {
                         let value = ctx.evm.env.tx.value;
                         let caller = ctx.evm.env.tx.caller;
@@ -435,6 +442,16 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         let data = ctx.evm.env.tx.data.clone();
                         let result = self.create_inner(caller, value, data, gas_limit)?;
                         FrameResult::Create(result)
+                    }
+                    TransactTo::Blended(execution_environment, _raw_data) => {
+                        match execution_environment {
+                            ExecutionEnvironment::Fuel => {
+                                todo!("call blendedAPI.exec_fuel_tx")
+                            }
+                            ExecutionEnvironment::Solana => {
+                                todo!("call blendedAPI.exec_fuel_tx")
+                            }
+                        }
                     }
                 }
             }
