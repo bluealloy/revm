@@ -30,11 +30,16 @@ use fluentbase_core::{
 };
 use fluentbase_sdk::{
     journal::{JournalState, JournalStateBuilder},
-    runtime::RuntimeContextWrapper,
     types::{EvmCallMethodInput, EvmCreateMethodInput},
 };
-use fluentbase_types::{Address, BlockContext, ContractContext, TxContext};
-use revm_interpreter::{CallOutcome, Contract, CreateOutcome};
+use fluentbase_types::{
+    Address,
+    BlockContext,
+    ContractContext,
+    NativeAPI,
+    TxContext,
+};
+use revm_interpreter::{CallOutcome, CreateOutcome};
 use std::vec::Vec;
 
 /// EVM call stack limit.
@@ -523,7 +528,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         }
 
         let (caller_account, _) = self.context.evm.load_account(caller_address)?;
-        // .expect("external database error");
         if caller_account.info.balance < value {
             return Ok(return_result(InstructionResult::OutOfFunds, gas));
         }
@@ -541,9 +545,11 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let mut sdk = self.create_sdk(Some(ContractContext {
             gas_limit,
             address: Address::ZERO,
+            bytecode_address: Address::ZERO,
             caller: caller_address,
             is_static: false,
             value,
+            input: Bytes::new(),
         }))?;
         let create_output = _loader_create(&mut sdk, method_data);
 
@@ -560,10 +566,31 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         })
     }
 
+    #[cfg(feature = "std")]
     fn create_sdk(
         &mut self,
         contract_context: Option<ContractContext>,
-    ) -> Result<JournalState<RuntimeContextWrapper>, EVMError<DB::Error>> {
+    ) -> Result<JournalState<fluentbase_sdk::runtime::RuntimeContextWrapper>, EVMError<DB::Error>>
+    {
+        self.create_sdk_inner(
+            contract_context,
+            fluentbase_sdk::runtime::RuntimeContextWrapper::new(),
+        )
+    }
+
+    #[cfg(not(feature = "std"))]
+    fn create_sdk(
+        &mut self,
+        contract_context: Option<ContractContext>,
+    ) -> Result<JournalState<fluentbase_sdk::rwasm::RwasmContext>, EVMError<DB::Error>> {
+        self.create_sdk_inner(contract_context, fluentbase_sdk::rwasm::RwasmContext {})
+    }
+
+    fn create_sdk_inner<API: NativeAPI>(
+        &mut self,
+        contract_context: Option<ContractContext>,
+        native_sdk: API,
+    ) -> Result<JournalState<API>, EVMError<DB::Error>> {
         let mut builder = JournalStateBuilder::default();
         let mut accounts_to_load = Vec::new();
 
@@ -617,7 +644,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             builder.add_contract_context(contract_context);
         }
 
-        Ok(JournalState::builder(RuntimeContextWrapper::new(), builder))
+        Ok(JournalState::builder(native_sdk, builder))
     }
 
     /// Main contract call of the EVM.
@@ -654,9 +681,11 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let mut sdk = self.create_sdk(Some(ContractContext {
             gas_limit,
             address: callee_address,
+            bytecode_address: callee_address,
             caller: caller_address,
             is_static: false,
             value,
+            input: Bytes::new(),
         }))?;
         let call_output = _loader_call(&mut sdk, method_input);
 

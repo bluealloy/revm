@@ -1212,7 +1212,6 @@ version = "0.1.0"
 dependencies = [
  "byteorder",
  "fluentbase-codec",
- "fluentbase-codec-derive",
  "fluentbase-genesis",
  "fluentbase-runtime",
  "fluentbase-sdk-derive",
@@ -1243,6 +1242,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-rlp",
  "byteorder",
+ "fluentbase-codec",
  "hashbrown",
  "revm-primitives",
  "rwasm",
