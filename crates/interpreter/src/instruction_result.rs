@@ -8,7 +8,7 @@ pub enum InstructionResult {
     #[default]
     /// Execution should continue to the next one.
     Continue = 0x00,
-    /// Halt execution.
+    /// Encountered a `STOP` opcode
     Stop,
     /// Return from the current call.
     Return,
