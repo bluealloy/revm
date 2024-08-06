@@ -12,8 +12,8 @@ pub mod db;
 pub mod env;
 
 mod bytecode;
-mod evm_wiring;
 mod constants;
+mod evm_wiring;
 #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg;
 pub mod precompile;
@@ -29,9 +29,9 @@ pub use alloy_primitives::{
 };
 pub use bitvec;
 pub use bytecode::*;
-pub use evm_wiring::*;
 pub use constants::*;
 pub use env::*;
+pub use evm_wiring::*;
 
 cfg_if::cfg_if! {
     if #[cfg(all(not(feature = "hashbrown"), feature = "std"))] {

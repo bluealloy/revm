@@ -33,7 +33,8 @@ pub trait TransactionValidation {
 
 pub trait EvmWiring: Sized {
     /// External type
-    type ExternalContext: Sized + Debug;
+    type ExternalContext: Sized;
+
     /// Database type.
     type Database: Database;
 
