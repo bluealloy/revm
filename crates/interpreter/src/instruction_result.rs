@@ -74,7 +74,7 @@ pub enum InstructionResult {
     CreateContractSizeLimit,
     /// Created contract starts with invalid bytes (`0xEF`).
     CreateContractStartingWithEF,
-    /// Exceeded init code size limit (EIP-3860).
+    /// Exceeded init code size limit (EIP-3860:  Limit and meter initcode).
     CreateInitCodeSizeLimit,
     /// Fatal external error. Returned by database.
     FatalExternalError,
