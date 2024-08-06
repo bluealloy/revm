@@ -156,6 +156,13 @@ pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> ContextPrecompiles<D
         ])
     }
 
+    if SPEC::enabled(SpecId::GRANITE) {
+        precompiles.extend([
+            // Restrict bn256Pairing input size
+            optimism::bn128::pair::GRANITE,
+        ])
+    }
+
     precompiles
 }
 

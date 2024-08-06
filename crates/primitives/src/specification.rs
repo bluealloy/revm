@@ -65,8 +65,9 @@ pub enum SpecId {
     CANCUN = 20,
     ECOTONE = 21,
     FJORD = 22,
-    PRAGUE = 23,
-    PRAGUE_EOF = 24,
+    GRANITE = 23,
+    PRAGUE = 24,
+    PRAGUE_EOF = 25,
     #[default]
     LATEST = u8::MAX,
 }
@@ -120,6 +121,8 @@ impl From<&str> for SpecId {
             "Ecotone" => SpecId::ECOTONE,
             #[cfg(feature = "optimism")]
             "Fjord" => SpecId::FJORD,
+            #[cfg(feature = "optimism")]
+            "Granite" => SpecId::GRANITE,
             _ => Self::LATEST,
         }
     }
@@ -158,6 +161,8 @@ impl From<SpecId> for &'static str {
             SpecId::ECOTONE => "Ecotone",
             #[cfg(feature = "optimism")]
             SpecId::FJORD => "Fjord",
+            #[cfg(feature = "optimism")]
+            SpecId::GRANITE => "Granite",
             SpecId::LATEST => "Latest",
         }
     }
@@ -219,6 +224,8 @@ spec!(CANYON, CanyonSpec);
 spec!(ECOTONE, EcotoneSpec);
 #[cfg(feature = "optimism")]
 spec!(FJORD, FjordSpec);
+#[cfg(feature = "optimism")]
+spec!(GRANITE, GraniteSpec);
 
 #[cfg(not(feature = "optimism"))]
 #[macro_export]
@@ -378,6 +385,10 @@ macro_rules! spec_to_generic {
                 use $crate::FjordSpec as SPEC;
                 $e
             }
+            $crate::SpecId::GRANITE => {
+                use $crate::GraniteSpec as SPEC;
+                $e
+            }
         }
     }};
 }
@@ -418,6 +429,8 @@ mod tests {
         spec_to_generic!(ECOTONE, assert_eq!(SPEC::SPEC_ID, ECOTONE));
         #[cfg(feature = "optimism")]
         spec_to_generic!(FJORD, assert_eq!(SPEC::SPEC_ID, FJORD));
+        #[cfg(feature = "optimism")]
+        spec_to_generic!(GRANITE, assert_eq!(SPEC::SPEC_ID, GRANITE));
         spec_to_generic!(PRAGUE, assert_eq!(SPEC::SPEC_ID, PRAGUE));
         spec_to_generic!(PRAGUE_EOF, assert_eq!(SPEC::SPEC_ID, PRAGUE_EOF));
         spec_to_generic!(LATEST, assert_eq!(SPEC::SPEC_ID, LATEST));
@@ -539,5 +552,33 @@ mod optimism_tests {
         assert!(SpecId::enabled(SpecId::FJORD, SpecId::CANYON));
         assert!(SpecId::enabled(SpecId::FJORD, SpecId::ECOTONE));
         assert!(SpecId::enabled(SpecId::FJORD, SpecId::FJORD));
+    }
+
+    #[test]
+    fn test_granite_post_merge_hardforks() {
+        assert!(GraniteSpec::enabled(SpecId::MERGE));
+        assert!(GraniteSpec::enabled(SpecId::SHANGHAI));
+        assert!(GraniteSpec::enabled(SpecId::CANCUN));
+        assert!(!GraniteSpec::enabled(SpecId::LATEST));
+        assert!(GraniteSpec::enabled(SpecId::BEDROCK));
+        assert!(GraniteSpec::enabled(SpecId::REGOLITH));
+        assert!(GraniteSpec::enabled(SpecId::CANYON));
+        assert!(GraniteSpec::enabled(SpecId::ECOTONE));
+        assert!(GraniteSpec::enabled(SpecId::FJORD));
+        assert!(GraniteSpec::enabled(SpecId::GRANITE));
+    }
+
+    #[test]
+    fn test_granite_post_merge_hardforks_spec_id() {
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::MERGE));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::SHANGHAI));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::CANCUN));
+        assert!(!SpecId::enabled(SpecId::GRANITE, SpecId::LATEST));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::BEDROCK));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::REGOLITH));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::CANYON));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::ECOTONE));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::FJORD));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::GRANITE));
     }
 }
