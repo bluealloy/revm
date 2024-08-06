@@ -80,7 +80,7 @@ pub enum InstructionResult {
     FatalExternalError,
     /// `RETURNCONTRACT` called outside init EOF code.
     ReturnContractInNotInitEOF,
-    /// Legacy contract is calling opcode that is enabled only in Ethereum Object Format.
+    /// Legacy contract is calling opcode that is enabled only in EOF.
     EOFOpcodeDisabledInLegacy,
     /// Stack overflow in Ethereum Object Format function.
     EOFFunctionStackOverflow,
