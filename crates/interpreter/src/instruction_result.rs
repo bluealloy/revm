@@ -4,68 +4,91 @@ use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InstructionResult {
-    // success codes
+    // Success Codes
     #[default]
+    /// Execution should continue to the next one.
     Continue = 0x00,
+    /// Encountered a `STOP` opcode
     Stop,
+    /// Return from the current call.
     Return,
+    /// Self-destruct the current contract.
     SelfDestruct,
+    /// Return a contract (used in contract creation).
     ReturnContract,
 
-    // revert codes
-    Revert = 0x10, // revert opcode
+    // Revert Codes
+    /// Revert the transaction.
+    Revert = 0x10,
+    /// Exceeded maximum call depth.
     CallTooDeep,
+    /// Insufficient funds for transfer.
     OutOfFunds,
-    /// Revert if CREATE/CREATE2 starts with 0xEF00
+    /// Revert if `CREATE`/`CREATE2` starts with `0xEF00`.
     CreateInitCodeStartingEF00,
-    /// Invalid EOF initcode,
+    /// Invalid EVM Object Format (EOF) init code.
     InvalidEOFInitCode,
-    /// ExtDelegateCall calling a non EOF contract.
+    /// `ExtDelegateCall` calling a non EOF contract.
     InvalidExtDelegateCallTarget,
 
-    // Actions
+    // Action Codes
+    /// Indicates a call or contract creation.
     CallOrCreate = 0x20,
 
-    // error codes
+    // Error Codes
     OutOfGas = 0x50,
+    /// Out of gas error encountered during memory expansion.
     MemoryOOG,
+    /// The memory limit of the EVM has been exceeded.
     MemoryLimitOOG,
+    /// Out of gas error encountered during the execution of a precompiled contract.
     PrecompileOOG,
+    /// Out of gas error encountered while calling an invalid operand.
     InvalidOperandOOG,
+    /// Unknown or invalid opcode.
     OpcodeNotFound,
-    /// Transferring value with CALL/CALLCODE is not possible in static mode.
+    /// Invalid `CALL` with value transfer in static context.
     CallNotAllowedInsideStatic,
-    /// State change attempted in static mode.
+    /// Invalid state modification in static call.
     StateChangeDuringStaticCall,
+    /// An undefined bytecode value encountered during execution.
     InvalidFEOpcode,
     InvalidJump,
+    /// The feature or opcode is not activated in this version of the EVM.
     NotActivated,
+    /// Attempting to pop a value from an empty stack.
     StackUnderflow,
+    /// Attempting to push a value onto a full stack.
     StackOverflow,
+    /// Invalid memory or storage offset.
     OutOfOffset,
+    /// Address collision during contract creation.
     CreateCollision,
+    /// Payment amount overflow.
     OverflowPayment,
+    /// Error in precompiled contract execution.
     PrecompileError,
+    /// Nonce overflow.
     NonceOverflow,
-    /// Create init code size exceeds limit (runtime).
+    /// Exceeded contract size limit during creation.
     CreateContractSizeLimit,
-    /// Error on created contract that begins with EF
+    /// Created contract starts with invalid bytes (`0xEF`).
     CreateContractStartingWithEF,
-    /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
+    /// Exceeded init code size limit (EIP-3860:  Limit and meter initcode).
     CreateInitCodeSizeLimit,
     /// Fatal external error. Returned by database.
     FatalExternalError,
-    /// RETURNCONTRACT called in not init eof code.
+    /// `RETURNCONTRACT` called outside init EOF code.
     ReturnContractInNotInitEOF,
     /// Legacy contract is calling opcode that is enabled only in EOF.
     EOFOpcodeDisabledInLegacy,
-    /// EOF function stack overflow
+    /// Stack overflow in EOF subroutine function calls.
     EOFFunctionStackOverflow,
-    /// Aux data overflow, new aux data is larger tha u16 max size.
+    /// Aux data overflow, new aux data is larger than `u16` max size.
     EofAuxDataOverflow,
     /// Aux data is smaller then already present data size.
     EofAuxDataTooSmall,
-    /// EXT*CALL target address needs to be padded with 0s.
+    /// `EXT*CALL` target address needs to be padded with 0s.
     InvalidEXTCALLTarget,
 }
 
