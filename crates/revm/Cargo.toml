@@ -41,7 +41,7 @@ serde_json = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 # ethersdb
-tokio = { version = "1.38", features = [
+tokio = { version = "1.39", features = [
     "rt-multi-thread",
     "macros",
 ], optional = true }
@@ -62,7 +62,7 @@ anyhow = "1.0.83"
 criterion = "0.5"
 indicatif = "0.17"
 reqwest = { version = "0.12" }
-rstest = "0.21.0"
+rstest = "0.22.0"
 
 alloy-provider = "0.2"
 

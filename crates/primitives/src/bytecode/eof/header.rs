@@ -39,13 +39,14 @@ fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize),
     if num_sections == 0 {
         return Err(EofDecodeError::NonSizes);
     }
-    let byte_size = (num_sections * 2) as usize;
+    let num_sections = num_sections as usize;
+    let byte_size = num_sections * 2;
     if input.len() < byte_size {
         return Err(EofDecodeError::ShortInputForSizes);
     }
-    let mut sizes = Vec::with_capacity(num_sections as usize);
+    let mut sizes = Vec::with_capacity(num_sections);
     let mut sum = 0;
-    for i in 0..num_sections as usize {
+    for i in 0..num_sections {
         // size	2 bytes	0x0001-0xFFFF
         // 16-bit unsigned big-endian integer denoting the length of the section content
         let code_size = u16::from_be_bytes([input[i * 2], input[i * 2 + 1]]);
@@ -175,7 +176,8 @@ impl EofHeader {
         // code_sections_sizes
         let (input, sizes, sum) = consume_header_section_size(input)?;
 
-        if sizes.len() > 1024 {
+        // more than 1024 code sections are not allowed
+        if sizes.len() > 0x0400 {
             return Err(EofDecodeError::TooManyCodeSections);
         }
 
@@ -196,8 +198,8 @@ impl EofHeader {
             KIND_CONTAINER => {
                 // container_sections_sizes
                 let (input, sizes, sum) = consume_header_section_size(input)?;
-                // the number of container sections must not exceed 256
-                if sizes.len() > 256 {
+                // the number of container sections may not exceed 256
+                if sizes.len() > 0x0100 {
                     return Err(EofDecodeError::TooManyContainerSections);
                 }
                 header.container_sizes = sizes;
@@ -254,5 +256,23 @@ mod tests {
     fn failing_test() {
         let input = hex!("ef00010100040200010006030001001404000200008000016000e0000000ef000101000402000100010400000000800000fe");
         let _ = EofHeader::decode(&input).unwrap();
+    }
+
+    #[test]
+    fn cut_header() {
+        let input = hex!("ef0001010000028000");
+        assert_eq!(
+            EofHeader::decode(&input),
+            Err(EofDecodeError::ShortInputForSizes)
+        );
+    }
+
+    #[test]
+    fn short_input() {
+        let input = hex!("ef0001010000028000");
+        assert_eq!(
+            EofHeader::decode(&input),
+            Err(EofDecodeError::ShortInputForSizes)
+        );
     }
 }

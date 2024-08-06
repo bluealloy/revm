@@ -3,10 +3,7 @@ mod test_suite;
 pub use test_suite::{PragueTestResult, TestResult, TestSuite, TestUnit, TestVector};
 
 use crate::{cmd::Error, dir_utils::find_all_json_tests};
-use revm::{
-    interpreter::analysis::{validate_raw_eof, EofError},
-    primitives::Eof,
-};
+use revm::interpreter::analysis::{validate_raw_eof_inner, CodeType, EofError};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
@@ -26,12 +23,11 @@ impl Cmd {
         if !self.path.exists() {
             return Err(Error::Custom("The specified path does not exist"));
         }
-        run_test(&self.path);
-        Ok(())
+        run_test(&self.path)
     }
 }
 
-pub fn run_test(path: &Path) {
+pub fn run_test(path: &Path) -> Result<(), Error> {
     let test_files = find_all_json_tests(path);
     let mut test_sum = 0;
     let mut passed_tests = 0;
@@ -48,11 +44,15 @@ pub fn run_test(path: &Path) {
         for (name, test_unit) in suite.0 {
             for (vector_name, test_vector) in test_unit.vectors {
                 test_sum += 1;
-                let res = validate_raw_eof(test_vector.code.clone());
+                let kind = if test_vector.container_kind.is_some() {
+                    Some(CodeType::ReturnContract)
+                } else {
+                    None
+                };
+                let res = validate_raw_eof_inner(test_vector.code.clone(), kind);
                 if res.is_ok() != test_vector.results.prague.result {
-                    let eof = Eof::decode(test_vector.code.clone());
                     println!(
-                        "\nTest failed: {} - {}\nresult:{:?}\nrevm err_result:{:#?}\nbytes:{:?}\n,eof:{eof:#?}",
+                        "\nTest failed: {} - {}\nresult:{:?}\nrevm err_result:{:#?}\nbytes:{:?}\n",
                         name,
                         vector_name,
                         test_vector.results.prague,
@@ -72,6 +72,14 @@ pub fn run_test(path: &Path) {
             }
         }
     }
-    println!("Types of error: {:#?}", types_of_error);
     println!("Passed tests: {}/{}", passed_tests, test_sum);
+    if passed_tests != test_sum {
+        println!("Types of error: {:#?}", types_of_error);
+        Err(Error::EofValidation {
+            failed_test: test_sum - passed_tests,
+            total_tests: test_sum,
+        })
+    } else {
+        Ok(())
+    }
 }
