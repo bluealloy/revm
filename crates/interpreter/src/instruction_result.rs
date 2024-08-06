@@ -78,7 +78,7 @@ pub enum InstructionResult {
     CreateInitCodeSizeLimit,
     /// Fatal external error. Returned by database.
     FatalExternalError,
-    /// `RETURNCONTRACT` called outside init Ethereum Object Format code.
+    /// `RETURNCONTRACT` called outside init EOF code.
     ReturnContractInNotInitEOF,
     /// Legacy contract is calling opcode that is enabled only in Ethereum Object Format.
     EOFOpcodeDisabledInLegacy,
