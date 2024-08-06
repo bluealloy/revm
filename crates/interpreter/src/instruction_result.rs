@@ -26,7 +26,7 @@ pub enum InstructionResult {
     OutOfFunds,
     /// Revert if `CREATE`/`CREATE2` starts with `0xEF00`.
     CreateInitCodeStartingEF00,
-    /// Invalid Ethereum Object Format (EOF) init code.
+    /// Invalid EVM Object Format (EOF) init code.
     InvalidEOFInitCode,
     /// `ExtDelegateCall` calling a non EOF contract.
     InvalidExtDelegateCallTarget,
