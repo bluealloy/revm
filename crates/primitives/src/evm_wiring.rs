@@ -12,20 +12,12 @@ impl<HardforkT> HardforkTrait for HardforkT where
 {
 }
 
-// cfg_if! {
-//     if #[cfg(feature = "serde")] {
-//         pub trait HaltReasonTrait:  Clone + Debug + PartialEq + Eq + From<crate::HaltReason> + for<'a> serde::Deserialize<'a> + serde::Serialize {}
-
-//         impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
-//         HaltReasonT: Clone + Debug + PartialEq + Eq + From<crate::HaltReason> + for<'a>  serde::Deserialize<'a> + serde::Serialize {}
-//     } else {
 pub trait HaltReasonTrait: Clone + Debug + PartialEq + Eq + From<crate::HaltReason> {}
+
 impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
     HaltReasonT: Clone + Debug + PartialEq + Eq + From<crate::HaltReason>
 {
 }
-//     }
-// }
 
 pub trait TransactionValidation {
     cfg_if! {
@@ -67,9 +59,9 @@ impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
     type Database = DB;
     type ExternalContext = EXT;
     type Block = crate::BlockEnv;
+    type Transaction = crate::TxEnv;
     type Hardfork = SpecId;
     type HaltReason = crate::HaltReason;
-    type Transaction = crate::TxEnv;
 }
 
 pub type DefaultEthereumWiring = EthereumWiring<crate::db::EmptyDB, ()>;

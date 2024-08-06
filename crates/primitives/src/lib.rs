@@ -12,7 +12,7 @@ pub mod db;
 pub mod env;
 
 mod bytecode;
-mod chain_spec;
+mod evm_wiring;
 mod constants;
 #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg;
@@ -29,7 +29,7 @@ pub use alloy_primitives::{
 };
 pub use bitvec;
 pub use bytecode::*;
-pub use chain_spec::*;
+pub use evm_wiring::*;
 pub use constants::*;
 pub use env::*;
 
