@@ -82,7 +82,7 @@ pub enum InstructionResult {
     ReturnContractInNotInitEOF,
     /// Legacy contract is calling opcode that is enabled only in EOF.
     EOFOpcodeDisabledInLegacy,
-    /// Stack overflow in Ethereum Object Format function.
+    /// Stack overflow in EOF subroutine function calls.
     EOFFunctionStackOverflow,
     /// Aux data overflow, new aux data is larger than `u16` max size.
     EofAuxDataOverflow,
