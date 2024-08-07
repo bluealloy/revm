@@ -1,15 +1,14 @@
-pub mod eip7702;
 pub mod eof;
 pub mod legacy;
 
-use core::panic;
-use eip7702::Eip7702Bytecode;
-use eof::EofDecodeError;
 pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
-use std::sync::Arc;
 
-use crate::{keccak256, Bytes, B256, KECCAK_EMPTY};
+use crate::{keccak256, Bytes, Eip7702Bytecode, B256, KECCAK_EMPTY};
+use alloy_primitives::Address;
+use core::panic;
+use eof::EofDecodeError;
+use std::sync::Arc;
 
 /// State of the [`Bytecode`] analysis.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -93,11 +92,18 @@ impl Bytecode {
         Self::new_raw_checked(bytecode).expect("Expect correct EOF bytecode")
     }
 
+    /// Creates a new EIP-7702 [`Bytecode`] from [`Address`].
+    #[inline]
+    pub fn new_eip7702(address: Address) -> Self {
+        Self::Eip7702s(Eip7702Bytecode::new_address(address))
+    }
+
     /// Creates a new raw [`Bytecode`].
     ///
     /// Returns an error on incorrect EOF format.
     #[inline]
     pub fn new_raw_checked(bytecode: Bytes) -> Result<Self, EofDecodeError> {
+        // TODO include EIP-7702 check
         if bytecode.starts_with(&EOF_MAGIC_BYTES) {
             Ok(Self::Eof(Arc::new(Eof::decode(bytecode)?)))
         } else {

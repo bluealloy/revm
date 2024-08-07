@@ -10,7 +10,7 @@ pub const BLOCK_HASH_HISTORY: usize = 256;
 
 /// EIP-2935: Serve historical block hashes from state
 ///
-/// Number of block hashes the EVM can access in the past (Prague).
+/// Number of block hashes the EVM –can access in the past (Prague).
 ///
 /// # Note
 ///

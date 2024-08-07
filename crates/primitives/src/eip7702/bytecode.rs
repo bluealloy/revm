@@ -29,6 +29,16 @@ impl Eip7702Bytecode {
         })
     }
 
+    /// Creates a new EIP-7702 bytecode with the given address.
+    pub fn new_address(address: Address) -> Self {
+        let mut raw = EIP7702_MAGIC_BYTES.to_vec();
+        raw.extend(&address);
+        Self {
+            delegated_address: address,
+            raw: raw.into(),
+        }
+    }
+
     /// Return the raw bytecode with version MAGIC number.
     #[inline]
     pub fn raw(&self) -> &Bytes {
@@ -58,6 +68,17 @@ mod tests {
                 delegated_address: address,
                 raw,
             })
+        );
+    }
+
+    #[test]
+    fn create_eip7702_bytecode_from_address() {
+        let address = Address::new([0x01; 20]);
+        let bytecode = Eip7702Bytecode::new_address(address);
+        assert_eq!(bytecode.delegated_address, address);
+        assert_eq!(
+            bytecode.raw,
+            bytes!("ef010101010101010101010101010101010101010101")
         );
     }
 }

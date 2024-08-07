@@ -1,8 +1,7 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, Bytecode, EVMError, ExecutionResult, ResultAndState, Spec, SpecId::LONDON,
-        KECCAK_EMPTY, U256,
+        db::Database, EVMError, ExecutionResult, ResultAndState, Spec, SpecId::LONDON, U256,
     },
     Context, FrameResult,
 };
@@ -93,7 +92,7 @@ pub fn output<EXT, DB: Database>(
     let instruction_result = result.into_interpreter_result();
 
     // reset journal and return present state.
-    let (mut state, logs) = context.evm.journaled_state.finalize();
+    let (state, logs) = context.evm.journaled_state.finalize();
 
     let result = match instruction_result.result.into() {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {
