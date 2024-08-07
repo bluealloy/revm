@@ -368,19 +368,19 @@ impl Interpreter {
         // execute instruction.
         (instruction_table[opcode as usize])(self, host);
 
-        #[cfg(feature = "debug-print")]
-        println!(
-            " - opcode {:x?} pc {} stack({}) {:?} gas (limit {} spent {} remaining {}) instruction_result {:?} next_action {:?}",
-            opcode,
-            self.program_counter(),
-            self.stack.len(),
-            self.stack.data(),
-            self.gas.limit(),
-            self.gas.spent(),
-            self.gas.remaining(),
-            self.instruction_result,
-            self.next_action,
-        );
+        // #[cfg(feature = "debug-print")]
+        // println!(
+        //     " - opcode {:x?} pc {} stack({}) {:?} gas (limit {} spent {} remaining {})
+        // instruction_result {:?} next_action {:?}",     opcode,
+        //     self.program_counter(),
+        //     self.stack.len(),
+        //     self.stack.data(),
+        //     self.gas.limit(),
+        //     self.gas.spent(),
+        //     self.gas.remaining(),
+        //     self.instruction_result,
+        //     self.next_action,
+        // );
     }
 
     /// Take memory and replace it with empty memory.

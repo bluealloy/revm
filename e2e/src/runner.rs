@@ -352,11 +352,13 @@ fn check_evm_execution<EXT1, EXT2>(
             }
             if let Some(s1) = v1.account.as_ref().map(|v| &v.storage) {
                 for (slot, value1) in s1.iter() {
-                    println!(
-                        " - + slot ({}) => ({})",
-                        hex::encode(&slot.to_be_bytes::<32>()),
-                        hex::encode(&value1.to_be_bytes::<32>())
-                    );
+                    if cfg!(feature = "debug-print") {
+                        println!(
+                            " - + slot ({}) => ({})",
+                            hex::encode(&slot.to_be_bytes::<32>()),
+                            hex::encode(&value1.to_be_bytes::<32>())
+                        );
+                    }
                     // let storage_key = calc_storage_key(address, slot.as_le_bytes().as_ptr());
                     // let fluent_evm_storage = evm2
                     //     .context
