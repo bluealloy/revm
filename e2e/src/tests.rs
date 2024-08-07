@@ -26,11 +26,10 @@ macro_rules! define_tests {
 
 mod failing_tests {
     define_tests! {
-        // fn operation_diff_gas("tests/GeneralStateTests/stBadOpcode/operationDiffGas.json");
-        fn cancun_st_e_i_p1153_transient_storage_05_tload_reentrancy("tests/GeneralStateTests/Cancun/stEIP1153-transientStorage/05_tloadReentrancy.json");
-        // fn cancun_eip6780_selfdestruct_create_selfdestruct_same_tx("tests/GeneralStateTests/Pyspecs/cancun/eip6780_selfdestruct/create_selfdestruct_same_tx.json");
-        // fn invalid_diff_places("tests/GeneralStateTests/stBadOpcode/invalidDiffPlaces.json");
-        // fn revert_in_create_in_init_paris("tests/GeneralStateTests/stRevertTest/RevertInCreateInInit_Paris.json");
+        fn callcallcallcode_001("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcallcode_001.json");
+        // fn callcallcode_01("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcode_01.json");
+        // fn callcallcodecallcode_011("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcodecallcode_011.json");
+        // fn callcodecallcallcode_101("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcodecallcallcode_101.json");
     }
 }
 

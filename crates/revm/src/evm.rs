@@ -23,17 +23,18 @@ use crate::{
     ContextWithHandlerCfg,
     FrameResult,
 };
-use core::{cell::RefCell, fmt, mem::take};
+use alloc::vec::Vec;
+use core::{fmt, mem::take};
 use fluentbase_core::{
     helpers::evm_error_from_exit_code,
     loader::{_loader_call, _loader_create},
 };
+use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
 use fluentbase_sdk::{
     journal::{JournalState, JournalStateBuilder},
-    runtime::RuntimeContextWrapper,
     types::{EvmCallMethodInput, EvmCreateMethodInput},
 };
-use fluentbase_types::{Account, Address, BlockContext, TxContext};
+use fluentbase_types::{Address, BlockContext, ContractContext, NativeAPI, TxContext};
 use revm_interpreter::{CallOutcome, CreateOutcome};
 
 /// EVM call stack limit.
@@ -522,7 +523,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         }
 
         let (caller_account, _) = self.context.evm.load_account(caller_address)?;
-        // .expect("external database error");
         if caller_account.info.balance < value {
             return Ok(return_result(InstructionResult::OutOfFunds, gas));
         }
@@ -537,7 +537,24 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             is_static: false,
         };
 
-        let mut sdk = self.create_sdk()?;
+        let contract_context = ContractContext {
+            gas_limit,
+            address: Address::ZERO,
+            bytecode_address: Address::ZERO,
+            caller: caller_address,
+            is_static: false,
+            value,
+            input: Bytes::new(),
+        };
+
+        let runtime_context = RuntimeContext::default()
+            .with_depth(0u32)
+            .with_fuel_limit(contract_context.gas_limit)
+            .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
+        let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
+        let mut sdk =
+            crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk, contract_context);
+        // let mut sdk = self.create_sdk(Some(contract_context))?;
         let create_output = _loader_create(&mut sdk, method_data);
 
         let mut gas = Gas::new(create_output.gas);
@@ -553,7 +570,31 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         })
     }
 
-    fn create_sdk(&mut self) -> Result<JournalState<RuntimeContextWrapper>, EVMError<DB::Error>> {
+    #[cfg(feature = "std")]
+    fn create_sdk(
+        &mut self,
+        contract_context: Option<ContractContext>,
+    ) -> Result<JournalState<fluentbase_sdk::runtime::RuntimeContextWrapper>, EVMError<DB::Error>>
+    {
+        self.create_sdk_inner(
+            contract_context,
+            fluentbase_sdk::runtime::RuntimeContextWrapper::empty(),
+        )
+    }
+
+    #[cfg(not(feature = "std"))]
+    fn create_sdk(
+        &mut self,
+        contract_context: Option<ContractContext>,
+    ) -> Result<JournalState<fluentbase_sdk::rwasm::RwasmContext>, EVMError<DB::Error>> {
+        self.create_sdk_inner(contract_context, fluentbase_sdk::rwasm::RwasmContext {})
+    }
+
+    fn create_sdk_inner<API: NativeAPI>(
+        &mut self,
+        contract_context: Option<ContractContext>,
+        native_sdk: API,
+    ) -> Result<JournalState<API>, EVMError<DB::Error>> {
         let mut builder = JournalStateBuilder::default();
         let mut accounts_to_load = Vec::new();
 
@@ -603,8 +644,11 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         // fill contexts
         builder.add_block_context(BlockContext::from(self.context.evm.env.as_ref()));
         builder.add_tx_context(TxContext::from(self.context.evm.env.as_ref()));
+        if let Some(contract_context) = contract_context {
+            builder.add_contract_context(contract_context);
+        }
 
-        Ok(JournalState::builder(RuntimeContextWrapper::new(), builder))
+        Ok(JournalState::builder(native_sdk, builder))
     }
 
     /// Main contract call of the EVM.
@@ -638,7 +682,25 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             is_static: false,
         };
 
-        let mut sdk = self.create_sdk()?;
+        let contract_context = ContractContext {
+            gas_limit,
+            address: callee_address,
+            bytecode_address: callee_address,
+            caller: caller_address,
+            is_static: false,
+            value,
+            input: Bytes::new(),
+        };
+
+        let runtime_context = RuntimeContext::default()
+            .with_depth(0u32)
+            .with_fuel_limit(contract_context.gas_limit)
+            .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
+        let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
+        let mut sdk =
+            crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk, contract_context);
+
+        // let mut sdk = self.create_sdk(Some(contract_context))?;
         let call_output = _loader_call(&mut sdk, method_input);
 
         #[cfg(feature = "debug-print")]

@@ -219,6 +219,13 @@ impl<DB: Database> InnerEvmContext<DB> {
         self.journaled_state.load_code_by_hash(hash, &mut self.db)
     }
 
+    #[inline]
+    #[cfg(feature = "rwasm")]
+    pub fn code_by_hash_slice(&mut self, hash: B256) -> Result<Option<&[u8]>, EVMError<DB::Error>> {
+        self.journaled_state
+            .load_code_by_hash_slice(hash, &mut self.db)
+    }
+
     /// Get code hash of address.
     ///
     /// In case of EOF account it will return `EOF_MAGIC_HASH`

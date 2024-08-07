@@ -93,6 +93,7 @@ default = [
     "secp256k1",
     "portable",
     "blst",
+    "rwasm",
 ]
 std = [
     "serde?/std",
@@ -105,9 +106,8 @@ std = [
     "fluentbase-core/std",
     "dep:fluentbase-runtime",
     "dep:fluentbase-genesis",
-    #    "fluentbase-runtime?/std",
-    #    "fluentbase-codec/std",
     "fluentbase-genesis/std",
+    "dep:rwasm",
     "rwasm?/std",
 ]
 e2e = [

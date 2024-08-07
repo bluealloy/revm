@@ -67,7 +67,6 @@ impl JournaledState {
     /// And will not take into account if account is not existing or empty.
     ///
     /// # Note
-    ///
     pub fn new(spec: SpecId, warm_preloaded_addresses: HashSet<Address>) -> JournaledState {
         Self {
             state: HashMap::new(),
@@ -180,34 +179,24 @@ impl JournaledState {
         #[cfg(feature = "rwasm")]
         {
             if let Some(code_hash) = code_hash {
-                account.info.code_hash = code_hash;
+                if code_hash == account.info.rwasm_code_hash {
+                    self.code_state
+                        .insert(account.info.rwasm_code_hash, code.clone());
+                    account.info.rwasm_code = Some(code);
+                } else if code_hash == account.info.code_hash {
+                    self.code_state.insert(account.info.code_hash, code.clone());
+                    account.info.code = Some(code);
+                }
+            } else {
+                self.code_state.insert(account.info.code_hash, code.clone());
+                account.info.code = Some(code);
             }
-            self.code_state.insert(account.info.code_hash, code.clone());
         }
         #[cfg(not(feature = "rwasm"))]
         {
             account.info.code_hash = code.hash_slow();
+            account.info.code = Some(code);
         }
-        account.info.code = Some(code);
-    }
-
-    #[inline]
-    #[cfg(feature = "rwasm")]
-    pub fn set_rwasm_code(&mut self, address: Address, code: Bytecode, code_hash: Option<F254>) {
-        let account = self.state.get_mut(&address).unwrap();
-        Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
-
-        self.journal
-            .last_mut()
-            .unwrap()
-            .push(JournalEntry::CodeChange { address });
-
-        if let Some(code_hash) = code_hash {
-            account.info.rwasm_code_hash = code_hash;
-        }
-        self.code_state
-            .insert(account.info.rwasm_code_hash, code.clone());
-        account.info.rwasm_code = Some(code);
     }
 
     #[inline]
@@ -723,6 +712,19 @@ impl JournaledState {
                 .insert(db.code_by_hash(hash).map_err(EVMError::Database)?)
                 .original_bytes()),
         }
+    }
+
+    /// Loads code.
+    #[inline]
+    #[cfg(feature = "rwasm")]
+    pub fn load_code_by_hash_slice<DB: Database>(
+        &mut self,
+        hash: B256,
+        db: &mut DB,
+    ) -> Result<Option<&[u8]>, EVMError<DB::Error>> {
+        self.load_code_by_hash(hash, db)?;
+        let result = self.code_state.get(&hash).map(|v| v.original_byte_slice());
+        Ok(result)
     }
 
     /// Load storage slot

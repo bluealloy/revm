@@ -23,24 +23,19 @@ use crate::{
     ContextWithHandlerCfg,
     FrameResult,
 };
+use alloc::vec::Vec;
 use core::{fmt, mem::take};
 use fluentbase_core::{
     helpers::evm_error_from_exit_code,
     loader::{_loader_call, _loader_create},
 };
+use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
 use fluentbase_sdk::{
     journal::{JournalState, JournalStateBuilder},
     types::{EvmCallMethodInput, EvmCreateMethodInput},
 };
-use fluentbase_types::{
-    Address,
-    BlockContext,
-    ContractContext,
-    NativeAPI,
-    TxContext,
-};
+use fluentbase_types::{Address, BlockContext, ContractContext, NativeAPI, TxContext};
 use revm_interpreter::{CallOutcome, CreateOutcome};
-use std::vec::Vec;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -542,7 +537,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             is_static: false,
         };
 
-        let mut sdk = self.create_sdk(Some(ContractContext {
+        let contract_context = ContractContext {
             gas_limit,
             address: Address::ZERO,
             bytecode_address: Address::ZERO,
@@ -550,7 +545,16 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             is_static: false,
             value,
             input: Bytes::new(),
-        }))?;
+        };
+
+        let runtime_context = RuntimeContext::default()
+            .with_depth(0u32)
+            .with_fuel_limit(contract_context.gas_limit)
+            .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
+        let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
+        let mut sdk =
+            crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk, contract_context);
+        // let mut sdk = self.create_sdk(Some(contract_context))?;
         let create_output = _loader_create(&mut sdk, method_data);
 
         let mut gas = Gas::new(create_output.gas);
@@ -574,7 +578,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     {
         self.create_sdk_inner(
             contract_context,
-            fluentbase_sdk::runtime::RuntimeContextWrapper::new(),
+            fluentbase_sdk::runtime::RuntimeContextWrapper::empty(),
         )
     }
 
@@ -678,7 +682,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             is_static: false,
         };
 
-        let mut sdk = self.create_sdk(Some(ContractContext {
+        let contract_context = ContractContext {
             gas_limit,
             address: callee_address,
             bytecode_address: callee_address,
@@ -686,7 +690,17 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             is_static: false,
             value,
             input: Bytes::new(),
-        }))?;
+        };
+
+        let runtime_context = RuntimeContext::default()
+            .with_depth(0u32)
+            .with_fuel_limit(contract_context.gas_limit)
+            .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
+        let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
+        let mut sdk =
+            crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk, contract_context);
+
+        // let mut sdk = self.create_sdk(Some(contract_context))?;
         let call_output = _loader_call(&mut sdk, method_input);
 
         #[cfg(feature = "debug-print")]

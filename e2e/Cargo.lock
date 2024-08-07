@@ -2568,6 +2568,7 @@ dependencies = [
  "fluentbase-runtime",
  "fluentbase-sdk",
  "fluentbase-types",
+ "hex",
  "lazy_static",
  "revm-interpreter",
  "revm-precompile",

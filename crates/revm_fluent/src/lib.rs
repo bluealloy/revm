@@ -25,9 +25,10 @@ mod inspector;
 mod journaled_state;
 #[cfg(feature = "optimism")]
 pub mod optimism;
-// #[cfg(feature = "rwasm")]
-// mod rwasm;
-
+#[cfg(feature = "rwasm")]
+mod rwasm;
+#[cfg(test)]
+mod test;
 // Export items.
 
 pub use builder::EvmBuilder;
