@@ -52,9 +52,9 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
     // EIP-7702. Load bytecode to authorized accounts.
     if SPEC::enabled(PRAGUE) {
         if let Some(authorization_list) = context.evm.inner.env.tx.authorization_list.as_ref() {
-            let mut valid_auths = Vec::with_capacity(authorization_list.len());
             for authorization in authorization_list.recovered_iter() {
                 // 1. recover authority and authorized addresses.
+                // authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]
                 let Some(authority) = authorization.authority() else {
                     continue;
                 };
@@ -71,31 +71,24 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
                     .evm
                     .inner
                     .journaled_state
-                    .load_account(authority, &mut context.evm.inner.db)?;
+                    .load_code(authority, &mut context.evm.inner.db)?;
 
-                // 3. Verify that the code of authority is empty.
-                // In case of multiple same authorities this step will skip loading of
-                // authorized account.
-                if authority_acc.info.code_hash() != KECCAK_EMPTY {
-                    continue;
+                // 3. Verify the code of authority is either empty or already delegated.
+                if let Some(bytecode) = authority_acc.info.code {
+                    // if it is not empty or it is not eip7702
+                    if !bytecode.is_empty() || !bytecode.is_eip7702() {
+                        continue;
+                    }
                 }
 
+                // TODO In case of signer setting its own delegation check when
+                //      Signer nonce is checked and bumped!
                 // 4. If nonce list item is length one, verify the nonce of authority is equal to nonce.
                 if let Some(nonce) = authorization.nonce() {
                     if nonce != authority_acc.info.nonce {
                         continue;
                     }
                 }
-
-                // warm code account and get the code.
-                // 6. Add the authority account to accessed_addresses
-                let (account, _) = context
-                    .evm
-                    .inner
-                    .journaled_state
-                    .load_code(authorization.address, &mut context.evm.inner.db)?;
-                let code = account.info.code.clone();
-                let code_hash = account.info.code_hash;
 
                 // If code is empty no need to set code or add it to valid
                 // authorizations, as it is a noop operation.
@@ -110,13 +103,12 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
                     code_hash,
                 );
 
-                valid_auths.push(authority);
+                // TODO(EIP-7702) set contract to account.
             }
-
-            context.evm.inner.valid_authorizations = valid_auths;
         }
     }
 
+    // Load access list
     context.evm.load_access_list()?;
     Ok(())
 }

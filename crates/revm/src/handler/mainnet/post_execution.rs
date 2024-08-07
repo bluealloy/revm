@@ -22,9 +22,6 @@ pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
     // clear error and journaled state.
     let _ = context.evm.take_error();
     context.evm.inner.journaled_state.clear();
-    // Clear valid authorizations after each transaction.
-    // If transaction is valid they are consumed in `output` handler.
-    context.evm.inner.valid_authorizations.clear();
 }
 
 /// Reward beneficiary with gas fee.
@@ -97,15 +94,6 @@ pub fn output<EXT, DB: Database>(
 
     // reset journal and return present state.
     let (mut state, logs) = context.evm.journaled_state.finalize();
-
-    // clear code of authorized accounts.
-    for authorized in core::mem::take(&mut context.evm.inner.valid_authorizations).into_iter() {
-        let account = state
-            .get_mut(&authorized)
-            .expect("Authorized account must exist");
-        account.info.code = Some(Bytecode::default());
-        account.info.code_hash = KECCAK_EMPTY;
-    }
 
     let result = match instruction_result.result.into() {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {

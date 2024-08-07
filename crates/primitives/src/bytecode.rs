@@ -1,6 +1,9 @@
+pub mod eip7702;
 pub mod eof;
 pub mod legacy;
 
+use core::panic;
+use eip7702::Eip7702Bytecode;
 use eof::EofDecodeError;
 pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
@@ -18,6 +21,8 @@ pub enum Bytecode {
     LegacyAnalyzed(LegacyAnalyzedBytecode),
     /// Ethereum Object Format
     Eof(Arc<Eof>),
+    /// EIP-7702 delegated bytecode
+    Eip7702s(Eip7702Bytecode),
 }
 
 impl Default for Bytecode {
@@ -66,6 +71,10 @@ impl Bytecode {
     #[inline]
     pub const fn is_eof(&self) -> bool {
         matches!(self, Self::Eof(_))
+    }
+
+    pub const fn is_eip7702(&self) -> bool {
+        matches!(self, Self::Eip7702s(_))
     }
 
     /// Creates a new legacy [`Bytecode`].
@@ -117,6 +126,10 @@ impl Bytecode {
     /// Returns a reference to the bytecode.
     ///
     /// In case of EOF this will be the first code section.
+    ///
+    /// # Panics
+    ///   
+    /// Panics if Bytecode is EIp7702 that does not contain bytecode.
     #[inline]
     pub fn bytecode(&self) -> &Bytes {
         match self {
@@ -126,6 +139,7 @@ impl Bytecode {
                 .body
                 .code(0)
                 .expect("Valid EOF has at least one code section"),
+            Self::Eip7702s(_) => panic!("EIP-7702 bytecode contains account addresss"),
         }
     }
 
@@ -138,9 +152,8 @@ impl Bytecode {
     #[inline]
     pub fn bytes(&self) -> Bytes {
         match self {
-            Self::LegacyRaw(bytes) => bytes.clone(),
             Self::LegacyAnalyzed(analyzed) => analyzed.bytecode().clone(),
-            Self::Eof(eof) => eof.raw().clone(),
+            _ => self.original_bytes(),
         }
     }
 
@@ -148,9 +161,8 @@ impl Bytecode {
     #[inline]
     pub fn bytes_slice(&self) -> &[u8] {
         match self {
-            Self::LegacyRaw(bytes) => bytes,
             Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
-            Self::Eof(eof) => eof.raw(),
+            _ => self.original_byte_slice(),
         }
     }
 
@@ -161,6 +173,7 @@ impl Bytecode {
             Self::LegacyRaw(bytes) => bytes.clone(),
             Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
             Self::Eof(eof) => eof.raw().clone(),
+            Self::Eip7702s(eip7702) => eip7702.raw().clone(),
         }
     }
 
@@ -171,17 +184,14 @@ impl Bytecode {
             Self::LegacyRaw(bytes) => bytes,
             Self::LegacyAnalyzed(analyzed) => analyzed.original_byte_slice(),
             Self::Eof(eof) => eof.raw(),
+            Self::Eip7702s(eip7702) => eip7702.raw(),
         }
     }
 
-    /// Returns the length of the raw bytes.
+    /// Returns the length of the original bytes.
     #[inline]
     pub fn len(&self) -> usize {
-        match self {
-            Self::LegacyRaw(bytes) => bytes.len(),
-            Self::LegacyAnalyzed(analyzed) => analyzed.original_len(),
-            Self::Eof(eof) => eof.size(),
-        }
+        self.original_byte_slice().len()
     }
 
     /// Returns whether the bytecode is empty.
@@ -193,7 +203,7 @@ impl Bytecode {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{Bytecode, Eof};
     use std::sync::Arc;
 
     #[test]

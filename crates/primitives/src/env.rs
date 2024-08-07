@@ -200,7 +200,12 @@ impl Env {
             return Err(InvalidTransaction::AuthorizationListNotSupported);
         }
 
-        if self.tx.authorization_list.is_some() {
+        if let Some(auth_list) = &self.tx.authorization_list {
+            // The transaction is considered invalid if the length of authorization_list is zero.
+            if auth_list.is_empty() {
+                return Err(InvalidTransaction::EmptyAuthorizationList);
+            }
+
             // Check if other fields are unset.
             if self.tx.max_fee_per_blob_gas.is_some() || !self.tx.blob_hashes.is_empty() {
                 return Err(InvalidTransaction::AuthorizationListInvalidFields);
