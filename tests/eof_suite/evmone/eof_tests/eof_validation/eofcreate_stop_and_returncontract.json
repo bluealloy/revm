@@ -1,0 +1,15 @@
+{
+  "eofcreate_stop_and_returncontract": {
+    "vectors": {
+      "eofcreate_stop_and_returncontract_0": {
+        "code": "0xef0001010004020001000b030001003804000000008000046000600060006000ec0000ef0001010004020001000c030001001404000000008000026000e100010060006000ee00ef000101000402000100010400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_IncompatibleContainerKind",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

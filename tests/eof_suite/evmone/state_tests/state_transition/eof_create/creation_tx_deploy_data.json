@@ -1,0 +1,48 @@
+{
+  "creation_tx_deploy_data": {
+    "env": {
+      "currentBaseFee": "0x3e7",
+      "currentCoinbase": "0x00000000000000000000000000000000c014bace",
+      "currentGasLimit": "0xf4240",
+      "currentNumber": "0x1",
+      "currentTimestamp": "0x0"
+    },
+    "post": {
+      "PragueEOF": [
+        {
+          "hash": "0x3bd1651fdcb154948521c2472185606de5809216c1f28eed1110a02cfc7391ec",
+          "indexes": {
+            "data": 0,
+            "gas": 0,
+            "value": 0
+          },
+          "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+        }
+      ]
+    },
+    "pre": {
+      "0xe100713fc15400d1e94096a545879e7c6407001e": {
+        "balance": "0x3b9aca01",
+        "code": "0x",
+        "nonce": "0x1",
+        "storage": {}
+      }
+    },
+    "transaction": {
+      "data": [
+        "0xef000101000402000100060300010017040000000080000260006000ee00ef000101000402000100010400030000800000feabcdef"
+      ],
+      "gasLimit": [
+        "0xf4240"
+      ],
+      "maxFeePerGas": "0x3e8",
+      "maxPriorityFeePerGas": "0x3e8",
+      "nonce": "0x1",
+      "secretKey": "0x00000000000000000000000000000000000000000000000000000002b1263d2b",
+      "sender": "0xe100713fc15400d1e94096a545879e7c6407001e",
+      "value": [
+        "0x0"
+      ]
+    }
+  }
+}

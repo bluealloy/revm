@@ -1,0 +1,31 @@
+{
+  "runtime_container_stop": {
+    "vectors": {
+      "runtime_container_stop_0": {
+        "code": "0xef00010100040200010001040000000080000000",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "runtime_container_stop_1": {
+        "code": "0xef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+        "containerKind": "INITCODE",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "runtime_container_stop_2": {
+        "code": "0xef0001010004020001000b030001003204000000008000046000600060006000ec0000ef000101000402000100060300010014040000000080000260006000ee00ef00010100040200010001040000000080000000",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      }
+    }
+  }
+}

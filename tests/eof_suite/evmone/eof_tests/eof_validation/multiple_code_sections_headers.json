@@ -1,0 +1,15 @@
+{
+  "multiple_code_sections_headers": {
+    "vectors": {
+      "multiple_code_sections_headers_0": {
+        "code": "0xef0001010008020001000402000100050400000000800000045c000000405c0000002e0005",
+        "results": {
+          "Prague": {
+            "exception": "EOF_DataSectionMissing",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

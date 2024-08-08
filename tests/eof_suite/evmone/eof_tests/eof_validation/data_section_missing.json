@@ -1,0 +1,15 @@
+{
+  "data_section_missing": {
+    "vectors": {
+      "data_section_missing_0": {
+        "code": "0xef000101000402000100010000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_DataSectionMissing",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

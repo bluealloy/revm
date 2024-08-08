@@ -1,0 +1,69 @@
+{
+  "EOF1_truncated_section": {
+    "vectors": {
+      "EOF1_truncated_section_0": {
+        "code": "0xef0001010004020001000204000000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidSectionBodiesSize",
+            "result": false
+          }
+        }
+      },
+      "EOF1_truncated_section_1": {
+        "code": "0xef0001010004020001000204000000008000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidSectionBodiesSize",
+            "result": false
+          }
+        }
+      },
+      "EOF1_truncated_section_2": {
+        "code": "0xef000101000402000100020400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidSectionBodiesSize",
+            "result": false
+          }
+        }
+      },
+      "EOF1_truncated_section_3": {
+        "code": "0xef000101000402000100060300010014040000000080000260026000ee00ef000101000402000100010400020000800000fe",
+        "containerKind": "INITCODE",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "EOF1_truncated_section_4": {
+        "code": "0xef000101000402000100060300010015040000000080000260016000ee00ef000101000402000100010400020000800000feaa",
+        "containerKind": "INITCODE",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "EOF1_truncated_section_5": {
+        "code": "0xef000101000402000100010400020000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ToplevelContainerTruncated",
+            "result": false
+          }
+        }
+      },
+      "EOF1_truncated_section_6": {
+        "code": "0xef000101000402000100010400020000800000feaa",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ToplevelContainerTruncated",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

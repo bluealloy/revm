@@ -10,6 +10,7 @@ pub struct TestSuite(pub BTreeMap<String, TestUnit>);
 pub struct TestUnit {
     #[serde(default, rename = "_info")]
     pub info: Option<serde_json::Value>,
+    #[serde(default)]
     pub vectors: BTreeMap<String, TestVector>,
 }
 

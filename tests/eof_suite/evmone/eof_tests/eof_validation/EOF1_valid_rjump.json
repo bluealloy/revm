@@ -1,0 +1,30 @@
+{
+  "EOF1_valid_rjump": {
+    "vectors": {
+      "offset_negative": {
+        "code": "0xef0001010004020001000404000000008000005be0fffc",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "offset_positive": {
+        "code": "0xef0001010004020001000d04000000008000025fe100055f5fe000035f600100",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "offset_zero": {
+        "code": "0xef000101000402000100040400000000800000e0000000",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      }
+    }
+  }
+}

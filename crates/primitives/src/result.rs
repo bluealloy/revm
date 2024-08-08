@@ -467,6 +467,8 @@ pub enum HaltReason {
     EofAuxDataTooSmall,
     /// EOF Subroutine stack overflow
     EOFFunctionStackOverflow,
+    /// Check for target address validity is only done inside subcall.
+    InvalidEXTCALLTarget,
 
     /* Optimism errors */
     #[cfg(feature = "optimism")]

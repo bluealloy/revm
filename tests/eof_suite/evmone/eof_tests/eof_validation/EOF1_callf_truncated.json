@@ -1,0 +1,24 @@
+{
+  "EOF1_callf_truncated": {
+    "vectors": {
+      "EOF1_callf_truncated_0": {
+        "code": "0xef000101000402000100010400000000800000e3",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TruncatedImmediate",
+            "result": false
+          }
+        }
+      },
+      "EOF1_callf_truncated_1": {
+        "code": "0xef000101000402000100020400000000800000e300",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TruncatedImmediate",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

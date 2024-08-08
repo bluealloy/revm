@@ -13,17 +13,20 @@ use structopt::StructOpt;
 pub struct Cmd {
     /// Input path to eof validation test
     #[structopt(required = true)]
-    path: PathBuf,
+    path: Vec<PathBuf>,
 }
 
 impl Cmd {
     /// Run statetest command.
     pub fn run(&self) -> Result<(), Error> {
         // check if path exists.
-        if !self.path.exists() {
-            return Err(Error::Custom("The specified path does not exist"));
+        for path in &self.path {
+            if !path.exists() {
+                return Err(Error::Custom("The specified path does not exist"));
+            }
+            run_test(path)?
         }
-        run_test(&self.path)
+        Ok(())
     }
 }
 
@@ -47,7 +50,7 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
                 let kind = if test_vector.container_kind.is_some() {
                     Some(CodeType::ReturnContract)
                 } else {
-                    None
+                    Some(CodeType::ReturnOrStop)
                 };
                 let res = validate_raw_eof_inner(test_vector.code.clone(), kind);
                 if res.is_ok() != test_vector.results.prague.result {

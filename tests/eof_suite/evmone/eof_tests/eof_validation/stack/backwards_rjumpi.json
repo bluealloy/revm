@@ -1,0 +1,100 @@
+{
+  "backwards_rjumpi": {
+    "vectors": {
+      "backwards_rjumpi_0": {
+        "code": "0xef0001010004020001000604000000008000016000e1fffb00",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "backwards_rjumpi_1": {
+        "code": "0xef0001010004020001000804000000008000015f506000e1fff900",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "backwards_rjumpi_10": {
+        "code": "0xef0001010004020001000e040000000080000360be6000e10001506000e1fff500",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ConflictingStackHeight",
+            "result": false
+          }
+        }
+      },
+      "backwards_rjumpi_2": {
+        "code": "0xef0001010004020001000d04000000008000015f506000e1fff96000e1fff400",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "backwards_rjumpi_3": {
+        "code": "0xef0001010004020001000e04000000008000025f506000e1fff95f6000e1fff300",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ConflictingStackHeight",
+            "result": false
+          }
+        }
+      },
+      "backwards_rjumpi_4": {
+        "code": "0xef0001010004020001000904000000008000025f60010180e1fff900",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "backwards_rjumpi_5": {
+        "code": "0xef0001010004020001000a04000000008000025f6001018080e1fff800",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ConflictingStackHeight",
+            "result": false
+          }
+        }
+      },
+      "backwards_rjumpi_6": {
+        "code": "0xef0001010004020001000804000000008000025f5f5f50e1fffc00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ConflictingStackHeight",
+            "result": false
+          }
+        }
+      },
+      "backwards_rjumpi_7": {
+        "code": "0xef0001010004020001000a04000000008000015f506000e1fff9e0fff6",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "backwards_rjumpi_8": {
+        "code": "0xef0001010004020001000b04000000008000015f506000e1fff95fe0fff5",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ConflictingStackHeight",
+            "result": false
+          }
+        }
+      },
+      "backwards_rjumpi_9": {
+        "code": "0xef0001010004020001000d04000000008000035f6000e100015f6000e1fff500",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ConflictingStackHeight",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}
