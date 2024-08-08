@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.3.0](https://github.com/bluealloy/revm/compare/revm-precompile-v9.2.0...revm-precompile-v9.3.0) - 2024-08-08
+
+### Added
+- use batch bn256 pair operation ([#1643](https://github.com/bluealloy/revm/pull/1643))
+
+### Other
+- Add OP-Granite hardfork, limiting bn256Pairing input size ([#1685](https://github.com/bluealloy/revm/pull/1685))
+- *(deps)* bump rstest from 0.21.0 to 0.22.0 ([#1681](https://github.com/bluealloy/revm/pull/1681))
+- *(deps)* bump blst from 0.3.12 to 0.3.13 ([#1669](https://github.com/bluealloy/revm/pull/1669))
+- *(clippy)* 1.80 rust clippy list paragraph ident ([#1661](https://github.com/bluealloy/revm/pull/1661))
+- use `is_zero` for `U256` and `B256` ([#1638](https://github.com/bluealloy/revm/pull/1638))
+
 ## [9.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v9.0.0...revm-precompile-v9.1.0) - 2024-07-16
 
 ### Added

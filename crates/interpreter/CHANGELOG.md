@@ -6,6 +6,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v8.1.0...revm-interpreter-v9.0.0) - 2024-08-08
+
+### Added
+- *(EOF)* add evmone test suite ([#1689](https://github.com/bluealloy/revm/pull/1689))
+- check for typos in CI ([#1686](https://github.com/bluealloy/revm/pull/1686))
+- *(EOF)* Add non-returning CALLF/JUMPF checks ([#1663](https://github.com/bluealloy/revm/pull/1663))
+- *(EOF)* EOF Validation add code type and sub container tracker ([#1648](https://github.com/bluealloy/revm/pull/1648))
+- *(EOF)* implement std::error::Error trait for EofValidationError and EofError ([#1649](https://github.com/bluealloy/revm/pull/1649))
+- *(interpreter)* derive traits on FunctionStack ([#1640](https://github.com/bluealloy/revm/pull/1640))
+
+### Fixed
+- add DATACOPY to OpCode::modifies_memory ([#1639](https://github.com/bluealloy/revm/pull/1639))
+- *(EOF)* returning to non-returning jumpf, enable valition error ([#1664](https://github.com/bluealloy/revm/pull/1664))
+- *(EOF)* Validate code access in stack ([#1659](https://github.com/bluealloy/revm/pull/1659))
+- *(eof)* deny static context in EOFCREATE ([#1644](https://github.com/bluealloy/revm/pull/1644))
+
+### Other
+- improve `InstructionResult` documentation ([#1673](https://github.com/bluealloy/revm/pull/1673))
+- Add EOF Layout Fuzz Loop to `revme bytecode` ([#1677](https://github.com/bluealloy/revm/pull/1677))
+- *(eof)* Add opcodes that expand memory ([#1665](https://github.com/bluealloy/revm/pull/1665))
+- *(clippy)* 1.80 rust clippy list paragraph ident ([#1661](https://github.com/bluealloy/revm/pull/1661))
+- avoid cloning original_bytes ([#1646](https://github.com/bluealloy/revm/pull/1646))
+- use `is_zero` for `U256` and `B256` ([#1638](https://github.com/bluealloy/revm/pull/1638))
+- fix some typos & remove useless Arc::clone ([#1621](https://github.com/bluealloy/revm/pull/1621))
+- *(eof)* avoid some allocations ([#1632](https://github.com/bluealloy/revm/pull/1632))
+- bump versions bcs of primitives ([#1631](https://github.com/bluealloy/revm/pull/1631))
+
 ## [8.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v7.0.0...revm-interpreter-v8.0.0) - 2024-07-16
 
 ### Added
