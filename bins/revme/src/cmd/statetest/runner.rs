@@ -133,7 +133,6 @@ fn skip_test(path: &Path) -> bool {
         | "block_apply_ommers_reward.json"
         | "known_block_hash.json"
         | "eip7516_blob_base_fee.json"
-
     ) || path_str.contains("stEOF")
 }
 
@@ -338,10 +337,9 @@ pub fn execute_test_suite(
 
             let spec_id = spec_name.to_spec_id();
 
-            if spec_id.is_enabled_in(SpecId::MERGE) {
-                if env.block.prevrandao.is_none() {
-                    env.block.prevrandao = Some(B256::default());
-                }
+            if spec_id.is_enabled_in(SpecId::MERGE) && env.block.prevrandao.is_none() {
+                // if spec is merge and prevrandao is not set, set it to default
+                env.block.prevrandao = Some(B256::default());
             }
 
             for (index, test) in tests.into_iter().enumerate() {

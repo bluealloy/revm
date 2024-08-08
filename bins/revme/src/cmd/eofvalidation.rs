@@ -47,7 +47,7 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
                 let kind = if test_vector.container_kind.is_some() {
                     Some(CodeType::ReturnContract)
                 } else {
-                    None
+                    Some(CodeType::ReturnOrStop)
                 };
                 let res = validate_raw_eof_inner(test_vector.code.clone(), kind);
                 if res.is_ok() != test_vector.results.prague.result {
