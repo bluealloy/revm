@@ -95,10 +95,6 @@ jobs:
       - run: cargo fmt --all --check
 
   typos-check:
-    needs: [skip_check]
-    if: |
-      github.event.pull_request.draft == false &&
-      (github.event.action == 'ready_for_review' || needs.skip_check.outputs.should_skip != 'true')
     name: TyposCheck
     timeout-minutes: 5
     runs-on: ubuntu-latest
@@ -106,6 +102,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: crate-ci/typos@v1.22.7
         with:
-          config: ./typos.toml
+          config: ./Typos.toml
           isolated: true
 
