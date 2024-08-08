@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm"]
 license = "MIT"
 name = "revm"
 repository = "https://github.com/bluealloy/revm"
-version = "12.2.0"
+version = "13.0.0"
 readme = "../../README.md"
 
 [package.metadata.docs.rs]
@@ -24,7 +24,7 @@ all = "warn"
 [dependencies]
 # revm
 revm-interpreter = { path = "../interpreter", version = "9.0.0", default-features = false }
-revm-precompile = { path = "../precompile", version = "9.3.0", default-features = false }
+revm-precompile = { path = "../precompile", version = "10.0.0", default-features = false }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
