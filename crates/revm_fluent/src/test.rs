@@ -22,13 +22,9 @@ use fluentbase_genesis::{
     Genesis,
     EXAMPLE_GREETING_ADDRESS,
 };
+use fluentbase_poseidon::poseidon_hash;
 use fluentbase_runtime::RuntimeContext;
-use fluentbase_sdk::{
-    codec::{BufferDecoder, Encoder},
-    poseidon_hash,
-    runtime::TestingContext,
-    types::EvmCallMethodInput,
-};
+use fluentbase_sdk::{codec::Encoder, runtime::TestingContext};
 use fluentbase_types::{
     address,
     bytes,

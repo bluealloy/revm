@@ -4,8 +4,9 @@ use super::{
     utils::recover_address,
 };
 use crate::merkle_trie::state_merkle_trie_root2;
+use fluentbase_core::evm::EvmBytecodeExecutor;
 use fluentbase_genesis::devnet::{devnet_genesis_from_file, KECCAK_HASH_KEY, POSEIDON_HASH_KEY};
-use fluentbase_types::{consts::EVM_STORAGE_ADDRESS, Address, ExitCode};
+use fluentbase_types::{contracts::PRECOMPILE_EVM_LOADER, Address, ExitCode};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use lazy_static::lazy_static;
@@ -13,7 +14,6 @@ use revm::{
     db::{states::plain_account::PlainStorage, EmptyDB},
     inspector_handle_register,
     inspectors::TracerEip3155,
-    interpreter::{CreateScheme, InterpreterResult},
     primitives::{
         calc_excess_blob_gas,
         keccak256,
@@ -450,6 +450,14 @@ lazy_static! {
     // };
 }
 
+fn code_hash_storage_key(address: &Address) -> U256 {
+    let mut buffer64: [u8; 64] = [0u8; 64];
+    buffer64[0..32].copy_from_slice(U256::ZERO.as_le_slice());
+    buffer64[44..64].copy_from_slice(address.as_slice());
+    let code_hash_key = keccak256(&buffer64);
+    U256::from_be_bytes(code_hash_key.0)
+}
+
 pub fn execute_test_suite(
     path: &Path,
     elapsed: &Arc<Mutex<Duration>>,
@@ -470,8 +478,6 @@ pub fn execute_test_suite(
 
     let devnet_genesis = devnet_genesis_from_file();
 
-    // let (rwasm_bytecode, rwasm_hash) = (*EVM_LOADER).clone();
-
     let selected_test_cases = vec![];
     for (name, unit) in suite.0 {
         if selected_test_cases.len() > 0 && !selected_test_cases.contains(&name.as_str()) {
@@ -482,7 +488,7 @@ pub fn execute_test_suite(
         let mut cache_state = revm::CacheState::new(false);
         let mut cache_state2 = revm_fluent::CacheState::new(false);
 
-        let evm_storage: PlainStorage = PlainStorage::default();
+        let mut evm_storage: PlainStorage = PlainStorage::default();
         let mut genesis_addresses: HashSet<Address> = Default::default();
         for (address, info) in &devnet_genesis.alloc {
             let code_hash = info
@@ -505,19 +511,18 @@ pub fn execute_test_suite(
                 code: Some(Bytecode::new()),
                 rwasm_code: Some(Bytecode::new_raw(info.code.clone().unwrap_or_default())),
             };
+            evm_storage.insert(
+                code_hash_storage_key(address),
+                U256::from_le_bytes(code_hash.0),
+            );
             let mut account_storage = PlainStorage::default();
             if let Some(storage) = info.storage.as_ref() {
                 for (k, v) in storage.iter() {
-                    // if cfg!(feature = "debug_use_fluent_storage") {
-                    //     let storage_key = calc_storage_key(address, k.as_ptr());
-                    //     evm_storage.insert(U256::from_le_bytes(storage_key), (*v).into());
-                    // } else {
                     account_storage.insert(U256::from_be_bytes(k.0), U256::from_be_bytes(v.0));
-                    // }
                 }
             }
+            cache_state2.insert_account_with_storage(*address, acc_info, account_storage);
             genesis_addresses.insert(*address);
-            // cache_state2.insert_account_with_storage(*address, acc_info, account_storage);
         }
 
         for (address, info) in unit.pre {
@@ -528,46 +533,26 @@ pub fn execute_test_suite(
                 code: Some(Bytecode::new_raw(info.code.clone())),
                 ..Default::default()
             };
+            evm_storage.insert(
+                code_hash_storage_key(&address),
+                U256::from_le_bytes(acc_info.code_hash.0),
+            );
             cache_state.insert_account_with_storage(
                 address,
                 acc_info.clone(),
                 info.storage.clone(),
             );
-            // acc_info.rwasm_code_hash = rwasm_hash;
-            // acc_info.rwasm_code = Some(Bytecode::new_raw(rwasm_bytecode.clone()));
-            // if cfg!(feature = "debug_use_fluent_storage") {
-            //     for (k, v) in info.storage.iter() {
-            //         let storage_key = calc_storage_key(&address, k.to_le_bytes::<32>().as_ptr());
-            //         println!(
-            //             "mapping EVM storage address=0x{}, slot={}, storage_key={}, value={}",
-            //             hex::encode(&address),
-            //             hex::encode(k.to_be_bytes::<32>().as_slice()),
-            //             hex::encode(&storage_key),
-            //             hex::encode(v.to_be_bytes::<32>().as_slice()),
-            //         );
-            //         evm_storage.insert(U256::from_le_bytes(storage_key), (*v).into());
-            //     }
-            //     cache_state2.insert_account_with_storage(
-            //         address,
-            //         acc_info,
-            //         PlainStorage::default(),
-            //     );
-            // } else {
             cache_state2.insert_account_with_storage(address, acc_info, info.storage);
-            // }
         }
 
-        #[cfg(feature = "debug_use_fluent_storage")]
-        {
-            cache_state2.insert_account_with_storage(
-                EVM_STORAGE_ADDRESS,
-                AccountInfo {
-                    nonce: 1,
-                    ..AccountInfo::default()
-                },
-                evm_storage,
-            );
-        }
+        cache_state2.insert_account_with_storage(
+            PRECOMPILE_EVM_LOADER,
+            AccountInfo {
+                nonce: 1,
+                ..AccountInfo::default()
+            },
+            evm_storage,
+        );
 
         let mut env = Box::<Env>::default();
         // for mainnet

@@ -26,10 +26,9 @@ macro_rules! define_tests {
 
 mod failing_tests {
     define_tests! {
-        fn callcallcallcode_001("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcallcode_001.json");
-        // fn callcallcode_01("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcode_01.json");
-        // fn callcallcodecallcode_011("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcallcodecallcode_011.json");
-        // fn callcodecallcallcode_101("tests/GeneralStateTests/stCallDelegateCodesCallCodeHomestead/callcodecallcallcode_101.json");
+        fn code_copy_zero_paris("tests/GeneralStateTests/stExtCodeHash/codeCopyZero_Paris.json");
+        fn ext_code_hash_self_in_init("tests/GeneralStateTests/stExtCodeHash/extCodeHashSelfInInit.json");
+        fn extcodehash_empty_paris("tests/GeneralStateTests/stExtCodeHash/extcodehashEmpty_Paris.json");
     }
 }
 

@@ -11,6 +11,7 @@ use fluentbase_sdk::{Account, AccountStatus, SovereignAPI};
 use fluentbase_types::{
     BlockContext,
     BytecodeType,
+    CallPrecompileResult,
     ContractContext,
     DestroyedAccountResult,
     ExitCode,
@@ -31,14 +32,12 @@ pub(crate) struct RwasmDbWrapper<'a, API: NativeAPI, DB: Database> {
     native_sdk: API,
     block_context: BlockContext,
     tx_context: TxContext,
-    contract_context: ContractContext,
 }
 
 impl<'a, API: NativeAPI, DB: Database> RwasmDbWrapper<'a, API, DB> {
     pub(crate) fn new(
         evm_context: &'a mut EvmContext<DB>,
         native_sdk: API,
-        contract_context: ContractContext,
     ) -> RwasmDbWrapper<'a, API, DB> {
         let block_context = BlockContext::from(evm_context.env.deref());
         let tx_context = TxContext::from(evm_context.env.deref());
@@ -47,7 +46,6 @@ impl<'a, API: NativeAPI, DB: Database> RwasmDbWrapper<'a, API, DB> {
             native_sdk,
             block_context,
             tx_context,
-            contract_context,
         }
     }
 }
@@ -84,7 +82,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
     }
 
     fn contract_context(&self) -> Option<&ContractContext> {
-        Some(&self.contract_context)
+        None
     }
 
     fn checkpoint(&self) -> JournalCheckpoint {
@@ -223,6 +221,16 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
         (value, true)
     }
 
+    fn write_transient_storage(&mut self, address: Address, index: U256, value: U256) {
+        let mut ctx = self.evm_context.borrow_mut();
+        ctx.journaled_state.tstore(address, index, value);
+    }
+
+    fn transient_storage(&self, address: Address, index: U256) -> U256 {
+        let mut ctx = self.evm_context.borrow_mut();
+        ctx.journaled_state.tload(address, index)
+    }
+
     fn write_log(&mut self, address: Address, data: Bytes, topics: &[B256]) {
         let mut ctx = self.evm_context.borrow_mut();
         ctx.journaled_state.log(Log {
@@ -262,17 +270,17 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
         address: &Address,
         input: &Bytes,
         gas: u64,
-    ) -> Option<(Bytes, ExitCode, u64, i64)> {
+    ) -> Option<CallPrecompileResult> {
         let mut ctx = self.evm_context.borrow_mut();
         let result = ctx
             .call_precompile(&address, input, Gas::new(gas))
             .unwrap_or(None)?;
-        Some((
-            result.output,
-            exit_code_from_evm_error(result.result),
-            result.gas.remaining(),
-            result.gas.refunded(),
-        ))
+        Some(CallPrecompileResult {
+            output: result.output,
+            exit_code: exit_code_from_evm_error(result.result),
+            gas_remaining: result.gas.remaining(),
+            gas_refund: result.gas.refunded(),
+        })
     }
 
     fn is_precompile(&self, address: &Address) -> bool {

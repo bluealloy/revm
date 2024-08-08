@@ -63,3 +63,6 @@ pub const BLOB_GASPRICE_UPDATE_FRACTION: u64 = 3338477;
 
 /// First version of the blob.
 pub const VERSIONED_HASH_VERSION_KZG: u8 = 0x01;
+
+/// Max call stack limit
+pub const MAX_CALL_STACK_LIMIT: u32 = 1024;

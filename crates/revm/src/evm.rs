@@ -8,6 +8,7 @@ use crate::{
         BlockEnv,
         Bytes,
         CfgEnv,
+        CreateScheme,
         EVMError,
         EVMResult,
         EnvWithHandlerCfg,
@@ -25,17 +26,17 @@ use crate::{
 };
 use alloc::vec::Vec;
 use core::{fmt, mem::take};
-use fluentbase_core::{
-    helpers::evm_error_from_exit_code,
-    loader::{_loader_call, _loader_create},
-};
+use fluentbase_core::evm::EvmBytecodeExecutor;
 use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
-use fluentbase_sdk::{
-    journal::{JournalState, JournalStateBuilder},
-    types::{EvmCallMethodInput, EvmCreateMethodInput},
+use fluentbase_sdk::journal::{JournalState, JournalStateBuilder};
+use fluentbase_types::{
+    contracts::PRECOMPILE_EVM_LOADER,
+    BlockContext,
+    ContractContext,
+    NativeAPI,
+    TxContext,
 };
-use fluentbase_types::{Address, BlockContext, ContractContext, NativeAPI, TxContext};
-use revm_interpreter::{CallOutcome, CreateOutcome};
+use revm_interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -373,26 +374,20 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let mut result = {
             #[cfg(feature = "rwasm")]
             {
-                // Load EVM storage account
-                // let (evm_storage, _) = ctx.evm.load_account(EVM_STORAGE_ADDRESS)?;
-                // evm_storage.info.nonce = 1;
-                // ctx.evm.touch(&EVM_STORAGE_ADDRESS);
-                let tx_gas_limit = ctx.evm.env.tx.gas_limit;
+                // load an EVM loader account to access storage slots
+                let (evm_storage, _) = ctx.evm.load_account(PRECOMPILE_EVM_LOADER)?;
+                evm_storage.info.nonce = 1;
+                ctx.evm.touch(&PRECOMPILE_EVM_LOADER);
 
                 match ctx.evm.env.tx.transact_to {
-                    TransactTo::Call(address) => {
-                        let value = ctx.evm.env.tx.value;
-                        let caller = ctx.evm.env.tx.caller;
-                        let data = ctx.evm.env.tx.data.clone();
-                        let result =
-                            self.call_inner(caller, address, value, data, tx_gas_limit, gas_limit)?;
+                    TransactTo::Call(_) => {
+                        let inputs = CallInputs::new(&ctx.evm.env.tx, gas_limit).unwrap();
+                        let result = self.call_inner(inputs)?;
                         FrameResult::Call(result)
                     }
                     TransactTo::Create => {
-                        let value = ctx.evm.env.tx.value;
-                        let caller = ctx.evm.env.tx.caller;
-                        let data = ctx.evm.env.tx.data.clone();
-                        let result = self.create_inner(caller, value, data, gas_limit)?;
+                        let inputs = CreateInputs::new(&ctx.evm.env.tx, gas_limit).unwrap();
+                        let result = self.create_inner(inputs)?;
                         FrameResult::Create(result)
                     }
                 }
@@ -502,72 +497,17 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     #[cfg(feature = "rwasm")]
     fn create_inner(
         &mut self,
-        caller_address: Address,
-        value: U256,
-        input: Bytes,
-        gas_limit: u64,
+        create_inputs: CreateInputs,
     ) -> Result<CreateOutcome, EVMError<DB::Error>> {
-        let return_result = |instruction_result: InstructionResult, gas: Gas| CreateOutcome {
-            result: InterpreterResult {
-                result: instruction_result,
-                output: Default::default(),
-                gas,
-            },
-            address: None,
-        };
-
-        let mut gas = Gas::new(gas_limit);
-
-        if self.context.evm.journaled_state.depth as u64 > CALL_STACK_LIMIT {
-            return Ok(return_result(InstructionResult::CallTooDeep, gas));
-        }
-
-        let (caller_account, _) = self.context.evm.load_account(caller_address)?;
-        if caller_account.info.balance < value {
-            return Ok(return_result(InstructionResult::OutOfFunds, gas));
-        }
-
-        let method_data = EvmCreateMethodInput {
-            caller: caller_address,
-            bytecode: input,
-            value,
-            gas_limit: gas.remaining(),
-            salt: None,
-            depth: 0,
-            is_static: false,
-        };
-
-        let contract_context = ContractContext {
-            gas_limit,
-            address: Address::ZERO,
-            bytecode_address: Address::ZERO,
-            caller: caller_address,
-            is_static: false,
-            value,
-            input: Bytes::new(),
-        };
-
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
-            .with_fuel_limit(contract_context.gas_limit)
+            .with_fuel_limit(create_inputs.gas_limit)
             .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
-        let mut sdk =
-            crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk, contract_context);
-        // let mut sdk = self.create_sdk(Some(contract_context))?;
-        let create_output = _loader_create(&mut sdk, method_data);
+        let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
 
-        let mut gas = Gas::new(create_output.gas);
-        gas.record_refund(create_output.gas_refund);
-
-        Ok(CreateOutcome {
-            result: InterpreterResult {
-                result: evm_error_from_exit_code(create_output.exit_code.into()),
-                output: Bytes::new(),
-                gas,
-            },
-            address: create_output.address,
-        })
+        let result = EvmBytecodeExecutor::new(&mut sdk).create(create_inputs);
+        Ok(result)
     }
 
     #[cfg(feature = "std")]
@@ -653,102 +593,57 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
     /// Main contract call of the EVM.
     #[cfg(feature = "rwasm")]
-    fn call_inner(
-        &mut self,
-        caller_address: Address,
-        callee_address: Address,
-        value: U256,
-        input: Bytes,
-        tx_gas_limit: u64,
-        gas_limit: u64,
-    ) -> Result<CallOutcome, EVMError<DB::Error>> {
-        let gas = Gas::new(tx_gas_limit);
-
+    fn call_inner(&mut self, call_inputs: CallInputs) -> Result<CallOutcome, EVMError<DB::Error>> {
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
-        if value == U256::ZERO {
-            self.context.evm.load_account(callee_address)?;
-            self.context.evm.journaled_state.touch(&callee_address);
+        if call_inputs.call_value() == U256::ZERO {
+            self.context.evm.load_account(call_inputs.target_address)?;
+            self.context
+                .evm
+                .journaled_state
+                .touch(&call_inputs.target_address);
         }
-
-        let method_input = EvmCallMethodInput {
-            caller: caller_address,
-            address: callee_address,
-            bytecode_address: callee_address,
-            value,
-            apparent_value: value,
-            input,
-            gas_limit,
-            depth: 0,
-            is_static: false,
-        };
-
-        let contract_context = ContractContext {
-            gas_limit,
-            address: callee_address,
-            bytecode_address: callee_address,
-            caller: caller_address,
-            is_static: false,
-            value,
-            input: Bytes::new(),
-        };
 
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
-            .with_fuel_limit(contract_context.gas_limit)
+            .with_fuel_limit(call_inputs.gas_limit)
             .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
-        let mut sdk =
-            crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk, contract_context);
+        let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
 
-        // let mut sdk = self.create_sdk(Some(contract_context))?;
-        let call_output = _loader_call(&mut sdk, method_input);
+        let result = EvmBytecodeExecutor::new(&mut sdk).call(call_inputs);
+        Ok(result)
 
-        #[cfg(feature = "debug-print")]
-        {
-            println!("executed ECL call:");
-            println!(" - caller: 0x{}", caller_address);
-            println!(" - callee: 0x{}", callee_address);
-            println!(" - value: 0x{}", value);
-            println!(
-                " - call_output.gas_remaining: {}",
-                call_output.gas_remaining
-            );
-            println!(" - call_output.gas_refund: {}", call_output.gas_refund);
-            println!(
-                " - fuel consumed: {}",
-                gas.remaining() as i64 - call_output.gas_remaining as i64
-            );
-            println!(" - gas.limit: {}", gas.limit() as i64);
-            println!(" - gas.remaining: {}", gas.remaining() as i64);
-            println!(" - gas.spent: {}", gas.spent() as i64);
-            println!(" - gas.refunded: {}", gas.refunded());
-            println!(" - exit code: {}", call_output.exit_code);
-            if call_output.output.iter().all(|c| c.is_ascii()) {
-                println!(
-                    " - output message: {}",
-                    core::str::from_utf8(&call_output.output).unwrap()
-                );
-            } else {
-                println!(
-                    " - output message: {}",
-                    format!("0x{}", &call_output.output)
-                );
-            }
-        }
-
-        let mut gas = Gas::new(tx_gas_limit);
-        if !gas.record_cost(tx_gas_limit - call_output.gas_remaining) {
-            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
-        };
-        gas.record_refund(call_output.gas_refund);
-
-        Ok(CallOutcome {
-            result: InterpreterResult {
-                result: evm_error_from_exit_code(call_output.exit_code.into()),
-                output: call_output.output,
-                gas,
-            },
-            memory_offset: Default::default(),
-        })
+        // #[cfg(feature = "debug-print")]
+        // {
+        //     println!("executed ECL call:");
+        //     println!(" - caller: 0x{}", caller_address);
+        //     println!(" - callee: 0x{}", callee_address);
+        //     println!(" - value: 0x{}", value);
+        //     println!(
+        //         " - call_output.gas_remaining: {}",
+        //         call_output.gas_remaining
+        //     );
+        //     println!(" - call_output.gas_refund: {}", call_output.gas_refund);
+        //     println!(
+        //         " - fuel consumed: {}",
+        //         gas.remaining() as i64 - call_output.gas_remaining as i64
+        //     );
+        //     println!(" - gas.limit: {}", gas.limit() as i64);
+        //     println!(" - gas.remaining: {}", gas.remaining() as i64);
+        //     println!(" - gas.spent: {}", gas.spent() as i64);
+        //     println!(" - gas.refunded: {}", gas.refunded());
+        //     println!(" - exit code: {}", call_output.exit_code);
+        //     if call_output.output.iter().all(|c| c.is_ascii()) {
+        //         println!(
+        //             " - output message: {}",
+        //             core::str::from_utf8(&call_output.output).unwrap()
+        //         );
+        //     } else {
+        //         println!(
+        //             " - output message: {}",
+        //             format!("0x{}", &call_output.output)
+        //         );
+        //     }
+        // }
     }
 }

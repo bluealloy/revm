@@ -23,18 +23,21 @@ all = "warn"
 
 [dependencies]
 # revm
-#revm-interpreter = { path = "../interpreter", default-features = false, optional = true }
+#revm-interpreter = { path = "../interpreter", default-features = false }
 #revm-precompile = { path = "../precompile", default-features = false }
-revm-interpreter = { package = "revm-interpreter", path = "../interpreter", default-features = false, optional = true }
+revm-interpreter = { package = "revm-interpreter", path = "../interpreter", default-features = false }
 revm-precompile = { package = "revm-precompile", path = "../precompile", default-features = false, optional = true }
 
+#fluentbase-sdk = { workspace = true, default-features = false }
+#fluentbase-types = { workspace = true, default-features = false }
+#fluentbase-core = { workspace = true, default-features = false }
+#fluentbase-runtime = { workspace = true, default-features = false, optional = true }
+#fluentbase-genesis = { workspace = true, default-features = false, optional = true }
 fluentbase-types = { path = "../../../crates/types", default-features = false }
 fluentbase-core = { path = "../../../crates/core", default-features = false }
 fluentbase-sdk = { path = "../../../crates/sdk", default-features = false }
-fluentbase-runtime = { path = "../../../crates/runtime", default-features = false }
-fluentbase-codec = { path = "../../../crates/codec", default-features = false }
-fluentbase-poseidon = { path = "../../../crates/poseidon", default-features = false }
-fluentbase-genesis = { path = "../../../crates/genesis", default-features = false }
+fluentbase-runtime = { path = "../../../crates/runtime", default-features = false, optional = true }
+fluentbase-genesis = { path = "../../../crates/genesis", default-features = false, optional = true }
 
 rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm", branch = "devel", default-features = false, optional = true }
 
@@ -54,36 +57,45 @@ serde_json = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 # ethersdb
-tokio = { version = "1.38", features = [
+tokio = { version = "1.37", features = [
     "rt-multi-thread",
     "macros",
 ], optional = true }
 ethers-providers = { version = "2.0", optional = true }
 ethers-core = { version = "2.0", optional = true }
-hex = "0.4.3"
 
 # alloydb
-#alloy-provider = { version = "0.1", optional = true, default-features = false }
-#alloy-eips = { version = "0.1", optional = true, default-features = false }
-#alloy-transport = { version = "0.1", optional = true, default-features = false }
+# alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
+# alloy-rpc-types = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
+# alloy-transport = { git = "https://github.com/alloy-rs/alloy.git", rev = "44b8a6d", optional = true, default-features = false }
 
 [dev-dependencies]
 alloy-sol-types = { version = "0.7.0", default-features = false, features = [
     "std",
 ] }
 ethers-contract = { version = "2.0.14", default-features = false }
-anyhow = "1.0.83"
-criterion = "0.5"
-indicatif = "0.17"
-reqwest = { version = "0.12" }
-rstest = "0.21.0"
+anyhow = { version = "1.0.83", default-features = false }
+criterion = { version = "0.5", default-features = false }
+indicatif = { version = "0.17", default-features = false }
+reqwest = { version = "0.12", default-features = false }
+rstest = { version = "0.19.0", default-features = false }
+fluentbase-poseidon = { workspace = true, default-features = false }
 
 alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "61140ec", default-features = false, features = [
     "reqwest",
 ] }
+# needed for enabling TLS to use HTTPS connections when testing alloy DB
+alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "61140ec", default-features = false }
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = [
+    "std",
+    "c-kzg",
+    "secp256k1",
+    "portable",
+    "blst",
+    "rwasm",
+]
 std = [
     "serde?/std",
     "serde_json?/std",
@@ -93,8 +105,8 @@ std = [
     "fluentbase-sdk/std",
     "fluentbase-types/std",
     "fluentbase-core/std",
-    "fluentbase-runtime/std",
-    "fluentbase-codec/std",
+    "dep:fluentbase-runtime",
+    "dep:fluentbase-genesis",
     "fluentbase-genesis/std",
     "dep:rwasm",
     "rwasm?/std",
@@ -112,7 +124,11 @@ portable = ["revm-precompile/portable", "revm-interpreter/portable"]
 
 test-utils = []
 
-optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
+optimism = [
+    "revm-interpreter/optimism",
+    "revm-interpreter/optimism",
+    "revm-precompile/optimism",
+]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
 optimism-default-handler = [
     "optimism",
@@ -124,15 +140,21 @@ negate-optimism-default-handler = [
     "revm-interpreter/negate-optimism-default-handler",
 ]
 
-ethersdb = ["std", "dep:tokio", "dep:ethers-providers", "dep:ethers-core"]
+ethersdb = [
+    "std",
+    "tokio",
+    "ethers-providers",
+    "ethers-core",
+] # Negate optimism default handler
 
-#alloydb = [
-#    "std",
-#    "dep:tokio",
-#    "dep:alloy-provider",
-#    "dep:alloy-eips",
-#    "dep:alloy-transport",
-#]
+#
+# alloydb = [
+#     "std",
+#     "tokio",
+#     "alloy-provider",
+#     "alloy-rpc-types",
+#     "alloy-transport",
+# ]
 
 dev = [
     "memory_limit",
@@ -160,7 +182,7 @@ debug-print = [
     "revm-interpreter/debug-print"
 ]
 rwasm = [
-    #    "e2e",
+    "e2e",
     "revm-interpreter/rwasm",
     "revm-precompile/rwasm",
 ]
