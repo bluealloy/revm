@@ -40,14 +40,15 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         effective_gas_price
     };
 
-    let (coinbase_account, _) = context
+    let coinbase_account = context
         .evm
         .inner
         .journaled_state
         .load_account(beneficiary, &mut context.evm.inner.db)?;
 
-    coinbase_account.mark_touch();
-    coinbase_account.info.balance = coinbase_account
+    coinbase_account.data.mark_touch();
+    coinbase_account.data.info.balance = coinbase_account
+        .data
         .info
         .balance
         .saturating_add(coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64));
@@ -64,16 +65,16 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
     let effective_gas_price = context.evm.env.effective_gas_price();
 
     // return balance of not spend gas.
-    let (caller_account, _) = context
+    let caller_account = context
         .evm
         .inner
         .journaled_state
         .load_account(caller, &mut context.evm.inner.db)?;
 
-    caller_account.info.balance = caller_account
-        .info
-        .balance
-        .saturating_add(effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64));
+    caller_account.data.info.balance =
+        caller_account.data.info.balance.saturating_add(
+            effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64),
+        );
 
     Ok(())
 }

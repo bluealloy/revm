@@ -9,6 +9,21 @@ use crate::{
 use core::mem;
 use std::vec::Vec;
 
+/// Account access information.
+pub struct AccountLoad<T> {
+    /// returned data
+    pub data: T,
+    /// True if account is cold loaded.
+    pub is_cold: bool,
+}
+
+pub struct DelegatedAccountLoad<T> {
+    /// returned data
+    pub account_load: AccountLoad<T>,
+    /// True if account has delegate code and delegated account is cold loaded.
+    pub is_cold: bool,
+}
+
 /// JournalState is internal EVM state that is used to contain state and track changes to that state.
 /// It contains journal of changes that happened to state so that they can be reverted.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -568,12 +583,15 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
-        let (value, is_cold) = match self.state.entry(address) {
+    ) -> Result<AccountLoad<&mut Account>, EVMError<DB::Error>> {
+        let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
                 let is_cold = account.mark_warm();
-                (account, is_cold)
+                AccountLoad {
+                    data: account,
+                    is_cold,
+                }
             }
             Entry::Vacant(vac) => {
                 let account =
@@ -586,19 +604,22 @@ impl JournaledState {
                 // precompiles are warm loaded so we need to take that into account
                 let is_cold = !self.warm_preloaded_addresses.contains(&address);
 
-                (vac.insert(account), is_cold)
+                AccountLoad {
+                    data: vac.insert(account),
+                    is_cold,
+                }
             }
         };
 
         // journal loading of cold account.
-        if is_cold {
+        if load.is_cold {
             self.journal
                 .last_mut()
                 .unwrap()
                 .push(JournalEntry::AccountWarmed { address });
         }
 
-        Ok((value, is_cold))
+        Ok(load)
     }
 
     /// Load account from database to JournaledState.
@@ -611,7 +632,8 @@ impl JournaledState {
         db: &mut DB,
     ) -> Result<LoadAccountResult, EVMError<DB::Error>> {
         let spec = self.spec;
-        let (acc, is_cold) = self.load_account(address, db)?;
+        let AccountLoad { data, is_cold } = self.load_account(address, db)?;
+        let acc = data;
 
         let is_spurious_dragon_enabled = SpecId::enabled(spec, SPURIOUS_DRAGON);
         let is_empty = if is_spurious_dragon_enabled {
@@ -632,7 +654,8 @@ impl JournaledState {
         address: Address,
         db: &mut DB,
     ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
-        let (acc, is_cold) = self.load_account(address, db)?;
+        let AccountLoad { data, is_cold } = self.load_account(address, db)?;
+        let acc = data;
         if acc.info.code.is_none() {
             if acc.info.code_hash == KECCAK_EMPTY {
                 let empty = Bytecode::default();

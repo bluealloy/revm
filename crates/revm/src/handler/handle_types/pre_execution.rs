@@ -1,5 +1,5 @@
 // Includes.
-use super::GenericContextHandle;
+use super::{GenericContextHandle, GenericContextHandleRet};
 use crate::{
     handler::mainnet,
     primitives::{db::Database, EVMError, Spec},
@@ -18,8 +18,8 @@ pub type LoadAccountsHandle<'a, EXT, DB> = GenericContextHandle<'a, EXT, DB>;
 /// Deduct the caller to its limit.
 pub type DeductCallerHandle<'a, EXT, DB> = GenericContextHandle<'a, EXT, DB>;
 
-/// Load Auth list for EIP-7702
-pub type ApplyEIP7702AuthListHandle<'a, EXT, DB> = GenericContextHandle<'a, EXT, DB>;
+/// Load Auth list for EIP-7702, and returns number of created accounts.
+pub type ApplyEIP7702AuthListHandle<'a, EXT, DB> = GenericContextHandleRet<'a, EXT, DB, u64>;
 
 /// Handles related to pre execution before the stack loop is started.
 pub struct PreExecutionHandler<'a, EXT, DB: Database> {
@@ -56,10 +56,11 @@ impl<'a, EXT, DB: Database> PreExecutionHandler<'a, EXT, DB> {
         (self.load_accounts)(context)
     }
 
+    /// Apply EIP-7702 auth list and return number of created accounts.
     pub fn apply_eip7702_auth_list(
         &self,
         context: &mut Context<EXT, DB>,
-    ) -> Result<(), EVMError<DB::Error>> {
+    ) -> Result<u64, EVMError<DB::Error>> {
         (self.apply_eip7702_auth_list)(context)
     }
 

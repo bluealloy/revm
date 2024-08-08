@@ -6,7 +6,7 @@ use crate::{
     precompile::PrecompileSpecId,
     primitives::{
         db::Database,
-        Account, Bytecode, EVMError, Env, Spec,
+        eip7702, Account, Bytecode, EVMError, Env, Spec,
         SpecId::{CANCUN, PRAGUE, SHANGHAI},
         TxKind, BLOCKHASH_STORAGE_ADDRESS, U256,
     },
@@ -85,32 +85,34 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<(), EVMError<DB::Error>> {
     // load caller's account.
-    let (caller_account, _) = context
+    let caller_account = context
         .evm
         .inner
         .journaled_state
         .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)?;
 
     // deduct gas cost from caller's account.
-    deduct_caller_inner::<SPEC>(caller_account, &context.evm.inner.env);
+    deduct_caller_inner::<SPEC>(caller_account.data, &context.evm.inner.env);
 
     Ok(())
 }
 
+/// Apply EIP-7702 auth list and return number gas refund on already created accounts.
 #[inline]
 pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-) -> Result<(), EVMError<DB::Error>> {
+) -> Result<u64, EVMError<DB::Error>> {
     // EIP-7702. Load bytecode to authorized accounts.
     if !SPEC::enabled(PRAGUE) {
-        return Ok(());
+        return Ok(0);
     }
 
-    // return if there is not auth list.
+    // return if there is no auth list.
     let Some(authorization_list) = context.evm.inner.env.tx.authorization_list.as_ref() else {
-        return Ok(());
+        return Ok(0);
     };
 
+    let mut created_accounts_cnt = 0;
     for authorization in authorization_list.recovered_iter() {
         // 1. recover authority and authorized addresses.
         // authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]
@@ -126,7 +128,7 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
         }
 
         // warm authority account and check nonce.
-        // 8. Add authority to accessed_addresses (as defined in EIP-2929.)
+        // 8.Add authority to accessed_addresses (as defined in EIP-2929.)
         let (authority_acc, _) = context
             .evm
             .inner
@@ -150,8 +152,10 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
             }
         }
 
-
-
+        // 5. Refund the sender PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST gas if authority exists in the trie.
+        if authority_acc.is_empty() {
+            created_accounts_cnt += 1;
+        }
 
         // 6. Set the code of authority to be 0xef0100 || address. This is a delegation designation.
         let bytecode = Bytecode::new_eip7702(authorization.address);
@@ -162,8 +166,11 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
         authority_acc.info.nonce = authority_acc.info.nonce.saturating_add(1);
         authority_acc.mark_touch();
 
-
         // TODO(EIP-7702) set contract to account.
     }
-    Ok(())
+
+    let existing_accounts = authorization_list.len() as u64 - created_accounts_cnt;
+    let refunded_gas =
+        existing_accounts * (eip7702::PER_EMPTY_ACCOUNT_COST - eip7702::PER_AUTH_BASE_COST);
+    Ok(refunded_gas)
 }

@@ -4,7 +4,7 @@ use crate::{
         analysis::to_analysed, gas, return_ok, InstructionResult, InterpreterResult,
         LoadAccountResult, SStoreResult, SelfDestructResult,
     },
-    journaled_state::JournaledState,
+    journaled_state::{AccountLoad, JournaledState},
     primitives::{
         AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, EVMError, Env,
         Eof, HashSet, Spec,
@@ -147,7 +147,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     pub fn load_account(
         &mut self,
         address: Address,
-    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
+    ) -> Result<AccountLoad<&mut Account>, EVMError<DB::Error>> {
         self.journaled_state.load_account(address, &mut self.db)
     }
 
@@ -168,7 +168,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     pub fn balance(&mut self, address: Address) -> Result<(U256, bool), EVMError<DB::Error>> {
         self.journaled_state
             .load_account(address, &mut self.db)
-            .map(|(acc, is_cold)| (acc.info.balance, is_cold))
+            .map(|acc| (acc.data.info.balance, acc.is_cold))
     }
 
     /// Return account code bytes and if address is cold loaded.
@@ -183,6 +183,9 @@ impl<DB: Database> InnerEvmContext<DB> {
                 let code = a.info.code.as_ref().unwrap();
                 if code.is_eof() {
                     (EOF_MAGIC_BYTES.clone(), is_cold)
+                } else if code.is_eip7702() {
+                    // Load delegation acc
+                    unimplemented!();
                 } else {
                     (code.original_bytes(), is_cold)
                 }
@@ -199,9 +202,18 @@ impl<DB: Database> InnerEvmContext<DB> {
         if acc.is_empty() {
             return Ok((B256::ZERO, is_cold));
         }
-        if let Some(true) = acc.info.code.as_ref().map(|code| code.is_eof()) {
+        // SAFETY: safe to unwrap as load_code will insert code if it is empty.
+        let code = acc.info.code.as_ref().unwrap();
+
+        if code.is_eof() {
             return Ok((EOF_MAGIC_HASH, is_cold));
         }
+
+        if code.is_eip7702() {
+            // Load delegation acc
+            unimplemented!();
+        }
+
         Ok((acc.info.code_hash, is_cold))
     }
 

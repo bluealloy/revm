@@ -340,6 +340,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
 
+        // apply EIP-7702 auth list.
+        let gas_refund = pre_exec.apply_eip7702_auth_list(ctx)?;
+
+        // safe to increment gas as intrinsic gas was already deducted.
+        let gas_limit = gas_limit + gas_refund;
+
         let exec = self.handler.execution();
         // call inner handling of call/create
         let first_frame_or_result = match ctx.evm.env.tx.transact_to {
