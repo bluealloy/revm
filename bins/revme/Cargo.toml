@@ -15,12 +15,12 @@ hashbrown = "0.14"
 indicatif = "0.17"
 microbench = "0.5"
 plain_hasher = "0.2"
-revm = { path = "../../crates/revm", version = "12.2.0", default-features = false, features = [
+revm = { path = "../../crates/revm", version = "13.0.0", default-features = false, features = [
     "ethersdb",
     "std",
     "serde-json",
     "c-kzg",
-    "blst"
+    "blst",
 ] }
 alloy-rlp = { version = "0.3", default-features = false, features = [
     "arrayvec",
