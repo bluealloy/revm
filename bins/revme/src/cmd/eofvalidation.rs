@@ -30,6 +30,32 @@ impl Cmd {
     }
 }
 
+fn skip_test(name: &str) -> bool {
+    // embedded containers rules changed
+    if name.starts_with("EOF1_embedded_container") {
+        return true;
+    }
+    matches!(
+        name,
+        "EOF1_undefined_opcodes_186"
+        | ""
+        // truncated data is only allowed in embedded containers
+        | "validInvalid_48"
+        | "validInvalid_1"
+        | "EOF1_truncated_section_3"
+        | "EOF1_truncated_section_4"
+        | "validInvalid_2"
+        | "validInvalid_3"
+        // Orphan containers are no longer allowed
+        | "EOF1_returncontract_valid_0"
+        | "EOF1_returncontract_valid_1"
+        | "EOF1_returncontract_valid_2"
+        | "EOF1_eofcreate_valid_1"
+        | "EOF1_eofcreate_valid_2"
+        | "EOF1_section_order_6"
+    )
+}
+
 pub fn run_test(path: &Path) -> Result<(), Error> {
     let test_files = find_all_json_tests(path);
     let mut test_sum = 0;
@@ -46,6 +72,9 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
         let suite: TestSuite = serde_json::from_str(&s).unwrap();
         for (name, test_unit) in suite.0 {
             for (vector_name, test_vector) in test_unit.vectors {
+                if skip_test(&vector_name) {
+                    continue;
+                }
                 test_sum += 1;
                 let kind = if test_vector.container_kind.is_some() {
                     Some(CodeType::ReturnContract)

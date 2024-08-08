@@ -74,7 +74,6 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
 }
 
 fn skip_test(path: &Path) -> bool {
-    let path_str = path.to_str().expect("Path is not valid UTF-8");
     let name = path.file_name().unwrap().to_str().unwrap();
 
     matches!(
@@ -133,7 +132,7 @@ fn skip_test(path: &Path) -> bool {
         | "block_apply_ommers_reward.json"
         | "known_block_hash.json"
         | "eip7516_blob_base_fee.json"
-    ) || path_str.contains("stEOF")
+    )
 }
 
 fn check_evm_execution<EXT>(
