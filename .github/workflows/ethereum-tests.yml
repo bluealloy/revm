@@ -54,6 +54,6 @@ jobs:
       - name: Run EOF validation tests
         run: |
           cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- eof-validation \
-          tests/eof_suite/eof_tests/prague \
+          tests/eof_suite/eest/eof_tests/prague \
           tests/eof_suite/evmone/eof_tests
 
