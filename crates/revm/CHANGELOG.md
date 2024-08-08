@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.2.0](https://github.com/bluealloy/revm/compare/revm-v12.1.0...revm-v12.2.0) - 2024-08-08
+
+### Added
+- check for typos in CI ([#1686](https://github.com/bluealloy/revm/pull/1686))
+- *(EOF)* EOF Validation add code type and sub container tracker ([#1648](https://github.com/bluealloy/revm/pull/1648))
+
+### Other
+- Add OP-Granite hardfork, limiting bn256Pairing input size ([#1685](https://github.com/bluealloy/revm/pull/1685))
+- *(deps)* bump rstest from 0.21.0 to 0.22.0 ([#1681](https://github.com/bluealloy/revm/pull/1681))
+- *(deps)* bump tokio from 1.38.1 to 1.39.2 ([#1668](https://github.com/bluealloy/revm/pull/1668))
+- *(clippy)* 1.80 rust clippy list paragraph ident ([#1661](https://github.com/bluealloy/revm/pull/1661))
+- avoid cloning original_bytes ([#1646](https://github.com/bluealloy/revm/pull/1646))
+- use `is_zero` for `U256` and `B256` ([#1638](https://github.com/bluealloy/revm/pull/1638))
+- fix some typos & remove useless Arc::clone ([#1621](https://github.com/bluealloy/revm/pull/1621))
+- *(eof)* simplify magic checks ([#1633](https://github.com/bluealloy/revm/pull/1633))
+
 ## [12.0.0](https://github.com/bluealloy/revm/compare/revm-v11.0.0...revm-v12.0.0) - 2024-07-16
 
 ### Added
