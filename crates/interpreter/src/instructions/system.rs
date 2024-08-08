@@ -38,24 +38,17 @@ pub fn codesize<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) 
 
 pub fn codecopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     pop!(interpreter, memory_offset, code_offset, len);
-    let len = as_usize_or_fail!(interpreter, len);
-    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
-    if len == 0 {
-        return;
-    }
-    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
     let code_offset = as_usize_saturated!(code_offset);
-    resize_memory!(interpreter, memory_offset, len);
-
+    let len = as_usize_or_fail!(interpreter, len);
     // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
     assume!(!interpreter.contract.bytecode.is_eof());
-    // Note: this can't panic because we resized memory to fit.
-    interpreter.shared_memory.set_data(
-        memory_offset,
-        code_offset,
-        len,
-        interpreter.contract.bytecode.original_byte_slice(),
-    );
+    if let Some(memory_offset) = copy_to_memory(interpreter, memory_offset, code_offset, len) {
+        let source = interpreter.contract.bytecode.original_byte_slice();
+        // Note: this can't panic because we resized memory to fit.
+        interpreter
+            .shared_memory
+            .set_data(memory_offset, code_offset, len, &*source);
+    }
 }
 
 pub fn calldataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -94,21 +87,14 @@ pub fn callvalue<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
 pub fn calldatacopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     pop!(interpreter, memory_offset, data_offset, len);
     let len = as_usize_or_fail!(interpreter, len);
-    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
-    if len == 0 {
-        return;
-    }
-    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
     let data_offset = as_usize_saturated!(data_offset);
-    resize_memory!(interpreter, memory_offset, len);
-
-    // Note: this can't panic because we resized memory to fit.
-    interpreter.shared_memory.set_data(
-        memory_offset,
-        data_offset,
-        len,
-        &interpreter.contract.input,
-    );
+    if let Some(memory_offset) = copy_to_memory(interpreter, memory_offset, data_offset, len) {
+        let source = interpreter.contract.input.as_ref();
+        // Note: this can't panic because we resized memory to fit.
+        interpreter
+            .shared_memory
+            .set_data(memory_offset, data_offset, len, source);
+    };
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
@@ -127,8 +113,6 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
     pop!(interpreter, memory_offset, offset, len);
 
     let len = as_usize_or_fail!(interpreter, len);
-    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
-
     let data_offset = as_usize_saturated!(offset);
     let data_end = data_offset.saturating_add(len);
 
@@ -139,22 +123,13 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
         return;
     }
 
-    // if len is zero memory is not resized.
-    if len == 0 {
-        return;
-    }
-
-    // resize memory
-    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
-    resize_memory!(interpreter, memory_offset, len);
-
-    // Note: this can't panic because we resized memory to fit.
-    interpreter.shared_memory.set_data(
-        memory_offset,
-        data_offset,
-        len,
-        &interpreter.return_data_buffer,
-    );
+    if let Some(memory_offset) = copy_to_memory(interpreter, memory_offset, data_offset, len) {
+        let source = interpreter.return_data_buffer.as_ref();
+        // Note: this can't panic because we resized memory to fit.
+        interpreter
+            .shared_memory
+            .set_data(memory_offset, data_offset, len, &*source);
+    };
 }
 
 /// Part of EOF `<https://eips.ethereum.org/EIPS/eip-7069>`.
@@ -177,6 +152,23 @@ pub fn returndataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &m
     }
 
     *offset = B256::from(output).into();
+}
+
+// common logic for copying data from a source buffer to the EVM's memory
+fn copy_to_memory(
+    interpreter: &mut Interpreter,
+    memory_offset: U256,
+    data_offset: usize,
+    len: usize,
+) -> Option<usize> {
+    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
+    if len == 0 {
+        return None;
+    }
+    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
+    resize_memory!(interpreter, memory_offset, len);
+
+    Some(memory_offset)
 }
 
 pub fn gas<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
