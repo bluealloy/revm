@@ -89,7 +89,7 @@ pub fn validate_raw_eof_inner(
 /// Only place where validation happen is in Creating Transaction.
 /// Because of that we are assuming CodeType is ReturnContract.
 ///
-/// Note: If neeed we can make a flag that would assume ReturnContract CodeType.
+/// Note: If needed we can make a flag that would assume ReturnContract CodeType.
 pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
     validate_eof_inner(eof, Some(CodeType::ReturnContract))
 }
@@ -224,7 +224,7 @@ impl std::error::Error for EofError {}
 
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum EofValidationError {
-    FalsePossitive,
+    FalsePositive,
     /// Opcode is not known. It is not defined in the opcode table.
     UnknownOpcode,
     /// Opcode is disabled in EOF. For example JUMP, JUMPI, etc.
@@ -398,7 +398,7 @@ impl fmt::Display for EofValidationError {
             f,
             "{}",
             match self {
-                Self::FalsePossitive => "False positive",
+                Self::FalsePositive => "False positive",
                 Self::UnknownOpcode => "Opcode is not known",
                 Self::OpcodeDisabled => "Opcode is disabled",
                 Self::InstructionNotForwardAccessed => "Should have forward jump",

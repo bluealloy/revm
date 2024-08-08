@@ -461,7 +461,7 @@ pub enum HaltReason {
     OutOfFunds,
     CallTooDeep,
 
-    /// Aux data overflow, new aux data is larger tha u16 max size.
+    /// Aux data overflow, new aux data is larger than u16 max size.
     EofAuxDataOverflow,
     /// Aud data is smaller then already present data size.
     EofAuxDataTooSmall,

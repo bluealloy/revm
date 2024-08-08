@@ -50,7 +50,7 @@ impl Default for EOFCreateKind {
 pub struct EOFCreateInputs {
     /// Caller of Eof Craate
     pub caller: Address,
-    /// Values of ether transfered
+    /// Values of ether transferred
     pub value: U256,
     /// Gas limit for the create call.
     pub gas_limit: u64,

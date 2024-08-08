@@ -1,6 +1,6 @@
 # KZG 
 
-With the introduction of [EIP4844](https://eips.ethereum.org/EIPS/eip-4844), this use of blobs for a more efficent short term storage is employed, the validity of this blob stored in the consensus layer is verified using the `Point Evaluation` pre-compile, a fancy way of verifing that and evaluation at a given point of a commited polynomial is vaild, in a much more bigger scale, implies that `Data is Available`.
+With the introduction of [EIP4844](https://eips.ethereum.org/EIPS/eip-4844), this use of blobs for a more efficient short term storage is employed, the validity of this blob stored in the consensus layer is verified using the `Point Evaluation` pre-compile, a fancy way of verifying that and evaluation at a given point of a committed polynomial is valid, in a much more bigger scale, implies that `Data is Available`.
 
 This module houses;
 
