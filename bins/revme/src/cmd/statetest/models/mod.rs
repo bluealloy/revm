@@ -91,6 +91,7 @@ pub struct AccountInfo {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Env {
     pub current_coinbase: Address,
+    #[serde(default)]
     pub current_difficulty: U256,
     pub current_gas_limit: U256,
     pub current_number: U256,
@@ -118,7 +119,7 @@ pub struct TransactionParts {
     /// if sender is not present we need to derive it from secret key.
     #[serde(default)]
     pub sender: Option<Address>,
-    #[serde(deserialize_with = "deserialize_maybe_empty")]
+    #[serde(default, deserialize_with = "deserialize_maybe_empty")]
     pub to: Option<Address>,
     pub value: Vec<U256>,
     pub max_fee_per_gas: Option<U256>,

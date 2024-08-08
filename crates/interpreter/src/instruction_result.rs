@@ -134,6 +134,7 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::EofAuxDataOverflow => Self::EofAuxDataOverflow,
             HaltReason::EofAuxDataTooSmall => Self::EofAuxDataTooSmall,
             HaltReason::EOFFunctionStackOverflow => Self::EOFFunctionStackOverflow,
+            HaltReason::InvalidEXTCALLTarget => Self::InvalidEXTCALLTarget,
             #[cfg(feature = "optimism")]
             HaltReason::FailedDeposit => Self::FatalExternalError,
         }
@@ -226,8 +227,6 @@ pub enum InternalResult {
     InternalCallOrCreate,
     /// Internal CREATE/CREATE starts with 0xEF00
     CreateInitCodeStartingEF00,
-    /// Check for target address validity is only done inside subcall.
-    InvalidEXTCALLTarget,
     /// Internal to ExtDelegateCall
     InvalidExtDelegateCallTarget,
 }
@@ -338,9 +337,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
             InstructionResult::EofAuxDataOverflow => Self::Halt(HaltReason::EofAuxDataOverflow),
             InstructionResult::EofAuxDataTooSmall => Self::Halt(HaltReason::EofAuxDataTooSmall),
-            InstructionResult::InvalidEXTCALLTarget => {
-                Self::Internal(InternalResult::InvalidEXTCALLTarget)
-            }
+            InstructionResult::InvalidEXTCALLTarget => Self::Halt(HaltReason::InvalidEXTCALLTarget),
             InstructionResult::InvalidExtDelegateCallTarget => {
                 Self::Internal(InternalResult::InvalidExtDelegateCallTarget)
             }

@@ -1,0 +1,46 @@
+{
+  "forwards_rjump": {
+    "vectors": {
+      "forwards_rjump_0": {
+        "code": "0xef000101000402000100040400000000800000e0000000",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "forwards_rjump_1": {
+        "code": "0xef0001010004020001000b04000000008000025f6000e10003e000011900",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "forwards_rjump_2": {
+        "code": "0xef0001010004020001001304000000008000025f6000e100086000e10006e00004e000011900",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "forwards_rjump_3": {
+        "code": "0xef0001010004020001000b04000000008000025f6000e10003e000015f00",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "forwards_rjump_4": {
+        "code": "0xef0001010004020001001404000000008000025f6000e100086000e10007e000055fe000011900",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      }
+    }
+  }
+}

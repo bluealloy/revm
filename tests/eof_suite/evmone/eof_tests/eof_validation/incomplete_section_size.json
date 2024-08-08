@@ -1,0 +1,15 @@
+{
+  "incomplete_section_size": {
+    "vectors": {
+      "incomplete_section_size_0": {
+        "code": "0xef000101010002003f0100",
+        "results": {
+          "Prague": {
+            "exception": "EOF_IncompleteSectionSize",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

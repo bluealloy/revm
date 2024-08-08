@@ -1,0 +1,15 @@
+{
+  "validate_empty_code": {
+    "vectors": {
+      "validate_empty_code_0": {
+        "code": "0x",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidPrefix",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

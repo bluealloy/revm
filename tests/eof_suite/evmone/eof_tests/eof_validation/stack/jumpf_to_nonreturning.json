@@ -1,0 +1,47 @@
+{
+  "jumpf_to_nonreturning": {
+    "vectors": {
+      "jumpf_to_nonreturning_0": {
+        "code": "0xef000101000802000200030001040000000080000000800000e5000100",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "jumpf_to_nonreturning_1": {
+        "code": "0xef0001010008020002000500010400000000800002008000005f5fe5000100",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "jumpf_to_nonreturning_2": {
+        "code": "0xef0001010008020002000600010400000000800003038000035f5f5fe5000100",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "jumpf_to_nonreturning_3": {
+        "code": "0xef0001010008020002000700010400000000800004038000035f5f5f5fe5000100",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "jumpf_to_nonreturning_4": {
+        "code": "0xef0001010008020002000500010400000000800002038000035f5fe5000100",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

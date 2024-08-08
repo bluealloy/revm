@@ -1,0 +1,24 @@
+{
+  "EOF1_no_type_section": {
+    "vectors": {
+      "EOF1_no_type_section_0": {
+        "code": "0xef0001020001000100fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      },
+      "EOF1_no_type_section_1": {
+        "code": "0xef00010200020001000100fefe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_TypeSectionMissing",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

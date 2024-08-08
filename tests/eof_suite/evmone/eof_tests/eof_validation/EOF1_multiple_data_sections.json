@@ -1,0 +1,15 @@
+{
+  "EOF1_multiple_data_sections": {
+    "vectors": {
+      "EOF1_multiple_data_sections_0": {
+        "code": "0xef000101000402000100010400010400010000800000fedada",
+        "results": {
+          "Prague": {
+            "exception": "EOF_HeaderTerminatorMissing",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

@@ -26,6 +26,7 @@ pub enum SpecName {
     Cancun,
     Prague,
     PragueEOF,
+    Osaka, // SKIPPED
     #[serde(other)]
     Unknown,
 }
@@ -52,6 +53,7 @@ impl SpecName {
             Self::ByzantiumToConstantinopleAt5 | Self::Constantinople => {
                 panic!("Overridden with PETERSBURG")
             }
+            Self::Osaka => panic!("Osaka is not implemented"),
             Self::Unknown => panic!("Unknown spec"),
         }
     }

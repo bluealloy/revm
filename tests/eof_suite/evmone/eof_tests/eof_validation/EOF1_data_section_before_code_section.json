@@ -1,0 +1,15 @@
+{
+  "EOF1_data_section_before_code_section": {
+    "vectors": {
+      "EOF1_data_section_before_code_section_0": {
+        "code": "0xef000101000403000102000100010000800000aafe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_CodeSectionMissing",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

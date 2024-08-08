@@ -1,0 +1,26 @@
+{
+  "eofcreate_and_returncontract_targeting_same_container": {
+    "vectors": {
+      "eofcreate_and_returncontract_targeting_same_container_0": {
+        "code": "0xef00010100040200010010030001001404000000008000046000600060006000ec0060006000ee00ef000101000402000100010400000000800000fe",
+        "containerKind": "INITCODE",
+        "results": {
+          "Prague": {
+            "exception": "EOF_AmbiguousContainerKind",
+            "result": false
+          }
+        }
+      },
+      "eofcreate_and_returncontract_targeting_same_container_1": {
+        "code": "0xef000101000402000100100300020014001404000000008000046000600060006000ec0060006000ee00ef000101000402000100010400000000800000feef000101000402000100010400000000800000fe",
+        "containerKind": "INITCODE",
+        "results": {
+          "Prague": {
+            "exception": "EOF_AmbiguousContainerKind",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "validate_EOF_version": {
+    "vectors": {
+      "valid_except_version_00": {
+        "code": "0xef000001000402000100030200040000800000600000aabbccdd",
+        "results": {
+          "Prague": {
+            "exception": "EOF_UnknownVersion",
+            "result": false
+          }
+        }
+      },
+      "valid_except_version_02": {
+        "code": "0xef000201000402000100030200040000800000600000aabbccdd",
+        "results": {
+          "Prague": {
+            "exception": "EOF_UnknownVersion",
+            "result": false
+          }
+        }
+      },
+      "valid_except_version_FF": {
+        "code": "0xef00ff01000402000100030200040000800000600000aabbccdd",
+        "results": {
+          "Prague": {
+            "exception": "EOF_UnknownVersion",
+            "result": false
+          }
+        }
+      },
+      "validate_EOF_version_0": {
+        "code": "0xef0002",
+        "results": {
+          "Prague": {
+            "exception": "EOF_UnknownVersion",
+            "result": false
+          }
+        }
+      },
+      "validate_EOF_version_1": {
+        "code": "0xef00ff",
+        "results": {
+          "Prague": {
+            "exception": "EOF_UnknownVersion",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}
