@@ -289,11 +289,7 @@ pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResul
 /// * If account is not existing and needs to be created. After Spurious dragon
 ///   this is only accounted if value is transferred.
 #[inline]
-pub const fn call_cost(
-    spec_id: SpecId,
-    transfers_value: bool,
-    account_load: AccountLoad,
-) -> u64 {
+pub const fn call_cost(spec_id: SpecId, transfers_value: bool, account_load: AccountLoad) -> u64 {
     // Account access.
     let mut gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
         warm_cold_cost_with_delegation(account_load.load)

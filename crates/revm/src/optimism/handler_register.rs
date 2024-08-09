@@ -497,7 +497,7 @@ mod tests {
         deduct_caller::<RegolithSpec, (), _>(&mut context).unwrap();
 
         // Check the account balance is updated.
-        let (account, _) = context
+        let account = context
             .evm
             .inner
             .journaled_state
@@ -535,7 +535,7 @@ mod tests {
         deduct_caller::<RegolithSpec, (), _>(&mut context).unwrap();
 
         // Check the account balance is updated.
-        let (account, _) = context
+        let account = context
             .evm
             .inner
             .journaled_state
@@ -567,7 +567,7 @@ mod tests {
         deduct_caller::<RegolithSpec, (), _>(&mut context).unwrap();
 
         // Check the account balance is updated.
-        let (account, _) = context
+        let account = context
             .evm
             .inner
             .journaled_state
