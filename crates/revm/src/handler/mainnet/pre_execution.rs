@@ -129,7 +129,7 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
 
         // warm authority account and check nonce.
         // 8.Add authority to accessed_addresses (as defined in EIP-2929.)
-        let (authority_acc, _) = context
+        let mut authority_acc = context
             .evm
             .inner
             .journaled_state

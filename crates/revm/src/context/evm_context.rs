@@ -216,7 +216,7 @@ impl<DB: Database> EvmContext<DB> {
                 inputs.return_memory_offset.clone(),
             ))
         } else {
-            let (account, _) = self
+            let account = self
                 .inner
                 .journaled_state
                 .load_code(inputs.bytecode_address, &mut self.inner.db)?;
@@ -276,10 +276,10 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         // Fetch balance of caller.
-        let (caller_balance, _) = self.balance(inputs.caller)?;
+        let caller_balance = self.balance(inputs.caller)?;
 
         // Check if caller has enough balance to send to the created contract.
-        if caller_balance < inputs.value {
+        if caller_balance.data < inputs.value {
             return return_error(InstructionResult::OutOfFunds);
         }
 
@@ -397,10 +397,10 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         // Fetch balance of caller.
-        let (caller_balance, _) = self.balance(inputs.caller)?;
+        let caller_balance = self.balance(inputs.caller)?;
 
         // Check if caller has enough balance to send to the created contract.
-        if caller_balance < inputs.value {
+        if caller_balance.data < inputs.value {
             return return_error(InstructionResult::OutOfFunds);
         }
 

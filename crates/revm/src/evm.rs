@@ -341,10 +341,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
 
         // apply EIP-7702 auth list.
-        let gas_refund = pre_exec.apply_eip7702_auth_list(ctx)?;
-
-        // safe to increment gas as intrinsic gas was already deducted.
-        let gas_limit = gas_limit + gas_refund;
+        let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(ctx)? as i64;
 
         let exec = self.handler.execution();
         // call inner handling of call/create
@@ -371,6 +368,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 }
             }
         };
+
         // Starts the main running loop.
         let mut result = match first_frame_or_result {
             FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
@@ -378,6 +376,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         };
 
         let ctx = &mut self.context;
+
+        // add refund from EIP-7702.
+        result.gas_mut().record_refund(eip7702_gas_refund);
 
         // handle output of call/create calls.
         self.handler

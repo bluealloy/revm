@@ -1,10 +1,10 @@
 use crate::{
     db::Database,
     interpreter::{
-        analysis::to_analysed, gas, return_ok, InstructionResult, InterpreterResult,
-        LoadAccountResult, SStoreResult, SelfDestructResult,
+        analysis::to_analysed, gas, return_ok, AccountLoad, Eip7702CodeLoad, InstructionResult,
+        InterpreterResult, SStoreResult, SelfDestructResult, StateLoad,
     },
-    journaled_state::{AccountLoad, JournaledState},
+    journaled_state::JournaledState,
     primitives::{
         AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, EVMError, Env,
         Eof, HashSet, Spec,
@@ -147,7 +147,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     pub fn load_account(
         &mut self,
         address: Address,
-    ) -> Result<AccountLoad<&mut Account>, EVMError<DB::Error>> {
+    ) -> Result<StateLoad<&mut Account>, EVMError<DB::Error>> {
         self.journaled_state.load_account(address, &mut self.db)
     }
 
@@ -158,38 +158,56 @@ impl<DB: Database> InnerEvmContext<DB> {
     pub fn load_account_exist(
         &mut self,
         address: Address,
-    ) -> Result<LoadAccountResult, EVMError<DB::Error>> {
+    ) -> Result<AccountLoad, EVMError<DB::Error>> {
         self.journaled_state
             .load_account_exist(address, &mut self.db)
     }
 
     /// Return account balance and is_cold flag.
     #[inline]
-    pub fn balance(&mut self, address: Address) -> Result<(U256, bool), EVMError<DB::Error>> {
+    pub fn balance(&mut self, address: Address) -> Result<StateLoad<U256>, EVMError<DB::Error>> {
         self.journaled_state
             .load_account(address, &mut self.db)
-            .map(|acc| (acc.data.info.balance, acc.is_cold))
+            .map(|acc| acc.map(|a| a.info.balance))
     }
 
     /// Return account code bytes and if address is cold loaded.
     ///
     /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
     #[inline]
-    pub fn code(&mut self, address: Address) -> Result<(Bytes, bool), EVMError<DB::Error>> {
-        self.journaled_state
-            .load_code(address, &mut self.db)
-            .map(|(a, is_cold)| {
-                // SAFETY: safe to unwrap as load_code will insert code if it is empty.
-                let code = a.info.code.as_ref().unwrap();
-                if code.is_eof() {
-                    (EOF_MAGIC_BYTES.clone(), is_cold)
-                } else if code.is_eip7702() {
-                    // Load delegation acc
-                    unimplemented!();
-                } else {
-                    (code.original_bytes(), is_cold)
-                }
-            })
+    pub fn code(
+        &mut self,
+        address: Address,
+    ) -> Result<Eip7702CodeLoad<Bytes>, EVMError<DB::Error>> {
+        let a = self.journaled_state.load_code(address, &mut self.db)?;
+        // SAFETY: safe to unwrap as load_code will insert code if it is empty.
+        let code = a.info.code.as_ref().unwrap();
+        if code.is_eof() {
+            return Ok(Eip7702CodeLoad::new_not_delegated(
+                EOF_MAGIC_BYTES.clone(),
+                a.is_cold,
+            ));
+        }
+
+        if let Bytecode::Eip7702s(code) = code {
+            let address = code.address();
+            let is_cold = a.is_cold;
+
+            let delegated_account = self.journaled_state.load_code(address, &mut self.db)?;
+
+            // SAFETY: safe to unwrap as load_code will insert code if it is empty.
+            let delegated_code = delegated_account.info.code.as_ref().cloned().unwrap();
+
+            return Ok(Eip7702CodeLoad::new(
+                StateLoad::new(delegated_code.original_bytes(), is_cold),
+                delegated_account.is_cold,
+            ));
+        }
+
+        Ok(Eip7702CodeLoad::new_not_delegated(
+            code.original_bytes(),
+            a.is_cold,
+        ))
     }
 
     /// Get code hash of address.
@@ -197,24 +215,41 @@ impl<DB: Database> InnerEvmContext<DB> {
     /// In case of EOF account it will return `EOF_MAGIC_HASH`
     /// (the hash of `0xEF00`).
     #[inline]
-    pub fn code_hash(&mut self, address: Address) -> Result<(B256, bool), EVMError<DB::Error>> {
-        let (acc, is_cold) = self.journaled_state.load_code(address, &mut self.db)?;
+    pub fn code_hash(
+        &mut self,
+        address: Address,
+    ) -> Result<Eip7702CodeLoad<B256>, EVMError<DB::Error>> {
+        let acc = self.journaled_state.load_code(address, &mut self.db)?;
         if acc.is_empty() {
-            return Ok((B256::ZERO, is_cold));
+            return Ok(Eip7702CodeLoad::new_not_delegated(B256::ZERO, acc.is_cold));
         }
         // SAFETY: safe to unwrap as load_code will insert code if it is empty.
         let code = acc.info.code.as_ref().unwrap();
 
         if code.is_eof() {
-            return Ok((EOF_MAGIC_HASH, is_cold));
+            return Ok(Eip7702CodeLoad::new_not_delegated(
+                EOF_MAGIC_HASH,
+                acc.is_cold,
+            ));
         }
 
-        if code.is_eip7702() {
-            // Load delegation acc
-            unimplemented!();
+        // If bytecode is EIP-7702 then we need to load the delegated account.
+        if let Bytecode::Eip7702s(code) = code {
+            let address = code.address();
+            let is_cold = acc.is_cold;
+
+            let delegated_account = self.journaled_state.load_code(address, &mut self.db)?;
+
+            return Ok(Eip7702CodeLoad::new(
+                StateLoad::new(delegated_account.info.code_hash, is_cold),
+                delegated_account.is_cold,
+            ));
         }
 
-        Ok((acc.info.code_hash, is_cold))
+        Ok(Eip7702CodeLoad::new_not_delegated(
+            acc.info.code_hash,
+            acc.is_cold,
+        ))
     }
 
     /// Load storage slot, if storage is not present inside the account then it will be loaded from database.
@@ -223,7 +258,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         &mut self,
         address: Address,
         index: U256,
-    ) -> Result<(U256, bool), EVMError<DB::Error>> {
+    ) -> Result<StateLoad<U256>, EVMError<DB::Error>> {
         // account is always warm. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.journaled_state.sload(address, index, &mut self.db)
     }
@@ -235,7 +270,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         address: Address,
         index: U256,
         value: U256,
-    ) -> Result<SStoreResult, EVMError<DB::Error>> {
+    ) -> Result<StateLoad<SStoreResult>, EVMError<DB::Error>> {
         self.journaled_state
             .sstore(address, index, value, &mut self.db)
     }
@@ -258,7 +293,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         &mut self,
         address: Address,
         target: Address,
-    ) -> Result<SelfDestructResult, EVMError<DB::Error>> {
+    ) -> Result<StateLoad<SelfDestructResult>, EVMError<DB::Error>> {
         self.journaled_state
             .selfdestruct(address, target, &mut self.db)
     }

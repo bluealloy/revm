@@ -8,8 +8,8 @@ use crate::{
     primitives::{
         eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, B256, U256,
     },
-    CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, Host,
-    InstructionResult, InterpreterAction, InterpreterResult, LoadAccountResult, MAX_INITCODE_SIZE,
+    AccountLoad, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs,
+    Host, InstructionResult, InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE,
 };
 use core::cmp::max;
 use std::boxed::Box;
@@ -417,7 +417,7 @@ pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &
         return;
     };
 
-    let Some(LoadAccountResult { is_cold, is_empty }) = host.load_account(to) else {
+    let Some(AccountLoad { is_cold, is_empty }) = host.load_account(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
@@ -467,7 +467,7 @@ pub fn call_code<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
         return;
     };
 
-    let Some(LoadAccountResult { is_cold, .. }) = host.load_account(to) else {
+    let Some(AccountLoad { is_cold, .. }) = host.load_account(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
@@ -518,7 +518,7 @@ pub fn delegate_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter
         return;
     };
 
-    let Some(LoadAccountResult { is_cold, .. }) = host.load_account(to) else {
+    let Some(AccountLoad { is_cold, .. }) = host.load_account(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
@@ -559,7 +559,7 @@ pub fn static_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
         return;
     };
 
-    let Some(LoadAccountResult { is_cold, .. }) = host.load_account(to) else {
+    let Some(AccountLoad { is_cold, .. }) = host.load_account(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };

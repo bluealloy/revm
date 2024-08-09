@@ -2,7 +2,7 @@ use super::constants::*;
 use crate::{
     num_words,
     primitives::{AccessListItem, SpecId, U256},
-    SelfDestructResult,
+    SelfDestructResult, StateLoad,
 };
 
 /// `const` Option `?`.
@@ -251,12 +251,12 @@ fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
 
 /// `SELFDESTRUCT` opcode cost calculation.
 #[inline]
-pub const fn selfdestruct_cost(spec_id: SpecId, res: SelfDestructResult) -> u64 {
+pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResult>) -> u64 {
     // EIP-161: State trie clearing (invariant-preserving alternative)
     let should_charge_topup = if spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
-        res.had_value && !res.target_exists
+        res.data.had_value && !res.data.target_exists
     } else {
-        !res.target_exists
+        !res.data.target_exists
     };
 
     // EIP-150: Gas cost changes for IO-heavy operations
