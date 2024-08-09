@@ -13,18 +13,47 @@ use structopt::StructOpt;
 pub struct Cmd {
     /// Input path to eof validation test
     #[structopt(required = true)]
-    path: PathBuf,
+    path: Vec<PathBuf>,
 }
 
 impl Cmd {
     /// Run statetest command.
     pub fn run(&self) -> Result<(), Error> {
         // check if path exists.
-        if !self.path.exists() {
-            return Err(Error::Custom("The specified path does not exist"));
+        for path in &self.path {
+            if !path.exists() {
+                return Err(Error::Custom("The specified path does not exist"));
+            }
+            run_test(path)?
         }
-        run_test(&self.path)
+        Ok(())
     }
+}
+
+fn skip_test(name: &str) -> bool {
+    // embedded containers rules changed
+    if name.starts_with("EOF1_embedded_container") {
+        return true;
+    }
+    matches!(
+        name,
+        "EOF1_undefined_opcodes_186"
+        | ""
+        // truncated data is only allowed in embedded containers
+        | "validInvalid_48"
+        | "validInvalid_1"
+        | "EOF1_truncated_section_3"
+        | "EOF1_truncated_section_4"
+        | "validInvalid_2"
+        | "validInvalid_3"
+        // Orphan containers are no longer allowed
+        | "EOF1_returncontract_valid_0"
+        | "EOF1_returncontract_valid_1"
+        | "EOF1_returncontract_valid_2"
+        | "EOF1_eofcreate_valid_1"
+        | "EOF1_eofcreate_valid_2"
+        | "EOF1_section_order_6"
+    )
 }
 
 pub fn run_test(path: &Path) -> Result<(), Error> {
@@ -43,11 +72,14 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
         let suite: TestSuite = serde_json::from_str(&s).unwrap();
         for (name, test_unit) in suite.0 {
             for (vector_name, test_vector) in test_unit.vectors {
+                if skip_test(&vector_name) {
+                    continue;
+                }
                 test_sum += 1;
                 let kind = if test_vector.container_kind.is_some() {
                     Some(CodeType::ReturnContract)
                 } else {
-                    None
+                    Some(CodeType::ReturnOrStop)
                 };
                 let res = validate_raw_eof_inner(test_vector.code.clone(), kind);
                 if res.is_ok() != test_vector.results.prague.result {

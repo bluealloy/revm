@@ -1,0 +1,201 @@
+{
+  "exchange_stack_validation": {
+    "vectors": {
+      "exchange_stack_validation_0": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e80000",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "exchange_stack_validation_1": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e81000",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "exchange_stack_validation_10": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e81600",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "exchange_stack_validation_11": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e86100",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "exchange_stack_validation_12": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e88000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "exchange_stack_validation_13": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e80800",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "exchange_stack_validation_14": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e87100",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "exchange_stack_validation_15": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e81700",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "exchange_stack_validation_16": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e84400",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "exchange_stack_validation_17": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e85300",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "exchange_stack_validation_18": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e83500",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "exchange_stack_validation_19": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e8ee00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "exchange_stack_validation_2": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e80100",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "exchange_stack_validation_20": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e8ef00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "exchange_stack_validation_21": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e8fe00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "exchange_stack_validation_22": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e8ff00",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "exchange_stack_validation_3": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e82000",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "exchange_stack_validation_4": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e80200",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "exchange_stack_validation_5": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e87000",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "exchange_stack_validation_6": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e80700",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "exchange_stack_validation_7": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e81100",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "exchange_stack_validation_8": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e83400",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "exchange_stack_validation_9": {
+        "code": "0xef00010100040200010017040000000080000a6001600160016001600160016001600160016001e84300",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      }
+    }
+  }
+}

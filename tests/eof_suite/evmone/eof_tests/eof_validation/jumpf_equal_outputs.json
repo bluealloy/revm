@@ -1,0 +1,14 @@
+{
+  "jumpf_equal_outputs": {
+    "vectors": {
+      "jumpf_equal_outputs_0": {
+        "code": "0xef000101000c02000300040003000404000000008000030003000000030003e3000100e500025f5f5fe4",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      }
+    }
+  }
+}

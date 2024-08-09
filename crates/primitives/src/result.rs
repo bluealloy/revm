@@ -464,12 +464,14 @@ pub enum HaltReason {
     OutOfFunds,
     CallTooDeep,
 
-    /// Aux data overflow, new aux data is larger tha u16 max size.
+    /// Aux data overflow, new aux data is larger than u16 max size.
     EofAuxDataOverflow,
     /// Aud data is smaller then already present data size.
     EofAuxDataTooSmall,
     /// EOF Subroutine stack overflow
     EOFFunctionStackOverflow,
+    /// Check for target address validity is only done inside subcall.
+    InvalidEXTCALLTarget,
 
     /* Optimism errors */
     #[cfg(feature = "optimism")]

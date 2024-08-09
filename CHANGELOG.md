@@ -1,5 +1,18 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v41 tag
+date: 08.08.2024
+
+EOF fixes and improvements.
+Optimism Granite fork support.
+
+* `revme`: 0.8.0 -> 0.9.0
+* `revm`: 12.1.0 -> 13.0.0
+* `revm-interpreter`: 8.1.0 -> 9.0.0
+* `revm-primitives`: 7.1.0 -> 8.0.0
+* `revm-precompile`: 9.2.0 -> 10.0.0
+* `revm-test`: 0.1.0
+
 # v40 tag
 date 17.07.2024
 

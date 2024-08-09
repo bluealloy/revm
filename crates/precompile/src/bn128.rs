@@ -45,7 +45,7 @@ pub mod mul {
 pub mod pair {
     use super::*;
 
-    const ADDRESS: Address = crate::u64_to_address(8);
+    pub const ADDRESS: Address = crate::u64_to_address(8);
 
     pub const ISTANBUL_PAIR_PER_POINT: u64 = 34_000;
     pub const ISTANBUL_PAIR_BASE: u64 = 45_000;

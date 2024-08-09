@@ -1,0 +1,15 @@
+{
+  "callf_into_nonreturning": {
+    "vectors": {
+      "callf_into_nonreturning_0": {
+        "code": "0xef000101000802000200040001040000000080000000800000e300010000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_CallfToNonReturningFunction",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}
