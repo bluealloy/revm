@@ -22,3 +22,6 @@ debug = true
 [profile.ethtests]
 inherits = "test"
 opt-level = 3
+
+[patch.crates-io]
+alloy-eips = { git = "https://github.com/alloy-rs/alloy", rev = "fd159f6" }

@@ -121,8 +121,8 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
         };
 
         // 2. Verify the chain id is either 0 or the chain's current ID.
-        if authorization.chain_id() != 0
-            && authorization.chain_id() != context.evm.inner.env.cfg.chain_id
+        if !authorization.chain_id().is_zero()
+            && authorization.chain_id() != U256::from(context.evm.inner.env.cfg.chain_id)
         {
             continue;
         }
@@ -146,10 +146,8 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
         // 4. If nonce list item is length one, verify the nonce of authority is equal to nonce.
         //
         // In case of signer setting its own delegation nonce will be bumped twice
-        if let Some(nonce) = authorization.nonce() {
-            if nonce != authority_acc.info.nonce {
-                continue;
-            }
+        if authorization.nonce() != authority_acc.info.nonce {
+            continue;
         }
 
         // 5. Refund the sender PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST gas if authority exists in the trie.
