@@ -6,11 +6,9 @@ use crate::{
 };
 use core::{cell::RefCell, ops::Deref};
 use fluentbase_core::helpers::exit_code_from_evm_error;
-use fluentbase_runtime::Runtime;
 use fluentbase_sdk::{Account, AccountStatus, SovereignAPI};
 use fluentbase_types::{
     BlockContext,
-    BytecodeType,
     CallPrecompileResult,
     ContractContext,
     DestroyedAccountResult,
@@ -19,8 +17,6 @@ use fluentbase_types::{
     IJournaledTrie,
     IsColdAccess,
     JournalCheckpoint,
-    JournalEvent,
-    JournalLog,
     NativeAPI,
     SovereignStateResult,
     TxContext,
@@ -241,9 +237,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
 
     fn context_call(
         &mut self,
-        caller: &Address,
         address: &Address,
-        value: &U256,
         fuel: &mut Fuel,
         input: &[u8],
         state: u32,
@@ -251,12 +245,17 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
         // load account that belongs to the address, we need this to extract rWASM code hash that we
         // pass inside the runtime for execution
         let (account, _) = self.account(&address);
+        // warmup bytecode before execution,
+        // it's a technical limitation we have right now,
+        // planning to solve it in the future
+        #[cfg(feature = "std")]
+        {
+            use fluentbase_runtime::Runtime;
+            let bytecode = self.preimage(&account.rwasm_code_hash).unwrap_or_default();
+            Runtime::warmup_bytecode(account.rwasm_code_hash, bytecode);
+        }
         // we need to generate default root context, we're going to remove this and start using
         // nested calls as well for transaction execution to support fork-less mode
-        Runtime::warmup_bytecode(
-            account.rwasm_code_hash,
-            self.preimage(&account.rwasm_code_hash).unwrap_or_default(),
-        );
         let exit_code = self
             .native_sdk
             .exec(&account.rwasm_code_hash, address, input, fuel, state);

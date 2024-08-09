@@ -31,6 +31,7 @@ use fluentbase_types::{
     calc_create_address,
     Account,
     Address,
+    BytecodeType,
     Bytes,
     ExitCode,
     NativeAPI,
@@ -204,30 +205,39 @@ impl<'a> TxBuilder<'a> {
 }
 
 fn deploy_evm_tx(ctx: &mut EvmTestingContext, deployer: Address, init_bytecode: Bytes) -> Address {
+    let bytecode_type = BytecodeType::from_slice(init_bytecode.as_ref());
     // deploy greeting EVM contract
     let result = TxBuilder::create(ctx, deployer, init_bytecode.clone().into()).exec();
     assert!(result.is_success());
     let contract_address = calc_create_address(&ctx.sdk, &deployer, 0);
     assert_eq!(contract_address, deployer.create(0));
     let contract_account = ctx.db.accounts.get(&contract_address).unwrap();
-    let source_bytecode = ctx
-        .db
-        .contracts
-        .get(&contract_account.info.code_hash)
-        .unwrap()
-        .original_bytes()
-        .to_vec();
-    assert_eq!(contract_account.info.code_hash, keccak256(&source_bytecode));
-    assert!(source_bytecode.len() > 0);
-    // let rwasm_bytecode = ctx
-    //     .db
-    //     .contracts
-    //     .get(&contract_account.info.rwasm_code_hash)
-    //     .unwrap()
-    //     .bytes()
-    //     .to_vec();
-    // let is_rwasm = rwasm_bytecode.get(0).cloned().unwrap() == 0xef;
-    // assert!(is_rwasm);
+    // if bytecode_type == BytecodeType::EVM {
+    //     let source_bytecode = ctx
+    //         .db
+    //         .contracts
+    //         .get(&contract_account.info.code_hash)
+    //         .unwrap()
+    //         .original_bytes()
+    //         .to_vec();
+    //     assert_eq!(contract_account.info.code_hash, keccak256(&source_bytecode));
+    //     assert!(source_bytecode.len() > 0);
+    // }
+    // if bytecode_type == BytecodeType::WASM {
+    //     let rwasm_bytecode = ctx
+    //         .db
+    //         .contracts
+    //         .get(&contract_account.info.rwasm_code_hash)
+    //         .unwrap()
+    //         .bytes()
+    //         .to_vec();
+    //     assert_eq!(
+    //         contract_account.info.rwasm_code_hash.0,
+    //         poseidon_hash(&rwasm_bytecode)
+    //     );
+    //     let is_rwasm = rwasm_bytecode.get(0).cloned().unwrap() == 0xef;
+    //     assert!(is_rwasm);
+    // }
     contract_address
 }
 

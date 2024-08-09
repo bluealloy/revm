@@ -26,7 +26,7 @@ use crate::{
 };
 use alloc::vec::Vec;
 use core::{fmt, mem::take};
-use fluentbase_core::evm::EvmBytecodeExecutor;
+use fluentbase_core::evm::EvmRuntime;
 use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
 use fluentbase_sdk::journal::{JournalState, JournalStateBuilder};
 use fluentbase_types::{
@@ -381,12 +381,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
                 match ctx.evm.env.tx.transact_to {
                     TransactTo::Call(_) => {
-                        let inputs = CallInputs::new(&ctx.evm.env.tx, gas_limit).unwrap();
+                        let inputs = CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap();
                         let result = self.call_inner(inputs)?;
                         FrameResult::Call(result)
                     }
                     TransactTo::Create => {
-                        let inputs = CreateInputs::new(&ctx.evm.env.tx, gas_limit).unwrap();
+                        let inputs = CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap();
                         let result = self.create_inner(inputs)?;
                         FrameResult::Create(result)
                     }
@@ -497,7 +497,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     #[cfg(feature = "rwasm")]
     fn create_inner(
         &mut self,
-        create_inputs: CreateInputs,
+        create_inputs: Box<CreateInputs>,
     ) -> Result<CreateOutcome, EVMError<DB::Error>> {
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
@@ -506,7 +506,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
         let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
 
-        let result = EvmBytecodeExecutor::new(&mut sdk).create(create_inputs);
+        let result = EvmRuntime::new(&mut sdk).create(create_inputs);
         Ok(result)
     }
 
@@ -593,7 +593,10 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
     /// Main contract call of the EVM.
     #[cfg(feature = "rwasm")]
-    fn call_inner(&mut self, call_inputs: CallInputs) -> Result<CallOutcome, EVMError<DB::Error>> {
+    fn call_inner(
+        &mut self,
+        call_inputs: Box<CallInputs>,
+    ) -> Result<CallOutcome, EVMError<DB::Error>> {
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         if call_inputs.call_value() == U256::ZERO {
             self.context.evm.load_account(call_inputs.target_address)?;
@@ -610,7 +613,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
         let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
 
-        let result = EvmBytecodeExecutor::new(&mut sdk).call(call_inputs);
+        let result = EvmRuntime::new(&mut sdk).call(call_inputs);
         Ok(result)
 
         // #[cfg(feature = "debug-print")]

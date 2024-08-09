@@ -288,7 +288,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     ///
     /// # Example
     /// ```rust
-    /// use revm_fluent::{EvmBuilder, Handler, primitives::{SpecId, HandlerCfg}};
+    /// use revm::{EvmBuilder, Handler, primitives::{SpecId, HandlerCfg}};
     /// use revm_interpreter::primitives::CancunSpec;
     /// let builder = EvmBuilder::default();
     ///
