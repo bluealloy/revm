@@ -1,3 +1,5 @@
+use revm_interpreter::Eip7702CodeLoad;
+
 use crate::{
     interpreter::{AccountLoad, InstructionResult, SStoreResult, SelfDestructResult, StateLoad},
     primitives::{
@@ -478,7 +480,10 @@ impl JournaledState {
         target: Address,
         db: &mut DB,
     ) -> Result<StateLoad<SelfDestructResult>, EVMError<DB::Error>> {
-        let load_result = self.load_account_exist(target, db)?;
+        let spec = self.spec;
+        let account_load = self.load_account(target, db)?;
+        let is_cold = account_load.is_cold;
+        let is_empty = account_load.is_empty_state_clear_aware(spec);
 
         if address != target {
             // Both accounts are loaded before this point, `address` as we execute its contract.
@@ -527,10 +532,10 @@ impl JournaledState {
         Ok(StateLoad {
             data: SelfDestructResult {
                 had_value: !balance.is_zero(),
-                target_exists: !load_result.is_empty,
+                target_exists: !is_empty,
                 previously_destroyed,
             },
-            is_cold: load_result.is_cold,
+            is_cold,
         })
     }
 
@@ -609,32 +614,30 @@ impl JournaledState {
         Ok(load)
     }
 
-    /// Load account from database to JournaledState.
-    ///
-    /// Return boolean pair where first is `is_cold` second bool `is_exists`.
     #[inline]
-    pub fn load_account_exist<DB: Database>(
+    pub fn load_account_delegated<DB: Database>(
         &mut self,
         address: Address,
         db: &mut DB,
     ) -> Result<AccountLoad, EVMError<DB::Error>> {
         let spec = self.spec;
-        let account_load = self.load_account(address, db)?;
-        let acc = account_load.data;
+        let account = self.load_code(address, db)?;
+        let is_empty = account.is_empty_state_clear_aware(spec);
 
-        let is_spurious_dragon_enabled = SpecId::enabled(spec, SPURIOUS_DRAGON);
-        let is_empty = if is_spurious_dragon_enabled {
-            acc.is_empty()
-        } else {
-            let loaded_not_existing = acc.is_loaded_as_not_existing();
-            let is_not_touched = !acc.is_touched();
-            loaded_not_existing && is_not_touched
-        };
-
-        Ok(AccountLoad {
+        let mut account_load = AccountLoad {
             is_empty,
-            is_cold: account_load.is_cold,
-        })
+            load: Eip7702CodeLoad::new_not_delegated((), account.is_cold),
+        };
+        // load delegate code if account is EIP-7702
+        if let Some(Bytecode::Eip7702s(code)) = &account.info.code {
+            let address = code.address();
+            let delegate_account = self.load_account(address, db)?;
+            account_load
+                .load
+                .set_delegate_load(delegate_account.is_cold);
+        }
+
+        Ok(account_load)
     }
 
     /// Loads code.

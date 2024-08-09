@@ -145,7 +145,7 @@ impl Bytecode {
                 .body
                 .code(0)
                 .expect("Valid EOF has at least one code section"),
-            Self::Eip7702s(_) => panic!("EIP-7702 bytecode contains account addresss"),
+            Self::Eip7702s(_) => panic!("EIP-7702 bytecode contains account address"),
         }
     }
 

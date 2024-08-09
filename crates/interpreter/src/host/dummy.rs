@@ -45,7 +45,7 @@ impl Host for DummyHost {
     }
 
     #[inline]
-    fn load_account(&mut self, _address: Address) -> Option<AccountLoad> {
+    fn load_account_delegated(&mut self, _address: Address) -> Option<AccountLoad> {
         Some(AccountLoad::default())
     }
 

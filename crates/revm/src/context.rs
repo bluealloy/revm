@@ -132,9 +132,9 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
         Some(B256::ZERO)
     }
 
-    fn load_account(&mut self, address: Address) -> Option<AccountLoad> {
+    fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad> {
         self.evm
-            .load_account_exist(address)
+            .load_account_delegated(address)
             .map_err(|e| self.evm.error = Err(e))
             .ok()
     }

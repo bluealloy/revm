@@ -1,5 +1,5 @@
 use crate::{
-    gas::{self, warm_cold_cost},
+    gas::{self, warm_cold_cost, warm_cold_cost_with_delegation},
     interpreter::Interpreter,
     primitives::{Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
     Host, InstructionResult, SStoreResult, StateLoad,
@@ -46,16 +46,16 @@ pub fn extcodesize<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
+    let (code, load) = code.into_components();
     if SPEC::enabled(BERLIN) {
-        // TODO EIP-7702
-        gas!(interpreter, warm_cold_cost(code.is_cold));
+        gas!(interpreter, warm_cold_cost_with_delegation(load));
     } else if SPEC::enabled(TANGERINE) {
         gas!(interpreter, 700);
     } else {
         gas!(interpreter, 20);
     }
 
-    push!(interpreter, U256::from(code.data.len()));
+    push!(interpreter, U256::from(code.len()));
 }
 
 /// EIP-1052: EXTCODEHASH opcode
@@ -66,15 +66,15 @@ pub fn extcodehash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
+    let (code_hash, load) = code_hash.into_components();
     if SPEC::enabled(BERLIN) {
-        // TODO EIP-7702
-        gas!(interpreter, warm_cold_cost(code_hash.is_cold));
+        gas!(interpreter, warm_cold_cost_with_delegation(load))
     } else if SPEC::enabled(ISTANBUL) {
         gas!(interpreter, 700);
     } else {
         gas!(interpreter, 400);
     }
-    push_b256!(interpreter, code_hash.data);
+    push_b256!(interpreter, code_hash);
 }
 
 pub fn extcodecopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
@@ -88,21 +88,22 @@ pub fn extcodecopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
 
     let len = as_usize_or_fail!(interpreter, len_u256);
     // TODO EIP-7702
+    let (code, load) = code.into_components();
     gas_or_fail!(
         interpreter,
-        gas::extcodecopy_cost(SPEC::SPEC_ID, len as u64, code.is_cold)
+        gas::extcodecopy_cost(SPEC::SPEC_ID, len as u64, load)
     );
     if len == 0 {
         return;
     }
     let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
-    let code_offset = min(as_usize_saturated!(code_offset), code.data.len());
+    let code_offset = min(as_usize_saturated!(code_offset), code.len());
     resize_memory!(interpreter, memory_offset, len);
 
     // Note: this can't panic because we resized memory to fit.
     interpreter
         .shared_memory
-        .set_data(memory_offset, code_offset, len, &code.data);
+        .set_data(memory_offset, code_offset, len, &code);
 }
 
 pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {

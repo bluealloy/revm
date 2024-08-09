@@ -17,14 +17,14 @@ impl Eip7702Bytecode {
     /// Creates a new EIP-7702 bytecode or returns None if the raw bytecode is invalid.
     #[inline]
     pub fn new(raw: Bytes) -> Option<Self> {
-        if raw.len() != 24 {
+        if raw.len() != 22 {
             return None;
         }
-        if raw.starts_with(&EIP7702_MAGIC_BYTES) {
+        if !raw.starts_with(&EIP7702_MAGIC_BYTES) {
             return None;
         }
         Some(Self {
-            delegated_address: Address::new(raw[4..].try_into().unwrap()),
+            delegated_address: Address::new(raw[2..].try_into().unwrap()),
             raw,
         })
     }
@@ -60,7 +60,7 @@ mod tests {
     fn sanity_decode() {
         let raw = bytes!("ef01deadbeef");
         assert_eq!(Eip7702Bytecode::new(raw), None);
-        let raw = bytes!("ef01deadbeef00000000000000000000");
+        let raw = bytes!("ef01deadbeef00000000000000000000000000000000");
         let address = raw[2..].try_into().unwrap();
         assert_eq!(
             Eip7702Bytecode::new(raw.clone()),

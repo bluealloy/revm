@@ -1,6 +1,5 @@
-use std::ops::{Deref, DerefMut};
-
 use crate::primitives::{Address, Bytes, Env, Log, B256, U256};
+use core::ops::{Deref, DerefMut};
 
 mod dummy;
 pub use dummy::DummyHost;
@@ -13,10 +12,8 @@ pub trait Host {
     /// Returns a mutable reference to the environment.
     fn env_mut(&mut self) -> &mut Env;
 
-    /// Load an account.
-    ///
-    /// Returns (is_cold, is_new_account)
-    fn load_account(&mut self, address: Address) -> Option<AccountLoad>;
+    /// Load an account code.
+    fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad>;
 
     /// Get the block hash of the given block `number`.
     fn block_hash(&mut self, number: u64) -> Option<B256>;
@@ -76,10 +73,24 @@ pub struct SStoreResult {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountLoad {
-    /// Is account cold loaded
-    pub is_cold: bool,
+    /// Is account and delegate code are loaded
+    pub load: Eip7702CodeLoad<()>,
     /// Is account empty, if true account is not created.
     pub is_empty: bool,
+}
+
+impl Deref for AccountLoad {
+    type Target = Eip7702CodeLoad<()>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.load
+    }
+}
+
+impl DerefMut for AccountLoad {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.load
+    }
 }
 
 /// Account access information.
@@ -126,7 +137,7 @@ pub struct Eip7702CodeLoad<T> {
     /// returned data
     pub state_load: StateLoad<T>,
     /// True if account has delegate code and delegated account is cold loaded.
-    pub is_delegate_account_cold: bool,
+    pub is_delegate_account_cold: Option<bool>,
 }
 
 impl<T> Deref for Eip7702CodeLoad<T> {
@@ -147,20 +158,35 @@ impl<T> Eip7702CodeLoad<T> {
     pub fn new_state_load(state_load: StateLoad<T>) -> Self {
         Self {
             state_load,
-            is_delegate_account_cold: false,
+            is_delegate_account_cold: None,
         }
     }
     pub fn new_not_delegated(data: T, is_cold: bool) -> Self {
         Self {
             state_load: StateLoad::new(data, is_cold),
-            is_delegate_account_cold: false,
+            is_delegate_account_cold: None,
         }
+    }
+
+    pub fn into_components(self) -> (T, Eip7702CodeLoad<()>) {
+        let is_cold = self.is_cold;
+        (
+            self.state_load.data,
+            Eip7702CodeLoad {
+                state_load: StateLoad::new((), is_cold),
+                is_delegate_account_cold: self.is_delegate_account_cold,
+            },
+        )
+    }
+
+    pub fn set_delegate_load(&mut self, is_delegate_account_cold: bool) {
+        self.is_delegate_account_cold = Some(is_delegate_account_cold);
     }
 
     pub fn new(state_load: StateLoad<T>, is_delegate_account_cold: bool) -> Self {
         Self {
             state_load,
-            is_delegate_account_cold,
+            is_delegate_account_cold: Some(is_delegate_account_cold),
         }
     }
 }

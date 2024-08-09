@@ -155,12 +155,12 @@ impl<DB: Database> InnerEvmContext<DB> {
     ///
     /// Return boolean pair where first is `is_cold` second bool `exists`.
     #[inline]
-    pub fn load_account_exist(
+    pub fn load_account_delegated(
         &mut self,
         address: Address,
     ) -> Result<AccountLoad, EVMError<DB::Error>> {
         self.journaled_state
-            .load_account_exist(address, &mut self.db)
+            .load_account_delegated(address, &mut self.db)
     }
 
     /// Return account balance and is_cold flag.
@@ -197,6 +197,13 @@ impl<DB: Database> InnerEvmContext<DB> {
 
             // SAFETY: safe to unwrap as load_code will insert code if it is empty.
             let delegated_code = delegated_account.info.code.as_ref().cloned().unwrap();
+
+            if delegated_code.is_eof() {
+                return Ok(Eip7702CodeLoad::new(
+                    StateLoad::new(EOF_MAGIC_BYTES.clone(), is_cold),
+                    delegated_account.is_cold,
+                ));
+            }
 
             return Ok(Eip7702CodeLoad::new(
                 StateLoad::new(delegated_code.original_bytes(), is_cold),
@@ -239,6 +246,13 @@ impl<DB: Database> InnerEvmContext<DB> {
             let is_cold = acc.is_cold;
 
             let delegated_account = self.journaled_state.load_code(address, &mut self.db)?;
+
+            if delegated_account.info.code.as_ref().unwrap().is_eof() {
+                return Ok(Eip7702CodeLoad::new(
+                    StateLoad::new(EOF_MAGIC_HASH, is_cold),
+                    delegated_account.is_cold,
+                ));
+            }
 
             return Ok(Eip7702CodeLoad::new(
                 StateLoad::new(delegated_account.info.code_hash, is_cold),
