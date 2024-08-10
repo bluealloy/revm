@@ -1,15 +1,23 @@
 use crate::{bytes, Address, Bytes};
 
-/// EIP Version Magic in u16 form.
+/// EIP-7702 Version Magic in u16 form.
 pub const EIP7702_MAGIC: u16 = 0xEF01;
 
-/// EOF magic number in array form.
+/// EIP-7702 magic number in array form.
 pub static EIP7702_MAGIC_BYTES: Bytes = bytes!("ef01");
 
+/// EIP-7702 first version of bytecode.
+pub const EIP7702_VERSION: u8 = 0;
+
+/// Bytecode of delegated account, specified in EIP-7702
+///
+/// Format of EIP-7702 bytecode consist of:
+/// 0xEF00 (MAGIC) + 0x00 (VERSION) + 20 bytes of address.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eip7702Bytecode {
     pub delegated_address: Address,
+    pub version: u8,
     pub raw: Bytes,
 }
 
@@ -17,14 +25,21 @@ impl Eip7702Bytecode {
     /// Creates a new EIP-7702 bytecode or returns None if the raw bytecode is invalid.
     #[inline]
     pub fn new(raw: Bytes) -> Option<Self> {
-        if raw.len() != 22 {
+        if raw.len() != 23 {
             return None;
         }
         if !raw.starts_with(&EIP7702_MAGIC_BYTES) {
             return None;
         }
+
+        // Only suported version is version 0.
+        if raw[2] != EIP7702_VERSION {
+            return None;
+        }
+
         Some(Self {
-            delegated_address: Address::new(raw[2..].try_into().unwrap()),
+            delegated_address: Address::new(raw[3..].try_into().unwrap()),
+            version: EIP7702_VERSION,
             raw,
         })
     }
@@ -32,9 +47,11 @@ impl Eip7702Bytecode {
     /// Creates a new EIP-7702 bytecode with the given address.
     pub fn new_address(address: Address) -> Self {
         let mut raw = EIP7702_MAGIC_BYTES.to_vec();
+        raw.push(EIP7702_VERSION);
         raw.extend(&address);
         Self {
             delegated_address: address,
+            version: EIP7702_VERSION,
             raw: raw.into(),
         }
     }
@@ -60,12 +77,13 @@ mod tests {
     fn sanity_decode() {
         let raw = bytes!("ef01deadbeef");
         assert_eq!(Eip7702Bytecode::new(raw), None);
-        let raw = bytes!("ef01deadbeef00000000000000000000000000000000");
-        let address = raw[2..].try_into().unwrap();
+        let raw = bytes!("ef0100deadbeef00000000000000000000000000000000");
+        let address = raw[3..].try_into().unwrap();
         assert_eq!(
             Eip7702Bytecode::new(raw.clone()),
             Some(Eip7702Bytecode {
                 delegated_address: address,
+                version: 0,
                 raw,
             })
         );
@@ -78,7 +96,7 @@ mod tests {
         assert_eq!(bytecode.delegated_address, address);
         assert_eq!(
             bytecode.raw,
-            bytes!("ef010101010101010101010101010101010101010101")
+            bytes!("ef01000101010101010101010101010101010101010101")
         );
     }
 }

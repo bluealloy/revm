@@ -313,6 +313,8 @@ pub enum InvalidTransaction {
     AuthorizationListInvalidFields,
     /// Empty Authorization List is not allowed.
     EmptyAuthorizationList,
+    /// Invalid EIP-7702 Authorization List
+    InvalidAuthorizationList,
     /// Optimism-specific transaction validation error.
     #[cfg(feature = "optimism")]
     OptimismError(OptimismInvalidTransaction),
@@ -396,6 +398,7 @@ impl fmt::Display for InvalidTransaction {
                 write!(f, "authorization list tx has invalid fields")
             }
             Self::EmptyAuthorizationList => write!(f, "empty authorization list"),
+            Self::InvalidAuthorizationList => write!(f, "invalid authorization list"),
             #[cfg(feature = "optimism")]
             Self::OptimismError(op_error) => op_error.fmt(f),
         }

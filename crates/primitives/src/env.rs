@@ -202,6 +202,11 @@ impl Env {
                 return Err(InvalidTransaction::EmptyAuthorizationList);
             }
 
+            // Check validity of authorization_list
+            if !auth_list.is_valid() {
+                return Err(InvalidTransaction::InvalidAuthorizationList);
+            }
+
             // Check if other fields are unset.
             if self.tx.max_fee_per_blob_gas.is_some() || !self.tx.blob_hashes.is_empty() {
                 return Err(InvalidTransaction::AuthorizationListInvalidFields);

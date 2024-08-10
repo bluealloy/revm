@@ -34,6 +34,18 @@ impl AuthorizationList {
         }
     }
 
+    /// Returns true if the authorization list is valid.
+    /// TODO EIP-7702 switch to error type.
+    pub fn is_valid(&self) -> bool {
+        true
+        /*
+        match self {
+            Self::Signed(signed) => signed.iter().all(|signed| signed.is_valid()),
+            Self::Recovered(recovered) => recovered.iter().all(|recovered| recovered.is_valid()),
+        }
+        */
+    }
+
     /// Return empty authorization list.
     pub fn empty() -> Self {
         Self::Recovered(Vec::new())

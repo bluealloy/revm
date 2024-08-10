@@ -4,11 +4,11 @@ pub mod legacy;
 pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
 
-use crate::{keccak256, Bytes, Eip7702Bytecode, B256, KECCAK_EMPTY};
+use crate::{keccak256, Bytes, Eip7702Bytecode, B256, EIP7702_MAGIC_BYTES, KECCAK_EMPTY};
 use alloy_primitives::Address;
-use core::panic;
+use core::{fmt::Debug, panic};
 use eof::EofDecodeError;
-use std::sync::Arc;
+use std::{fmt, sync::Arc};
 
 /// State of the [`Bytecode`] analysis.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -102,12 +102,18 @@ impl Bytecode {
     ///
     /// Returns an error on incorrect EOF format.
     #[inline]
-    pub fn new_raw_checked(bytecode: Bytes) -> Result<Self, EofDecodeError> {
-        // TODO include EIP-7702 check
-        if bytecode.starts_with(&EOF_MAGIC_BYTES) {
-            Ok(Self::Eof(Arc::new(Eof::decode(bytecode)?)))
-        } else {
-            Ok(Self::LegacyRaw(bytecode))
+    pub fn new_raw_checked(bytecode: Bytes) -> Result<Self, BytecodeDecodeError> {
+        let prefix = bytecode.get(..2);
+        match prefix {
+            Some(prefix) if prefix == &EOF_MAGIC_BYTES => {
+                let eof = Eof::decode(bytecode)?;
+                Ok(Self::Eof(Arc::new(eof)))
+            }
+            Some(prefix) if prefix == &EIP7702_MAGIC_BYTES => {
+                let eip7702 = Eip7702Bytecode::new(bytecode).ok_or(BytecodeDecodeError::Eip7702)?;
+                Ok(Self::Eip7702s(eip7702))
+            }
+            _ => Ok(Self::LegacyRaw(bytecode)),
         }
     }
 
@@ -204,6 +210,33 @@ impl Bytecode {
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+}
+
+/// EOF decode errors.
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum BytecodeDecodeError {
+    Eof(EofDecodeError),
+    // TODO EIP-7702 add errors
+    Eip7702,
+}
+
+impl From<EofDecodeError> for BytecodeDecodeError {
+    fn from(error: EofDecodeError) -> Self {
+        Self::Eof(error)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for BytecodeDecodeError {}
+
+impl fmt::Display for BytecodeDecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Eof(e) => fmt::Display::fmt(e, f),
+            Self::Eip7702 => f.write_str("EIP-7702 decode error"),
+        }
     }
 }
 
