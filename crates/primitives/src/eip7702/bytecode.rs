@@ -32,7 +32,7 @@ impl Eip7702Bytecode {
             return None;
         }
 
-        // Only suported version is version 0.
+        // Only supported version is version 0.
         if raw[2] != EIP7702_VERSION {
             return None;
         }
