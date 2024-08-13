@@ -24,18 +24,19 @@ use fluentbase_genesis::{
 };
 use fluentbase_poseidon::poseidon_hash;
 use fluentbase_runtime::RuntimeContext;
-use fluentbase_sdk::{codec::Encoder, runtime::TestingContext};
+use fluentbase_sdk::{
+    byteorder::{ByteOrder, LittleEndian},
+    runtime::TestingContext,
+};
 use fluentbase_types::{
     address,
     bytes,
     calc_create_address,
     Account,
     Address,
-    BytecodeType,
     Bytes,
-    ExitCode,
-    NativeAPI,
     SysFuncIdx,
+    STATE_MAIN,
     U256,
 };
 use rwasm::{
@@ -205,13 +206,13 @@ impl<'a> TxBuilder<'a> {
 }
 
 fn deploy_evm_tx(ctx: &mut EvmTestingContext, deployer: Address, init_bytecode: Bytes) -> Address {
-    let bytecode_type = BytecodeType::from_slice(init_bytecode.as_ref());
+    // let bytecode_type = BytecodeType::from_slice(init_bytecode.as_ref());
     // deploy greeting EVM contract
     let result = TxBuilder::create(ctx, deployer, init_bytecode.clone().into()).exec();
     assert!(result.is_success());
     let contract_address = calc_create_address(&ctx.sdk, &deployer, 0);
     assert_eq!(contract_address, deployer.create(0));
-    let contract_account = ctx.db.accounts.get(&contract_address).unwrap();
+    // let contract_account = ctx.db.accounts.get(&contract_address).unwrap();
     // if bytecode_type == BytecodeType::EVM {
     //     let source_bytecode = ctx
     //         .db
@@ -823,19 +824,30 @@ fn test_bridge_contract_with_call() {
 #[test]
 fn test_simple_nested_call() {
     let mut ctx = EvmTestingContext::default();
+    const ACCOUNT1_ADDRESS: Address = address!("1111111111111111111111111111111111111111");
+    const ACCOUNT2_ADDRESS: Address = address!("1111111111111111111111111111111111111112");
+    const ACCOUNT3_ADDRESS: Address = address!("1111111111111111111111111111111111111113");
     let account1 = ctx.add_wasm_contract(
-        address!("0000000000000000000000000000000000000001"),
+        ACCOUNT1_ADDRESS,
         instruction_set! {
-            I32Const(100)
-            I32Const(20)
-            I32Add
-            I32Const(3)
-            I32Add
+            I32Const(-100)
             Call(SysFuncIdx::EXIT)
         },
     );
-    let mut memory_section = vec![0u8; 32 + 8];
-    memory_section[0..32].copy_from_slice(&account1.rwasm_code_hash.0);
+    let account2 = ctx.add_wasm_contract(
+        ACCOUNT2_ADDRESS,
+        instruction_set! {
+            I32Const(-20)
+            Call(SysFuncIdx::EXIT)
+        },
+    );
+    let mut memory_section = vec![];
+    memory_section.extend_from_slice(&account1.rwasm_code_hash.0);
+    memory_section.extend_from_slice(ACCOUNT1_ADDRESS.as_slice());
+    memory_section.extend_from_slice(&account2.rwasm_code_hash.0);
+    memory_section.extend_from_slice(ACCOUNT2_ADDRESS.as_slice());
+    memory_section.extend_from_slice(&[0, 0, 0, 0]);
+    assert_eq!(memory_section.len(), 108);
     let code_section = instruction_set! {
         // alloc and init memory
         I32Const(1)
@@ -843,26 +855,42 @@ fn test_simple_nested_call() {
         Drop
         I32Const(0)
         I32Const(0)
-        I32Const(40)
+        I32Const(memory_section.len() as u32)
         MemoryInit(0)
         DataDrop(0)
         // sys exec hash
-        I32Const(0) // bytecode_hash32_offset
-        I32Const(0) // input_offset
+        I32Const(0) // hash32_ptr
+        I32Const(32) // address20_ptr
+        I32Const(0) // input_ptr
         I32Const(0) // input_len
-        I32Const(0) // return_offset
-        I32Const(0) // return_len
-        I32Const(32) // fuel_offset
-        I32Const(0) // state
+        I32Const(100_000) // fuel
+        I32Const(STATE_MAIN) // state
         Call(SysFuncIdx::EXEC)
-        Drop
-        // check error
-        I32Const(ExitCode::Ok.into_i32())
+        // sys exec hash
+        I32Const(52) // hash32_ptr
+        I32Const(84) // address20_ptr
+        I32Const(0) // input_ptr
+        I32Const(0) // input_len
+        I32Const(100_000) // fuel
+        I32Const(STATE_MAIN) // state
+        Call(SysFuncIdx::EXEC)
+        // write the sum of two error codes into 1 byte result
+        I32Add
+        LocalGet(1)
+        I32Const(104)
+        LocalSet(2)
+        I32Store(0)
+        // call "_write" func
+        I32Const(104) // offset
+        I32Const(4) // length
+        Call(SysFuncIdx::WRITE)
+        // exit with 0 exit code
+        I32Const(0)
         Call(SysFuncIdx::EXIT)
     };
     let code_section_len = code_section.len() as u32;
     ctx.add_wasm_contract(
-        address!("0000000000000000000000000000000000000002"),
+        ACCOUNT3_ADDRESS,
         RwasmModule {
             code_section,
             memory_section,
@@ -870,13 +898,10 @@ fn test_simple_nested_call() {
             ..Default::default()
         },
     );
-    let result = TxBuilder::call(
-        &mut ctx,
-        Address::ZERO,
-        address!("0000000000000000000000000000000000000002"),
-    )
-    .gas_price(U256::ZERO)
-    .exec();
-    println!("{:?}", result);
+    let result = TxBuilder::call(&mut ctx, Address::ZERO, ACCOUNT3_ADDRESS)
+        .gas_price(U256::ZERO)
+        .exec();
+    let value = LittleEndian::read_i32(result.output().unwrap_or_default().as_ref());
+    assert_eq!(value, -120);
     assert!(result.is_success());
 }

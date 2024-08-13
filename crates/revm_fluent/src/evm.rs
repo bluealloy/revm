@@ -2,23 +2,19 @@ use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
-    interpreter::{Gas, Host, InstructionResult, InterpreterResult},
+    interpreter::Host,
     primitives::{
         specification::SpecId,
         BlockEnv,
-        Bytes,
         CfgEnv,
-        CreateScheme,
         EVMError,
         EVMResult,
         EnvWithHandlerCfg,
         ExecutionResult,
         HandlerCfg,
-        InvalidTransaction,
         ResultAndState,
         TransactTo,
         TxEnv,
-        U256,
     },
     Context,
     ContextWithHandlerCfg,
@@ -355,7 +351,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
     /// Transact pre-verified transaction.
     fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
-        let spec_id = self.spec_id();
+        // let spec_id = self.spec_id();
         let ctx = &mut self.context;
         let pre_exec = self.handler.pre_execution();
 
@@ -597,6 +593,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         &mut self,
         call_inputs: Box<CallInputs>,
     ) -> Result<CallOutcome, EVMError<DB::Error>> {
+        use fluentbase_sdk::U256;
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         if call_inputs.call_value() == U256::ZERO {
             self.context.evm.load_account(call_inputs.target_address)?;

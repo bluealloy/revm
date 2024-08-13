@@ -13,8 +13,6 @@ use fluentbase_types::{
     ContractContext,
     DestroyedAccountResult,
     ExitCode,
-    Fuel,
-    IJournaledTrie,
     IsColdAccess,
     JournalCheckpoint,
     NativeAPI,
@@ -156,7 +154,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
         (account, is_cold)
     }
 
-    fn account_committed(&self, address: &Address) -> (Account, IsColdAccess) {
+    fn account_committed(&self, _address: &Address) -> (Account, IsColdAccess) {
         todo!()
     }
 

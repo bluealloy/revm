@@ -26,7 +26,6 @@ use fluentbase_poseidon::poseidon_hash;
 use fluentbase_runtime::RuntimeContext;
 use fluentbase_sdk::{
     byteorder::{ByteOrder, LittleEndian},
-    codec::Encoder,
     runtime::TestingContext,
 };
 use fluentbase_types::{
@@ -35,10 +34,7 @@ use fluentbase_types::{
     calc_create_address,
     Account,
     Address,
-    BytecodeType,
     Bytes,
-    ExitCode,
-    NativeAPI,
     SysFuncIdx,
     STATE_MAIN,
     U256,
@@ -210,13 +206,13 @@ impl<'a> TxBuilder<'a> {
 }
 
 fn deploy_evm_tx(ctx: &mut EvmTestingContext, deployer: Address, init_bytecode: Bytes) -> Address {
-    let bytecode_type = BytecodeType::from_slice(init_bytecode.as_ref());
+    // let bytecode_type = BytecodeType::from_slice(init_bytecode.as_ref());
     // deploy greeting EVM contract
     let result = TxBuilder::create(ctx, deployer, init_bytecode.clone().into()).exec();
     assert!(result.is_success());
     let contract_address = calc_create_address(&ctx.sdk, &deployer, 0);
     assert_eq!(contract_address, deployer.create(0));
-    let contract_account = ctx.db.accounts.get(&contract_address).unwrap();
+    // let contract_account = ctx.db.accounts.get(&contract_address).unwrap();
     // if bytecode_type == BytecodeType::EVM {
     //     let source_bytecode = ctx
     //         .db

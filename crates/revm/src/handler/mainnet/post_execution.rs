@@ -1,6 +1,5 @@
-use fluentbase_core::helpers::exit_code_from_evm_error;
 use crate::{
-    interpreter::{Gas, SuccessOrHalt},
+    interpreter::Gas,
     primitives::{
         db::Database,
         EVMError,
@@ -8,13 +7,11 @@ use crate::{
         ResultAndState,
         Spec,
         SpecId::LONDON,
-        SuccessReason,
         U256,
     },
     Context,
     FrameResult,
 };
-use fluentbase_types::ExitCode;
 
 /// Mainnet end handle does not change the output.
 #[inline]
@@ -142,6 +139,9 @@ pub fn output<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     result: FrameResult,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
+    use crate::primitives::SuccessReason;
+    use fluentbase_core::helpers::exit_code_from_evm_error;
+    use fluentbase_sdk::ExitCode;
     core::mem::replace(&mut context.evm.error, Ok(()))?;
     // used gas with refund calculated.
     let gas_refunded = result.gas().refunded() as u64;

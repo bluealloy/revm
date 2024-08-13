@@ -1,7 +1,6 @@
 //! Revm is a Rust EVM implementation.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(unused_extern_crates)]
 #[macro_use]
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
@@ -65,10 +64,7 @@ pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 // export Optimism types, helpers, and constants
 #[cfg(feature = "optimism")]
 pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
-
 // Reexport libraries
-extern crate core;
-
 #[doc(inline)]
 pub use revm_interpreter as interpreter;
 #[doc(inline)]

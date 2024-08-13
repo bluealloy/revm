@@ -9,7 +9,7 @@ use crate::{
     EvmContext,
     Inspector,
 };
-use revm_interpreter::{CallOutcome, CreateOutcome, OpCode};
+use revm_interpreter::{CallOutcome, CreateOutcome};
 
 /// Custom print [Inspector], it has step level information of execution.
 ///
@@ -28,26 +28,19 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     // all other information can be obtained from interp.
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         if cfg!(not(feature = "rwasm")) {
-            let opcode = interp.current_opcode();
-            let name = OpCode::name_by_op(opcode);
-
-            let gas_remaining = self.gas_inspector.gas_remaining();
-
-            let memory_size = interp.shared_memory.len();
-
             #[cfg(feature = "debug-print")]
             println!(
                 "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
                 context.journaled_state.depth(),
                 interp.program_counter(),
-                gas_remaining,
-                gas_remaining,
-                name,
-                opcode,
+                self.gas_inspector.gas_remaining(),
+                self.gas_inspector.gas_remaining(),
+                OpCode::name_by_op(interp.current_opcode()),
+                interp.current_opcode(),
                 interp.gas.refunded(),
                 interp.gas.refunded(),
                 interp.stack.data(),
-                memory_size,
+                interp.shared_memory.len(),
             );
 
             self.gas_inspector.step(interp, context);

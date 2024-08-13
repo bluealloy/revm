@@ -6,17 +6,13 @@ use crate::{
 };
 use core::{cell::RefCell, ops::Deref};
 use fluentbase_core::helpers::exit_code_from_evm_error;
-use fluentbase_sdk::{address, Account, AccountStatus, SovereignAPI};
+use fluentbase_sdk::{Account, AccountStatus, SovereignAPI};
 use fluentbase_types::{
-    contracts::SYSCALL_ID_COLD_STORAGE_READ,
     BlockContext,
     CallPrecompileResult,
     ContractContext,
-    DelayedInvocationParams,
     DestroyedAccountResult,
     ExitCode,
-    Fuel,
-    IJournaledTrie,
     IsColdAccess,
     JournalCheckpoint,
     NativeAPI,
@@ -158,7 +154,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
         (account, is_cold)
     }
 
-    fn account_committed(&self, address: &Address) -> (Account, IsColdAccess) {
+    fn account_committed(&self, _address: &Address) -> (Account, IsColdAccess) {
         todo!()
     }
 
