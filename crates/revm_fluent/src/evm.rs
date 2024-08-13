@@ -104,7 +104,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         first_frame: crate::Frame,
     ) -> Result<FrameResult, EVMError<DB::Error>> {
         use crate::{Frame, FrameOrResult};
-        use revm_interpreter::InterpreterAction;
+        use revm_interpreter::{InterpreterAction, SharedMemory};
 
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);

@@ -6,11 +6,13 @@ use crate::{
 };
 use core::{cell::RefCell, ops::Deref};
 use fluentbase_core::helpers::exit_code_from_evm_error;
-use fluentbase_sdk::{Account, AccountStatus, SovereignAPI};
+use fluentbase_sdk::{address, Account, AccountStatus, SovereignAPI};
 use fluentbase_types::{
+    contracts::SYSCALL_ID_COLD_STORAGE_READ,
     BlockContext,
     CallPrecompileResult,
     ContractContext,
+    DelayedInvocationParams,
     DestroyedAccountResult,
     ExitCode,
     Fuel,
@@ -233,34 +235,6 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
             address,
             data: LogData::new_unchecked(topics.into(), data),
         });
-    }
-
-    fn context_call(
-        &mut self,
-        address: &Address,
-        fuel: &mut Fuel,
-        input: &[u8],
-        state: u32,
-    ) -> (Bytes, ExitCode) {
-        // load account that belongs to the address, we need this to extract rWASM code hash that we
-        // pass inside the runtime for execution
-        let (account, _) = self.account(&address);
-        // warmup bytecode before execution,
-        // it's a technical limitation we have right now,
-        // planning to solve it in the future
-        #[cfg(feature = "std")]
-        {
-            use fluentbase_runtime::Runtime;
-            let bytecode = self.preimage(&account.rwasm_code_hash).unwrap_or_default();
-            Runtime::warmup_bytecode(account.rwasm_code_hash, bytecode);
-        }
-        // we need to generate default root context, we're going to remove this and start using
-        // nested calls as well for transaction execution to support fork-less mode
-        let exit_code = self
-            .native_sdk
-            .exec(&account.rwasm_code_hash, address, input, fuel, state);
-        // root's context return data is output
-        (self.native_sdk.return_data(), ExitCode::from(exit_code))
     }
 
     //noinspection RsBorrowChecker
