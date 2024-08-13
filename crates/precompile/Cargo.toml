@@ -35,14 +35,14 @@ secp256k1 = { version = ">=0.28, <=0.29", default-features = false, features = [
 ], optional = true }
 
 # SHA2-256 and RIPEMD-160
-sha2 = { version = "0.10", default-features = false }
+sha2 = { version = "0.10", default-features = false, optional = true }
 ripemd = { version = "0.1", default-features = false }
 
 # modexp
-aurora-engine-modexp = { version = "1.1", default-features = false }
+aurora-engine-modexp = { version = "1.1", default-features = false, optional = true }
 
 # ecAdd, ecMul, ecPairing
-bn = { package = "substrate-bn", version = "0.6", default-features = false }
+bn = { package = "substrate-bn", version = "0.6", default-features = false, optional = true }
 
 # KZG point evaluation precompile
 c-kzg = { version = "1.0.2", default-features = false, optional = true }
@@ -73,7 +73,7 @@ serde_json = "1.0"
 serde_derive = "1.0"
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst", "bn128", "fatal_precompile", "hash", "identity", "modexp"]
 std = [
     "revm-primitives/std",
     "k256/std",
@@ -115,6 +115,21 @@ secp256k1 = ["dep:secp256k1"]
 
 # Enables the BLS12-381 precompiles.
 blst = ["dep:blst"]
+
+# Enables the BN128 precompiles.
+bn128 = ["dep:bn"]
+
+#Enables the fatal precompile.
+fatal_precompile = []
+
+# Enables the hash precompile.
+hash = ["dep:sha2"]
+
+# Enables the identiy precompile.
+identity = []
+
+# Enables the modexp precompile.
+modexp = ["dep:aurora-engine-modexp"]
 
 [[bench]]
 name = "bench"

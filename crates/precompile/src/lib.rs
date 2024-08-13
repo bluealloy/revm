@@ -11,12 +11,17 @@ extern crate alloc as std;
 pub mod blake2;
 #[cfg(feature = "blst")]
 pub mod bls12_381;
+#[cfg(feature = "bn128")]
 pub mod bn128;
+#[cfg(feature = "fatal_precompile")]
 pub mod fatal_precompile;
+#[cfg(feature = "hash")]
 pub mod hash;
+#[cfg(feature = "identity")]
 pub mod identity;
 #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg_point_evaluation;
+#[cfg(feature = "modexp")]
 pub mod modexp;
 pub mod secp256k1;
 #[cfg(feature = "secp256r1")]
