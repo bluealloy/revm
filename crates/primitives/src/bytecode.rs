@@ -6,7 +6,7 @@ pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
 
 use crate::{keccak256, Bytes, Eip7702Bytecode, B256, EIP7702_MAGIC_BYTES, KECCAK_EMPTY};
 use alloy_primitives::Address;
-use core::{fmt::Debug, panic};
+use core::fmt::Debug;
 use eof::EofDecodeError;
 use std::{fmt, sync::Arc};
 

@@ -394,3 +394,53 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         post_exec.output(ctx, result)
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use crate::{
+        db::BenchmarkDB,
+        interpreter::opcode::{PUSH1, SSTORE},
+        primitives::{address, Authorization, Bytecode, RecoveredAuthorization, U256},
+    };
+
+    #[test]
+    fn sanity_eip7702_tx() {
+        let delegate = address!("0000000000000000000000000000000000000000");
+        let caller = address!("0000000000000000000000000000000000000001");
+        let auth = address!("0000000000000000000000000000000000000100");
+
+        let bytecode = Bytecode::new_legacy([PUSH1, 0x01, PUSH1, 0x01, SSTORE].into());
+
+        let mut evm = Evm::builder()
+            .with_spec_id(SpecId::PRAGUE)
+            .with_db(BenchmarkDB::new_bytecode(bytecode))
+            .modify_tx_env(|tx| {
+                tx.authorization_list = Some(
+                    vec![RecoveredAuthorization::new_unchecked(
+                        Authorization {
+                            chain_id: U256::from(1),
+                            address: delegate,
+                            nonce: 0,
+                        },
+                        Some(auth),
+                    )]
+                    .into(),
+                );
+                tx.caller = caller;
+                tx.transact_to = TxKind::Call(auth);
+            })
+            .build();
+
+        let ok = evm.transact().unwrap();
+
+        let auth_acc = ok.state.get(&auth).unwrap();
+        assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(delegate)));
+        assert_eq!(auth_acc.info.nonce, 1);
+        assert_eq!(
+            auth_acc.storage.get(&U256::from(1)).unwrap().present_value,
+            U256::from(1)
+        );
+    }
+}
