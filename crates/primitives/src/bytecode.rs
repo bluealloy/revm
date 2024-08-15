@@ -95,7 +95,7 @@ impl Bytecode {
     /// Creates a new EIP-7702 [`Bytecode`] from [`Address`].
     #[inline]
     pub fn new_eip7702(address: Address) -> Self {
-        Self::Eip7702(Eip7702Bytecode::new_address(address))
+        Self::Eip7702(Eip7702Bytecode::new(address))
     }
 
     /// Creates a new raw [`Bytecode`].
@@ -110,7 +110,8 @@ impl Bytecode {
                 Ok(Self::Eof(Arc::new(eof)))
             }
             Some(prefix) if prefix == &EIP7702_MAGIC_BYTES => {
-                let eip7702 = Eip7702Bytecode::new(bytecode).ok_or(BytecodeDecodeError::Eip7702)?;
+                let eip7702 =
+                    Eip7702Bytecode::new_raw(bytecode).ok_or(BytecodeDecodeError::Eip7702)?;
                 Ok(Self::Eip7702(eip7702))
             }
             _ => Ok(Self::LegacyRaw(bytecode)),

@@ -76,11 +76,11 @@ mod tests {
     #[test]
     fn sanity_decode() {
         let raw = bytes!("ef01deadbeef");
-        assert_eq!(Eip7702Bytecode::new(raw), None);
+        assert_eq!(Eip7702Bytecode::new_raw(raw), None);
         let raw = bytes!("ef0100deadbeef00000000000000000000000000000000");
         let address = raw[3..].try_into().unwrap();
         assert_eq!(
-            Eip7702Bytecode::new(raw.clone()),
+            Eip7702Bytecode::new_raw(raw.clone()),
             Some(Eip7702Bytecode {
                 delegated_address: address,
                 version: 0,
@@ -92,7 +92,7 @@ mod tests {
     #[test]
     fn create_eip7702_bytecode_from_address() {
         let address = Address::new([0x01; 20]);
-        let bytecode = Eip7702Bytecode::new_address(address);
+        let bytecode = Eip7702Bytecode::new(address);
         assert_eq!(bytecode.delegated_address, address);
         assert_eq!(
             bytecode.raw,
