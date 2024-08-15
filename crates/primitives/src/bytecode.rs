@@ -139,10 +139,6 @@ impl Bytecode {
     /// Returns a reference to the bytecode.
     ///
     /// In case of EOF this will be the first code section.
-    ///
-    /// # Panics
-    ///   
-    /// Panics if Bytecode is Eip7702 that does not contain bytecode.
     #[inline]
     pub fn bytecode(&self) -> &Bytes {
         match self {
@@ -152,7 +148,7 @@ impl Bytecode {
                 .body
                 .code(0)
                 .expect("Valid EOF has at least one code section"),
-            Self::Eip7702(_) => panic!("EIP-7702 bytecode contains account address"),
+            Self::Eip7702(code) => code.raw(),
         }
     }
 

@@ -177,7 +177,7 @@ impl<DB: Database> EvmContext<DB> {
         let _ = self
             .inner
             .journaled_state
-            .load_account(inputs.bytecode_address, &mut self.inner.db)?;
+            .load_account_delegated(inputs.bytecode_address, &mut self.inner.db)?;
 
         // Create subroutine checkpoint
         let checkpoint = self.journaled_state.checkpoint();
@@ -236,7 +236,7 @@ impl<DB: Database> EvmContext<DB> {
                 return return_result(InstructionResult::Stop);
             }
 
-            if let Bytecode::Eip7702s(eip7702_bytecode) = bytecode {
+            if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
                 bytecode = self
                     .inner
                     .journaled_state
