@@ -222,7 +222,7 @@ impl<DB: Database> EvmContext<DB> {
                 .load_code(inputs.bytecode_address, &mut self.inner.db)?;
 
             let code_hash = account.info.code_hash();
-            let bytecode = account.info.code.clone().unwrap_or_default();
+            let mut bytecode = account.info.code.clone().unwrap_or_default();
 
             // ExtDelegateCall is not allowed to call non-EOF contracts.
             if inputs.scheme.is_ext_delegate_call()
@@ -234,6 +234,17 @@ impl<DB: Database> EvmContext<DB> {
             if bytecode.is_empty() {
                 self.journaled_state.checkpoint_commit();
                 return return_result(InstructionResult::Stop);
+            }
+
+            if let Bytecode::Eip7702s(eip7702_bytecode) = bytecode {
+                bytecode = self
+                    .inner
+                    .journaled_state
+                    .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?
+                    .info
+                    .code
+                    .clone()
+                    .unwrap_or_default();
             }
 
             let contract =
