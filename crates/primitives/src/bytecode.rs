@@ -21,7 +21,7 @@ pub enum Bytecode {
     /// Ethereum Object Format
     Eof(Arc<Eof>),
     /// EIP-7702 delegated bytecode
-    Eip7702s(Eip7702Bytecode),
+    Eip7702(Eip7702Bytecode),
 }
 
 impl Default for Bytecode {
@@ -73,7 +73,7 @@ impl Bytecode {
     }
 
     pub const fn is_eip7702(&self) -> bool {
-        matches!(self, Self::Eip7702s(_))
+        matches!(self, Self::Eip7702(_))
     }
 
     /// Creates a new legacy [`Bytecode`].
@@ -95,7 +95,7 @@ impl Bytecode {
     /// Creates a new EIP-7702 [`Bytecode`] from [`Address`].
     #[inline]
     pub fn new_eip7702(address: Address) -> Self {
-        Self::Eip7702s(Eip7702Bytecode::new_address(address))
+        Self::Eip7702(Eip7702Bytecode::new_address(address))
     }
 
     /// Creates a new raw [`Bytecode`].
@@ -111,7 +111,7 @@ impl Bytecode {
             }
             Some(prefix) if prefix == &EIP7702_MAGIC_BYTES => {
                 let eip7702 = Eip7702Bytecode::new(bytecode).ok_or(BytecodeDecodeError::Eip7702)?;
-                Ok(Self::Eip7702s(eip7702))
+                Ok(Self::Eip7702(eip7702))
             }
             _ => Ok(Self::LegacyRaw(bytecode)),
         }
@@ -151,7 +151,7 @@ impl Bytecode {
                 .body
                 .code(0)
                 .expect("Valid EOF has at least one code section"),
-            Self::Eip7702s(_) => panic!("EIP-7702 bytecode contains account address"),
+            Self::Eip7702(_) => panic!("EIP-7702 bytecode contains account address"),
         }
     }
 
@@ -185,7 +185,7 @@ impl Bytecode {
             Self::LegacyRaw(bytes) => bytes.clone(),
             Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
             Self::Eof(eof) => eof.raw().clone(),
-            Self::Eip7702s(eip7702) => eip7702.raw().clone(),
+            Self::Eip7702(eip7702) => eip7702.raw().clone(),
         }
     }
 
@@ -196,7 +196,7 @@ impl Bytecode {
             Self::LegacyRaw(bytes) => bytes,
             Self::LegacyAnalyzed(analyzed) => analyzed.original_byte_slice(),
             Self::Eof(eof) => eof.raw(),
-            Self::Eip7702s(eip7702) => eip7702.raw(),
+            Self::Eip7702(eip7702) => eip7702.raw(),
         }
     }
 

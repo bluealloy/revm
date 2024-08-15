@@ -189,7 +189,7 @@ impl<DB: Database> InnerEvmContext<DB> {
             ));
         }
 
-        if let Bytecode::Eip7702s(code) = code {
+        if let Bytecode::Eip7702(code) = code {
             let address = code.address();
             let is_cold = a.is_cold;
 
@@ -241,7 +241,7 @@ impl<DB: Database> InnerEvmContext<DB> {
         }
 
         // If bytecode is EIP-7702 then we need to load the delegated account.
-        if let Bytecode::Eip7702s(code) = code {
+        if let Bytecode::Eip7702(code) = code {
             let address = code.address();
             let is_cold = acc.is_cold;
 
