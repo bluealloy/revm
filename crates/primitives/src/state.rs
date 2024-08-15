@@ -64,7 +64,7 @@ impl Account {
 
     /// Check if account is empty and check if empty state before spurious dragon hardfork.
     #[inline]
-    pub fn is_empty_state_clear_aware(&self, spec: SpecId) -> bool {
+    pub fn state_clear_aware_is_empty(&self, spec: SpecId) -> bool {
         if SpecId::enabled(spec, SpecId::SPURIOUS_DRAGON) {
             self.is_empty()
         } else {

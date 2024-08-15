@@ -483,7 +483,7 @@ impl JournaledState {
         let spec = self.spec;
         let account_load = self.load_account(target, db)?;
         let is_cold = account_load.is_cold;
-        let is_empty = account_load.is_empty_state_clear_aware(spec);
+        let is_empty = account_load.state_clear_aware_is_empty(spec);
 
         if address != target {
             // Both accounts are loaded before this point, `address` as we execute its contract.
@@ -622,7 +622,7 @@ impl JournaledState {
     ) -> Result<AccountLoad, EVMError<DB::Error>> {
         let spec = self.spec;
         let account = self.load_code(address, db)?;
-        let is_empty = account.is_empty_state_clear_aware(spec);
+        let is_empty = account.state_clear_aware_is_empty(spec);
 
         let mut account_load = AccountLoad {
             is_empty,
