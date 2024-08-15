@@ -24,7 +24,7 @@ pub struct Eip7702Bytecode {
 impl Eip7702Bytecode {
     /// Creates a new EIP-7702 bytecode or returns None if the raw bytecode is invalid.
     #[inline]
-    pub fn new(raw: Bytes) -> Option<Self> {
+    pub fn new_raw(raw: Bytes) -> Option<Self> {
         if raw.len() != 23 {
             return None;
         }
@@ -45,7 +45,7 @@ impl Eip7702Bytecode {
     }
 
     /// Creates a new EIP-7702 bytecode with the given address.
-    pub fn new_address(address: Address) -> Self {
+    pub fn new(address: Address) -> Self {
         let mut raw = EIP7702_MAGIC_BYTES.to_vec();
         raw.push(EIP7702_VERSION);
         raw.extend(&address);
