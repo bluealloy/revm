@@ -141,7 +141,7 @@ impl Bytecode {
     ///
     /// # Panics
     ///   
-    /// Panics if Bytecode is EIp7702 that does not contain bytecode.
+    /// Panics if Bytecode is Eip7702 that does not contain bytecode.
     #[inline]
     pub fn bytecode(&self) -> &Bytes {
         match self {

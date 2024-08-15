@@ -128,14 +128,14 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
         }
 
         // warm authority account and check nonce.
-        // 8.Add authority to accessed_addresses (as defined in EIP-2929.)
+        // 3. Add authority to accessed_addresses (as defined in EIP-2929.)
         let mut authority_acc = context
             .evm
             .inner
             .journaled_state
             .load_code(authority, &mut context.evm.inner.db)?;
 
-        // 3. Verify the code of authority is either empty or already delegated.
+        // 4. Verify the code of authority is either empty or already delegated.
         if let Some(bytecode) = &authority_acc.info.code {
             // if it is not empty and it is not eip7702
             if !bytecode.is_empty() && !bytecode.is_eip7702() {
@@ -143,28 +143,24 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
             }
         }
 
-        // 4. If nonce list item is length one, verify the nonce of authority is equal to nonce.
-        //
-        // In case of signer setting its own delegation nonce will be bumped twice
+        // 5. Verify the nonce of authority is equal to nonce.
         if authorization.nonce() != authority_acc.info.nonce {
             continue;
         }
 
-        // 5. Refund the sender PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST gas if authority exists in the trie.
+        // 6. Refund the sender PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST gas if authority exists in the trie.
         if authority_acc.is_empty() {
             created_accounts_cnt += 1;
         }
 
-        // 6. Set the code of authority to be 0xef0100 || address. This is a delegation designation.
+        // 7. Set the code of authority to be 0xef0100 || address. This is a delegation designation.
         let bytecode = Bytecode::new_eip7702(authorization.address);
         authority_acc.info.code_hash = bytecode.hash_slow();
         authority_acc.info.code = Some(bytecode);
 
-        // 7. Increase the nonce of authority by one.
+        // 8. Increase the nonce of authority by one.
         authority_acc.info.nonce = authority_acc.info.nonce.saturating_add(1);
         authority_acc.mark_touch();
-
-        // TODO(EIP-7702) set contract to account.
     }
 
     let existing_accounts = authorization_list.len() as u64 - created_accounts_cnt;
