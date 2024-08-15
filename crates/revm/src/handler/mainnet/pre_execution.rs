@@ -137,8 +137,8 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
 
         // 3. Verify the code of authority is either empty or already delegated.
         if let Some(bytecode) = &authority_acc.info.code {
-            // if it is not empty or it is not eip7702
-            if !bytecode.is_empty() || !bytecode.is_eip7702() {
+            // if it is not empty and it is not eip7702
+            if !bytecode.is_empty() && !bytecode.is_eip7702() {
                 continue;
             }
         }
