@@ -4,7 +4,6 @@ use super::{
     utils::recover_address,
 };
 use crate::merkle_trie::state_merkle_trie_root2;
-use fluentbase_core::evm::EvmRuntime;
 use fluentbase_genesis::devnet::{devnet_genesis_from_file, KECCAK_HASH_KEY, POSEIDON_HASH_KEY};
 use fluentbase_types::{contracts::PRECOMPILE_EVM_LOADER, Address, ExitCode};
 use hashbrown::HashSet;
@@ -20,7 +19,6 @@ use revm::{
         AccountInfo,
         Bytecode,
         Bytes,
-        EVMError,
         EVMResultGeneric,
         Env,
         ExecutionResult,

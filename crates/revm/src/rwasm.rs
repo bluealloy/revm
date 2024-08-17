@@ -225,11 +225,11 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
         ctx.journaled_state.tload(address, index)
     }
 
-    fn write_log(&mut self, address: Address, data: Bytes, topics: &[B256]) {
+    fn write_log(&mut self, address: Address, data: Bytes, topics: Vec<B256>) {
         let mut ctx = self.evm_context.borrow_mut();
         ctx.journaled_state.log(Log {
             address,
-            data: LogData::new_unchecked(topics.into(), data),
+            data: LogData::new_unchecked(topics, data),
         });
     }
 

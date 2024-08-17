@@ -32,6 +32,7 @@ use fluentbase_types::{
     address,
     bytes,
     calc_create_address,
+    contracts::SYSCALL_ID_CALL,
     Account,
     Address,
     Bytes,
@@ -827,14 +828,14 @@ fn test_simple_nested_call() {
     const ACCOUNT1_ADDRESS: Address = address!("1111111111111111111111111111111111111111");
     const ACCOUNT2_ADDRESS: Address = address!("1111111111111111111111111111111111111112");
     const ACCOUNT3_ADDRESS: Address = address!("1111111111111111111111111111111111111113");
-    let account1 = ctx.add_wasm_contract(
+    let _account1 = ctx.add_wasm_contract(
         ACCOUNT1_ADDRESS,
         instruction_set! {
             I32Const(-100)
             Call(SysFuncIdx::EXIT)
         },
     );
-    let account2 = ctx.add_wasm_contract(
+    let _account2 = ctx.add_wasm_contract(
         ACCOUNT2_ADDRESS,
         instruction_set! {
             I32Const(-20)
@@ -842,12 +843,13 @@ fn test_simple_nested_call() {
         },
     );
     let mut memory_section = vec![];
-    memory_section.extend_from_slice(&account1.rwasm_code_hash.0);
-    memory_section.extend_from_slice(ACCOUNT1_ADDRESS.as_slice());
-    memory_section.extend_from_slice(&account2.rwasm_code_hash.0);
-    memory_section.extend_from_slice(ACCOUNT2_ADDRESS.as_slice());
-    memory_section.extend_from_slice(&[0, 0, 0, 0]);
-    assert_eq!(memory_section.len(), 108);
+    memory_section.extend_from_slice(&SYSCALL_ID_CALL.0); // 0..32
+    memory_section.extend_from_slice(ACCOUNT1_ADDRESS.as_slice()); // 32..
+    memory_section.extend_from_slice(U256::ZERO.as_le_slice());
+    memory_section.extend_from_slice(ACCOUNT2_ADDRESS.as_slice()); // 84..
+    memory_section.extend_from_slice(U256::ZERO.as_le_slice());
+    memory_section.extend_from_slice(&[0, 0, 0, 0]); // 136..
+    assert_eq!(memory_section.len(), 140);
     let code_section = instruction_set! {
         // alloc and init memory
         I32Const(1)
@@ -860,28 +862,26 @@ fn test_simple_nested_call() {
         DataDrop(0)
         // sys exec hash
         I32Const(0) // hash32_ptr
-        I32Const(32) // address20_ptr
-        I32Const(0) // input_ptr
-        I32Const(0) // input_len
+        I32Const(32) // input_ptr
+        I32Const(52) // input_len
         I32Const(100_000) // fuel
         I32Const(STATE_MAIN) // state
         Call(SysFuncIdx::EXEC)
         // sys exec hash
-        I32Const(52) // hash32_ptr
-        I32Const(84) // address20_ptr
-        I32Const(0) // input_ptr
-        I32Const(0) // input_len
+        I32Const(0) // hash32_ptr
+        I32Const(84) // input_ptr
+        I32Const(52) // input_len
         I32Const(100_000) // fuel
         I32Const(STATE_MAIN) // state
         Call(SysFuncIdx::EXEC)
         // write the sum of two error codes into 1 byte result
         I32Add
         LocalGet(1)
-        I32Const(104)
+        I32Const(136)
         LocalSet(2)
         I32Store(0)
         // call "_write" func
-        I32Const(104) // offset
+        I32Const(136) // offset
         I32Const(4) // length
         Call(SysFuncIdx::WRITE)
         // exit with 0 exit code

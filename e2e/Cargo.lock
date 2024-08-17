@@ -1150,6 +1150,7 @@ dependencies = [
  "alloy-rlp",
  "byteorder",
  "fluentbase-codec",
+ "fluentbase-runtime",
  "fluentbase-sdk",
  "fluentbase-types",
  "hashbrown",
@@ -1192,7 +1193,6 @@ dependencies = [
 name = "fluentbase-runtime"
 version = "0.1.0"
 dependencies = [
- "byteorder",
  "eth_trie",
  "fluentbase-codec",
  "fluentbase-poseidon",
@@ -1218,7 +1218,6 @@ dependencies = [
  "fluentbase-sdk-derive",
  "fluentbase-types",
  "hashbrown",
- "paste",
 ]
 
 [[package]]

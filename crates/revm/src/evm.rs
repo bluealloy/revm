@@ -22,7 +22,7 @@ use crate::{
 };
 use alloc::vec::Vec;
 use core::{fmt, mem::take};
-use fluentbase_core::evm::EvmRuntime;
+use fluentbase_core::blended::BlendedRuntime;
 use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
 use fluentbase_sdk::journal::{JournalState, JournalStateBuilder};
 use fluentbase_types::{
@@ -497,12 +497,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     ) -> Result<CreateOutcome, EVMError<DB::Error>> {
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
-            .with_fuel_limit(create_inputs.gas_limit)
+            .with_fuel(create_inputs.gas_limit)
             .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
         let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
 
-        let result = EvmRuntime::new(&mut sdk).create(create_inputs);
+        let result = BlendedRuntime::new(&mut sdk).create(create_inputs);
         Ok(result)
     }
 
@@ -605,12 +605,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
-            .with_fuel_limit(call_inputs.gas_limit)
+            .with_fuel(call_inputs.gas_limit)
             .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
         let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
 
-        let result = EvmRuntime::new(&mut sdk).call(call_inputs);
+        let result = BlendedRuntime::new(&mut sdk).call(call_inputs);
         Ok(result)
 
         // #[cfg(feature = "debug-print")]

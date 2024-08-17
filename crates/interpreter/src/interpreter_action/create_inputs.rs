@@ -2,13 +2,13 @@ pub use crate::primitives::CreateScheme;
 use crate::primitives::{Address, Bytes, TransactTo, TxEnv, U256};
 use std::boxed::Box;
 
-/// Inputs for a create call.
+/// Inputs for a "create" call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateInputs {
     /// Caller address of the EVM.
     pub caller: Address,
-    /// The create scheme.
+    /// The "create" scheme.
     pub scheme: CreateScheme,
     /// The value to transfer.
     pub value: U256,
