@@ -26,9 +26,12 @@ macro_rules! define_tests {
 
 mod failing_tests {
     define_tests! {
-        fn code_copy_zero_paris("tests/GeneralStateTests/stExtCodeHash/codeCopyZero_Paris.json");
-        fn ext_code_hash_self_in_init("tests/GeneralStateTests/stExtCodeHash/extCodeHashSelfInInit.json");
-        fn extcodehash_empty_paris("tests/GeneralStateTests/stExtCodeHash/extcodehashEmpty_Paris.json");
+        fn st_e_i_p4844_blobtransactions_opcode_blobh_bounds("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhBounds.json");
+        fn st_e_i_p4844_blobtransactions_opcode_blobhash_out_of_range("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhashOutOfRange.json");
+        fn shanghai_eip3860_initcode_contract_creating_tx("tests/GeneralStateTests/Pyspecs/shanghai/eip3860_initcode/contract_creating_tx.json");
+        fn create2_on_depth1024("tests/GeneralStateTests/stCreate2/Create2OnDepth1024.json");
+        fn create2_recursive("tests/GeneralStateTests/stCreate2/Create2Recursive.json");
+        fn loop_calls_depth_then_revert2("tests/GeneralStateTests/stRevertTest/LoopCallsDepthThenRevert2.json");
     }
 }
 
@@ -929,7 +932,6 @@ mod st_refund_test {
 }
 
 mod st_recursive_create {
-
     define_tests! {
 
         // --- ALL PASS ---

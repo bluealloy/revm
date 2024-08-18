@@ -10,8 +10,9 @@ use crate::{
 pub struct Contract {
     /// Contracts data
     pub input: Bytes,
-    /// Bytecode contains contract code, size of original code, analysis with gas block and jump table.
-    /// Note that current code is extended with push padding and STOP at end.
+    /// Bytecode contains contract code, size of original code, analysis with gas block and jump
+    /// table.
+    /// Note that current code is extended with push padding and STOP at the end.
     pub bytecode: Bytecode,
     /// Bytecode hash for legacy. For EOF this would be None.
     pub hash: Option<B256>,
@@ -19,7 +20,7 @@ pub struct Contract {
     pub target_address: Address,
     /// Caller of the EVM.
     pub caller: Address,
-    /// Value send to contract from transaction or from CALL opcodes.
+    /// Value sent to contract from transaction or from CALL opcodes.
     pub call_value: U256,
 }
 

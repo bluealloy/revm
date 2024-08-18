@@ -26,7 +26,6 @@ use fluentbase_core::blended::BlendedRuntime;
 use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
 use fluentbase_sdk::journal::{JournalState, JournalStateBuilder};
 use fluentbase_types::{
-    contracts::PRECOMPILE_EVM_LOADER,
     BlockContext,
     ContractContext,
     NativeAPI,
@@ -371,9 +370,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             #[cfg(feature = "rwasm")]
             {
                 // load an EVM loader account to access storage slots
-                let (evm_storage, _) = ctx.evm.load_account(PRECOMPILE_EVM_LOADER)?;
-                evm_storage.info.nonce = 1;
-                ctx.evm.touch(&PRECOMPILE_EVM_LOADER);
+                // let (evm_storage, _) = ctx.evm.load_account(PRECOMPILE_EVM)?;
+                // evm_storage.info.nonce = 1;
+                // ctx.evm.touch(&PRECOMPILE_EVM);
 
                 match ctx.evm.env.tx.transact_to {
                     TransactTo::Call(_) => {
@@ -409,12 +408,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         // if first byte of data is magic 0xEF00, then it is EOFCreate.
                         if spec_id.is_enabled_in(SpecId::PRAGUE)
                             && ctx
-                                .env()
-                                .tx
-                                .data
-                                .get(0..=1)
-                                .filter(|&t| t == [0xEF, 00])
-                                .is_some()
+                            .env()
+                            .tx
+                            .data
+                            .get(0..=1)
+                            .filter(|&t| t == [0xEF, 00])
+                            .is_some()
                         {
                             // TODO Should we just check 0xEF it seems excessive to switch to legacy
                             // only if it 0xEF00?

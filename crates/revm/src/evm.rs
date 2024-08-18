@@ -25,13 +25,7 @@ use core::{fmt, mem::take};
 use fluentbase_core::blended::BlendedRuntime;
 use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
 use fluentbase_sdk::journal::{JournalState, JournalStateBuilder};
-use fluentbase_types::{
-    contracts::PRECOMPILE_EVM_LOADER,
-    BlockContext,
-    ContractContext,
-    NativeAPI,
-    TxContext,
-};
+use fluentbase_types::{BlockContext, ContractContext, NativeAPI, TxContext};
 use revm_interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome};
 
 /// EVM call stack limit.
@@ -351,7 +345,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
     /// Transact pre-verified transaction.
     fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
-        // let spec_id = self.spec_id();
+        let spec_id = self.spec_id();
         let ctx = &mut self.context;
         let pre_exec = self.handler.pre_execution();
 
@@ -397,6 +391,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                     CreateInputs,
                     EOFCreateInputs,
                     EOFCreateOutcome,
+                    Gas,
+                    InstructionResult,
+                    InterpreterResult,
                 };
                 let exec = self.handler.execution();
                 // call inner handling of call/create
@@ -447,7 +444,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                                     EOFCreateOutcome::new(
                                         InterpreterResult::new(
                                             InstructionResult::Stop,
-                                            Bytes::new(),
+                                            Default::default(),
                                             Gas::new(gas_limit),
                                         ),
                                         ctx.env().tx.caller.create(nonce),

@@ -5,7 +5,7 @@ use super::{
 };
 use crate::merkle_trie::state_merkle_trie_root2;
 use fluentbase_genesis::devnet::{devnet_genesis_from_file, KECCAK_HASH_KEY, POSEIDON_HASH_KEY};
-use fluentbase_types::{contracts::PRECOMPILE_EVM_LOADER, Address, ExitCode};
+use fluentbase_types::{contracts::PRECOMPILE_EVM, Address, ExitCode};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use lazy_static::lazy_static;
@@ -328,7 +328,10 @@ fn check_evm_execution<EXT1, EXT2>(
             //     v1,
             //     v2.unwrap()
             // );
-            assert_eq!(a1.balance, a2.balance, "EVM account balance mismatch");
+            assert_eq!(
+                a1.balance, a2.balance,
+                "EVM <> FLUENT account balance mismatch"
+            );
             if cfg!(feature = "debug-print") {
                 println!(" - nonce: {}", a1.nonce);
             }
@@ -544,7 +547,7 @@ pub fn execute_test_suite(
         }
 
         cache_state2.insert_account_with_storage(
-            PRECOMPILE_EVM_LOADER,
+            PRECOMPILE_EVM,
             AccountInfo {
                 nonce: 1,
                 ..AccountInfo::default()

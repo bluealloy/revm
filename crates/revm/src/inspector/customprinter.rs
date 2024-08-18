@@ -35,7 +35,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
                 interp.program_counter(),
                 self.gas_inspector.gas_remaining(),
                 self.gas_inspector.gas_remaining(),
-                OpCode::name_by_op(interp.current_opcode()),
+                revm_interpreter::OpCode::name_by_op(interp.current_opcode()),
                 interp.current_opcode(),
                 interp.gas.refunded(),
                 interp.gas.refunded(),

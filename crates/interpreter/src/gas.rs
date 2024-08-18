@@ -117,6 +117,10 @@ impl Gas {
     #[must_use = "prefer using `gas!` instead to return an out-of-gas error on failure"]
     pub fn record_cost(&mut self, cost: u64) -> bool {
         let (remaining, overflow) = self.remaining.overflowing_sub(cost);
+        // println!(
+        //     "GAS record_cost: cost={} remaining={}, overflow={}",
+        //     cost, remaining, overflow
+        // );
         let success = !overflow;
         if success {
             self.remaining = remaining;

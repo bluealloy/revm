@@ -1147,15 +1147,9 @@ dependencies = [
 name = "fluentbase-core"
 version = "0.1.0"
 dependencies = [
- "alloy-rlp",
- "byteorder",
- "fluentbase-codec",
  "fluentbase-runtime",
  "fluentbase-sdk",
- "fluentbase-types",
- "hashbrown",
  "hex",
- "paste",
  "revm-interpreter",
  "revm-primitives",
  "rwasm",
@@ -1194,13 +1188,11 @@ name = "fluentbase-runtime"
 version = "0.1.0"
 dependencies = [
  "eth_trie",
- "fluentbase-codec",
  "fluentbase-poseidon",
  "fluentbase-types",
  "fluentbase-zktrie",
  "halo2curves 0.6.1 (git+https://github.com/privacy-scaling-explorations/halo2curves?tag=v0.6.1)",
  "hashbrown",
- "hex",
  "hex-literal",
  "k256",
  "keccak-hash",
@@ -1211,7 +1203,6 @@ dependencies = [
 name = "fluentbase-sdk"
 version = "0.1.0"
 dependencies = [
- "byteorder",
  "fluentbase-codec",
  "fluentbase-genesis",
  "fluentbase-runtime",

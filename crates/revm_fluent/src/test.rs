@@ -554,7 +554,7 @@ fn test_evm_self_destruct() {
     assert!(result.is_success());
     assert_eq!(ctx.get_balance(SENDER_ADDRESS), U256::from(1e18));
     assert_eq!(ctx.get_balance(contract_address), U256::from(1e18));
-    // call self destruct contract
+    // call self destructed contract
     let result = TxBuilder::call(&mut ctx, SENDER_ADDRESS, contract_address)
         .gas_price(gas_price)
         .exec();
