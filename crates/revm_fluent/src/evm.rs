@@ -25,12 +25,7 @@ use core::{fmt, mem::take};
 use fluentbase_core::blended::BlendedRuntime;
 use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
 use fluentbase_sdk::journal::{JournalState, JournalStateBuilder};
-use fluentbase_types::{
-    BlockContext,
-    ContractContext,
-    NativeAPI,
-    TxContext,
-};
+use fluentbase_types::{BlockContext, ContractContext, NativeAPI, TxContext};
 use revm_interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome};
 
 /// EVM call stack limit.
@@ -408,12 +403,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         // if first byte of data is magic 0xEF00, then it is EOFCreate.
                         if spec_id.is_enabled_in(SpecId::PRAGUE)
                             && ctx
-                            .env()
-                            .tx
-                            .data
-                            .get(0..=1)
-                            .filter(|&t| t == [0xEF, 00])
-                            .is_some()
+                                .env()
+                                .tx
+                                .data
+                                .get(0..=1)
+                                .filter(|&t| t == [0xEF, 00])
+                                .is_some()
                         {
                             // TODO Should we just check 0xEF it seems excessive to switch to legacy
                             // only if it 0xEF00?
