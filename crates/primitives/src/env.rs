@@ -13,6 +13,7 @@ use crate::{
     GAS_PER_BLOB,
     KECCAK_EMPTY,
     MAX_BLOB_NUMBER_PER_BLOCK,
+    MAX_INITCODE_SIZE,
     U256,
     VERSIONED_HASH_VERSION_KZG,
 };
@@ -127,16 +128,17 @@ impl Env {
         }
 
         // EIP-3860: Limit and meter initcode
-        // if SPEC::enabled(SpecId::SHANGHAI) && self.tx.transact_to.is_create() {
-        //     let max_initcode_size = self
-        //         .cfg
-        //         .limit_contract_code_size
-        //         .map(|limit| limit.saturating_mul(2))
-        //         .unwrap_or(MAX_INITCODE_SIZE);
-        //     if self.tx.data.len() > max_initcode_size {
-        //         return Err(InvalidTransaction::CreateInitCodeSizeLimit);
-        //     }
-        // }
+        #[cfg(feature = "e2e")]
+        if SPEC::enabled(SpecId::SHANGHAI) && self.tx.transact_to.is_create() {
+            let max_initcode_size = self
+                .cfg
+                .limit_contract_code_size
+                .map(|limit| limit.saturating_mul(2))
+                .unwrap_or(MAX_INITCODE_SIZE);
+            if self.tx.data.len() > max_initcode_size {
+                return Err(InvalidTransaction::CreateInitCodeSizeLimit);
+            }
+        }
 
         // Check if the transaction's chain id is correct
         if let Some(tx_chain_id) = self.tx.chain_id {

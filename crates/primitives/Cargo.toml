@@ -99,3 +99,4 @@ rand = ["alloy-primitives/rand"]
 c-kzg = ["dep:c-kzg", "dep:once_cell", "dep:derive_more"]
 
 rwasm = []
+e2e = []
