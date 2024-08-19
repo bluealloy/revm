@@ -1491,7 +1491,7 @@ dependencies = [
 [[package]]
 name = "fuel-core-executor"
 version = "0.31.0"
-source = "git+https://github.com/fluentlabs-xyz/fuel-core?branch=feat/fuel-vm#1b7ce6a19c4fc351f564ad4ea695381cb12f6cd9"
+source = "git+https://github.com/fluentlabs-xyz/fuel-core?branch=devel#1b7ce6a19c4fc351f564ad4ea695381cb12f6cd9"
 dependencies = [
  "anyhow",
  "fuel-core-storage",
@@ -1505,7 +1505,7 @@ dependencies = [
 [[package]]
 name = "fuel-core-storage"
 version = "0.31.0"
-source = "git+https://github.com/fluentlabs-xyz/fuel-core?branch=feat/fuel-vm#1b7ce6a19c4fc351f564ad4ea695381cb12f6cd9"
+source = "git+https://github.com/fluentlabs-xyz/fuel-core?branch=devel#1b7ce6a19c4fc351f564ad4ea695381cb12f6cd9"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -1526,7 +1526,7 @@ dependencies = [
 [[package]]
 name = "fuel-core-types"
 version = "0.31.0"
-source = "git+https://github.com/fluentlabs-xyz/fuel-core?branch=feat/fuel-vm#1b7ce6a19c4fc351f564ad4ea695381cb12f6cd9"
+source = "git+https://github.com/fluentlabs-xyz/fuel-core?branch=devel#1b7ce6a19c4fc351f564ad4ea695381cb12f6cd9"
 dependencies = [
  "anyhow",
  "derivative",

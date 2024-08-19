@@ -48,11 +48,14 @@ use fluentbase_core::{
     helpers::evm_error_from_exit_code,
     loader::{_loader_call, _loader_create},
 };
-use fluentbase_sdk::{types::{EvmCallMethodInput, EvmCreateMethodInput}, ContractInput, AccountManager};
+use fluentbase_sdk::{
+    types::{EvmCallMethodInput, EvmCreateMethodInput},
+    AccountManager,
+    ContractInput,
+};
 use fluentbase_types::{Address, ExitCode};
 use revm_interpreter::{CallOutcome, CreateOutcome};
 use std::vec::Vec;
-use fluentbase_core::helpers::evm_error_from_exit_code;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
