@@ -33,90 +33,90 @@ impl<'a, DB: Database> JournalDbWrapper<'a, DB> {
     }
 }
 
-impl<'a, DB: Database> IJournaledTrie for JournalDbWrapper<'a, DB> {
-    fn checkpoint(&self) -> fluentbase_types::JournalCheckpoint {
-        fluentbase_types::JournalCheckpoint::from_u64(AccountManager::checkpoint(self))
-    }
-
-    fn get(&self, key: &[u8; 32], committed: bool) -> Option<(Vec<[u8; 32]>, u32, bool)> {
-        // if first 12 bytes are empty then its account load otherwise storage
-        if key[..12] == [0u8; 12] {
-            let address = Address::from_slice(&key[12..]);
-            let (account, is_cold) = AccountManager::account(self, address);
-            Some((
-                account.get_fields().to_vec(),
-                JZKT_ACCOUNT_COMPRESSION_FLAGS,
-                is_cold,
-            ))
-        } else {
-            let index = U256::from_le_bytes(*key);
-            let (value, is_cold) =
-                AccountManager::storage(self, EVM_STORAGE_ADDRESS, index, committed);
-            Some((
-                vec![value.to_le_bytes::<32>()],
-                JZKT_STORAGE_COMPRESSION_FLAGS,
-                is_cold,
-            ))
-        }
-    }
-
-    fn update(&self, key: &[u8; 32], value: &Vec<[u8; 32]>, _flags: u32) {
-        if value.len() == JZKT_ACCOUNT_FIELDS_COUNT as usize {
-            let address = Address::from_slice(&key[12..]);
-            let jzkt_account = Account::new_from_fields(address, value.as_slice());
-            AccountManager::write_account(self, &jzkt_account);
-        } else if value.len() == JZKT_STORAGE_FIELDS_COUNT as usize {
-            AccountManager::write_storage(
-                self,
-                EVM_STORAGE_ADDRESS,
-                U256::from_le_bytes(*key),
-                U256::from_le_bytes(*value.get(0).unwrap()),
-            );
-        } else {
-            panic!("not supported field count: {}", value.len())
-        }
-    }
-
-    fn remove(&self, _key: &[u8; 32]) {
-        // TODO: "account removal is not supported"
-    }
-
-    fn compute_root(&self) -> [u8; 32] {
-        // TODO: "root is not supported"
-        [0u8; 32]
-    }
-
-    fn emit_log(&self, address: Address, topics: Vec<B256>, data: Bytes) {
-        AccountManager::log(self, address, data, &topics);
-    }
-
-    fn commit(&self) -> Result<([u8; 32], Vec<JournalLog>), ExitCode> {
-        AccountManager::commit(self);
-        Ok(([0u8; 32], vec![]))
-    }
-
-    fn rollback(&self, checkpoint: fluentbase_types::JournalCheckpoint) {
-        AccountManager::rollback(self, checkpoint.to_u64());
-    }
-
-    fn update_preimage(&self, key: &[u8; 32], field: u32, preimage: &[u8]) -> bool {
-        AccountManager::update_preimage(self, key, field, preimage);
-        true
-    }
-
-    fn preimage(&self, hash: &[u8; 32]) -> Vec<u8> {
-        AccountManager::preimage(self, hash).to_vec()
-    }
-
-    fn preimage_size(&self, hash: &[u8; 32]) -> u32 {
-        AccountManager::preimage_size(self, hash)
-    }
-
-    fn journal(&self) -> Vec<JournalEvent> {
-        // TODO: "journal is not supported here"
-        vec![]
-    }
-}
+// impl<'a, DB: Database> IJournaledTrie for JournalDbWrapper<'a, DB> {
+//     fn checkpoint(&self) -> fluentbase_types::JournalCheckpoint {
+//         fluentbase_types::JournalCheckpoint::from_u64(AccountManager::checkpoint(self))
+//     }
+//
+//     fn get(&self, key: &[u8; 32], committed: bool) -> Option<(Vec<[u8; 32]>, u32, bool)> {
+//         // if first 12 bytes are empty then its account load otherwise storage
+//         if key[..12] == [0u8; 12] {
+//             let address = Address::from_slice(&key[12..]);
+//             let (account, is_cold) = AccountManager::account(self, address);
+//             Some((
+//                 account.get_fields().to_vec(),
+//                 JZKT_ACCOUNT_COMPRESSION_FLAGS,
+//                 is_cold,
+//             ))
+//         } else {
+//             let index = U256::from_le_bytes(*key);
+//             let (value, is_cold) =
+//                 AccountManager::storage(self, EVM_STORAGE_ADDRESS, index, committed);
+//             Some((
+//                 vec![value.to_le_bytes::<32>()],
+//                 JZKT_STORAGE_COMPRESSION_FLAGS,
+//                 is_cold,
+//             ))
+//         }
+//     }
+//
+//     fn update(&self, key: &[u8; 32], value: &Vec<[u8; 32]>, _flags: u32) {
+//         if value.len() == JZKT_ACCOUNT_FIELDS_COUNT as usize {
+//             let address = Address::from_slice(&key[12..]);
+//             let jzkt_account = Account::new_from_fields(address, value.as_slice());
+//             AccountManager::write_account(self, &jzkt_account);
+//         } else if value.len() == JZKT_STORAGE_FIELDS_COUNT as usize {
+//             AccountManager::write_storage(
+//                 self,
+//                 EVM_STORAGE_ADDRESS,
+//                 U256::from_le_bytes(*key),
+//                 U256::from_le_bytes(*value.get(0).unwrap()),
+//             );
+//         } else {
+//             panic!("not supported field count: {}", value.len())
+//         }
+//     }
+//
+//     fn remove(&self, _key: &[u8; 32]) {
+//         // TODO: "account removal is not supported"
+//     }
+//
+//     fn compute_root(&self) -> [u8; 32] {
+//         // TODO: "root is not supported"
+//         [0u8; 32]
+//     }
+//
+//     fn emit_log(&self, address: Address, topics: Vec<B256>, data: Bytes) {
+//         AccountManager::log(self, address, data, &topics);
+//     }
+//
+//     fn commit(&self) -> Result<([u8; 32], Vec<JournalLog>), ExitCode> {
+//         AccountManager::commit(self);
+//         Ok(([0u8; 32], vec![]))
+//     }
+//
+//     fn rollback(&self, checkpoint: fluentbase_types::JournalCheckpoint) {
+//         AccountManager::rollback(self, checkpoint.to_u64());
+//     }
+//
+//     fn update_preimage(&self, key: &[u8; 32], field: u32, preimage: &[u8]) -> bool {
+//         AccountManager::update_preimage(self, key, field, preimage);
+//         true
+//     }
+//
+//     fn preimage(&self, hash: &[u8; 32]) -> Vec<u8> {
+//         AccountManager::preimage(self, hash).to_vec()
+//     }
+//
+//     fn preimage_size(&self, hash: &[u8; 32]) -> u32 {
+//         AccountManager::preimage_size(self, hash)
+//     }
+//
+//     fn journal(&self) -> Vec<JournalEvent> {
+//         // TODO: "journal is not supported here"
+//         vec![]
+//     }
+// }
 
 impl<'a, DB: Database> AccountManager for JournalDbWrapper<'a, DB> {
     fn checkpoint(&self) -> AccountCheckpoint {
