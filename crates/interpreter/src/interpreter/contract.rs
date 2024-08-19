@@ -3,6 +3,7 @@ use crate::{
     primitives::{Address, Bytecode, Bytes, Env, TransactTo, B256, U256},
     CallInputs,
 };
+use revm_primitives::ExecutionEnvironment;
 
 /// EVM contract information.
 #[derive(Clone, Debug, Default)]
@@ -10,8 +11,8 @@ use crate::{
 pub struct Contract {
     /// Contracts data
     pub input: Bytes,
-    /// Bytecode contains contract code, size of original code, analysis with gas block and jump table.
-    /// Note that current code is extended with push padding and STOP at end.
+    /// Bytecode contains contract code, size of original code, analysis with gas block and jump
+    /// table. Note that current code is extended with push padding and STOP at end.
     pub bytecode: Bytecode,
     /// Bytecode hash for legacy. For EOF this would be None.
     pub hash: Option<B256>,
@@ -52,6 +53,8 @@ impl Contract {
         let contract_address = match env.tx.transact_to {
             TransactTo::Call(caller) => caller,
             TransactTo::Create => Address::ZERO,
+            // TODO: fluent_tx_d1r1 how we can get the address here?
+            TransactTo::Blended(_, _) => Address::ZERO,
         };
         Self::new(
             env.tx.data.clone(),

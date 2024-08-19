@@ -5,7 +5,7 @@ use criterion::{
     BenchmarkGroup,
     Criterion,
 };
-use revm::{
+use revm_fluent::{
     db::BenchmarkDB,
     interpreter::{analysis::to_analysed, Contract, DummyHost, Interpreter},
     primitives::{address, bytes, hex, BerlinSpec, Bytecode, Bytes, TransactTo, U256},

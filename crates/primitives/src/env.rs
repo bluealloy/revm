@@ -1,16 +1,28 @@
 pub mod handler_cfg;
 
-pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
-
 use crate::{
-    calc_blob_gasprice, Account, Address, Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId,
-    B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
+    calc_blob_gasprice,
+    Account,
+    Address,
+    Bytes,
+    InvalidHeader,
+    InvalidTransaction,
+    Spec,
+    SpecId,
+    B256,
+    GAS_PER_BLOB,
+    KECCAK_EMPTY,
+    MAX_BLOB_NUMBER_PER_BLOCK,
+    MAX_INITCODE_SIZE,
+    U256,
     VERSIONED_HASH_VERSION_KZG,
 };
-use core::cmp::{min, Ordering};
-use core::hash::Hash;
-use std::boxed::Box;
-use std::vec::Vec;
+use core::{
+    cmp::{min, Ordering},
+    hash::Hash,
+};
+pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
+use std::{boxed::Box, vec::Vec};
 
 /// EVM environment configuration.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -140,7 +152,8 @@ impl Env {
         }
 
         // - For CANCUN and later, check that the gas price is not more than the tx max
-        // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not set
+        // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not
+        //   set
         if SPEC::enabled(SpecId::CANCUN) {
             // Presence of max_fee_per_blob_gas means that this is blob transaction.
             if let Some(max) = self.tx.max_fee_per_blob_gas {
@@ -258,40 +271,44 @@ pub struct CfgEnv {
     /// Chain ID of the EVM, it will be compared to the transaction's Chain ID.
     /// Chain ID is introduced EIP-155
     pub chain_id: u64,
-    /// KZG Settings for point evaluation precompile. By default, this is loaded from the ethereum mainnet trusted setup.
+    /// KZG Settings for point evaluation precompile. By default, this is loaded from the ethereum
+    /// mainnet trusted setup.
     #[cfg(feature = "c-kzg")]
     #[cfg_attr(feature = "serde", serde(skip))]
     pub kzg_settings: crate::kzg::EnvKzgSettings,
-    /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
-    /// This is very beneficial for testing and speeds up execution of that bytecode if called multiple times.
+    /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is
+    /// created. This is very beneficial for testing and speeds up execution of that bytecode
+    /// if called multiple times.
     ///
     /// Default: Analyse
     pub perf_analyse_created_bytecodes: AnalysisKind,
-    /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
-    /// By default it is 0x6000 (~25kb).
+    /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because
+    /// of tests. By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
-    /// A hard memory limit in bytes beyond which [crate::result::OutOfGasError::Memory] cannot be resized.
+    /// A hard memory limit in bytes beyond which [crate::result::OutOfGasError::Memory] cannot be
+    /// resized.
     ///
     /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
     /// a sane value to prevent memory allocation panics. Defaults to `2^32 - 1` bytes per
     /// EIP-1985.
     #[cfg(feature = "memory_limit")]
     pub memory_limit: u64,
-    /// Skip balance checks if true. Adds transaction cost to balance to ensure execution doesn't fail.
+    /// Skip balance checks if true. Adds transaction cost to balance to ensure execution doesn't
+    /// fail.
     #[cfg(feature = "optional_balance_check")]
     pub disable_balance_check: bool,
-    /// There are use cases where it's allowed to provide a gas limit that's higher than a block's gas limit. To that
-    /// end, you can disable the block gas limit validation.
+    /// There are use cases where it's allowed to provide a gas limit that's higher than a block's
+    /// gas limit. To that end, you can disable the block gas limit validation.
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_block_gas_limit")]
     pub disable_block_gas_limit: bool,
-    /// EIP-3607 rejects transactions from senders with deployed code. In development, it can be desirable to simulate
-    /// calls from contracts, which this setting allows.
+    /// EIP-3607 rejects transactions from senders with deployed code. In development, it can be
+    /// desirable to simulate calls from contracts, which this setting allows.
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_eip3607")]
     pub disable_eip3607: bool,
-    /// Disables all gas refunds. This is useful when using chains that have gas refunds disabled e.g. Avalanche.
-    /// Reasoning behind removing gas refunds can be found in EIP-3298.
+    /// Disables all gas refunds. This is useful when using chains that have gas refunds disabled
+    /// e.g. Avalanche. Reasoning behind removing gas refunds can be found in EIP-3298.
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_gas_refund")]
     pub disable_gas_refund: bool,
@@ -510,7 +527,8 @@ pub struct TxEnv {
     pub data: Bytes,
     /// The nonce of the transaction.
     ///
-    /// Caution: If set to `None`, then nonce validation against the account's nonce is skipped: [InvalidTransaction::NonceTooHigh] and [InvalidTransaction::NonceTooLow]
+    /// Caution: If set to `None`, then nonce validation against the account's nonce is skipped:
+    /// [InvalidTransaction::NonceTooHigh] and [InvalidTransaction::NonceTooLow]
     pub nonce: Option<u64>,
 
     /// The chain ID of the transaction. If set to `None`, no checks are performed.
@@ -658,6 +676,40 @@ pub struct OptimismFields {
     pub enveloped_tx: Option<Bytes>,
 }
 
+// #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+// #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+// pub struct FluentFields {
+//     pub execution_environment: ExecutionEnvironment,
+//     pub raw_data: Bytes,
+// }
+
+// impl Default for FluentFields {
+//     fn default() -> Self {
+//         Self {
+//             execution_environment: ExecutionEnvironment::Fuel,
+//             raw_data: Bytes::new(),
+//         }
+//     }
+// }
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum ExecutionEnvironment {
+    Fuel,
+    Solana,
+}
+
+impl TryFrom<u8> for ExecutionEnvironment {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(ExecutionEnvironment::Fuel),
+            1 => Ok(ExecutionEnvironment::Solana),
+            _ => Err(()),
+        }
+    }
+}
 /// Transaction destination.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -666,6 +718,8 @@ pub enum TransactTo {
     Call(Address),
     /// Contract creation.
     Create,
+    /// Fluent transaction type.
+    Blended(ExecutionEnvironment, Bytes),
 }
 
 impl TransactTo {
@@ -690,6 +744,12 @@ impl TransactTo {
     #[inline]
     pub fn is_create(&self) -> bool {
         matches!(self, Self::Create)
+    }
+
+    /// Returns `true` if the transaction is `Blended`.
+    #[inline]
+    pub fn is_blended(&self) -> bool {
+        matches!(self, Self::Blended(..))
     }
 }
 

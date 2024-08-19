@@ -38,7 +38,7 @@ fluentbase-codec = { path = "../../../crates/codec", default-features = false }
 fluentbase-poseidon = { path = "../../../crates/poseidon", default-features = false }
 fluentbase-genesis = { path = "../../../crates/genesis", default-features = false }
 
-rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm", branch = "devel", default-features = false, optional = true }
+rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel", default-features = false, optional = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }

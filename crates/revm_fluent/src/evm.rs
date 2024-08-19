@@ -27,6 +27,7 @@ use crate::{
         EVMError,
         EVMResult,
         EnvWithHandlerCfg,
+        ExecutionEnvironment,
         ExecutionResult,
         HandlerCfg,
         InvalidTransaction,
@@ -43,6 +44,8 @@ use crate::{
 };
 use core::{cell::RefCell, fmt};
 use fluentbase_core::{
+    fvm::exec::_exec_fuel_tx,
+    helpers::evm_error_from_exit_code,
     loader::{_loader_call, _loader_create},
 };
 use fluentbase_sdk::{types::{EvmCallMethodInput, EvmCreateMethodInput}, ContractInput, AccountManager};
@@ -393,8 +396,8 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// Transact pre-verified transaction.
+
     fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
-        let spec_id = self.spec_id();
         let ctx = &mut self.context;
         let pre_exec = self.handler.pre_execution();
 
@@ -419,7 +422,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 // ctx.evm.touch(&EVM_STORAGE_ADDRESS);
                 let tx_gas_limit = ctx.evm.env.tx.gas_limit;
 
-                match ctx.evm.env.tx.transact_to {
+                match ctx.evm.env.tx.transact_to.clone() {
                     TransactTo::Call(address) => {
                         let value = ctx.evm.env.tx.value;
                         let caller = ctx.evm.env.tx.caller;
@@ -434,6 +437,18 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         let data = ctx.evm.env.tx.data.clone();
                         let result = self.create_inner(caller, value, data, gas_limit)?;
                         FrameResult::Create(result)
+                    }
+                    TransactTo::Blended(execution_environment, raw_data) => {
+                        match execution_environment {
+                            ExecutionEnvironment::Fuel => {
+                                let result =
+                                    self.blend_fuel_inner(tx_gas_limit, gas_limit, raw_data)?;
+                                FrameResult::Call(result)
+                            }
+                            ExecutionEnvironment::Solana => {
+                                todo!("call blendedAPI.exec_fuel_tx")
+                            }
+                        }
                     }
                 }
             }
@@ -690,6 +705,40 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             result: InterpreterResult {
                 result: evm_error_from_exit_code(call_output.exit_code.into()),
                 output: call_output.output,
+                gas,
+            },
+            memory_offset: Default::default(),
+        })
+    }
+
+    /// Main contract call of the EVM.
+    #[cfg(feature = "rwasm")]
+    fn blend_fuel_inner(
+        &mut self,
+        tx_gas_limit: u64,
+        gas_limit: u64,
+        raw_fuel_tx: Bytes,
+    ) -> Result<CallOutcome, EVMError<DB::Error>> {
+        let mut gas = Gas::new(tx_gas_limit);
+        let contract_input = self.input_from_env(
+            &mut gas,
+            Address::default(),
+            Address::default(),
+            U256::default(),
+        );
+        let am = JournalDbWrapper::new(RefCell::new(&mut self.context.evm));
+        let output = _exec_fuel_tx(&contract_input, &am, gas_limit, raw_fuel_tx);
+
+        let mut gas = Gas::new(tx_gas_limit);
+        if !gas.record_cost(tx_gas_limit - output.gas_remaining) {
+            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
+        };
+        gas.record_refund(output.gas_refund);
+
+        Ok(CallOutcome {
+            result: InterpreterResult {
+                result: evm_error_from_exit_code(output.exit_code.into()),
+                output: output.output,
                 gas,
             },
             memory_offset: Default::default(),
