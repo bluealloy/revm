@@ -13,7 +13,6 @@ use crate::{
     GAS_PER_BLOB,
     KECCAK_EMPTY,
     MAX_BLOB_NUMBER_PER_BLOCK,
-    MAX_INITCODE_SIZE,
     U256,
     VERSIONED_HASH_VERSION_KZG,
 };
@@ -130,6 +129,7 @@ impl Env {
         // EIP-3860: Limit and meter initcode
         #[cfg(feature = "e2e")]
         if SPEC::enabled(SpecId::SHANGHAI) && self.tx.transact_to.is_create() {
+            use crate::MAX_INITCODE_SIZE;
             let max_initcode_size = self
                 .cfg
                 .limit_contract_code_size

@@ -1149,7 +1149,6 @@ version = "0.1.0"
 dependencies = [
  "fluentbase-runtime",
  "fluentbase-sdk",
- "hex",
  "revm-interpreter",
  "revm-primitives",
  "rwasm",
