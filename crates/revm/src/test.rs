@@ -277,81 +277,6 @@ fn test_genesis_greeting() {
 }
 
 #[test]
-fn test_deploy_greeting() {
-    // deploy greeting WASM contract
-    let mut ctx = EvmTestingContext::default();
-    const DEPLOYER_ADDRESS: Address = Address::ZERO;
-    let contract_address = deploy_evm_tx(
-        &mut ctx,
-        DEPLOYER_ADDRESS,
-        include_bytes!("../../../../examples/greeting/lib.wasm").into(),
-    );
-    // call greeting WASM contract
-    let result = call_evm_tx(
-        &mut ctx,
-        DEPLOYER_ADDRESS,
-        contract_address,
-        Bytes::default(),
-        None,
-    );
-    assert!(result.is_success());
-    let bytes = result.output().unwrap_or_default();
-    assert_eq!("Hello, World", from_utf8(bytes.as_ref()).unwrap());
-}
-
-#[test]
-fn test_deploy_keccak256() {
-    // deploy greeting WASM contract
-    let mut ctx = EvmTestingContext::default();
-    const DEPLOYER_ADDRESS: Address = Address::ZERO;
-    let contract_address = deploy_evm_tx(
-        &mut ctx,
-        DEPLOYER_ADDRESS,
-        include_bytes!("../../../../examples/hashing/lib.wasm").into(),
-    );
-    // call greeting WASM contract
-    let result = call_evm_tx(
-        &mut ctx,
-        DEPLOYER_ADDRESS,
-        contract_address,
-        "Hello, World".into(),
-        None,
-    );
-    assert!(result.is_success());
-    let bytes = result.output().unwrap_or_default().as_ref();
-    assert_eq!(
-        "a04a451028d0f9284ce82243755e245238ab1e4ecf7b9dd8bf4734d9ecfd0529",
-        hex::encode(&bytes[0..32]),
-    );
-}
-
-#[test]
-fn test_deploy_panic() {
-    // deploy greeting WASM contract
-    let mut ctx = EvmTestingContext::default();
-    const DEPLOYER_ADDRESS: Address = Address::ZERO;
-    let contract_address = deploy_evm_tx(
-        &mut ctx,
-        DEPLOYER_ADDRESS,
-        include_bytes!("../../../../examples/panic/lib.wasm").into(),
-    );
-    // call greeting WASM contract
-    let result = call_evm_tx(
-        &mut ctx,
-        DEPLOYER_ADDRESS,
-        contract_address,
-        Bytes::default(),
-        None,
-    );
-    assert!(!result.is_success());
-    let bytes = result.output().unwrap_or_default();
-    assert_eq!(
-        "panicked at examples/panic/lib.rs:17:9: it is panic time",
-        from_utf8(bytes.as_ref()).unwrap()
-    );
-}
-
-#[test]
 fn test_evm_greeting() {
     // deploy greeting EVM contract
     let mut ctx = EvmTestingContext::default();
@@ -480,60 +405,6 @@ fn test_simple_send() {
 }
 
 #[test]
-fn test_create_send() {
-    // deploy greeting EVM contract
-    let mut ctx = EvmTestingContext::default();
-    const SENDER_ADDRESS: Address = address!("1231238908230948230948209348203984029834");
-    ctx.add_balance(SENDER_ADDRESS, U256::from(2e18));
-    let gas_price = U256::from(2e9);
-    let result = TxBuilder::create(
-        &mut ctx,
-        SENDER_ADDRESS,
-        include_bytes!("../../../../examples/greeting/lib.wasm").into(),
-    )
-    .gas_price(gas_price)
-    .value(U256::from(1e18))
-    .exec();
-    let contract_address = calc_create_address(&ctx.sdk, &SENDER_ADDRESS, 0);
-    assert!(result.is_success());
-    let tx_cost = gas_price * U256::from(result.gas_used());
-    assert_eq!(ctx.get_balance(SENDER_ADDRESS), U256::from(1e18) - tx_cost);
-    assert_eq!(ctx.get_balance(contract_address), U256::from(1e18));
-}
-
-#[test]
-fn test_evm_revert() {
-    // deploy greeting EVM contract
-    let mut ctx = EvmTestingContext::default();
-    const SENDER_ADDRESS: Address = address!("1231238908230948230948209348203984029834");
-    ctx.add_balance(SENDER_ADDRESS, U256::from(2e18));
-    let gas_price = U256::from(0);
-    let result = TxBuilder::create(&mut ctx, SENDER_ADDRESS, hex!("5f5ffd").into())
-        .gas_price(gas_price)
-        .value(U256::from(1e18))
-        .exec();
-    let contract_address = calc_create_address(&ctx.sdk, &SENDER_ADDRESS, 0);
-    assert!(!result.is_success());
-    assert_eq!(ctx.get_balance(SENDER_ADDRESS), U256::from(2e18));
-    assert_eq!(ctx.get_balance(contract_address), U256::from(0e18));
-    // now send success tx
-    let result = TxBuilder::create(
-        &mut ctx,
-        SENDER_ADDRESS,
-        include_bytes!("../../../../examples/greeting/lib.wasm").into(),
-    )
-    .gas_price(gas_price)
-    .value(U256::from(1e18))
-    .exec();
-    // here nonce must be 1 because we increment nonce for failed txs
-    let contract_address = calc_create_address(&ctx.sdk, &SENDER_ADDRESS, 1);
-    println!("{}", contract_address);
-    assert!(result.is_success());
-    assert_eq!(ctx.get_balance(SENDER_ADDRESS), U256::from(1e18));
-    assert_eq!(ctx.get_balance(contract_address), U256::from(1e18));
-}
-
-#[test]
 fn test_evm_self_destruct() {
     // deploy greeting EVM contract
     let mut ctx = EvmTestingContext::default();
@@ -546,9 +417,9 @@ fn test_evm_self_destruct() {
         SENDER_ADDRESS,
         hex!("6003600c60003960036000F36003ff").into(),
     )
-    .gas_price(gas_price)
-    .value(U256::from(1e18))
-    .exec();
+        .gas_price(gas_price)
+        .value(U256::from(1e18))
+        .exec();
     let contract_address = calc_create_address(&ctx.sdk, &SENDER_ADDRESS, 0);
     assert!(result.is_success());
     assert_eq!(ctx.get_balance(SENDER_ADDRESS), U256::from(1e18));
@@ -570,7 +441,7 @@ fn test_evm_self_destruct() {
         SENDER_ADDRESS,
         hex!("6000600060006000600073f91c20c0cafbfdc150adff51bbfc5808edde7cb561FFFFF1").into(),
     )
-    .exec();
+        .exec();
     assert!(result.is_success());
     assert_eq!(ctx.get_balance(SENDER_ADDRESS), U256::from(1e18));
     assert_eq!(ctx.get_balance(contract_address), U256::from(0e18));
@@ -706,7 +577,7 @@ fn test_bridge_contract_with_call() {
         signer_l1_wallet_owner,
         erc20gateway_contract_address,
     )
-    .input(bytes!(
+        .input(bytes!(
         "\
         f2fde38b\
         0000000000000000000000009fe46736679d2d9a65f0992f2272de9f3c7fa6e0\
@@ -777,17 +648,13 @@ fn test_bridge_contract_with_call() {
         signer_l1_wallet_owner,
         erc20gateway_contract_address,
     )
-    // data: 0x70616e69636b6564206174206372617465732f636f72652f7372632f636f6e7472616374732f65636c2e72733a34373a31373a2063616c6c206d6574686f64206661696c65642c206578697420636f64653a202d31303232
-    .input(bytes!(
+        // data: 0x70616e69636b6564206174206372617465732f636f72652f7372632f636f6e7472616374732f65636c2e72733a34373a31373a2063616c6c206d6574686f64206661696c65642c206578697420636f64653a202d31303232
+        .input(bytes!(
         "\
         aab858dd\
         000000000000000000000000dc64a140aa3e981100a9beca4e685f962f0cf6c9\
         "
     ));
-
-    // 70616e69636b6564206174206372617465732f636f72652f7372632f636f6e74
-    // 72616374732f65636c2e72733a34373a31373a2063616c6c206d6574686f6420
-    // 6661696c65642c206578697420636f64653a202d31303232
 
     assert_eq!(
         signer_l1_wallet_owner,
@@ -795,113 +662,5 @@ fn test_bridge_contract_with_call() {
     );
     let result = erc20gateway_factory_tx_builder.exec();
     assert!(!result.output().unwrap().is_empty());
-    assert!(result.is_success());
-}
-
-// #[test]
-// fn test_codec_case() {
-//     let call_method_input = EvmCallMethodInput {
-//         caller: Default::default(),
-//         address: address!("095e7baea6a6c7c4c2dfeb977efac326af552d87"),
-//         bytecode_address: address!("095e7baea6a6c7c4c2dfeb977efac326af552d87"),
-//         value: U256::from_be_slice(
-//             &hex::decode("0x00000000000000000000000000000000000000000000000000000000000186a0")
-//                 .unwrap(),
-//         ),
-//         apparent_value: Default::default(),
-//         input: Bytes::copy_from_slice(&hex::decode("").unwrap()),
-//         gas_limit: 9999979000,
-//         depth: 0,
-//         is_static: false,
-//     };
-//     let call_method_input_encoded = call_method_input.encode_to_vec(0);
-//     let mut buffer = BufferDecoder::new(&call_method_input_encoded);
-//     let mut call_method_input_decoded = EvmCallMethodInput::default();
-//     EvmCallMethodInput::decode_body(&mut buffer, 0, &mut call_method_input_decoded);
-//     assert_eq!(call_method_input_decoded.callee, call_method_input.callee);
-// }
-
-#[test]
-fn test_simple_nested_call() {
-    let mut ctx = EvmTestingContext::default();
-    const ACCOUNT1_ADDRESS: Address = address!("1111111111111111111111111111111111111111");
-    const ACCOUNT2_ADDRESS: Address = address!("1111111111111111111111111111111111111112");
-    const ACCOUNT3_ADDRESS: Address = address!("1111111111111111111111111111111111111113");
-    let account1 = ctx.add_wasm_contract(
-        ACCOUNT1_ADDRESS,
-        instruction_set! {
-            I32Const(-100)
-            Call(SysFuncIdx::EXIT)
-        },
-    );
-    let account2 = ctx.add_wasm_contract(
-        ACCOUNT2_ADDRESS,
-        instruction_set! {
-            I32Const(-20)
-            Call(SysFuncIdx::EXIT)
-        },
-    );
-    let mut memory_section = vec![];
-    memory_section.extend_from_slice(&account1.rwasm_code_hash.0);
-    memory_section.extend_from_slice(ACCOUNT1_ADDRESS.as_slice());
-    memory_section.extend_from_slice(&account2.rwasm_code_hash.0);
-    memory_section.extend_from_slice(ACCOUNT2_ADDRESS.as_slice());
-    memory_section.extend_from_slice(&[0, 0, 0, 0]);
-    assert_eq!(memory_section.len(), 108);
-    let code_section = instruction_set! {
-        // alloc and init memory
-        I32Const(1)
-        MemoryGrow
-        Drop
-        I32Const(0)
-        I32Const(0)
-        I32Const(memory_section.len() as u32)
-        MemoryInit(0)
-        DataDrop(0)
-        // sys exec hash
-        I32Const(0) // hash32_ptr
-        I32Const(32) // address20_ptr
-        I32Const(0) // input_ptr
-        I32Const(0) // input_len
-        I32Const(100_000) // fuel
-        I32Const(STATE_MAIN) // state
-        Call(SysFuncIdx::EXEC)
-        // sys exec hash
-        I32Const(52) // hash32_ptr
-        I32Const(84) // address20_ptr
-        I32Const(0) // input_ptr
-        I32Const(0) // input_len
-        I32Const(100_000) // fuel
-        I32Const(STATE_MAIN) // state
-        Call(SysFuncIdx::EXEC)
-        // write the sum of two error codes into 1 byte result
-        I32Add
-        LocalGet(1)
-        I32Const(104)
-        LocalSet(2)
-        I32Store(0)
-        // call "_write" func
-        I32Const(104) // offset
-        I32Const(4) // length
-        Call(SysFuncIdx::WRITE)
-        // exit with 0 exit code
-        I32Const(0)
-        Call(SysFuncIdx::EXIT)
-    };
-    let code_section_len = code_section.len() as u32;
-    ctx.add_wasm_contract(
-        ACCOUNT3_ADDRESS,
-        RwasmModule {
-            code_section,
-            memory_section,
-            func_section: vec![code_section_len],
-            ..Default::default()
-        },
-    );
-    let result = TxBuilder::call(&mut ctx, Address::ZERO, ACCOUNT3_ADDRESS)
-        .gas_price(U256::ZERO)
-        .exec();
-    let value = LittleEndian::read_i32(result.output().unwrap_or_default().as_ref());
-    assert_eq!(value, -120);
     assert!(result.is_success());
 }

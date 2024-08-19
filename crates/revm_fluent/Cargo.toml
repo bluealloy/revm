@@ -184,7 +184,6 @@ debug-print = [
     "revm-interpreter/debug-print"
 ]
 rwasm = [
-    "e2e",
     "revm-interpreter/rwasm",
     "revm-precompile/rwasm",
 ]

@@ -45,6 +45,7 @@ revm-fluent = { package = "revm-fluent", path = "../crates/revm_fluent", default
     "c-kzg",
     "blst",
     "rwasm",
+    "e2e",
 ] }
 
 hash-db = "=0.15"

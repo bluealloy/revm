@@ -365,9 +365,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             #[cfg(feature = "rwasm")]
             {
                 // load an EVM loader account to access storage slots
-                let (evm_storage, _) = ctx.evm.load_account(PRECOMPILE_EVM_LOADER)?;
-                evm_storage.info.nonce = 1;
-                ctx.evm.touch(&PRECOMPILE_EVM_LOADER);
+                // let (evm_storage, _) = ctx.evm.load_account(PRECOMPILE_EVM_LOADER)?;
+                // evm_storage.info.nonce = 1;
+                // ctx.evm.touch(&PRECOMPILE_EVM_LOADER);
 
                 match ctx.evm.env.tx.transact_to {
                     TransactTo::Call(_) => {
