@@ -24,25 +24,9 @@ use fluentbase_genesis::{
 };
 use fluentbase_poseidon::poseidon_hash;
 use fluentbase_runtime::RuntimeContext;
-use fluentbase_sdk::{
-    byteorder::{ByteOrder, LittleEndian},
-    runtime::TestingContext,
-};
-use fluentbase_types::{
-    address,
-    bytes,
-    calc_create_address,
-    Account,
-    Address,
-    Bytes,
-    SysFuncIdx,
-    STATE_MAIN,
-    U256,
-};
-use rwasm::{
-    instruction_set,
-    rwasm::{BinaryFormat, RwasmModule},
-};
+use fluentbase_sdk::runtime::TestingContext;
+use fluentbase_types::{address, bytes, calc_create_address, Account, Address, Bytes, U256};
+use rwasm::rwasm::{BinaryFormat, RwasmModule};
 
 #[allow(dead_code)]
 struct EvmTestingContext {
