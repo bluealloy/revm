@@ -745,6 +745,12 @@ impl TransactTo {
     pub fn is_create(&self) -> bool {
         matches!(self, Self::Create)
     }
+
+    /// Returns `true` if the transaction is `Blended`.
+    #[inline]
+    pub fn is_blended(&self) -> bool {
+        matches!(self, Self::Blended(..))
+    }
 }
 
 /// Create scheme.
