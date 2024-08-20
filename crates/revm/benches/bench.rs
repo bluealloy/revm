@@ -14,9 +14,6 @@ use revm::{
 use revm_interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use std::time::Duration;
 
-#[cfg(feature = "rwasm")]
-extern crate revm_interpreter_fluent as revm_interpreter;
-
 fn analysis(c: &mut Criterion) {
     let evm = Evm::builder()
         .modify_tx_env(|tx| {

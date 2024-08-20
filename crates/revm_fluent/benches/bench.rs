@@ -5,7 +5,7 @@ use criterion::{
     BenchmarkGroup,
     Criterion,
 };
-use revm::{
+use revm_fluent::{
     db::BenchmarkDB,
     interpreter::{analysis::to_analysed, Contract, DummyHost, Interpreter},
     primitives::{address, bytes, hex, BerlinSpec, Bytecode, Bytes, TransactTo, U256},
@@ -13,9 +13,6 @@ use revm::{
 };
 use revm_interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use std::time::Duration;
-
-#[cfg(feature = "rwasm")]
-extern crate revm_interpreter_fluent as revm_interpreter;
 
 fn analysis(c: &mut Criterion) {
     let evm = Evm::builder()

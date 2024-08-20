@@ -13,6 +13,7 @@ use crate::{
     GAS_PER_BLOB,
     KECCAK_EMPTY,
     MAX_BLOB_NUMBER_PER_BLOCK,
+
     U256,
     VERSIONED_HASH_VERSION_KZG,
 };
@@ -677,6 +678,40 @@ pub struct OptimismFields {
     pub enveloped_tx: Option<Bytes>,
 }
 
+// #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+// #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+// pub struct FluentFields {
+//     pub execution_environment: ExecutionEnvironment,
+//     pub raw_data: Bytes,
+// }
+
+// impl Default for FluentFields {
+//     fn default() -> Self {
+//         Self {
+//             execution_environment: ExecutionEnvironment::Fuel,
+//             raw_data: Bytes::new(),
+//         }
+//     }
+// }
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum ExecutionEnvironment {
+    Fuel,
+    Solana,
+}
+
+impl TryFrom<u8> for ExecutionEnvironment {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(ExecutionEnvironment::Fuel),
+            1 => Ok(ExecutionEnvironment::Solana),
+            _ => Err(()),
+        }
+    }
+}
 /// Transaction destination.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -685,6 +720,8 @@ pub enum TransactTo {
     Call(Address),
     /// Contract creation.
     Create,
+    /// Fluent transaction type.
+    Blended(ExecutionEnvironment, Bytes),
 }
 
 impl TransactTo {
@@ -709,6 +746,12 @@ impl TransactTo {
     #[inline]
     pub fn is_create(&self) -> bool {
         matches!(self, Self::Create)
+    }
+
+    /// Returns `true` if the transaction is `Blended`.
+    #[inline]
+    pub fn is_blended(&self) -> bool {
+        matches!(self, Self::Blended(..))
     }
 }
 

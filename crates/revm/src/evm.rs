@@ -1,7 +1,7 @@
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
-    handler::Handler,
+    handler::{execution, Handler},
     interpreter::Host,
     primitives::{
         specification::SpecId,
@@ -10,6 +10,7 @@ use crate::{
         EVMError,
         EVMResult,
         EnvWithHandlerCfg,
+        ExecutionEnvironment,
         ExecutionResult,
         HandlerCfg,
         ResultAndState,
@@ -369,7 +370,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 // evm_storage.info.nonce = 1;
                 // ctx.evm.touch(&PRECOMPILE_EVM_LOADER);
 
-                match ctx.evm.env.tx.transact_to {
+                match ctx.evm.env.tx.transact_to.clone() {
                     TransactTo::Call(_) => {
                         let inputs = CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap();
                         let result = self.call_inner(inputs)?;
@@ -379,6 +380,16 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         let inputs = CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap();
                         let result = self.create_inner(inputs)?;
                         FrameResult::Create(result)
+                    }
+                    TransactTo::Blended(execution_environment, _raw_data) => {
+                        match execution_environment {
+                            ExecutionEnvironment::Fuel => {
+                                todo!("add tx execution for fuel")
+                            }
+                            ExecutionEnvironment::Solana => {
+                                todo!("add tx execution for solana")
+                            }
+                        }
                     }
                 }
             }
@@ -397,7 +408,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 };
                 let exec = self.handler.execution();
                 // call inner handling of call/create
-                let first_frame_or_result = match ctx.evm.env.tx.transact_to {
+                let first_frame_or_result = match ctx.evm.env.tx.transact_to.clone() {
                     TransactTo::Call(_) => exec.call(
                         ctx,
                         CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
@@ -457,6 +468,16 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                                 ctx,
                                 CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
                             )?
+                        }
+                    }
+                    TransactTo::Blended(execution_environment, _raw_data) => {
+                        match execution_environment {
+                            ExecutionEnvironment::Fuel => {
+                                todo!("add tx execution for fuel")
+                            }
+                            ExecutionEnvironment::Solana => {
+                                todo!("add tx execution for solana")
+                            }
                         }
                     }
                 };

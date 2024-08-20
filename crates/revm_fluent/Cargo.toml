@@ -28,6 +28,7 @@ all = "warn"
 revm-interpreter = { package = "revm-interpreter", path = "../interpreter", default-features = false }
 revm-precompile = { package = "revm-precompile", path = "../precompile", default-features = false, optional = true }
 
+#fluentbase-contracts = { workspace = true, default-features = false }
 #fluentbase-sdk = { workspace = true, default-features = false }
 #fluentbase-types = { workspace = true, default-features = false }
 #fluentbase-core = { workspace = true, default-features = false }
