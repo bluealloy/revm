@@ -42,7 +42,7 @@ kzg-rs = { version = "0.1", default-features = false, features = [
 
 # utility
 enumn = "0.1"
-derive_more = { version = "0.99", optional = true }
+derive_more = { version = "1", features = ["as_ref", "deref", "deref_mut"], optional = true }
 cfg-if = "1"
 dyn-clone = "1.0"
 
