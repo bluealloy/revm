@@ -32,12 +32,12 @@ use fluentbase_types::{
     address,
     bytes,
     calc_create_address,
-    contracts::SYSCALL_ID_CALL,
     Account,
     Address,
     Bytes,
     SysFuncIdx,
     STATE_MAIN,
+    SYSCALL_ID_CALL,
     U256,
 };
 use rwasm::{

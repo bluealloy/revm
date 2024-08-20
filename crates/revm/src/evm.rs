@@ -1,7 +1,7 @@
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
-    handler::{execution, Handler},
+    handler::Handler,
     interpreter::Host,
     primitives::{
         specification::SpecId,
