@@ -401,9 +401,9 @@ fn test_evm_self_destruct() {
         SENDER_ADDRESS,
         hex!("6003600c60003960036000F36003ff").into(),
     )
-        .gas_price(gas_price)
-        .value(U256::from(1e18))
-        .exec();
+    .gas_price(gas_price)
+    .value(U256::from(1e18))
+    .exec();
     let contract_address = calc_create_address(&ctx.sdk, &SENDER_ADDRESS, 0);
     assert!(result.is_success());
     assert_eq!(ctx.get_balance(SENDER_ADDRESS), U256::from(1e18));
@@ -425,7 +425,7 @@ fn test_evm_self_destruct() {
         SENDER_ADDRESS,
         hex!("6000600060006000600073f91c20c0cafbfdc150adff51bbfc5808edde7cb561FFFFF1").into(),
     )
-        .exec();
+    .exec();
     assert!(result.is_success());
     assert_eq!(ctx.get_balance(SENDER_ADDRESS), U256::from(1e18));
     assert_eq!(ctx.get_balance(contract_address), U256::from(0e18));
@@ -561,7 +561,7 @@ fn test_bridge_contract_with_call() {
         signer_l1_wallet_owner,
         erc20gateway_contract_address,
     )
-        .input(bytes!(
+    .input(bytes!(
         "\
         f2fde38b\
         0000000000000000000000009fe46736679d2d9a65f0992f2272de9f3c7fa6e0\
@@ -632,8 +632,8 @@ fn test_bridge_contract_with_call() {
         signer_l1_wallet_owner,
         erc20gateway_contract_address,
     )
-        // data: 0x70616e69636b6564206174206372617465732f636f72652f7372632f636f6e7472616374732f65636c2e72733a34373a31373a2063616c6c206d6574686f64206661696c65642c206578697420636f64653a202d31303232
-        .input(bytes!(
+    // data: 0x70616e69636b6564206174206372617465732f636f72652f7372632f636f6e7472616374732f65636c2e72733a34373a31373a2063616c6c206d6574686f64206661696c65642c206578697420636f64653a202d31303232
+    .input(bytes!(
         "\
         aab858dd\
         000000000000000000000000dc64a140aa3e981100a9beca4e685f962f0cf6c9\
