@@ -66,8 +66,10 @@ use fuel_core::txpool::types::TxId;
 use fuel_core_storage::{
     structured_storage::StructuredStorage,
     tables::Coins,
+    transactional::{Modifiable, WriteTransaction},
     StorageAsMut,
     StorageAsRef,
+    StorageInspect,
     StorageMutate,
 };
 use fuel_core_types::{
@@ -185,117 +187,18 @@ impl EvmTestingContext {
         self.db.commit(HashMap::from([(address, revm_account)]));
     }
 
-    pub(crate) fn sdk(&mut self) -> impl SovereignAPI {
+    pub(crate) fn with_sdk<F>(&mut self, f: F)
+    where
+        F: Fn(
+            RwasmDbWrapper<'_, fluentbase_sdk::runtime::RuntimeContextWrapper, &mut InMemoryDB>,
+        ) -> (),
+    {
         let mut evm = Evm::builder().with_db(&mut self.db).build();
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
             .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
-        RwasmDbWrapper::new(&mut evm.context, native_sdk)
-    }
-}
-
-impl SovereignAPI for EvmTestingContext {
-    fn native_sdk(&self) -> &impl NativeAPI {
-        unimplemented!()
-    }
-
-    fn block_context(&self) -> &BlockContext {
-        unimplemented!()
-    }
-
-    fn tx_context(&self) -> &TxContext {
-        unimplemented!()
-    }
-
-    fn contract_context(&self) -> Option<&ContractContext> {
-        unimplemented!()
-    }
-
-    fn checkpoint(&self) -> JournalCheckpoint {
-        unimplemented!()
-    }
-
-    fn commit(&mut self) -> SovereignStateResult {
-        unimplemented!()
-    }
-
-    fn rollback(&mut self, checkpoint: JournalCheckpoint) {
-        unimplemented!()
-    }
-
-    fn write_account(&mut self, account: Account, status: AccountStatus) {
-        unimplemented!()
-    }
-
-    fn destroy_account(&mut self, address: &Address, target: &Address) -> DestroyedAccountResult {
-        unimplemented!()
-    }
-
-    fn account(&self, address: &Address) -> (Account, IsColdAccess) {
-        unimplemented!()
-    }
-
-    fn account_committed(&self, address: &Address) -> (Account, IsColdAccess) {
-        unimplemented!()
-    }
-
-    fn write_preimage(&mut self, address: Address, hash: B256, preimage: Bytes) {
-        unimplemented!()
-    }
-
-    fn preimage(&self, hash: &B256) -> Option<Bytes> {
-        unimplemented!()
-    }
-
-    fn preimage_size(&self, hash: &B256) -> u32 {
-        unimplemented!()
-    }
-
-    fn write_storage(&mut self, address: Address, slot: U256, value: U256) -> IsColdAccess {
-        unimplemented!()
-    }
-
-    fn storage(&self, address: &Address, slot: &U256) -> (U256, IsColdAccess) {
-        unimplemented!()
-    }
-
-    fn committed_storage(&self, address: &Address, slot: &U256) -> (U256, IsColdAccess) {
-        unimplemented!()
-    }
-
-    fn write_transient_storage(&mut self, address: Address, index: U256, value: U256) {
-        unimplemented!()
-    }
-
-    fn transient_storage(&self, address: Address, index: U256) -> U256 {
-        unimplemented!()
-    }
-
-    fn write_log(&mut self, address: Address, data: Bytes, topics: Vec<B256>) {
-        unimplemented!()
-    }
-
-    fn precompile(
-        &self,
-        address: &Address,
-        input: &Bytes,
-        gas: u64,
-    ) -> Option<CallPrecompileResult> {
-        unimplemented!()
-    }
-
-    fn is_precompile(&self, address: &Address) -> bool {
-        unimplemented!()
-    }
-
-    fn transfer(
-        &mut self,
-        from: &mut Account,
-        to: &mut Account,
-        value: U256,
-    ) -> Result<(), ExitCode> {
-        unimplemented!()
+        f(RwasmDbWrapper::new(&mut evm.context.evm, native_sdk))
     }
 }
 
@@ -752,7 +655,7 @@ fn test_evm_self_destruct() {
         SENDER_ADDRESS,
         hex!("6000600060006000600073f91c20c0cafbfdc150adff51bbfc5808edde7cb561FFFFF1").into(),
     )
-        .exec();
+    .exec();
     if !result.is_success() {
         println!(
             "{}",
@@ -1129,16 +1032,18 @@ fn test_fuel_asset_transfer() {
     coin.set_owner(secret1_address);
     coin.set_amount(0xffff);
 
-    let mut sdk = JournalState::empty(ctx.sdk);
-    {
+    ctx.with_sdk(|mut sdk| {
         let wasm_storage = WasmStorage { sdk: &mut sdk };
         let mut storage = StructuredStorage::new(wasm_storage);
 
-        <StructuredStorage<WasmStorage<'_, JournalState<TestingContext>>> as StorageMutate<
-            Coins,
-        >>::insert(&mut storage, &utxo_id, &coin)
+        <StructuredStorage<
+            WasmStorage<
+                '_,
+                RwasmDbWrapper<'_, fluentbase_sdk::runtime::RuntimeContextWrapper, &mut InMemoryDB>,
+            >,
+        > as StorageMutate<Coins>>::insert(&mut storage, &utxo_id, &coin)
         .unwrap();
-    }
+    });
 
     let fuel_tx_bytes: Bytes = hex!("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000800000000000000010000000000000002000000000000000124000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000f5bd94297364b371180b42da369f74918912b80c9947d6a174c0c6e2c95fae1d000000000000fffff8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002f5bd94297364b371180b42da369f74918912b80c9947d6a174c0c6e2c95fae1d0000000000000000f8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad0700000000000000006b63804cfbf9856e68e5b6e7aef238dc8311ec55bec04df774003a2c96e0418e0000000000000001f8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07000000000000004044707037842c62c4afe0e4033a7fd323c8dba2b5a6f7dbe52807e077a96bbe8adcadf5abfa01b340b28998c7461b4ba49312545eb5d34e25acbed4db83ca07ec").into();
     let result = TxBuilder::blend(
