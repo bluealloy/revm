@@ -24,7 +24,7 @@ mod journaled_state;
 #[cfg(feature = "optimism")]
 pub mod optimism;
 #[cfg(feature = "rwasm")]
-mod rwasm;
+pub mod rwasm;
 #[cfg(test)]
 mod test;
 // Export items.

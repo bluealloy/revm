@@ -11,8 +11,10 @@ mod bytecode;
 mod constants;
 pub mod db;
 pub mod env;
-#[cfg(not(feature = "std"))]
-pub mod keccak256;
+#[cfg(target_arch = "wasm32")]
+mod keccak256;
+#[cfg(target_arch = "wasm32")]
+pub use keccak256::keccak256;
 #[cfg(feature = "c-kzg")]
 pub mod kzg;
 pub mod precompile;

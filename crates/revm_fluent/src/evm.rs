@@ -32,13 +32,11 @@ use fluentbase_core::{
 use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
 use fluentbase_sdk::{
     journal::{JournalState, JournalStateBuilder},
-    Address,
     BlockContext,
     Bytes,
     ContractContext,
     NativeAPI,
     TxContext,
-    U256,
 };
 use revm_interpreter::{
     CallInputs,

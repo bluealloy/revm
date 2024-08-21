@@ -5,7 +5,7 @@ use super::{
 };
 use crate::merkle_trie::state_merkle_trie_root2;
 use fluentbase_genesis::devnet::{devnet_genesis_from_file, KECCAK_HASH_KEY, POSEIDON_HASH_KEY};
-use fluentbase_types::{contracts::PRECOMPILE_EVM, Address, ExitCode};
+use fluentbase_types::{Address, ExitCode, PRECOMPILE_EVM};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use lazy_static::lazy_static;
