@@ -21,7 +21,7 @@ use fluentbase_types::{
 };
 use revm_interpreter::{Gas, InstructionResult};
 
-pub(crate) struct RwasmDbWrapper<'a, API: NativeAPI, DB: Database> {
+pub struct RwasmDbWrapper<'a, API: NativeAPI, DB: Database> {
     evm_context: RefCell<&'a mut EvmContext<DB>>,
     native_sdk: API,
     block_context: BlockContext,
@@ -29,7 +29,7 @@ pub(crate) struct RwasmDbWrapper<'a, API: NativeAPI, DB: Database> {
 }
 
 impl<'a, API: NativeAPI, DB: Database> RwasmDbWrapper<'a, API, DB> {
-    pub(crate) fn new(
+    pub fn new(
         evm_context: &'a mut EvmContext<DB>,
         native_sdk: API,
     ) -> RwasmDbWrapper<'a, API, DB> {

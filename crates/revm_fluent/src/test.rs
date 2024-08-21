@@ -12,6 +12,7 @@ use crate::{
         KECCAK_EMPTY,
         POSEIDON_EMPTY,
     },
+    rwasm::RwasmDbWrapper,
     DatabaseCommit,
     Evm,
     InMemoryDB,
@@ -23,7 +24,7 @@ use fluentbase_genesis::{
     EXAMPLE_GREETING_ADDRESS,
 };
 use fluentbase_poseidon::poseidon_hash;
-use fluentbase_runtime::RuntimeContext;
+use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
 use fluentbase_sdk::{
     byteorder::{ByteOrder, LittleEndian},
     runtime::TestingContext,
@@ -35,6 +36,7 @@ use fluentbase_types::{
     Account,
     Address,
     Bytes,
+    SovereignAPI,
     SysFuncIdx,
     STATE_MAIN,
     SYSCALL_ID_CALL,
@@ -149,6 +151,15 @@ impl EvmTestingContext {
         let mut revm_account = crate::primitives::Account::from(account.info.clone());
         revm_account.mark_touch();
         self.db.commit(HashMap::from([(address, revm_account)]));
+    }
+
+    pub(crate) fn sdk(&mut self) -> impl SovereignAPI {
+        let mut evm = Evm::builder().with_db(&mut self.db).build();
+        let runtime_context = RuntimeContext::default()
+            .with_depth(0u32)
+            .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
+        let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
+        RwasmDbWrapper::new(&mut evm.context, native_sdk)
     }
 }
 
@@ -503,9 +514,9 @@ fn test_create_send() {
         SENDER_ADDRESS,
         include_bytes!("../../../../examples/greeting/lib.wasm").into(),
     )
-    .gas_price(gas_price)
-    .value(U256::from(1e18))
-    .exec();
+        .gas_price(gas_price)
+        .value(U256::from(1e18))
+        .exec();
     let contract_address = calc_create_address(&ctx.sdk, &SENDER_ADDRESS, 0);
     assert!(result.is_success());
     let tx_cost = gas_price * U256::from(result.gas_used());
@@ -534,9 +545,9 @@ fn test_evm_revert() {
         SENDER_ADDRESS,
         include_bytes!("../../../../examples/greeting/lib.wasm").into(),
     )
-    .gas_price(gas_price)
-    .value(U256::from(1e18))
-    .exec();
+        .gas_price(gas_price)
+        .value(U256::from(1e18))
+        .exec();
     // here nonce must be 1 because we increment nonce for failed txs
     let contract_address = calc_create_address(&ctx.sdk, &SENDER_ADDRESS, 1);
     println!("{}", contract_address);
@@ -558,9 +569,9 @@ fn test_evm_self_destruct() {
         SENDER_ADDRESS,
         hex!("6003600c60003960036000F36003ff").into(),
     )
-    .gas_price(gas_price)
-    .value(U256::from(1e18))
-    .exec();
+        .gas_price(gas_price)
+        .value(U256::from(1e18))
+        .exec();
     let contract_address = calc_create_address(&ctx.sdk, &SENDER_ADDRESS, 0);
     assert!(result.is_success());
     assert_eq!(ctx.get_balance(SENDER_ADDRESS), U256::from(1e18));
@@ -588,7 +599,7 @@ fn test_evm_self_destruct() {
         SENDER_ADDRESS,
         hex!("6000600060006000600073f91c20c0cafbfdc150adff51bbfc5808edde7cb561FFFFF1").into(),
     )
-    .exec();
+        .exec();
     if !result.is_success() {
         println!(
             "{}",
@@ -726,7 +737,7 @@ fn test_bridge_contract_with_call() {
         signer_l1_wallet_owner,
         erc20gateway_contract_address,
     )
-    .input(bytes!(
+        .input(bytes!(
         "\
         f2fde38b\
         0000000000000000000000009fe46736679d2d9a65f0992f2272de9f3c7fa6e0\
@@ -797,8 +808,8 @@ fn test_bridge_contract_with_call() {
         signer_l1_wallet_owner,
         erc20gateway_contract_address,
     )
-    // data: 0x70616e69636b6564206174206372617465732f636f72652f7372632f636f6e7472616374732f65636c2e72733a34373a31373a2063616c6c206d6574686f64206661696c65642c206578697420636f64653a202d31303232
-    .input(bytes!(
+        // data: 0x70616e69636b6564206174206372617465732f636f72652f7372632f636f6e7472616374732f65636c2e72733a34373a31373a2063616c6c206d6574686f64206661696c65642c206578697420636f64653a202d31303232
+        .input(bytes!(
         "\
         aab858dd\
         000000000000000000000000dc64a140aa3e981100a9beca4e685f962f0cf6c9\
