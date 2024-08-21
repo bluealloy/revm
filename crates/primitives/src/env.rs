@@ -13,7 +13,6 @@ use crate::{
     GAS_PER_BLOB,
     KECCAK_EMPTY,
     MAX_BLOB_NUMBER_PER_BLOCK,
-
     U256,
     VERSIONED_HASH_VERSION_KZG,
 };
@@ -143,7 +142,8 @@ impl Env {
 
         // Check if the transaction's chain id is correct
         if let Some(tx_chain_id) = self.tx.chain_id {
-            if tx_chain_id != self.cfg.chain_id {
+            let cfg_chain_id = self.cfg.chain_id;
+            if tx_chain_id != cfg_chain_id {
                 return Err(InvalidTransaction::InvalidChainId);
             }
         }

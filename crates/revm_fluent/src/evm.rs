@@ -26,7 +26,7 @@ use alloc::vec::Vec;
 use core::{fmt, mem::take};
 use fluentbase_core::{
     blended::BlendedRuntime,
-    fvm::exec::_exec_fuel_tx,
+    fvm::{exec::_exec_fuel_tx, types::STORAGE_ADDRESSES},
     helpers::evm_error_from_exit_code,
 };
 use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
@@ -367,7 +367,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// Transact pre-verified transaction.
 
     fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
-        let spec_id = self.spec_id();
         let ctx = &mut self.context;
         let pre_exec = self.handler.pre_execution();
 
@@ -403,6 +402,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         FrameResult::Create(result)
                     }
                     TransactTo::Blended(execution_environment, raw_data) => {
+                        for a in &STORAGE_ADDRESSES {
+                            let _ = ctx.evm.load_account(*a)?;
+                        }
                         match execution_environment {
                             ExecutionEnvironment::Fuel => {
                                 let gas_limit = ctx.evm.env.tx.gas_limit;

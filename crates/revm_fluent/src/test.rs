@@ -5,18 +5,25 @@ use crate::{
         AccountInfo,
         Bytecode,
         Env,
+        ExecutionEnvironment,
         ExecutionResult,
         HashMap,
         Output,
         TransactTo,
+        B256,
         KECCAK_EMPTY,
         POSEIDON_EMPTY,
     },
     DatabaseCommit,
     Evm,
     InMemoryDB,
+    JournaledState,
 };
-use core::{mem::take, str::from_utf8};
+use core::{
+    mem::take,
+    str::{from_utf8, FromStr},
+};
+use fluentbase_core::fvm::types::WasmStorage;
 use fluentbase_genesis::{
     devnet::{devnet_genesis_from_file, KECCAK_HASH_KEY, POSEIDON_HASH_KEY},
     Genesis,
@@ -26,6 +33,7 @@ use fluentbase_poseidon::poseidon_hash;
 use fluentbase_runtime::RuntimeContext;
 use fluentbase_sdk::{
     byteorder::{ByteOrder, LittleEndian},
+    journal::JournalState,
     runtime::TestingContext,
 };
 use fluentbase_types::{
@@ -34,16 +42,44 @@ use fluentbase_types::{
     calc_create_address,
     contracts::SYSCALL_ID_CALL,
     Account,
+    AccountStatus,
     Address,
+    BlockContext,
     Bytes,
+    CallPrecompileResult,
+    ContractContext,
+    DestroyedAccountResult,
+    ExitCode,
+    IsColdAccess,
+    JournalCheckpoint,
+    NativeAPI,
+    SovereignAPI,
+    SovereignStateResult,
     SysFuncIdx,
+    TxContext,
+    DEVNET_CHAIN_ID,
     STATE_MAIN,
     U256,
+};
+use fuel_core::txpool::types::TxId;
+use fuel_core_storage::{
+    structured_storage::StructuredStorage,
+    tables::Coins,
+    StorageAsMut,
+    StorageAsRef,
+    StorageMutate,
+};
+use fuel_core_types::{
+    entities::coins::coin::CompressedCoin,
+    fuel_tx,
+    fuel_tx::{Input, UtxoId},
+    fuel_vm::SecretKey,
 };
 use rwasm::{
     instruction_set,
     rwasm::{BinaryFormat, RwasmModule},
 };
+use std::borrow::BorrowMut;
 
 #[allow(dead_code)]
 struct EvmTestingContext {
@@ -101,11 +137,8 @@ impl EvmTestingContext {
             info.rwasm_code = v.code.clone().map(Bytecode::new_raw);
             db.insert_account_info(*k, info);
         }
-        Self {
-            sdk: TestingContext::new(RuntimeContext::default()),
-            genesis,
-            db,
-        }
+        let mut sdk = TestingContext::new(RuntimeContext::default());
+        Self { sdk, genesis, db }
     }
 
     pub(crate) fn add_wasm_contract<I: Into<RwasmModule>>(
@@ -152,6 +185,110 @@ impl EvmTestingContext {
     }
 }
 
+impl SovereignAPI for EvmTestingContext {
+    fn native_sdk(&self) -> &impl NativeAPI {
+        unimplemented!()
+    }
+
+    fn block_context(&self) -> &BlockContext {
+        unimplemented!()
+    }
+
+    fn tx_context(&self) -> &TxContext {
+        unimplemented!()
+    }
+
+    fn contract_context(&self) -> Option<&ContractContext> {
+        unimplemented!()
+    }
+
+    fn checkpoint(&self) -> JournalCheckpoint {
+        unimplemented!()
+    }
+
+    fn commit(&mut self) -> SovereignStateResult {
+        unimplemented!()
+    }
+
+    fn rollback(&mut self, checkpoint: JournalCheckpoint) {
+        unimplemented!()
+    }
+
+    fn write_account(&mut self, account: Account, status: AccountStatus) {
+        unimplemented!()
+    }
+
+    fn destroy_account(&mut self, address: &Address, target: &Address) -> DestroyedAccountResult {
+        unimplemented!()
+    }
+
+    fn account(&self, address: &Address) -> (Account, IsColdAccess) {
+        unimplemented!()
+    }
+
+    fn account_committed(&self, address: &Address) -> (Account, IsColdAccess) {
+        unimplemented!()
+    }
+
+    fn write_preimage(&mut self, address: Address, hash: B256, preimage: Bytes) {
+        unimplemented!()
+    }
+
+    fn preimage(&self, hash: &B256) -> Option<Bytes> {
+        unimplemented!()
+    }
+
+    fn preimage_size(&self, hash: &B256) -> u32 {
+        unimplemented!()
+    }
+
+    fn write_storage(&mut self, address: Address, slot: U256, value: U256) -> IsColdAccess {
+        unimplemented!()
+    }
+
+    fn storage(&self, address: &Address, slot: &U256) -> (U256, IsColdAccess) {
+        unimplemented!()
+    }
+
+    fn committed_storage(&self, address: &Address, slot: &U256) -> (U256, IsColdAccess) {
+        unimplemented!()
+    }
+
+    fn write_transient_storage(&mut self, address: Address, index: U256, value: U256) {
+        unimplemented!()
+    }
+
+    fn transient_storage(&self, address: Address, index: U256) -> U256 {
+        unimplemented!()
+    }
+
+    fn write_log(&mut self, address: Address, data: Bytes, topics: Vec<B256>) {
+        unimplemented!()
+    }
+
+    fn precompile(
+        &self,
+        address: &Address,
+        input: &Bytes,
+        gas: u64,
+    ) -> Option<CallPrecompileResult> {
+        unimplemented!()
+    }
+
+    fn is_precompile(&self, address: &Address) -> bool {
+        unimplemented!()
+    }
+
+    fn transfer(
+        &mut self,
+        from: &mut Account,
+        to: &mut Account,
+        value: U256,
+    ) -> Result<(), ExitCode> {
+        unimplemented!()
+    }
+}
+
 struct TxBuilder<'a> {
     pub(crate) ctx: &'a mut EvmTestingContext,
     pub(crate) env: Env,
@@ -174,6 +311,23 @@ impl<'a> TxBuilder<'a> {
         env.tx.caller = caller;
         env.tx.transact_to = TransactTo::Call(callee);
         env.tx.gas_limit = 10_000_000;
+        Self { ctx, env }
+    }
+
+    fn blend(
+        ctx: &'a mut EvmTestingContext,
+        chain_id: u64,
+        caller: Address,
+        ee: ExecutionEnvironment,
+        data: Bytes,
+    ) -> Self {
+        let mut env = Env::default();
+        env.cfg.chain_id = chain_id;
+        env.tx.gas_price = U256::from(1);
+        env.tx.caller = caller;
+        env.tx.chain_id = Some(chain_id);
+        env.tx.transact_to = TransactTo::Blended(ee, data);
+        env.tx.gas_limit = 30_000_000;
         Self { ctx, env }
     }
 
@@ -497,9 +651,9 @@ fn test_create_send() {
         SENDER_ADDRESS,
         include_bytes!("../../../../examples/greeting/lib.wasm").into(),
     )
-        .gas_price(gas_price)
-        .value(U256::from(1e18))
-        .exec();
+    .gas_price(gas_price)
+    .value(U256::from(1e18))
+    .exec();
     let contract_address = calc_create_address(&ctx.sdk, &SENDER_ADDRESS, 0);
     assert!(result.is_success());
     let tx_cost = gas_price * U256::from(result.gas_used());
@@ -528,9 +682,9 @@ fn test_evm_revert() {
         SENDER_ADDRESS,
         include_bytes!("../../../../examples/greeting/lib.wasm").into(),
     )
-        .gas_price(gas_price)
-        .value(U256::from(1e18))
-        .exec();
+    .gas_price(gas_price)
+    .value(U256::from(1e18))
+    .exec();
     // here nonce must be 1 because we increment nonce for failed txs
     let contract_address = calc_create_address(&ctx.sdk, &SENDER_ADDRESS, 1);
     println!("{}", contract_address);
@@ -552,9 +706,9 @@ fn test_evm_self_destruct() {
         SENDER_ADDRESS,
         hex!("6003600c60003960036000F36003ff").into(),
     )
-        .gas_price(gas_price)
-        .value(U256::from(1e18))
-        .exec();
+    .gas_price(gas_price)
+    .value(U256::from(1e18))
+    .exec();
     let contract_address = calc_create_address(&ctx.sdk, &SENDER_ADDRESS, 0);
     assert!(result.is_success());
     assert_eq!(ctx.get_balance(SENDER_ADDRESS), U256::from(1e18));
@@ -576,7 +730,7 @@ fn test_evm_self_destruct() {
         SENDER_ADDRESS,
         hex!("6000600060006000600073f91c20c0cafbfdc150adff51bbfc5808edde7cb561FFFFF1").into(),
     )
-        .exec();
+    .exec();
     assert!(result.is_success());
     assert_eq!(ctx.get_balance(SENDER_ADDRESS), U256::from(1e18));
     assert_eq!(ctx.get_balance(contract_address), U256::from(0e18));
@@ -712,7 +866,7 @@ fn test_bridge_contract_with_call() {
         signer_l1_wallet_owner,
         erc20gateway_contract_address,
     )
-        .input(bytes!(
+    .input(bytes!(
         "\
         f2fde38b\
         0000000000000000000000009fe46736679d2d9a65f0992f2272de9f3c7fa6e0\
@@ -783,8 +937,8 @@ fn test_bridge_contract_with_call() {
         signer_l1_wallet_owner,
         erc20gateway_contract_address,
     )
-        // data: 0x70616e69636b6564206174206372617465732f636f72652f7372632f636f6e7472616374732f65636c2e72733a34373a31373a2063616c6c206d6574686f64206661696c65642c206578697420636f64653a202d31303232
-        .input(bytes!(
+    // data: 0x70616e69636b6564206174206372617465732f636f72652f7372632f636f6e7472616374732f65636c2e72733a34373a31373a2063616c6c206d6574686f64206661696c65642c206578697420636f64653a202d31303232
+    .input(bytes!(
         "\
         aab858dd\
         000000000000000000000000dc64a140aa3e981100a9beca4e685f962f0cf6c9\
@@ -849,11 +1003,11 @@ fn test_simple_nested_call() {
     );
     let mut memory_section = vec![];
     memory_section.extend_from_slice(&SYSCALL_ID_CALL.0); // 0..32
-    memory_section.extend_from_slice(ACCOUNT1_ADDRESS.as_slice()); // 32..
-    memory_section.extend_from_slice(U256::ZERO.as_le_slice());
-    memory_section.extend_from_slice(ACCOUNT2_ADDRESS.as_slice()); // 84..
-    memory_section.extend_from_slice(U256::ZERO.as_le_slice());
-    memory_section.extend_from_slice(&[0, 0, 0, 0]); // 136..
+    memory_section.extend_from_slice(ACCOUNT1_ADDRESS.as_slice()); // 32..52
+    memory_section.extend_from_slice(U256::ZERO.as_le_slice()); // 52..84
+    memory_section.extend_from_slice(ACCOUNT2_ADDRESS.as_slice()); // 84..104
+    memory_section.extend_from_slice(U256::ZERO.as_le_slice()); // 104..136
+    memory_section.extend_from_slice(&[0, 0, 0, 0]); // 136..140
     assert_eq!(memory_section.len(), 140);
     let code_section = instruction_set! {
         // alloc and init memory
@@ -906,6 +1060,51 @@ fn test_simple_nested_call() {
     let result = TxBuilder::call(&mut ctx, Address::ZERO, ACCOUNT3_ADDRESS)
         .gas_price(U256::ZERO)
         .exec();
+    let value = LittleEndian::read_i32(result.output().unwrap_or_default().as_ref());
+    assert_eq!(value, -120);
+    assert!(result.is_success());
+}
+
+#[test]
+fn test_fuel_asset_transfer() {
+    let mut ctx = EvmTestingContext::default();
+
+    let secret1 = "0x99e87b0e9158531eeeb503ff15266e2b23c2a2507b138c9d1b1f2ab458df2d61";
+    let secret1_vec = hex::decode(secret1).unwrap();
+    let secret1_secret_key = SecretKey::try_from(secret1_vec.as_slice()).unwrap();
+    let secret1_address = Input::owner(&secret1_secret_key.public_key());
+
+    // TODO need starting money for address:
+    //  f5bd94297364b371180b42da 369f74918912b80c9947d6a174c0c6e2c95fae1d
+    let tx_id: TxId =
+        TxId::from_str("0x0000000000000000000000000000000000000000000000000000000000001000")
+            .unwrap();
+    let utxo_id = UtxoId::new(tx_id, 0);
+    let mut coin = CompressedCoin::default();
+    coin.set_owner(secret1_address);
+    coin.set_amount(0xffff);
+
+    let mut sdk = JournalState::empty(ctx.sdk);
+    {
+        let wasm_storage = WasmStorage { sdk: &mut sdk };
+        let mut storage = StructuredStorage::new(wasm_storage);
+
+        <StructuredStorage<WasmStorage<'_, JournalState<TestingContext>>> as StorageMutate<
+            Coins,
+        >>::insert(&mut storage, &utxo_id, &coin)
+        .unwrap();
+    }
+
+    let fuel_tx_bytes: Bytes = hex!("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000800000000000000010000000000000002000000000000000124000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000f5bd94297364b371180b42da369f74918912b80c9947d6a174c0c6e2c95fae1d000000000000fffff8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002f5bd94297364b371180b42da369f74918912b80c9947d6a174c0c6e2c95fae1d0000000000000000f8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad0700000000000000006b63804cfbf9856e68e5b6e7aef238dc8311ec55bec04df774003a2c96e0418e0000000000000001f8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07000000000000004044707037842c62c4afe0e4033a7fd323c8dba2b5a6f7dbe52807e077a96bbe8adcadf5abfa01b340b28998c7461b4ba49312545eb5d34e25acbed4db83ca07ec").into();
+    let result = TxBuilder::blend(
+        &mut ctx,
+        DEVNET_CHAIN_ID,
+        address!("369f74918912b80c9947d6a174c0c6e2c95fae1d"),
+        ExecutionEnvironment::Fuel,
+        fuel_tx_bytes,
+    )
+    .gas_price(U256::ZERO)
+    .exec();
     let value = LittleEndian::read_i32(result.output().unwrap_or_default().as_ref());
     assert_eq!(value, -120);
     assert!(result.is_success());
