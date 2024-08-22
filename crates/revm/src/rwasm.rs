@@ -173,7 +173,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
         Some(bytecode)
     }
 
-    fn preimage_size(&self, hash: &B256) -> u32 {
+    fn preimage_size(&self, _address: &Address, hash: &B256) -> u32 {
         self.evm_context
             .borrow_mut()
             .db
