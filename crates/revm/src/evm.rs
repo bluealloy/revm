@@ -188,7 +188,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// Calls clear handle of post execution to clear the state for next execution.
-    fn clear(&mut self) {
+    pub fn clear(&mut self) {
         self.handler.post_execution().clear(&mut self.context);
     }
 
@@ -210,7 +210,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
     /// Pre verify transaction inner.
     #[inline]
-    fn preverify_transaction_inner(&mut self) -> Result<InitialAndFloorGas, EVMError<DB::Error>> {
+    pub fn preverify_transaction_inner(&mut self) -> Result<InitialAndFloorGas, EVMError<DB::Error>> {
         self.handler.validation().env(&self.context.evm.env)?;
         let initial_gas_spend = self
             .handler
