@@ -321,7 +321,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// Transact pre-verified transaction.
-    fn transact_preverified_inner(&mut self, gas: InitialAndFloorGas) -> EVMResult<DB::Error> {
+    pub fn transact_preverified_inner(&mut self, gas: InitialAndFloorGas) -> EVMResult<DB::Error> {
         let spec_id = self.spec_id();
         let ctx = &mut self.context;
         let pre_exec = self.handler.pre_execution();
