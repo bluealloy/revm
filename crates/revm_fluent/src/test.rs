@@ -36,7 +36,6 @@ use fluentbase_types::{
     Account,
     Address,
     Bytes,
-    SovereignAPI,
     SysFuncIdx,
     STATE_MAIN,
     SYSCALL_ID_CALL,
@@ -153,13 +152,18 @@ impl EvmTestingContext {
         self.db.commit(HashMap::from([(address, revm_account)]));
     }
 
-    pub(crate) fn sdk(&mut self) -> impl SovereignAPI {
+    pub(crate) fn with_sdk<F>(&mut self, f: F)
+    where
+        F: Fn(
+            RwasmDbWrapper<'_, fluentbase_sdk::runtime::RuntimeContextWrapper, &mut InMemoryDB>,
+        ) -> (),
+    {
         let mut evm = Evm::builder().with_db(&mut self.db).build();
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
             .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
-        RwasmDbWrapper::new(&mut evm.context, native_sdk)
+        f(RwasmDbWrapper::new(&mut evm.context.evm, native_sdk))
     }
 }
 
@@ -211,7 +215,7 @@ impl<'a> TxBuilder<'a> {
     fn exec(&mut self) -> ExecutionResult {
         let mut evm = Evm::builder()
             .with_env(Box::new(take(&mut self.env)))
-            .with_db(&mut self.ctx.db)
+            .with_ref_db(&mut self.ctx.db)
             .build();
         evm.transact_commit().unwrap()
     }

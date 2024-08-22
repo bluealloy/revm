@@ -7,7 +7,6 @@ extern crate alloc as std;
 
 #[cfg(feature = "std")]
 extern crate alloc;
-
 // Define modules.
 
 mod builder;
