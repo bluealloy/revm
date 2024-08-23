@@ -9,6 +9,7 @@ use crate::{
         CfgEnv,
         EVMError,
         EVMResult,
+        EVMResultGeneric,
         EnvWithHandlerCfg,
         ExecutionEnvironment,
         ExecutionResult,
@@ -362,6 +363,18 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         ContextWithHandlerCfg::new(self.context, self.handler.cfg)
     }
 
+    ///
+    #[cfg(test)]
+    pub fn warmup_fuel_storage_accounts(&mut self) -> EVMResultGeneric<(), DB::Error> {
+        let ctx: &mut Context<EXT, DB> = &mut self.context;
+        for a in &STORAGE_ADDRESSES {
+            let (acc, _) = ctx.evm.load_account(*a)?;
+            acc.info.nonce = 1;
+            ctx.evm.touch(a);
+        }
+        Ok(())
+    }
+
     /// Transact pre-verified transaction.
 
     fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
@@ -401,7 +414,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                     }
                     TransactTo::Blended(execution_environment, raw_data) => {
                         for a in &STORAGE_ADDRESSES {
-                            let _ = ctx.evm.load_account(*a)?;
+                            let (acc, _) = ctx.evm.load_account(*a)?;
+                            acc.info.nonce = 1;
+                            ctx.evm.touch(a);
                         }
                         match execution_environment {
                             ExecutionEnvironment::Fuel => {

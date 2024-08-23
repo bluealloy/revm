@@ -22,7 +22,7 @@ use fluentbase_types::{
 use revm_interpreter::{Gas, InstructionResult};
 
 pub struct RwasmDbWrapper<'a, API: NativeAPI, DB: Database> {
-    evm_context: RefCell<&'a mut EvmContext<DB>>,
+    pub evm_context: RefCell<&'a mut EvmContext<DB>>,
     native_sdk: API,
     block_context: BlockContext,
     tx_context: TxContext,

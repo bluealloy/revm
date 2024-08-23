@@ -10,7 +10,6 @@ use crate::{
         HashMap,
         Output,
         TransactTo,
-        B256,
         KECCAK_EMPTY,
         POSEIDON_EMPTY,
     },
@@ -18,13 +17,12 @@ use crate::{
     DatabaseCommit,
     Evm,
     InMemoryDB,
-    JournaledState,
 };
 use core::{
     mem::take,
     str::{from_utf8, FromStr},
 };
-use fluentbase_core::fvm::types::WasmStorage;
+use fluentbase_core::fvm::{helpers::FUEL_TESTNET_BASE_ASSET_ID, types::WasmStorage};
 use fluentbase_genesis::{
     devnet::{devnet_genesis_from_file, KECCAK_HASH_KEY, POSEIDON_HASH_KEY},
     Genesis,
@@ -34,7 +32,6 @@ use fluentbase_poseidon::poseidon_hash;
 use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
 use fluentbase_sdk::{
     byteorder::{ByteOrder, LittleEndian},
-    journal::JournalState,
     runtime::TestingContext,
 };
 use fluentbase_types::{
@@ -42,21 +39,11 @@ use fluentbase_types::{
     bytes,
     calc_create_address,
     Account,
-    AccountStatus,
     Address,
-    BlockContext,
     Bytes,
-    CallPrecompileResult,
-    ContractContext,
-    DestroyedAccountResult,
-    ExitCode,
-    IsColdAccess,
-    JournalCheckpoint,
     NativeAPI,
     SovereignAPI,
-    SovereignStateResult,
     SysFuncIdx,
-    TxContext,
     DEVNET_CHAIN_ID,
     STATE_MAIN,
     SYSCALL_ID_CALL,
@@ -66,7 +53,6 @@ use fuel_core::txpool::types::TxId;
 use fuel_core_storage::{
     structured_storage::StructuredStorage,
     tables::Coins,
-    transactional::{Modifiable, WriteTransaction},
     StorageAsMut,
     StorageAsRef,
     StorageInspect,
@@ -74,15 +60,18 @@ use fuel_core_storage::{
 };
 use fuel_core_types::{
     entities::coins::coin::CompressedCoin,
-    fuel_tx,
-    fuel_tx::{Input, UtxoId},
+    fuel_asm::{op, RegId},
+    fuel_crypto::rand::{rngs::StdRng, SeedableRng},
+    fuel_tx::{AssetId, ConsensusParameters, Input, TxPointer, UtxoId},
+    fuel_types::{canonical::Serialize, BlockHeight, ChainId},
     fuel_vm::SecretKey,
 };
+use fuel_tx::TransactionBuilder;
+use fuel_vm::storage::MemoryStorage;
 use rwasm::{
     instruction_set,
     rwasm::{BinaryFormat, RwasmModule},
 };
-use std::borrow::BorrowMut;
 
 #[allow(dead_code)]
 struct EvmTestingContext {
@@ -187,18 +176,24 @@ impl EvmTestingContext {
         self.db.commit(HashMap::from([(address, revm_account)]));
     }
 
-    pub(crate) fn with_sdk<F>(&mut self, f: F)
+    pub(crate) fn with_sdk<F, V>(&mut self, f: F) -> V
     where
         F: Fn(
             RwasmDbWrapper<'_, fluentbase_sdk::runtime::RuntimeContextWrapper, &mut InMemoryDB>,
-        ) -> (),
+        ) -> V,
     {
-        let mut evm = Evm::builder().with_db(&mut self.db).build();
+        let mut evm_builder = Evm::builder().with_db(&mut self.db);
+        let mut evm = evm_builder.build();
+        evm.warmup_fuel_storage_accounts().unwrap();
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
             .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
-        f(RwasmDbWrapper::new(&mut evm.context.evm, native_sdk))
+
+        let result = f(RwasmDbWrapper::new(&mut evm.context.evm, native_sdk));
+        let (state, _logs) = evm.context.evm.journaled_state.finalize();
+        evm.db_mut().commit(state);
+        result
     }
 }
 
@@ -1017,21 +1012,73 @@ fn test_simple_nested_call() {
 fn test_fuel_asset_transfer() {
     let mut ctx = EvmTestingContext::default();
 
+    let base_asset_id = AssetId::from_str(FUEL_TESTNET_BASE_ASSET_ID).unwrap();
+
     let secret1 = "0x99e87b0e9158531eeeb503ff15266e2b23c2a2507b138c9d1b1f2ab458df2d61";
     let secret1_vec = hex::decode(secret1).unwrap();
     let secret1_secret_key = SecretKey::try_from(secret1_vec.as_slice()).unwrap();
     let secret1_address = Input::owner(&secret1_secret_key.public_key());
+    println!("secret1_address: {}", secret1_address);
 
-    // TODO need starting money for address:
-    //  f5bd94297364b371180b42da 369f74918912b80c9947d6a174c0c6e2c95fae1d
+    let secret2 = "0xde97d8624a438121b86a1956544bd72ed68cd69f2c99555b08b1e8c51ffd511c";
+    let secret2_vec = hex::decode(secret2).unwrap();
+    let secret2_secret_key = SecretKey::try_from(secret2_vec.as_slice()).unwrap();
+    let secret2_address = Input::owner(&secret2_secret_key.public_key());
+    println!("secret2_address: {}", secret2_address);
+
+    let initial_balance = 0xffff;
+    let coins_sent = 0x1;
+
+    let bytecode = core::iter::once(op::ret(RegId::ZERO)).collect();
+    let mut test_builder = fuel_vm::util::test_helpers::TestBuilder {
+        rng: StdRng::seed_from_u64(1234),
+        gas_price: 0,
+        max_fee_limit: 0,
+        script_gas_limit: 100,
+        builder: TransactionBuilder::script(bytecode, vec![]),
+        storage: MemoryStorage::default(),
+        block_height: Default::default(),
+        consensus_params: ConsensusParameters::standard(),
+    };
+
+    let chain_id = DEVNET_CHAIN_ID;
+    let tx_in_id: TxId =
+        TxId::from_str("0x0000000000000000000000000000000000000000000000000000000000001000")
+            .unwrap();
+    let utxo_id = UtxoId::new(tx_in_id, 0);
+    test_builder
+        .with_chain_id(ChainId::new(chain_id))
+        .builder
+        .add_unsigned_coin_input(
+            secret1_secret_key.clone(),
+            utxo_id,
+            0xffff,
+            base_asset_id,
+            TxPointer::new(BlockHeight::new(0), 0),
+        )
+        .add_output(fuel_tx::Output::change(
+            secret1_address.clone(),
+            0,
+            base_asset_id,
+        ))
+        .add_output(fuel_tx::Output::coin(
+            secret2_address.clone(),
+            coins_sent,
+            base_asset_id,
+        ));
+    let tx1 = test_builder.build().transaction().clone();
+    let tx1: fuel_tx::Transaction = fuel_tx::Transaction::Script(tx1);
+    let fuel_tx_bytes = Bytes::from(tx1.to_bytes());
+
+    // top up address1 for initial balance
     let tx_id: TxId =
         TxId::from_str("0x0000000000000000000000000000000000000000000000000000000000001000")
             .unwrap();
     let utxo_id = UtxoId::new(tx_id, 0);
     let mut coin = CompressedCoin::default();
     coin.set_owner(secret1_address);
-    coin.set_amount(0xffff);
-
+    coin.set_amount(initial_balance);
+    coin.set_asset_id(base_asset_id);
     ctx.with_sdk(|mut sdk| {
         let wasm_storage = WasmStorage { sdk: &mut sdk };
         let mut storage = StructuredStorage::new(wasm_storage);
@@ -1045,7 +1092,6 @@ fn test_fuel_asset_transfer() {
         .unwrap();
     });
 
-    let fuel_tx_bytes: Bytes = hex!("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000800000000000000010000000000000002000000000000000124000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000f5bd94297364b371180b42da369f74918912b80c9947d6a174c0c6e2c95fae1d000000000000fffff8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002f5bd94297364b371180b42da369f74918912b80c9947d6a174c0c6e2c95fae1d0000000000000000f8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad0700000000000000006b63804cfbf9856e68e5b6e7aef238dc8311ec55bec04df774003a2c96e0418e0000000000000001f8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07000000000000004044707037842c62c4afe0e4033a7fd323c8dba2b5a6f7dbe52807e077a96bbe8adcadf5abfa01b340b28998c7461b4ba49312545eb5d34e25acbed4db83ca07ec").into();
     let result = TxBuilder::blend(
         &mut ctx,
         DEVNET_CHAIN_ID,
@@ -1055,7 +1101,42 @@ fn test_fuel_asset_transfer() {
     )
     .gas_price(U256::ZERO)
     .exec();
-    let value = LittleEndian::read_i32(result.output().unwrap_or_default().as_ref());
-    assert_eq!(value, -120);
     assert!(result.is_success());
+
+    let tx_out_id: TxId =
+        TxId::from_str("0x1d4e6f1aacbd31328dccd2741c3afc23be1d1ac393ede7e0cd107b4091c3620e")
+            .unwrap();
+    let utxo_out1_id = UtxoId::new(tx_out_id, 0);
+    let utxo_out2_id = UtxoId::new(tx_out_id, 1);
+
+    let (coin_out1, coin_out2) = ctx.with_sdk(|mut sdk| -> (CompressedCoin, CompressedCoin) {
+        let wasm_storage = WasmStorage { sdk: &mut sdk };
+        let mut storage = StructuredStorage::new(wasm_storage);
+
+        let c1 = <StructuredStorage<
+            WasmStorage<
+                '_,
+                RwasmDbWrapper<'_, fluentbase_sdk::runtime::RuntimeContextWrapper, &mut InMemoryDB>,
+            >,
+        > as StorageInspect<Coins>>::get(&mut storage, &utxo_out1_id)
+        .unwrap()
+        .unwrap()
+        .into_owned();
+        let c2 = <StructuredStorage<
+            WasmStorage<
+                '_,
+                RwasmDbWrapper<'_, fluentbase_sdk::runtime::RuntimeContextWrapper, &mut InMemoryDB>,
+            >,
+        > as StorageInspect<Coins>>::get(&mut storage, &utxo_out2_id)
+        .unwrap()
+        .unwrap()
+        .into_owned();
+        (c1, c2)
+    });
+    assert_eq!(coin_out1.asset_id(), &base_asset_id);
+    assert_eq!(coin_out1.owner(), &secret1_address);
+    assert_eq!(coin_out1.amount(), &(initial_balance - coins_sent));
+    assert_eq!(coin_out2.asset_id(), &base_asset_id);
+    assert_eq!(coin_out2.owner(), &secret2_address);
+    assert_eq!(coin_out2.amount(), &coins_sent);
 }
