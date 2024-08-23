@@ -177,7 +177,7 @@ impl<DB: Database> EvmContext<DB> {
         let _ = self
             .inner
             .journaled_state
-            .load_account_delegated(inputs.bytecode_address, &mut self.inner.db, true)?;
+            .load_account_delegated(inputs.bytecode_address, &mut self.inner.db, false)?;
 
 
         // Create subroutine checkpoint
@@ -187,7 +187,7 @@ impl<DB: Database> EvmContext<DB> {
         match inputs.value {
             // if transfer value is zero, load account and force the touch.
             CallValue::Transfer(value) if value.is_zero() => {
-                self.load_account(inputs.target_address, true)?;
+                self.load_account(inputs.target_address, false)?;
                 self.journaled_state.touch(&inputs.target_address);
             }
             CallValue::Transfer(value) => {

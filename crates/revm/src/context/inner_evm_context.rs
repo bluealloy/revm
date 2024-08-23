@@ -148,8 +148,9 @@ impl<DB: Database> InnerEvmContext<DB> {
     pub fn load_account(
         &mut self,
         address: Address,
+        write: bool,
     ) -> Result<StateLoad<&mut Account>, EVMError<DB::Error>> {
-        self.journaled_state.load_account(address, &mut self.db, true)
+        self.journaled_state.load_account(address, &mut self.db, write)
     }
 
     /// Load account from database to JournaledState.
