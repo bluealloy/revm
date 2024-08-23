@@ -595,9 +595,6 @@ impl JournaledState {
             }
             Entry::Vacant(vac) => {
                 println!("load_account: {:?}", address);
-                if address == Address::ZERO {
-                    panic!("load_account: {:?}", address);
-                }
                 let account =
                     if let Some(account) = db.basic(address, write).map_err(EVMError::Database)? {
                         account.into()

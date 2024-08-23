@@ -26,32 +26,31 @@ pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
 /// Reward beneficiary with gas fee.
 #[inline]
 pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-    gas: &Gas,
+    _context: &mut Context<EXT, DB>,
+    _gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
-    let beneficiary = context.evm.env.block.coinbase;
-    let effective_gas_price = context.evm.env.effective_gas_price();
+    // let beneficiary = context.evm.env.block.coinbase;
+    // let effective_gas_price = context.evm.env.effective_gas_price();
 
-    // transfer fee to coinbase/beneficiary.
-    // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
-    let coinbase_gas_price = if SPEC::enabled(LONDON) {
-        effective_gas_price.saturating_sub(context.evm.env.block.basefee)
-    } else {
-        effective_gas_price
-    };
+    // // transfer fee to coinbase/beneficiary.
+    // // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
+    // let coinbase_gas_price = if SPEC::enabled(LONDON) {
+    //     effective_gas_price.saturating_sub(context.evm.env.block.basefee)
+    // } else {
+    //     effective_gas_price
+    // };
 
-    let coinbase_account = context
-        .evm
-        .inner
-        .journaled_state
-        .load_account(beneficiary, &mut context.evm.inner.db, true)?;
+    // let (coinbase_account, _) = context
+    //     .evm
+    //     .inner
+    //     .journaled_state
+    //     .load_account(beneficiary, &mut context.evm.inner.db, true)?;
 
-    coinbase_account.data.mark_touch();
-    coinbase_account.data.info.balance = coinbase_account
-        .data
-        .info
-        .balance
-        .saturating_add(coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64));
+    // coinbase_account.mark_touch();
+    // coinbase_account.info.balance = coinbase_account
+    //     .info
+    //     .balance
+    //     .saturating_add(coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64));
 
     Ok(())
 }
