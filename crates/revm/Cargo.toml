@@ -94,7 +94,6 @@ default = [
     "secp256k1",
     "portable",
     "blst",
-    "rwasm",
 ]
 std = [
     "serde?/std",

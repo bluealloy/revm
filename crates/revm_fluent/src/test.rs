@@ -605,8 +605,9 @@ fn test_evm_self_destruct() {
     )
         .exec();
     if !result.is_success() {
+        println!("status: {:?}", result);
         println!(
-            "{}",
+            "utf8-output: {}",
             from_utf8(result.output().cloned().unwrap_or_default().as_ref()).unwrap_or("")
         );
     }
