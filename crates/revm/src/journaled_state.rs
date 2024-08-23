@@ -8,7 +8,7 @@ use crate::{
         KECCAK_EMPTY, PRECOMPILE3, U256,
     },
 };
-use core::mem;
+use core::{mem, panic};
 use std::vec::Vec;
 
 /// A journal of state changes internal to the EVM.
@@ -595,6 +595,9 @@ impl JournaledState {
             }
             Entry::Vacant(vac) => {
                 println!("load_account: {:?}", address);
+                if address == Address::ZERO {
+                    panic!("load_account: {:?}", address);
+                }
                 let account =
                     if let Some(account) = db.basic(address, write).map_err(EVMError::Database)? {
                         account.into()
