@@ -57,7 +57,7 @@ impl<E> Database for EmptyDBTyped<E> {
     type Error = E;
 
     #[inline]
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(&mut self, address: Address, _write: bool) -> Result<Option<AccountInfo>, Self::Error> {
         <Self as DatabaseRef>::basic_ref(self, address)
     }
 
@@ -67,7 +67,7 @@ impl<E> Database for EmptyDBTyped<E> {
     }
 
     #[inline]
-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
+    fn storage(&mut self, address: Address, index: U256, _write: bool) -> Result<U256, Self::Error> {
         <Self as DatabaseRef>::storage_ref(self, address, index)
     }
 

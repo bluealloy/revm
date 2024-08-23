@@ -27,7 +27,7 @@ pub enum DatabaseComponentError<SE, BHE> {
 impl<S: State, BH: BlockHash> Database for DatabaseComponents<S, BH> {
     type Error = DatabaseComponentError<S::Error, BH::Error>;
 
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(&mut self, address: Address, _write: bool) -> Result<Option<AccountInfo>, Self::Error> {
         self.state.basic(address).map_err(Self::Error::State)
     }
 
@@ -37,7 +37,7 @@ impl<S: State, BH: BlockHash> Database for DatabaseComponents<S, BH> {
             .map_err(Self::Error::State)
     }
 
-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
+    fn storage(&mut self, address: Address, index: U256, _write: bool) -> Result<U256, Self::Error> {
         self.state
             .storage(address, index)
             .map_err(Self::Error::State)

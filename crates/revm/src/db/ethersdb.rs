@@ -156,7 +156,7 @@ impl<M: Middleware> Database for EthersDB<M> {
     type Error = M::Error;
 
     #[inline]
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(&mut self, address: Address, _write: bool) -> Result<Option<AccountInfo>, Self::Error> {
         <Self as DatabaseRef>::basic_ref(self, address)
     }
 
@@ -166,7 +166,7 @@ impl<M: Middleware> Database for EthersDB<M> {
     }
 
     #[inline]
-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
+    fn storage(&mut self, address: Address, index: U256, _write: bool) -> Result<U256, Self::Error> {
         <Self as DatabaseRef>::storage_ref(self, address, index)
     }
 

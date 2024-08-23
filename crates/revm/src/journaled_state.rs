@@ -558,7 +558,7 @@ impl JournaledState {
         let account = match self.state.entry(address) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(vac) => vac.insert(
-                db.basic(address)
+                db.basic(address, true)
                     .map_err(EVMError::Database)?
                     .map(|i| i.into())
                     .unwrap_or(Account::new_not_existing()),
@@ -568,7 +568,7 @@ impl JournaledState {
         for storage_key in storage_keys.into_iter() {
             if let Entry::Vacant(entry) = account.storage.entry(storage_key) {
                 let storage = db
-                    .storage(address, storage_key)
+                    .storage(address, storage_key, true)
                     .map_err(EVMError::Database)?;
                 entry.insert(EvmStorageSlot::new(storage));
             }
@@ -594,7 +594,7 @@ impl JournaledState {
             }
             Entry::Vacant(vac) => {
                 let account =
-                    if let Some(account) = db.basic(address).map_err(EVMError::Database)? {
+                    if let Some(account) = db.basic(address, true).map_err(EVMError::Database)? {
                         account.into()
                     } else {
                         Account::new_not_existing()
@@ -695,7 +695,7 @@ impl JournaledState {
                 let value = if is_newly_created {
                     U256::ZERO
                 } else {
-                    db.storage(address, key).map_err(EVMError::Database)?
+                    db.storage(address, key, true).map_err(EVMError::Database)?
                 };
 
                 vac.insert(EvmStorageSlot::new(value));

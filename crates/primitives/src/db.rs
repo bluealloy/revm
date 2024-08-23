@@ -13,13 +13,13 @@ pub trait Database {
     type Error;
 
     /// Get basic account information.
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
+    fn basic(&mut self, address: Address, write: bool) -> Result<Option<AccountInfo>, Self::Error>;
 
     /// Get account code by its hash.
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
 
     /// Get storage value of address at index.
-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error>;
+    fn storage(&mut self, address: Address, index: U256, write: bool) -> Result<U256, Self::Error>;
 
     /// Get block hash by block number.
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error>;
@@ -71,7 +71,7 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     type Error = T::Error;
 
     #[inline]
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(&mut self, address: Address, _write: bool) -> Result<Option<AccountInfo>, Self::Error> {
         self.0.basic_ref(address)
     }
 
@@ -81,7 +81,7 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     }
 
     #[inline]
-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
+    fn storage(&mut self, address: Address, index: U256, _write: bool) -> Result<U256, Self::Error> {
         self.0.storage_ref(address, index)
     }
 
