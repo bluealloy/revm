@@ -193,7 +193,6 @@ impl<DB: Database> EvmContext<DB> {
             CallValue::Transfer(value) => {
                 // Transfer value from caller to called account. As value get transferred
                 // target gets touched.
-                println!("Caller: {:?}, Target: {:?}, Value: {:?}", inputs.caller, inputs.target_address, value);
                 if let Some(result) = self.inner.journaled_state.transfer(
                     &inputs.caller,
                     &inputs.target_address,
