@@ -164,7 +164,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
             .set_code(address, Bytecode::new_raw(preimage), Some(hash))
     }
 
-    fn preimage(&self, hash: &B256) -> Option<Bytes> {
+    fn preimage(&self, address: &Address, hash: &B256) -> Option<Bytes> {
         let mut ctx = self.evm_context.borrow_mut();
         let bytecode = ctx
             .code_by_hash(*hash)
@@ -173,7 +173,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
         Some(bytecode)
     }
 
-    fn preimage_size(&self, hash: &B256) -> u32 {
+    fn preimage_size(&self, _address: &Address, hash: &B256) -> u32 {
         self.evm_context
             .borrow_mut()
             .db

@@ -189,7 +189,6 @@ impl EvmTestingContext {
             .with_depth(0u32)
             .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
-
         let result = f(RwasmDbWrapper::new(&mut evm.context.evm, native_sdk));
         let (state, _logs) = evm.context.evm.journaled_state.finalize();
         evm.db_mut().commit(state);
@@ -262,7 +261,7 @@ impl<'a> TxBuilder<'a> {
     fn exec(&mut self) -> ExecutionResult {
         let mut evm = Evm::builder()
             .with_env(Box::new(take(&mut self.env)))
-            .with_db(&mut self.ctx.db)
+            .with_ref_db(&mut self.ctx.db)
             .build();
         evm.transact_commit().unwrap()
     }
@@ -652,8 +651,9 @@ fn test_evm_self_destruct() {
     )
     .exec();
     if !result.is_success() {
+        println!("status: {:?}", result);
         println!(
-            "{}",
+            "utf8-output: {}",
             from_utf8(result.output().cloned().unwrap_or_default().as_ref()).unwrap_or("")
         );
     }

@@ -160,25 +160,98 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
 
     fn write_preimage(&mut self, address: Address, hash: B256, preimage: Bytes) {
         let mut ctx = self.evm_context.borrow_mut();
-        ctx.journaled_state
-            .set_code(address, Bytecode::new_raw(preimage), Some(hash))
-    }
-
-    fn preimage(&self, hash: &B256) -> Option<Bytes> {
-        let mut ctx = self.evm_context.borrow_mut();
-        let bytecode = ctx
-            .code_by_hash(*hash)
-            .map_err(|_| panic!("failed to get bytecode by hash"))
+        let (account, _) = ctx
+            .load_account(address)
+            .map_err(|_| panic!("database error"))
             .unwrap();
-        Some(bytecode)
+        if account.info.code_hash == hash || account.info.rwasm_code_hash == hash {
+            ctx.journaled_state
+                .set_code(address, Bytecode::new_raw(preimage), Some(hash));
+            return;
+        }
+        // calculate preimage address
+        let preimage_address = Address::from_slice(&hash.0[12..]);
+        let (preimage_account, _) = ctx
+            .load_account(preimage_address)
+            .map_err(|_| panic!("database error"))
+            .unwrap();
+        if !preimage_account.is_empty() {
+            assert_eq!(
+                preimage_account.info.code_hash, hash,
+                "unexpected preimage hash"
+            );
+            return;
+        }
+        // set default preimage account fields
+        preimage_account.info.nonce = 1;
+        preimage_account.info.code_hash = hash;
+        // write preimage as a bytecode for the account
+        ctx.journaled_state
+            .set_code(preimage_address, Bytecode::new_raw(preimage), Some(hash));
+        // // remember code hash
+        // ctx.sstore(
+        //     PRECOMPILE_EVM,
+        //     U256::from_le_bytes(address.into_word().0),
+        //     U256::from_le_bytes(hash.0),
+        // )
+        // .map_err(|_| panic!("database error"))
+        // .unwrap();
     }
 
-    fn preimage_size(&self, hash: &B256) -> u32 {
-        self.evm_context
-            .borrow_mut()
-            .db
-            .code_by_hash(*hash)
-            .map(|b| b.bytecode().len() as u32)
+    fn preimage(&self, address: &Address, hash: &B256) -> Option<Bytes> {
+        let mut ctx = self.evm_context.borrow_mut();
+        let (account, _) = ctx
+            .load_account_with_code(*address)
+            .map_err(|_| panic!("database error"))
+            .unwrap();
+        if account.info.rwasm_code_hash == *hash {
+            return account.info.rwasm_code.as_ref().map(|v| v.original_bytes());
+        } else if account.info.code_hash == *hash {
+            return account.info.code.as_ref().map(|v| v.original_bytes());
+        }
+        let preimage_address = Address::from_slice(&hash.0[12..]);
+        let (preimage_account, _) = ctx
+            .load_account(preimage_address)
+            .map_err(|_| panic!("database error"))
+            .unwrap();
+        preimage_account
+            .info
+            .code
+            .as_ref()
+            .map(|v| v.original_bytes())
+    }
+
+    fn preimage_size(&self, address: &Address, hash: &B256) -> u32 {
+        let mut ctx = self.evm_context.borrow_mut();
+        let (account, _) = ctx
+            .load_account_with_code(*address)
+            .map_err(|_| panic!("database error"))
+            .unwrap();
+        if account.info.rwasm_code_hash == *hash {
+            return account
+                .info
+                .rwasm_code
+                .as_ref()
+                .map(|v| v.len() as u32)
+                .unwrap_or_default();
+        } else if account.info.code_hash == *hash {
+            return account
+                .info
+                .code
+                .as_ref()
+                .map(|v| v.len() as u32)
+                .unwrap_or_default();
+        }
+        let preimage_address = Address::from_slice(&hash.0[12..]);
+        let (preimage_account, _) = ctx
+            .load_account(preimage_address)
+            .map_err(|_| panic!("database error"))
+            .unwrap();
+        preimage_account
+            .info
+            .code
+            .as_ref()
+            .map(|v| v.len() as u32)
             .unwrap_or_default()
     }
 
