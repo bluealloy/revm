@@ -20,6 +20,7 @@ use crate::{
     Host,
     InstructionResult,
     InterpreterAction,
+    OPCODE_INFO_JUMPTABLE,
 };
 pub use contract::Contract;
 use core::cmp::min;
@@ -359,6 +360,17 @@ impl Interpreter {
     {
         // Get current opcode.
         let opcode = unsafe { *self.instruction_pointer };
+
+        #[cfg(target_arch = "wasm32")]
+        unsafe {
+            #[link(wasm_import_module = "fluentbase_v1preview")]
+            extern "C" {
+                pub fn _debug_log(msg_ptr: *const u8, msg_len: u32);
+            }
+            let opcode = crate::opcode::OPCODE_INFO_JUMPTABLE[opcode as usize].unwrap();
+            let message = std::format!("opcode={}", opcode.name());
+            _debug_log(message.as_ptr(), message.len() as u32);
+        }
 
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last

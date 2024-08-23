@@ -1,16 +1,25 @@
 mod call_helpers;
 
-pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
-use revm_primitives::{keccak256, BerlinSpec};
-
 use crate::{
     gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD},
     interpreter::Interpreter,
     primitives::{Address, Bytes, Eof, Spec, SpecId::*, U256},
-    CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, Host,
-    InstructionResult, InterpreterAction, InterpreterResult, LoadAccountResult, MAX_INITCODE_SIZE,
+    CallInputs,
+    CallScheme,
+    CallValue,
+    CreateInputs,
+    CreateScheme,
+    EOFCreateInputs,
+    Host,
+    InstructionResult,
+    InterpreterAction,
+    InterpreterResult,
+    LoadAccountResult,
+    MAX_INITCODE_SIZE,
 };
+pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
 use core::cmp::max;
+use revm_primitives::{keccak256, BerlinSpec};
 use std::boxed::Box;
 
 /// EOF Create instruction
@@ -396,7 +405,7 @@ pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &
 
     gas!(interpreter, gas_limit);
 
-    // add call stipend if there is value to be transferred.
+    // add call stipend if there is a value to be transferred.
     if has_transfer {
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }

@@ -1381,6 +1381,7 @@ dependencies = [
  "fluentbase-zktrie",
  "halo2curves 0.6.1 (git+https://github.com/privacy-scaling-explorations/halo2curves?tag=v0.6.1)",
  "hashbrown 0.14.5",
+ "hex",
  "hex-literal",
  "k256",
  "keccak-hash",
