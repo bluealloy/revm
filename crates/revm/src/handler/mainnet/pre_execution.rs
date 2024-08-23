@@ -89,7 +89,7 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
         .evm
         .inner
         .journaled_state
-        .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)?;
+        .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db, true)?;
 
     // deduct gas cost from caller's account.
     deduct_caller_inner::<SPEC>(caller_account.data, &context.evm.inner.env);
@@ -137,7 +137,7 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
             .evm
             .inner
             .journaled_state
-            .load_code(authority, &mut context.evm.inner.db)?;
+            .load_code(authority, &mut context.evm.inner.db, false)?;
 
         // 5. Verify the code of `authority` is either empty or already delegated.
         if let Some(bytecode) = &authority_acc.info.code {

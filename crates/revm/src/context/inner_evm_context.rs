@@ -142,13 +142,14 @@ impl<DB: Database> InnerEvmContext<DB> {
         self.journaled_state.touch(address);
     }
 
-    /// Loads an account into memory. Returns `true` if it is cold accessed.
+    /// Loads an account into memory. Returns `true` if it is cold accessed. 
+    /// ------------ THIS SHOULD TAKE A R/W ARGUMENT ----------------------
     #[inline]
     pub fn load_account(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, EVMError<DB::Error>> {
-        self.journaled_state.load_account(address, &mut self.db)
+        self.journaled_state.load_account(address, &mut self.db, true)
     }
 
     /// Load account from database to JournaledState.
@@ -158,16 +159,17 @@ impl<DB: Database> InnerEvmContext<DB> {
     pub fn load_account_delegated(
         &mut self,
         address: Address,
+        write: bool,
     ) -> Result<AccountLoad, EVMError<DB::Error>> {
         self.journaled_state
-            .load_account_delegated(address, &mut self.db)
+            .load_account_delegated(address, &mut self.db, write)
     }
 
     /// Return account balance and is_cold flag.
     #[inline]
     pub fn balance(&mut self, address: Address) -> Result<StateLoad<U256>, EVMError<DB::Error>> {
         self.journaled_state
-            .load_account(address, &mut self.db)
+            .load_account(address, &mut self.db, true)
             .map(|acc| acc.map(|a| a.info.balance))
     }
 
@@ -176,7 +178,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
     #[inline]
     pub fn code(&mut self, address: Address) -> Result<StateLoad<Bytes>, EVMError<DB::Error>> {
-        let a = self.journaled_state.load_code(address, &mut self.db)?;
+        let a = self.journaled_state.load_code(address, &mut self.db, false)?;
         // SAFETY: safe to unwrap as load_code will insert code if it is empty.
         let code = a.info.code.as_ref().unwrap();
 
@@ -197,7 +199,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     /// (the hash of `0xEF00`).
     #[inline]
     pub fn code_hash(&mut self, address: Address) -> Result<StateLoad<B256>, EVMError<DB::Error>> {
-        let acc = self.journaled_state.load_code(address, &mut self.db)?;
+        let acc = self.journaled_state.load_code(address, &mut self.db, false)?;
         if acc.is_empty() {
             return Ok(StateLoad::new(B256::ZERO, acc.is_cold));
         }

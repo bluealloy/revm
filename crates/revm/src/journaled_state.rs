@@ -205,8 +205,8 @@ impl JournaledState {
         db: &mut DB,
     ) -> Result<Option<InstructionResult>, EVMError<DB::Error>> {
         // load accounts
-        self.load_account(*from, db)?;
-        self.load_account(*to, db)?;
+        self.load_account(*from, db, true)?;
+        self.load_account(*to, db, true)?;
 
         // sub balance from
         let from_account = &mut self.state.get_mut(from).unwrap();
@@ -582,6 +582,7 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
+        write: bool,
     ) -> Result<StateLoad<&mut Account>, EVMError<DB::Error>> {
         let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
@@ -594,7 +595,7 @@ impl JournaledState {
             }
             Entry::Vacant(vac) => {
                 let account =
-                    if let Some(account) = db.basic(address, true).map_err(EVMError::Database)? {
+                    if let Some(account) = db.basic(address, write).map_err(EVMError::Database)? {
                         account.into()
                     } else {
                         Account::new_not_existing()
@@ -626,9 +627,10 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
+        write: bool,
     ) -> Result<AccountLoad, EVMError<DB::Error>> {
         let spec = self.spec;
-        let account = self.load_code(address, db)?;
+        let account = self.load_code(address, db, write)?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
         let mut account_load = AccountLoad {
@@ -638,7 +640,7 @@ impl JournaledState {
         // load delegate code if account is EIP-7702
         if let Some(Bytecode::Eip7702(code)) = &account.info.code {
             let address = code.address();
-            let delegate_account = self.load_account(address, db)?;
+            let delegate_account = self.load_account(address, db, write)?;
             account_load
                 .load
                 .set_delegate_load(delegate_account.is_cold);
@@ -653,8 +655,9 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
+        write: bool,
     ) -> Result<StateLoad<&mut Account>, EVMError<DB::Error>> {
-        let account_load = self.load_account(address, db)?;
+        let account_load = self.load_account(address, db, write)?;
         let acc = &mut account_load.data.info;
         if acc.code.is_none() {
             if acc.code_hash == KECCAK_EMPTY {

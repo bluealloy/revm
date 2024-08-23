@@ -177,7 +177,8 @@ impl<DB: Database> EvmContext<DB> {
         let _ = self
             .inner
             .journaled_state
-            .load_account_delegated(inputs.bytecode_address, &mut self.inner.db)?;
+            .load_account_delegated(inputs.bytecode_address, &mut self.inner.db, true)?;
+
 
         // Create subroutine checkpoint
         let checkpoint = self.journaled_state.checkpoint();
@@ -186,7 +187,7 @@ impl<DB: Database> EvmContext<DB> {
         match inputs.value {
             // if transfer value is zero, load account and force the touch.
             CallValue::Transfer(value) if value.is_zero() => {
-                self.load_account(inputs.target_address)?;
+                self.load_account(inputs.target_address, true)?;
                 self.journaled_state.touch(&inputs.target_address);
             }
             CallValue::Transfer(value) => {
@@ -226,7 +227,7 @@ impl<DB: Database> EvmContext<DB> {
         let account = self
             .inner
             .journaled_state
-            .load_code(inputs.bytecode_address, &mut self.inner.db)?;
+            .load_code(inputs.bytecode_address, &mut self.inner.db, false)?;
 
         let code_hash = account.info.code_hash();
         let mut bytecode = account.info.code.clone().unwrap_or_default();
@@ -245,7 +246,7 @@ impl<DB: Database> EvmContext<DB> {
             bytecode = self
                 .inner
                 .journaled_state
-                .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?
+                .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db, false)?
                 .info
                 .code
                 .clone()
@@ -322,7 +323,7 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         // warm load account.
-        self.load_account(created_address)?;
+        self.load_account(created_address, true)?;
 
         // create account, transfer funds and make the journal checkpoint.
         let checkpoint = match self.journaled_state.create_account_checkpoint(
@@ -434,7 +435,7 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         // Load account so it needs to be marked as warm for access list.
-        self.load_account(created_address)?;
+        self.load_account(created_address, true)?;
 
         // create account, transfer funds and make the journal checkpoint.
         let checkpoint = match self.journaled_state.create_account_checkpoint(
