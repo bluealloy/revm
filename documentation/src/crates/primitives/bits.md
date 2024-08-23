@@ -8,7 +8,7 @@ The `AsRef` and `Deref` traits from `derive_more` crate are derived for both of 
 
 The `Arbitrary` trait from the `arbitrary` crate and the `PropTestArbitrary` trait from `proptest_derive` crate are derived conditionally when either testing or the "arbitrary" feature is enabled. 
 
-The code also provides conversions between `B256`, `Address` and various other types such as `u64`, `primitive_types::H256`, `primitive_types::H160`, `primitive_types::U256`, and `ruint::aliases::U256`. The `impl` From blocks specify how to convert from one type to another.
+The code also provides conversions between `B256`, `Address` and various other types such as `u64`, `primitive_types::H256`, `primitive_types::H160`, `primitive_types::U256`, and `ruint::aliases::U256`. The `impl` From blocks specifies how to convert from one type to another.
 
 `impl_fixed_hash_conversions!` macro is used to define conversions between `B256` and `Address` types.
 
