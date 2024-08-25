@@ -20,7 +20,6 @@ use crate::{
     Host,
     InstructionResult,
     InterpreterAction,
-    OPCODE_INFO_JUMPTABLE,
 };
 pub use contract::Contract;
 use core::cmp::min;
