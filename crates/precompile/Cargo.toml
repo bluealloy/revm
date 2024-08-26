@@ -45,7 +45,7 @@ aurora-engine-modexp = { version = "1.1", default-features = false }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 
 # KZG point evaluation precompile
-c-kzg = { version = "1.0.2", default-features = false, optional = true }
+c-kzg = { version = "2.0.0", default-features = false, optional = true }
 
 # Optionally use `kzg-rs` for a pure Rust implementation of KZG point evaluation.
 kzg-rs = { version = "0.1", default-features = false, features = [
