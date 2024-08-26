@@ -9,24 +9,33 @@ use crate::{
 use core::mem;
 use std::vec::Vec;
 
-/// JournalState is internal EVM state that is used to contain state and track changes to that state.
-/// It contains journal of changes that happened to state so that they can be reverted.
+/// A journal of state changes internal to the EVM.
+///
+/// On each additional call, the depth of the journaled state is increased (`depth`) and a new journal is added. The journal contains every state change that happens within that call, making it possible to revert changes made in a specific call.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournaledState {
-    /// Current state.
+    /// The current state.
     pub state: EvmState,
-    /// [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153) transient storage that is discarded after every transactions
+    /// Transient storage that is discarded after every transaction.
+    ///
+    /// See [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153).
     pub transient_storage: TransientStorage,
-    /// logs
+    /// Emitted logs.
     pub logs: Vec<Log>,
-    /// how deep are we in call stack.
+    /// The current call stack depth.
     pub depth: usize,
-    /// journal with changes that happened between calls.
+    /// The journal of state changes, one for each call.
     pub journal: Vec<Vec<JournalEntry>>,
-    /// Ethereum before EIP-161 differently defined empty and not-existing account
-    /// Spec is needed for two things SpuriousDragon's `EIP-161 State clear`,
-    /// and for Cancun's `EIP-6780: SELFDESTRUCT in same transaction`
+    /// The spec ID for the EVM.
+    ///
+    /// This spec is used for two things:
+    ///
+    /// - [EIP-161]: Prior to this EIP, Ethereum had separate definitions for empty and non-existing accounts.
+    /// - [EIP-6780]: `SELFDESTRUCT` only in same transaction
+    ///
+    /// [EIP-161]: https://eips.ethereum.org/EIPS/eip-161
+    /// [EIP-6780]: https://eips.ethereum.org/EIPS/eip-6780
     pub spec: SpecId,
     /// Warm loaded addresses are used to check if loaded address
     /// should be considered cold or warm loaded when the account
@@ -43,12 +52,10 @@ impl JournaledState {
     /// warm_preloaded_addresses is used to determine if address is considered warm loaded.
     /// In ordinary case this is precompile or beneficiary.
     ///
-    /// Note: This function will journal state after Spurious Dragon fork.
-    /// And will not take into account if account is not existing or empty.
-    ///
     /// # Note
     ///
-    ///
+    /// This function will journal state after Spurious Dragon fork.
+    /// And will not take into account if account is not existing or empty.
     pub fn new(spec: SpecId, warm_preloaded_addresses: HashSet<Address>) -> JournaledState {
         Self {
             state: HashMap::new(),

@@ -171,6 +171,9 @@ impl<DB: Database> State<DB> {
         }
     }
 
+    /// Get a mutable reference to the [`CacheAccount`] for the given address.
+    /// If the account is not found in the cache, it will be loaded from the
+    /// database and inserted into the cache.
     pub fn load_cache_account(&mut self, address: Address) -> Result<&mut CacheAccount, DB::Error> {
         match self.cache.accounts.entry(address) {
             hash_map::Entry::Vacant(entry) => {
@@ -198,15 +201,15 @@ impl<DB: Database> State<DB> {
     }
 
     // TODO make cache aware of transitions dropping by having global transition counter.
-    /// Takes changeset and reverts from state and replaces it with empty one.
-    /// This will trop pending Transition and any transitions would be lost.
+    /// Takes the [`BundleState`] changeset from the [`State`], replacing it
+    /// with an empty one.
     ///
-    /// NOTE: If either:
-    /// * The [State] has not been built with [StateBuilder::with_bundle_update], or
-    /// * The [State] has a [TransitionState] set to `None` when
-    ///   [State::merge_transitions] is called,
+    /// This will not apply any pending [`TransitionState`]. It is recommended
+    /// to call [`State::merge_transitions`] before taking the bundle.
     ///
-    /// this will panic.
+    /// If the `State` has been built with the
+    /// [`StateBuilder::with_bundle_prestate`] option, the pre-state will be
+    /// taken along with any changes made by [`State::merge_transitions`].
     pub fn take_bundle(&mut self) -> BundleState {
         core::mem::take(&mut self.bundle_state)
     }

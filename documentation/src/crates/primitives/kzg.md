@@ -6,7 +6,7 @@ This module houses;
 
 1. `KzgSettings`: Stores the setup and parameters needed for computing and verify KZG proofs.
 
-    The `KZG` premitive provides a default `KZGSettings` obtained from [this]( https://ceremony.ethereum.org/) trusted setup ceremony, a provision is also made for using a custom `KZGSettings` if need be, this is available in the `env.cfg`.
+    The `KZG` primitive provides a default `KZGSettings` obtained from [this]( https://ceremony.ethereum.org/) trusted setup ceremony, a provision is also made for using a custom `KZGSettings` if need be, this is available in the `env.cfg`.
 
 
-2. `trusted_setup_points`: This module contains functions and types used for parsing and utilizing the [Trusted Setup]( https://ceremony.ethereum.org/) for the `KzgSettings`.
+2. `trusted_setup_points`: This module contains functions and types used for parsing and utilizing the [Trusted Setup](https://ceremony.ethereum.org/) for the `KzgSettings`.
