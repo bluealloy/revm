@@ -3007,7 +3007,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "13.0.0"
+version = "13.0.1"
 dependencies = [
  "alloy-eips",
  "alloy-provider",
@@ -3107,7 +3107,7 @@ dependencies = [
 
 [[package]]
 name = "revme"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "alloy-rlp",
  "hash-db",
