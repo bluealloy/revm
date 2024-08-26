@@ -3082,13 +3082,11 @@ dependencies = [
  "bitvec",
  "c-kzg",
  "cfg-if",
- "derive_more",
  "dyn-clone",
  "enumn",
  "hashbrown",
  "hex",
  "kzg-rs",
- "once_cell",
  "serde",
 ]
 
