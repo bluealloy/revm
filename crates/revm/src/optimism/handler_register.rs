@@ -144,6 +144,24 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
     Ok(())
 }
 
+pub fn refund<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+    gas: &mut Gas,
+    eip7702_refund: i64,
+) {
+    gas.record_refund(eip7702_refund);
+
+    let env = context.evm.inner.env();
+    let is_deposit = env.tx.optimism.source_hash.is_some();
+    let is_regolith = SPEC::enabled(REGOLITH);
+
+    // Prior to Regolith, deposit transactions did not receive gas refunds.
+    let is_gas_refund_disabled = env.cfg.is_gas_refund_disabled() || (is_deposit && !is_regolith);
+    if !is_gas_refund_disabled {
+        gas.set_final_refund(SPEC::SPEC_ID.is_enabled_in(SpecId::LONDON));
+    }
+}
+
 /// Load precompiles for Optimism chain.
 #[inline]
 pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> ContextPrecompiles<DB> {
