@@ -73,7 +73,6 @@ serde = [
     "bitvec/serde",
     "bitflags/serde",
     "c-kzg?/serde",
-    "kzg-rs?/serde",
 ]
 arbitrary = [
     "std",
