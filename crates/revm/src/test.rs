@@ -274,6 +274,7 @@ fn test_evm_greeting() {
         hex!("45773e4e").into(),
         None,
     );
+    println!("{:?}", result);
     assert!(result.is_success());
     let bytes = result.output().unwrap_or_default();
     let bytes = &bytes[64..75];

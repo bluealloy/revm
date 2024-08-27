@@ -417,12 +417,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         // if first byte of data is magic 0xEF00, then it is EOFCreate.
                         if spec_id.is_enabled_in(SpecId::PRAGUE)
                             && ctx
-                                .env()
-                                .tx
-                                .data
-                                .get(0..=1)
-                                .filter(|&t| t == [0xEF, 00])
-                                .is_some()
+                            .env()
+                            .tx
+                            .data
+                            .get(0..=1)
+                            .filter(|&t| t == [0xEF, 00])
+                            .is_some()
                         {
                             // TODO Should we just check 0xEF it seems excessive to switch to legacy
                             // only if it 0xEF00?
@@ -515,7 +515,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     ) -> Result<CreateOutcome, EVMError<DB::Error>> {
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
-            .with_fuel(create_inputs.gas_limit)
+            .with_fuel_limit(create_inputs.gas_limit)
             .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
         let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
@@ -623,7 +623,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
-            .with_fuel(call_inputs.gas_limit)
+            .with_fuel_limit(call_inputs.gas_limit)
             .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
         let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);

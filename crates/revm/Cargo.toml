@@ -39,7 +39,7 @@ fluentbase-sdk = { path = "../../../crates/sdk", default-features = false }
 fluentbase-runtime = { path = "../../../crates/runtime", default-features = false, optional = true }
 fluentbase-genesis = { path = "../../../crates/genesis", default-features = false, optional = true }
 
-rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel", default-features = false, optional = true }
+rwasm = { workspace = true, default-features = false, optional = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }

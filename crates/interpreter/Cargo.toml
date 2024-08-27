@@ -83,5 +83,6 @@ optional_no_base_fee = ["revm-primitives/optional_no_base_fee"]
 optional_beneficiary_reward = ["revm-primitives/optional_beneficiary_reward"]
 
 rwasm = ["revm-primitives/rwasm"]
+gasless = []
 e2e = ["revm-primitives/e2e"]
 debug-print = []
