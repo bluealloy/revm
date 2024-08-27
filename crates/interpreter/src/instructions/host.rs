@@ -2,7 +2,7 @@ use crate::{
     gas::{self, warm_cold_cost, warm_cold_cost_with_delegation},
     interpreter::Interpreter,
     primitives::{Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
-    Host, InstructionResult, SStoreResult, StateLoad,
+    Host, InstructionResult,
 };
 use core::cmp::min;
 use std::vec::Vec;
@@ -87,7 +87,6 @@ pub fn extcodecopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
     };
 
     let len = as_usize_or_fail!(interpreter, len_u256);
-    // TODO EIP-7702
     let (code, load) = code.into_components();
     gas_or_fail!(
         interpreter,
@@ -132,26 +131,22 @@ pub fn sstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host:
     require_non_staticcall!(interpreter);
 
     pop!(interpreter, index, value);
-    let Some(StateLoad {
-        data:
-            SStoreResult {
-                original_value: original,
-                present_value: old,
-                new_value: new,
-            },
-        is_cold,
-    }) = host.sstore(interpreter.contract.target_address, index, value)
-    else {
+    let Some(state_load) = host.sstore(interpreter.contract.target_address, index, value) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
     gas_or_fail!(interpreter, {
         let remaining_gas = interpreter.gas.remaining();
-        gas::sstore_cost(SPEC::SPEC_ID, original, old, new, remaining_gas, is_cold)
+        gas::sstore_cost(
+            SPEC::SPEC_ID,
+            &state_load.data,
+            remaining_gas,
+            state_load.is_cold,
+        )
     });
     refund!(
         interpreter,
-        gas::sstore_refund(SPEC::SPEC_ID, original, old, new)
+        gas::sstore_refund(SPEC::SPEC_ID, &state_load.data)
     );
 }
 

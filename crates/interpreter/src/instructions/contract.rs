@@ -170,7 +170,7 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return None;
     };
-
+    // account_load.is_empty will be accounted if there is transfer value.
     let call_cost = gas::call_cost(BerlinSpec::SPEC_ID, transfers_value, account_load);
     gas!(interpreter, call_cost, None);
 

@@ -6,7 +6,9 @@ use deserializer::*;
 pub use eip7702::TxEip7702;
 pub use spec::SpecName;
 
-use revm::primitives::{AccessList, Address, AuthorizationList, Bytes, HashMap, B256, U256};
+use revm::primitives::{
+    AccessList, Address, AuthorizationList, Bytes, HashMap, Signature, B256, U256,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -109,7 +111,7 @@ pub struct Env {
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TransactionParts {
     pub data: Vec<Bytes>,
     pub gas_limit: Vec<U256>,
@@ -127,13 +129,22 @@ pub struct TransactionParts {
 
     #[serde(default)]
     pub access_lists: Vec<Option<AccessList>>,
-
-    //#[serde(default)]
-    // TODO EIP-7702 when added enable serde `deny_unknown_fields`.
-    //pub authorization_list: Vec<Option<Vec<TestAuthorization>>>,
+    #[serde(default)]
+    pub authorization_list: Vec<TestAuthorization>,
     #[serde(default)]
     pub blob_versioned_hashes: Vec<B256>,
     pub max_fee_per_blob_gas: Option<U256>,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TestAuthorization {
+    chain_id: U256,
+    address: Address,
+    nonce: U256,
+    #[serde(flatten)]
+    signature: Signature,
+    signer: Address,
 }
 
 #[cfg(test)]
