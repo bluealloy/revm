@@ -24,4 +24,6 @@ inherits = "test"
 opt-level = 3
 
 [patch.crates-io]
-alloy-eips = { git = "https://github.com/alloy-rs/alloy", rev = "fd159f6" }
+alloy-eips = { git = "https://github.com/alloy-rs/alloy", rev = "05cc4e0" }
+alloy-provider = { git = "https://github.com/alloy-rs/alloy", rev = "05cc4e0" }
+alloy-transport = { git = "https://github.com/alloy-rs/alloy", rev = "05cc4e0" }
