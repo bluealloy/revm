@@ -413,22 +413,23 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         FrameResult::Create(result)
                     }
                     TransactTo::Blended(execution_environment, raw_data) => {
-                        for a in &STORAGE_ADDRESSES {
-                            let (acc, _) = ctx.evm.load_account(*a)?;
-                            acc.info.nonce = 1;
-                            ctx.evm.touch(a);
-                        }
-                        match execution_environment {
-                            ExecutionEnvironment::Fuel => {
-                                let gas_limit = ctx.evm.env.tx.gas_limit;
-                                let result =
-                                    self.blend_fuel_inner(gas_limit, gas_limit, raw_data)?;
-                                FrameResult::Call(result)
-                            }
-                            ExecutionEnvironment::Solana => {
-                                todo!("call blendedAPI.exec_fuel_tx")
-                            }
-                        }
+                        todo!("looks like we dont need it anymore")
+                        // for a in &STORAGE_ADDRESSES {
+                        //     let (acc, _) = ctx.evm.load_account(*a)?;
+                        //     acc.info.nonce = 1;
+                        //     ctx.evm.touch(a);
+                        // }
+                        // match execution_environment {
+                        //     ExecutionEnvironment::Fuel => {
+                        //         let gas_limit = ctx.evm.env.tx.gas_limit;
+                        //         let result =
+                        //             self.blend_fuel_inner(gas_limit, gas_limit, raw_data)?;
+                        //         FrameResult::Call(result)
+                        //     }
+                        //     ExecutionEnvironment::Solana => {
+                        //         todo!("call blendedAPI.exec_fuel_tx")
+                        //     }
+                        // }
                     }
                 }
             }
@@ -658,36 +659,36 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         Ok(result)
     }
 
-    /// Main contract call of the EVM.
-    #[cfg(feature = "rwasm")]
-    fn blend_fuel_inner(
-        &mut self,
-        tx_gas_limit: u64,
-        gas_limit: u64,
-        raw_fuel_tx: Bytes,
-    ) -> Result<CallOutcome, EVMError<DB::Error>> {
-        let runtime_context = RuntimeContext::default()
-            .with_depth(0u32)
-            .with_fuel(gas_limit)
-            .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
-        let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
-        let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
-
-        let output = _exec_fuel_tx(&mut sdk, gas_limit, raw_fuel_tx);
-
-        let mut gas = Gas::new(tx_gas_limit);
-        if !gas.record_cost(tx_gas_limit - output.gas_remaining) {
-            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
-        };
-        gas.record_refund(output.gas_refund);
-
-        Ok(CallOutcome {
-            result: InterpreterResult {
-                result: evm_error_from_exit_code(output.exit_code.into()),
-                output: output.output,
-                gas,
-            },
-            memory_offset: Default::default(),
-        })
-    }
+    // /// Main contract call of the FVM.
+    // #[cfg(feature = "rwasm")]
+    // fn blend_fuel_inner(
+    //     &mut self,
+    //     tx_gas_limit: u64,
+    //     gas_limit: u64,
+    //     raw_fuel_tx: Bytes,
+    // ) -> Result<CallOutcome, EVMError<DB::Error>> {
+    //     let runtime_context = RuntimeContext::default()
+    //         .with_depth(0u32)
+    //         .with_fuel(gas_limit)
+    //         .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
+    //     let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
+    //     let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
+    //
+    //     let output = _exec_fuel_tx(&mut sdk, gas_limit, raw_fuel_tx);
+    //
+    //     let mut gas = Gas::new(tx_gas_limit);
+    //     if !gas.record_cost(tx_gas_limit - output.gas_remaining) {
+    //         return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
+    //     };
+    //     gas.record_refund(output.gas_refund);
+    //
+    //     Ok(CallOutcome {
+    //         result: InterpreterResult {
+    //             result: evm_error_from_exit_code(output.exit_code.into()),
+    //             output: output.output,
+    //             gas,
+    //         },
+    //         memory_offset: Default::default(),
+    //     })
+    // }
 }
