@@ -282,7 +282,7 @@ pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResul
 /// there is transfer value.
 ///
 /// This means that [`crate::OpCode::EXTSTATICCALL`],
-/// [`crate::OpCode::EXTDELEGATECALL] that dont transfer value will not be
+/// [`crate::OpCode::EXTDELEGATECALL`] that dont transfer value will not be
 /// effected by this field.
 ///
 /// [`crate::OpCode::CALL`], [`crate::OpCode::EXTCALL`] use this field.
