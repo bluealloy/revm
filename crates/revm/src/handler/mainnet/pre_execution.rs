@@ -112,7 +112,7 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
         return Ok(0);
     };
 
-    let mut created_accounts_cnt = 0;
+    let mut refunded_accounts = 0;
     for authorization in authorization_list.recovered_iter() {
         // 1. recover authority and authorized addresses.
         // authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]
@@ -149,8 +149,8 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
         }
 
         // 6. Refund the sender PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST gas if authority exists in the trie.
-        if authority_acc.is_empty() {
-            created_accounts_cnt += 1;
+        if !authority_acc.is_empty() {
+            refunded_accounts += 1;
         }
 
         // 7. Set the code of authority to be 0xef0100 || address. This is a delegation designation.
@@ -163,8 +163,8 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
         authority_acc.mark_touch();
     }
 
-    let existing_accounts = authorization_list.len() as u64 - created_accounts_cnt;
     let refunded_gas =
-        existing_accounts * (eip7702::PER_EMPTY_ACCOUNT_COST - eip7702::PER_AUTH_BASE_COST);
+        refunded_accounts * (eip7702::PER_EMPTY_ACCOUNT_COST - eip7702::PER_AUTH_BASE_COST);
+
     Ok(refunded_gas)
 }

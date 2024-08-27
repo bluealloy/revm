@@ -50,7 +50,7 @@ pub fn calc_call_gas<SPEC: Spec>(
     local_gas_limit: u64,
 ) -> Option<u64> {
     let call_cost = gas::call_cost(SPEC::SPEC_ID, has_transfer, account_load);
-
+    println!("call_cost: {}", call_cost);
     gas!(interpreter, call_cost, None);
 
     // EIP-150: Gas cost changes for IO-heavy operations
@@ -63,6 +63,8 @@ pub fn calc_call_gas<SPEC: Spec>(
     } else {
         local_gas_limit
     };
+
+    println!("gas_limit: {}", gas_limit);
 
     Some(gas_limit)
 }

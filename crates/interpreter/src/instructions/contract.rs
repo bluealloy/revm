@@ -429,6 +429,8 @@ pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }
 
+    println!("gas_limit (with stipend): {}", gas_limit);
+
     // Call host to interact with target contract
     interpreter.next_action = InterpreterAction::Call {
         inputs: Box::new(CallInputs {
