@@ -196,17 +196,16 @@ impl<DB: Database> InnerEvmContext<DB> {
             let delegated_account = self.journaled_state.load_code(address, &mut self.db)?;
 
             // SAFETY: safe to unwrap as load_code will insert code if it is empty.
-            let delegated_code = delegated_account.info.code.as_ref().cloned().unwrap();
+            let delegated_code = delegated_account.info.code.as_ref().unwrap();
 
-            if delegated_code.is_eof() {
-                return Ok(Eip7702CodeLoad::new(
-                    StateLoad::new(EOF_MAGIC_BYTES.clone(), is_cold),
-                    delegated_account.is_cold,
-                ));
-            }
+            let bytes = if delegated_code.is_eof() {
+                EOF_MAGIC_BYTES.clone()
+            } else {
+                delegated_code.original_bytes()
+            };
 
             return Ok(Eip7702CodeLoad::new(
-                StateLoad::new(delegated_code.original_bytes(), is_cold),
+                StateLoad::new(bytes, is_cold),
                 delegated_account.is_cold,
             ));
         }

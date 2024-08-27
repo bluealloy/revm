@@ -130,7 +130,7 @@ pub struct TransactionParts {
     #[serde(default)]
     pub access_lists: Vec<Option<AccessList>>,
     #[serde(default)]
-    pub authorization_list: Vec<TestAuthorization>,
+    pub authorization_list: Vec<Authorization>,
     #[serde(default)]
     pub blob_versioned_hashes: Vec<B256>,
     pub max_fee_per_blob_gas: Option<U256>,
@@ -138,7 +138,7 @@ pub struct TransactionParts {
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct TestAuthorization {
+pub struct Authorization {
     chain_id: U256,
     address: Address,
     nonce: U256,
