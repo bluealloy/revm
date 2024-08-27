@@ -22,8 +22,11 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-alloy-eips = { version = "0.2", default-features = false, features = ["k256"] }
-alloy-primitives = { version = "0.7.7", default-features = false, features = [
+alloy-eip7702 = { version = "0.1", default-features = false, features = [
+    "k256",
+] }
+alloy-eip2930 = { version = "0.1", default-features = false }
+alloy-primitives = { version = "0.8.0", default-features = false, features = [
     "rlp",
 ] }
 hashbrown = "0.14"
@@ -59,7 +62,6 @@ hex = { version = "0.4", default-features = false }
 default = ["std", "c-kzg", "portable"]
 std = [
     "serde?/std",
-    "alloy-eips/std",
     "alloy-primitives/std",
     "hex/std",
     "bitvec/std",
@@ -68,7 +70,8 @@ std = [
 hashbrown = []
 serde = [
     "dep:serde",
-    "alloy-eips/serde",
+    "alloy-eip7702/serde",
+    "alloy-eip2930/serde",
     "alloy-primitives/serde",
     "hex/serde",
     "hashbrown/serde",
@@ -79,7 +82,6 @@ serde = [
 ]
 arbitrary = [
     "std",
-    "alloy-eips/arbitrary",
     "alloy-primitives/arbitrary",
     "bitflags/arbitrary",
 ]

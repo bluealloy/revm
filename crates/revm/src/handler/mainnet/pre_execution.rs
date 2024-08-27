@@ -60,8 +60,8 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
                 };
 
                 // 2. Verify the chain id is either 0 or the chain's current ID.
-                if authorization.chain_id() != 0
-                    && authorization.chain_id() != context.evm.inner.env.cfg.chain_id
+                if authorization.chain_id() != U256::ZERO
+                    && authorization.chain_id() != U256::from(context.evm.inner.env.cfg.chain_id)
                 {
                     continue;
                 }
@@ -81,10 +81,8 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
                 }
 
                 // 4. If nonce list item is length one, verify the nonce of authority is equal to nonce.
-                if let Some(nonce) = authorization.nonce() {
-                    if nonce != authority_acc.info.nonce {
-                        continue;
-                    }
+                if authorization.nonce() != authority_acc.info.nonce {
+                    continue;
                 }
 
                 // warm code account and get the code.
