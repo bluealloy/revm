@@ -142,8 +142,9 @@ pub struct TestAuthorization {
     chain_id: U256,
     address: Address,
     nonce: U256,
-    #[serde(flatten)]
-    signature: Signature,
+    v: U256,
+    r: U256,
+    s: U256,
     signer: Address,
 }
 
