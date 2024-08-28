@@ -218,7 +218,7 @@ impl Env {
     ///
     /// # Panics
     ///
-    ///
+    /// If account code is not loaded.
     #[inline]
     pub fn validate_tx_against_state<SPEC: Spec>(
         &self,
