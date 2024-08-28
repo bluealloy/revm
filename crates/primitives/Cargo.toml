@@ -37,9 +37,7 @@ c-kzg = { version = "1.0.3", default-features = false, optional = true, features
 ] }
 
 # Optionally use `kzg-rs` for a pure Rust implementation of KZG.
-kzg-rs = { version = "0.1", default-features = false, features = [
-    'cache',
-], optional = true }
+kzg-rs = { version = "0.2.2", default-features = false, optional = true }
 
 # utility
 enumn = "0.1"
@@ -75,7 +73,6 @@ serde = [
     "bitvec/serde",
     "bitflags/serde",
     "c-kzg?/serde",
-    "kzg-rs?/serde",
 ]
 arbitrary = [
     "std",
