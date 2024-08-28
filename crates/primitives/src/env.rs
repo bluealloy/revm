@@ -4,8 +4,8 @@ pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
     calc_blob_gasprice, AccessListItem, Account, Address, AuthorizationList, Bytes, InvalidHeader,
-    InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK,
-    MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
+    InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE,
+    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
 use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
@@ -203,9 +203,7 @@ impl Env {
             }
 
             // Check validity of authorization_list
-            if !auth_list.is_valid() {
-                return Err(InvalidTransaction::InvalidAuthorizationList);
-            }
+            auth_list.is_valid()?;
 
             // Check if other fields are unset.
             if self.tx.max_fee_per_blob_gas.is_some() || !self.tx.blob_hashes.is_empty() {
@@ -217,6 +215,10 @@ impl Env {
     }
 
     /// Validate transaction against state.
+    ///
+    /// # Panics
+    ///
+    ///
     #[inline]
     pub fn validate_tx_against_state<SPEC: Spec>(
         &self,
@@ -225,8 +227,15 @@ impl Env {
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no collision in past
         // so we can leave it enabled always
-        if !self.cfg.is_eip3607_disabled() && account.info.code_hash != KECCAK_EMPTY {
-            return Err(InvalidTransaction::RejectCallerWithCode);
+        let bytecode = account.info.code.as_ref();
+        if !self.cfg.is_eip3607_disabled() {
+            if let Some(bytecode) = bytecode {
+                // allow EOAs whose code is a valid delegation designation,
+                // i.e. 0xef0100 || address, to continue to originate transactions.
+                if !bytecode.is_eip7702() {
+                    return Err(InvalidTransaction::RejectCallerWithCode);
+                }
+            }
         }
 
         // Check that the transaction's nonce is correct

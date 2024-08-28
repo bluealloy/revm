@@ -23,7 +23,7 @@ pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
         .evm
         .inner
         .journaled_state
-        .load_account(tx_caller, &mut context.evm.inner.db)?;
+        .load_code(tx_caller, &mut context.evm.inner.db)?;
 
     context
         .evm

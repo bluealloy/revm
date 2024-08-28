@@ -2,7 +2,7 @@ pub use alloy_eips::eip7702::{Authorization, SignedAuthorization};
 pub use alloy_primitives::Signature;
 
 use crate::Address;
-use core::ops::Deref;
+use core::{fmt, ops::Deref};
 use std::{boxed::Box, vec::Vec};
 
 /// Authorization list for EIP-7702 transaction type.
@@ -35,15 +35,13 @@ impl AuthorizationList {
     }
 
     /// Returns true if the authorization list is valid.
-    /// TODO EIP-7702 switch to error type.
-    pub fn is_valid(&self) -> bool {
-        true
-        /*
-        match self {
-            Self::Signed(signed) => signed.iter().all(|signed| signed.is_valid()),
-            Self::Recovered(recovered) => recovered.iter().all(|recovered| recovered.is_valid()),
-        }
-        */
+    pub fn is_valid(&self) -> Result<(), InvalidAuthorization> {
+        //let check
+        // match self {
+        //     Self::Signed(signed) => signed.iter().all(|signed| signed.is_valid()),
+        //     Self::Recovered(recovered) => recovered.iter().all(|recovered| recovered.is_valid()),
+        // }
+        Ok(())
     }
 
     /// Return empty authorization list.
@@ -114,5 +112,24 @@ impl Deref for RecoveredAuthorization {
 
     fn deref(&self) -> &Self::Target {
         &self.inner
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum InvalidAuthorization {
+    InvalidChainId,
+    InvalidYParity,
+    Eip2InvalidSValue,
+}
+
+impl fmt::Display for InvalidAuthorization {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Self::InvalidChainId => "Invalid chain_id, Expect chain's ID or zero",
+            Self::InvalidYParity => "Invalid y_parity, Expect 0 or 1.",
+            Self::Eip2InvalidSValue => "Invalid signature s-value.",
+        };
+        f.write_str(s)
     }
 }

@@ -4,7 +4,10 @@ pub mod legacy;
 pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
 
-use crate::{keccak256, Bytes, Eip7702Bytecode, B256, EIP7702_MAGIC_BYTES, KECCAK_EMPTY};
+use crate::{
+    eip7702::bytecode::Eip7702DecodeError, keccak256, Bytes, Eip7702Bytecode, B256,
+    EIP7702_MAGIC_BYTES, KECCAK_EMPTY,
+};
 use alloy_primitives::Address;
 use core::fmt::Debug;
 use eof::EofDecodeError;
@@ -110,8 +113,7 @@ impl Bytecode {
                 Ok(Self::Eof(Arc::new(eof)))
             }
             Some(prefix) if prefix == &EIP7702_MAGIC_BYTES => {
-                let eip7702 =
-                    Eip7702Bytecode::new_raw(bytecode).ok_or(BytecodeDecodeError::Eip7702)?;
+                let eip7702 = Eip7702Bytecode::new_raw(bytecode)?;
                 Ok(Self::Eip7702(eip7702))
             }
             _ => Ok(Self::LegacyRaw(bytecode)),
@@ -211,17 +213,24 @@ impl Bytecode {
 }
 
 /// EOF decode errors.
-#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BytecodeDecodeError {
+    /// EOF decode error
     Eof(EofDecodeError),
-    // TODO EIP-7702 add errors
-    Eip7702,
+    /// EIP-7702 decode error
+    Eip7702(Eip7702DecodeError),
 }
 
 impl From<EofDecodeError> for BytecodeDecodeError {
     fn from(error: EofDecodeError) -> Self {
         Self::Eof(error)
+    }
+}
+
+impl From<Eip7702DecodeError> for BytecodeDecodeError {
+    fn from(error: Eip7702DecodeError) -> Self {
+        Self::Eip7702(error)
     }
 }
 
@@ -232,7 +241,7 @@ impl fmt::Display for BytecodeDecodeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Eof(e) => fmt::Display::fmt(e, f),
-            Self::Eip7702 => f.write_str("EIP-7702 decode error"),
+            Self::Eip7702(e) => fmt::Display::fmt(e, f),
         }
     }
 }

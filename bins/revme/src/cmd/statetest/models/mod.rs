@@ -143,7 +143,7 @@ pub struct Authorization {
     v: U256,
     r: U256,
     s: U256,
-    signer: Address,
+    signer: Option<Address>,
 }
 
 #[cfg(test)]

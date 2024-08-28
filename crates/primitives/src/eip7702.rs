@@ -2,9 +2,9 @@ pub mod authorization_list;
 pub mod bytecode;
 
 pub use authorization_list::{
-    Authorization, AuthorizationList, RecoveredAuthorization, Signature, SignedAuthorization,
+    Authorization,InvalidAuthorization, AuthorizationList, RecoveredAuthorization, Signature, SignedAuthorization,
 };
-pub use bytecode::{Eip7702Bytecode, EIP7702_MAGIC, EIP7702_MAGIC_BYTES, EIP7702_VERSION};
+pub use bytecode::{Eip7702Bytecode, Eip7702DecodeError, EIP7702_MAGIC, EIP7702_MAGIC_BYTES, EIP7702_VERSION};
 
 // Base cost of updating authorized account.
 pub const PER_AUTH_BASE_COST: u64 = 2500;
