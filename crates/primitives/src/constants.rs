@@ -6,7 +6,7 @@ use alloy_primitives::{address, Address};
 pub const MAX_CODE_SIZE: usize = 0x6000;
 
 /// Number of block hashes that EVM can access in the past (pre-Prague).
-pub const BLOCK_HASH_HISTORY: usize = 256;
+pub const BLOCK_HASH_HISTORY: u64 = 256;
 
 /// EIP-2935: Serve historical block hashes from state
 ///
