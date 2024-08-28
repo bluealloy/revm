@@ -105,8 +105,15 @@ mod tests {
         let raw = bytes!("ef01deadbeef");
         assert_eq!(
             Eip7702Bytecode::new_raw(raw),
+            Err(Eip7702DecodeError::InvalidLength)
+        );
+
+        let raw = bytes!("ef0101deadbeef00000000000000000000000000000000");
+        assert_eq!(
+            Eip7702Bytecode::new_raw(raw),
             Err(Eip7702DecodeError::UnsupportedVersion)
         );
+
         let raw = bytes!("ef0100deadbeef00000000000000000000000000000000");
         let address = raw[3..].try_into().unwrap();
         assert_eq!(
