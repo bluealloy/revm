@@ -278,7 +278,7 @@ impl<DB: Database> Database for State<DB> {
                 let ret = *entry.insert(self.database.block_hash(number)?);
 
                 // prune all hashes that are older then BLOCK_HASH_HISTORY
-                let last_block = number.saturating_sub(BLOCK_HASH_HISTORY as u64);
+                let last_block = number.saturating_sub(BLOCK_HASH_HISTORY);
                 while let Some(entry) = self.block_hashes.first_entry() {
                     if *entry.key() < last_block {
                         entry.remove();
@@ -315,7 +315,7 @@ mod tests {
         state.block_hash(1u64).unwrap();
         state.block_hash(2u64).unwrap();
 
-        let test_number = BLOCK_HASH_HISTORY as u64 + 2;
+        let test_number = BLOCK_HASH_HISTORY + 2;
 
         let block1_hash = keccak256(U256::from(1).to_string().as_bytes());
         let block2_hash = keccak256(U256::from(2).to_string().as_bytes());
