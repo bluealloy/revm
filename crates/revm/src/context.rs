@@ -8,7 +8,7 @@ pub use context_precompiles::{
 };
 pub use evm_context::EvmContext;
 pub use inner_evm_context::InnerEvmContext;
-use revm_interpreter::as_usize_saturated;
+use revm_interpreter::{as_u64_saturated, as_usize_saturated};
 
 use crate::{
     db::{Database, EmptyDB},
@@ -109,8 +109,8 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
     }
 
     fn block_hash(&mut self, number: u64) -> Option<B256> {
-        let block_number = as_usize_saturated!(self.env().block.number);
-        let requested_number = usize::try_from(number).unwrap_or(usize::MAX);
+        let block_number = as_u64_saturated!(self.env().block.number);
+        let requested_number = u64::try_from(number).unwrap_or(u64::MAX);
 
         let Some(diff) = block_number.checked_sub(requested_number) else {
             return Some(B256::ZERO);
