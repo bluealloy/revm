@@ -109,7 +109,7 @@ pub struct Env {
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[serde(rename_all = "camelCase")]
 pub struct TransactionParts {
     pub data: Vec<Bytes>,
     pub gas_limit: Vec<U256>,
