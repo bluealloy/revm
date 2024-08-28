@@ -232,7 +232,6 @@ impl Env {
             // allow EOAs whose code is a valid delegation designation,
             // i.e. 0xef0100 || address, to continue to originate transactions.
             if !bytecode.is_empty() && !bytecode.is_eip7702() {
-                println!("bytecode: {:?}", bytecode);
                 return Err(InvalidTransaction::RejectCallerWithCode);
             }
         }
