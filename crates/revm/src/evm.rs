@@ -402,7 +402,7 @@ mod tests {
     use crate::{
         db::BenchmarkDB,
         interpreter::opcode::{PUSH1, SSTORE},
-        primitives::{address, Authorization, Bytecode, RecoveredAuthorization, U256},
+        primitives::{address, Authorization, Bytecode, RecoveredAuthorization, Signature, U256},
     };
 
     #[test]
@@ -419,11 +419,12 @@ mod tests {
             .modify_tx_env(|tx| {
                 tx.authorization_list = Some(
                     vec![RecoveredAuthorization::new_unchecked(
-                        SignedAuthorization {
+                        Authorization {
                             chain_id: U256::from(1),
                             address: delegate,
                             nonce: 0,
-                        },
+                        }
+                        .into_signed(Signature::test_signature()),
                         Some(auth),
                     )]
                     .into(),

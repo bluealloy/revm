@@ -9,18 +9,22 @@ pub struct TransitionState {
 }
 
 impl TransitionState {
-    /// Create new transition state with one transition.
+    /// Create new transition state containing one [`TransitionAccount`].
     pub fn single(address: Address, transition: TransitionAccount) -> Self {
         let mut transitions = HashMap::new();
         transitions.insert(address, transition);
         TransitionState { transitions }
     }
 
-    /// Return transition id and all account transitions. Leave empty transition map.
+    /// Take the contents of this [`TransitionState`] and replace it with an
+    /// empty one. See [`core::mem::take`].
     pub fn take(&mut self) -> TransitionState {
         core::mem::take(self)
     }
 
+    /// Add transitions to the transition state. This will insert new
+    /// [`TransitionAccount`]s, or update existing ones via
+    /// [`TransitionAccount::update`].
     pub fn add_transitions(&mut self, transitions: Vec<(Address, TransitionAccount)>) {
         for (address, account) in transitions {
             match self.transitions.entry(address) {
