@@ -177,30 +177,47 @@ impl From<OptimismSpecId> for PrecompileSpecId {
     }
 }
 
+/// String identifiers for Optimism hardforks.
+pub mod id {
+    // Re-export the Ethereum hardforks.
+    pub use crate::primitives::specification::id::*;
+
+    pub const BEDROCK: &str = "Bedrock";
+    pub const REGOLITH: &str = "Regolith";
+    pub const CANYON: &str = "Canyon";
+    pub const ECOTONE: &str = "Ecotone";
+    pub const FJORD: &str = "Fjord";
+}
+
 impl From<&str> for OptimismSpecId {
     fn from(name: &str) -> Self {
         match name {
-            "Frontier" => Self::FRONTIER,
-            "Homestead" => Self::HOMESTEAD,
-            "Tangerine" => Self::TANGERINE,
-            "Spurious" => Self::SPURIOUS_DRAGON,
-            "Byzantium" => Self::BYZANTIUM,
-            "Constantinople" => Self::CONSTANTINOPLE,
-            "Petersburg" => Self::PETERSBURG,
-            "Istanbul" => Self::ISTANBUL,
-            "MuirGlacier" => Self::MUIR_GLACIER,
-            "Berlin" => Self::BERLIN,
-            "London" => Self::LONDON,
-            "Merge" => Self::MERGE,
-            "Shanghai" => Self::SHANGHAI,
-            "Cancun" => Self::CANCUN,
-            "Prague" => Self::PRAGUE,
-            "PragueEOF" => Self::PRAGUE_EOF,
-            "Bedrock" => Self::BEDROCK,
-            "Regolith" => Self::REGOLITH,
-            "Canyon" => Self::CANYON,
-            "Ecotone" => Self::ECOTONE,
-            "Fjord" => Self::FJORD,
+            id::FRONTIER => Self::FRONTIER,
+            id::FRONTIER_THAWING => Self::FRONTIER_THAWING,
+            id::HOMESTEAD => Self::HOMESTEAD,
+            id::DAO_FORK => Self::DAO_FORK,
+            id::TANGERINE => Self::TANGERINE,
+            id::SPURIOUS_DRAGON => Self::SPURIOUS_DRAGON,
+            id::BYZANTIUM => Self::BYZANTIUM,
+            id::CONSTANTINOPLE => Self::CONSTANTINOPLE,
+            id::PETERSBURG => Self::PETERSBURG,
+            id::ISTANBUL => Self::ISTANBUL,
+            id::MUIR_GLACIER => Self::MUIR_GLACIER,
+            id::BERLIN => Self::BERLIN,
+            id::LONDON => Self::LONDON,
+            id::ARROW_GLACIER => Self::ARROW_GLACIER,
+            id::GRAY_GLACIER => Self::GRAY_GLACIER,
+            id::MERGE => Self::MERGE,
+            id::SHANGHAI => Self::SHANGHAI,
+            id::CANCUN => Self::CANCUN,
+            id::PRAGUE => Self::PRAGUE,
+            id::PRAGUE_EOF => Self::PRAGUE_EOF,
+            id::BEDROCK => Self::BEDROCK,
+            id::REGOLITH => Self::REGOLITH,
+            id::CANYON => Self::CANYON,
+            id::ECOTONE => Self::ECOTONE,
+            id::FJORD => Self::FJORD,
+            id::LATEST => Self::LATEST,
             _ => Self::LATEST,
         }
     }
@@ -229,12 +246,12 @@ impl From<OptimismSpecId> for &'static str {
             | OptimismSpecId::CANCUN
             | OptimismSpecId::PRAGUE
             | OptimismSpecId::PRAGUE_EOF => value.into_eth_spec_id().into(),
-            OptimismSpecId::BEDROCK => "Bedrock",
-            OptimismSpecId::REGOLITH => "Regolith",
-            OptimismSpecId::CANYON => "Canyon",
-            OptimismSpecId::ECOTONE => "Ecotone",
-            OptimismSpecId::FJORD => "Fjord",
-            OptimismSpecId::LATEST => "Latest",
+            OptimismSpecId::BEDROCK => id::BEDROCK,
+            OptimismSpecId::REGOLITH => id::REGOLITH,
+            OptimismSpecId::CANYON => id::CANYON,
+            OptimismSpecId::ECOTONE => id::ECOTONE,
+            OptimismSpecId::FJORD => id::FJORD,
+            OptimismSpecId::LATEST => id::LATEST,
         }
     }
 }
