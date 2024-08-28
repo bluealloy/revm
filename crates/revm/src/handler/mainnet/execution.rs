@@ -184,6 +184,7 @@ pub fn insert_eofcreate_outcome<EXT, DB: Database>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::handler::mainnet::refund;
     use crate::primitives::{CancunSpec, Env};
     use revm_precompile::Bytes;
 
@@ -203,6 +204,7 @@ mod tests {
             0..0,
         ));
         last_frame_return::<CancunSpec, _, _>(&mut ctx, &mut first_frame).unwrap();
+        refund::<CancunSpec, _, _>(&mut ctx, first_frame.gas_mut(), 0);
         *first_frame.gas()
     }
 
