@@ -419,7 +419,7 @@ mod tests {
             .modify_tx_env(|tx| {
                 tx.authorization_list = Some(
                     vec![RecoveredAuthorization::new_unchecked(
-                        Authorization {
+                        SignedAuthorization {
                             chain_id: U256::from(1),
                             address: delegate,
                             nonce: 0,

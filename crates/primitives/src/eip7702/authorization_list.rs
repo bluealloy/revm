@@ -1,6 +1,7 @@
 pub use alloy_eips::eip7702::{Authorization, SignedAuthorization};
-pub use alloy_primitives::Signature;
+pub use alloy_primitives::{Parity, Signature};
 
+use super::SECP256K1N_HALF;
 use crate::Address;
 use core::{fmt, ops::Deref};
 use std::{boxed::Box, vec::Vec};
@@ -35,12 +36,36 @@ impl AuthorizationList {
     }
 
     /// Returns true if the authorization list is valid.
-    pub fn is_valid(&self) -> Result<(), InvalidAuthorization> {
-        //let check
-        // match self {
-        //     Self::Signed(signed) => signed.iter().all(|signed| signed.is_valid()),
-        //     Self::Recovered(recovered) => recovered.iter().all(|recovered| recovered.is_valid()),
-        // }
+    pub fn is_valid(&self, _chain_id: u64) -> Result<(), InvalidAuthorization> {
+        let validate = |auth: &SignedAuthorization| -> Result<(), InvalidAuthorization> {
+            // TODO Eip7702. Check chain_id
+            // Pending: https://github.com/ethereum/EIPs/pull/8833/files
+            // let auth_chain_id: u64 = auth.chain_id().try_into().unwrap_or(u64::MAX);
+            // if auth_chain_id != 0 && auth_chain_id != chain_id {
+            //     return Err(InvalidAuthorization::InvalidChainId);
+            // }
+
+            // Check y_parity, Parity::Parity means that it was 0 or 1.
+            if !matches!(auth.signature().v(), Parity::Parity(_)) {
+                return Err(InvalidAuthorization::InvalidYParity);
+            }
+
+            // Check s-value
+            if auth.signature().s() > SECP256K1N_HALF {
+                return Err(InvalidAuthorization::Eip2InvalidSValue);
+            }
+
+            Ok(())
+        };
+
+        match self {
+            Self::Signed(signed) => signed.iter().try_for_each(validate)?,
+            Self::Recovered(recovered) => recovered
+                .iter()
+                .map(|recovered| &recovered.inner)
+                .try_for_each(validate)?,
+        };
+
         Ok(())
     }
 
@@ -76,13 +101,13 @@ impl AuthorizationList {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RecoveredAuthorization {
     #[cfg_attr(feature = "serde", serde(flatten))]
-    inner: Authorization,
+    inner: SignedAuthorization,
     authority: Option<Address>,
 }
 
 impl RecoveredAuthorization {
     /// Instantiate without performing recovery. This should be used carefully.
-    pub const fn new_unchecked(inner: Authorization, authority: Option<Address>) -> Self {
+    pub const fn new_unchecked(inner: SignedAuthorization, authority: Option<Address>) -> Self {
         Self { inner, authority }
     }
 
@@ -94,7 +119,7 @@ impl RecoveredAuthorization {
     }
 
     /// Splits the authorization into parts.
-    pub const fn into_parts(self) -> (Authorization, Option<Address>) {
+    pub const fn into_parts(self) -> (SignedAuthorization, Option<Address>) {
         (self.inner, self.authority)
     }
 }
@@ -102,8 +127,7 @@ impl RecoveredAuthorization {
 impl From<SignedAuthorization> for RecoveredAuthorization {
     fn from(signed_auth: SignedAuthorization) -> Self {
         let authority = signed_auth.recover_authority().ok();
-        let (authorization, _) = signed_auth.into_parts();
-        Self::new_unchecked(authorization, authority)
+        Self::new_unchecked(signed_auth, authority)
     }
 }
 

@@ -203,7 +203,7 @@ impl Env {
             }
 
             // Check validity of authorization_list
-            auth_list.is_valid()?;
+            auth_list.is_valid(self.cfg.chain_id)?;
 
             // Check if other fields are unset.
             if self.tx.max_fee_per_blob_gas.is_some() || !self.tx.blob_hashes.is_empty() {
@@ -227,14 +227,13 @@ impl Env {
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no collision in past
         // so we can leave it enabled always
-        let bytecode = account.info.code.as_ref();
         if !self.cfg.is_eip3607_disabled() {
-            if let Some(bytecode) = bytecode {
-                // allow EOAs whose code is a valid delegation designation,
-                // i.e. 0xef0100 || address, to continue to originate transactions.
-                if !bytecode.is_eip7702() {
-                    return Err(InvalidTransaction::RejectCallerWithCode);
-                }
+            let bytecode = &account.info.code.as_ref().unwrap();
+            // allow EOAs whose code is a valid delegation designation,
+            // i.e. 0xef0100 || address, to continue to originate transactions.
+            if !bytecode.is_empty() && !bytecode.is_eip7702() {
+                println!("bytecode: {:?}", bytecode);
+                return Err(InvalidTransaction::RejectCallerWithCode);
             }
         }
 
