@@ -86,6 +86,7 @@ fn bench_transact<EXT>(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<'_, E
         Bytecode::LegacyRaw(_) => "raw",
         Bytecode::LegacyAnalyzed(_) => "analysed",
         Bytecode::Eof(_) => "eof",
+        Bytecode::Eip7702(_) => panic!("Delegated account not supported"),
     };
     let id = format!("transact/{state}");
     g.bench_function(id, |b| b.iter(|| evm.transact().unwrap()));

@@ -1,4 +1,4 @@
-use crate::{Address, Bytecode, HashMap, B256, KECCAK_EMPTY, U256};
+use crate::{Address, Bytecode, HashMap, SpecId, B256, KECCAK_EMPTY, U256};
 use bitflags::bitflags;
 use core::hash::{Hash, Hasher};
 
@@ -59,6 +59,18 @@ impl Account {
             info: AccountInfo::default(),
             storage: HashMap::new(),
             status: AccountStatus::LoadedAsNotExisting,
+        }
+    }
+
+    /// Check if account is empty and check if empty state before spurious dragon hardfork.
+    #[inline]
+    pub fn state_clear_aware_is_empty(&self, spec: SpecId) -> bool {
+        if SpecId::enabled(spec, SpecId::SPURIOUS_DRAGON) {
+            self.is_empty()
+        } else {
+            let loaded_not_existing = self.is_loaded_as_not_existing();
+            let is_not_touched = !self.is_touched();
+            loaded_not_existing && is_not_touched
         }
     }
 

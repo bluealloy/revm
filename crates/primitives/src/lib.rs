@@ -10,6 +10,7 @@ extern crate alloc as std;
 mod bytecode;
 mod constants;
 pub mod db;
+pub mod eip7702;
 pub mod env;
 
 #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
@@ -27,6 +28,10 @@ pub use alloy_primitives::{
 pub use bitvec;
 pub use bytecode::*;
 pub use constants::*;
+pub use eip7702::{
+    Authorization, AuthorizationList, Eip7702Bytecode, Eip7702DecodeError, InvalidAuthorization,
+    RecoveredAuthorization, Signature, SignedAuthorization, EIP7702_MAGIC, EIP7702_MAGIC_BYTES,
+};
 pub use env::*;
 
 cfg_if::cfg_if! {

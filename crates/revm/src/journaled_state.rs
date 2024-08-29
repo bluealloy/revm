@@ -1,5 +1,7 @@
+use revm_interpreter::Eip7702CodeLoad;
+
 use crate::{
-    interpreter::{InstructionResult, LoadAccountResult, SStoreResult, SelfDestructResult},
+    interpreter::{AccountLoad, InstructionResult, SStoreResult, SelfDestructResult, StateLoad},
     primitives::{
         db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, EvmState,
         EvmStorageSlot, HashMap, HashSet, Log, SpecId, SpecId::*, TransientStorage, B256,
@@ -484,8 +486,11 @@ impl JournaledState {
         address: Address,
         target: Address,
         db: &mut DB,
-    ) -> Result<SelfDestructResult, EVMError<DB::Error>> {
-        let load_result = self.load_account_exist(target, db)?;
+    ) -> Result<StateLoad<SelfDestructResult>, EVMError<DB::Error>> {
+        let spec = self.spec;
+        let account_load = self.load_account(target, db)?;
+        let is_cold = account_load.is_cold;
+        let is_empty = account_load.state_clear_aware_is_empty(spec);
 
         if address != target {
             // Both accounts are loaded before this point, `address` as we execute its contract.
@@ -531,11 +536,13 @@ impl JournaledState {
             self.journal.last_mut().unwrap().push(entry);
         };
 
-        Ok(SelfDestructResult {
-            had_value: !balance.is_zero(),
-            is_cold: load_result.is_cold,
-            target_exists: !load_result.is_empty,
-            previously_destroyed,
+        Ok(StateLoad {
+            data: SelfDestructResult {
+                had_value: !balance.is_zero(),
+                target_exists: !is_empty,
+                previously_destroyed,
+            },
+            is_cold,
         })
     }
 
@@ -575,12 +582,15 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
-        let (value, is_cold) = match self.state.entry(address) {
+    ) -> Result<StateLoad<&mut Account>, EVMError<DB::Error>> {
+        let load = match self.state.entry(address) {
             Entry::Occupied(entry) => {
                 let account = entry.into_mut();
                 let is_cold = account.mark_warm();
-                (account, is_cold)
+                StateLoad {
+                    data: account,
+                    is_cold,
+                }
             }
             Entry::Vacant(vac) => {
                 let account =
@@ -593,43 +603,48 @@ impl JournaledState {
                 // precompiles are warm loaded so we need to take that into account
                 let is_cold = !self.warm_preloaded_addresses.contains(&address);
 
-                (vac.insert(account), is_cold)
+                StateLoad {
+                    data: vac.insert(account),
+                    is_cold,
+                }
             }
         };
 
         // journal loading of cold account.
-        if is_cold {
+        if load.is_cold {
             self.journal
                 .last_mut()
                 .unwrap()
                 .push(JournalEntry::AccountWarmed { address });
         }
 
-        Ok((value, is_cold))
+        Ok(load)
     }
 
-    /// Load account from database to JournaledState.
-    ///
-    /// Return boolean pair where first is `is_cold` second bool `is_exists`.
     #[inline]
-    pub fn load_account_exist<DB: Database>(
+    pub fn load_account_delegated<DB: Database>(
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<LoadAccountResult, EVMError<DB::Error>> {
+    ) -> Result<AccountLoad, EVMError<DB::Error>> {
         let spec = self.spec;
-        let (acc, is_cold) = self.load_account(address, db)?;
+        let account = self.load_code(address, db)?;
+        let is_empty = account.state_clear_aware_is_empty(spec);
 
-        let is_spurious_dragon_enabled = SpecId::enabled(spec, SPURIOUS_DRAGON);
-        let is_empty = if is_spurious_dragon_enabled {
-            acc.is_empty()
-        } else {
-            let loaded_not_existing = acc.is_loaded_as_not_existing();
-            let is_not_touched = !acc.is_touched();
-            loaded_not_existing && is_not_touched
+        let mut account_load = AccountLoad {
+            is_empty,
+            load: Eip7702CodeLoad::new_not_delegated((), account.is_cold),
         };
+        // load delegate code if account is EIP-7702
+        if let Some(Bytecode::Eip7702(code)) = &account.info.code {
+            let address = code.address();
+            let delegate_account = self.load_account(address, db)?;
+            account_load
+                .load
+                .set_delegate_load(delegate_account.is_cold);
+        }
 
-        Ok(LoadAccountResult { is_empty, is_cold })
+        Ok(account_load)
     }
 
     /// Loads code.
@@ -638,20 +653,19 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
-        let (acc, is_cold) = self.load_account(address, db)?;
-        if acc.info.code.is_none() {
-            if acc.info.code_hash == KECCAK_EMPTY {
+    ) -> Result<StateLoad<&mut Account>, EVMError<DB::Error>> {
+        let account_load = self.load_account(address, db)?;
+        let acc = &mut account_load.data.info;
+        if acc.code.is_none() {
+            if acc.code_hash == KECCAK_EMPTY {
                 let empty = Bytecode::default();
-                acc.info.code = Some(empty);
+                acc.code = Some(empty);
             } else {
-                let code = db
-                    .code_by_hash(acc.info.code_hash)
-                    .map_err(EVMError::Database)?;
-                acc.info.code = Some(code);
+                let code = db.code_by_hash(acc.code_hash).map_err(EVMError::Database)?;
+                acc.code = Some(code);
             }
         }
-        Ok((acc, is_cold))
+        Ok(account_load)
     }
 
     /// Load storage slot
@@ -665,7 +679,7 @@ impl JournaledState {
         address: Address,
         key: U256,
         db: &mut DB,
-    ) -> Result<(U256, bool), EVMError<DB::Error>> {
+    ) -> Result<StateLoad<U256>, EVMError<DB::Error>> {
         // assume acc is warm
         let account = self.state.get_mut(&address).unwrap();
         // only if account is created in this tx we can assume that storage is empty.
@@ -698,7 +712,7 @@ impl JournaledState {
                 .push(JournalEntry::StorageWarmed { address, key });
         }
 
-        Ok((value, is_cold))
+        Ok(StateLoad::new(value, is_cold))
     }
 
     /// Stores storage slot.
@@ -714,22 +728,24 @@ impl JournaledState {
         key: U256,
         new: U256,
         db: &mut DB,
-    ) -> Result<SStoreResult, EVMError<DB::Error>> {
+    ) -> Result<StateLoad<SStoreResult>, EVMError<DB::Error>> {
         // assume that acc exists and load the slot.
-        let (present, is_cold) = self.sload(address, key, db)?;
+        let present = self.sload(address, key, db)?;
         let acc = self.state.get_mut(&address).unwrap();
 
         // if there is no original value in dirty return present value, that is our original.
         let slot = acc.storage.get_mut(&key).unwrap();
 
         // new value is same as present, we don't need to do anything
-        if present == new {
-            return Ok(SStoreResult {
-                original_value: slot.original_value(),
-                present_value: present,
-                new_value: new,
-                is_cold,
-            });
+        if present.data == new {
+            return Ok(StateLoad::new(
+                SStoreResult {
+                    original_value: slot.original_value(),
+                    present_value: present.data,
+                    new_value: new,
+                },
+                present.is_cold,
+            ));
         }
 
         self.journal
@@ -738,16 +754,18 @@ impl JournaledState {
             .push(JournalEntry::StorageChanged {
                 address,
                 key,
-                had_value: present,
+                had_value: present.data,
             });
         // insert value into present state.
         slot.present_value = new;
-        Ok(SStoreResult {
-            original_value: slot.original_value(),
-            present_value: present,
-            new_value: new,
-            is_cold,
-        })
+        Ok(StateLoad::new(
+            SStoreResult {
+                original_value: slot.original_value(),
+                present_value: present.data,
+                new_value: new,
+            },
+            present.is_cold,
+        ))
     }
 
     /// Read transient storage tied to the account.
