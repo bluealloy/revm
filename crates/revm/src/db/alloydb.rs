@@ -3,7 +3,10 @@ use crate::{
     primitives::{AccountInfo, Address, Bytecode, B256, U256},
 };
 use alloy_eips::BlockId;
-use alloy_provider::{Network, Provider};
+use alloy_provider::{
+    network::{BlockResponse, HeaderResponse},
+    Network, Provider,
+};
 use alloy_transport::{Transport, TransportError};
 use std::future::IntoFuture;
 use tokio::runtime::{Handle, Runtime};
@@ -129,7 +132,7 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> DatabaseRef for AlloyD
                 .get_block_by_number(number.into(), false),
         )?;
         // SAFETY: If the number is given, the block is supposed to be finalized, so unwrapping is safe.
-        Ok(B256::new(*block.unwrap().header.hash.unwrap()))
+        Ok(B256::new(*block.unwrap().header().hash()))
     }
 
     fn code_by_hash_ref(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
