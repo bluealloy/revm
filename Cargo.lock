@@ -3125,7 +3125,7 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "10.1.0"
+version = "11.0.0"
 dependencies = [
  "aurora-engine-modexp",
  "blst",
