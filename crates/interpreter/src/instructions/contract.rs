@@ -20,7 +20,7 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     require_non_staticcall!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
     let initcontainer_index = unsafe { *interpreter.instruction_pointer };
-    pop!(interpreter, value, salt, data_offset, data_size);
+    pop!(interpreter, salt, data_offset, data_size, value);
 
     let sub_container = interpreter
         .eof()
