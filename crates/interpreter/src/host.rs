@@ -32,7 +32,7 @@ pub trait Host {
 
     /// Set storage value of account address at index.
     ///
-    /// Returns (original, present, new, is_cold).
+    /// Returns [`StateLoad`] with [`SStoreResult`] that contains original/new/old storage value.
     fn sstore(
         &mut self,
         address: Address,
@@ -69,6 +69,44 @@ pub struct SStoreResult {
     pub new_value: U256,
 }
 
+impl SStoreResult {
+    /// Returns `true` if the new value is equal to the present value.
+    #[inline]
+    pub fn is_new_eq_present(&self) -> bool {
+        self.new_value == self.present_value
+    }
+
+    /// Returns `true` if the original value is equal to the present value.
+    #[inline]
+    pub fn is_original_eq_present(&self) -> bool {
+        self.original_value == self.present_value
+    }
+
+    /// Returns `true` if the original value is equal to the new value.
+    #[inline]
+    pub fn is_original_eq_new(&self) -> bool {
+        self.original_value == self.new_value
+    }
+
+    /// Returns `true` if the original value is zero.
+    #[inline]
+    pub fn is_original_zero(&self) -> bool {
+        self.original_value.is_zero()
+    }
+
+    /// Returns `true` if the present value is zero.
+    #[inline]
+    pub fn is_present_zero(&self) -> bool {
+        self.present_value.is_zero()
+    }
+
+    /// Returns `true` if the new value is zero.
+    #[inline]
+    pub fn is_new_zero(&self) -> bool {
+        self.new_value.is_zero()
+    }
+}
+
 /// Result of the account load from Journal state.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -93,7 +131,7 @@ impl DerefMut for AccountLoad {
     }
 }
 
-/// Account access information.
+/// State load information that contains the data and if the account or storage is cold loaded.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StateLoad<T> {
@@ -118,10 +156,14 @@ impl<T> DerefMut for StateLoad<T> {
 }
 
 impl<T> StateLoad<T> {
+    /// Returns a new [`StateLoad`] with the given data and cold load status.
     pub fn new(data: T, is_cold: bool) -> Self {
         Self { data, is_cold }
     }
 
+    /// Maps the data of the [`StateLoad`] to a new value.
+    ///
+    /// Useful for transforming the data of the [`StateLoad`] without changing the cold load status.
     pub fn map<B, F>(self, f: F) -> StateLoad<B>
     where
         F: FnOnce(T) -> B,
@@ -130,7 +172,9 @@ impl<T> StateLoad<T> {
     }
 }
 
-/// EIP-7702 code load with potential delegate account cold load.
+/// EIP-7702 code load result that contains optional delegation is_cold information.
+///
+/// [`Self::is_delegate_account_cold`] will be [`Some`] if account has delegation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eip7702CodeLoad<T> {
@@ -155,12 +199,15 @@ impl<T> DerefMut for Eip7702CodeLoad<T> {
 }
 
 impl<T> Eip7702CodeLoad<T> {
+    /// Returns a new [`Eip7702CodeLoad`] with the given data and without delegation.
     pub fn new_state_load(state_load: StateLoad<T>) -> Self {
         Self {
             state_load,
             is_delegate_account_cold: None,
         }
     }
+
+    /// Returns a new [`Eip7702CodeLoad`] with the given data and without delegation.
     pub fn new_not_delegated(data: T, is_cold: bool) -> Self {
         Self {
             state_load: StateLoad::new(data, is_cold),
@@ -168,6 +215,8 @@ impl<T> Eip7702CodeLoad<T> {
         }
     }
 
+    /// Deconstructs the [`Eip7702CodeLoad`] by extracting data and
+    /// returning a new [`Eip7702CodeLoad`] with empty data.
     pub fn into_components(self) -> (T, Eip7702CodeLoad<()>) {
         let is_cold = self.is_cold;
         (
@@ -179,10 +228,12 @@ impl<T> Eip7702CodeLoad<T> {
         )
     }
 
+    /// Sets the delegation cold load status.
     pub fn set_delegate_load(&mut self, is_delegate_account_cold: bool) {
         self.is_delegate_account_cold = Some(is_delegate_account_cold);
     }
 
+    /// Returns a new [`Eip7702CodeLoad`] with the given data and delegation cold load status.
     pub fn new(state_load: StateLoad<T>, is_delegate_account_cold: bool) -> Self {
         Self {
             state_load,
@@ -191,7 +242,9 @@ impl<T> Eip7702CodeLoad<T> {
     }
 }
 
-/// Result of a selfdestruct instruction.
+/// Result of a selfdestruct action.
+///
+/// Value returned are needed to calculate the gas spent.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SelfDestructResult {

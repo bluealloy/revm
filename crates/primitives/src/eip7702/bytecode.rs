@@ -1,4 +1,5 @@
 use crate::{bytes, Address, Bytes};
+use core::fmt;
 
 /// EIP-7702 Version Magic in u16 form.
 pub const EIP7702_MAGIC: u16 = 0xEF01;
@@ -24,20 +25,20 @@ pub struct Eip7702Bytecode {
 impl Eip7702Bytecode {
     /// Creates a new EIP-7702 bytecode or returns None if the raw bytecode is invalid.
     #[inline]
-    pub fn new_raw(raw: Bytes) -> Option<Self> {
+    pub fn new_raw(raw: Bytes) -> Result<Self, Eip7702DecodeError> {
         if raw.len() != 23 {
-            return None;
+            return Err(Eip7702DecodeError::InvalidLength);
         }
         if !raw.starts_with(&EIP7702_MAGIC_BYTES) {
-            return None;
+            return Err(Eip7702DecodeError::InvalidMagic);
         }
 
         // Only supported version is version 0.
         if raw[2] != EIP7702_VERSION {
-            return None;
+            return Err(Eip7702DecodeError::UnsupportedVersion);
         }
 
-        Some(Self {
+        Ok(Self {
             delegated_address: Address::new(raw[3..].try_into().unwrap()),
             version: EIP7702_VERSION,
             raw,
@@ -69,6 +70,32 @@ impl Eip7702Bytecode {
     }
 }
 
+/// Bytecode errors.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum Eip7702DecodeError {
+    /// Invalid length of the raw bytecode. It should be 23 bytes.
+    InvalidLength,
+    /// All Eip7702 bytecodes should start with the magic number 0xEF01.
+    InvalidMagic,
+    /// Only supported version is version 0x00.
+    UnsupportedVersion,
+}
+
+impl fmt::Display for Eip7702DecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Self::InvalidLength => "Eip7702 is not 23 bytes long",
+            Self::InvalidMagic => "Bytecode is not starting with 0xEF01",
+            Self::UnsupportedVersion => "Unsupported Eip7702 version.",
+        };
+        f.write_str(s)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for Eip7702DecodeError {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -76,12 +103,22 @@ mod tests {
     #[test]
     fn sanity_decode() {
         let raw = bytes!("ef01deadbeef");
-        assert_eq!(Eip7702Bytecode::new_raw(raw), None);
+        assert_eq!(
+            Eip7702Bytecode::new_raw(raw),
+            Err(Eip7702DecodeError::InvalidLength)
+        );
+
+        let raw = bytes!("ef0101deadbeef00000000000000000000000000000000");
+        assert_eq!(
+            Eip7702Bytecode::new_raw(raw),
+            Err(Eip7702DecodeError::UnsupportedVersion)
+        );
+
         let raw = bytes!("ef0100deadbeef00000000000000000000000000000000");
         let address = raw[3..].try_into().unwrap();
         assert_eq!(
             Eip7702Bytecode::new_raw(raw.clone()),
-            Some(Eip7702Bytecode {
+            Ok(Eip7702Bytecode {
                 delegated_address: address,
                 version: 0,
                 raw,

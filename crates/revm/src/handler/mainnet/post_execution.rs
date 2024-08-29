@@ -1,7 +1,7 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, EVMError, ExecutionResult, ResultAndState, Spec, SpecId::LONDON, U256,
+        db::Database, EVMError, ExecutionResult, ResultAndState, Spec, SpecId, SpecId::LONDON, U256,
     },
     Context, FrameResult,
 };
@@ -54,6 +54,19 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         .saturating_add(coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64));
 
     Ok(())
+}
+
+pub fn refund<SPEC: Spec, EXT, DB: Database>(
+    _context: &mut Context<EXT, DB>,
+    gas: &mut Gas,
+    eip7702_refund: i64,
+) {
+    gas.record_refund(eip7702_refund);
+
+    // Calculate gas refund for transaction.
+    // If spec is set to london, it will decrease the maximum refund amount to 5th part of
+    // gas spend. (Before london it was 2th part of gas spend)
+    gas.set_final_refund(SPEC::SPEC_ID.is_enabled_in(SpecId::LONDON));
 }
 
 #[inline]

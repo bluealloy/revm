@@ -196,17 +196,16 @@ impl<DB: Database> InnerEvmContext<DB> {
             let delegated_account = self.journaled_state.load_code(address, &mut self.db)?;
 
             // SAFETY: safe to unwrap as load_code will insert code if it is empty.
-            let delegated_code = delegated_account.info.code.as_ref().cloned().unwrap();
+            let delegated_code = delegated_account.info.code.as_ref().unwrap();
 
-            if delegated_code.is_eof() {
-                return Ok(Eip7702CodeLoad::new(
-                    StateLoad::new(EOF_MAGIC_BYTES.clone(), is_cold),
-                    delegated_account.is_cold,
-                ));
-            }
+            let bytes = if delegated_code.is_eof() {
+                EOF_MAGIC_BYTES.clone()
+            } else {
+                delegated_code.original_bytes()
+            };
 
             return Ok(Eip7702CodeLoad::new(
-                StateLoad::new(delegated_code.original_bytes(), is_cold),
+                StateLoad::new(bytes, is_cold),
                 delegated_account.is_cold,
             ));
         }
@@ -233,13 +232,6 @@ impl<DB: Database> InnerEvmContext<DB> {
         // SAFETY: safe to unwrap as load_code will insert code if it is empty.
         let code = acc.info.code.as_ref().unwrap();
 
-        if code.is_eof() {
-            return Ok(Eip7702CodeLoad::new_not_delegated(
-                EOF_MAGIC_HASH,
-                acc.is_cold,
-            ));
-        }
-
         // If bytecode is EIP-7702 then we need to load the delegated account.
         if let Bytecode::Eip7702(code) = code {
             let address = code.address();
@@ -247,23 +239,27 @@ impl<DB: Database> InnerEvmContext<DB> {
 
             let delegated_account = self.journaled_state.load_code(address, &mut self.db)?;
 
-            if delegated_account.info.code.as_ref().unwrap().is_eof() {
-                return Ok(Eip7702CodeLoad::new(
-                    StateLoad::new(EOF_MAGIC_HASH, is_cold),
-                    delegated_account.is_cold,
-                ));
-            }
+            let hash = if delegated_account.is_empty() {
+                B256::ZERO
+            } else if delegated_account.info.code.as_ref().unwrap().is_eof() {
+                EOF_MAGIC_HASH
+            } else {
+                delegated_account.info.code_hash
+            };
 
             return Ok(Eip7702CodeLoad::new(
-                StateLoad::new(delegated_account.info.code_hash, is_cold),
+                StateLoad::new(hash, is_cold),
                 delegated_account.is_cold,
             ));
         }
 
-        Ok(Eip7702CodeLoad::new_not_delegated(
-            acc.info.code_hash,
-            acc.is_cold,
-        ))
+        let hash = if code.is_eof() {
+            EOF_MAGIC_HASH
+        } else {
+            acc.info.code_hash
+        };
+
+        Ok(Eip7702CodeLoad::new_not_delegated(hash, acc.is_cold))
     }
 
     /// Load storage slot, if storage is not present inside the account then it will be loaded from database.

@@ -47,9 +47,6 @@ pub const COLD_ACCOUNT_ACCESS_COST: u64 = 2600;
 pub const WARM_STORAGE_READ_COST: u64 = 100;
 pub const WARM_SSTORE_RESET: u64 = SSTORE_RESET - COLD_SLOAD_COST;
 
-/// EIP-7702
-pub const PER_AUTH_BASE_COST: u64 = 2500;
-
 /// EIP-3860 : Limit and meter initcode
 pub const INITCODE_WORD_COST: u64 = 2;
 

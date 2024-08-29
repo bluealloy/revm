@@ -33,6 +33,7 @@ pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, 
         handler.pre_execution.deduct_caller = Arc::new(deduct_caller::<SPEC, EXT, DB>);
         // Refund is calculated differently then mainnet.
         handler.execution.last_frame_return = Arc::new(last_frame_return::<SPEC, EXT, DB>);
+        handler.post_execution.refund = Arc::new(refund::<SPEC, EXT, DB>);
         handler.post_execution.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, EXT, DB>);
         // In case of halt of deposit transaction return Error.
         handler.post_execution.output = Arc::new(output::<SPEC, EXT, DB>);
@@ -136,12 +137,27 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
         }
         _ => {}
     }
+    Ok(())
+}
+
+/// Record Eip-7702 refund and calculate final refund.
+#[inline]
+pub fn refund<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+    gas: &mut Gas,
+    eip7702_refund: i64,
+) {
+    gas.record_refund(eip7702_refund);
+
+    let env = context.evm.inner.env();
+    let is_deposit = env.tx.optimism.source_hash.is_some();
+    let is_regolith = SPEC::enabled(REGOLITH);
+
     // Prior to Regolith, deposit transactions did not receive gas refunds.
     let is_gas_refund_disabled = env.cfg.is_gas_refund_disabled() || (is_deposit && !is_regolith);
     if !is_gas_refund_disabled {
         gas.set_final_refund(SPEC::SPEC_ID.is_enabled_in(SpecId::LONDON));
     }
-    Ok(())
 }
 
 /// Load precompiles for Optimism chain.
@@ -416,6 +432,7 @@ mod tests {
             0..0,
         ));
         last_frame_return::<SPEC, _, _>(&mut ctx, &mut first_frame).unwrap();
+        refund::<SPEC, _, _>(&mut ctx, first_frame.gas_mut(), 0);
         *first_frame.gas()
     }
 

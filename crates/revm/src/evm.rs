@@ -377,15 +377,14 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         let ctx = &mut self.context;
 
-        // add refund from EIP-7702.
-        result.gas_mut().record_refund(eip7702_gas_refund);
-
         // handle output of call/create calls.
         self.handler
             .execution()
             .last_frame_return(ctx, &mut result)?;
 
         let post_exec = self.handler.post_execution();
+        // calculate final refund and add EIP-7702 refund to gas.
+        post_exec.refund(ctx, result.gas_mut(), eip7702_gas_refund);
         // Reimburse the caller
         post_exec.reimburse_caller(ctx, result.gas())?;
         // Reward beneficiary
@@ -402,7 +401,7 @@ mod tests {
     use crate::{
         db::BenchmarkDB,
         interpreter::opcode::{PUSH1, SSTORE},
-        primitives::{address, Authorization, Bytecode, RecoveredAuthorization, U256},
+        primitives::{address, Authorization, Bytecode, RecoveredAuthorization, Signature, U256},
     };
 
     #[test]
@@ -423,7 +422,8 @@ mod tests {
                             chain_id: U256::from(1),
                             address: delegate,
                             nonce: 0,
-                        },
+                        }
+                        .into_signed(Signature::test_signature()),
                         Some(auth),
                     )]
                     .into(),
