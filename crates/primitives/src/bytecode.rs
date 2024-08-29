@@ -69,12 +69,13 @@ impl Bytecode {
         }
     }
 
-    /// Return true if bytecode is EOF.
+    /// Returns true if bytecode is EOF.
     #[inline]
     pub const fn is_eof(&self) -> bool {
         matches!(self, Self::Eof(_))
     }
 
+    /// Returns true if bytecode is EIP-7702.
     pub const fn is_eip7702(&self) -> bool {
         matches!(self, Self::Eip7702(_))
     }
@@ -89,7 +90,7 @@ impl Bytecode {
     ///
     /// # Panics
     ///
-    /// Panics if bytecode is EOF and has incorrect format.
+    /// Panics if bytecode is in incorrect format.
     #[inline]
     pub fn new_raw(bytecode: Bytes) -> Self {
         Self::new_raw_checked(bytecode).expect("Expect correct EOF bytecode")
@@ -103,7 +104,7 @@ impl Bytecode {
 
     /// Creates a new raw [`Bytecode`].
     ///
-    /// Returns an error on incorrect EOF format.
+    /// Returns an error on incorrect Bytecode format.
     #[inline]
     pub fn new_raw_checked(bytecode: Bytes) -> Result<Self, BytecodeDecodeError> {
         let prefix = bytecode.get(..2);

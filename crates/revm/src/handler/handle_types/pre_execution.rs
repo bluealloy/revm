@@ -56,7 +56,7 @@ impl<'a, EXT, DB: Database> PreExecutionHandler<'a, EXT, DB> {
         (self.load_accounts)(context)
     }
 
-    /// Apply EIP-7702 auth list and return number of created accounts.
+    /// Apply EIP-7702 auth list and return gas refund on account that were already present.
     pub fn apply_eip7702_auth_list(
         &self,
         context: &mut Context<EXT, DB>,

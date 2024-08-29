@@ -383,13 +383,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             .last_frame_return(ctx, &mut result)?;
 
         let post_exec = self.handler.post_execution();
-        // calculate refund for EIP-7702
+        // calculate final refund and add EIP-7702 refund to gas.
         post_exec.refund(ctx, result.gas_mut(), eip7702_gas_refund);
         // Reimburse the caller
         post_exec.reimburse_caller(ctx, result.gas())?;
         // Reward beneficiary
         post_exec.reward_beneficiary(ctx, result.gas())?;
-
         // Returns output of transaction.
         post_exec.output(ctx, result)
     }
