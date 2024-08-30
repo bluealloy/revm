@@ -2196,9 +2196,9 @@ dependencies = [
 
 [[package]]
 name = "kzg-rs"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b4bb3bc9aea7619189db05005d378385ccfd7f12b31891c3a2647035294443f"
+checksum = "0850eb19206463a61bede4f7b7e6b21731807137619044b1f3c287ebcfe2b3b0"
 dependencies = [
  "ff",
  "hex",

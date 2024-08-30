@@ -50,7 +50,7 @@ c-kzg = { version = "1.0.3", default-features = false, optional = true, features
 ] }
 
 # Optionally use `kzg-rs` for a pure Rust implementation of KZG point evaluation.
-kzg-rs = { version = "0.2.2", default-features = false, optional = true }
+kzg-rs = { version = "0.2.3", default-features = false, optional = true }
 
 # BLS12-381 precompiles
 blst = { version = "0.3.13", optional = true }
