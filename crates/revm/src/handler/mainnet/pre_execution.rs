@@ -5,12 +5,11 @@
 use crate::{
     precompile::PrecompileSpecId,
     primitives::{
-        Account, Block, EVMError, EVMResultGeneric, EnvWiring, Spec, SpecId, Transaction,
-        BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256,
+        eip7702, Account, Block, Bytecode, EVMError, EVMResultGeneric, EnvWiring, Spec, SpecId,
+        Transaction, BLOCKHASH_STORAGE_ADDRESS, PRAGUE, U256,
     },
     Context, ContextPrecompiles, EvmWiring,
 };
-use std::vec::Vec;
 
 /// Main precompile load
 #[inline]
@@ -47,77 +46,7 @@ pub fn load_accounts<EvmWiringT: EvmWiring, SPEC: Spec>(
             .insert(BLOCKHASH_STORAGE_ADDRESS);
     }
 
-    // EIP-7702. Load bytecode to authorized accounts.
-    if SPEC::enabled(SpecId::PRAGUE) {
-        if let Some(authorization_list) = context.evm.inner.env.tx.authorization_list().as_ref() {
-            let mut valid_auths = Vec::with_capacity(authorization_list.len());
-            for authorization in authorization_list.recovered_iter() {
-                // 1. recover authority and authorized addresses.
-                let Some(authority) = authorization.authority() else {
-                    continue;
-                };
-
-                // 2. Verify the chain id is either 0 or the chain's current ID.
-                if authorization.chain_id() != 0
-                    && authorization.chain_id() != context.evm.inner.env.cfg.chain_id
-                {
-                    continue;
-                }
-
-                // warm authority account and check nonce.
-                let (authority_acc, _) = context
-                    .evm
-                    .inner
-                    .journaled_state
-                    .load_account(authority, &mut context.evm.inner.db)
-                    .map_err(EVMError::Database)?;
-
-                // 3. Verify that the code of authority is empty.
-                // In case of multiple same authorities this step will skip loading of
-                // authorized account.
-                if authority_acc.info.code_hash() != KECCAK_EMPTY {
-                    continue;
-                }
-
-                // 4. If nonce list item is length one, verify the nonce of authority is equal to nonce.
-                if let Some(nonce) = authorization.nonce() {
-                    if nonce != authority_acc.info.nonce {
-                        continue;
-                    }
-                }
-
-                // warm code account and get the code.
-                // 6. Add the authority account to accessed_addresses
-                let (account, _) = context
-                    .evm
-                    .inner
-                    .journaled_state
-                    .load_code(authorization.address, &mut context.evm.inner.db)
-                    .map_err(EVMError::Database)?;
-
-                let code = account.info.code.clone();
-                let code_hash = account.info.code_hash;
-
-                // If code is empty no need to set code or add it to valid
-                // authorizations, as it is a noop operation.
-                if code_hash == KECCAK_EMPTY {
-                    continue;
-                }
-
-                // 5. Set the code of authority to code associated with address.
-                context.evm.inner.journaled_state.set_code_with_hash(
-                    authority,
-                    code.unwrap_or_default(),
-                    code_hash,
-                );
-
-                valid_auths.push(authority);
-            }
-
-            context.evm.inner.valid_authorizations = valid_auths;
-        }
-    }
-
+    // Load access list
     context.evm.load_access_list().map_err(EVMError::Database)?;
     Ok(())
 }
@@ -157,7 +86,7 @@ pub fn deduct_caller<EvmWiringT: EvmWiring, SPEC: Spec>(
     context: &mut Context<EvmWiringT>,
 ) -> EVMResultGeneric<(), EvmWiringT> {
     // load caller's account.
-    let (caller_account, _) = context
+    let caller_account = context
         .evm
         .inner
         .journaled_state
@@ -168,7 +97,80 @@ pub fn deduct_caller<EvmWiringT: EvmWiring, SPEC: Spec>(
         .map_err(EVMError::Database)?;
 
     // deduct gas cost from caller's account.
-    deduct_caller_inner::<EvmWiringT, SPEC>(caller_account, &context.evm.inner.env);
+    deduct_caller_inner::<EvmWiringT, SPEC>(caller_account.data, &context.evm.inner.env);
 
     Ok(())
+}
+
+/// Apply EIP-7702 auth list and return number gas refund on already created accounts.
+#[inline]
+pub fn apply_eip7702_auth_list<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
+) -> EVMResultGeneric<u64, EvmWiringT> {
+    // EIP-7702. Load bytecode to authorized accounts.
+    if !SPEC::enabled(PRAGUE) {
+        return Ok(0);
+    }
+
+    // return if there is no auth list.
+    let Some(authorization_list) = context.evm.inner.env.tx.authorization_list() else {
+        return Ok(0);
+    };
+
+    let mut refunded_accounts = 0;
+    for authorization in authorization_list.recovered_iter() {
+        // 1. recover authority and authorized addresses.
+        // authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]
+        let Some(authority) = authorization.authority() else {
+            continue;
+        };
+
+        // 2. Verify the chain id is either 0 or the chain's current ID.
+        if !authorization.chain_id().is_zero()
+            && authorization.chain_id() != U256::from(context.evm.inner.env.cfg.chain_id)
+        {
+            continue;
+        }
+
+        // warm authority account and check nonce.
+        // 3. Add authority to accessed_addresses (as defined in EIP-2929.)
+        let mut authority_acc = context
+            .evm
+            .inner
+            .journaled_state
+            .load_code(authority, &mut context.evm.inner.db)
+            .map_err(EVMError::Database)?;
+
+        // 4. Verify the code of authority is either empty or already delegated.
+        if let Some(bytecode) = &authority_acc.info.code {
+            // if it is not empty and it is not eip7702
+            if !bytecode.is_empty() && !bytecode.is_eip7702() {
+                continue;
+            }
+        }
+
+        // 5. Verify the nonce of authority is equal to nonce.
+        if authorization.nonce() != authority_acc.info.nonce {
+            continue;
+        }
+
+        // 6. Refund the sender PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST gas if authority exists in the trie.
+        if !authority_acc.is_empty() {
+            refunded_accounts += 1;
+        }
+
+        // 7. Set the code of authority to be 0xef0100 || address. This is a delegation designation.
+        let bytecode = Bytecode::new_eip7702(authorization.address);
+        authority_acc.info.code_hash = bytecode.hash_slow();
+        authority_acc.info.code = Some(bytecode);
+
+        // 8. Increase the nonce of authority by one.
+        authority_acc.info.nonce = authority_acc.info.nonce.saturating_add(1);
+        authority_acc.mark_touch();
+    }
+
+    let refunded_gas =
+        refunded_accounts * (eip7702::PER_EMPTY_ACCOUNT_COST - eip7702::PER_AUTH_BASE_COST);
+
+    Ok(refunded_gas)
 }

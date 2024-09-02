@@ -10,13 +10,15 @@ pub struct TestSuite(pub BTreeMap<String, TestUnit>);
 pub struct TestUnit {
     #[serde(default, rename = "_info")]
     pub info: Option<serde_json::Value>,
+    #[serde(default)]
     pub vectors: BTreeMap<String, TestVector>,
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TestVector {
     pub code: Bytes,
+    pub container_kind: Option<String>,
     pub results: PragueTestResult,
 }
 

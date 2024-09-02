@@ -526,9 +526,11 @@ impl BundleState {
         self.contracts.get(hash).cloned()
     }
 
-    /// Consume `TransitionState` by applying the changes and creating the reverts
+    /// Consume [`TransitionState`] by applying the changes and creating the
+    /// reverts.
     ///
-    /// If [BundleRetention::includes_reverts] is `true`, then the reverts will be retained.
+    /// If [BundleRetention::includes_reverts] is `true`, then the reverts will
+    /// be retained.
     pub fn apply_transitions_and_create_reverts(
         &mut self,
         transitions: TransitionState,

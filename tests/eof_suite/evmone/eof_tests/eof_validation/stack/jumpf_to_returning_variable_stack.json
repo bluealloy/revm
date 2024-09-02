@@ -1,0 +1,78 @@
+{
+  "jumpf_to_returning_variable_stack": {
+    "vectors": {
+      "jumpf_to_returning_variable_stack_0": {
+        "code": "0xef000101000c0200030004000b000204000000008000030003000305030003e30001005f6000e100025f5fe500025fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "jumpf_to_returning_variable_stack_1": {
+        "code": "0xef000101000c0200030004000b000104000000008000030003000303030003e30001005f6000e100025f5fe50002e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "jumpf_to_returning_variable_stack_2": {
+        "code": "0xef000101000c0200030004000b000304000000008000030003000301030005e30001005f6000e100025f5fe500025f5fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNumberOfOutputs",
+            "result": false
+          }
+        }
+      },
+      "jumpf_to_returning_variable_stack_3": {
+        "code": "0xef000101000c0200030004000b000404000000008000030003000300030003e30001005f6000e100025f5fe500025f5f5fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNumberOfOutputs",
+            "result": false
+          }
+        }
+      },
+      "jumpf_to_returning_variable_stack_4": {
+        "code": "0xef000101000c0200030004000b000504000000008000020002000305010005e30001005f6000e100025f5fe5000250505050e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "jumpf_to_returning_variable_stack_5": {
+        "code": "0xef000101000c0200030004000b000304000000008000020002000303010003e30001005f6000e100025f5fe500025050e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_StackUnderflow",
+            "result": false
+          }
+        }
+      },
+      "jumpf_to_returning_variable_stack_6": {
+        "code": "0xef000101000c0200030004000b000104000000008000020002000301010001e30001005f6000e100025f5fe50002e4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNumberOfOutputs",
+            "result": false
+          }
+        }
+      },
+      "jumpf_to_returning_variable_stack_7": {
+        "code": "0xef000101000c0200030004000b000204000000008000020002000300010001e30001005f6000e100025f5fe500025fe4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidNumberOfOutputs",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

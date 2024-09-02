@@ -29,8 +29,12 @@ pub type EndHandle<'a, EvmWiringT> =
 /// context. It will always be called even on failed validation.
 pub type ClearHandle<'a, EvmWiringT> = Arc<dyn Fn(&mut Context<EvmWiringT>) + 'a>;
 
+/// Refund handle, calculates the final refund.
+pub type RefundHandle<'a, EvmWiringT> = Arc<dyn Fn(&mut Context<EvmWiringT>, &mut Gas, i64) + 'a>;
 /// Handles related to post execution after the stack loop is finished.
 pub struct PostExecutionHandler<'a, EvmWiringT: EvmWiring> {
+    /// Calculate final refund
+    pub refund: RefundHandle<'a, EvmWiringT>,
     /// Reimburse the caller with ethereum it didn't spend.
     pub reimburse_caller: ReimburseCallerHandle<'a, EvmWiringT>,
     /// Reward the beneficiary with caller fee.
@@ -50,6 +54,7 @@ impl<'a, EvmWiringT: EvmWiring + 'a> PostExecutionHandler<'a, EvmWiringT> {
     /// Creates mainnet MainHandles.
     pub fn mainnet<SPEC: Spec + 'a>() -> Self {
         Self {
+            refund: Arc::new(mainnet::refund::<EvmWiringT, SPEC>),
             reimburse_caller: Arc::new(mainnet::reimburse_caller::<EvmWiringT>),
             reward_beneficiary: Arc::new(mainnet::reward_beneficiary::<EvmWiringT, SPEC>),
             output: Arc::new(mainnet::output::<EvmWiringT>),
@@ -60,6 +65,11 @@ impl<'a, EvmWiringT: EvmWiring + 'a> PostExecutionHandler<'a, EvmWiringT> {
 }
 
 impl<'a, EvmWiringT: EvmWiring> PostExecutionHandler<'a, EvmWiringT> {
+    /// Calculate final refund
+    pub fn refund(&self, context: &mut Context<EvmWiringT>, gas: &mut Gas, eip7702_refund: i64) {
+        (self.refund)(context, gas, eip7702_refund)
+    }
+
     /// Reimburse the caller with gas that were not spend.
     pub fn reimburse_caller(
         &self,

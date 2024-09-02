@@ -60,7 +60,7 @@ pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     gas!(interpreter, VERYLOW);
     pop!(interpreter, mem_offset, offset, size);
 
-    // sizes more than u64::MAX will spend all the gas in memmory resize.
+    // sizes more than u64::MAX will spend all the gas in memory resize.
     let size = as_usize_or_fail!(interpreter, size);
     // size of zero should not change the memory
     if size == 0 {
@@ -75,7 +75,7 @@ pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     let offset = as_usize_saturated!(offset);
     let data = interpreter.contract.bytecode.eof().expect("eof").data();
 
-    // set data from the eof to the shared memory. Padd it with zeros.
+    // set data from the eof to the shared memory. Padded it with zeros.
     interpreter
         .shared_memory
         .set_data(mem_offset, offset, size, data);

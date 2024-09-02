@@ -1,0 +1,58 @@
+{
+  "txcreate_auxdata_shorter_than_declared": {
+    "env": {
+      "currentBaseFee": "0x3e7",
+      "currentCoinbase": "0x00000000000000000000000000000000c014bace",
+      "currentGasLimit": "0xf4240",
+      "currentNumber": "0x1",
+      "currentTimestamp": "0x0"
+    },
+    "post": {
+      "Osaka": [
+        {
+          "hash": "0x103fe01f2c25d1e814777a3b0459834104a86f5f7b489209da289308eb7da994",
+          "indexes": {
+            "data": 0,
+            "gas": 0,
+            "value": 0
+          },
+          "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+        }
+      ]
+    },
+    "pre": {
+      "0x000000000000000000000000000000000000c0de": {
+        "balance": "0x0",
+        "code": "0xef00010100040200010037040000000080000536600060003736600060ff60007f2592466c6c3f16c9ddde69802d7274367c45ae187570fb8815afd98c51ff3ca8ed60005260206000f3",
+        "nonce": "0x1",
+        "storage": {}
+      },
+      "0xe100713fc15400d1e94096a545879e7c6407001e": {
+        "balance": "0x3b9aca01",
+        "code": "0x",
+        "nonce": "0x1",
+        "storage": {}
+      }
+    },
+    "transaction": {
+      "data": [
+        "0xaabbccddeeff"
+      ],
+      "gasLimit": [
+        "0xf4240"
+      ],
+      "initcodes": [
+        "0xef0001010004020001000b03000100170400000000800003366000600037366000ee00ef0001010004020001000104000a0000800000feabcdef"
+      ],
+      "maxFeePerGas": "0x3e8",
+      "maxPriorityFeePerGas": "0x3e8",
+      "nonce": "0x1",
+      "secretKey": "0x00000000000000000000000000000000000000000000000000000002b1263d2b",
+      "sender": "0xe100713fc15400d1e94096a545879e7c6407001e",
+      "to": "0x000000000000000000000000000000000000c0de",
+      "value": [
+        "0x0"
+      ]
+    }
+  }
+}

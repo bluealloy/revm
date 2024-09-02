@@ -1,0 +1,31 @@
+{
+  "runtime_container_return": {
+    "vectors": {
+      "runtime_container_return_0": {
+        "code": "0xef00010100040200010005040000000080000260006000f3",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "runtime_container_return_1": {
+        "code": "0xef000101000402000100060300010018040000000080000260006000ee00ef00010100040200010005040000000080000260006000f3",
+        "containerKind": "INITCODE",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "runtime_container_return_2": {
+        "code": "0xef0001010004020001000b030001003604000000008000046000600060006000ec0000ef000101000402000100060300010018040000000080000260006000ee00ef00010100040200010005040000000080000260006000f3",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      }
+    }
+  }
+}

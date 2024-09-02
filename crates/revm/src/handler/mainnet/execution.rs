@@ -4,7 +4,7 @@ use crate::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
     },
-    primitives::{EVMError, EVMResultGeneric, EnvWiring, Spec, SpecId, Transaction},
+    primitives::{EVMError, EVMResultGeneric, Spec},
     CallFrame, Context, CreateFrame, EvmWiring, Frame, FrameOrResult, FrameResult,
 };
 use core::mem;
@@ -34,20 +34,19 @@ pub fn execute_frame<EvmWiringT: EvmWiring, SPEC: Spec>(
     Ok(next_action)
 }
 
-/// Helper function called inside [`last_frame_return`]
+/// Handle output of the transaction
 #[inline]
-pub fn frame_return_with_refund_flag<EvmWiringT: EvmWiring, SPEC: Spec>(
-    env: &EnvWiring<EvmWiringT>,
+pub fn last_frame_return<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
     frame_result: &mut FrameResult,
-    refund_enabled: bool,
-) {
+) -> EVMResultGeneric<(), EvmWiringT> {
     let instruction_result = frame_result.interpreter_result().result;
     let gas = frame_result.gas_mut();
     let remaining = gas.remaining();
     let refunded = gas.refunded();
 
     // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-    *gas = Gas::new_spent(env.tx.gas_limit());
+    *gas = Gas::new_spent(context.evm.env.tx.gas_limit);
 
     match instruction_result {
         return_ok!() => {
@@ -59,24 +58,6 @@ pub fn frame_return_with_refund_flag<EvmWiringT: EvmWiring, SPEC: Spec>(
         }
         _ => {}
     }
-
-    // Calculate gas refund for transaction.
-    // If config is set to disable gas refund, it will return 0.
-    // If spec is set to london, it will decrease the maximum refund amount to 5th part of
-    // gas spend. (Before london it was 2th part of gas spend)
-    if refund_enabled {
-        // EIP-3529: Reduction in refunds
-        gas.set_final_refund(SPEC::SPEC_ID.is_enabled_in(SpecId::LONDON));
-    }
-}
-
-/// Handle output of the transaction
-#[inline]
-pub fn last_frame_return<EvmWiringT: EvmWiring, SPEC: Spec>(
-    context: &mut Context<EvmWiringT>,
-    frame_result: &mut FrameResult,
-) -> EVMResultGeneric<(), EvmWiringT> {
-    frame_return_with_refund_flag::<EvmWiringT, SPEC>(&context.evm.env, frame_result, true);
     Ok(())
 }
 
@@ -211,8 +192,8 @@ pub fn insert_eofcreate_outcome<EvmWiringT: EvmWiring>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::DefaultEthereumWiring;
-    use revm_interpreter::primitives::CancunSpec;
+    use crate::handler::mainnet::refund;
+    use crate::primitives::{CancunSpec, DefaultEthereumWiring, EnvWiring};
     use revm_precompile::Bytes;
 
     /// Creates frame result.
@@ -220,6 +201,8 @@ mod tests {
         let mut env = EnvWiring::<DefaultEthereumWiring>::default();
         env.tx.gas_limit = 100;
 
+        let mut ctx = Context::new_empty();
+        ctx.evm.inner.env = Box::new(env);
         let mut first_frame = FrameResult::Call(CallOutcome::new(
             InterpreterResult {
                 result: instruction_result,
@@ -228,11 +211,8 @@ mod tests {
             },
             0..0,
         ));
-        frame_return_with_refund_flag::<DefaultEthereumWiring, CancunSpec>(
-            &env,
-            &mut first_frame,
-            true,
-        );
+        last_frame_return::<DefaultEthereumWiring, CancunSpec>(&mut ctx, &mut first_frame).unwrap();
+        refund::<CancunSpec, _, _>(&mut ctx, first_frame.gas_mut(), 0);
         *first_frame.gas()
     }
 

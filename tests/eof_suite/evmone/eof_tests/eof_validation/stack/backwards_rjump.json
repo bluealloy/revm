@@ -1,0 +1,57 @@
+{
+  "backwards_rjump": {
+    "vectors": {
+      "backwards_rjump_0": {
+        "code": "0xef000101000402000100030400000000800000e0fffd",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "backwards_rjump_1": {
+        "code": "0xef0001010004020001000504000000008000015f50e0fffb",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "backwards_rjump_2": {
+        "code": "0xef0001010004020001000d04000000008000015f506001e10003e0fff8e0fff5",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "backwards_rjump_3": {
+        "code": "0xef0001010004020001000e04000000008000015f506001e10003e0fff85fe0fff4",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ConflictingStackHeight",
+            "result": false
+          }
+        }
+      },
+      "backwards_rjump_4": {
+        "code": "0xef0001010004020001000404000000008000015fe0fffc",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ConflictingStackHeight",
+            "result": false
+          }
+        }
+      },
+      "backwards_rjump_5": {
+        "code": "0xef0001010004020001000504000000008000015f50e0fffc",
+        "results": {
+          "Prague": {
+            "exception": "EOF_ConflictingStackHeight",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,6 +2,7 @@ use crate::{
     gas,
     interpreter::Interpreter,
     primitives::{Bytes, Spec, SpecId::*, U256},
+    AccountLoad,
 };
 use core::{cmp::min, ops::Range};
 
@@ -44,13 +45,11 @@ pub fn resize_memory(
 #[inline]
 pub fn calc_call_gas<SPEC: Spec>(
     interpreter: &mut Interpreter,
-    is_cold: bool,
+    account_load: AccountLoad,
     has_transfer: bool,
-    new_account_accounting: bool,
     local_gas_limit: u64,
 ) -> Option<u64> {
-    let call_cost = gas::call_cost(SPEC::SPEC_ID, has_transfer, is_cold, new_account_accounting);
-
+    let call_cost = gas::call_cost(SPEC::SPEC_ID, has_transfer, account_load);
     gas!(interpreter, call_cost, None);
 
     // EIP-150: Gas cost changes for IO-heavy operations

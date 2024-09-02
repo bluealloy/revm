@@ -43,10 +43,9 @@ pub fn optimism_handle_register<EvmWiringT, DB, EXT>(
         // An estimated batch cost is charged from the caller and added to L1 Fee Vault.
         handler.pre_execution.deduct_caller = Arc::new(deduct_caller::<EvmWiringT, SPEC, EXT, DB>);
         // Refund is calculated differently then mainnet.
-        handler.execution.last_frame_return =
-            Arc::new(last_frame_return::<EvmWiringT, SPEC, EXT, DB>);
-        handler.post_execution.reward_beneficiary =
-            Arc::new(reward_beneficiary::<EvmWiringT, SPEC, EXT, DB>);
+        handler.execution.last_frame_return = Arc::new(last_frame_return::<EvmWiringT, SPEC, EXT, DB>);
+        handler.post_execution.refund = Arc::new(refund::<EvmWiringT, SPEC, EXT, DB>);
+        handler.post_execution.reward_beneficiary = Arc::new(reward_beneficiary::<EvmWiringT, SPEC, EXT, DB>);
         // In case of halt of deposit transaction return Error.
         handler.post_execution.output = Arc::new(output::<EvmWiringT, SPEC, EXT, DB>);
         handler.post_execution.end = Arc::new(end::<EvmWiringT, SPEC, EXT, DB>);
@@ -157,12 +156,27 @@ pub fn last_frame_return<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB
         }
         _ => {}
     }
+    Ok(())
+}
+
+/// Record Eip-7702 refund and calculate final refund.
+#[inline]
+pub fn refund<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+    gas: &mut Gas,
+    eip7702_refund: i64,
+) {
+    gas.record_refund(eip7702_refund);
+
+    let env = context.evm.inner.env();
+    let is_deposit = env.tx.optimism.source_hash.is_some();
+    let is_regolith = SPEC::enabled(REGOLITH);
+
     // Prior to Regolith, deposit transactions did not receive gas refunds.
     let is_gas_refund_disabled = env.cfg.is_gas_refund_disabled() || (is_deposit && !is_regolith);
     if !is_gas_refund_disabled {
         gas.set_final_refund(SPEC::OPTIMISM_SPEC_ID.is_enabled_in(OptimismSpecId::LONDON));
     }
-    Ok(())
 }
 
 /// Load precompiles for Optimism chain.
@@ -175,6 +189,13 @@ pub fn load_precompiles<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB:
         precompiles.extend([
             // EIP-7212: secp256r1 P256verify
             secp256r1::P256VERIFY,
+        ])
+    }
+
+    if SPEC::enabled(SpecId::GRANITE) {
+        precompiles.extend([
+            // Restrict bn256Pairing input size
+            optimism::bn128::pair::GRANITE,
         ])
     }
 
@@ -206,7 +227,7 @@ pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Da
     context: &mut Context<EvmWiringT>,
 ) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
     // load caller's account.
-    let (caller_account, _) = context
+    let mut caller_account = context
         .evm
         .inner
         .journaled_state
@@ -225,7 +246,7 @@ pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Da
 
     // We deduct caller max balance after minting and before deducing the
     // l1 cost, max values is already checked in pre_validate but l1 cost wasn't.
-    deduct_caller_inner::<EvmWiringT, SPEC>(caller_account, &context.evm.inner.env);
+    deduct_caller_inner::<EvmWiringT, SPEC>(caller_account.data, &context.evm.inner.env);
 
     // If the transaction is not a deposit transaction, subtract the L1 data fee from the
     // caller's balance directly after minting the requested amount of ETH.
@@ -288,7 +309,7 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, D
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, SPEC::OPTIMISM_SPEC_ID);
 
         // Send the L1 cost of the transaction to the L1 Fee Vault.
-        let (l1_fee_vault_account, _) = context
+        let mut l1_fee_vault_account = context
             .evm
             .inner
             .journaled_state
@@ -298,7 +319,7 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, D
         l1_fee_vault_account.info.balance += l1_cost;
 
         // Send the base fee of the transaction to the Base Fee Vault.
-        let (base_fee_vault_account, _) = context
+        let mut base_fee_vault_account = context
             .evm
             .inner
             .journaled_state
@@ -437,6 +458,7 @@ mod tests {
             0..0,
         ));
         last_frame_return::<optimism::EvmWiring, SPEC, _, _>(&mut ctx, &mut first_frame).unwrap();
+        refund::<optimism::EvmWiring, SPEC, _, _>(&mut ctx, first_frame.gas_mut(), 0);
         *first_frame.gas()
     }
 
@@ -526,7 +548,7 @@ mod tests {
         deduct_caller::<optimism::EvmWiring, RegolithSpec, (), _>(&mut context).unwrap();
 
         // Check the account balance is updated.
-        let (account, _) = context
+        let account = context
             .evm
             .inner
             .journaled_state
@@ -564,7 +586,7 @@ mod tests {
         deduct_caller::<optimism::EvmWiring, RegolithSpec, (), _>(&mut context).unwrap();
 
         // Check the account balance is updated.
-        let (account, _) = context
+        let account = context
             .evm
             .inner
             .journaled_state
@@ -596,7 +618,7 @@ mod tests {
         deduct_caller::<optimism::EvmWiring, RegolithSpec, (), _>(&mut context).unwrap();
 
         // Check the account balance is updated.
-        let (account, _) = context
+        let account = context
             .evm
             .inner
             .journaled_state

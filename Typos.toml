@@ -1,0 +1,13 @@
+[default]
+extend-ignore-identifiers-re = [
+	"[sS]imular",
+	"ba",
+	"modul"
+]
+
+[files]
+extend-exclude = [
+	"CHANGELOG.md",
+	"tests"
+]
+

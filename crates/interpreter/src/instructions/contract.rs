@@ -9,7 +9,7 @@ use crate::{
         eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, B256, U256,
     },
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, Host,
-    InstructionResult, InterpreterAction, InterpreterResult, LoadAccountResult, MAX_INITCODE_SIZE,
+    InstructionResult, InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE,
 };
 use core::cmp::max;
 use std::boxed::Box;
@@ -166,17 +166,12 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
     target: Address,
     transfers_value: bool,
 ) -> Option<u64> {
-    let Some(load_result) = host.load_account(target) else {
+    let Some(account_load) = host.load_account_delegated(target) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return None;
     };
-
-    let call_cost = gas::call_cost(
-        BerlinSpec::SPEC_ID,
-        transfers_value,
-        load_result.is_cold,
-        load_result.is_empty,
-    );
+    // account_load.is_empty will be accounted if there is transfer value.
+    let call_cost = gas::call_cost(BerlinSpec::SPEC_ID, transfers_value, account_load);
     gas!(interpreter, call_cost, None);
 
     // 7. Calculate the gas available to callee as caller’s
@@ -417,17 +412,13 @@ pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &
         return;
     };
 
-    let Some(LoadAccountResult { is_cold, is_empty }) = host.load_account(to) else {
+    let Some(account_load) = host.load_account_delegated(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-    let Some(mut gas_limit) = calc_call_gas::<SPEC>(
-        interpreter,
-        is_cold,
-        has_transfer,
-        is_empty,
-        local_gas_limit,
-    ) else {
+    let Some(mut gas_limit) =
+        calc_call_gas::<SPEC>(interpreter, account_load, has_transfer, local_gas_limit)
+    else {
         return;
     };
 
@@ -467,18 +458,15 @@ pub fn call_code<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
         return;
     };
 
-    let Some(LoadAccountResult { is_cold, .. }) = host.load_account(to) else {
+    let Some(mut load) = host.load_account_delegated(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-
-    let Some(mut gas_limit) = calc_call_gas::<SPEC>(
-        interpreter,
-        is_cold,
-        !value.is_zero(),
-        false,
-        local_gas_limit,
-    ) else {
+    // set is_empty to false as we are not creating this account.
+    load.is_empty = false;
+    let Some(mut gas_limit) =
+        calc_call_gas::<SPEC>(interpreter, load, !value.is_zero(), local_gas_limit)
+    else {
         return;
     };
 
@@ -518,13 +506,13 @@ pub fn delegate_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter
         return;
     };
 
-    let Some(LoadAccountResult { is_cold, .. }) = host.load_account(to) else {
+    let Some(mut load) = host.load_account_delegated(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-    let Some(gas_limit) =
-        calc_call_gas::<SPEC>(interpreter, is_cold, false, false, local_gas_limit)
-    else {
+    // set is_empty to false as we are not creating this account.
+    load.is_empty = false;
+    let Some(gas_limit) = calc_call_gas::<SPEC>(interpreter, load, false, local_gas_limit) else {
         return;
     };
 
@@ -559,14 +547,13 @@ pub fn static_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
         return;
     };
 
-    let Some(LoadAccountResult { is_cold, .. }) = host.load_account(to) else {
+    let Some(mut load) = host.load_account_delegated(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-
-    let Some(gas_limit) =
-        calc_call_gas::<SPEC>(interpreter, is_cold, false, false, local_gas_limit)
-    else {
+    // set is_empty to false as we are not creating this account.
+    load.is_empty = false;
+    let Some(gas_limit) = calc_call_gas::<SPEC>(interpreter, load, false, local_gas_limit) else {
         return;
     };
     gas!(interpreter, gas_limit);

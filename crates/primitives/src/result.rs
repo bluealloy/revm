@@ -1,6 +1,6 @@
 use crate::{
-    db::Database, Address, Bytes, EvmState, EvmWiring, HaltReasonTrait, Log, TransactionValidation,
-    U256,
+    db::Database, eip7702::authorization_list::InvalidAuthorization, Address, Bytes, EvmState,
+    EvmWiring, HaltReasonTrait, Log, TransactionValidation, U256,
 };
 use core::fmt::{self, Debug};
 use std::{boxed::Box, string::String, vec::Vec};
@@ -294,6 +294,16 @@ pub enum InvalidTransaction {
     AuthorizationListNotSupported,
     /// EIP-7702 transaction has invalid fields set.
     AuthorizationListInvalidFields,
+    /// Empty Authorization List is not allowed.
+    EmptyAuthorizationList,
+    /// Invalid EIP-7702 Authorization List
+    InvalidAuthorizationList(InvalidAuthorization),
+}
+
+impl From<InvalidAuthorization> for InvalidTransaction {
+    fn from(value: InvalidAuthorization) -> Self {
+        Self::InvalidAuthorizationList(value)
+    }
 }
 
 #[cfg(feature = "std")]
@@ -357,6 +367,8 @@ impl fmt::Display for InvalidTransaction {
             Self::AuthorizationListInvalidFields => {
                 write!(f, "authorization list tx has invalid fields")
             }
+            Self::EmptyAuthorizationList => write!(f, "empty authorization list"),
+            Self::InvalidAuthorizationList(i) => fmt::Display::fmt(i, f),
         }
     }
 }
@@ -423,12 +435,14 @@ pub enum HaltReason {
     OutOfFunds,
     CallTooDeep,
 
-    /// Aux data overflow, new aux data is larger tha u16 max size.
+    /// Aux data overflow, new aux data is larger than u16 max size.
     EofAuxDataOverflow,
     /// Aud data is smaller then already present data size.
     EofAuxDataTooSmall,
     /// EOF Subroutine stack overflow
     EOFFunctionStackOverflow,
+    /// Check for target address validity is only done inside subcall.
+    InvalidEXTCALLTarget,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

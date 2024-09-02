@@ -165,8 +165,7 @@ where
         let _ = self
             .inner
             .journaled_state
-            .load_account(inputs.bytecode_address, &mut self.inner.db)
-            .map_err(EVMError::Database)?;
+            .load_account_delegated(inputs.bytecode_address, &mut self.inner.db)?;
 
         // Create subroutine checkpoint
         let checkpoint = self.journaled_state.checkpoint();
@@ -211,14 +210,14 @@ where
                 inputs.return_memory_offset.clone(),
             ))
         } else {
-            let (account, _) = self
+            let account = self
                 .inner
                 .journaled_state
                 .load_code(inputs.bytecode_address, &mut self.inner.db)
                 .map_err(EVMError::Database)?;
 
             let code_hash = account.info.code_hash();
-            let bytecode = account.info.code.clone().unwrap_or_default();
+            let mut bytecode = account.info.code.clone().unwrap_or_default();
 
             // ExtDelegateCall is not allowed to call non-EOF contracts.
             if inputs.scheme.is_ext_delegate_call()
@@ -230,6 +229,17 @@ where
             if bytecode.is_empty() {
                 self.journaled_state.checkpoint_commit();
                 return return_result(InstructionResult::Stop);
+            }
+
+            if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
+                bytecode = self
+                    .inner
+                    .journaled_state
+                    .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?
+                    .info
+                    .code
+                    .clone()
+                    .unwrap_or_default();
             }
 
             let contract =
@@ -272,10 +282,10 @@ where
         }
 
         // Fetch balance of caller.
-        let (caller_balance, _) = self.balance(inputs.caller)?;
+        let caller_balance = self.balance(inputs.caller)?;
 
         // Check if caller has enough balance to send to the created contract.
-        if caller_balance < inputs.value {
+        if caller_balance.data < inputs.value {
             return return_error(InstructionResult::OutOfFunds);
         }
 
@@ -363,12 +373,15 @@ where
             } => (input.clone(), initcode.clone(), Some(*created_address)),
             EOFCreateKind::Tx { initdata } => {
                 // decode eof and init code.
+                // TODO handle inc_nonce handling more gracefully.
                 let Ok((eof, input)) = Eof::decode_dangling(initdata.clone()) else {
+                    self.journaled_state.inc_nonce(inputs.caller);
                     return return_error(InstructionResult::InvalidEOFInitCode);
                 };
 
                 if validate_eof(&eof).is_err() {
                     // TODO (EOF) new error type.
+                    self.journaled_state.inc_nonce(inputs.caller);
                     return return_error(InstructionResult::InvalidEOFInitCode);
                 }
 
@@ -385,10 +398,10 @@ where
         }
 
         // Fetch balance of caller.
-        let (caller_balance, _) = self.balance(inputs.caller)?;
+        let caller_balance = self.balance(inputs.caller)?;
 
         // Check if caller has enough balance to send to the created contract.
-        if caller_balance < inputs.value {
+        if caller_balance.data < inputs.value {
             return return_error(InstructionResult::OutOfFunds);
         }
 
@@ -508,7 +521,6 @@ pub(crate) mod test_utils {
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
                 db,
                 error: Ok(()),
-                valid_authorizations: Vec::new(),
             },
             precompiles: ContextPrecompiles::default(),
         }
@@ -525,7 +537,6 @@ pub(crate) mod test_utils {
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
                 db,
                 error: Ok(()),
-                valid_authorizations: Default::default(),
             },
             precompiles: ContextPrecompiles::default(),
         }

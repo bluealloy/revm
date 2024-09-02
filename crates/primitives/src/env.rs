@@ -1,13 +1,5 @@
-pub mod eip7702;
-
-pub use eip7702::{
-    Authorization, AuthorizationList, RecoveredAuthorization, Signature, SignedAuthorization,
-};
-
 use crate::{
-    calc_blob_gasprice, AccessListItem, Account, Address, Block, Bytes, EvmWiring, InvalidHeader,
-    InvalidTransaction, Spec, SpecId, Transaction, TransactionValidation, B256, KECCAK_EMPTY,
-    MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
+    calc_blob_gasprice, AccessListItem, Account, Address, AuthorizationList, Block, Bytes, EvmWiring, InvalidHeader, InvalidTransaction, Spec, SpecId, Transaction, TransactionValidation, B256, GAS_PER_BLOB, MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG
 };
 use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
@@ -198,7 +190,15 @@ impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
             return Err(InvalidTransaction::AuthorizationListNotSupported);
         }
 
-        if self.tx.authorization_list().is_some() {
+        if let Some(auth_list) = &self.tx.authorization_list() {
+            // The transaction is considered invalid if the length of authorization_list is zero.
+            if auth_list.is_empty() {
+                return Err(InvalidTransaction::EmptyAuthorizationList);
+            }
+
+            // Check validity of authorization_list
+            auth_list.is_valid(self.cfg.chain_id)?;
+
             // Check if other fields are unset.
             if self.tx.max_fee_per_blob_gas().is_some() || !self.tx.blob_hashes().is_empty() {
                 return Err(InvalidTransaction::AuthorizationListInvalidFields);
@@ -209,6 +209,10 @@ impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
     }
 
     /// Validate transaction against state.
+    ///
+    /// # Panics
+    ///
+    /// If account code is not loaded.
     #[inline]
     pub fn validate_tx_against_state<SPEC: Spec>(
         &self,
@@ -217,8 +221,13 @@ impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no collision in past
         // so we can leave it enabled always
-        if !self.cfg.is_eip3607_disabled() && account.info.code_hash != KECCAK_EMPTY {
-            return Err(InvalidTransaction::RejectCallerWithCode);
+        if !self.cfg.is_eip3607_disabled() {
+            let bytecode = &account.info.code.as_ref().unwrap();
+            // allow EOAs whose code is a valid delegation designation,
+            // i.e. 0xef0100 || address, to continue to originate transactions.
+            if !bytecode.is_empty() && !bytecode.is_eip7702() {
+                return Err(InvalidTransaction::RejectCallerWithCode);
+            }
         }
 
         // Check that the transaction's nonce is correct

@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm", "precompiles"]
 license = "MIT"
 name = "revm-precompile"
 repository = "https://github.com/bluealloy/revm"
-version = "9.2.0"
+version = "11.0.1"
 readme = "../../README.md"
 
 [package.metadata.docs.rs]
@@ -22,7 +22,7 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-revm-primitives = { path = "../primitives", version = "7.1.0", default-features = false }
+revm-primitives = { path = "../primitives", version = "9.0.1", default-features = false }
 once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
 
 # ecRecover
@@ -45,15 +45,15 @@ aurora-engine-modexp = { version = "1.1", default-features = false }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 
 # KZG point evaluation precompile
-c-kzg = { version = "1.0.2", default-features = false, optional = true }
+c-kzg = { version = "1.0.3", default-features = false, optional = true, features = [
+    "ethereum_kzg_settings",
+] }
 
 # Optionally use `kzg-rs` for a pure Rust implementation of KZG point evaluation.
-kzg-rs = { version = "0.1", default-features = false, features = [
-    'cache',
-], optional = true }
+kzg-rs = { version = "0.2.3", default-features = false, optional = true }
 
 # BLS12-381 precompiles
-blst = { version = "0.3.12", optional = true }
+blst = { version = "0.3.13", optional = true }
 
 # p256verify precompile
 p256 = { version = "0.13.2", optional = true, default-features = false, features = [
@@ -67,7 +67,7 @@ cfg-if = { version = "1.0", default-features = false }
 criterion = "0.5"
 rand = { version = "0.8", features = ["std"] }
 eyre = "0.6.12"
-rstest = "0.21.0"
+rstest = "0.22.0"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"

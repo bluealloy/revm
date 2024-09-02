@@ -30,20 +30,20 @@ where
     <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
 {
     // load acc
-    let tx_caller = context.evm.env.tx.caller();
-    let (caller_account, _) = context
+    let tx_caller = *context.evm.env.tx.caller();
+    let caller_account = context
         .evm
         .inner
         .journaled_state
-        .load_account(*tx_caller, &mut context.evm.inner.db)
+        .load_code(tx_caller, &mut context.evm.inner.db)
         .map_err(EVMError::Database)?;
 
     context
         .evm
         .inner
         .env
-        .validate_tx_against_state::<SPEC>(caller_account)
-        .map_err(|error| EVMError::Transaction(error.into()))?;
+        .validate_tx_against_state::<SPEC>(caller_account.data)
+        .map_err(|e| EVMError::Transaction(e.into()))?;
 
     Ok(())
 }

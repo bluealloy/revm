@@ -8,6 +8,7 @@ use revm::{
     db::{EmptyDB, State},
     inspector_handle_register,
     inspectors::TracerEip3155,
+    interpreter::analysis::to_analysed,
     primitives::{
         calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, EnvWiring,
         EthereumWiring, ExecutionResult, HaltReason, SpecId, TxKind, B256,
@@ -76,7 +77,6 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
 }
 
 fn skip_test(path: &Path) -> bool {
-    let path_str = path.to_str().expect("Path is not valid UTF-8");
     let name = path.file_name().unwrap().to_str().unwrap();
 
     matches!(
@@ -126,7 +126,16 @@ fn skip_test(path: &Path) -> bool {
         | "static_Call50000_sha256.json"
         | "loopMul.json"
         | "CALLBlake2f_MaxRounds.json"
-    ) || path_str.contains("stEOF")
+
+        // evmone statetest
+        | "initcode_transaction_before_prague.json"
+        | "invalid_tx_non_existing_sender.json"
+        | "tx_non_existing_sender.json"
+        | "block_apply_withdrawal.json"
+        | "block_apply_ommers_reward.json"
+        | "known_block_hash.json"
+        | "eip7516_blob_base_fee.json"
+    )
 }
 
 fn check_evm_execution<EXT: Debug>(
@@ -264,7 +273,7 @@ pub fn execute_test_suite(
         let mut cache_state = revm::CacheState::new(false);
         for (address, info) in unit.pre {
             let code_hash = keccak256(&info.code);
-            let bytecode = Bytecode::new_raw(info.code);
+            let bytecode = to_analysed(Bytecode::new_raw(info.code));
             let acc_info = revm::primitives::AccountInfo {
                 balance: info.balance,
                 code_hash,
@@ -327,11 +336,16 @@ pub fn execute_test_suite(
             // Constantinople was immediately extended by Petersburg.
             // There isn't any production Constantinople transaction
             // so we don't support it and skip right to Petersburg.
-            if spec_name == SpecName::Constantinople {
+            if spec_name == SpecName::Constantinople || spec_name == SpecName::Osaka {
                 continue;
             }
 
             let spec_id = spec_name.to_spec_id();
+
+            if spec_id.is_enabled_in(SpecId::MERGE) && env.block.prevrandao.is_none() {
+                // if spec is merge and prevrandao is not set, set it to default
+                env.block.prevrandao = Some(B256::default());
+            }
 
             for (index, test) in tests.into_iter().enumerate() {
                 env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
