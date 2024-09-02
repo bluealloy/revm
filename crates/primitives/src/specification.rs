@@ -53,25 +53,55 @@ impl SpecId {
     }
 }
 
+/// String identifiers for hardforks.
+pub mod id {
+    pub const FRONTIER: &str = "Frontier";
+    pub const FRONTIER_THAWING: &str = "Frontier Thawing";
+    pub const HOMESTEAD: &str = "Homestead";
+    pub const DAO_FORK: &str = "DAO Fork";
+    pub const TANGERINE: &str = "Tangerine";
+    pub const SPURIOUS_DRAGON: &str = "Spurious";
+    pub const BYZANTIUM: &str = "Byzantium";
+    pub const CONSTANTINOPLE: &str = "Constantinople";
+    pub const PETERSBURG: &str = "Petersburg";
+    pub const ISTANBUL: &str = "Istanbul";
+    pub const MUIR_GLACIER: &str = "MuirGlacier";
+    pub const BERLIN: &str = "Berlin";
+    pub const LONDON: &str = "London";
+    pub const ARROW_GLACIER: &str = "Arrow Glacier";
+    pub const GRAY_GLACIER: &str = "Gray Glacier";
+    pub const MERGE: &str = "Merge";
+    pub const SHANGHAI: &str = "Shanghai";
+    pub const CANCUN: &str = "Cancun";
+    pub const PRAGUE: &str = "Prague";
+    pub const PRAGUE_EOF: &str = "PragueEOF";
+    pub const LATEST: &str = "Latest";
+}
+
 impl From<&str> for SpecId {
     fn from(name: &str) -> Self {
         match name {
-            "Frontier" => Self::FRONTIER,
-            "Homestead" => Self::HOMESTEAD,
-            "Tangerine" => Self::TANGERINE,
-            "Spurious" => Self::SPURIOUS_DRAGON,
-            "Byzantium" => Self::BYZANTIUM,
-            "Constantinople" => Self::CONSTANTINOPLE,
-            "Petersburg" => Self::PETERSBURG,
-            "Istanbul" => Self::ISTANBUL,
-            "MuirGlacier" => Self::MUIR_GLACIER,
-            "Berlin" => Self::BERLIN,
-            "London" => Self::LONDON,
-            "Merge" => Self::MERGE,
-            "Shanghai" => Self::SHANGHAI,
-            "Cancun" => Self::CANCUN,
-            "Prague" => Self::PRAGUE,
-            "PragueEOF" => Self::PRAGUE_EOF,
+            id::FRONTIER => Self::FRONTIER,
+            id::FRONTIER_THAWING => Self::FRONTIER_THAWING,
+            id::HOMESTEAD => Self::HOMESTEAD,
+            id::DAO_FORK => Self::DAO_FORK,
+            id::TANGERINE => Self::TANGERINE,
+            id::SPURIOUS_DRAGON => Self::SPURIOUS_DRAGON,
+            id::BYZANTIUM => Self::BYZANTIUM,
+            id::CONSTANTINOPLE => Self::CONSTANTINOPLE,
+            id::PETERSBURG => Self::PETERSBURG,
+            id::ISTANBUL => Self::ISTANBUL,
+            id::MUIR_GLACIER => Self::MUIR_GLACIER,
+            id::BERLIN => Self::BERLIN,
+            id::LONDON => Self::LONDON,
+            id::ARROW_GLACIER => Self::ARROW_GLACIER,
+            id::GRAY_GLACIER => Self::GRAY_GLACIER,
+            id::MERGE => Self::MERGE,
+            id::SHANGHAI => Self::SHANGHAI,
+            id::CANCUN => Self::CANCUN,
+            id::PRAGUE => Self::PRAGUE,
+            id::PRAGUE_EOF => Self::PRAGUE_EOF,
+            id::LATEST => Self::LATEST,
             _ => Self::LATEST,
         }
     }
@@ -80,27 +110,27 @@ impl From<&str> for SpecId {
 impl From<SpecId> for &'static str {
     fn from(spec_id: SpecId) -> Self {
         match spec_id {
-            SpecId::FRONTIER => "Frontier",
-            SpecId::FRONTIER_THAWING => "Frontier Thawing",
-            SpecId::HOMESTEAD => "Homestead",
-            SpecId::DAO_FORK => "DAO Fork",
-            SpecId::TANGERINE => "Tangerine",
-            SpecId::SPURIOUS_DRAGON => "Spurious",
-            SpecId::BYZANTIUM => "Byzantium",
-            SpecId::CONSTANTINOPLE => "Constantinople",
-            SpecId::PETERSBURG => "Petersburg",
-            SpecId::ISTANBUL => "Istanbul",
-            SpecId::MUIR_GLACIER => "MuirGlacier",
-            SpecId::BERLIN => "Berlin",
-            SpecId::LONDON => "London",
-            SpecId::ARROW_GLACIER => "Arrow Glacier",
-            SpecId::GRAY_GLACIER => "Gray Glacier",
-            SpecId::MERGE => "Merge",
-            SpecId::SHANGHAI => "Shanghai",
-            SpecId::CANCUN => "Cancun",
-            SpecId::PRAGUE => "Prague",
-            SpecId::PRAGUE_EOF => "PragueEOF",
-            SpecId::LATEST => "Latest",
+            SpecId::FRONTIER => id::FRONTIER,
+            SpecId::FRONTIER_THAWING => id::FRONTIER_THAWING,
+            SpecId::HOMESTEAD => id::HOMESTEAD,
+            SpecId::DAO_FORK => id::DAO_FORK,
+            SpecId::TANGERINE => id::TANGERINE,
+            SpecId::SPURIOUS_DRAGON => id::SPURIOUS_DRAGON,
+            SpecId::BYZANTIUM => id::BYZANTIUM,
+            SpecId::CONSTANTINOPLE => id::CONSTANTINOPLE,
+            SpecId::PETERSBURG => id::PETERSBURG,
+            SpecId::ISTANBUL => id::ISTANBUL,
+            SpecId::MUIR_GLACIER => id::MUIR_GLACIER,
+            SpecId::BERLIN => id::BERLIN,
+            SpecId::LONDON => id::LONDON,
+            SpecId::ARROW_GLACIER => id::ARROW_GLACIER,
+            SpecId::GRAY_GLACIER => id::GRAY_GLACIER,
+            SpecId::MERGE => id::MERGE,
+            SpecId::SHANGHAI => id::SHANGHAI,
+            SpecId::CANCUN => id::CANCUN,
+            SpecId::PRAGUE => id::PRAGUE,
+            SpecId::PRAGUE_EOF => id::PRAGUE_EOF,
+            SpecId::LATEST => id::LATEST,
         }
     }
 }
