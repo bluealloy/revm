@@ -417,12 +417,13 @@ mod tests {
 
         // L1 block info for OP mainnet fjord block 124665056
         // <https://optimistic.etherscan.io/block/124665056>
-        let mut l1_block_info = L1BlockInfo::default();
-        l1_block_info.l1_base_fee = U256::from(1055991687);
-        l1_block_info.l1_base_fee_scalar = U256::from(5227);
-        l1_block_info.l1_blob_base_fee_scalar = Some(U256::from(1014213));
-        l1_block_info.l1_blob_base_fee = Some(U256::from(1));
-        // l1 fee overhead (l1 gas used) deprecated since Fjord
+        let l1_block_info = L1BlockInfo {
+            l1_base_fee: U256::from(1055991687),
+            l1_base_fee_scalar: U256::from(5227),
+            l1_blob_base_fee_scalar: Some(U256::from(1014213)),
+            l1_blob_base_fee: Some(U256::from(1)),
+            ..Default::default() // l1 fee overhead (l1 gas used) deprecated since Fjord
+        };
 
         // first tx in OP mainnet Fjord block 124665056
         // https://optimistic.etherscan.io/tx/0x1059e8004daff32caa1f1b1ef97fe3a07a8cf40508f5b835b66d9420d87c4a4a
