@@ -3,7 +3,7 @@ use super::{GenericContextHandle, GenericContextHandleRet};
 use crate::{
     handler::mainnet,
     primitives::{EVMResultGeneric, Spec},
-    Context, ContextPrecompiles,EvmWiring
+    Context, ContextPrecompiles, EvmWiring,
 };
 use std::sync::Arc;
 
@@ -14,19 +14,19 @@ pub type LoadPrecompilesHandle<'a, EvmWiringT> =
 /// Load access list accounts and beneficiary.
 /// There is no need to load Caller as it is assumed that
 /// it will be loaded in DeductCallerHandle.
-pub type LoadAccountsHandle<'a, EvmWiring> = GenericContextHandle<'a, EvmWiring>;
+pub type LoadAccountsHandle<'a, EvmWiringT> = GenericContextHandle<'a, EvmWiringT>;
 
 /// Deduct the caller to its limit.
-pub type DeductCallerHandle<'a, EvmWiring> = GenericContextHandle<'a, EvmWiring>;
+pub type DeductCallerHandle<'a, EvmWiringT> = GenericContextHandle<'a, EvmWiringT>;
 
 /// Load Auth list for EIP-7702, and returns number of created accounts.
-pub type ApplyEIP7702AuthListHandle<'a, EvmWiring> = GenericContextHandleRet<'a, EvmWiring, u64>;
+pub type ApplyEIP7702AuthListHandle<'a, EvmWiringT> = GenericContextHandleRet<'a, EvmWiringT, u64>;
 
 /// Handles related to pre execution before the stack loop is started.
 pub struct PreExecutionHandler<'a, EvmWiringT: EvmWiring> {
     /// Load precompiles
     pub load_precompiles: LoadPrecompilesHandle<'a, EvmWiringT>,
-    /// Main load handle
+    // /// Main load handle
     pub load_accounts: LoadAccountsHandle<'a, EvmWiringT>,
     /// Deduct max value from the caller.
     pub deduct_caller: DeductCallerHandle<'a, EvmWiringT>,

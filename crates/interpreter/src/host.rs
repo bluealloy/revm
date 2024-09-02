@@ -1,4 +1,4 @@
-use crate::primitives::{Address, Bytes, Env, Log, B256, U256};
+use crate::primitives::{Address, Bytes, Log, B256, U256};
 use core::ops::{Deref, DerefMut};
 
 mod dummy;

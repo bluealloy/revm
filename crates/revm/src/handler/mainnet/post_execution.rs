@@ -1,7 +1,8 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, EVMError, ExecutionResult, ResultAndState, Spec, SpecId, SpecId::LONDON, U256,
+        Block, EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState, Spec,
+        SpecId, SpecId::LONDON, Transaction, U256,
     },
     Context, EvmWiring, FrameResult,
 };
@@ -75,7 +76,7 @@ pub fn reimburse_caller<EvmWiringT: EvmWiring>(
     context: &mut Context<EvmWiringT>,
     gas: &Gas,
 ) -> EVMResultGeneric<(), EvmWiringT> {
-    let caller = context.evm.env.tx.caller();
+    let caller = *context.evm.env.tx.caller();
     let effective_gas_price = context.evm.env.effective_gas_price();
 
     // return balance of not spend gas.
@@ -83,7 +84,7 @@ pub fn reimburse_caller<EvmWiringT: EvmWiring>(
         .evm
         .inner
         .journaled_state
-        .load_account(*caller, &mut context.evm.inner.db)
+        .load_account(caller, &mut context.evm.inner.db)
         .map_err(EVMError::Database)?;
 
     caller_account.data.info.balance =

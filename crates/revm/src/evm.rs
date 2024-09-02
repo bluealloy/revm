@@ -420,7 +420,10 @@ mod tests {
     use crate::{
         db::BenchmarkDB,
         interpreter::opcode::{PUSH1, SSTORE},
-        primitives::{address, Authorization, Bytecode, RecoveredAuthorization, Signature, U256},
+        primitives::{
+            address, Authorization, Bytecode, EthereumWiring, RecoveredAuthorization, Signature,
+            U256,
+        },
     };
 
     #[test]
@@ -431,7 +434,7 @@ mod tests {
 
         let bytecode = Bytecode::new_legacy([PUSH1, 0x01, PUSH1, 0x01, SSTORE].into());
 
-        let mut evm = Evm::builder()
+        let mut evm = Evm::<EthereumWiring<BenchmarkDB, ()>>::builder()
             .with_spec_id(SpecId::PRAGUE)
             .with_db(BenchmarkDB::new_bytecode(bytecode))
             .modify_tx_env(|tx| {

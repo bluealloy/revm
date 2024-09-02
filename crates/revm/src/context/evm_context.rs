@@ -165,7 +165,8 @@ where
         let _ = self
             .inner
             .journaled_state
-            .load_account_delegated(inputs.bytecode_address, &mut self.inner.db)?;
+            .load_account_delegated(inputs.bytecode_address, &mut self.inner.db)
+            .map_err(EVMError::Database)?;
 
         // Create subroutine checkpoint
         let checkpoint = self.journaled_state.checkpoint();
@@ -235,7 +236,8 @@ where
                 bytecode = self
                     .inner
                     .journaled_state
-                    .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?
+                    .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)
+                    .map_err(EVMError::Database)?
                     .info
                     .code
                     .clone()

@@ -4,7 +4,7 @@ use crate::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
     },
-    primitives::{EVMError, EVMResultGeneric, Spec},
+    primitives::{EVMError, EVMResultGeneric, Spec, Transaction},
     CallFrame, Context, CreateFrame, EvmWiring, Frame, FrameOrResult, FrameResult,
 };
 use core::mem;
@@ -46,7 +46,7 @@ pub fn last_frame_return<EvmWiringT: EvmWiring, SPEC: Spec>(
     let refunded = gas.refunded();
 
     // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-    *gas = Gas::new_spent(context.evm.env.tx.gas_limit);
+    *gas = Gas::new_spent(context.evm.env.tx.gas_limit());
 
     match instruction_result {
         return_ok!() => {
@@ -201,7 +201,7 @@ mod tests {
         let mut env = EnvWiring::<DefaultEthereumWiring>::default();
         env.tx.gas_limit = 100;
 
-        let mut ctx = Context::new_empty();
+        let mut ctx = Context::default();
         ctx.evm.inner.env = Box::new(env);
         let mut first_frame = FrameResult::Call(CallOutcome::new(
             InterpreterResult {
@@ -212,7 +212,7 @@ mod tests {
             0..0,
         ));
         last_frame_return::<DefaultEthereumWiring, CancunSpec>(&mut ctx, &mut first_frame).unwrap();
-        refund::<CancunSpec, _, _>(&mut ctx, first_frame.gas_mut(), 0);
+        refund::<DefaultEthereumWiring, CancunSpec>(&mut ctx, first_frame.gas_mut(), 0);
         *first_frame.gas()
     }
 

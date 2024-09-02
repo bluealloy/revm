@@ -1,9 +1,7 @@
 use crate::{
-    db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
+    db::EmptyDB,
     handler::register,
-    primitives::{
-        self, CfgEnv, Env, EnvWiring, EthereumWiring, InvalidTransaction, TransactionValidation,
-    },
+    primitives::{CfgEnv, EnvWiring, EthereumWiring, InvalidTransaction, TransactionValidation},
     Context, Evm, EvmContext, EvmWiring, Handler,
 };
 use core::marker::PhantomData;
