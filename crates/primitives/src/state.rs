@@ -20,6 +20,8 @@ pub struct Account {
     pub storage: EvmStorage,
     /// Account status flags.
     pub status: AccountStatus,
+    /// Whether account is symbolic or not.
+    pub symbolic: bool,
 }
 
 // The `bitflags!` macro generates `struct`s that manage a set of flags.
@@ -59,6 +61,7 @@ impl Account {
             info: AccountInfo::default(),
             storage: HashMap::new(),
             status: AccountStatus::LoadedAsNotExisting,
+            symbolic: false,
         }
     }
 
@@ -129,6 +132,12 @@ impl Account {
         }
     }
 
+    /// Mark account as symbolic in order to generate random values for slots
+    /// that are not written yet.
+    pub fn mark_symbolic(&mut self) {
+        self.symbolic = true;
+    }
+
     /// Is account loaded as not existing from database
     /// This is needed for pre spurious dragon hardforks where
     /// existing and empty were two separate states.
@@ -160,6 +169,7 @@ impl From<AccountInfo> for Account {
             info,
             storage: HashMap::new(),
             status: AccountStatus::Loaded,
+            symbolic: false,
         }
     }
 }

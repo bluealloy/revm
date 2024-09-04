@@ -3,9 +3,9 @@ use revm_interpreter::Eip7702CodeLoad;
 use crate::{
     interpreter::{AccountLoad, InstructionResult, SStoreResult, SelfDestructResult, StateLoad},
     primitives::{
-        db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, EvmState,
-        EvmStorageSlot, HashMap, HashSet, Log, SpecId, SpecId::*, TransientStorage, B256,
-        KECCAK_EMPTY, PRECOMPILE3, U256,
+        alloy_primitives::private::rand::random, db::Database, hash_map::Entry, Account, Address,
+        Bytecode, EVMError, EvmState, EvmStorageSlot, HashMap, HashSet, Log, SpecId, SpecId::*,
+        TransientStorage, B256, KECCAK_EMPTY, PRECOMPILE3, U256,
     },
 };
 use core::mem;
@@ -693,7 +693,11 @@ impl JournaledState {
             Entry::Vacant(vac) => {
                 // if storage was cleared, we don't need to ping db.
                 let value = if is_newly_created {
-                    U256::ZERO
+                    if account.symbolic {
+                        random()
+                    } else {
+                        U256::ZERO
+                    }
                 } else {
                     db.storage(address, key).map_err(EVMError::Database)?
                 };

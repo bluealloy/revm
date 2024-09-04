@@ -24,7 +24,7 @@ all = "warn"
 [dependencies]
 alloy-eips = { version = "0.3", default-features = false, features = ["k256"] }
 alloy-primitives = { version = "0.8.0", default-features = false, features = [
-    "rlp",
+    "rlp", "rand"
 ] }
 hashbrown = "0.14"
 auto_impl = "1.2"
