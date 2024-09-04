@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.0.2](https://github.com/bluealloy/revm/compare/revm-v14.0.1...revm-v14.0.2) - 2024-09-04
+
+### Fixed
+- *(inspector)* always call selfdestruct if entry is made ([#1746](https://github.com/bluealloy/revm/pull/1746))
+
+### Other
+- Add test for `revm::optimism::L1BlockInfo::calculate_tx_l1_cost_fjord` ([#1743](https://github.com/bluealloy/revm/pull/1743))
+- *(deps)* bump tokio from 1.39.2 to 1.40.0 ([#1739](https://github.com/bluealloy/revm/pull/1739))
+
 ## [14.0.1](https://github.com/bluealloy/revm/compare/revm-v14.0.0...revm-v14.0.1) - 2024-08-30
 
 ### Other
