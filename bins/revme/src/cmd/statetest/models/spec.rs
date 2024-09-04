@@ -25,7 +25,6 @@ pub enum SpecName {
     Shanghai,
     Cancun,
     Prague,
-    PragueEOF,
     Osaka, // SKIPPED
     #[serde(other)]
     Unknown,
@@ -49,7 +48,6 @@ impl SpecName {
             Self::Shanghai => SpecId::SHANGHAI,
             Self::Cancun => SpecId::CANCUN,
             Self::Prague => SpecId::PRAGUE,
-            Self::PragueEOF => SpecId::PRAGUE_EOF,
             Self::ByzantiumToConstantinopleAt5 | Self::Constantinople => {
                 panic!("Overridden with PETERSBURG")
             }
