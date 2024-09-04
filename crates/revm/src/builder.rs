@@ -10,36 +10,39 @@ use std::boxed::Box;
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that changes underlying structures
 /// will reset the registered handler to default mainnet.
-pub struct EvmBuilder<'a, EvmWiringT: EvmWiring> {
+pub struct EvmBuilder<'a, BuilderStage, EvmWiringT: EvmWiring> {
     database: Option<EvmWiringT::Database>,
     external_context: Option<EvmWiringT::ExternalContext>,
     env: Option<Box<EnvWiring<EvmWiringT>>>,
     /// Handler that will be used by EVM. It contains handle registers
     handler: Handler<'a, EvmWiringT, Context<EvmWiringT>>,
+    /// Phantom data to mark the stage of the builder.
+    phantom: PhantomData<BuilderStage>,
 }
 
-// /// First stage of the builder allows setting generic variables.
-// /// Generic variables are database and external context.
-// pub struct SetGenericStage;
+/// First stage of the builder allows setting generic variables.
+/// Generic variables are database and external context.
+pub struct SetGenericStage;
 
-// /// Second stage of the builder allows appending handler registers.
-// /// Requires the database and external context to be set.
-// pub struct HandlerStage;
+/// Second stage of the builder allows appending handler registers.
+/// Requires the database and external context to be set.
+pub struct HandlerStage;
 
-impl<'a> Default for EvmBuilder<'a, EthereumWiring<EmptyDB, ()>> {
+impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthereumWiring<EmptyDB, ()>> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, EvmWiringT> {
+impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
     /// Sets the [`EvmWiring`] that will be used by [`Evm`].
-    pub fn new() -> EvmBuilder<'a, EvmWiringT> {
+    pub fn new() -> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
         EvmBuilder {
             database: None,
             external_context: None,
             env: None,
             handler: EvmWiringT::handler::<'a>(EvmWiringT::Hardfork::default()),
+            phantom: PhantomData,
         }
     }
 
@@ -54,6 +57,7 @@ impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, EvmWiringT> {
             external_context: Some(external_context),
             env: Some(env),
             handler,
+            phantom: PhantomData,
         }
     }
 
@@ -65,6 +69,7 @@ impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, EvmWiringT> {
             external_context: None,
             env: None,
             handler: NewEvmWiringT::handler::<'a>(NewEvmWiringT::Hardfork::default()),
+            phantom: PhantomData,
         }
     }
 
