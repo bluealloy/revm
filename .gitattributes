@@ -1,1 +1,3 @@
+assets/** linguist-vendored
+documentation/** linguist-vendored
 tests/** linguist-vendored
