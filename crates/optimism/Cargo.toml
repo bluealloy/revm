@@ -23,7 +23,7 @@ all = "warn"
 
 [dependencies]
 # revm
-revm = { path = "../revm", version = "14.0.1", default-features = false }
+revm = { path = "../revm", version = "14.0.1", default-features = false, features=["std"] }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }

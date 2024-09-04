@@ -10,39 +10,36 @@ use std::boxed::Box;
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that changes underlying structures
 /// will reset the registered handler to default mainnet.
-pub struct EvmBuilder<'a, BuilderStage, EvmWiringT: EvmWiring> {
+pub struct EvmBuilder<'a, EvmWiringT: EvmWiring> {
     database: Option<EvmWiringT::Database>,
     external_context: Option<EvmWiringT::ExternalContext>,
     env: Option<Box<EnvWiring<EvmWiringT>>>,
     /// Handler that will be used by EVM. It contains handle registers
     handler: Handler<'a, EvmWiringT, Context<EvmWiringT>>,
-    /// Phantom data to mark the stage of the builder.
-    phantom: PhantomData<BuilderStage>,
 }
 
-/// First stage of the builder allows setting generic variables.
-/// Generic variables are database and external context.
-pub struct SetGenericStage;
+// /// First stage of the builder allows setting generic variables.
+// /// Generic variables are database and external context.
+// pub struct SetGenericStage;
 
-/// Second stage of the builder allows appending handler registers.
-/// Requires the database and external context to be set.
-pub struct HandlerStage;
+// /// Second stage of the builder allows appending handler registers.
+// /// Requires the database and external context to be set.
+// pub struct HandlerStage;
 
-impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthereumWiring<EmptyDB, ()>> {
+impl<'a> Default for EvmBuilder<'a, EthereumWiring<EmptyDB, ()>> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
+impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, EvmWiringT> {
     /// Sets the [`EvmWiring`] that will be used by [`Evm`].
-    pub fn new() -> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
+    pub fn new() -> EvmBuilder<'a, EvmWiringT> {
         EvmBuilder {
             database: None,
             external_context: None,
             env: None,
             handler: EvmWiringT::handler::<'a>(EvmWiringT::Hardfork::default()),
-            phantom: PhantomData,
         }
     }
 
@@ -57,7 +54,6 @@ impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
             external_context: Some(external_context),
             env: Some(env),
             handler,
-            phantom: PhantomData,
         }
     }
 
@@ -69,7 +65,6 @@ impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
             external_context: None,
             env: None,
             handler: NewEvmWiringT::handler::<'a>(NewEvmWiringT::Hardfork::default()),
-            phantom: PhantomData,
         }
     }
 
@@ -335,7 +330,7 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring> EvmBuilder<'a, BuilderStage, EvmWi
 
     /// Allows modification of Evm Database.
     pub fn modify_db(mut self, f: impl FnOnce(&mut EvmWiringT::Database)) -> Self {
-        f(&mut self.database.as_mut().unwrap());
+        f(self.database.as_mut().unwrap());
         self
     }
 
@@ -344,13 +339,13 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring> EvmBuilder<'a, BuilderStage, EvmWi
         mut self,
         f: impl FnOnce(&mut EvmWiringT::ExternalContext),
     ) -> Self {
-        f(&mut self.external_context.as_mut().unwrap());
+        f(self.external_context.as_mut().unwrap());
         self
     }
 
     /// Allows modification of Evm Environment.
     pub fn modify_env(mut self, f: impl FnOnce(&mut Box<EnvWiring<EvmWiringT>>)) -> Self {
-        f(&mut self.env.as_mut().unwrap());
+        f(self.env.as_mut().unwrap());
         self
     }
 
@@ -451,21 +446,11 @@ where
 #[cfg(test)]
 mod test {
     use crate::{
-        db::EmptyDB,
-        inspector::inspector_handle_register,
-        inspectors::NoOpInspector,
-        primitives::{
-            address, AccountInfo, Address, Bytecode, Bytes, EthereumWiring, PrecompileResult,
-            SpecId, TxKind, U256,
-        },
-        Context, ContextPrecompile, ContextStatefulPrecompile, Evm, InMemoryDB, InnerEvmContext,
+        interpreter::Interpreter,
+        primitives::{address, AccountInfo, Bytecode, EthereumWiring, TxKind, U256},
+        Context, Evm, InMemoryDB,
     };
-    use alloy_provider::network::Ethereum;
-    use revm_interpreter::{gas, Host, Interpreter};
-    use revm_precompile::PrecompileOutput;
-    use std::{cell::RefCell, rc::Rc, sync::Arc};
-
-    type TestEvmWiring = crate::primitives::DefaultEthereumWiring;
+    use std::{cell::RefCell, rc::Rc};
 
     /// Custom evm context
     #[derive(Default, Clone, Debug)]
