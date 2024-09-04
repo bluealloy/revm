@@ -28,7 +28,7 @@ sol! {
     }
 }
 
-type EthereumBenchmarkWire = EthereumWiring<CacheDB<EmptyDB>, ()>;
+type EthereumCacheDbWiring = EthereumWiring<CacheDB<EmptyDB>, ()>;
 
 fn main() {
     let (seed, iterations) = try_init_env_vars().expect("Failed to parse env vars");
@@ -37,7 +37,7 @@ fn main() {
 
     let db = init_db();
 
-    let mut evm = Evm::<EthereumBenchmarkWire>::builder()
+    let mut evm = Evm::<EthereumCacheDbWiring>::builder()
         .modify_tx_env(|tx| {
             tx.caller = address!("1000000000000000000000000000000000000000");
             tx.transact_to = TxKind::Call(BURNTPIX_MAIN_ADDRESS);

@@ -3108,7 +3108,6 @@ dependencies = [
  "criterion",
  "derive-where",
  "dyn-clone",
- "enumn",
  "ethers-contract",
  "ethers-core",
  "ethers-providers",
@@ -3134,6 +3133,25 @@ dependencies = [
  "serde",
  "serde_json",
  "walkdir",
+]
+
+[[package]]
+name = "revm-optimism"
+version = "1.0.0"
+dependencies = [
+ "alloy-provider",
+ "alloy-sol-types",
+ "anyhow",
+ "auto_impl",
+ "criterion",
+ "derive-where",
+ "dyn-clone",
+ "enumn",
+ "indicatif",
+ "revm",
+ "rstest",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

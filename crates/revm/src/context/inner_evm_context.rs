@@ -18,7 +18,7 @@ use crate::{
 use std::{boxed::Box, sync::Arc};
 
 /// EVM contexts contains data that EVM needs for execution.
-#[derive_where(Clone, Debug; EvmWiringT::Block, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error)]
+#[derive_where(Clone, Debug; EvmWiringT::Block, EvmWiringT::ChainContext, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error)]
 pub struct InnerEvmContext<EvmWiringT: EvmWiring> {
     /// EVM Environment contains all the information about config, block and transaction that
     /// evm needs.
@@ -27,6 +27,8 @@ pub struct InnerEvmContext<EvmWiringT: EvmWiring> {
     pub journaled_state: JournaledState,
     /// Database to load data from.
     pub db: EvmWiringT::Database,
+    /// Inner context.
+    pub chain: EvmWiringT::ChainContext,
     /// Error that happened during execution.
     pub error: Result<(), <EvmWiringT::Database as Database>::Error>,
 }
@@ -40,6 +42,7 @@ where
             env: Box::default(),
             journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
             db,
+            chain: Default::default(),
             error: Ok(()),
         }
     }
@@ -53,6 +56,7 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
             env,
             journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
             db,
+            chain: Default::default(),
             error: Ok(()),
         }
     }
@@ -71,6 +75,7 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
             env: self.env,
             journaled_state: self.journaled_state,
             db,
+            chain: Default::default(),
             error: Ok(()),
         }
     }
@@ -155,7 +160,10 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
 
     /// Return account balance and is_cold flag.
     #[inline]
-    pub fn balance(&mut self, address: Address) -> Result<StateLoad<U256>, <EvmWiringT::Database as Database>::Error> {
+    pub fn balance(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<U256>, <EvmWiringT::Database as Database>::Error> {
         self.journaled_state
             .load_account(address, &mut self.db)
             .map(|acc| acc.map(|a| a.info.balance))
@@ -168,7 +176,7 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
     pub fn code(
         &mut self,
         address: Address,
-    ) -> Result<Eip7702CodeLoad<Bytes>,<EvmWiringT::Database as Database>::Error> {
+    ) -> Result<Eip7702CodeLoad<Bytes>, <EvmWiringT::Database as Database>::Error> {
         let a = self.journaled_state.load_code(address, &mut self.db)?;
         // SAFETY: safe to unwrap as load_code will insert code if it is empty.
         let code = a.info.code.as_ref().unwrap();

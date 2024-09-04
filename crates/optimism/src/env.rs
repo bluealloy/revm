@@ -1,4 +1,4 @@
-use crate::primitives::{
+use revm::primitives::{
     AccessListItem, Address, AuthorizationList, Bytes, Transaction, TransactionValidation, TxKind,
     B256, U256,
 };
@@ -10,7 +10,7 @@ use super::{OptimismInvalidTransaction, OptimismTransaction};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     #[cfg_attr(feature = "serde", serde(flatten))]
-    pub base: crate::primitives::TxEnv,
+    pub base: revm::primitives::TxEnv,
 
     /// The source hash is used to make sure that deposit transactions do
     /// not have identical hashes.

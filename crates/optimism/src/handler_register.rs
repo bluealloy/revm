@@ -1,61 +1,58 @@
 //! Handler related to Optimism chain
 
-use crate::{
+use super::{
+    optimism_spec_to_generic, OptimismContext, OptimismHaltReason, OptimismInvalidTransaction,
+    OptimismSpec, OptimismSpecId, OptimismTransaction, OptimismWiring,
+};
+use crate::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT};
+use core::ops::Mul;
+use revm::{
     handler::{
         mainnet::{self, deduct_caller_inner},
         register::EvmHandler,
     },
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
-    optimism, optimism_spec_to_generic,
+    precompile::{secp256r1, PrecompileSpecId},
     primitives::{
-        db::Database, Account, Block, EVMError, EVMResultGeneric, Env, ExecutionResult, HashMap,
-        InvalidTransaction, ResultAndState, Transaction, U256,
+        db::Database, Account, Block, EVMError, EVMResult, EVMResultGeneric, EnvWiring,
+        ExecutionResult, HashMap, InvalidTransaction, ResultAndState, Transaction, U256,
     },
     Context, ContextPrecompiles, FrameResult,
 };
-use core::ops::Mul;
-use revm_precompile::{secp256r1, PrecompileSpecId};
 use std::string::ToString;
 use std::sync::Arc;
 
-use super::{
-    OptimismContext, OptimismHaltReason, OptimismInvalidTransaction, OptimismSpec, OptimismSpecId,
-    OptimismTransaction, OptimismWiring,
-};
-
-pub fn optimism_handle_register<EvmWiringT, DB, EXT>(
-    handler: &mut EvmHandler<'_, EvmWiringT, EXT, DB>,
-) where
+pub fn optimism_handle_register<EvmWiringT>(handler: &mut EvmHandler<'_, EvmWiringT>)
+where
     EvmWiringT: OptimismWiring,
-    DB: Database,
 {
     optimism_spec_to_generic!(handler.spec_id, {
         // validate environment
-        handler.validation.env = Arc::new(validate_env::<EvmWiringT, SPEC, DB>);
+        handler.validation.env = Arc::new(validate_env::<EvmWiringT, SPEC>);
         // Validate transaction against state.
         handler.validation.tx_against_state =
-            Arc::new(validate_tx_against_state::<EvmWiringT, SPEC, EXT, DB>);
+            Arc::new(validate_tx_against_state::<EvmWiringT, SPEC>);
         // Load additional precompiles for the given chain spec.
-        handler.pre_execution.load_precompiles =
-            Arc::new(load_precompiles::<EvmWiringT, SPEC, EXT, DB>);
+        handler.pre_execution.load_precompiles = Arc::new(load_precompiles::<EvmWiringT, SPEC>);
         // load l1 data
-        handler.pre_execution.load_accounts = Arc::new(load_accounts::<EvmWiringT, SPEC, EXT, DB>);
+        handler.pre_execution.load_accounts = Arc::new(load_accounts::<EvmWiringT, SPEC>);
         // An estimated batch cost is charged from the caller and added to L1 Fee Vault.
-        handler.pre_execution.deduct_caller = Arc::new(deduct_caller::<EvmWiringT, SPEC, EXT, DB>);
+        handler.pre_execution.deduct_caller = Arc::new(deduct_caller::<EvmWiringT, SPEC>);
         // Refund is calculated differently then mainnet.
-        handler.execution.last_frame_return = Arc::new(last_frame_return::<EvmWiringT, SPEC, EXT, DB>);
-        handler.post_execution.refund = Arc::new(refund::<EvmWiringT, SPEC, EXT, DB>);
-        handler.post_execution.reward_beneficiary = Arc::new(reward_beneficiary::<EvmWiringT, SPEC, EXT, DB>);
+        handler.execution.last_frame_return = Arc::new(last_frame_return::<EvmWiringT, SPEC>);
+        handler.post_execution.refund = Arc::new(refund::<EvmWiringT, SPEC>);
+        handler.post_execution.reward_beneficiary =
+            Arc::new(reward_beneficiary::<EvmWiringT, SPEC>);
         // In case of halt of deposit transaction return Error.
-        handler.post_execution.output = Arc::new(output::<EvmWiringT, SPEC, EXT, DB>);
-        handler.post_execution.end = Arc::new(end::<EvmWiringT, SPEC, EXT, DB>);
+        handler.post_execution.output = Arc::new(output::<EvmWiringT, SPEC>);
+        handler.post_execution.end = Arc::new(end::<EvmWiringT, SPEC>);
     });
 }
 
 /// Validate environment for the Optimism chain.
-pub fn validate_env<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, DB: Database>(
+pub fn validate_env<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     env: &EnvWiring<EvmWiringT>,
-) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
+) -> EVMResultGeneric<(), EvmWiringT> {
     // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
     if env.tx.source_hash().is_some() {
         return Ok(());
@@ -78,26 +75,21 @@ pub fn validate_env<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, DB: Database
 }
 
 /// Don not perform any extra validation for deposit transactions, they are pre-verified on L1.
-pub fn validate_tx_against_state<
-    EvmWiringT: OptimismWiring,
-    SPEC: OptimismSpec,
-    EXT,
-    DB: Database,
->(
+pub fn validate_tx_against_state<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     context: &mut Context<EvmWiringT>,
-) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
+) -> EVMResultGeneric<(), EvmWiringT> {
     if context.evm.inner.env.tx.source_hash().is_some() {
         return Ok(());
     }
-    mainnet::validate_tx_against_state::<EvmWiringT, SPEC, EXT, DB>(context)
+    mainnet::validate_tx_against_state::<EvmWiringT, SPEC>(context)
 }
 
 /// Handle output of the transaction
 #[inline]
-pub fn last_frame_return<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
+pub fn last_frame_return<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     context: &mut Context<EvmWiringT>,
     frame_result: &mut FrameResult,
-) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
+) -> EVMResultGeneric<(), EvmWiringT> {
     let env = context.evm.inner.env();
     let is_deposit = env.tx.source_hash().is_some();
     let tx_system = env.tx.is_system_transaction();
@@ -161,16 +153,16 @@ pub fn last_frame_return<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB
 
 /// Record Eip-7702 refund and calculate final refund.
 #[inline]
-pub fn refund<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+pub fn refund<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
+    context: &mut Context<EvmWiringT>,
     gas: &mut Gas,
     eip7702_refund: i64,
 ) {
     gas.record_refund(eip7702_refund);
 
     let env = context.evm.inner.env();
-    let is_deposit = env.tx.optimism.source_hash.is_some();
-    let is_regolith = SPEC::enabled(REGOLITH);
+    let is_deposit = env.tx.source_hash().is_some();
+    let is_regolith = SPEC::optimism_enabled(OptimismSpecId::REGOLITH);
 
     // Prior to Regolith, deposit transactions did not receive gas refunds.
     let is_gas_refund_disabled = env.cfg.is_gas_refund_disabled() || (is_deposit && !is_regolith);
@@ -181,8 +173,8 @@ pub fn refund<SPEC: Spec, EXT, DB: Database>(
 
 /// Load precompiles for Optimism chain.
 #[inline]
-pub fn load_precompiles<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
-) -> ContextPrecompiles<EvmWiringT, DB> {
+pub fn load_precompiles<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
+) -> ContextPrecompiles<EvmWiringT> {
     let mut precompiles = ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID));
 
     if SPEC::optimism_enabled(OptimismSpecId::FJORD) {
@@ -192,10 +184,10 @@ pub fn load_precompiles<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB:
         ])
     }
 
-    if SPEC::enabled(SpecId::GRANITE) {
+    if SPEC::optimism_enabled(OptimismSpecId::GRANITE) {
         precompiles.extend([
             // Restrict bn256Pairing input size
-            optimism::bn128::pair::GRANITE,
+            crate::bn128::pair::GRANITE,
         ])
     }
 
@@ -204,9 +196,9 @@ pub fn load_precompiles<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB:
 
 /// Load account (make them warm) and l1 data from database.
 #[inline]
-fn load_accounts<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
+pub fn load_accounts<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     context: &mut Context<EvmWiringT>,
-) -> EVMResultGeneric<(), EvmWiringT, DB::Error> {
+) -> EVMResultGeneric<(), EvmWiringT> {
     // the L1-cost fee is only computed for Optimism non-deposit transactions.
 
     if context.evm.env.tx.source_hash().is_none() {
@@ -218,14 +210,14 @@ fn load_accounts<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Databa
         *context.evm.chain.l1_block_info_mut() = Some(l1_block_info);
     }
 
-    mainnet::load_accounts::<EvmWiringT, SPEC, EXT, DB>(context)
+    mainnet::load_accounts::<EvmWiringT, SPEC>(context)
 }
 
 /// Deduct max balance from caller
 #[inline]
-pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
+pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     context: &mut Context<EvmWiringT>,
-) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
+) -> EVMResultGeneric<(), EvmWiringT> {
     // load caller's account.
     let mut caller_account = context
         .evm
@@ -260,6 +252,7 @@ pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Da
 
         let tx_l1_cost = context
             .evm
+            .inner
             .chain
             .l1_block_info()
             .expect("L1BlockInfo should be loaded")
@@ -280,15 +273,15 @@ pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Da
 
 /// Reward beneficiary with gas fee.
 #[inline]
-pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
+pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     context: &mut Context<EvmWiringT>,
     gas: &Gas,
-) -> Result<(), EVMError<DB::Error, OptimismInvalidTransaction>> {
+) -> EVMResultGeneric<(), EvmWiringT> {
     let is_deposit = context.evm.inner.env.tx.source_hash().is_some();
 
     // transfer fee to coinbase/beneficiary.
     if !is_deposit {
-        mainnet::reward_beneficiary::<EvmWiringT, SPEC, EXT, DB>(context, gas)?;
+        mainnet::reward_beneficiary::<EvmWiringT, SPEC>(context, gas)?;
     }
 
     if !is_deposit {
@@ -313,7 +306,7 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, D
             .evm
             .inner
             .journaled_state
-            .load_account(optimism::L1_FEE_RECIPIENT, &mut context.evm.inner.db)
+            .load_account(L1_FEE_RECIPIENT, &mut context.evm.inner.db)
             .map_err(EVMError::Database)?;
         l1_fee_vault_account.mark_touch();
         l1_fee_vault_account.info.balance += l1_cost;
@@ -323,7 +316,7 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, D
             .evm
             .inner
             .journaled_state
-            .load_account(optimism::BASE_FEE_RECIPIENT, &mut context.evm.inner.db)
+            .load_account(BASE_FEE_RECIPIENT, &mut context.evm.inner.db)
             .map_err(EVMError::Database)?;
         base_fee_vault_account.mark_touch();
         base_fee_vault_account.info.balance += context
@@ -339,11 +332,11 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, D
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
-pub fn output<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
+pub fn output<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     context: &mut Context<EvmWiringT>,
     frame_result: FrameResult,
-) -> Result<ResultAndState<EvmWiringT>, EVMError<DB::Error, OptimismInvalidTransaction>> {
-    let result = mainnet::output::<EvmWiringT, EXT, DB>(context, frame_result)?;
+) -> EVMResult<EvmWiringT> {
+    let result = mainnet::output::<EvmWiringT>(context, frame_result)?;
 
     if result.result.is_halt() {
         // Post-regolith, if the transaction is a deposit transaction and it halts,
@@ -361,10 +354,10 @@ pub fn output<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>
 /// Optimism end handle changes output if the transaction is a deposit transaction.
 /// Deposit transaction can't be reverted and is always successful.
 #[inline]
-pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
+pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     context: &mut Context<EvmWiringT>,
-    evm_output: Result<ResultAndState<EvmWiringT>, EVMError<DB::Error, OptimismInvalidTransaction>>,
-) -> Result<ResultAndState<EvmWiringT>, EVMError<DB::Error, OptimismInvalidTransaction>> {
+    evm_output: EVMResult<EvmWiringT>,
+) -> EVMResult<EvmWiringT> {
     evm_output.or_else(|err| {
         if matches!(err, EVMError::Transaction(_))
             && context.evm.inner.env().tx.source_hash().is_some()
@@ -428,26 +421,27 @@ pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec, EXT, DB: Database>(
 
 #[cfg(test)]
 mod tests {
-    use revm_interpreter::{CallOutcome, InterpreterResult};
-
     use super::*;
-    use crate::{
+    use crate::{BedrockSpec, L1BlockInfo, LatestSpec, OptimismEvmWiring, RegolithSpec};
+    use revm::{
         db::{EmptyDB, InMemoryDB},
-        optimism::{self, BedrockSpec, LatestSpec, RegolithSpec},
-        primitives::{bytes, state::AccountInfo, Address, Bytes, Env, B256},
-        L1BlockInfo,
+        interpreter::{CallOutcome, InterpreterResult},
+        primitives::{bytes, state::AccountInfo, Address, Bytes, B256},
     };
+
+    type TestEmptyOpWiring = OptimismEvmWiring<EmptyDB, ()>;
+    type TestMemOpWiring = OptimismEvmWiring<InMemoryDB, ()>;
 
     /// Creates frame result.
     fn call_last_frame_return<SPEC>(
-        env: Env<optimism::EvmWiring>,
+        env: EnvWiring<TestEmptyOpWiring>,
         instruction_result: InstructionResult,
         gas: Gas,
     ) -> Gas
     where
         SPEC: OptimismSpec,
     {
-        let mut ctx = Context::new_empty();
+        let mut ctx = Context::<TestEmptyOpWiring>::new_with_db(EmptyDB::default());
         ctx.evm.inner.env = Box::new(env);
         let mut first_frame = FrameResult::Call(CallOutcome::new(
             InterpreterResult {
@@ -457,14 +451,14 @@ mod tests {
             },
             0..0,
         ));
-        last_frame_return::<optimism::EvmWiring, SPEC, _, _>(&mut ctx, &mut first_frame).unwrap();
-        refund::<optimism::EvmWiring, SPEC, _, _>(&mut ctx, first_frame.gas_mut(), 0);
+        last_frame_return::<TestEmptyOpWiring, SPEC>(&mut ctx, &mut first_frame).unwrap();
+        refund::<TestEmptyOpWiring, SPEC>(&mut ctx, first_frame.gas_mut(), 0);
         *first_frame.gas()
     }
 
     #[test]
     fn test_revert_gas() {
-        let mut env = Env::<optimism::EvmWiring>::default();
+        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
         env.tx.base.gas_limit = 100;
         env.tx.source_hash = None;
 
@@ -477,7 +471,7 @@ mod tests {
 
     #[test]
     fn test_consume_gas() {
-        let mut env = Env::<optimism::EvmWiring>::default();
+        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
         env.tx.base.gas_limit = 100;
         env.tx.source_hash = Some(B256::ZERO);
 
@@ -490,7 +484,7 @@ mod tests {
 
     #[test]
     fn test_consume_gas_with_refund() {
-        let mut env = Env::<optimism::EvmWiring>::default();
+        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
         env.tx.base.gas_limit = 100;
         env.tx.source_hash = Some(B256::ZERO);
 
@@ -511,7 +505,7 @@ mod tests {
 
     #[test]
     fn test_consume_gas_sys_deposit_tx() {
-        let mut env = Env::<optimism::EvmWiring>::default();
+        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
         env.tx.base.gas_limit = 100;
         env.tx.source_hash = Some(B256::ZERO);
 
@@ -533,7 +527,7 @@ mod tests {
             },
         );
 
-        let mut context: Context<optimism::EvmWiring, (), InMemoryDB> = Context::new_with_db(db);
+        let mut context = Context::<TestMemOpWiring>::new_with_db(db);
         *context.evm.chain.l1_block_info_mut() = Some(L1BlockInfo {
             l1_base_fee: U256::from(1_000),
             l1_fee_overhead: Some(U256::from(1_000)),
@@ -545,7 +539,7 @@ mod tests {
         // added mint value is 10.
         context.evm.inner.env.tx.mint = Some(10);
 
-        deduct_caller::<optimism::EvmWiring, RegolithSpec, (), _>(&mut context).unwrap();
+        deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context).unwrap();
 
         // Check the account balance is updated.
         let account = context
@@ -568,7 +562,7 @@ mod tests {
                 ..Default::default()
             },
         );
-        let mut context: Context<optimism::EvmWiring, (), InMemoryDB> = Context::new_with_db(db);
+        let mut context = Context::<TestMemOpWiring>::new_with_db(db);
         *context.evm.chain.l1_block_info_mut() = Some(L1BlockInfo {
             l1_base_fee: U256::from(1_000),
             l1_fee_overhead: Some(U256::from(1_000)),
@@ -583,7 +577,7 @@ mod tests {
         // so enveloped_tx gas cost is ignored.
         context.evm.inner.env.tx.source_hash = Some(B256::ZERO);
 
-        deduct_caller::<optimism::EvmWiring, RegolithSpec, (), _>(&mut context).unwrap();
+        deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context).unwrap();
 
         // Check the account balance is updated.
         let account = context
@@ -606,7 +600,7 @@ mod tests {
                 ..Default::default()
             },
         );
-        let mut context: Context<optimism::EvmWiring, (), InMemoryDB> = Context::new_with_db(db);
+        let mut context = Context::<TestMemOpWiring>::new_with_db(db);
         *context.evm.chain.l1_block_info_mut() = Some(L1BlockInfo {
             l1_base_fee: U256::from(1_000),
             l1_fee_overhead: Some(U256::from(1_000)),
@@ -615,7 +609,7 @@ mod tests {
         });
         // l1block cost is 1048 fee.
         context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
-        deduct_caller::<optimism::EvmWiring, RegolithSpec, (), _>(&mut context).unwrap();
+        deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context).unwrap();
 
         // Check the account balance is updated.
         let account = context
@@ -638,7 +632,7 @@ mod tests {
                 ..Default::default()
             },
         );
-        let mut context: Context<optimism::EvmWiring, (), InMemoryDB> = Context::new_with_db(db);
+        let mut context = Context::<TestMemOpWiring>::new_with_db(db);
         *context.evm.chain.l1_block_info_mut() = Some(L1BlockInfo {
             l1_base_fee: U256::from(1_000),
             l1_fee_overhead: Some(U256::from(1_000)),
@@ -649,7 +643,7 @@ mod tests {
         context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
 
         assert_eq!(
-            deduct_caller::<optimism::EvmWiring, RegolithSpec, (), _>(&mut context),
+            deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context),
             Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
                     fee: Box::new(U256::from(1048)),
@@ -663,34 +657,34 @@ mod tests {
     #[test]
     fn test_validate_sys_tx() {
         // mark the tx as a system transaction.
-        let mut env = Env::<optimism::EvmWiring>::default();
+        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
         env.tx.is_system_transaction = Some(true);
         assert_eq!(
-            validate_env::<optimism::EvmWiring, RegolithSpec, EmptyDB>(&env),
+            validate_env::<TestEmptyOpWiring, RegolithSpec>(&env),
             Err(EVMError::Transaction(
                 OptimismInvalidTransaction::DepositSystemTxPostRegolith
             ))
         );
 
         // Pre-regolith system transactions should be allowed.
-        assert!(validate_env::<optimism::EvmWiring, BedrockSpec, EmptyDB>(&env).is_ok());
+        assert!(validate_env::<TestEmptyOpWiring, BedrockSpec>(&env).is_ok());
     }
 
     #[test]
     fn test_validate_deposit_tx() {
         // Set source hash.
-        let mut env = Env::<optimism::EvmWiring>::default();
+        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
         env.tx.source_hash = Some(B256::ZERO);
-        assert!(validate_env::<optimism::EvmWiring, RegolithSpec, EmptyDB>(&env).is_ok());
+        assert!(validate_env::<TestEmptyOpWiring, RegolithSpec>(&env).is_ok());
     }
 
     #[test]
     fn test_validate_tx_against_state_deposit_tx() {
         // Set source hash.
-        let mut env = Env::<optimism::EvmWiring>::default();
+        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
         env.tx.source_hash = Some(B256::ZERO);
 
         // Nonce and balance checks should be skipped for deposit transactions.
-        assert!(validate_env::<optimism::EvmWiring, LatestSpec, EmptyDB>(&env).is_ok());
+        assert!(validate_env::<TestEmptyOpWiring, LatestSpec>(&env).is_ok());
     }
 }

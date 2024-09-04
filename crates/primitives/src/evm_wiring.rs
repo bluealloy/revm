@@ -32,8 +32,11 @@ pub trait TransactionValidation {
 }
 
 pub trait EvmWiring: Sized {
-    /// External type
+    /// External context type
     type ExternalContext: Sized;
+
+    /// Chain context type.
+    type ChainContext: Sized + Default + Debug;
 
     /// Database type.
     type Database: Database;
@@ -59,6 +62,7 @@ pub struct EthereumWiring<DB: Database, EXT> {
 impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
     type Database = DB;
     type ExternalContext = EXT;
+    type ChainContext = ();
     type Block = crate::BlockEnv;
     type Transaction = crate::TxEnv;
     type Hardfork = SpecId;

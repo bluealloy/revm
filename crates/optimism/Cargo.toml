@@ -1,0 +1,91 @@
+[package]
+authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
+description = "Revm Optimism"
+edition = "2021"
+keywords = ["ethereum", "optimism", "evm", "revm", "no_std"]
+license = "MIT"
+name = "revm-optimism"
+repository = "https://github.com/bluealloy/revm"
+version = "1.0.0"
+readme = "../../README.md"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+# revm
+revm = { path = "../revm", version = "14.0.1", default-features = false }
+
+# misc
+auto_impl = { version = "1.2", default-features = false }
+derive-where = { version = "1.2.7", default-features = false }
+dyn-clone = "1.0"
+enumn = { version = "0.1"}
+
+# Optional
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+], optional = true }
+serde_json = { version = "1.0", default-features = false, features = [
+    "alloc",
+], optional = true }
+
+
+[dev-dependencies]
+anyhow = "1.0.83"
+criterion = "0.5"
+indicatif = "0.17"
+rstest = "0.22.0"
+alloy-sol-types = "0.8"
+
+alloy-provider = "0.3"
+
+[features]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
+std = [
+    "serde?/std",
+    "serde_json?/std",
+    "serde_json?/preserve_order",
+    "revm/std",
+]
+hashbrown = ["revm/hashbrown"]
+serde = ["dep:serde", "revm/serde"]
+serde-json = ["serde", "dep:serde_json"]
+portable = ["revm/portable"]
+
+
+dev = [
+    "memory_limit",
+    "optional_balance_check",
+    "optional_block_gas_limit",
+    "optional_eip3607",
+    "optional_gas_refund",
+    "optional_no_base_fee",
+    "optional_beneficiary_reward",
+    "optional_nonce_check",
+]
+memory_limit = ["revm/memory_limit"]
+optional_balance_check = ["revm/optional_balance_check"]
+optional_block_gas_limit = ["revm/optional_block_gas_limit"]
+optional_eip3607 = ["revm/optional_eip3607"]
+optional_gas_refund = ["revm/optional_gas_refund"]
+optional_no_base_fee = ["revm/optional_no_base_fee"]
+optional_beneficiary_reward = ["revm/optional_beneficiary_reward"]
+optional_nonce_check = ["revm/optional_nonce_check"]
+
+# See comments in `revm-precompile`
+secp256k1 = ["revm/secp256k1"]
+c-kzg = ["revm/c-kzg"]
+# `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
+kzg-rs = ["revm/kzg-rs"]
+blst = ["revm/blst"]

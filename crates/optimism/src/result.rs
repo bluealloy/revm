@@ -1,6 +1,6 @@
 use core::fmt::Display;
 
-use crate::primitives::{EVMError, HaltReason, InvalidTransaction};
+use revm::primitives::{EVMError, HaltReason, InvalidTransaction};
 
 /// Optimism transaction validation error.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

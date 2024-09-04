@@ -30,7 +30,6 @@ revm-precompile = { path = "../precompile", version = "11.0.1", default-features
 auto_impl = { version = "1.2", default-features = false }
 derive-where = { version = "1.2.7", default-features = false }
 dyn-clone = "1.0"
-enumn = { version = "0.1", optional = true }
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -84,8 +83,6 @@ asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
 portable = ["revm-precompile/portable", "revm-interpreter/portable"]
 
 test-utils = []
-
-optimism = ["dep:enumn", "revm-interpreter/optimism", "revm-precompile/optimism"]
 
 ethersdb = ["std", "dep:tokio", "dep:ethers-providers", "dep:ethers-core"]
 
@@ -143,10 +140,10 @@ required-features = ["std", "serde-json"]
 #path = "../../examples/uniswap_v2_usdc_swap.rs"
 #required-features = ["alloydb"]
 
-[[example]]
-name = "custom_opcodes"
-path = "../../examples/custom_opcodes.rs"
-required-features = []
+#[[example]]
+#name = "custom_opcodes"
+#path = "../../examples/custom_opcodes.rs"
+#required-features = []
 
 [[bench]]
 name = "bench"

@@ -2,7 +2,7 @@ use revm::{
     db::BenchmarkDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
-    primitives::{address, Address, Bytecode,BytecodeDecodeError, EthereumWiring, TxKind},
+    primitives::{address, Address, Bytecode, BytecodeDecodeError, EthereumWiring, TxKind},
     Database, Evm,
 };
 use std::io::Error as IoError;

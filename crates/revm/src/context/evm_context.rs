@@ -21,7 +21,7 @@ use core::ops::{Deref, DerefMut};
 use std::{boxed::Box, sync::Arc};
 
 /// EVM context that contains the inner EVM context and precompiles.
-#[derive_where(Clone, Debug; EvmWiringT::Block, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error)]
+#[derive_where(Clone, Debug; EvmWiringT::Block, EvmWiringT::ChainContext, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error)]
 pub struct EvmContext<EvmWiringT: EvmWiring> {
     /// Inner EVM context.
     pub inner: InnerEvmContext<EvmWiringT>,
@@ -522,6 +522,7 @@ pub(crate) mod test_utils {
                 env,
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
                 db,
+                chain: Default::default(),
                 error: Ok(()),
             },
             precompiles: ContextPrecompiles::default(),
@@ -538,6 +539,7 @@ pub(crate) mod test_utils {
                 env,
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
                 db,
+                chain: Default::default(),
                 error: Ok(()),
             },
             precompiles: ContextPrecompiles::default(),

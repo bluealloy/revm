@@ -1,6 +1,6 @@
-use crate::optimism::fast_lz::flz_compress_len;
-use crate::primitives::{address, db::Database, Address, U256};
+use crate::fast_lz::flz_compress_len;
 use core::ops::Mul;
+use revm::primitives::{address, db::Database, Address, U256};
 
 use super::OptimismSpecId;
 
@@ -249,7 +249,7 @@ impl L1BlockInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::bytes;
+    use revm::primitives::bytes;
 
     #[test]
     fn test_data_gas_non_zero_bytes() {

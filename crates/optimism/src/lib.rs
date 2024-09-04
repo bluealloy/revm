@@ -1,13 +1,13 @@
 //! Optimism-specific constants, types, and helpers.
 
 mod bn128;
+mod env;
 mod fast_lz;
 mod handler_register;
 mod l1block;
 mod result;
 mod spec;
 
-use crate::primitives::{Bytes, TransactionValidation, B256};
 pub use handler_register::{
     deduct_caller, end, last_frame_return, load_accounts, load_precompiles,
     optimism_handle_register, output, refund, reward_beneficiary, validate_env,
@@ -15,6 +15,7 @@ pub use handler_register::{
 };
 pub use l1block::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
 pub use result::{OptimismHaltReason, OptimismInvalidTransaction};
+use revm::primitives::{Bytes, TransactionValidation, B256};
 pub use spec::*;
 
 pub trait OptimismContext {
@@ -55,8 +56,8 @@ pub trait OptimismTransaction {
 
 /// Trait for an Optimism chain spec.
 pub trait OptimismWiring:
-    crate::EvmWiring<
-    Context: OptimismContext,
+    revm::EvmWiring<
+    ChainContext: OptimismContext,
     Hardfork = OptimismSpecId,
     HaltReason = OptimismHaltReason,
     Transaction: OptimismTransaction
@@ -66,8 +67,8 @@ pub trait OptimismWiring:
 }
 
 impl<EvmWiringT> OptimismWiring for EvmWiringT where
-    EvmWiringT: crate::EvmWiring<
-        Context: OptimismContext,
+    EvmWiringT: revm::EvmWiring<
+        ChainContext: OptimismContext,
         Hardfork = OptimismSpecId,
         HaltReason = OptimismHaltReason,
         Transaction: OptimismTransaction

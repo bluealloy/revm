@@ -6,6 +6,7 @@ members = [
     "crates/primitives",
     "crates/interpreter",
     "crates/precompile",
+    "crates/optimism",
 ]
 resolver = "2"
 default-members = ["crates/revm"]
@@ -15,7 +16,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [profile.release]
-lto = true
+#lto = true
 codegen-units = 1
 debug = true
 

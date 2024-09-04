@@ -1,34 +1,36 @@
-use revm_precompile::PrecompileSpecId;
-
-use crate::{
-    handler::register::HandleRegisters,
-    primitives::{db::Database, BlockEnv, Spec, SpecId},
-    EvmHandler, L1BlockInfo,
+use core::marker::PhantomData;
+use revm::{
+    handler::register::HandleRegisters,precompile::PrecompileSpecId,
+    primitives::{db::Database,EvmWiring, BlockEnv, Spec, SpecId},
+    EvmHandler,
 };
-
-use super::{env::TxEnv, OptimismContext, OptimismHaltReason};
+use crate::{env::TxEnv,L1BlockInfo, optimism_handle_register, OptimismContext, OptimismHaltReason};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct EvmWiring;
+pub struct OptimismEvmWiring<DB:Database, EXT> {
+    _phantom: PhantomData<(DB,EXT)>,
+}
 
-impl crate::primitives::EvmWiring for EvmWiring {
+impl<DB:Database,EXT> EvmWiring for OptimismEvmWiring<DB,EXT> {
     type Block = BlockEnv;
+    type Database = DB;
+    type ChainContext = Context;
+    type ExternalContext = EXT;
     type Hardfork = OptimismSpecId;
     type HaltReason = OptimismHaltReason;
     type Transaction = TxEnv;
 }
 
-impl crate::EvmWiring for EvmWiring {
-    type Context = Context;
+impl<DB:Database,EXT> revm::EvmWiring for OptimismEvmWiring<DB,EXT> {
 
-    fn handler<'evm, EXT, DB>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self, EXT, DB>
+    fn handler<'evm>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self>
     where
         DB: Database,
     {
         let mut handler = EvmHandler::mainnet_with_spec(hardfork);
 
         handler.append_handler_register(HandleRegisters::Plain(
-            crate::optimism::optimism_handle_register::<Self, DB, EXT>,
+            optimism_handle_register::<Self>,
         ));
 
         handler
@@ -36,7 +38,7 @@ impl crate::EvmWiring for EvmWiring {
 }
 
 /// Context for the Optimism chain.
-#[derive(Default)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct Context {
     l1_block_info: Option<L1BlockInfo>,
 }
@@ -80,8 +82,9 @@ pub enum OptimismSpecId {
     CANCUN = 20,
     ECOTONE = 21,
     FJORD = 22,
-    PRAGUE = 23,
-    PRAGUE_EOF = 24,
+    GRANITE = 23,
+    PRAGUE = 24,
+    PRAGUE_EOF = 25,
     #[default]
     LATEST = u8::MAX,
 }
@@ -127,7 +130,7 @@ impl OptimismSpecId {
                 SpecId::MERGE
             }
             OptimismSpecId::SHANGHAI | OptimismSpecId::CANYON => SpecId::SHANGHAI,
-            OptimismSpecId::CANCUN | OptimismSpecId::ECOTONE | OptimismSpecId::FJORD => {
+            OptimismSpecId::CANCUN | OptimismSpecId::ECOTONE | OptimismSpecId::FJORD |OptimismSpecId::GRANITE => {
                 SpecId::CANCUN
             }
             OptimismSpecId::PRAGUE => SpecId::PRAGUE,
@@ -180,13 +183,14 @@ impl From<OptimismSpecId> for PrecompileSpecId {
 /// String identifiers for Optimism hardforks.
 pub mod id {
     // Re-export the Ethereum hardforks.
-    pub use crate::primitives::specification::id::*;
+    pub use revm::primitives::specification::id::*;
 
     pub const BEDROCK: &str = "Bedrock";
     pub const REGOLITH: &str = "Regolith";
     pub const CANYON: &str = "Canyon";
     pub const ECOTONE: &str = "Ecotone";
     pub const FJORD: &str = "Fjord";
+    pub const GRANITE: &str = "Granite";
 }
 
 impl From<&str> for OptimismSpecId {
@@ -251,6 +255,7 @@ impl From<OptimismSpecId> for &'static str {
             OptimismSpecId::CANYON => id::CANYON,
             OptimismSpecId::ECOTONE => id::ECOTONE,
             OptimismSpecId::FJORD => id::FJORD,
+            OptimismSpecId::GRANITE => id::GRANITE,
             OptimismSpecId::LATEST => id::LATEST,
         }
     }
@@ -311,96 +316,101 @@ spec!(REGOLITH, RegolithSpec);
 spec!(CANYON, CanyonSpec);
 spec!(ECOTONE, EcotoneSpec);
 spec!(FJORD, FjordSpec);
+spec!(GRANITE, GraniteSpec);
 
 #[macro_export]
 macro_rules! optimism_spec_to_generic {
     ($spec_id:expr, $e:expr) => {{
         // We are transitioning from var to generic spec.
         match $spec_id {
-            $crate::optimism::OptimismSpecId::FRONTIER
-            | $crate::optimism::OptimismSpecId::FRONTIER_THAWING => {
-                use $crate::optimism::FrontierSpec as SPEC;
+            $crate::OptimismSpecId::FRONTIER
+            | $crate::OptimismSpecId::FRONTIER_THAWING => {
+                use $crate::FrontierSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::HOMESTEAD
-            | $crate::optimism::OptimismSpecId::DAO_FORK => {
-                use $crate::optimism::HomesteadSpec as SPEC;
+            $crate::OptimismSpecId::HOMESTEAD
+            | $crate::OptimismSpecId::DAO_FORK => {
+                use $crate::HomesteadSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::TANGERINE => {
-                use $crate::optimism::TangerineSpec as SPEC;
+            $crate::OptimismSpecId::TANGERINE => {
+                use $crate::TangerineSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::SPURIOUS_DRAGON => {
-                use $crate::optimism::SpuriousDragonSpec as SPEC;
+            $crate::OptimismSpecId::SPURIOUS_DRAGON => {
+                use $crate::SpuriousDragonSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::BYZANTIUM => {
-                use $crate::optimism::ByzantiumSpec as SPEC;
+            $crate::OptimismSpecId::BYZANTIUM => {
+                use $crate::ByzantiumSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::PETERSBURG
-            | $crate::optimism::OptimismSpecId::CONSTANTINOPLE => {
-                use $crate::optimism::PetersburgSpec as SPEC;
+            $crate::OptimismSpecId::PETERSBURG
+            | $crate::OptimismSpecId::CONSTANTINOPLE => {
+                use $crate::PetersburgSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::ISTANBUL
-            | $crate::optimism::OptimismSpecId::MUIR_GLACIER => {
-                use $crate::optimism::IstanbulSpec as SPEC;
+            $crate::OptimismSpecId::ISTANBUL
+            | $crate::OptimismSpecId::MUIR_GLACIER => {
+                use $crate::IstanbulSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::BERLIN => {
-                use $crate::optimism::BerlinSpec as SPEC;
+            $crate::OptimismSpecId::BERLIN => {
+                use $crate::BerlinSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::LONDON
-            | $crate::optimism::OptimismSpecId::ARROW_GLACIER
-            | $crate::optimism::OptimismSpecId::GRAY_GLACIER => {
-                use $crate::optimism::LondonSpec as SPEC;
+            $crate::OptimismSpecId::LONDON
+            | $crate::OptimismSpecId::ARROW_GLACIER
+            | $crate::OptimismSpecId::GRAY_GLACIER => {
+                use $crate::LondonSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::MERGE => {
-                use $crate::optimism::MergeSpec as SPEC;
+            $crate::OptimismSpecId::MERGE => {
+                use $crate::MergeSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::SHANGHAI => {
-                use $crate::optimism::ShanghaiSpec as SPEC;
+            $crate::OptimismSpecId::SHANGHAI => {
+                use $crate::ShanghaiSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::CANCUN => {
-                use $crate::optimism::CancunSpec as SPEC;
+            $crate::OptimismSpecId::CANCUN => {
+                use $crate::CancunSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::LATEST => {
-                use $crate::optimism::LatestSpec as SPEC;
+            $crate::OptimismSpecId::LATEST => {
+                use $crate::LatestSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::PRAGUE => {
-                use $crate::optimism::PragueSpec as SPEC;
+            $crate::OptimismSpecId::PRAGUE => {
+                use $crate::PragueSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::PRAGUE_EOF => {
-                use $crate::optimism::PragueEofSpec as SPEC;
+            $crate::OptimismSpecId::PRAGUE_EOF => {
+                use $crate::PragueEofSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::BEDROCK => {
-                use $crate::optimism::BedrockSpec as SPEC;
+            $crate::OptimismSpecId::BEDROCK => {
+                use $crate::BedrockSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::REGOLITH => {
-                use $crate::optimism::RegolithSpec as SPEC;
+            $crate::OptimismSpecId::REGOLITH => {
+                use $crate::RegolithSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::CANYON => {
-                use $crate::optimism::CanyonSpec as SPEC;
+            $crate::OptimismSpecId::CANYON => {
+                use $crate::CanyonSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::ECOTONE => {
-                use $crate::optimism::EcotoneSpec as SPEC;
+            $crate::OptimismSpecId::GRANITE => {
+                use $crate::GraniteSpec as SPEC;
                 $e
             }
-            $crate::optimism::OptimismSpecId::FJORD => {
-                use $crate::optimism::FjordSpec as SPEC;
+            $crate::OptimismSpecId::ECOTONE => {
+                use $crate::EcotoneSpec as SPEC;
+                $e
+            }
+            $crate::OptimismSpecId::FJORD => {
+                use $crate::FjordSpec as SPEC;
                 $e
             }
         }
@@ -513,7 +523,6 @@ mod tests {
             OptimismSpecId::LATEST,
             assert_eq!(SPEC::SPEC_ID, SpecId::LATEST)
         );
-
         optimism_spec_to_generic!(
             OptimismSpecId::FRONTIER,
             assert_eq!(SPEC::OPTIMISM_SPEC_ID, OptimismSpecId::FRONTIER)
@@ -605,6 +614,10 @@ mod tests {
         optimism_spec_to_generic!(
             OptimismSpecId::FJORD,
             assert_eq!(SPEC::OPTIMISM_SPEC_ID, OptimismSpecId::FJORD)
+        );
+        optimism_spec_to_generic!(
+            OptimismSpecId::GRANITE,
+            assert_eq!(SPEC::OPTIMISM_SPEC_ID, OptimismSpecId::GRANITE)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::PRAGUE,

@@ -29,8 +29,8 @@ use std::{
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 
-type ExecEvmWiring<'a> = revm::primitives::EthereumWiring<&'a mut State<EmptyDB>, ()>;
-type TraceEvmWiring<'a> = revm::primitives::EthereumWiring<&'a mut State<EmptyDB>, TracerEip3155>;
+type ExecEvmWiring<'a> = EthereumWiring<&'a mut State<EmptyDB>, ()>;
+type TraceEvmWiring<'a> = EthereumWiring<&'a mut State<EmptyDB>, TracerEip3155>;
 
 #[derive(Debug, Error)]
 #[error("Test {name} failed: {kind}")]
