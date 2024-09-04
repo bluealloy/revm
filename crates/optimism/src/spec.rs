@@ -1,17 +1,20 @@
+use crate::{
+    env::TxEnv, optimism_handle_register, L1BlockInfo, OptimismContext, OptimismHaltReason,
+};
 use core::marker::PhantomData;
 use revm::{
-    handler::register::HandleRegisters,precompile::PrecompileSpecId,
-    primitives::{db::Database,EvmWiring, BlockEnv, Spec, SpecId},
+    handler::register::HandleRegisters,
+    precompile::PrecompileSpecId,
+    primitives::{db::Database, BlockEnv, EvmWiring, Spec, SpecId},
     EvmHandler,
 };
-use crate::{env::TxEnv,L1BlockInfo, optimism_handle_register, OptimismContext, OptimismHaltReason};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct OptimismEvmWiring<DB:Database, EXT> {
-    _phantom: PhantomData<(DB,EXT)>,
+pub struct OptimismEvmWiring<DB: Database, EXT> {
+    _phantom: PhantomData<(DB, EXT)>,
 }
 
-impl<DB:Database,EXT> EvmWiring for OptimismEvmWiring<DB,EXT> {
+impl<DB: Database, EXT> EvmWiring for OptimismEvmWiring<DB, EXT> {
     type Block = BlockEnv;
     type Database = DB;
     type ChainContext = Context;
@@ -21,17 +24,14 @@ impl<DB:Database,EXT> EvmWiring for OptimismEvmWiring<DB,EXT> {
     type Transaction = TxEnv;
 }
 
-impl<DB:Database,EXT> revm::EvmWiring for OptimismEvmWiring<DB,EXT> {
-
+impl<DB: Database, EXT> revm::EvmWiring for OptimismEvmWiring<DB, EXT> {
     fn handler<'evm>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self>
     where
         DB: Database,
     {
         let mut handler = EvmHandler::mainnet_with_spec(hardfork);
 
-        handler.append_handler_register(HandleRegisters::Plain(
-            optimism_handle_register::<Self>,
-        ));
+        handler.append_handler_register(HandleRegisters::Plain(optimism_handle_register::<Self>));
 
         handler
     }
@@ -130,9 +130,10 @@ impl OptimismSpecId {
                 SpecId::MERGE
             }
             OptimismSpecId::SHANGHAI | OptimismSpecId::CANYON => SpecId::SHANGHAI,
-            OptimismSpecId::CANCUN | OptimismSpecId::ECOTONE | OptimismSpecId::FJORD |OptimismSpecId::GRANITE => {
-                SpecId::CANCUN
-            }
+            OptimismSpecId::CANCUN
+            | OptimismSpecId::ECOTONE
+            | OptimismSpecId::FJORD
+            | OptimismSpecId::GRANITE => SpecId::CANCUN,
             OptimismSpecId::PRAGUE => SpecId::PRAGUE,
             OptimismSpecId::PRAGUE_EOF => SpecId::PRAGUE_EOF,
             OptimismSpecId::LATEST => SpecId::LATEST,
@@ -323,13 +324,11 @@ macro_rules! optimism_spec_to_generic {
     ($spec_id:expr, $e:expr) => {{
         // We are transitioning from var to generic spec.
         match $spec_id {
-            $crate::OptimismSpecId::FRONTIER
-            | $crate::OptimismSpecId::FRONTIER_THAWING => {
+            $crate::OptimismSpecId::FRONTIER | $crate::OptimismSpecId::FRONTIER_THAWING => {
                 use $crate::FrontierSpec as SPEC;
                 $e
             }
-            $crate::OptimismSpecId::HOMESTEAD
-            | $crate::OptimismSpecId::DAO_FORK => {
+            $crate::OptimismSpecId::HOMESTEAD | $crate::OptimismSpecId::DAO_FORK => {
                 use $crate::HomesteadSpec as SPEC;
                 $e
             }
@@ -345,13 +344,11 @@ macro_rules! optimism_spec_to_generic {
                 use $crate::ByzantiumSpec as SPEC;
                 $e
             }
-            $crate::OptimismSpecId::PETERSBURG
-            | $crate::OptimismSpecId::CONSTANTINOPLE => {
+            $crate::OptimismSpecId::PETERSBURG | $crate::OptimismSpecId::CONSTANTINOPLE => {
                 use $crate::PetersburgSpec as SPEC;
                 $e
             }
-            $crate::OptimismSpecId::ISTANBUL
-            | $crate::OptimismSpecId::MUIR_GLACIER => {
+            $crate::OptimismSpecId::ISTANBUL | $crate::OptimismSpecId::MUIR_GLACIER => {
                 use $crate::IstanbulSpec as SPEC;
                 $e
             }

@@ -55,7 +55,7 @@ fn run_transaction_and_commit(db: &mut CacheDB<EmptyDB>) -> anyhow::Result<()> {
     let ResultAndState { state: changes, .. } = {
         let rdb = &*db;
 
-        let mut evm = Evm::<EthereumWiring<_,_>>::builder()
+        let mut evm = Evm::<EthereumWiring<_, _>>::builder()
             .with_db(WrapDatabaseRef(rdb))
             .with_external_context(NoOpInspector)
             .append_handler_register(inspector_handle_register)
