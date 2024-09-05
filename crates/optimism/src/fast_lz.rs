@@ -106,12 +106,11 @@ fn u24(input: &[u8], idx: u32) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::OptimismEvmWiring;
     use alloy_sol_types::sol;
     use alloy_sol_types::SolCall;
     use revm::{
         db::BenchmarkDB,
-        primitives::{address, bytes, Bytecode, Bytes, TxKind, U256},
+        primitives::{address, bytes, Bytecode, Bytes, EthereumWiring, TxKind, U256},
         Evm,
     };
 
@@ -162,14 +161,14 @@ mod tests {
 
         let native_val = flz_compress_len(&input);
 
-        let mut evm = Evm::<OptimismEvmWiring<BenchmarkDB, ()>>::builder()
+        let mut evm = Evm::<EthereumWiring<BenchmarkDB, ()>>::builder()
             .with_db(BenchmarkDB::new_bytecode(contract_bytecode.clone()))
             .with_default_ext_ctx()
             .modify_tx_env(|tx| {
-                tx.base.caller = address!("1000000000000000000000000000000000000000");
-                tx.base.transact_to =
+                tx.caller = address!("1000000000000000000000000000000000000000");
+                tx.transact_to =
                     TxKind::Call(address!("0000000000000000000000000000000000000000"));
-                tx.base.data = FastLz::fastLzCall::new((input,)).abi_encode().into();
+                tx.data = FastLz::fastLzCall::new((input,)).abi_encode().into();
             })
             .build();
 
