@@ -443,7 +443,7 @@ mod tests {
 
         // test
 
-        let data_gas = l1_block_info.data_gas(TX, SpecId::FJORD);
+        let data_gas = l1_block_info.data_gas(TX, OptimismSpecId::FJORD);
 
         assert_eq!(data_gas, expected_data_gas);
 
