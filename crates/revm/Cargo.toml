@@ -22,6 +22,7 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
+once_cell = "1.19.0"
 # revm
 revm-interpreter = { path = "../interpreter", version = "9.0.0", default-features = false }
 revm-precompile = { path = "../precompile", version = "10.0.0", default-features = false }

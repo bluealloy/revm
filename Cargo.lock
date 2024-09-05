@@ -3022,6 +3022,7 @@ dependencies = [
  "ethers-core",
  "ethers-providers",
  "indicatif",
+ "once_cell",
  "reqwest 0.12.5",
  "revm-interpreter",
  "revm-precompile",

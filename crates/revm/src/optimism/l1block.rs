@@ -1,9 +1,22 @@
 use crate::optimism::fast_lz::flz_compress_len;
 use crate::primitives::{address, db::Database, Address, SpecId, U256};
 use core::ops::Mul;
+use once_cell::sync::Lazy;
 
 const ZERO_BYTE_COST: u64 = 4;
-const NON_ZERO_BYTE_COST: u64 = 16;
+/// const NON_ZERO_BYTE_COST: u64 = 16; <------------ Original
+/// WeaveVM intends to decrease this cost
+/// to 8 gas
+/// ENV=NON_ZERO_BYTE_COST_ORIGINAL can be set to false so it loads 16 gas
+pub static NON_ZERO_BYTE_COST: Lazy<u64> = Lazy::new(|| {
+    let original = std::env::var("NON_ZERO_BYTE_COST_ORIGINAL").unwrap_or_else(|_| "false".to_string());
+
+    if original == "true" {
+        16
+    } else {
+        8
+    }
+});
 
 /// The two 4-byte Ecotone fee scalar values are packed into the same storage slot as the 8-byte sequence number.
 /// Byte offset within the storage slot of the 4-byte baseFeeScalar attribute.
@@ -120,6 +133,7 @@ impl L1BlockInfo {
     /// Calculate the data gas for posting the transaction on L1. Calldata costs 16 gas per byte
     /// after compression.
     ///
+    /// (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
     /// Prior to fjord, calldata costs 16 gas per non-zero byte and 4 gas per zero byte.
     ///
     /// Prior to regolith, an extra 68 non-zero bytes were included in the rollup data costs to
@@ -129,7 +143,7 @@ impl L1BlockInfo {
             let estimated_size = self.tx_estimated_size_fjord(input);
 
             return estimated_size
-                .saturating_mul(U256::from(NON_ZERO_BYTE_COST))
+                .saturating_mul(U256::from(*NON_ZERO_BYTE_COST))
                 .wrapping_div(U256::from(1_000_000));
         };
 
@@ -137,13 +151,13 @@ impl L1BlockInfo {
             acc + if *byte == 0x00 {
                 ZERO_BYTE_COST
             } else {
-                NON_ZERO_BYTE_COST
+                *NON_ZERO_BYTE_COST
             }
         }));
 
         // Prior to regolith, an extra 68 non zero bytes were included in the rollup data costs.
         if !spec_id.is_enabled_in(SpecId::REGOLITH) {
-            rollup_data_gas_cost += U256::from(NON_ZERO_BYTE_COST).mul(U256::from(68));
+            rollup_data_gas_cost += U256::from(*NON_ZERO_BYTE_COST).mul(U256::from(68));
         }
 
         rollup_data_gas_cost
@@ -210,7 +224,7 @@ impl L1BlockInfo {
 
         l1_fee_scaled
             .saturating_mul(rollup_data_gas_cost)
-            .wrapping_div(U256::from(1_000_000 * NON_ZERO_BYTE_COST))
+            .wrapping_div(U256::from(1_000_000 * (*NON_ZERO_BYTE_COST)))
     }
 
     /// Calculate the gas cost of a transaction based on L1 block data posted on L2, post-Fjord.
@@ -230,7 +244,7 @@ impl L1BlockInfo {
     fn calculate_l1_fee_scaled_ecotone(&self) -> U256 {
         let calldata_cost_per_byte = self
             .l1_base_fee
-            .saturating_mul(U256::from(NON_ZERO_BYTE_COST))
+            .saturating_mul(U256::from(*NON_ZERO_BYTE_COST))
             .saturating_mul(self.l1_base_fee_scalar);
         let blob_cost_per_byte = self
             .l1_blob_base_fee
@@ -260,20 +274,23 @@ mod tests {
 
         // Pre-regolith (ie bedrock) has an extra 68 non-zero bytes
         // gas cost = 3 non-zero bytes * NON_ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
-        // gas cost = 3 * 16 + 68 * 16 = 1136
+        // gas cost = 3 * 8 + 68 * 8 = 1136
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let input = bytes!("FACADE");
         let bedrock_data_gas = l1_block_info.data_gas(&input, SpecId::BEDROCK);
-        assert_eq!(bedrock_data_gas, U256::from(1136));
+        assert_eq!(bedrock_data_gas, U256::from(568));
 
         // Regolith has no added 68 non zero bytes
         // gas cost = 3 * 16 = 48
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let regolith_data_gas = l1_block_info.data_gas(&input, SpecId::REGOLITH);
-        assert_eq!(regolith_data_gas, U256::from(48));
+        assert_eq!(regolith_data_gas, U256::from(24));
 
         // Fjord has a minimum compressed size of 100 bytes
         // gas cost = 100 * 16 = 1600
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let fjord_data_gas = l1_block_info.data_gas(&input, SpecId::FJORD);
-        assert_eq!(fjord_data_gas, U256::from(1600));
+        assert_eq!(fjord_data_gas, U256::from(800));
     }
 
     #[test]
@@ -291,19 +308,20 @@ mod tests {
         // Pre-regolith (ie bedrock) has an extra 68 non-zero bytes
         // gas cost = 3 non-zero * NON_ZERO_BYTE_COST + 2 * ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
         // gas cost = 3 * 16 + 2 * 4 + 68 * 16 = 1144
+        // (16 gas per byte were previously used, Weavem changed this. Know it can be reverted through NON_ZERO_BYTE_COST_ORIGINAL feature flag)
         let input = bytes!("FA00CA00DE");
         let bedrock_data_gas = l1_block_info.data_gas(&input, SpecId::BEDROCK);
-        assert_eq!(bedrock_data_gas, U256::from(1144));
+        assert_eq!(bedrock_data_gas, U256::from(576));
 
         // Regolith has no added 68 non zero bytes
         // gas cost = 3 * 16 + 2 * 4 = 56
         let regolith_data_gas = l1_block_info.data_gas(&input, SpecId::REGOLITH);
-        assert_eq!(regolith_data_gas, U256::from(56));
+        assert_eq!(regolith_data_gas, U256::from(32));
 
         // Fjord has a minimum compressed size of 100 bytes
         // gas cost = 100 * 16 = 1600
         let fjord_data_gas = l1_block_info.data_gas(&input, SpecId::FJORD);
-        assert_eq!(fjord_data_gas, U256::from(1600));
+        assert_eq!(fjord_data_gas, U256::from(800));
     }
 
     #[test]
@@ -317,7 +335,7 @@ mod tests {
 
         let input = bytes!("FACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::REGOLITH);
-        assert_eq!(gas_cost, U256::from(1048));
+        assert_eq!(gas_cost, U256::from(1024));
 
         // Zero rollup data gas cost should result in zero
         let input = bytes!("");
@@ -346,7 +364,7 @@ mod tests {
         // = 51
         let input = bytes!("FACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
-        assert_eq!(gas_cost, U256::from(51));
+        assert_eq!(gas_cost, U256::from(27));
 
         // Zero rollup data gas cost should result in zero
         let input = bytes!("");
@@ -362,7 +380,7 @@ mod tests {
         l1_block_info.empty_scalars = true;
         let input = bytes!("FACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
-        assert_eq!(gas_cost, U256::from(1048));
+        assert_eq!(gas_cost, U256::from(1024));
     }
 
     #[test]
@@ -387,7 +405,7 @@ mod tests {
         //        = 100e6 * 17 / 1e6
         //        = 1700
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::FJORD);
-        assert_eq!(gas_cost, U256::from(1700));
+        assert_eq!(gas_cost, U256::from(900));
 
         // fastLzSize = 202
         // estimatedSize = max(minTransactionSize, intercept + fastlzCoef*fastlzSize)
@@ -398,7 +416,7 @@ mod tests {
         //        = 126387400 * 17 / 1e6
         //        = 2148
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::FJORD);
-        assert_eq!(gas_cost, U256::from(2148));
+        assert_eq!(gas_cost, U256::from(1137));
 
         // Zero rollup data gas cost should result in zero
         let input = bytes!("");
