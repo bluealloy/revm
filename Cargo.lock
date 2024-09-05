@@ -3149,6 +3149,7 @@ dependencies = [
  "enumn",
  "indicatif",
  "revm",
+ "revm-precompile",
  "rstest",
  "serde",
  "serde_json",

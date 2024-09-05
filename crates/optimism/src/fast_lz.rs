@@ -164,6 +164,7 @@ mod tests {
 
         let mut evm = Evm::<OptimismEvmWiring<BenchmarkDB, ()>>::builder()
             .with_db(BenchmarkDB::new_bytecode(contract_bytecode.clone()))
+            .with_default_ext_ctx()
             .modify_tx_env(|tx| {
                 tx.base.caller = address!("1000000000000000000000000000000000000000");
                 tx.base.transact_to =

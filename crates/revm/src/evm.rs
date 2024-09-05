@@ -52,7 +52,11 @@ impl<EvmWiringT: EvmWiring<Database: DatabaseCommit>> Evm<'_, EvmWiringT> {
     }
 }
 
-impl<'a, EvmWiringT: EvmWiring> Evm<'a, EvmWiringT> {
+impl<'a, EvmWiringT: EvmWiring> Evm<'a, EvmWiringT>
+where
+    EvmWiringT::Transaction: Default,
+    EvmWiringT::Block: Default,
+{
     /// Returns evm builder with the mainnet chain spec, empty database, and empty external context.
     pub fn builder() -> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
         EvmBuilder::new()
@@ -437,6 +441,7 @@ mod tests {
         let mut evm = Evm::<EthereumWiring<BenchmarkDB, ()>>::builder()
             .with_spec_id(SpecId::PRAGUE)
             .with_db(BenchmarkDB::new_bytecode(bytecode))
+            .with_default_ext_ctx()
             .modify_tx_env(|tx| {
                 tx.authorization_list = Some(
                     vec![RecoveredAuthorization::new_unchecked(

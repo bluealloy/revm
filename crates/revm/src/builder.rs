@@ -34,18 +34,24 @@ impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthereumWiring<EmptyDB, ()>
     }
 }
 
-impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
+impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT>
+where
+    EvmWiringT::Transaction: Default,
+    EvmWiringT::Block: Default,
+{
     /// Sets the [`EvmWiring`] that will be used by [`Evm`].
     pub fn new() -> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
         EvmBuilder {
             database: None,
             external_context: None,
-            env: None,
+            env: Some(Box::new(EnvWiring::<EvmWiringT>::default())),
             handler: EvmWiringT::handler::<'a>(EvmWiringT::Hardfork::default()),
             phantom: PhantomData,
         }
     }
+}
 
+impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
     pub fn new_with(
         database: EvmWiringT::Database,
         external_context: EvmWiringT::ExternalContext,
@@ -63,11 +69,15 @@ impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
 
     pub fn with_wiring<NewEvmWiringT: EvmWiring>(
         self,
-    ) -> EvmBuilder<'a, SetGenericStage, NewEvmWiringT> {
+    ) -> EvmBuilder<'a, SetGenericStage, NewEvmWiringT>
+    where
+        NewEvmWiringT::Transaction: Default,
+        NewEvmWiringT::Block: Default,
+    {
         EvmBuilder {
             database: None,
             external_context: None,
-            env: None,
+            env: Some(Box::new(EnvWiring::<NewEvmWiringT>::default())),
             handler: NewEvmWiringT::handler::<'a>(NewEvmWiringT::Hardfork::default()),
             phantom: PhantomData,
         }
@@ -476,6 +486,7 @@ mod test {
         let to_capture = custom_context.clone();
         let mut evm = Evm::<EthereumWiring<InMemoryDB, ()>>::builder()
             .with_default_db()
+            .with_default_ext_ctx()
             .modify_db(|db| {
                 db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
             })

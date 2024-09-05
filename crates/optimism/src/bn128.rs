@@ -1,5 +1,6 @@
-use revm::precompile::bn128;
-use revm::precompile::{Error, Precompile, PrecompileResult, PrecompileWithAddress};
+use revm_precompile::{
+    bn128, {Error, Precompile, PrecompileResult, PrecompileWithAddress},
+};
 
 pub(crate) mod pair {
     use super::*;

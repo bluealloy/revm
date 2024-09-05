@@ -403,6 +403,7 @@ mod tests {
     fn test_inspector_reg() {
         let mut noop = NoOpInspector;
         let _evm: Evm<'_, EthereumWiring<EmptyDB, &mut NoOpInspector>> = Evm::builder()
+            .with_default_db()
             .with_external_context(&mut noop)
             .append_handler_register(inspector_handle_register)
             .build();
