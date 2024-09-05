@@ -68,16 +68,25 @@ pub fn inspector_handle_register<
         // execute selfdestruct
         prev(interpreter, host);
         // check if selfdestruct was successful and if journal entry is made.
-        if let Some(JournalEntry::AccountDestroyed {
-            address,
-            target,
-            had_balance,
-            ..
-        }) = host.evm.journaled_state.journal.last().unwrap().last()
-        {
-            host.external
-                .get_inspector()
-                .selfdestruct(*address, *target, *had_balance);
+        match host.evm.journaled_state.journal.last().unwrap().last() {
+            Some(JournalEntry::AccountDestroyed {
+                address,
+                target,
+                had_balance,
+                ..
+            }) => {
+                host.external
+                    .get_inspector()
+                    .selfdestruct(*address, *target, *had_balance);
+            }
+            Some(JournalEntry::BalanceTransfer {
+                from, to, balance, ..
+            }) => {
+                host.external
+                    .get_inspector()
+                    .selfdestruct(*from, *to, *balance);
+            }
+            _ => {}
         }
     });
 
