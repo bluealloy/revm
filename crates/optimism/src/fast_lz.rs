@@ -166,8 +166,7 @@ mod tests {
             .with_default_ext_ctx()
             .modify_tx_env(|tx| {
                 tx.caller = address!("1000000000000000000000000000000000000000");
-                tx.transact_to =
-                    TxKind::Call(address!("0000000000000000000000000000000000000000"));
+                tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
                 tx.data = FastLz::fastLzCall::new((input,)).abi_encode().into();
             })
             .build();

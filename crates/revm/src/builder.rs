@@ -289,10 +289,10 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring> EvmBuilder<'a, BuilderStage, EvmWi
     /// ```rust
     /// use revm::{EvmBuilder, EvmHandler, db::EmptyDB, primitives::{EthereumWiring, SpecId}};
     /// use revm_interpreter::primitives::CancunSpec;
-    /// let builder = EvmBuilder::default();
+    /// let builder = EvmBuilder::default().with_default_db().with_default_ext_ctx();
     ///
     /// // get the desired handler
-    /// let mainnet = EvmHandler::<'_, EthereumWiring, (), EmptyDB>::mainnet_with_spec(SpecId::CANCUN);
+    /// let mainnet = EvmHandler::<'_, EthereumWiring<EmptyDB,()>>::mainnet_with_spec(SpecId::CANCUN);
     /// let builder = builder.with_handler(mainnet);
     ///
     /// // build the EVM
