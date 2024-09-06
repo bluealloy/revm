@@ -93,8 +93,7 @@ impl fmt::Display for Eip7702DecodeError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for Eip7702DecodeError {}
+impl core::error::Error for Eip7702DecodeError {}
 
 #[cfg(test)]
 mod tests {

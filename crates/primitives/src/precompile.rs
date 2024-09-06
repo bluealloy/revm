@@ -140,8 +140,7 @@ pub enum PrecompileErrors {
     Fatal { msg: String },
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for PrecompileErrors {}
+impl core::error::Error for PrecompileErrors {}
 
 impl fmt::Display for PrecompileErrors {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -196,8 +195,7 @@ impl From<PrecompileError> for PrecompileErrors {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for PrecompileError {}
+impl core::error::Error for PrecompileError {}
 
 impl fmt::Display for PrecompileError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

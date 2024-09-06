@@ -24,8 +24,8 @@ impl fmt::Display for OpCodeError {
     }
 }
 
-#[cfg(all(feature = "std", feature = "parse"))]
-impl std::error::Error for OpCodeError {}
+#[cfg(feature = "parse")]
+impl core::error::Error for OpCodeError {}
 
 /// An EVM opcode.
 ///
