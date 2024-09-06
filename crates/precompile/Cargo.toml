@@ -86,8 +86,6 @@ std = [
 hashbrown = ["revm-primitives/hashbrown"]
 asm-keccak = ["revm-primitives/asm-keccak"]
 
-optimism = ["revm-primitives/optimism", "secp256r1"]
-
 # Enables the p256verify precompile.
 secp256r1 = ["dep:p256"]
 

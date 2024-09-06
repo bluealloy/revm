@@ -144,6 +144,11 @@ impl Output {
     }
 }
 
+pub type EVMErrorWiring<EvmWiringT> = EVMError<
+    <<EvmWiringT as EvmWiring>::Database as Database>::Error,
+    <<EvmWiringT as EvmWiring>::Transaction as TransactionValidation>::ValidationError,
+>;
+
 /// Main EVM error.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

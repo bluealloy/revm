@@ -3,11 +3,11 @@ use revm_interpreter::Host as _;
 use crate::{
     builder::{EvmBuilder, SetGenericStage},
     db::{Database, DatabaseCommit},
-    handler::{EnvWithEvmWiring, Handler},
+    handler::Handler,
     interpreter::{CallInputs, CreateInputs, EOFCreateInputs, InterpreterAction, SharedMemory},
     primitives::{
-        CfgEnv, EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState, SpecId,
-        Transaction, TxKind, EOF_MAGIC_BYTES,
+        CfgEnv, EVMError, EVMResult, EVMResultGeneric, EnvWiring, ExecutionResult, ResultAndState,
+        SpecId, Transaction, TxKind, EOF_MAGIC_BYTES,
     },
     Context, ContextWithEvmWiring, EvmContext, EvmWiring, Frame, FrameOrResult, FrameResult,
     InnerEvmContext,
@@ -91,10 +91,6 @@ impl<'a, EvmWiringT: EvmWiring> Evm<'a, EvmWiringT> {
                 },
             handler,
         } = self;
-        // let handler = self.handler;
-        // let db = self.context.evm.db;
-        // let ext = self.context.external;
-        // let env = self.context.evm.env;
         EvmBuilder::<'a>::new_with(db, external, env, handler)
     }
 
@@ -316,6 +312,12 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
         &mut self.context.evm.env.block
     }
 
+    /// Modify spec id, this will create new EVM that matches this spec id.
+    pub fn modify_spec_id(&mut self, spec_id: EvmWiringT::Hardfork) {
+        self.context.evm.journaled_state.set_spec_id(spec_id.into());
+        self.handler.modify_spec_id(spec_id);
+    }
+
     /// Returns internal database and external struct.
     #[inline]
     pub fn into_context(self) -> Context<EvmWiringT> {
@@ -326,13 +328,15 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
     #[inline]
     pub fn into_db_and_env_with_handler_cfg(
         self,
-    ) -> (EvmWiringT::Database, EnvWithEvmWiring<EvmWiringT>) {
+    ) -> (
+        EvmWiringT::Database,
+        Box<EnvWiring<EvmWiringT>>,
+        EvmWiringT::Hardfork,
+    ) {
         (
             self.context.evm.inner.db,
-            EnvWithEvmWiring {
-                env: self.context.evm.inner.env,
-                spec_id: self.handler.spec_id,
-            },
+            self.context.evm.inner.env,
+            self.handler.spec_id,
         )
     }
 

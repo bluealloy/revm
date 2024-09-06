@@ -1,11 +1,9 @@
 // Modules.
-pub mod cfg;
 mod handle_types;
 pub mod mainnet;
 pub mod register;
 
 // Exports.
-pub use cfg::{CfgEnvWithEvmWiring, EnvWithEvmWiring};
 pub use handle_types::*;
 
 // Includes.

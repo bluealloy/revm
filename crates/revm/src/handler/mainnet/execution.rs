@@ -180,7 +180,7 @@ pub fn insert_eofcreate_outcome<EvmWiringT: EvmWiring>(
     frame: &mut Frame,
     outcome: CreateOutcome,
 ) -> EVMResultGeneric<(), EvmWiringT> {
-    core::mem::replace(&mut context.evm.error, Ok(())).map_err(EVMError::Database)?;
+    context.evm.take_error().map_err(EVMError::Database)?;
 
     frame
         .frame_data_mut()

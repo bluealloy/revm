@@ -307,6 +307,10 @@ pub struct CfgEnv {
     /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
     /// By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
+    /// Skips the nonce validation against the account's nonce:
+    /// [`crate::InvalidTransaction::NonceTooHigh`] and
+    /// [`crate::InvalidTransaction::NonceTooLow`]
+    pub disable_nonce_check: bool,
     /// A hard memory limit in bytes beyond which [crate::result::OutOfGasError::Memory] cannot be resized.
     ///
     /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
@@ -341,11 +345,6 @@ pub struct CfgEnv {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_beneficiary_reward")]
     pub disable_beneficiary_reward: bool,
-    /// Skips the nonce validation against the account's nonce:
-    /// [`crate::InvalidTransaction::NonceTooHigh`] and
-    /// [`crate::InvalidTransaction::NonceTooLow`]
-    #[cfg(feature = "optional_nonce_check")]
-    pub disable_nonce_check: bool,
 }
 
 impl CfgEnv {
@@ -420,14 +419,8 @@ impl CfgEnv {
         false
     }
 
-    #[cfg(feature = "optional_nonce_check")]
     pub const fn is_nonce_check_disabled(&self) -> bool {
         self.disable_nonce_check
-    }
-
-    #[cfg(not(feature = "optional_nonce_check"))]
-    pub const fn is_nonce_check_disabled(&self) -> bool {
-        false
     }
 }
 
@@ -437,6 +430,7 @@ impl Default for CfgEnv {
             chain_id: 1,
             perf_analyse_created_bytecodes: AnalysisKind::default(),
             limit_contract_code_size: None,
+            disable_nonce_check: false,
             #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
             kzg_settings: crate::kzg::EnvKzgSettings::Default,
             #[cfg(feature = "memory_limit")]
@@ -453,8 +447,6 @@ impl Default for CfgEnv {
             disable_base_fee: false,
             #[cfg(feature = "optional_beneficiary_reward")]
             disable_beneficiary_reward: false,
-            #[cfg(feature = "optional_nonce_check")]
-            disable_nonce_check: false,
         }
     }
 }

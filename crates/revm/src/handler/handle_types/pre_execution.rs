@@ -26,7 +26,7 @@ pub type ApplyEIP7702AuthListHandle<'a, EvmWiringT> = GenericContextHandleRet<'a
 pub struct PreExecutionHandler<'a, EvmWiringT: EvmWiring> {
     /// Load precompiles
     pub load_precompiles: LoadPrecompilesHandle<'a, EvmWiringT>,
-    // /// Main load handle
+    /// Main load handle
     pub load_accounts: LoadAccountsHandle<'a, EvmWiringT>,
     /// Deduct max value from the caller.
     pub deduct_caller: DeductCallerHandle<'a, EvmWiringT>,

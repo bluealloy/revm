@@ -14,9 +14,9 @@ mod context;
 #[cfg(any(test, feature = "test-utils"))]
 pub mod test_utils;
 
-mod chain_spec;
 pub mod db;
 mod evm;
+mod evm_wiring;
 mod frame;
 pub mod handler;
 mod inspector;
@@ -25,7 +25,6 @@ mod journaled_state;
 // Export items.
 
 pub use builder::EvmBuilder;
-pub use chain_spec::EvmWiring;
 pub use context::{
     Context, ContextPrecompile, ContextPrecompiles, ContextStatefulPrecompile,
     ContextStatefulPrecompileArc, ContextStatefulPrecompileBox, ContextStatefulPrecompileMut,
@@ -36,6 +35,7 @@ pub use db::{
 };
 pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
 pub use evm::{Evm, CALL_STACK_LIMIT};
+pub use evm_wiring::EvmWiring;
 pub use frame::{CallFrame, CreateFrame, Frame, FrameData, FrameOrResult, FrameResult};
 pub use handler::{register::EvmHandler, Handler};
 pub use inspector::{inspector_handle_register, inspectors, GetInspector, Inspector};

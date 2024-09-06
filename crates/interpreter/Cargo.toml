@@ -51,8 +51,6 @@ asm-keccak = ["revm-primitives/asm-keccak"]
 portable = ["revm-primitives/portable"]
 parse = ["dep:paste", "dep:phf"]
 
-optimism = ["revm-primitives/optimism"]
-
 dev = [
     "memory_limit",
     "optional_balance_check",
@@ -61,7 +59,6 @@ dev = [
     "optional_gas_refund",
     "optional_no_base_fee",
     "optional_beneficiary_reward",
-    "optional_nonce_check",
 ]
 memory_limit = ["revm-primitives/memory_limit"]
 optional_balance_check = ["revm-primitives/optional_balance_check"]
@@ -70,6 +67,5 @@ optional_eip3607 = ["revm-primitives/optional_eip3607"]
 optional_gas_refund = ["revm-primitives/optional_gas_refund"]
 optional_no_base_fee = ["revm-primitives/optional_no_base_fee"]
 optional_beneficiary_reward = ["revm-primitives/optional_beneficiary_reward"]
-optional_nonce_check = ["revm-primitives/optional_nonce_check"]
 
 kzg-rs = ["revm-primitives/kzg-rs"]
