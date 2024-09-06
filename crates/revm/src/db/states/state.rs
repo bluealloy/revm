@@ -213,6 +213,11 @@ impl<DB: Database> State<DB> {
     pub fn take_bundle(&mut self) -> BundleState {
         core::mem::take(&mut self.bundle_state)
     }
+
+    /// Takes the [`CacheState`] from the [`State`], replacing it with an empty one.
+    pub fn take_cache(&mut self) -> CacheState {
+        core::mem::take(&mut self.cache)
+    }
 }
 
 impl<DB: Database> Database for State<DB> {
