@@ -391,6 +391,7 @@ pub fn execute_test_suite(
                     .build();
                 let mut evm = Evm::<ExecEvmWiring>::builder()
                     .with_db(&mut state)
+                    .with_default_ext_ctx()
                     .modify_env(|e| e.clone_from(&env))
                     .with_spec_id(spec_id)
                     .build();
