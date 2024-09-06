@@ -322,7 +322,7 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
         self.context
     }
 
-    /// Returns database and [`EnvWithEvmWiring`].
+    /// Returns database, [`EnvWiring`] and Hardfork.
     #[inline]
     pub fn into_db_and_env_with_handler_cfg(
         self,

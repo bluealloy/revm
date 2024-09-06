@@ -148,7 +148,7 @@ where
         self
     }
 
-    /// Sets the [`Database`] that will be used by [`Evm`].
+    /// Sets the [`crate::Database`] that will be used by [`Evm`].
     pub fn with_db(
         mut self,
         db: EvmWiringT::Database,
