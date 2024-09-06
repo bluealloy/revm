@@ -9,7 +9,8 @@ const ZERO_BYTE_COST: u64 = 4;
 /// to 8 gas
 /// ENV=NON_ZERO_BYTE_COST_ORIGINAL can be set to false so it loads 16 gas
 pub static NON_ZERO_BYTE_COST: Lazy<u64> = Lazy::new(|| {
-    let original = std::env::var("NON_ZERO_BYTE_COST_ORIGINAL").unwrap_or_else(|_| "false".to_string());
+    let original =
+        std::env::var("NON_ZERO_BYTE_COST_ORIGINAL").unwrap_or_else(|_| "false".to_string());
 
     if original == "true" {
         16
