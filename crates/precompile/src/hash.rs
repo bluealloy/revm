@@ -16,7 +16,7 @@ pub const RIPEMD160: PrecompileWithAddress = PrecompileWithAddress(
 /// This function follows specifications defined in the following references:
 /// - [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf)
 /// - [Solidity Documentation on Mathematical and Cryptographic Functions](https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions)
-/// - [Address 0x02][(https://etherscan.io/address/0000000000000000000000000000000000000002)
+/// - [Address 0x02](https://etherscan.io/address/0000000000000000000000000000000000000002)
 pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let cost = calc_linear_cost_u32(input.len(), 60, 12);
     if cost > gas_limit {
@@ -32,7 +32,7 @@ pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 /// This function follows specifications defined in the following references:
 /// - [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf)
 /// - [Solidity Documentation on Mathematical and Cryptographic Functions](https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions)
-/// - [Address 03](https://etherscan.io/address/0000000000000000000000000000000000000003))
+/// - [Address 03](https://etherscan.io/address/0000000000000000000000000000000000000003)
 pub fn ripemd160_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let gas_used = calc_linear_cost_u32(input.len(), 600, 120);
     if gas_used > gas_limit {
