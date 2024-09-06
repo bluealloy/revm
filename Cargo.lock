@@ -3149,7 +3149,6 @@ dependencies = [
  "revm-precompile",
  "rstest",
  "serde",
- "serde_json",
 ]
 
 [[package]]

@@ -26,9 +26,9 @@ pub(crate) mod pair {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use revm::primitives::{hex, PrecompileErrors};
     use std::vec;
-    use super::*;
 
     #[test]
     fn test_bn128_pair() {

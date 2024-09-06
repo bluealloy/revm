@@ -36,9 +36,6 @@ serde = { version = "1.0", default-features = false, features = [
     "derive",
     "rc",
 ], optional = true }
-serde_json = { version = "1.0", default-features = false, features = [
-    "alloc",
-], optional = true }
 
 
 [dev-dependencies]
@@ -54,14 +51,12 @@ alloy-provider = "0.3"
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
     "serde?/std",
-    "serde_json?/std",
-    "serde_json?/preserve_order",
     "revm/std",
     "revm-precompile/std",
 ]
 hashbrown = ["revm/hashbrown"]
 serde = ["dep:serde", "revm/serde"]
-serde-json = ["serde", "dep:serde_json", "revm/serde-json"]
+serde-json = ["serde", "revm/serde-json"]
 portable = ["revm/portable"]
 
 dev = [
