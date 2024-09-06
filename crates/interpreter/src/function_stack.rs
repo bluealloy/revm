@@ -51,9 +51,8 @@ impl FunctionStack {
 
     /// Pops a frame from the stack and sets current_code_idx to the popped frame's idx.
     pub fn pop(&mut self) -> Option<FunctionReturnFrame> {
-        self.return_stack.pop().map(|frame| {
+        self.return_stack.pop().inspect(|frame| {
             self.current_code_idx = frame.idx;
-            frame
         })
     }
 
