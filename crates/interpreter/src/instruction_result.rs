@@ -36,6 +36,7 @@ pub enum InstructionResult {
     CallOrCreate = 0x20,
 
     // Error Codes
+    /// Out of gas error.
     OutOfGas = 0x50,
     /// Out of gas error encountered during memory expansion.
     MemoryOOG,
@@ -53,6 +54,7 @@ pub enum InstructionResult {
     StateChangeDuringStaticCall,
     /// An undefined bytecode value encountered during execution.
     InvalidFEOpcode,
+    /// Invalid jump destination. Dynamic jumps points to invalid not jumpdest opcode.
     InvalidJump,
     /// The feature or opcode is not activated in this version of the EVM.
     NotActivated,

@@ -2,7 +2,7 @@ use revm::{
     db::BenchmarkDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
-    primitives::{eof::EofDecodeError, Address, Bytecode, TxKind},
+    primitives::{Address, Bytecode, BytecodeDecodeError, TxKind},
     Evm,
 };
 use std::io::Error as IoError;
@@ -26,7 +26,7 @@ pub enum Errors {
     #[error(transparent)]
     Io(#[from] IoError),
     #[error(transparent)]
-    EofError(#[from] EofDecodeError),
+    BytecodeDecodeError(#[from] BytecodeDecodeError),
 }
 
 /// Evm runner command allows running arbitrary evm bytecode.

@@ -109,7 +109,8 @@ impl Eof {
 }
 
 /// EOF decode errors.
-#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EofDecodeError {
     /// Short input while processing EOF.
     MissingInput,

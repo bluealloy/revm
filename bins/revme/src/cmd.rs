@@ -1,7 +1,6 @@
 pub mod bytecode;
 pub mod eofvalidation;
 pub mod evmrunner;
-pub mod format_kzg_setup;
 pub mod statetest;
 
 use structopt::{clap::AppSettings, StructOpt};
@@ -15,10 +14,6 @@ pub enum MainCmd {
     #[structopt(about = "Execute eof validation tests")]
     EofValidation(eofvalidation::Cmd),
     #[structopt(
-        about = "Format kzg settings from a trusted setup file (.txt) into binary format (.bin)"
-    )]
-    FormatKzgSetup(format_kzg_setup::Cmd),
-    #[structopt(
         about = "Evm runner command allows running arbitrary evm bytecode.\nBytecode can be provided from cli or from file with --path option."
     )]
     Evm(evmrunner::Cmd),
@@ -30,8 +25,6 @@ pub enum MainCmd {
 pub enum Error {
     #[error(transparent)]
     Statetest(#[from] statetest::Error),
-    #[error(transparent)]
-    KzgErrors(#[from] format_kzg_setup::KzgErrors),
     #[error(transparent)]
     EvmRunnerErrors(#[from] evmrunner::Errors),
     #[error("Eof validation failed: {:?}/{total_tests}", total_tests-failed_test)]
@@ -48,7 +41,6 @@ impl MainCmd {
         match self {
             Self::Statetest(cmd) => cmd.run().map_err(Into::into),
             Self::EofValidation(cmd) => cmd.run().map_err(Into::into),
-            Self::FormatKzgSetup(cmd) => cmd.run().map_err(Into::into),
             Self::Evm(cmd) => cmd.run().map_err(Into::into),
             Self::Bytecode(cmd) => {
                 cmd.run();
