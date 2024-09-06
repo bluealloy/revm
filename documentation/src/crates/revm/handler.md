@@ -43,13 +43,18 @@ They are called in the following order:
 
 Consists of functions that are called before execution.
 They are called in the following order:
+
 * `load`:
-  Loads access list and beneficiary from `Database`. Cold load is done here.
+    Loads access list and beneficiary from `Database`. Cold load is done here.
+
 * `load_precompiles`:
-  Retrieves the precompiles for the given spec ID.
-  More info: [precompile](../precompile.md). 
+    Retrieves the precompiles for the given spec ID. More info: [precompile](../precompile.md). 
+
+* `apply_eip7702_auth_list`
+    Applies the EIP-7702 authorization list to the accounts. Return gas refund of already created accounts.
+
 * `deduct_caller`:
-   Deducts values from the caller to calculate the maximum amount of gas that can be spent on the transaction.
+    Deducts values from the caller to calculate the maximum amount of gas that can be spent on the transaction.
    This loads the caller account from the `Database`.
 
 ### ExecutionHandler
@@ -94,6 +99,10 @@ Look at the Interpreter documentation for more information.
 
 Is a list of functions that are called after the execution. They are called in the following order:
 
+* `refund`
+    Add EIP-7702 refund for already created accounts and calculates final gas refund that can
+    be a maximum of 1/5 (1/2 before London hardfork) of spent gas.
+
 * `reimburse_caller`:
     Reimburse the caller with gas that was not spent during the execution of the transaction.
     Or balance of gas that needs to be refunded.
@@ -105,7 +114,7 @@ Is a list of functions that are called after the execution. They are called in t
     Returns the state changes and the result of the execution.
 
 * `end`:
-    Always called after transaction. End handler will not be called if validation fails.
+    Called after transaction. End handler will not be called if validation fails.
 
 * `clear`:
     Clears journal state and error and it is always called for the cleanup.

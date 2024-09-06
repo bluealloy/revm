@@ -11,7 +11,7 @@
 
 **Rust Ethereum Virtual Machine**
 
-![](./assets/revm-banner.png)
+![](./assets/logo/revm-banner.png)
 
 Revm is an EVM written in Rust that is focused on **speed** and **simplicity**.
 It has a fast and flexible implementation with a simple interface and embedded Host.

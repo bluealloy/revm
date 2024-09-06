@@ -177,7 +177,7 @@ impl<DB: Database> EvmContext<DB> {
         let _ = self
             .inner
             .journaled_state
-            .load_account(inputs.bytecode_address, &mut self.inner.db)?;
+            .load_account_delegated(inputs.bytecode_address, &mut self.inner.db)?;
 
         // Create subroutine checkpoint
         let checkpoint = self.journaled_state.checkpoint();
@@ -216,13 +216,13 @@ impl<DB: Database> EvmContext<DB> {
                 inputs.return_memory_offset.clone(),
             ))
         } else {
-            let (account, _) = self
+            let account = self
                 .inner
                 .journaled_state
                 .load_code(inputs.bytecode_address, &mut self.inner.db)?;
 
             let code_hash = account.info.code_hash();
-            let bytecode = account.info.code.clone().unwrap_or_default();
+            let mut bytecode = account.info.code.clone().unwrap_or_default();
 
             // ExtDelegateCall is not allowed to call non-EOF contracts.
             if inputs.scheme.is_ext_delegate_call()
@@ -234,6 +234,17 @@ impl<DB: Database> EvmContext<DB> {
             if bytecode.is_empty() {
                 self.journaled_state.checkpoint_commit();
                 return return_result(InstructionResult::Stop);
+            }
+
+            if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
+                bytecode = self
+                    .inner
+                    .journaled_state
+                    .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?
+                    .info
+                    .code
+                    .clone()
+                    .unwrap_or_default();
             }
 
             let contract =
@@ -276,10 +287,10 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         // Fetch balance of caller.
-        let (caller_balance, _) = self.balance(inputs.caller)?;
+        let caller_balance = self.balance(inputs.caller)?;
 
         // Check if caller has enough balance to send to the created contract.
-        if caller_balance < inputs.value {
+        if caller_balance.data < inputs.value {
             return return_error(InstructionResult::OutOfFunds);
         }
 
@@ -397,10 +408,10 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         // Fetch balance of caller.
-        let (caller_balance, _) = self.balance(inputs.caller)?;
+        let caller_balance = self.balance(inputs.caller)?;
 
         // Check if caller has enough balance to send to the created contract.
-        if caller_balance < inputs.value {
+        if caller_balance.data < inputs.value {
             return return_error(InstructionResult::OutOfFunds);
         }
 
@@ -518,7 +529,6 @@ pub(crate) mod test_utils {
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
                 db,
                 error: Ok(()),
-                valid_authorizations: Vec::new(),
                 #[cfg(feature = "optimism")]
                 l1_block_info: None,
             },
@@ -534,7 +544,6 @@ pub(crate) mod test_utils {
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
                 db,
                 error: Ok(()),
-                valid_authorizations: Default::default(),
                 #[cfg(feature = "optimism")]
                 l1_block_info: None,
             },

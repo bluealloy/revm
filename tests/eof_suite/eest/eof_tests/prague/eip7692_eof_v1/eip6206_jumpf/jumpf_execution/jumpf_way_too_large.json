@@ -1,22 +1,22 @@
 {
-    "tests/prague/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py::test_jumpf_way_too_large[fork_PragueEIP7692-eof_test]": {
+    "tests/prague/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py::test_jumpf_way_too_large[fork_CancunEIP7692-eof_test]": {
         "vectors": {
             "0": {
                 "code": "0xef000101000402000100030400000000800000e5ffff",
                 "results": {
                     "Prague": {
-                        "exception": "EOFException.UNDEFINED_EXCEPTION",
+                        "exception": "EOFException.INVALID_CODE_SECTION_INDEX",
                         "result": false
                     }
                 }
             }
         },
         "_info": {
-            "hash": "0x9264b7cc9ad90ebd8ae85f930a33d041ac38dc13cd6c0f8ddb0d2498c2bf4562",
+            "hash": "0x9bd14b4b8eca657bd2f8754e1bbeef08b104129955f2d5e03049eafde924dcbe",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "Hyperledger Besu evm 24.7-develop-30c96c7",
+            "filling-transition-tool": "evmone-t8n 0.12.0-6+commit.2d20cc63.dirty",
             "description": "Test function documentation:\nTests JUMPF jumping to uint64.MAX",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/eip7692-prague@v1.0.7/tests/prague/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L104",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/60b2036d3a8090e36595948846578af102666e65/tests/prague/eip7692_eof_v1/eip6206_jumpf/test_jumpf_execution.py#L104",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6206.md",
             "reference-spec-version": "2f365ea0cd58faa6e26013ea77ce6d538175f7d0"
         }

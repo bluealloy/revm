@@ -8,7 +8,7 @@
       "currentTimestamp": "0x0"
     },
     "post": {
-      "PragueEOF": [
+      "Prague": [
         {
           "expectException": "TR_InitCodeLimitExceeded",
           "hash": "0xa8ee3e60c0f9967eb8e7b8520445a5e9b6a737d45fb8ad777ead390ae8c1f9fb",

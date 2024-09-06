@@ -394,62 +394,51 @@ impl CodeType {
 
 impl fmt::Display for EofValidationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::FalsePositive => "False positive",
-                Self::UnknownOpcode => "Opcode is not known",
-                Self::OpcodeDisabled => "Opcode is disabled",
-                Self::InstructionNotForwardAccessed => "Should have forward jump",
-                Self::MissingImmediateBytes => "Bytecode is missing bytes",
-                Self::MissingRJUMPVImmediateBytes => {
-                    "Bytecode is missing bytes after RJUMPV opcode"
-                }
-                Self::JumpToImmediateBytes => "Invalid jump",
-                Self::BackwardJumpToImmediateBytes => "Invalid backward jump",
-                Self::RJUMPVZeroMaxIndex => "Used RJUMPV with zero as MaxIndex",
-                Self::JumpZeroOffset => "Used JUMP with zero as offset",
-                Self::EOFCREATEInvalidIndex => "EOFCREATE points to out of bound index",
-                Self::CodeSectionOutOfBounds => "CALLF index is out of bounds",
-                Self::CALLFNonReturningFunction => {
-                    "CALLF was used on non-returning function"
-                }
-                Self::StackOverflow => "CALLF stack overflow",
-                Self::JUMPFEnoughOutputs => "JUMPF needs more outputs",
-                Self::JUMPFStackHigherThanOutputs => {
-                    "JUMPF stack is too high for outputs"
-                }
-                Self::DataLoadOutOfBounds => "DATALOAD is out of bounds",
-                Self::RETFBiggestStackNumMoreThenOutputs => {
-                    "RETF biggest stack num is more than outputs"
-                }
-                Self::StackUnderflow => "Stack requirement is above smallest stack items",
-                Self::TypesStackUnderflow => {
-                    "Smallest stack items is more than output type"
-                }
-                Self::JumpUnderflow => "Jump destination is too low",
-                Self::JumpOverflow => "Jump destination is too high",
-                Self::BackwardJumpBiggestNumMismatch => {
-                    "Backward jump has different biggest stack item"
-                }
-                Self::BackwardJumpSmallestNumMismatch => {
-                    "Backward jump has different smallest stack item"
-                }
-                Self::LastInstructionNotTerminating => {
-                    "Last instruction of bytecode is not terminating"
-                }
-                Self::CodeSectionNotAccessed => "Code section was not accessed",
-                Self::InvalidTypesSection => "Invalid types section",
-                Self::InvalidFirstTypesSection => "Invalid first types section",
-                Self::MaxStackMismatch => "Max stack element mismatchs",
-                Self::NoCodeSections => "No code sections",
-                Self::SubContainerCalledInTwoModes => "Sub container called in two modes",
-                Self::SubContainerNotAccessed => "Sub container not accessed",
-                Self::DataNotFilled => "Data not filled",
-                Self::NonReturningSectionIsReturning => "Non returning section is returning",
+        let s = match self {
+            Self::FalsePositive => "False positive",
+            Self::UnknownOpcode => "Opcode is not known",
+            Self::OpcodeDisabled => "Opcode is disabled",
+            Self::InstructionNotForwardAccessed => "Should have forward jump",
+            Self::MissingImmediateBytes => "Bytecode is missing bytes",
+            Self::MissingRJUMPVImmediateBytes => "Bytecode is missing bytes after RJUMPV opcode",
+            Self::JumpToImmediateBytes => "Invalid jump",
+            Self::BackwardJumpToImmediateBytes => "Invalid backward jump",
+            Self::RJUMPVZeroMaxIndex => "Used RJUMPV with zero as MaxIndex",
+            Self::JumpZeroOffset => "Used JUMP with zero as offset",
+            Self::EOFCREATEInvalidIndex => "EOFCREATE points to out of bound index",
+            Self::CodeSectionOutOfBounds => "CALLF index is out of bounds",
+            Self::CALLFNonReturningFunction => "CALLF was used on non-returning function",
+            Self::StackOverflow => "CALLF stack overflow",
+            Self::JUMPFEnoughOutputs => "JUMPF needs more outputs",
+            Self::JUMPFStackHigherThanOutputs => "JUMPF stack is too high for outputs",
+            Self::DataLoadOutOfBounds => "DATALOAD is out of bounds",
+            Self::RETFBiggestStackNumMoreThenOutputs => {
+                "RETF biggest stack num is more than outputs"
             }
-        )
+            Self::StackUnderflow => "Stack requirement is above smallest stack items",
+            Self::TypesStackUnderflow => "Smallest stack items is more than output type",
+            Self::JumpUnderflow => "Jump destination is too low",
+            Self::JumpOverflow => "Jump destination is too high",
+            Self::BackwardJumpBiggestNumMismatch => {
+                "Backward jump has different biggest stack item"
+            }
+            Self::BackwardJumpSmallestNumMismatch => {
+                "Backward jump has different smallest stack item"
+            }
+            Self::LastInstructionNotTerminating => {
+                "Last instruction of bytecode is not terminating"
+            }
+            Self::CodeSectionNotAccessed => "Code section was not accessed",
+            Self::InvalidTypesSection => "Invalid types section",
+            Self::InvalidFirstTypesSection => "Invalid first types section",
+            Self::MaxStackMismatch => "Max stack element mismatchs",
+            Self::NoCodeSections => "No code sections",
+            Self::SubContainerCalledInTwoModes => "Sub container called in two modes",
+            Self::SubContainerNotAccessed => "Sub container not accessed",
+            Self::DataNotFilled => "Data not filled",
+            Self::NonReturningSectionIsReturning => "Non returning section is returning",
+        };
+        f.write_str(s)
     }
 }
 

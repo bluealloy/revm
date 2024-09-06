@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm"]
 license = "MIT"
 name = "revm"
 repository = "https://github.com/bluealloy/revm"
-version = "13.0.0"
+version = "14.0.1"
 readme = "../../README.md"
 
 [package.metadata.docs.rs]
@@ -24,8 +24,8 @@ all = "warn"
 [dependencies]
 once_cell = "1.19.0"
 # revm
-revm-interpreter = { path = "../interpreter", version = "9.0.0", default-features = false }
-revm-precompile = { path = "../precompile", version = "10.0.0", default-features = false }
+revm-interpreter = { path = "../interpreter", version = "10.0.1", default-features = false }
+revm-precompile = { path = "../precompile", version = "11.0.1", default-features = false }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
@@ -42,7 +42,7 @@ serde_json = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 # ethersdb
-tokio = { version = "1.39", features = [
+tokio = { version = "1.40", features = [
     "rt-multi-thread",
     "macros",
 ], optional = true }
@@ -50,12 +50,12 @@ ethers-providers = { version = "2.0", optional = true }
 ethers-core = { version = "2.0", optional = true }
 
 # alloydb
-alloy-provider = { version = "0.2", optional = true, default-features = false }
-alloy-eips = { version = "0.2", optional = true, default-features = false }
-alloy-transport = { version = "0.2", optional = true, default-features = false }
+alloy-provider = { version = "0.3", optional = true, default-features = false }
+alloy-eips = { version = "0.3", optional = true, default-features = false }
+alloy-transport = { version = "0.3", optional = true, default-features = false }
 
 [dev-dependencies]
-alloy-sol-types = { version = "0.7.7", default-features = false, features = [
+alloy-sol-types = { version = "0.8.0", default-features = false, features = [
     "std",
 ] }
 ethers-contract = { version = "2.0.14", default-features = false }
@@ -65,7 +65,7 @@ indicatif = "0.17"
 reqwest = { version = "0.12" }
 rstest = "0.22.0"
 
-alloy-provider = "0.2"
+alloy-provider = "0.3"
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
