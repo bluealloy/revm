@@ -45,8 +45,6 @@ indicatif = "0.17"
 rstest = "0.22.0"
 alloy-sol-types = "0.8"
 
-alloy-provider = "0.3"
-
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [

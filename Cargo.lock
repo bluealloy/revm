@@ -3139,7 +3139,6 @@ dependencies = [
 name = "revm-optimism"
 version = "1.0.0"
 dependencies = [
- "alloy-provider",
  "alloy-sol-types",
  "anyhow",
  "criterion",
