@@ -53,7 +53,7 @@ impl Contract {
         }
     }
 
-    /// Creates a new contract from the given [`Env`].
+    /// Creates a new contract from the given [`EnvWiring`].
     #[inline]
     pub fn new_env<EvmWiringT: EvmWiring>(
         env: &EnvWiring<EvmWiringT>,

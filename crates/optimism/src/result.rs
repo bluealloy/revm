@@ -1,5 +1,4 @@
 use core::fmt::Display;
-
 use revm::primitives::{EVMError, HaltReason, InvalidTransaction};
 
 /// Optimism transaction validation error.

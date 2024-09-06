@@ -184,7 +184,7 @@ mod test {
             let inner = inner.clone();
             Box::new(move |h| {
                 *inner.borrow_mut() += 1;
-                h.post_execution.output = Arc::new(|_, _| Err(EVMError::Custom("test".to_string())))
+                h.post_execution.output = Arc::new(|_, _| Err(EVMError::Custom("test".into())))
             })
         };
 

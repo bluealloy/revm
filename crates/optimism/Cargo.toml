@@ -23,18 +23,12 @@ all = "warn"
 
 [dependencies]
 # revm
-revm = { path = "../revm", version = "14.0.1", default-features = false, features = [
-    "std",
-] }
+revm = { path = "../revm", version = "14.0.1", default-features = false }
 revm-precompile = { path = "../precompile", version = "11.0.1", default-features = false, features = [
-    "std",
     "secp256r1",
 ] }
 
 # misc
-auto_impl = { version = "1.2", default-features = false }
-derive-where = { version = "1.2.7", default-features = false }
-dyn-clone = "1.0"
 enumn = { version = "0.1" }
 
 # Optional
@@ -63,12 +57,12 @@ std = [
     "serde_json?/std",
     "serde_json?/preserve_order",
     "revm/std",
+    "revm-precompile/std",
 ]
 hashbrown = ["revm/hashbrown"]
 serde = ["dep:serde", "revm/serde"]
-serde-json = ["serde", "dep:serde_json"]
+serde-json = ["serde", "dep:serde_json", "revm/serde-json"]
 portable = ["revm/portable"]
-
 
 dev = [
     "memory_limit",

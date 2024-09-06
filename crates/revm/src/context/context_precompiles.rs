@@ -84,7 +84,7 @@ impl<EvmWiringT: EvmWiring> ContextPrecompiles<EvmWiringT> {
 
     /// Returns precompiles addresses.
     #[inline]
-    pub fn addresses<'a>(&'a self) -> Box<dyn ExactSizeIterator<Item = &Address> + 'a> {
+    pub fn addresses(&self) -> Box<dyn ExactSizeIterator<Item = &Address> + '_> {
         match self.inner {
             PrecompilesCow::StaticRef(inner) => Box::new(inner.addresses()),
             PrecompilesCow::Owned(ref inner) => Box::new(inner.keys()),

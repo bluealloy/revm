@@ -1,7 +1,4 @@
-use cfg_if::cfg_if;
-
 use crate::{db::Database, Block, SpecId, Transaction};
-
 use core::{fmt::Debug, hash::Hash};
 
 /// The type that enumerates the chain's hardforks.
@@ -20,7 +17,7 @@ impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
 }
 
 pub trait TransactionValidation {
-    cfg_if! {
+    cfg_if::cfg_if! {
         if #[cfg(feature = "std")] {
             /// An error that occurs when validating a transaction.
             type ValidationError: Debug + std::error::Error;

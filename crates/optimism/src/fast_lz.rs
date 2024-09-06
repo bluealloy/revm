@@ -113,6 +113,7 @@ mod tests {
         primitives::{address, bytes, Bytecode, Bytes, EthereumWiring, TxKind, U256},
         Evm,
     };
+    use std::vec::Vec;
 
     use rstest::rstest;
 

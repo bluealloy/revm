@@ -19,7 +19,6 @@ use revm::{
     },
     Context, ContextPrecompiles, FrameResult,
 };
-use std::string::ToString;
 use std::sync::Arc;
 
 pub fn optimism_handle_register<EvmWiringT>(handler: &mut EvmHandler<'_, EvmWiringT>)
@@ -246,7 +245,7 @@ pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
         // get envelope
         let Some(enveloped_tx) = &context.evm.inner.env.tx.enveloped_tx() else {
             return Err(EVMError::Custom(
-                "[OPTIMISM] Failed to load enveloped transaction.".to_string(),
+                "[OPTIMISM] Failed to load enveloped transaction.".into(),
             ));
         };
 
@@ -295,7 +294,7 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 
         let Some(enveloped_tx) = &context.evm.inner.env.tx.enveloped_tx() else {
             return Err(EVMError::Custom(
-                "[OPTIMISM] Failed to load enveloped transaction.".to_string(),
+                "[OPTIMISM] Failed to load enveloped transaction.".into(),
             ));
         };
 
@@ -428,6 +427,7 @@ mod tests {
         interpreter::{CallOutcome, InterpreterResult},
         primitives::{bytes, state::AccountInfo, Address, Bytes, B256},
     };
+    use std::boxed::Box;
 
     type TestEmptyOpWiring = OptimismEvmWiring<EmptyDB, ()>;
     type TestMemOpWiring = OptimismEvmWiring<InMemoryDB, ()>;

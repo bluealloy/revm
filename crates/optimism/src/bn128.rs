@@ -27,7 +27,7 @@ pub(crate) mod pair {
 #[cfg(test)]
 mod tests {
     use revm::primitives::{hex, PrecompileErrors};
-
+    use std::vec;
     use super::*;
 
     #[test]
