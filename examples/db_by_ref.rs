@@ -1,3 +1,4 @@
+use core::error::Error;
 use core::fmt::Debug;
 use revm::{
     db::{CacheDB, EmptyDB, WrapDatabaseRef},
@@ -7,7 +8,6 @@ use revm::{
     primitives::{EthereumWiring, HaltReason, ResultAndState},
     DatabaseCommit, DatabaseRef, Evm,
 };
-use std::error::Error;
 
 trait DatabaseRefDebugError: DatabaseRef<Error = Self::DBError> {
     type DBError: std::fmt::Debug + Error + Send + Sync + 'static;

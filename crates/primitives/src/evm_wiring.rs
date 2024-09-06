@@ -18,7 +18,7 @@ impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
 
 pub trait TransactionValidation {
     /// An error that occurs when validating a transaction.
-    type ValidationError: Debug + std::error::Error;
+    type ValidationError: Debug + core::error::Error;
 }
 
 pub trait EvmWiring: Sized {
