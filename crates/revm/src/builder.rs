@@ -131,7 +131,7 @@ where
     EvmWiringT:
         EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
 {
-    /// Sets the [`EmptyDB`] as the [`Database`] that will be used by [`Evm`].
+    /// Creates the default [EvmWiring]::[crate::Database] that will be used by [`Evm`].
     pub fn with_default_db(mut self) -> EvmBuilder<'a, SetGenericStage, EvmWiringT>
     where
         EvmWiringT::Database: Default,
