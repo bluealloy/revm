@@ -361,16 +361,11 @@ pub fn execute_test_suite(
                     .unwrap_or_default();
 
                 env.tx.authorization_list =
-                    match test.txbytes.as_ref().and_then(|bytes| bytes.first()) {
-                        Some(&0x04) => Some(AuthorizationList::Recovered(
-                            unit.transaction
-                                .authorization_list
-                                .iter()
-                                .map(|auth| auth.into_recovered())
-                                .collect(),
-                        )),
-                        _ => None,
-                    };
+                    unit.transaction.authorization_list.as_ref().map(|auths| {
+                        AuthorizationList::Recovered(
+                            auths.iter().map(|auth| auth.into_recovered()).collect(),
+                        )
+                    });
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),
