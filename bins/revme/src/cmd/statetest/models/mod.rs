@@ -6,7 +6,9 @@ use deserializer::*;
 pub use eip7702::TxEip7702;
 pub use spec::SpecName;
 
-use revm::primitives::{AccessList, Address, AuthorizationList, Bytes, HashMap, B256, U256};
+use revm::primitives::{
+    AccessList, Address, AuthorizationList, Bytes, HashMap, Signature, B256, U256,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -128,7 +130,7 @@ pub struct TransactionParts {
     #[serde(default)]
     pub access_lists: Vec<Option<AccessList>>,
     #[serde(default)]
-    pub authorization_list: Vec<Authorization>,
+    pub authorization_list: Vec<TestAuthorization>,
     #[serde(default)]
     pub blob_versioned_hashes: Vec<B256>,
     pub max_fee_per_blob_gas: Option<U256>,
@@ -136,14 +138,21 @@ pub struct TransactionParts {
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct Authorization {
-    chain_id: U256,
-    address: Address,
-    nonce: U256,
-    v: U256,
-    r: U256,
-    s: U256,
-    signer: Option<Address>,
+pub struct TestAuthorization {
+    pub chain_id: U256,
+    pub address: Address,
+    pub nonce: U256,
+    pub v: U256,
+    pub r: U256,
+    pub s: U256,
+    pub signer: Option<Address>,
+}
+
+impl TestAuthorization {
+    pub fn signature(&self) -> Signature {
+        let parity: bool = self.v != U256::ZERO;
+        Signature::from_rs_and_parity(self.r, self.s, parity).unwrap()
+    }
 }
 
 #[cfg(test)]
