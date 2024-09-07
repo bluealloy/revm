@@ -360,14 +360,17 @@ pub fn execute_test_suite(
                     .cloned()
                     .unwrap_or_default();
 
-                let recovered_auth = unit
-                    .transaction
-                    .authorization_list
-                    .iter()
-                    .map(|auth| auth.into_recovered())
-                    .collect();
-
-                env.tx.authorization_list = Some(AuthorizationList::Recovered(recovered_auth));
+                env.tx.authorization_list =
+                    match test.txbytes.as_ref().and_then(|bytes| bytes.first()) {
+                        Some(&0x04) => Some(AuthorizationList::Recovered(
+                            unit.transaction
+                                .authorization_list
+                                .iter()
+                                .map(|auth| auth.into_recovered())
+                                .collect(),
+                        )),
+                        _ => None,
+                    };
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),
