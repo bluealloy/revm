@@ -10,8 +10,8 @@ use revm::{
     inspectors::TracerEip3155,
     interpreter::analysis::to_analysed,
     primitives::{
-        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, ExecutionResult,
-        SpecId, TxKind, B256,
+        calc_excess_blob_gas, keccak256, AuthorizationList, Bytecode, Bytes, EVMResultGeneric, Env,
+        ExecutionResult, SpecId, TxKind, B256,
     },
     Evm, State,
 };
@@ -359,10 +359,15 @@ pub fn execute_test_suite(
                     .and_then(Option::as_deref)
                     .cloned()
                     .unwrap_or_default();
-                let Ok(auth_list) = test.eip7702_authorization_list() else {
-                    continue;
-                };
-                env.tx.authorization_list = auth_list;
+
+                let recovered_auth = unit
+                    .transaction
+                    .authorization_list
+                    .iter()
+                    .map(|auth| auth.into_recovered())
+                    .collect();
+
+                env.tx.authorization_list = Some(AuthorizationList::Recovered(recovered_auth));
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),

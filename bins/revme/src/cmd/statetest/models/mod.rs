@@ -1,13 +1,12 @@
 mod deserializer;
-mod eip7702;
 mod spec;
 
 use deserializer::*;
-pub use eip7702::TxEip7702;
 pub use spec::SpecName;
 
 use revm::primitives::{
-    AccessList, Address, AuthorizationList, Bytes, HashMap, Signature, B256, U256,
+    AccessList, Address, Authorization, Bytes, HashMap, RecoveredAuthorization, Signature,
+    SignedAuthorization, B256, U256,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -49,26 +48,6 @@ pub struct Test {
 
     /// Tx bytes
     pub txbytes: Option<Bytes>,
-}
-
-impl Test {
-    pub fn eip7702_authorization_list(
-        &self,
-    ) -> Result<Option<AuthorizationList>, alloy_rlp::Error> {
-        let Some(txbytes) = self.txbytes.as_ref() else {
-            return Ok(None);
-        };
-
-        if txbytes.first() == Some(&0x04) {
-            let mut txbytes = &txbytes[1..];
-            let tx = TxEip7702::decode(&mut txbytes)?;
-            return Ok(Some(
-                AuthorizationList::Signed(tx.authorization_list).into_recovered(),
-            ));
-        }
-
-        Ok(None)
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
@@ -136,22 +115,38 @@ pub struct TransactionParts {
     pub max_fee_per_blob_gas: Option<U256>,
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TestAuthorization {
-    pub chain_id: U256,
-    pub address: Address,
-    pub nonce: U256,
-    pub v: U256,
-    pub r: U256,
-    pub s: U256,
-    pub signer: Option<Address>,
+    chain_id: U256,
+    address: Address,
+    nonce: u64,
+    v: U256,
+    r: U256,
+    s: U256,
+    signer: Option<Address>,
 }
 
 impl TestAuthorization {
     pub fn signature(&self) -> Signature {
-        let parity: bool = self.v != U256::ZERO;
+        let parity = self.v != U256::ZERO;
         Signature::from_rs_and_parity(self.r, self.s, parity).unwrap()
+    }
+
+    pub fn into_recovered(self) -> RecoveredAuthorization {
+        let signed: SignedAuthorization = self.into();
+        signed.into()
+    }
+}
+
+impl Into<SignedAuthorization> for TestAuthorization {
+    fn into(self) -> SignedAuthorization {
+        let auth = Authorization {
+            chain_id: self.chain_id,
+            address: self.address,
+            nonce: self.nonce,
+        };
+        auth.into_signed(self.signature())
     }
 }
 
