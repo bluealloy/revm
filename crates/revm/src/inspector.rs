@@ -12,8 +12,8 @@ use crate::{
     interpreter::{
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
     },
-    primitives::{db::Database, Address, Log, U256},
-    EvmContext,
+    primitives::{Address, Log, U256},
+    EvmContext, EvmWiring,
 };
 use auto_impl::auto_impl;
 
@@ -29,13 +29,17 @@ pub mod inspectors {
 
 /// EVM [Interpreter] callbacks.
 #[auto_impl(&mut, Box)]
-pub trait Inspector<DB: Database> {
+pub trait Inspector<EvmWiringT: EvmWiring> {
     /// Called before the interpreter is initialized.
     ///
     /// If `interp.instruction_result` is set to anything other than [crate::interpreter::InstructionResult::Continue] then the execution of the interpreter
     /// is skipped.
     #[inline]
-    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+    fn initialize_interp(
+        &mut self,
+        interp: &mut Interpreter,
+        context: &mut EvmContext<EvmWiringT>,
+    ) {
         let _ = interp;
         let _ = context;
     }
@@ -49,7 +53,7 @@ pub trait Inspector<DB: Database> {
     ///
     /// To get the current opcode, use `interp.current_opcode()`.
     #[inline]
-    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>) {
         let _ = interp;
         let _ = context;
     }
@@ -59,14 +63,14 @@ pub trait Inspector<DB: Database> {
     /// Setting `interp.instruction_result` to anything other than [crate::interpreter::InstructionResult::Continue] alters the execution
     /// of the interpreter.
     #[inline]
-    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>) {
         let _ = interp;
         let _ = context;
     }
 
     /// Called when a log is emitted.
     #[inline]
-    fn log(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>, log: &Log) {
+    fn log(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>, log: &Log) {
         let _ = interp;
         let _ = context;
         let _ = log;
@@ -78,7 +82,7 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn call(
         &mut self,
-        context: &mut EvmContext<DB>,
+        context: &mut EvmContext<EvmWiringT>,
         inputs: &mut CallInputs,
     ) -> Option<CallOutcome> {
         let _ = context;
@@ -94,7 +98,7 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn call_end(
         &mut self,
-        context: &mut EvmContext<DB>,
+        context: &mut EvmContext<EvmWiringT>,
         inputs: &CallInputs,
         outcome: CallOutcome,
     ) -> CallOutcome {
@@ -111,7 +115,7 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn create(
         &mut self,
-        context: &mut EvmContext<DB>,
+        context: &mut EvmContext<EvmWiringT>,
         inputs: &mut CreateInputs,
     ) -> Option<CreateOutcome> {
         let _ = context;
@@ -126,7 +130,7 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn create_end(
         &mut self,
-        context: &mut EvmContext<DB>,
+        context: &mut EvmContext<EvmWiringT>,
         inputs: &CreateInputs,
         outcome: CreateOutcome,
     ) -> CreateOutcome {
@@ -140,7 +144,7 @@ pub trait Inspector<DB: Database> {
     /// This can happen from create TX or from EOFCREATE opcode.
     fn eofcreate(
         &mut self,
-        context: &mut EvmContext<DB>,
+        context: &mut EvmContext<EvmWiringT>,
         inputs: &mut EOFCreateInputs,
     ) -> Option<CreateOutcome> {
         let _ = context;
@@ -151,7 +155,7 @@ pub trait Inspector<DB: Database> {
     /// Called when eof creating has ended.
     fn eofcreate_end(
         &mut self,
-        context: &mut EvmContext<DB>,
+        context: &mut EvmContext<EvmWiringT>,
         inputs: &EOFCreateInputs,
         outcome: CreateOutcome,
     ) -> CreateOutcome {

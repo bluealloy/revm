@@ -1,6 +1,6 @@
 use crate::{
     gas,
-    primitives::{Spec, SpecId::*, U256},
+    primitives::{Block, Spec, SpecId::*, Transaction, U256},
     Host, Interpreter,
 };
 
@@ -13,31 +13,31 @@ pub fn chainid<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
 
 pub fn coinbase<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, host.env().block.coinbase.into_word());
+    push_b256!(interpreter, host.env().block.coinbase().into_word());
 }
 
 pub fn timestamp<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().block.timestamp);
+    push!(interpreter, *host.env().block.timestamp());
 }
 
 pub fn block_number<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().block.number);
+    push!(interpreter, *host.env().block.number());
 }
 
 pub fn difficulty<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
     if SPEC::enabled(MERGE) {
-        push_b256!(interpreter, host.env().block.prevrandao.unwrap());
+        push_b256!(interpreter, *host.env().block.prevrandao().unwrap());
     } else {
-        push!(interpreter, host.env().block.difficulty);
+        push!(interpreter, *host.env().block.difficulty());
     }
 }
 
 pub fn gaslimit<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().block.gas_limit);
+    push!(interpreter, *host.env().block.gas_limit());
 }
 
 pub fn gasprice<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
@@ -49,12 +49,12 @@ pub fn gasprice<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
 pub fn basefee<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, LONDON);
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().block.basefee);
+    push!(interpreter, *host.env().block.basefee());
 }
 
 pub fn origin<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, host.env().tx.caller.into_word());
+    push_b256!(interpreter, host.env().tx.caller().into_word());
 }
 
 // EIP-4844: Shard Blob Transactions
@@ -63,7 +63,7 @@ pub fn blob_hash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, index);
     let i = as_usize_saturated!(index);
-    *index = match host.env().tx.blob_hashes.get(i) {
+    *index = match host.env().tx.blob_hashes().get(i) {
         Some(hash) => U256::from_be_bytes(hash.0),
         None => U256::ZERO,
     };
@@ -75,6 +75,12 @@ pub fn blob_basefee<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter,
     gas!(interpreter, gas::BASE);
     push!(
         interpreter,
-        U256::from(host.env().block.get_blob_gasprice().unwrap_or_default())
+        U256::from(
+            host.env()
+                .block
+                .get_blob_gasprice()
+                .copied()
+                .unwrap_or_default()
+        )
     );
 }

@@ -24,6 +24,7 @@ all = "warn"
 [dependencies]
 revm-primitives = { path = "../primitives", version = "9.0.1", default-features = false }
 
+derive-where = { version = "1.2.7", default-features = false }
 paste = { version = "1.0", optional = true }
 phf = { version = "0.11", default-features = false, optional = true, features = [
     "macros",
@@ -49,16 +50,6 @@ arbitrary = ["std", "revm-primitives/arbitrary"]
 asm-keccak = ["revm-primitives/asm-keccak"]
 portable = ["revm-primitives/portable"]
 parse = ["dep:paste", "dep:phf"]
-
-optimism = ["revm-primitives/optimism"]
-# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
-optimism-default-handler = [
-    "optimism",
-    "revm-primitives/optimism-default-handler",
-]
-negate-optimism-default-handler = [
-    "revm-primitives/negate-optimism-default-handler",
-]
 
 dev = [
     "memory_limit",

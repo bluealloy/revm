@@ -1,7 +1,7 @@
 use super::{DatabaseCommit, DatabaseRef, EmptyDB};
 use crate::primitives::{
-    hash_map::Entry, Account, AccountInfo, Address, Bytecode, HashMap, Log, B256, KECCAK_EMPTY,
-    U256,
+    hash_map::Entry, Account, AccountInfo, Address, Bytecode, EthereumWiring, HashMap, Log, B256,
+    KECCAK_EMPTY, U256,
 };
 use crate::Database;
 use core::convert::Infallible;
@@ -355,6 +355,9 @@ impl AccountState {
         matches!(self, AccountState::StorageCleared)
     }
 }
+
+/// Ethereum benchmark wiring
+pub type EthereumBenchmarkWiring = EthereumWiring<BenchmarkDB, ()>;
 
 /// Custom benchmarking DB that only has account info for the zero address.
 ///

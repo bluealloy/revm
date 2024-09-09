@@ -105,15 +105,15 @@ fn u24(input: &[u8], idx: u32) -> u32 {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use alloy_sol_types::sol;
     use alloy_sol_types::SolCall;
-
-    use super::*;
-    use crate::db::BenchmarkDB;
-    use crate::{
-        primitives::address, primitives::bytes, primitives::Bytecode, primitives::Bytes,
-        primitives::TxKind, primitives::U256, Evm,
+    use revm::{
+        db::BenchmarkDB,
+        primitives::{address, bytes, Bytecode, Bytes, EthereumWiring, TxKind, U256},
+        Evm,
     };
+    use std::vec::Vec;
 
     use rstest::rstest;
 
@@ -162,8 +162,9 @@ mod tests {
 
         let native_val = flz_compress_len(&input);
 
-        let mut evm = Evm::builder()
+        let mut evm = Evm::<EthereumWiring<BenchmarkDB, ()>>::builder()
             .with_db(BenchmarkDB::new_bytecode(contract_bytecode.clone()))
+            .with_default_ext_ctx()
             .modify_tx_env(|tx| {
                 tx.caller = address!("1000000000000000000000000000000000000000");
                 tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));

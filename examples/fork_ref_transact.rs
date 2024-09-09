@@ -1,6 +1,7 @@
 use alloy_sol_types::sol;
 use alloy_sol_types::SolCall;
 use ethers_providers::{Http, Provider};
+use revm::primitives::EthereumWiring;
 use revm::{
     db::{CacheDB, EmptyDB, EthersDB},
     primitives::{address, ExecutionResult, Output, TxKind, U256},
@@ -63,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
         .unwrap();
 
     // initialise an empty (default) EVM
-    let mut evm = Evm::builder()
+    let mut evm = Evm::<EthereumWiring<CacheDB<EmptyDB>, ()>>::builder()
         .with_db(cache_db)
         .modify_tx_env(|tx| {
             // fill in missing bits of env struct

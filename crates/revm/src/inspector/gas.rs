@@ -4,8 +4,7 @@ use revm_interpreter::CallOutcome;
 
 use crate::{
     interpreter::{CallInputs, CreateInputs, CreateOutcome},
-    primitives::db::Database,
-    EvmContext, Inspector,
+    EvmContext, EvmWiring, Inspector,
 };
 
 /// Helper [Inspector] that keeps track of gas.
@@ -26,11 +25,11 @@ impl GasInspector {
     }
 }
 
-impl<DB: Database> Inspector<DB> for GasInspector {
+impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for GasInspector {
     fn initialize_interp(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<DB>,
+        _context: &mut EvmContext<EvmWiringT>,
     ) {
         self.gas_remaining = interp.gas.limit();
     }
@@ -38,7 +37,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     fn step(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<DB>,
+        _context: &mut EvmContext<EvmWiringT>,
     ) {
         self.gas_remaining = interp.gas.remaining();
     }
@@ -46,7 +45,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     fn step_end(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<DB>,
+        _context: &mut EvmContext<EvmWiringT>,
     ) {
         let remaining = interp.gas.remaining();
         self.last_gas_cost = self.gas_remaining.saturating_sub(remaining);
@@ -55,7 +54,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
     fn call_end(
         &mut self,
-        _context: &mut EvmContext<DB>,
+        _context: &mut EvmContext<EvmWiringT>,
         _inputs: &CallInputs,
         mut outcome: CallOutcome,
     ) -> CallOutcome {
@@ -68,7 +67,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
     fn create_end(
         &mut self,
-        _context: &mut EvmContext<DB>,
+        _context: &mut EvmContext<EvmWiringT>,
         _inputs: &CreateInputs,
         mut outcome: CreateOutcome,
     ) -> CreateOutcome {
@@ -82,16 +81,14 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
 #[cfg(test)]
 mod tests {
-
-    use revm_interpreter::CallOutcome;
-    use revm_interpreter::CreateOutcome;
+    use super::*;
 
     use crate::{
-        inspectors::GasInspector,
-        interpreter::{CallInputs, CreateInputs, Interpreter},
-        primitives::Log,
-        Database, EvmContext, Inspector,
+        interpreter::Interpreter,
+        primitives::{self, EthereumWiring, Log},
     };
+
+    type TestEvmWiring = primitives::DefaultEthereumWiring;
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -100,21 +97,30 @@ mod tests {
         gas_remaining_steps: Vec<(usize, u64)>,
     }
 
-    impl<DB: Database> Inspector<DB> for StackInspector {
-        fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+    impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for StackInspector {
+        fn initialize_interp(
+            &mut self,
+            interp: &mut Interpreter,
+            context: &mut EvmContext<EvmWiringT>,
+        ) {
             self.gas_inspector.initialize_interp(interp, context);
         }
 
-        fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+        fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>) {
             self.pc = interp.program_counter();
             self.gas_inspector.step(interp, context);
         }
 
-        fn log(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>, log: &Log) {
+        fn log(
+            &mut self,
+            interp: &mut Interpreter,
+            context: &mut EvmContext<EvmWiringT>,
+            log: &Log,
+        ) {
             self.gas_inspector.log(interp, context, log);
         }
 
-        fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
+        fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>) {
             self.gas_inspector.step_end(interp, context);
             self.gas_remaining_steps
                 .push((self.pc, self.gas_inspector.gas_remaining()));
@@ -122,7 +128,7 @@ mod tests {
 
         fn call(
             &mut self,
-            context: &mut EvmContext<DB>,
+            context: &mut EvmContext<EvmWiringT>,
             call: &mut CallInputs,
         ) -> Option<CallOutcome> {
             self.gas_inspector.call(context, call)
@@ -130,7 +136,7 @@ mod tests {
 
         fn call_end(
             &mut self,
-            context: &mut EvmContext<DB>,
+            context: &mut EvmContext<EvmWiringT>,
             inputs: &CallInputs,
             outcome: CallOutcome,
         ) -> CallOutcome {
@@ -139,7 +145,7 @@ mod tests {
 
         fn create(
             &mut self,
-            context: &mut EvmContext<DB>,
+            context: &mut EvmContext<EvmWiringT>,
             call: &mut CreateInputs,
         ) -> Option<CreateOutcome> {
             self.gas_inspector.create(context, call);
@@ -148,7 +154,7 @@ mod tests {
 
         fn create_end(
             &mut self,
-            context: &mut EvmContext<DB>,
+            context: &mut EvmContext<EvmWiringT>,
             inputs: &CreateInputs,
             outcome: CreateOutcome,
         ) -> CreateOutcome {
@@ -183,11 +189,12 @@ mod tests {
         ]);
         let bytecode = Bytecode::new_raw(contract_data);
 
-        let mut evm: Evm<'_, StackInspector, BenchmarkDB> = Evm::builder()
+        let mut evm = Evm::<EthereumWiring<BenchmarkDB, StackInspector>>::builder()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
-            .with_external_context(StackInspector::default())
+            .with_default_ext_ctx()
             .modify_tx_env(|tx| {
-                tx.clear();
+                *tx = <TestEvmWiring as primitives::EvmWiring>::Transaction::default();
+
                 tx.caller = address!("1000000000000000000000000000000000000000");
                 tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
                 tx.gas_limit = 21100;

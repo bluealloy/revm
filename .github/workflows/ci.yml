@@ -38,13 +38,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        features: ["", "optimism,kzg-rs"]
+        features: ["", "kzg-rs"]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: riscv32imac-unknown-none-elf
-      - run: cargo check --target riscv32imac-unknown-none-elf --no-default-features --features=${{ matrix.features }}
+      - run: |
+          cargo check --target riscv32imac-unknown-none-elf --no-default-features --features=${{ matrix.features }}
+          cargo check --target riscv32imac-unknown-none-elf -p revm-optimism --no-default-features --features=${{ matrix.features }}
 
   check:
     name: check ${{ matrix.features }}

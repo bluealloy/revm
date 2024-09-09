@@ -1,28 +1,36 @@
 use crate::{
-    eip7702::authorization_list::InvalidAuthorization, Address, Bytes, EvmState, Log, U256,
+    db::Database, eip7702::authorization_list::InvalidAuthorization, Address, Bytes, EvmState,
+    EvmWiring, HaltReasonTrait, Log, TransactionValidation, U256,
 };
-use core::fmt;
+use core::fmt::{self, Debug};
 use std::{boxed::Box, string::String, vec::Vec};
 
 /// Result of EVM execution.
-pub type EVMResult<DBError> = EVMResultGeneric<ResultAndState, DBError>;
+pub type EVMResult<EvmWiringT> =
+    EVMResultGeneric<ResultAndState<<EvmWiringT as EvmWiring>::HaltReason>, EvmWiringT>;
 
 /// Generic result of EVM execution. Used to represent error and generic output.
-pub type EVMResultGeneric<T, DBError> = core::result::Result<T, EVMError<DBError>>;
+pub type EVMResultGeneric<T, EvmWiringT> = core::result::Result<T, EVMErrorForChain<EvmWiringT>>;
+
+/// EVM error type for a specific chain.
+pub type EVMErrorForChain<EvmWiringT> = EVMError<
+    <<EvmWiringT as EvmWiring>::Database as Database>::Error,
+    <<EvmWiringT as EvmWiring>::Transaction as TransactionValidation>::ValidationError,
+>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ResultAndState {
+pub struct ResultAndState<HaltReasonT: HaltReasonTrait> {
     /// Status of execution
-    pub result: ExecutionResult,
+    pub result: ExecutionResult<HaltReasonT>,
     /// State that got updated
     pub state: EvmState,
 }
 
 /// Result of a transaction execution.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ExecutionResult {
+pub enum ExecutionResult<HaltReasonT: HaltReasonTrait> {
     /// Returned successfully
     Success {
         reason: SuccessReason,
@@ -35,13 +43,13 @@ pub enum ExecutionResult {
     Revert { gas_used: u64, output: Bytes },
     /// Reverted for various reasons and spend all gas.
     Halt {
-        reason: HaltReason,
+        reason: HaltReasonT,
         /// Halting will spend all the gas, and will be equal to gas_limit.
         gas_used: u64,
     },
 }
 
-impl ExecutionResult {
+impl<HaltReasonT: HaltReasonTrait> ExecutionResult<HaltReasonT> {
     /// Returns if transaction execution is successful.
     /// 1 indicates success, 0 indicates revert.
     /// <https://eips.ethereum.org/EIPS/eip-658>
@@ -136,12 +144,17 @@ impl Output {
     }
 }
 
+pub type EVMErrorWiring<EvmWiringT> = EVMError<
+    <<EvmWiringT as EvmWiring>::Database as Database>::Error,
+    <<EvmWiringT as EvmWiring>::Transaction as TransactionValidation>::ValidationError,
+>;
+
 /// Main EVM error.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum EVMError<DBError> {
+pub enum EVMError<DBError, TransactionValidationErrorT> {
     /// Transaction validation error.
-    Transaction(InvalidTransaction),
+    Transaction(TransactionValidationErrorT),
     /// Header validation error.
     Header(InvalidHeader),
     /// Database error.
@@ -154,9 +167,9 @@ pub enum EVMError<DBError> {
     Precompile(String),
 }
 
-impl<DBError> EVMError<DBError> {
+impl<DBError, TransactionValidationErrorT> EVMError<DBError, TransactionValidationErrorT> {
     /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
-    pub fn map_db_err<F, E>(self, op: F) -> EVMError<E>
+    pub fn map_db_err<F, E>(self, op: F) -> EVMError<E, TransactionValidationErrorT>
     where
         F: FnOnce(DBError) -> E,
     {
@@ -171,7 +184,12 @@ impl<DBError> EVMError<DBError> {
 }
 
 #[cfg(feature = "std")]
-impl<DBError: std::error::Error + 'static> std::error::Error for EVMError<DBError> {
+impl<DBError, TransactionValidationErrorT> std::error::Error
+    for EVMError<DBError, TransactionValidationErrorT>
+where
+    DBError: std::error::Error + 'static,
+    TransactionValidationErrorT: std::error::Error + 'static,
+{
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Transaction(e) => Some(e),
@@ -182,7 +200,12 @@ impl<DBError: std::error::Error + 'static> std::error::Error for EVMError<DBErro
     }
 }
 
-impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
+impl<DBError, TransactionValidationErrorT> fmt::Display
+    for EVMError<DBError, TransactionValidationErrorT>
+where
+    DBError: fmt::Display,
+    TransactionValidationErrorT: fmt::Display,
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Transaction(e) => write!(f, "transaction validation error: {e}"),
@@ -193,55 +216,18 @@ impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
     }
 }
 
-impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
+impl<DBError> From<InvalidTransaction> for EVMError<DBError, InvalidTransaction> {
     fn from(value: InvalidTransaction) -> Self {
         Self::Transaction(value)
     }
 }
 
-impl<DBError> From<InvalidHeader> for EVMError<DBError> {
+impl<DBError, TransactionValidationErrorT> From<InvalidHeader>
+    for EVMError<DBError, TransactionValidationErrorT>
+{
     fn from(value: InvalidHeader) -> Self {
         Self::Header(value)
     }
-}
-
-/// Transaction validation error for Optimism.
-#[cfg(feature = "optimism")]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum OptimismInvalidTransaction {
-    /// System transactions are not supported post-regolith hardfork.
-    ///
-    /// Before the Regolith hardfork, there was a special field in the `Deposit` transaction
-    /// type that differentiated between `system` and `user` deposit transactions. This field
-    /// was deprecated in the Regolith hardfork, and this error is thrown if a `Deposit` transaction
-    /// is found with this field set to `true` after the hardfork activation.
-    ///
-    /// In addition, this error is internal, and bubbles up into a [HaltReason::FailedDeposit] error
-    /// in the `revm` handler for the consumer to easily handle. This is due to a state transition
-    /// rule on OP Stack chains where, if for any reason a deposit transaction fails, the transaction
-    /// must still be included in the block, the sender nonce is bumped, the `mint` value persists, and
-    /// special gas accounting rules are applied. Normally on L1, [EVMError::Transaction] errors
-    /// are cause for non-inclusion, so a special [HaltReason] variant was introduced to handle this
-    /// case for failed deposit transactions.
-    #[cfg(feature = "optimism")]
-    DepositSystemTxPostRegolith,
-    /// Deposit transaction haults bubble up to the global main return handler, wiping state and
-    /// only increasing the nonce + persisting the mint value.
-    ///
-    /// This is a catch-all error for any deposit transaction that is results in a [HaltReason] error
-    /// post-regolith hardfork. This allows for a consumer to easily handle special cases where
-    /// a deposit transaction fails during validation, but must still be included in the block.
-    ///
-    /// In addition, this error is internal, and bubbles up into a [HaltReason::FailedDeposit] error
-    /// in the `revm` handler for the consumer to easily handle. This is due to a state transition
-    /// rule on OP Stack chains where, if for any reason a deposit transaction fails, the transaction
-    /// must still be included in the block, the sender nonce is bumped, the `mint` value persists, and
-    /// special gas accounting rules are applied. Normally on L1, [EVMError::Transaction] errors
-    /// are cause for non-inclusion, so a special [HaltReason] variant was introduced to handle this
-    /// case for failed deposit transactions.
-    #[cfg(feature = "optimism")]
-    HaltedDepositPostRegolith,
 }
 
 /// Transaction validation error.
@@ -317,9 +303,6 @@ pub enum InvalidTransaction {
     EmptyAuthorizationList,
     /// Invalid EIP-7702 Authorization List
     InvalidAuthorizationList(InvalidAuthorization),
-    /// Optimism-specific transaction validation error.
-    #[cfg(feature = "optimism")]
-    OptimismError(OptimismInvalidTransaction),
 }
 
 impl From<InvalidAuthorization> for InvalidTransaction {
@@ -328,24 +311,7 @@ impl From<InvalidAuthorization> for InvalidTransaction {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for InvalidTransaction {}
-
-#[cfg(feature = "optimism")]
-impl fmt::Display for OptimismInvalidTransaction {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::DepositSystemTxPostRegolith => write!(
-                f,
-                "deposit system transactions post regolith hardfork are not supported"
-            ),
-            Self::HaltedDepositPostRegolith => write!(
-                f,
-                "deposit transaction halted post-regolith; error will be bubbled up to main return handler"
-            ),
-        }
-    }
-}
+impl core::error::Error for InvalidTransaction {}
 
 impl fmt::Display for InvalidTransaction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -407,8 +373,6 @@ impl fmt::Display for InvalidTransaction {
             }
             Self::EmptyAuthorizationList => write!(f, "empty authorization list"),
             Self::InvalidAuthorizationList(i) => fmt::Display::fmt(i, f),
-            #[cfg(feature = "optimism")]
-            Self::OptimismError(op_error) => op_error.fmt(f),
         }
     }
 }
@@ -423,8 +387,7 @@ pub enum InvalidHeader {
     ExcessBlobGasNotSet,
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for InvalidHeader {}
+impl core::error::Error for InvalidHeader {}
 
 impl fmt::Display for InvalidHeader {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -483,10 +446,6 @@ pub enum HaltReason {
     EOFFunctionStackOverflow,
     /// Check for target address validity is only done inside subcall.
     InvalidEXTCALLTarget,
-
-    /* Optimism errors */
-    #[cfg(feature = "optimism")]
-    FailedDeposit,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
