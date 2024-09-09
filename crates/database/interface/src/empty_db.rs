@@ -1,8 +1,10 @@
-use crate::{
-    db::{Database, DatabaseRef},
-    keccak256, AccountInfo, Address, Bytecode, B256, U256,
-};
+use crate::{Database, DatabaseRef};
 use core::{convert::Infallible, fmt, marker::PhantomData};
+use revm_state::{
+    bytecode::Bytecode,
+    primitives::{keccak256, Address, B256, U256},
+    AccountInfo,
+};
 use std::string::ToString;
 
 /// An empty database that always returns default values when queried.
@@ -104,7 +106,7 @@ impl<E> DatabaseRef for EmptyDBTyped<E> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::b256;
+    use revm_state::primitives::b256;
 
     #[test]
     fn conform_block_hash_calculation() {

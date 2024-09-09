@@ -3157,6 +3157,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "revm-bytecode"
+version = "1.0.0"
+dependencies = [
+ "bitvec",
+ "revm-primitives",
+ "serde",
+]
+
+[[package]]
+name = "revm-database-interface"
+version = "1.0.0"
+dependencies = [
+ "alloy-sol-types",
+ "anyhow",
+ "auto_impl",
+ "criterion",
+ "indicatif",
+ "revm-state",
+ "rstest",
+ "serde",
+]
+
+[[package]]
 name = "revm-interpreter"
 version = "10.0.1"
 dependencies = [
@@ -3227,6 +3250,21 @@ dependencies = [
  "hashbrown",
  "hex",
  "kzg-rs",
+ "serde",
+]
+
+[[package]]
+name = "revm-state"
+version = "1.0.0"
+dependencies = [
+ "alloy-sol-types",
+ "anyhow",
+ "bitflags 2.6.0",
+ "criterion",
+ "indicatif",
+ "revm-bytecode",
+ "revm-primitives",
+ "rstest",
  "serde",
 ]
 

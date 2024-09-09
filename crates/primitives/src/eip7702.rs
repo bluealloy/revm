@@ -1,13 +1,9 @@
 pub mod authorization_list;
-pub mod bytecode;
 
 use crate::U256;
 pub use authorization_list::{
     Authorization, AuthorizationList, InvalidAuthorization, RecoveredAuthorization, Signature,
     SignedAuthorization,
-};
-pub use bytecode::{
-    Eip7702Bytecode, Eip7702DecodeError, EIP7702_MAGIC, EIP7702_MAGIC_BYTES, EIP7702_VERSION,
 };
 
 // Base cost of updating authorized account.

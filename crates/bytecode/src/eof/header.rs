@@ -234,7 +234,7 @@ impl EofHeader {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::hex;
+    use revm_primitives::hex;
 
     #[test]
     fn sanity_header_decode() {

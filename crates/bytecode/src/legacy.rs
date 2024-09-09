@@ -2,7 +2,7 @@ mod jump_map;
 
 pub use jump_map::JumpTable;
 
-use crate::Bytes;
+use revm_primitives::Bytes;
 use bitvec::{bitvec, order::Lsb0};
 use std::sync::Arc;
 

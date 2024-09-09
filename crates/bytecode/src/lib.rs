@@ -1,16 +1,23 @@
+//! Optimism-specific constants, types, and helpers.
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(not(feature = "std"))]
+extern crate alloc as std;
+
+pub mod eip7702;
 pub mod eof;
 pub mod legacy;
 
 pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
 
-use crate::{
-    eip7702::bytecode::Eip7702DecodeError, keccak256, Bytes, Eip7702Bytecode, B256,
-    EIP7702_MAGIC_BYTES, KECCAK_EMPTY,
-};
-use alloy_primitives::Address;
 use core::fmt::Debug;
 use eof::EofDecodeError;
+use revm_primitives::{
+    eip7702::bytecode::Eip7702DecodeError, keccak256, Address, Bytes, Eip7702Bytecode, B256,
+    EIP7702_MAGIC_BYTES, KECCAK_EMPTY,
+};
 use std::{fmt, sync::Arc};
 
 /// State of the [`Bytecode`] analysis.

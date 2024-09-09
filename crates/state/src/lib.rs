@@ -1,15 +1,21 @@
-use crate::{Address, Bytecode, HashMap, SpecId, B256, KECCAK_EMPTY, U256};
+//! Optimism-specific constants, types, and helpers.
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(not(feature = "std"))]
+extern crate alloc as std;
+
+mod account_info;
+mod types;
+
+pub use account_info::AccountInfo;
+pub use types::{EvmState, EvmStorage, TransientStorage};
+pub use revm_bytecode as bytecode;
+pub use revm_primitives as primitives;
+
 use bitflags::bitflags;
-use core::hash::{Hash, Hasher};
-
-/// EVM State is a mapping from addresses to accounts.
-pub type EvmState = HashMap<Address, Account>;
-
-/// Structure used for EIP-1153 transient storage.
-pub type TransientStorage = HashMap<(Address, U256), U256>;
-
-/// An account's Storage is a mapping from 256-bit integer keys to [EvmStorageSlot]s.
-pub type EvmStorage = HashMap<U256, EvmStorageSlot>;
+use core::hash::Hash;
+use revm_primitives::{HashMap, SpecId, U256};
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -20,36 +26,6 @@ pub struct Account {
     pub storage: EvmStorage,
     /// Account status flags.
     pub status: AccountStatus,
-}
-
-// The `bitflags!` macro generates `struct`s that manage a set of flags.
-bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-    #[cfg_attr(feature = "serde", serde(transparent))]
-    pub struct AccountStatus: u8 {
-        /// When account is loaded but not touched or interacted with.
-        /// This is the default state.
-        const Loaded = 0b00000000;
-        /// When account is newly created we will not access database
-        /// to fetch storage values
-        const Created = 0b00000001;
-        /// If account is marked for self destruction.
-        const SelfDestructed = 0b00000010;
-        /// Only when account is marked as touched we will save it to database.
-        const Touched = 0b00000100;
-        /// used only for pre spurious dragon hardforks where existing and empty were two separate states.
-        /// it became same state after EIP-161: State trie clearing
-        const LoadedAsNotExisting = 0b0001000;
-        /// used to mark account as cold
-        const Cold = 0b0010000;
-    }
-}
-
-impl Default for AccountStatus {
-    fn default() -> Self {
-        Self::Loaded
-    }
 }
 
 impl Account {
@@ -164,6 +140,36 @@ impl From<AccountInfo> for Account {
     }
 }
 
+// The `bitflags!` macro generates `struct`s that manage a set of flags.
+bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(transparent))]
+    pub struct AccountStatus: u8 {
+        /// When account is loaded but not touched or interacted with.
+        /// This is the default state.
+        const Loaded = 0b00000000;
+        /// When account is newly created we will not access database
+        /// to fetch storage values
+        const Created = 0b00000001;
+        /// If account is marked for self destruction.
+        const SelfDestructed = 0b00000010;
+        /// Only when account is marked as touched we will save it to database.
+        const Touched = 0b00000100;
+        /// used only for pre spurious dragon hardforks where existing and empty were two separate states.
+        /// it became same state after EIP-161: State trie clearing
+        const LoadedAsNotExisting = 0b0001000;
+        /// used to mark account as cold
+        const Cold = 0b0010000;
+    }
+}
+
+impl Default for AccountStatus {
+    fn default() -> Self {
+        Self::Loaded
+    }
+}
+
 /// This type keeps track of the current value of a storage slot.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -220,124 +226,10 @@ impl EvmStorageSlot {
     }
 }
 
-/// AccountInfo account information.
-#[derive(Clone, Debug, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct AccountInfo {
-    /// Account balance.
-    pub balance: U256,
-    /// Account nonce.
-    pub nonce: u64,
-    /// code hash,
-    pub code_hash: B256,
-    /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
-    /// inside `revm`.
-    pub code: Option<Bytecode>,
-}
-
-impl Default for AccountInfo {
-    fn default() -> Self {
-        Self {
-            balance: U256::ZERO,
-            code_hash: KECCAK_EMPTY,
-            code: Some(Bytecode::default()),
-            nonce: 0,
-        }
-    }
-}
-
-impl PartialEq for AccountInfo {
-    fn eq(&self, other: &Self) -> bool {
-        self.balance == other.balance
-            && self.nonce == other.nonce
-            && self.code_hash == other.code_hash
-    }
-}
-
-impl Hash for AccountInfo {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.balance.hash(state);
-        self.nonce.hash(state);
-        self.code_hash.hash(state);
-    }
-}
-
-impl AccountInfo {
-    pub fn new(balance: U256, nonce: u64, code_hash: B256, code: Bytecode) -> Self {
-        Self {
-            balance,
-            nonce,
-            code: Some(code),
-            code_hash,
-        }
-    }
-
-    /// Returns account info without the code.
-    pub fn without_code(mut self) -> Self {
-        self.take_bytecode();
-        self
-    }
-
-    /// Returns if an account is empty.
-    ///
-    /// An account is empty if the following conditions are met.
-    /// - code hash is zero or set to the Keccak256 hash of the empty string `""`
-    /// - balance is zero
-    /// - nonce is zero
-    pub fn is_empty(&self) -> bool {
-        let code_empty = self.is_empty_code_hash() || self.code_hash.is_zero();
-        code_empty && self.balance.is_zero() && self.nonce == 0
-    }
-
-    /// Returns `true` if the account is not empty.
-    pub fn exists(&self) -> bool {
-        !self.is_empty()
-    }
-
-    /// Returns `true` if account has no nonce and code.
-    pub fn has_no_code_and_nonce(&self) -> bool {
-        self.is_empty_code_hash() && self.nonce == 0
-    }
-
-    /// Return bytecode hash associated with this account.
-    /// If account does not have code, it returns `KECCAK_EMPTY` hash.
-    pub fn code_hash(&self) -> B256 {
-        self.code_hash
-    }
-
-    /// Returns true if the code hash is the Keccak256 hash of the empty string `""`.
-    #[inline]
-    pub fn is_empty_code_hash(&self) -> bool {
-        self.code_hash == KECCAK_EMPTY
-    }
-
-    /// Take bytecode from account. Code will be set to None.
-    pub fn take_bytecode(&mut self) -> Option<Bytecode> {
-        self.code.take()
-    }
-
-    pub fn from_balance(balance: U256) -> Self {
-        AccountInfo {
-            balance,
-            ..Default::default()
-        }
-    }
-
-    pub fn from_bytecode(bytecode: Bytecode) -> Self {
-        let hash = bytecode.hash_slow();
-
-        AccountInfo {
-            balance: U256::ZERO,
-            nonce: 1,
-            code: Some(bytecode),
-            code_hash: hash,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::{Account, KECCAK_EMPTY, U256};
+    use crate::Account;
+    use revm_primitives::{KECCAK_EMPTY, U256};
 
     #[test]
     fn account_is_empty_balance() {

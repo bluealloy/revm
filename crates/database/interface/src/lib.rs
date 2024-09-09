@@ -1,13 +1,20 @@
-use crate::{Account, AccountInfo, Address, Bytecode, HashMap, B256, U256};
+//! Optimism-specific constants, types, and helpers.
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(not(feature = "std"))]
+extern crate alloc as std;
+
 use auto_impl::auto_impl;
-
-pub mod components;
-pub mod emptydb;
-
-pub use components::{
-    BlockHash, BlockHashRef, DatabaseComponentError, DatabaseComponents, State, StateRef,
+use revm_state::{
+    bytecode::Bytecode,
+    primitives::{Address, HashMap, B256, U256},
+    Account, AccountInfo,
 };
-pub use emptydb::{EmptyDB, EmptyDBTyped};
+
+pub mod empty_db;
+
+pub use empty_db::{EmptyDB, EmptyDBTyped};
 
 /// EVM database interface.
 #[auto_impl(&mut, Box)]

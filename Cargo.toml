@@ -7,6 +7,9 @@ members = [
     "crates/interpreter",
     "crates/precompile",
     "crates/optimism",
+    "crates/database/interface",
+    "crates/bytecode",
+    "crates/state"
 ]
 resolver = "2"
 default-members = ["crates/revm"]
