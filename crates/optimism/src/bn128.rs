@@ -1,5 +1,6 @@
-use revm_precompile::bn128;
-use revm_precompile::{Error, Precompile, PrecompileResult, PrecompileWithAddress};
+use revm_precompile::{
+    bn128, {Error, Precompile, PrecompileResult, PrecompileWithAddress},
+};
 
 pub(crate) mod pair {
     use super::*;
@@ -25,9 +26,9 @@ pub(crate) mod pair {
 
 #[cfg(test)]
 mod tests {
-    use revm_precompile::primitives::{hex, PrecompileErrors};
-
     use super::*;
+    use revm::primitives::{hex, PrecompileErrors};
+    use std::vec;
 
     #[test]
     fn test_bn128_pair() {

@@ -1140,6 +1140,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "derive-where"
+version = "1.2.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62d671cc41a825ebabc75757b62d3d168c577f9149b2d49ece1dad1f72119d25"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.70",
+]
+
+[[package]]
 name = "derive_arbitrary"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3129,8 +3140,8 @@ dependencies = [
  "alloy-transport",
  "anyhow",
  "auto_impl",
- "cfg-if",
  "criterion",
+ "derive-where",
  "dyn-clone",
  "ethers-contract",
  "ethers-core",
@@ -3150,12 +3161,28 @@ name = "revm-interpreter"
 version = "10.0.1"
 dependencies = [
  "bincode",
+ "derive-where",
  "paste",
  "phf",
  "revm-primitives",
  "serde",
  "serde_json",
  "walkdir",
+]
+
+[[package]]
+name = "revm-optimism"
+version = "1.0.0"
+dependencies = [
+ "alloy-sol-types",
+ "anyhow",
+ "criterion",
+ "enumn",
+ "indicatif",
+ "revm",
+ "revm-precompile",
+ "rstest",
+ "serde",
 ]
 
 [[package]]

@@ -83,11 +83,6 @@ arbitrary = [
 asm-keccak = ["alloy-primitives/asm-keccak"]
 portable = ["c-kzg?/portable"]
 
-optimism = []
-# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
-optimism-default-handler = ["optimism"]
-negate-optimism-default-handler = []
-
 dev = [
     "memory_limit",
     "optional_balance_check",

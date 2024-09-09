@@ -1,50 +1,47 @@
-pub mod handler_cfg;
-
-pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
-
 use crate::{
-    calc_blob_gasprice, AccessListItem, Account, Address, AuthorizationList, Bytes, InvalidHeader,
-    InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE,
-    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
+    calc_blob_gasprice, AccessListItem, Account, Address, AuthorizationList, Block, Bytes,
+    EvmWiring, InvalidHeader, InvalidTransaction, Spec, SpecId, Transaction, TransactionValidation,
+    B256, MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256,
+    VERSIONED_HASH_VERSION_KZG,
 };
 use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
+use core::fmt::Debug;
 use core::hash::Hash;
 use std::boxed::Box;
 use std::vec::Vec;
 
+/// Subtype
+pub type EnvWiring<EvmWiringT> =
+    Env<<EvmWiringT as EvmWiring>::Block, <EvmWiringT as EvmWiring>::Transaction>;
+
+#[derive(Clone, Debug, Default)]
 /// EVM environment configuration.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Env {
+pub struct Env<BlockT: Block, TxT: Transaction> {
     /// Configuration of the EVM itself.
     pub cfg: CfgEnv,
     /// Configuration of the block the transaction is in.
-    pub block: BlockEnv,
+    pub block: BlockT,
     /// Configuration of the transaction that is being executed.
-    pub tx: TxEnv,
+    pub tx: TxT,
 }
 
-impl Env {
-    /// Resets environment to default values.
-    #[inline]
-    pub fn clear(&mut self) {
-        *self = Self::default();
-    }
-
+impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
     /// Create boxed [Env].
     #[inline]
-    pub fn boxed(cfg: CfgEnv, block: BlockEnv, tx: TxEnv) -> Box<Self> {
+    pub fn boxed(cfg: CfgEnv, block: BlockT, tx: TxT) -> Box<Self> {
         Box::new(Self { cfg, block, tx })
     }
 
     /// Calculates the effective gas price of the transaction.
     #[inline]
     pub fn effective_gas_price(&self) -> U256 {
-        if let Some(priority_fee) = self.tx.gas_priority_fee {
-            min(self.tx.gas_price, self.block.basefee + priority_fee)
+        let gas_price = self.tx.gas_price();
+        if let Some(priority_fee) = self.tx.max_priority_fee_per_gas() {
+            min(*gas_price, self.block.basefee() + priority_fee)
         } else {
-            self.tx.gas_price
+            *gas_price
         }
     }
 
@@ -56,7 +53,7 @@ impl Env {
     #[inline]
     pub fn calc_data_fee(&self) -> Option<U256> {
         self.block.get_blob_gasprice().map(|blob_gas_price| {
-            U256::from(blob_gas_price).saturating_mul(U256::from(self.tx.get_total_blob_gas()))
+            U256::from(*blob_gas_price).saturating_mul(U256::from(self.tx.get_total_blob_gas()))
         })
     }
 
@@ -68,7 +65,7 @@ impl Env {
     /// See EIP-4844:
     /// <https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#execution-layer-validation>
     pub fn calc_max_data_fee(&self) -> Option<U256> {
-        self.tx.max_fee_per_blob_gas.map(|max_fee_per_blob_gas| {
+        self.tx.max_fee_per_blob_gas().map(|max_fee_per_blob_gas| {
             max_fee_per_blob_gas.saturating_mul(U256::from(self.tx.get_total_blob_gas()))
         })
     }
@@ -77,11 +74,11 @@ impl Env {
     #[inline]
     pub fn validate_block_env<SPEC: Spec>(&self) -> Result<(), InvalidHeader> {
         // `prevrandao` is required for the merge
-        if SPEC::enabled(SpecId::MERGE) && self.block.prevrandao.is_none() {
+        if SPEC::enabled(SpecId::MERGE) && self.block.prevrandao().is_none() {
             return Err(InvalidHeader::PrevrandaoNotSet);
         }
         // `excess_blob_gas` is required for Cancun
-        if SPEC::enabled(SpecId::CANCUN) && self.block.blob_excess_gas_and_price.is_none() {
+        if SPEC::enabled(SpecId::CANCUN) && self.block.blob_excess_gas_and_price().is_none() {
             return Err(InvalidHeader::ExcessBlobGasNotSet);
         }
         Ok(())
@@ -93,7 +90,7 @@ impl Env {
     #[inline]
     pub fn validate_tx<SPEC: Spec>(&self) -> Result<(), InvalidTransaction> {
         // Check if the transaction's chain id is correct
-        if let Some(tx_chain_id) = self.tx.chain_id {
+        if let Some(tx_chain_id) = self.tx.chain_id() {
             if tx_chain_id != self.cfg.chain_id {
                 return Err(InvalidTransaction::InvalidChainId);
             }
@@ -101,20 +98,20 @@ impl Env {
 
         // Check if gas_limit is more than block_gas_limit
         if !self.cfg.is_block_gas_limit_disabled()
-            && U256::from(self.tx.gas_limit) > self.block.gas_limit
+            && U256::from(self.tx.gas_limit()) > *self.block.gas_limit()
         {
             return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
         }
 
         // Check that access list is empty for transactions before BERLIN
-        if !SPEC::enabled(SpecId::BERLIN) && !self.tx.access_list.is_empty() {
+        if !SPEC::enabled(SpecId::BERLIN) && !self.tx.access_list().is_empty() {
             return Err(InvalidTransaction::AccessListNotSupported);
         }
 
         // BASEFEE tx check
         if SPEC::enabled(SpecId::LONDON) {
-            if let Some(priority_fee) = self.tx.gas_priority_fee {
-                if priority_fee > self.tx.gas_price {
+            if let Some(priority_fee) = self.tx.max_priority_fee_per_gas() {
+                if priority_fee > self.tx.gas_price() {
                     // or gas_max_fee for eip1559
                     return Err(InvalidTransaction::PriorityFeeGreaterThanMaxFee);
                 }
@@ -122,41 +119,41 @@ impl Env {
 
             // check minimal cost against basefee
             if !self.cfg.is_base_fee_check_disabled()
-                && self.effective_gas_price() < self.block.basefee
+                && self.effective_gas_price() < *self.block.basefee()
             {
                 return Err(InvalidTransaction::GasPriceLessThanBasefee);
             }
         }
 
         // EIP-3860: Limit and meter initcode
-        if SPEC::enabled(SpecId::SHANGHAI) && self.tx.transact_to.is_create() {
+        if SPEC::enabled(SpecId::SHANGHAI) && self.tx.kind().is_create() {
             let max_initcode_size = self
                 .cfg
                 .limit_contract_code_size
                 .map(|limit| limit.saturating_mul(2))
                 .unwrap_or(MAX_INITCODE_SIZE);
-            if self.tx.data.len() > max_initcode_size {
+            if self.tx.data().len() > max_initcode_size {
                 return Err(InvalidTransaction::CreateInitCodeSizeLimit);
             }
         }
 
         // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not set
         if !SPEC::enabled(SpecId::CANCUN)
-            && (self.tx.max_fee_per_blob_gas.is_some() || !self.tx.blob_hashes.is_empty())
+            && (self.tx.max_fee_per_blob_gas().is_some() || !self.tx.blob_hashes().is_empty())
         {
             return Err(InvalidTransaction::BlobVersionedHashesNotSupported);
         }
 
         // Presence of max_fee_per_blob_gas means that this is blob transaction.
-        if let Some(max) = self.tx.max_fee_per_blob_gas {
+        if let Some(max) = self.tx.max_fee_per_blob_gas() {
             // ensure that the user was willing to at least pay the current blob gasprice
             let price = self.block.get_blob_gasprice().expect("already checked");
-            if U256::from(price) > max {
+            if U256::from(*price) > *max {
                 return Err(InvalidTransaction::BlobGasPriceGreaterThanMax);
             }
 
             // there must be at least one blob
-            if self.tx.blob_hashes.is_empty() {
+            if self.tx.blob_hashes().is_empty() {
                 return Err(InvalidTransaction::EmptyBlobs);
             }
 
@@ -164,12 +161,12 @@ impl Env {
             // that it MUST NOT be nil and therefore must always represent
             // a 20-byte address. This means that blob transactions cannot
             // have the form of a create transaction.
-            if self.tx.transact_to.is_create() {
+            if self.tx.kind().is_create() {
                 return Err(InvalidTransaction::BlobCreateTransaction);
             }
 
             // all versioned blob hashes must start with VERSIONED_HASH_VERSION_KZG
-            for blob in self.tx.blob_hashes.iter() {
+            for blob in self.tx.blob_hashes() {
                 if blob[0] != VERSIONED_HASH_VERSION_KZG {
                     return Err(InvalidTransaction::BlobVersionNotSupported);
                 }
@@ -177,7 +174,7 @@ impl Env {
 
             // ensure the total blob gas spent is at most equal to the limit
             // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
-            let num_blobs = self.tx.blob_hashes.len();
+            let num_blobs = self.tx.blob_hashes().len();
             if num_blobs > MAX_BLOB_NUMBER_PER_BLOCK as usize {
                 return Err(InvalidTransaction::TooManyBlobs {
                     have: num_blobs,
@@ -186,17 +183,17 @@ impl Env {
             }
         } else {
             // if max_fee_per_blob_gas is not set, then blob_hashes must be empty
-            if !self.tx.blob_hashes.is_empty() {
+            if !self.tx.blob_hashes().is_empty() {
                 return Err(InvalidTransaction::BlobVersionedHashesNotSupported);
             }
         }
 
         // check if EIP-7702 transaction is enabled.
-        if !SPEC::enabled(SpecId::PRAGUE) && self.tx.authorization_list.is_some() {
+        if !SPEC::enabled(SpecId::PRAGUE) && self.tx.authorization_list().is_some() {
             return Err(InvalidTransaction::AuthorizationListNotSupported);
         }
 
-        if let Some(auth_list) = &self.tx.authorization_list {
+        if let Some(auth_list) = &self.tx.authorization_list() {
             // The transaction is considered invalid if the length of authorization_list is zero.
             if auth_list.is_empty() {
                 return Err(InvalidTransaction::EmptyAuthorizationList);
@@ -206,7 +203,7 @@ impl Env {
             auth_list.is_valid(self.cfg.chain_id)?;
 
             // Check if other fields are unset.
-            if self.tx.max_fee_per_blob_gas.is_some() || !self.tx.blob_hashes.is_empty() {
+            if self.tx.max_fee_per_blob_gas().is_some() || !self.tx.blob_hashes().is_empty() {
                 return Err(InvalidTransaction::AuthorizationListInvalidFields);
             }
         }
@@ -237,7 +234,8 @@ impl Env {
         }
 
         // Check that the transaction's nonce is correct
-        if let Some(tx) = self.tx.nonce {
+        if !self.cfg.is_nonce_check_disabled() {
+            let tx = self.tx.nonce();
             let state = account.info.nonce;
             match tx.cmp(&state) {
                 Ordering::Greater => {
@@ -250,9 +248,9 @@ impl Env {
             }
         }
 
-        let mut balance_check = U256::from(self.tx.gas_limit)
-            .checked_mul(self.tx.gas_price)
-            .and_then(|gas_cost| gas_cost.checked_add(self.tx.value))
+        let mut balance_check = U256::from(self.tx.gas_limit())
+            .checked_mul(*self.tx.gas_price())
+            .and_then(|gas_cost| gas_cost.checked_add(*self.tx.value()))
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
         if SPEC::enabled(SpecId::CANCUN) {
@@ -281,6 +279,14 @@ impl Env {
     }
 }
 
+impl<BlockT: Block + Default, TxT: Transaction + Default> Env<BlockT, TxT> {
+    /// Resets environment to default values.
+    #[inline]
+    pub fn clear(&mut self) {
+        *self = Self::default();
+    }
+}
+
 /// EVM configuration.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -301,6 +307,10 @@ pub struct CfgEnv {
     /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
     /// By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
+    /// Skips the nonce validation against the account's nonce:
+    /// [`crate::InvalidTransaction::NonceTooHigh`] and
+    /// [`crate::InvalidTransaction::NonceTooLow`]
+    pub disable_nonce_check: bool,
     /// A hard memory limit in bytes beyond which [crate::result::OutOfGasError::Memory] cannot be resized.
     ///
     /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
@@ -408,6 +418,10 @@ impl CfgEnv {
     pub fn is_beneficiary_reward_disabled(&self) -> bool {
         false
     }
+
+    pub const fn is_nonce_check_disabled(&self) -> bool {
+        self.disable_nonce_check
+    }
 }
 
 impl Default for CfgEnv {
@@ -416,6 +430,7 @@ impl Default for CfgEnv {
             chain_id: 1,
             perf_analyse_created_bytecodes: AnalysisKind::default(),
             limit_contract_code_size: None,
+            disable_nonce_check: false,
             #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
             kzg_settings: crate::kzg::EnvKzgSettings::Default,
             #[cfg(feature = "memory_limit")]
@@ -483,34 +498,47 @@ impl BlockEnv {
     pub fn set_blob_excess_gas_and_price(&mut self, excess_blob_gas: u64) {
         self.blob_excess_gas_and_price = Some(BlobExcessGasAndPrice::new(excess_blob_gas));
     }
-    /// See [EIP-4844] and [`crate::calc_blob_gasprice`].
-    ///
-    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
-    ///
-    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+}
+
+impl Block for BlockEnv {
     #[inline]
-    pub fn get_blob_gasprice(&self) -> Option<u128> {
-        self.blob_excess_gas_and_price
-            .as_ref()
-            .map(|a| a.blob_gasprice)
+    fn number(&self) -> &U256 {
+        &self.number
     }
 
-    /// Return `blob_excess_gas` header field. See [EIP-4844].
-    ///
-    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
-    ///
-    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
-    pub fn get_blob_excess_gas(&self) -> Option<u64> {
-        self.blob_excess_gas_and_price
-            .as_ref()
-            .map(|a| a.excess_blob_gas)
+    fn coinbase(&self) -> &Address {
+        &self.coinbase
     }
 
-    /// Clears environment and resets fields to default values.
     #[inline]
-    pub fn clear(&mut self) {
-        *self = Self::default();
+    fn timestamp(&self) -> &U256 {
+        &self.timestamp
+    }
+
+    #[inline]
+    fn gas_limit(&self) -> &U256 {
+        &self.gas_limit
+    }
+
+    #[inline]
+    fn basefee(&self) -> &U256 {
+        &self.basefee
+    }
+
+    #[inline]
+    fn difficulty(&self) -> &U256 {
+        &self.difficulty
+    }
+
+    #[inline]
+    fn prevrandao(&self) -> Option<&B256> {
+        self.prevrandao.as_ref()
+    }
+
+    #[inline]
+    fn blob_excess_gas_and_price(&self) -> Option<&BlobExcessGasAndPrice> {
+        self.blob_excess_gas_and_price.as_ref()
     }
 }
 
@@ -547,9 +575,7 @@ pub struct TxEnv {
     pub data: Bytes,
 
     /// The nonce of the transaction.
-    ///
-    /// Caution: If set to `None`, then nonce validation against the account's nonce is skipped: [InvalidTransaction::NonceTooHigh] and [InvalidTransaction::NonceTooLow]
-    pub nonce: Option<u64>,
+    pub nonce: u64,
 
     /// The chain ID of the transaction. If set to `None`, no checks are performed.
     ///
@@ -594,11 +620,77 @@ pub struct TxEnv {
     ///
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
     pub authorization_list: Option<AuthorizationList>,
+}
 
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    #[cfg(feature = "optimism")]
-    /// Optimism fields.
-    pub optimism: OptimismFields,
+impl Transaction for TxEnv {
+    #[inline]
+    fn caller(&self) -> &Address {
+        &self.caller
+    }
+
+    #[inline]
+    fn gas_limit(&self) -> u64 {
+        self.gas_limit
+    }
+
+    #[inline]
+    fn gas_price(&self) -> &U256 {
+        &self.gas_price
+    }
+
+    #[inline]
+    fn kind(&self) -> TxKind {
+        self.transact_to
+    }
+
+    #[inline]
+    fn value(&self) -> &U256 {
+        &self.value
+    }
+
+    #[inline]
+    fn data(&self) -> &Bytes {
+        &self.data
+    }
+
+    #[inline]
+    fn nonce(&self) -> u64 {
+        self.nonce
+    }
+
+    #[inline]
+    fn chain_id(&self) -> Option<u64> {
+        self.chain_id
+    }
+
+    #[inline]
+    fn access_list(&self) -> &[AccessListItem] {
+        &self.access_list
+    }
+
+    #[inline]
+    fn max_priority_fee_per_gas(&self) -> Option<&U256> {
+        self.gas_priority_fee.as_ref()
+    }
+
+    #[inline]
+    fn blob_hashes(&self) -> &[B256] {
+        &self.blob_hashes
+    }
+
+    #[inline]
+    fn max_fee_per_blob_gas(&self) -> Option<&U256> {
+        self.max_fee_per_blob_gas.as_ref()
+    }
+
+    #[inline]
+    fn authorization_list(&self) -> Option<&AuthorizationList> {
+        self.authorization_list.as_ref()
+    }
+}
+
+impl TransactionValidation for TxEnv {
+    type ValidationError = InvalidTransaction;
 }
 
 pub enum TxType {
@@ -606,22 +698,6 @@ pub enum TxType {
     Eip1559,
     BlobTx,
     EofCreate,
-}
-
-impl TxEnv {
-    /// See [EIP-4844], [`Env::calc_data_fee`], and [`Env::calc_max_data_fee`].
-    ///
-    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    #[inline]
-    pub fn get_total_blob_gas(&self) -> u64 {
-        GAS_PER_BLOB * self.blob_hashes.len() as u64
-    }
-
-    /// Clears environment and resets fields to default values.
-    #[inline]
-    pub fn clear(&mut self) {
-        *self = Self::default();
-    }
 }
 
 impl Default for TxEnv {
@@ -635,13 +711,11 @@ impl Default for TxEnv {
             value: U256::ZERO,
             data: Bytes::new(),
             chain_id: None,
-            nonce: None,
+            nonce: 0,
             access_list: Vec::new(),
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: None,
             authorization_list: None,
-            #[cfg(feature = "optimism")]
-            optimism: OptimismFields::default(),
         }
     }
 }
@@ -669,40 +743,6 @@ impl BlobExcessGasAndPrice {
             blob_gasprice,
         }
     }
-}
-
-/// Additional [TxEnv] fields for optimism.
-#[cfg(feature = "optimism")]
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct OptimismFields {
-    /// The source hash is used to make sure that deposit transactions do
-    /// not have identical hashes.
-    ///
-    /// L1 originated deposit transaction source hashes are computed using
-    /// the hash of the l1 block hash and the l1 log index.
-    /// L1 attributes deposit source hashes are computed with the l1 block
-    /// hash and the sequence number = l2 block number - l2 epoch start
-    /// block number.
-    ///
-    /// These two deposit transaction sources specify a domain in the outer
-    /// hash so there are no collisions.
-    pub source_hash: Option<B256>,
-    /// The amount to increase the balance of the `from` account as part of
-    /// a deposit transaction. This is unconditional and is applied to the
-    /// `from` account even if the deposit transaction fails since
-    /// the deposit is pre-paid on L1.
-    pub mint: Option<u128>,
-    /// Whether or not the transaction is a system transaction.
-    pub is_system_transaction: Option<bool>,
-    /// An enveloped EIP-2718 typed transaction. This is used
-    /// to compute the L1 tx cost using the L1 block info, as
-    /// opposed to requiring downstream apps to compute the cost
-    /// externally.
-    /// This field is optional to allow the [TxEnv] to be constructed
-    /// for non-optimism chains when the `optimism` feature is enabled,
-    /// but the [CfgEnv] `optimism` field is set to false.
-    pub enveloped_tx: Option<Bytes>,
 }
 
 /// Transaction destination
@@ -738,7 +778,7 @@ mod tests {
 
     #[test]
     fn test_validate_tx_chain_id() {
-        let mut env = Env::default();
+        let mut env = Env::<BlockEnv, TxEnv>::default();
         env.tx.chain_id = Some(1);
         env.cfg.chain_id = 2;
         assert_eq!(
@@ -749,7 +789,7 @@ mod tests {
 
     #[test]
     fn test_validate_tx_access_list() {
-        let mut env = Env::default();
+        let mut env = Env::<BlockEnv, TxEnv>::default();
         env.tx.access_list = vec![AccessListItem {
             address: Address::ZERO,
             storage_keys: vec![],

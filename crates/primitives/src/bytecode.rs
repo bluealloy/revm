@@ -235,8 +235,7 @@ impl From<Eip7702DecodeError> for BytecodeDecodeError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for BytecodeDecodeError {}
+impl core::error::Error for BytecodeDecodeError {}
 
 impl fmt::Display for BytecodeDecodeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

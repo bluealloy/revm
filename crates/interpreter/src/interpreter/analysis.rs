@@ -219,8 +219,7 @@ impl fmt::Display for EofError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for EofError {}
+impl core::error::Error for EofError {}
 
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum EofValidationError {
@@ -442,8 +441,7 @@ impl fmt::Display for EofValidationError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for EofValidationError {}
+impl core::error::Error for EofValidationError {}
 
 /// Validates that:
 /// * All instructions are valid.

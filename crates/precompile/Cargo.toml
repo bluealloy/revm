@@ -86,16 +86,6 @@ std = [
 hashbrown = ["revm-primitives/hashbrown"]
 asm-keccak = ["revm-primitives/asm-keccak"]
 
-optimism = ["revm-primitives/optimism", "secp256r1"]
-# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
-optimism-default-handler = [
-    "optimism",
-    "revm-primitives/optimism-default-handler",
-]
-negate-optimism-default-handler = [
-    "revm-primitives/negate-optimism-default-handler",
-]
-
 # Enables the p256verify precompile.
 secp256r1 = ["dep:p256"]
 

@@ -28,7 +28,7 @@ revm-precompile = { path = "../precompile", version = "11.0.1", default-features
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
-cfg-if = "1.0"
+derive-where = { version = "1.2.7", default-features = false }
 dyn-clone = "1.0"
 
 # Optional
@@ -83,18 +83,6 @@ asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
 portable = ["revm-precompile/portable", "revm-interpreter/portable"]
 
 test-utils = []
-
-optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
-# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
-optimism-default-handler = [
-    "optimism",
-    "revm-precompile/optimism-default-handler",
-    "revm-interpreter/optimism-default-handler",
-]
-negate-optimism-default-handler = [
-    "revm-precompile/negate-optimism-default-handler",
-    "revm-interpreter/negate-optimism-default-handler",
-]
 
 ethersdb = ["std", "dep:tokio", "dep:ethers-providers", "dep:ethers-core"]
 
