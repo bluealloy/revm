@@ -54,7 +54,7 @@ alloy-eips = { version = "0.3", optional = true, default-features = false }
 alloy-transport = { version = "0.3", optional = true, default-features = false }
 
 [dev-dependencies]
-alloy-sol-types = { version = "0.8.0", default-features = false, features = [
+alloy-sol-types = { version = "0.8.2", default-features = false, features = [
     "std",
 ] }
 ethers-contract = { version = "2.0.14", default-features = false }
