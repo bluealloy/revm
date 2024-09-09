@@ -5,6 +5,7 @@ use crate::{
     },
     Context, FrameResult,
 };
+use revm_interpreter::{gas::*, Host};
 
 /// Mainnet end handle does not change the output.
 #[inline]
@@ -57,11 +58,30 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
 }
 
 pub fn refund<SPEC: Spec, EXT, DB: Database>(
-    _context: &mut Context<EXT, DB>,
+    context: &mut Context<EXT, DB>,
     gas: &mut Gas,
     eip7702_refund: i64,
 ) {
     gas.record_refund(eip7702_refund);
+
+    // EIP-7623: Increase calldata cost
+    if context.evm.spec_id().is_enabled_in(SpecId::PRAGUE) {
+        let tokens_in_calldata = get_tokens_in_calldata(
+            context.env().tx.data.as_ref(),
+            true, // Istanbul is enabled in Prague
+        );
+        let token_cost_difference =
+            tokens_in_calldata * (TOTAL_COST_FLOOR_PER_TOKEN - STANDARD_TOKEN_COST);
+        // We already charged token cost floor as part of intrinsic gas, subtract the difference from current gas used.
+        let standard_cost = gas.spent() - token_cost_difference;
+        let floor = 21_000 + tokens_in_calldata * TOTAL_COST_FLOOR_PER_TOKEN;
+
+        if standard_cost > floor {
+            // Return gas charged as token cost floor.
+            // TODO: should it be refund instead?
+            gas.erase_cost(token_cost_difference);
+        }
+    }
 
     // Calculate gas refund for transaction.
     // If spec is set to london, it will decrease the maximum refund amount to 5th part of

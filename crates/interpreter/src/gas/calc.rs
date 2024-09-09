@@ -371,17 +371,14 @@ pub fn validate_initial_tx_gas(
     authorization_list_num: u64,
 ) -> u64 {
     let mut initial_gas = 0;
-    let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
-    let non_zero_data_len = input.len() as u64 - zero_data_len;
 
-    // initdate stipend
-    initial_gas += zero_data_len * TRANSACTION_ZERO_DATA;
-    // EIP-2028: Transaction data gas cost reduction
-    initial_gas += non_zero_data_len
-        * if spec_id.is_enabled_in(SpecId::ISTANBUL) {
-            16
+    let tokens_in_calldata = get_tokens_in_calldata(input, spec_id.is_enabled_in(SpecId::ISTANBUL));
+    initial_gas += tokens_in_calldata
+        * if spec_id.is_enabled_in(SpecId::PRAGUE) {
+            // EIP-7623: Deduct full cost floor per token to avoid invalidation after execution
+            TOTAL_COST_FLOOR_PER_TOKEN
         } else {
-            68
+            STANDARD_TOKEN_COST
         };
 
     // get number of access list account and storages.
@@ -409,10 +406,23 @@ pub fn validate_initial_tx_gas(
         initial_gas += initcode_cost(input.len() as u64)
     }
 
-    //   EIP-7702
+    // EIP-7702
     if spec_id.is_enabled_in(SpecId::PRAGUE) {
         initial_gas += authorization_list_num * eip7702::PER_EMPTY_ACCOUNT_COST;
     }
 
     initial_gas
+}
+
+/// Retrieve the total number of tokens in calldata.
+pub fn get_tokens_in_calldata(input: &[u8], is_istanbul: bool) -> u64 {
+    let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
+    let non_zero_data_len = input.len() as u64 - zero_data_len;
+    let non_zero_data_multiplier = if is_istanbul {
+        // EIP-2028: Transaction data gas cost reduction
+        NON_ZERO_BYTE_MULTIPLIER_ISTANBUL
+    } else {
+        NON_ZERO_BYTE_MULTIPLIER
+    };
+    zero_data_len + non_zero_data_len * non_zero_data_multiplier
 }
