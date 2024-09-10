@@ -47,7 +47,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0x92e29d31ea26376c7987ae58298f62ecf194d27b374ad419ae8c006481fb30d6",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -118,7 +118,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0x8a0a6749acd6f4a63139def028653caef062da0592641daca76d41b019892543",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -189,7 +189,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0xeb79c22f73f781deba202443ece072836008741ffb3d112b687fe82d40ae566e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -260,7 +260,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0x41b3cbfae1b5177b9e4060a63cdce212c472ff4fffe853d5e0cbc212be10f4f9",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -331,7 +331,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0x30a9cfedc10ee6e8b6939c7fcb2ba13100049f7e37b33c38eb14ab5d9ae15ae3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -402,7 +402,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0xab46acb258ddaa20f19e13340ef284ef1c2f717a1d5814b0bdbaaedacf4c624a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -473,7 +473,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0xbe3aa6f7e3c0a14639859214b695bd36d98f3194cfe96595fb990ef6a07214a3",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -544,7 +544,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0x862be04f7eed2af4db11e64d64635c09aa7367ebfb4365b646188670245ddb53",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -615,7 +615,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0x508ac5984121d7b1f8e4a38b1308abd75e455ce67d7b6686118fcb772d1187eb",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -686,7 +686,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0x4f7bfa3433504c32af993093e5dead6f435f6d75d4afb2698ffed84ec195ec60",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -757,7 +757,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0x1ee91cc30e9b08a2c2f020b2eb3777c3e37dcd451bb7611e8b99ea76438ed5ae",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -828,7 +828,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0x1129e305bee189a229a4e944ca4b8f610c5f2cb149f953950d9b836433fc80ab",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -899,7 +899,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0x3c40cf89647ba8df09b8219ae89abbebe956008369744733fea7675cdec50df2",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -970,7 +970,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0x649d93876e5072ecaac5b6dc3cdd28a385240e4c252ef54ec5400da24d066d2b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -1041,7 +1041,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0x3c75a41c1c2a464fd8d9a0b2b227bda21dbbd4c88b05f6b3ad16576fc51f3ef2",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
@@ -1112,7 +1112,7 @@
             "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
         },
         "post": {
-            "PragueEOF": [
+            "Prague": [
                 {
                     "hash": "0xef566e36a83ec817d0a35af61df9eca84a7a854da9d5c2b175f80a2030742cb1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",

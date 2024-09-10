@@ -182,8 +182,7 @@ impl fmt::Display for EofDecodeError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for EofDecodeError {}
+impl core::error::Error for EofDecodeError {}
 
 #[cfg(test)]
 mod test {

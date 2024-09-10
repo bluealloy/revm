@@ -1,12 +1,13 @@
+use core::error::Error;
+use core::fmt::Debug;
 use revm::{
     db::{CacheDB, EmptyDB, WrapDatabaseRef},
     handler::register::HandleRegister,
     inspector_handle_register,
     inspectors::{NoOpInspector, TracerEip3155},
-    primitives::ResultAndState,
+    primitives::{EthereumWiring, HaltReason, ResultAndState},
     DatabaseCommit, DatabaseRef, Evm,
 };
-use std::error::Error;
 
 trait DatabaseRefDebugError: DatabaseRef<Error = Self::DBError> {
     type DBError: std::fmt::Debug + Error + Send + Sync + 'static;
@@ -20,13 +21,13 @@ where
     type DBError = DBError;
 }
 
-fn run_transaction<EXT, DB: DatabaseRefDebugError>(
+fn run_transaction<EXT: Debug, DB: DatabaseRefDebugError>(
     db: DB,
     ext: EXT,
-    register_handles_fn: HandleRegister<EXT, WrapDatabaseRef<DB>>,
-) -> anyhow::Result<(ResultAndState, DB)> {
-    let mut evm = Evm::builder()
-        .with_ref_db(db)
+    register_handles_fn: HandleRegister<EthereumWiring<WrapDatabaseRef<DB>, EXT>>,
+) -> anyhow::Result<(ResultAndState<HaltReason>, DB)> {
+    let mut evm = Evm::<EthereumWiring<_, _>>::builder()
+        .with_db(WrapDatabaseRef(db))
         .with_external_context(ext)
         .append_handler_register(register_handles_fn)
         .build();
@@ -35,10 +36,10 @@ fn run_transaction<EXT, DB: DatabaseRefDebugError>(
     Ok((result, evm.into_context().evm.inner.db.0))
 }
 
-fn run_transaction_and_commit_with_ext<EXT, DB: DatabaseRefDebugError + DatabaseCommit>(
+fn run_transaction_and_commit_with_ext<EXT: Debug, DB: DatabaseRefDebugError + DatabaseCommit>(
     db: DB,
     ext: EXT,
-    register_handles_fn: HandleRegister<EXT, WrapDatabaseRef<DB>>,
+    register_handles_fn: HandleRegister<EthereumWiring<WrapDatabaseRef<DB>, EXT>>,
 ) -> anyhow::Result<()> {
     // To circumvent borrow checker issues, we need to move the database into the
     // transaction and return it after the transaction is done.
@@ -54,8 +55,8 @@ fn run_transaction_and_commit(db: &mut CacheDB<EmptyDB>) -> anyhow::Result<()> {
     let ResultAndState { state: changes, .. } = {
         let rdb = &*db;
 
-        let mut evm = Evm::builder()
-            .with_ref_db(rdb)
+        let mut evm = Evm::<EthereumWiring<_, _>>::builder()
+            .with_db(WrapDatabaseRef(rdb))
             .with_external_context(NoOpInspector)
             .append_handler_register(inspector_handle_register)
             .build();

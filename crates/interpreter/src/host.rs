@@ -1,16 +1,20 @@
-use crate::primitives::{Address, Bytes, Env, Log, B256, U256};
+use crate::primitives::{Address, Bytes, Log, B256, U256};
 use core::ops::{Deref, DerefMut};
 
 mod dummy;
 pub use dummy::DummyHost;
+use revm_primitives::{EnvWiring, EvmWiring};
 
 /// EVM context host.
 pub trait Host {
+    /// Chain specification.
+    type EvmWiringT: EvmWiring;
+
     /// Returns a reference to the environment.
-    fn env(&self) -> &Env;
+    fn env(&self) -> &EnvWiring<Self::EvmWiringT>;
 
     /// Returns a mutable reference to the environment.
-    fn env_mut(&mut self) -> &mut Env;
+    fn env_mut(&mut self) -> &mut EnvWiring<Self::EvmWiringT>;
 
     /// Load an account code.
     fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad>;
@@ -255,13 +259,15 @@ pub struct SelfDestructResult {
 
 #[cfg(test)]
 mod tests {
+    use revm_primitives::{db::EmptyDB, EthereumWiring};
+
     use super::*;
 
     fn assert_host<H: Host + ?Sized>() {}
 
     #[test]
     fn object_safety() {
-        assert_host::<DummyHost>();
-        assert_host::<dyn Host>();
+        assert_host::<DummyHost<EthereumWiring<EmptyDB, ()>>>();
+        assert_host::<dyn Host<EvmWiringT = EthereumWiring<EmptyDB, ()>>>();
     }
 }

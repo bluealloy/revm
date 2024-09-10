@@ -5,7 +5,6 @@ pub use SpecId::*;
 /// Specification IDs and their activation block.
 ///
 /// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
-#[cfg(not(feature = "optimism"))]
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, enumn::N)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -34,44 +33,6 @@ pub enum SpecId {
     LATEST = u8::MAX,
 }
 
-/// Specification IDs and their activation block.
-///
-/// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
-#[cfg(feature = "optimism")]
-#[repr(u8)]
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, enumn::N)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum SpecId {
-    FRONTIER = 0,
-    FRONTIER_THAWING = 1,
-    HOMESTEAD = 2,
-    DAO_FORK = 3,
-    TANGERINE = 4,
-    SPURIOUS_DRAGON = 5,
-    BYZANTIUM = 6,
-    CONSTANTINOPLE = 7,
-    PETERSBURG = 8,
-    ISTANBUL = 9,
-    MUIR_GLACIER = 10,
-    BERLIN = 11,
-    LONDON = 12,
-    ARROW_GLACIER = 13,
-    GRAY_GLACIER = 14,
-    MERGE = 15,
-    BEDROCK = 16,
-    REGOLITH = 17,
-    SHANGHAI = 18,
-    CANYON = 19,
-    CANCUN = 20,
-    ECOTONE = 21,
-    FJORD = 22,
-    GRANITE = 23,
-    PRAGUE = 24,
-    PRAGUE_EOF = 25,
-    #[default]
-    LATEST = u8::MAX,
-}
-
 impl SpecId {
     /// Returns the `SpecId` for the given `u8`.
     #[inline]
@@ -92,37 +53,55 @@ impl SpecId {
     }
 }
 
+/// String identifiers for hardforks.
+pub mod id {
+    pub const FRONTIER: &str = "Frontier";
+    pub const FRONTIER_THAWING: &str = "Frontier Thawing";
+    pub const HOMESTEAD: &str = "Homestead";
+    pub const DAO_FORK: &str = "DAO Fork";
+    pub const TANGERINE: &str = "Tangerine";
+    pub const SPURIOUS_DRAGON: &str = "Spurious";
+    pub const BYZANTIUM: &str = "Byzantium";
+    pub const CONSTANTINOPLE: &str = "Constantinople";
+    pub const PETERSBURG: &str = "Petersburg";
+    pub const ISTANBUL: &str = "Istanbul";
+    pub const MUIR_GLACIER: &str = "MuirGlacier";
+    pub const BERLIN: &str = "Berlin";
+    pub const LONDON: &str = "London";
+    pub const ARROW_GLACIER: &str = "Arrow Glacier";
+    pub const GRAY_GLACIER: &str = "Gray Glacier";
+    pub const MERGE: &str = "Merge";
+    pub const SHANGHAI: &str = "Shanghai";
+    pub const CANCUN: &str = "Cancun";
+    pub const PRAGUE: &str = "Prague";
+    pub const PRAGUE_EOF: &str = "PragueEOF";
+    pub const LATEST: &str = "Latest";
+}
+
 impl From<&str> for SpecId {
     fn from(name: &str) -> Self {
         match name {
-            "Frontier" => Self::FRONTIER,
-            "Homestead" => Self::HOMESTEAD,
-            "Tangerine" => Self::TANGERINE,
-            "Spurious" => Self::SPURIOUS_DRAGON,
-            "Byzantium" => Self::BYZANTIUM,
-            "Constantinople" => Self::CONSTANTINOPLE,
-            "Petersburg" => Self::PETERSBURG,
-            "Istanbul" => Self::ISTANBUL,
-            "MuirGlacier" => Self::MUIR_GLACIER,
-            "Berlin" => Self::BERLIN,
-            "London" => Self::LONDON,
-            "Merge" => Self::MERGE,
-            "Shanghai" => Self::SHANGHAI,
-            "Cancun" => Self::CANCUN,
-            "Prague" => Self::PRAGUE,
-            "PragueEOF" => Self::PRAGUE_EOF,
-            #[cfg(feature = "optimism")]
-            "Bedrock" => SpecId::BEDROCK,
-            #[cfg(feature = "optimism")]
-            "Regolith" => SpecId::REGOLITH,
-            #[cfg(feature = "optimism")]
-            "Canyon" => SpecId::CANYON,
-            #[cfg(feature = "optimism")]
-            "Ecotone" => SpecId::ECOTONE,
-            #[cfg(feature = "optimism")]
-            "Fjord" => SpecId::FJORD,
-            #[cfg(feature = "optimism")]
-            "Granite" => SpecId::GRANITE,
+            id::FRONTIER => Self::FRONTIER,
+            id::FRONTIER_THAWING => Self::FRONTIER_THAWING,
+            id::HOMESTEAD => Self::HOMESTEAD,
+            id::DAO_FORK => Self::DAO_FORK,
+            id::TANGERINE => Self::TANGERINE,
+            id::SPURIOUS_DRAGON => Self::SPURIOUS_DRAGON,
+            id::BYZANTIUM => Self::BYZANTIUM,
+            id::CONSTANTINOPLE => Self::CONSTANTINOPLE,
+            id::PETERSBURG => Self::PETERSBURG,
+            id::ISTANBUL => Self::ISTANBUL,
+            id::MUIR_GLACIER => Self::MUIR_GLACIER,
+            id::BERLIN => Self::BERLIN,
+            id::LONDON => Self::LONDON,
+            id::ARROW_GLACIER => Self::ARROW_GLACIER,
+            id::GRAY_GLACIER => Self::GRAY_GLACIER,
+            id::MERGE => Self::MERGE,
+            id::SHANGHAI => Self::SHANGHAI,
+            id::CANCUN => Self::CANCUN,
+            id::PRAGUE => Self::PRAGUE,
+            id::PRAGUE_EOF => Self::PRAGUE_EOF,
+            id::LATEST => Self::LATEST,
             _ => Self::LATEST,
         }
     }
@@ -131,39 +110,27 @@ impl From<&str> for SpecId {
 impl From<SpecId> for &'static str {
     fn from(spec_id: SpecId) -> Self {
         match spec_id {
-            SpecId::FRONTIER => "Frontier",
-            SpecId::FRONTIER_THAWING => "Frontier Thawing",
-            SpecId::HOMESTEAD => "Homestead",
-            SpecId::DAO_FORK => "DAO Fork",
-            SpecId::TANGERINE => "Tangerine",
-            SpecId::SPURIOUS_DRAGON => "Spurious",
-            SpecId::BYZANTIUM => "Byzantium",
-            SpecId::CONSTANTINOPLE => "Constantinople",
-            SpecId::PETERSBURG => "Petersburg",
-            SpecId::ISTANBUL => "Istanbul",
-            SpecId::MUIR_GLACIER => "MuirGlacier",
-            SpecId::BERLIN => "Berlin",
-            SpecId::LONDON => "London",
-            SpecId::ARROW_GLACIER => "Arrow Glacier",
-            SpecId::GRAY_GLACIER => "Gray Glacier",
-            SpecId::MERGE => "Merge",
-            SpecId::SHANGHAI => "Shanghai",
-            SpecId::CANCUN => "Cancun",
-            SpecId::PRAGUE => "Prague",
-            SpecId::PRAGUE_EOF => "PragueEOF",
-            #[cfg(feature = "optimism")]
-            SpecId::BEDROCK => "Bedrock",
-            #[cfg(feature = "optimism")]
-            SpecId::REGOLITH => "Regolith",
-            #[cfg(feature = "optimism")]
-            SpecId::CANYON => "Canyon",
-            #[cfg(feature = "optimism")]
-            SpecId::ECOTONE => "Ecotone",
-            #[cfg(feature = "optimism")]
-            SpecId::FJORD => "Fjord",
-            #[cfg(feature = "optimism")]
-            SpecId::GRANITE => "Granite",
-            SpecId::LATEST => "Latest",
+            SpecId::FRONTIER => id::FRONTIER,
+            SpecId::FRONTIER_THAWING => id::FRONTIER_THAWING,
+            SpecId::HOMESTEAD => id::HOMESTEAD,
+            SpecId::DAO_FORK => id::DAO_FORK,
+            SpecId::TANGERINE => id::TANGERINE,
+            SpecId::SPURIOUS_DRAGON => id::SPURIOUS_DRAGON,
+            SpecId::BYZANTIUM => id::BYZANTIUM,
+            SpecId::CONSTANTINOPLE => id::CONSTANTINOPLE,
+            SpecId::PETERSBURG => id::PETERSBURG,
+            SpecId::ISTANBUL => id::ISTANBUL,
+            SpecId::MUIR_GLACIER => id::MUIR_GLACIER,
+            SpecId::BERLIN => id::BERLIN,
+            SpecId::LONDON => id::LONDON,
+            SpecId::ARROW_GLACIER => id::ARROW_GLACIER,
+            SpecId::GRAY_GLACIER => id::GRAY_GLACIER,
+            SpecId::MERGE => id::MERGE,
+            SpecId::SHANGHAI => id::SHANGHAI,
+            SpecId::CANCUN => id::CANCUN,
+            SpecId::PRAGUE => id::PRAGUE,
+            SpecId::PRAGUE_EOF => id::PRAGUE_EOF,
+            SpecId::LATEST => id::LATEST,
         }
     }
 }
@@ -213,30 +180,15 @@ spec!(PRAGUE_EOF, PragueEofSpec);
 
 spec!(LATEST, LatestSpec);
 
-// Optimism Hardforks
-#[cfg(feature = "optimism")]
-spec!(BEDROCK, BedrockSpec);
-#[cfg(feature = "optimism")]
-spec!(REGOLITH, RegolithSpec);
-#[cfg(feature = "optimism")]
-spec!(CANYON, CanyonSpec);
-#[cfg(feature = "optimism")]
-spec!(ECOTONE, EcotoneSpec);
-#[cfg(feature = "optimism")]
-spec!(FJORD, FjordSpec);
-#[cfg(feature = "optimism")]
-spec!(GRANITE, GraniteSpec);
-
-#[cfg(not(feature = "optimism"))]
 #[macro_export]
 macro_rules! spec_to_generic {
     ($spec_id:expr, $e:expr) => {{
         match $spec_id {
-            $crate::SpecId::FRONTIER | SpecId::FRONTIER_THAWING => {
+            $crate::SpecId::FRONTIER | $crate::SpecId::FRONTIER_THAWING => {
                 use $crate::FrontierSpec as SPEC;
                 $e
             }
-            $crate::SpecId::HOMESTEAD | SpecId::DAO_FORK => {
+            $crate::SpecId::HOMESTEAD | $crate::SpecId::DAO_FORK => {
                 use $crate::HomesteadSpec as SPEC;
                 $e
             }
@@ -292,101 +244,6 @@ macro_rules! spec_to_generic {
             }
             $crate::SpecId::PRAGUE_EOF => {
                 use $crate::PragueEofSpec as SPEC;
-                $e
-            }
-        }
-    }};
-}
-
-#[cfg(feature = "optimism")]
-#[macro_export]
-macro_rules! spec_to_generic {
-    ($spec_id:expr, $e:expr) => {{
-        match $spec_id {
-            $crate::SpecId::FRONTIER | SpecId::FRONTIER_THAWING => {
-                use $crate::FrontierSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::HOMESTEAD | SpecId::DAO_FORK => {
-                use $crate::HomesteadSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::TANGERINE => {
-                use $crate::TangerineSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::SPURIOUS_DRAGON => {
-                use $crate::SpuriousDragonSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::BYZANTIUM => {
-                use $crate::ByzantiumSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::PETERSBURG | $crate::SpecId::CONSTANTINOPLE => {
-                use $crate::PetersburgSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::ISTANBUL | $crate::SpecId::MUIR_GLACIER => {
-                use $crate::IstanbulSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::BERLIN => {
-                use $crate::BerlinSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::LONDON
-            | $crate::SpecId::ARROW_GLACIER
-            | $crate::SpecId::GRAY_GLACIER => {
-                use $crate::LondonSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::MERGE => {
-                use $crate::MergeSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::SHANGHAI => {
-                use $crate::ShanghaiSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::CANCUN => {
-                use $crate::CancunSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::LATEST => {
-                use $crate::LatestSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::PRAGUE => {
-                use $crate::PragueSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::PRAGUE_EOF => {
-                use $crate::PragueEofSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::BEDROCK => {
-                use $crate::BedrockSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::REGOLITH => {
-                use $crate::RegolithSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::CANYON => {
-                use $crate::CanyonSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::ECOTONE => {
-                use $crate::EcotoneSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::FJORD => {
-                use $crate::FjordSpec as SPEC;
-                $e
-            }
-            $crate::SpecId::GRANITE => {
-                use $crate::GraniteSpec as SPEC;
                 $e
             }
         }
@@ -417,168 +274,9 @@ mod tests {
         spec_to_generic!(ARROW_GLACIER, assert_eq!(SPEC::SPEC_ID, LONDON));
         spec_to_generic!(GRAY_GLACIER, assert_eq!(SPEC::SPEC_ID, LONDON));
         spec_to_generic!(MERGE, assert_eq!(SPEC::SPEC_ID, MERGE));
-        #[cfg(feature = "optimism")]
-        spec_to_generic!(BEDROCK, assert_eq!(SPEC::SPEC_ID, BEDROCK));
-        #[cfg(feature = "optimism")]
-        spec_to_generic!(REGOLITH, assert_eq!(SPEC::SPEC_ID, REGOLITH));
-        spec_to_generic!(SHANGHAI, assert_eq!(SPEC::SPEC_ID, SHANGHAI));
-        #[cfg(feature = "optimism")]
-        spec_to_generic!(CANYON, assert_eq!(SPEC::SPEC_ID, CANYON));
         spec_to_generic!(CANCUN, assert_eq!(SPEC::SPEC_ID, CANCUN));
-        #[cfg(feature = "optimism")]
-        spec_to_generic!(ECOTONE, assert_eq!(SPEC::SPEC_ID, ECOTONE));
-        #[cfg(feature = "optimism")]
-        spec_to_generic!(FJORD, assert_eq!(SPEC::SPEC_ID, FJORD));
-        #[cfg(feature = "optimism")]
-        spec_to_generic!(GRANITE, assert_eq!(SPEC::SPEC_ID, GRANITE));
         spec_to_generic!(PRAGUE, assert_eq!(SPEC::SPEC_ID, PRAGUE));
         spec_to_generic!(PRAGUE_EOF, assert_eq!(SPEC::SPEC_ID, PRAGUE_EOF));
         spec_to_generic!(LATEST, assert_eq!(SPEC::SPEC_ID, LATEST));
-    }
-}
-
-#[cfg(feature = "optimism")]
-#[cfg(test)]
-mod optimism_tests {
-    use super::*;
-
-    #[test]
-    fn test_bedrock_post_merge_hardforks() {
-        assert!(BedrockSpec::enabled(SpecId::MERGE));
-        assert!(!BedrockSpec::enabled(SpecId::SHANGHAI));
-        assert!(!BedrockSpec::enabled(SpecId::CANCUN));
-        assert!(!BedrockSpec::enabled(SpecId::LATEST));
-        assert!(BedrockSpec::enabled(SpecId::BEDROCK));
-        assert!(!BedrockSpec::enabled(SpecId::REGOLITH));
-    }
-
-    #[test]
-    fn test_regolith_post_merge_hardforks() {
-        assert!(RegolithSpec::enabled(SpecId::MERGE));
-        assert!(!RegolithSpec::enabled(SpecId::SHANGHAI));
-        assert!(!RegolithSpec::enabled(SpecId::CANCUN));
-        assert!(!RegolithSpec::enabled(SpecId::LATEST));
-        assert!(RegolithSpec::enabled(SpecId::BEDROCK));
-        assert!(RegolithSpec::enabled(SpecId::REGOLITH));
-    }
-
-    #[test]
-    fn test_bedrock_post_merge_hardforks_spec_id() {
-        assert!(SpecId::enabled(SpecId::BEDROCK, SpecId::MERGE));
-        assert!(!SpecId::enabled(SpecId::BEDROCK, SpecId::SHANGHAI));
-        assert!(!SpecId::enabled(SpecId::BEDROCK, SpecId::CANCUN));
-        assert!(!SpecId::enabled(SpecId::BEDROCK, SpecId::LATEST));
-        assert!(SpecId::enabled(SpecId::BEDROCK, SpecId::BEDROCK));
-        assert!(!SpecId::enabled(SpecId::BEDROCK, SpecId::REGOLITH));
-    }
-
-    #[test]
-    fn test_regolith_post_merge_hardforks_spec_id() {
-        assert!(SpecId::enabled(SpecId::REGOLITH, SpecId::MERGE));
-        assert!(!SpecId::enabled(SpecId::REGOLITH, SpecId::SHANGHAI));
-        assert!(!SpecId::enabled(SpecId::REGOLITH, SpecId::CANCUN));
-        assert!(!SpecId::enabled(SpecId::REGOLITH, SpecId::LATEST));
-        assert!(SpecId::enabled(SpecId::REGOLITH, SpecId::BEDROCK));
-        assert!(SpecId::enabled(SpecId::REGOLITH, SpecId::REGOLITH));
-    }
-
-    #[test]
-    fn test_canyon_post_merge_hardforks() {
-        assert!(CanyonSpec::enabled(SpecId::MERGE));
-        assert!(CanyonSpec::enabled(SpecId::SHANGHAI));
-        assert!(!CanyonSpec::enabled(SpecId::CANCUN));
-        assert!(!CanyonSpec::enabled(SpecId::LATEST));
-        assert!(CanyonSpec::enabled(SpecId::BEDROCK));
-        assert!(CanyonSpec::enabled(SpecId::REGOLITH));
-        assert!(CanyonSpec::enabled(SpecId::CANYON));
-    }
-
-    #[test]
-    fn test_canyon_post_merge_hardforks_spec_id() {
-        assert!(SpecId::enabled(SpecId::CANYON, SpecId::MERGE));
-        assert!(SpecId::enabled(SpecId::CANYON, SpecId::SHANGHAI));
-        assert!(!SpecId::enabled(SpecId::CANYON, SpecId::CANCUN));
-        assert!(!SpecId::enabled(SpecId::CANYON, SpecId::LATEST));
-        assert!(SpecId::enabled(SpecId::CANYON, SpecId::BEDROCK));
-        assert!(SpecId::enabled(SpecId::CANYON, SpecId::REGOLITH));
-        assert!(SpecId::enabled(SpecId::CANYON, SpecId::CANYON));
-    }
-
-    #[test]
-    fn test_ecotone_post_merge_hardforks() {
-        assert!(EcotoneSpec::enabled(SpecId::MERGE));
-        assert!(EcotoneSpec::enabled(SpecId::SHANGHAI));
-        assert!(EcotoneSpec::enabled(SpecId::CANCUN));
-        assert!(!EcotoneSpec::enabled(SpecId::LATEST));
-        assert!(EcotoneSpec::enabled(SpecId::BEDROCK));
-        assert!(EcotoneSpec::enabled(SpecId::REGOLITH));
-        assert!(EcotoneSpec::enabled(SpecId::CANYON));
-        assert!(EcotoneSpec::enabled(SpecId::ECOTONE));
-    }
-
-    #[test]
-    fn test_ecotone_post_merge_hardforks_spec_id() {
-        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::MERGE));
-        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::SHANGHAI));
-        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::CANCUN));
-        assert!(!SpecId::enabled(SpecId::ECOTONE, SpecId::LATEST));
-        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::BEDROCK));
-        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::REGOLITH));
-        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::CANYON));
-        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::ECOTONE));
-    }
-
-    #[test]
-    fn test_fjord_post_merge_hardforks() {
-        assert!(FjordSpec::enabled(SpecId::MERGE));
-        assert!(FjordSpec::enabled(SpecId::SHANGHAI));
-        assert!(FjordSpec::enabled(SpecId::CANCUN));
-        assert!(!FjordSpec::enabled(SpecId::LATEST));
-        assert!(FjordSpec::enabled(SpecId::BEDROCK));
-        assert!(FjordSpec::enabled(SpecId::REGOLITH));
-        assert!(FjordSpec::enabled(SpecId::CANYON));
-        assert!(FjordSpec::enabled(SpecId::ECOTONE));
-        assert!(FjordSpec::enabled(SpecId::FJORD));
-    }
-
-    #[test]
-    fn test_fjord_post_merge_hardforks_spec_id() {
-        assert!(SpecId::enabled(SpecId::FJORD, SpecId::MERGE));
-        assert!(SpecId::enabled(SpecId::FJORD, SpecId::SHANGHAI));
-        assert!(SpecId::enabled(SpecId::FJORD, SpecId::CANCUN));
-        assert!(!SpecId::enabled(SpecId::FJORD, SpecId::LATEST));
-        assert!(SpecId::enabled(SpecId::FJORD, SpecId::BEDROCK));
-        assert!(SpecId::enabled(SpecId::FJORD, SpecId::REGOLITH));
-        assert!(SpecId::enabled(SpecId::FJORD, SpecId::CANYON));
-        assert!(SpecId::enabled(SpecId::FJORD, SpecId::ECOTONE));
-        assert!(SpecId::enabled(SpecId::FJORD, SpecId::FJORD));
-    }
-
-    #[test]
-    fn test_granite_post_merge_hardforks() {
-        assert!(GraniteSpec::enabled(SpecId::MERGE));
-        assert!(GraniteSpec::enabled(SpecId::SHANGHAI));
-        assert!(GraniteSpec::enabled(SpecId::CANCUN));
-        assert!(!GraniteSpec::enabled(SpecId::LATEST));
-        assert!(GraniteSpec::enabled(SpecId::BEDROCK));
-        assert!(GraniteSpec::enabled(SpecId::REGOLITH));
-        assert!(GraniteSpec::enabled(SpecId::CANYON));
-        assert!(GraniteSpec::enabled(SpecId::ECOTONE));
-        assert!(GraniteSpec::enabled(SpecId::FJORD));
-        assert!(GraniteSpec::enabled(SpecId::GRANITE));
-    }
-
-    #[test]
-    fn test_granite_post_merge_hardforks_spec_id() {
-        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::MERGE));
-        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::SHANGHAI));
-        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::CANCUN));
-        assert!(!SpecId::enabled(SpecId::GRANITE, SpecId::LATEST));
-        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::BEDROCK));
-        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::REGOLITH));
-        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::CANYON));
-        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::ECOTONE));
-        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::FJORD));
-        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::GRANITE));
     }
 }

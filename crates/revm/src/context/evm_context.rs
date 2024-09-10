@@ -1,3 +1,4 @@
+use derive_where::derive_where;
 use revm_interpreter::CallValue;
 use revm_precompile::PrecompileErrors;
 
@@ -9,77 +10,59 @@ use crate::{
         EOFCreateKind, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
     primitives::{
-        keccak256, Address, Bytecode, Bytes, CreateScheme, EVMError, Env, Eof,
+        keccak256, Address, Bytecode, Bytes, CreateScheme, EVMError, EVMResultGeneric, EnvWiring,
+        Eof,
         SpecId::{self, *},
-        B256, EOF_MAGIC_BYTES,
+        Transaction, B256, EOF_MAGIC_BYTES,
     },
-    ContextPrecompiles, FrameOrResult, CALL_STACK_LIMIT,
+    ContextPrecompiles, EvmWiring, FrameOrResult, CALL_STACK_LIMIT,
 };
-use core::{
-    fmt,
-    ops::{Deref, DerefMut},
-};
+use core::ops::{Deref, DerefMut};
 use std::{boxed::Box, sync::Arc};
 
 /// EVM context that contains the inner EVM context and precompiles.
-pub struct EvmContext<DB: Database> {
+#[derive_where(Clone, Debug; EvmWiringT::Block, EvmWiringT::ChainContext, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error)]
+pub struct EvmContext<EvmWiringT: EvmWiring> {
     /// Inner EVM context.
-    pub inner: InnerEvmContext<DB>,
+    pub inner: InnerEvmContext<EvmWiringT>,
     /// Precompiles that are available for evm.
-    pub precompiles: ContextPrecompiles<DB>,
+    pub precompiles: ContextPrecompiles<EvmWiringT>,
 }
 
-impl<DB: Database + Clone> Clone for EvmContext<DB>
-where
-    DB::Error: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-            precompiles: ContextPrecompiles::default(),
-        }
-    }
-}
-
-impl<DB> fmt::Debug for EvmContext<DB>
-where
-    DB: Database + fmt::Debug,
-    DB::Error: fmt::Debug,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("EvmContext")
-            .field("inner", &self.inner)
-            .field("precompiles", &self.inner)
-            .finish_non_exhaustive()
-    }
-}
-
-impl<DB: Database> Deref for EvmContext<DB> {
-    type Target = InnerEvmContext<DB>;
+impl<EvmWiringT: EvmWiring> Deref for EvmContext<EvmWiringT> {
+    type Target = InnerEvmContext<EvmWiringT>;
 
     fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }
 
-impl<DB: Database> DerefMut for EvmContext<DB> {
+impl<EvmWiringT: EvmWiring> DerefMut for EvmContext<EvmWiringT> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.inner
     }
 }
 
-impl<DB: Database> EvmContext<DB> {
+impl<EvmWiringT> EvmContext<EvmWiringT>
+where
+    EvmWiringT: EvmWiring<Block: Default, Transaction: Default>,
+{
     /// Create new context with database.
-    pub fn new(db: DB) -> Self {
+    pub fn new(db: EvmWiringT::Database) -> Self {
         Self {
             inner: InnerEvmContext::new(db),
             precompiles: ContextPrecompiles::default(),
         }
     }
+}
 
+impl<EvmWiringT> EvmContext<EvmWiringT>
+where
+    EvmWiringT: EvmWiring,
+{
     /// Creates a new context with the given environment and database.
     #[inline]
-    pub fn new_with_env(db: DB, env: Box<Env>) -> Self {
+    pub fn new_with_env(db: EvmWiringT::Database, env: Box<EnvWiring<EvmWiringT>>) -> Self {
         Self {
             inner: InnerEvmContext::new_with_env(db, env),
             precompiles: ContextPrecompiles::default(),
@@ -90,7 +73,12 @@ impl<DB: Database> EvmContext<DB> {
     ///
     /// Note that this will ignore the previous `error` if set.
     #[inline]
-    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmContext<ODB> {
+    pub fn with_db<
+        OEvmWiring: EvmWiring<Block = EvmWiringT::Block, Transaction = EvmWiringT::Transaction>,
+    >(
+        self,
+        db: OEvmWiring::Database,
+    ) -> EvmContext<OEvmWiring> {
         EvmContext {
             inner: self.inner.with_db(db),
             precompiles: ContextPrecompiles::default(),
@@ -99,7 +87,7 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Sets precompiles
     #[inline]
-    pub fn set_precompiles(&mut self, precompiles: ContextPrecompiles<DB>) {
+    pub fn set_precompiles(&mut self, precompiles: ContextPrecompiles<EvmWiringT>) {
         // set warm loaded addresses.
         self.journaled_state
             .warm_preloaded_addresses
@@ -114,7 +102,7 @@ impl<DB: Database> EvmContext<DB> {
         address: &Address,
         input_data: &Bytes,
         gas: Gas,
-    ) -> Result<Option<InterpreterResult>, EVMError<DB::Error>> {
+    ) -> EVMResultGeneric<Option<InterpreterResult>, EvmWiringT> {
         let Some(outcome) =
             self.precompiles
                 .call(address, input_data, gas.limit(), &mut self.inner)
@@ -154,7 +142,7 @@ impl<DB: Database> EvmContext<DB> {
     pub fn make_call_frame(
         &mut self,
         inputs: &CallInputs,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    ) -> EVMResultGeneric<FrameOrResult, EvmWiringT> {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {
@@ -177,7 +165,8 @@ impl<DB: Database> EvmContext<DB> {
         let _ = self
             .inner
             .journaled_state
-            .load_account_delegated(inputs.bytecode_address, &mut self.inner.db)?;
+            .load_account_delegated(inputs.bytecode_address, &mut self.inner.db)
+            .map_err(EVMError::Database)?;
 
         // Create subroutine checkpoint
         let checkpoint = self.journaled_state.checkpoint();
@@ -186,18 +175,24 @@ impl<DB: Database> EvmContext<DB> {
         match inputs.value {
             // if transfer value is zero, load account and force the touch.
             CallValue::Transfer(value) if value.is_zero() => {
-                self.load_account(inputs.target_address)?;
+                self.load_account(inputs.target_address)
+                    .map_err(EVMError::Database)?;
                 self.journaled_state.touch(&inputs.target_address);
             }
             CallValue::Transfer(value) => {
                 // Transfer value from caller to called account. As value get transferred
                 // target gets touched.
-                if let Some(result) = self.inner.journaled_state.transfer(
-                    &inputs.caller,
-                    &inputs.target_address,
-                    value,
-                    &mut self.inner.db,
-                )? {
+                if let Some(result) = self
+                    .inner
+                    .journaled_state
+                    .transfer(
+                        &inputs.caller,
+                        &inputs.target_address,
+                        value,
+                        &mut self.inner.db,
+                    )
+                    .map_err(EVMError::Database)?
+                {
                     self.journaled_state.checkpoint_revert(checkpoint);
                     return return_result(result);
                 }
@@ -219,7 +214,8 @@ impl<DB: Database> EvmContext<DB> {
             let account = self
                 .inner
                 .journaled_state
-                .load_code(inputs.bytecode_address, &mut self.inner.db)?;
+                .load_code(inputs.bytecode_address, &mut self.inner.db)
+                .map_err(EVMError::Database)?;
 
             let code_hash = account.info.code_hash();
             let mut bytecode = account.info.code.clone().unwrap_or_default();
@@ -240,7 +236,8 @@ impl<DB: Database> EvmContext<DB> {
                 bytecode = self
                     .inner
                     .journaled_state
-                    .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?
+                    .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)
+                    .map_err(EVMError::Database)?
                     .info
                     .code
                     .clone()
@@ -264,7 +261,7 @@ impl<DB: Database> EvmContext<DB> {
         &mut self,
         spec_id: SpecId,
         inputs: &CreateInputs,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    ) -> Result<FrameOrResult, <EvmWiringT::Database as Database>::Error> {
         let return_error = |e| {
             Ok(FrameOrResult::new_create_result(
                 InterpreterResult {
@@ -358,7 +355,7 @@ impl<DB: Database> EvmContext<DB> {
         &mut self,
         spec_id: SpecId,
         inputs: &EOFCreateInputs,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+    ) -> Result<FrameOrResult, <EvmWiringT::Database as Database>::Error> {
         let return_error = |e| {
             Ok(FrameOrResult::new_eofcreate_result(
                 InterpreterResult {
@@ -390,15 +387,10 @@ impl<DB: Database> EvmContext<DB> {
                     return return_error(InstructionResult::InvalidEOFInitCode);
                 }
 
-                // Use nonce from tx (if set) to calculate address.
-                // If not set, use the nonce from the account.
-                let nonce = self
-                    .env
-                    .tx
-                    .nonce
-                    .map(|nonce| self.env.tx.caller.create(nonce));
+                // Use nonce from tx to calculate address.
+                let nonce = self.env.tx.nonce();
 
-                (input, eof, nonce)
+                (input, eof, Some(self.env.tx.caller().create(nonce)))
             }
         };
 
@@ -501,11 +493,13 @@ pub(crate) mod test_utils {
     /// Creates an evm context with a cache db backend.
     /// Additionally loads the mock caller account into the db,
     /// and sets the balance to the provided U256 value.
-    pub fn create_cache_db_evm_context_with_balance(
-        env: Box<Env>,
+    pub fn create_cache_db_evm_context_with_balance<
+        EvmWiringT: EvmWiring<Database = CacheDB<EmptyDB>>,
+    >(
+        env: Box<EnvWiring<EvmWiringT>>,
         mut db: CacheDB<EmptyDB>,
         balance: U256,
-    ) -> EvmContext<CacheDB<EmptyDB>> {
+    ) -> EvmContext<EvmWiringT> {
         db.insert_account_info(
             test_utils::MOCK_CALLER,
             crate::primitives::AccountInfo {
@@ -519,33 +513,34 @@ pub(crate) mod test_utils {
     }
 
     /// Creates a cached db evm context.
-    pub fn create_cache_db_evm_context(
-        env: Box<Env>,
+    pub fn create_cache_db_evm_context<EvmWiringT: EvmWiring<Database = CacheDB<EmptyDB>>>(
+        env: Box<EnvWiring<EvmWiringT>>,
         db: CacheDB<EmptyDB>,
-    ) -> EvmContext<CacheDB<EmptyDB>> {
+    ) -> EvmContext<EvmWiringT> {
         EvmContext {
             inner: InnerEvmContext {
                 env,
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
                 db,
+                chain: Default::default(),
                 error: Ok(()),
-                #[cfg(feature = "optimism")]
-                l1_block_info: None,
             },
             precompiles: ContextPrecompiles::default(),
         }
     }
 
     /// Returns a new `EvmContext` with an empty journaled state.
-    pub fn create_empty_evm_context(env: Box<Env>, db: EmptyDB) -> EvmContext<EmptyDB> {
+    pub fn create_empty_evm_context<EvmWiringT: EvmWiring<Database = EmptyDB>>(
+        env: Box<EnvWiring<EvmWiringT>>,
+        db: EmptyDB,
+    ) -> EvmContext<EvmWiringT> {
         EvmContext {
             inner: InnerEvmContext {
                 env,
                 journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
                 db,
+                chain: Default::default(),
                 error: Ok(()),
-                #[cfg(feature = "optimism")]
-                l1_block_info: None,
             },
             precompiles: ContextPrecompiles::default(),
         }
@@ -558,7 +553,7 @@ mod tests {
     use crate::primitives::U256;
     use crate::{
         db::{CacheDB, EmptyDB},
-        primitives::{address, Bytecode},
+        primitives::{address, Bytecode, DefaultEthereumWiring, EthereumWiring},
         Frame, JournalEntry,
     };
     use std::boxed::Box;
@@ -568,9 +563,10 @@ mod tests {
     // call stack is too deep.
     #[test]
     fn test_make_call_frame_stack_too_deep() {
-        let env = Env::default();
+        let env = EnvWiring::<DefaultEthereumWiring>::default();
         let db = EmptyDB::default();
-        let mut context = test_utils::create_empty_evm_context(Box::new(env), db);
+        let mut context =
+            test_utils::create_empty_evm_context::<DefaultEthereumWiring>(Box::new(env), db);
         context.journaled_state.depth = CALL_STACK_LIMIT as usize + 1;
         let contract = address!("dead10000000000000000000000000000001dead");
         let call_inputs = test_utils::create_mock_call_inputs(contract);
@@ -589,9 +585,10 @@ mod tests {
     // checkpointed on the journaled state correctly.
     #[test]
     fn test_make_call_frame_transfer_revert() {
-        let env = Env::default();
+        let env = EnvWiring::<DefaultEthereumWiring>::default();
         let db = EmptyDB::default();
-        let mut evm_context = test_utils::create_empty_evm_context(Box::new(env), db);
+        let mut evm_context =
+            test_utils::create_empty_evm_context::<DefaultEthereumWiring>(Box::new(env), db);
         let contract = address!("dead10000000000000000000000000000001dead");
         let mut call_inputs = test_utils::create_mock_call_inputs(contract);
         call_inputs.value = CallValue::Transfer(U256::from(1));
@@ -610,10 +607,12 @@ mod tests {
 
     #[test]
     fn test_make_call_frame_missing_code_context() {
-        let env = Env::default();
+        type CacheEthWiring = EthereumWiring<CacheDB<EmptyDB>, ()>;
+        let env = EnvWiring::<CacheEthWiring>::default();
         let cdb = CacheDB::new(EmptyDB::default());
         let bal = U256::from(3_000_000_000_u128);
-        let mut context = create_cache_db_evm_context_with_balance(Box::new(env), cdb, bal);
+        let mut context =
+            create_cache_db_evm_context_with_balance::<CacheEthWiring>(Box::new(env), cdb, bal);
         let contract = address!("dead10000000000000000000000000000001dead");
         let call_inputs = test_utils::create_mock_call_inputs(contract);
         let res = context.make_call_frame(&call_inputs);
@@ -625,7 +624,8 @@ mod tests {
 
     #[test]
     fn test_make_call_frame_succeeds() {
-        let env = Env::default();
+        type CacheEthWiring = EthereumWiring<CacheDB<EmptyDB>, ()>;
+        let env = EnvWiring::<CacheEthWiring>::default();
         let mut cdb = CacheDB::new(EmptyDB::default());
         let bal = U256::from(3_000_000_000_u128);
         let by = Bytecode::new_raw(Bytes::from(vec![0x60, 0x00, 0x60, 0x00]));
@@ -639,7 +639,8 @@ mod tests {
                 code: Some(by),
             },
         );
-        let mut evm_context = create_cache_db_evm_context_with_balance(Box::new(env), cdb, bal);
+        let mut evm_context =
+            create_cache_db_evm_context_with_balance::<CacheEthWiring>(Box::new(env), cdb, bal);
         let call_inputs = test_utils::create_mock_call_inputs(contract);
         let res = evm_context.make_call_frame(&call_inputs);
         let Ok(FrameOrResult::Frame(Frame::Call(call_frame))) = res else {
