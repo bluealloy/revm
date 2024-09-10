@@ -10,8 +10,8 @@ use revm::{
     inspectors::TracerEip3155,
     interpreter::analysis::to_analysed,
     primitives::{
-        calc_excess_blob_gas, keccak256,AuthorizationList, Bytecode, Bytes, EVMResultGeneric, EnvWiring,
-        EthereumWiring, ExecutionResult, HaltReason, SpecId, TxKind, B256,
+        calc_excess_blob_gas, keccak256, AuthorizationList, Bytecode, Bytes, EVMResultGeneric,
+        EnvWiring, EthereumWiring, ExecutionResult, HaltReason, SpecId, TxKind, B256,
     },
     Evm,
 };
