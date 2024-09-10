@@ -5,8 +5,8 @@ use deserializer::*;
 pub use spec::SpecName;
 
 use revm::primitives::{
-    AccessList, Address, Authorization, Bytes, HashMap, RecoveredAuthorization, Signature,
-    SignedAuthorization, B256, U256,
+    AccessList, Address, Authorization, Bytes, HashMap, RecoveredAuthorization, Signature, B256,
+    U256,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -121,7 +121,7 @@ pub struct TransactionParts {
 pub struct TestAuthorization {
     chain_id: U256,
     address: Address,
-    nonce: u64,
+    nonce: U256,
     v: U256,
     r: U256,
     s: U256,
@@ -135,19 +135,19 @@ impl TestAuthorization {
     }
 
     pub fn into_recovered(self) -> RecoveredAuthorization {
-        let signed: SignedAuthorization = self.into();
-        signed.into()
-    }
-}
-
-impl Into<SignedAuthorization> for TestAuthorization {
-    fn into(self) -> SignedAuthorization {
-        let auth = Authorization {
+        let authorization = Authorization {
             chain_id: self.chain_id,
             address: self.address,
-            nonce: self.nonce,
+            nonce: u64::try_from(self.nonce).unwrap(),
         };
-        auth.into_signed(self.signature())
+        let authority = self
+            .signature()
+            .recover_address_from_prehash(&authorization.signature_hash())
+            .unwrap();
+        RecoveredAuthorization::new_unchecked(
+            authorization.into_signed(self.signature()),
+            Some(authority),
+        )
     }
 }
 
