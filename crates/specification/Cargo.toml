@@ -22,6 +22,13 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
+revm-primitives = { path = "../primitives", version = "9.0.1", default-features = false }
+
+# alloy
+alloy-eips = { version = "0.3", default-features = false, features = ["k256"] }
+alloy-primitives = { version = "0.8.2", default-features = false, features = [
+    "rlp",
+] }
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -33,9 +40,7 @@ serde = { version = "1.0", default-features = false, features = [
 [dev-dependencies]
 
 [features]
-default = ["std",]
-std = [
-    "serde?/std",
-]
+default = ["std"]
+std = ["serde?/std"]
 serde = ["dep:serde"]
 serde-json = ["serde"]

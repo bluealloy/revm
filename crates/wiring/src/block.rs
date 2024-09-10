@@ -1,4 +1,8 @@
-use crate::{Address, BlobExcessGasAndPrice, B256, U256};
+pub mod blob;
+
+pub use blob::BlobExcessGasAndPrice;
+
+use revm_primitives::{Address, B256, U256};
 
 /// Trait for retrieving block information required for execution.
 pub trait Block {

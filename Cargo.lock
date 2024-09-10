@@ -3180,6 +3180,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "revm-database-traits"
+version = "1.0.0"
+dependencies = [
+ "alloy-eips",
+ "alloy-primitives",
+ "revm-primitives",
+ "serde",
+]
+
+[[package]]
 name = "revm-interpreter"
 version = "10.0.1"
 dependencies = [
@@ -3187,7 +3197,9 @@ dependencies = [
  "derive-where",
  "paste",
  "phf",
+ "revm-bytecode",
  "revm-primitives",
+ "revm-wiring",
  "serde",
  "serde_json",
  "walkdir",
@@ -3280,6 +3292,16 @@ dependencies = [
  "microbench",
  "regex",
  "revm",
+]
+
+[[package]]
+name = "revm-wiring"
+version = "1.0.0"
+dependencies = [
+ "dyn-clone",
+ "revm-database-interface",
+ "revm-primitives",
+ "serde",
 ]
 
 [[package]]

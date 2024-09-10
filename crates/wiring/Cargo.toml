@@ -1,10 +1,10 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "Revm Database interface"
+description = "Revm generic types wiring"
 edition = "2021"
 keywords = ["ethereum", "evm", "revm", "no_std"]
 license = "MIT"
-name = "revm-database-traits"
+name = "revm-wiring"
 repository = "https://github.com/bluealloy/revm"
 version = "1.0.0"
 readme = "../../README.md"
@@ -22,6 +22,12 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
+# revm
+revm-primitives = { path = "../primitives", version = "9.0.1", default-features = false }
+revm-database-interface = { path = "../database/interface", version = "1.0.0", default-features = false }
+
+# mics
+dyn-clone = "1.0"
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -33,9 +39,7 @@ serde = { version = "1.0", default-features = false, features = [
 [dev-dependencies]
 
 [features]
-default = ["std",]
-std = [
-    "serde?/std",
-]
+default = ["std"]
+std = ["serde?/std"]
 serde = ["dep:serde"]
 serde-json = ["serde"]

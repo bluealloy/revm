@@ -23,6 +23,8 @@ all = "warn"
 
 [dependencies]
 revm-primitives = { path = "../primitives", version = "9.0.1", default-features = false }
+revm-wiring = { path = "../wiring", version = "1.0.0", default-features = false }
+revm-bytecode = { path = "../bytecode", version = "1.0.0", default-features = false }
 
 derive-where = { version = "1.2.7", default-features = false }
 paste = { version = "1.0", optional = true }

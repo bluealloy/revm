@@ -9,7 +9,9 @@ members = [
     "crates/optimism",
     "crates/database/interface",
     "crates/bytecode",
-    "crates/state"
+    "crates/state",
+    "crates/wiring",
+    "crates/specification",
 ]
 resolver = "2"
 default-members = ["crates/revm"]

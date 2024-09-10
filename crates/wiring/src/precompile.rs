@@ -1,4 +1,5 @@
-use crate::{Bytes, CfgEnv};
+use revm_primitives::{Bytes};
+use crate::default::CfgEnv;
 use core::fmt;
 use dyn_clone::DynClone;
 use std::{boxed::Box, string::String, sync::Arc};

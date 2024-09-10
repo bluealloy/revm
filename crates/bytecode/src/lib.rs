@@ -13,11 +13,9 @@ pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
 
 use core::fmt::Debug;
+use eip7702::{Eip7702Bytecode, Eip7702DecodeError, EIP7702_MAGIC_BYTES};
 use eof::EofDecodeError;
-use revm_primitives::{
-    eip7702::bytecode::Eip7702DecodeError, keccak256, Address, Bytes, Eip7702Bytecode, B256,
-    EIP7702_MAGIC_BYTES, KECCAK_EMPTY,
-};
+use revm_primitives::{keccak256, Address, Bytes, B256, KECCAK_EMPTY};
 use std::{fmt, sync::Arc};
 
 /// State of the [`Bytecode`] analysis.

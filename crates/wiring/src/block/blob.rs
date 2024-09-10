@@ -1,11 +1,31 @@
-use crate::{
-    b256, B256, BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK,
+use revm_primitives::{
+    BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK,
 };
-pub use alloy_primitives::keccak256;
 
-/// The Keccak-256 hash of the empty string `""`.
-pub const KECCAK_EMPTY: B256 =
-    b256!("c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
+/// Structure holding block blob excess gas and it calculates blob fee.
+///
+/// Incorporated as part of the Cancun upgrade via [EIP-4844].
+///
+/// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct BlobExcessGasAndPrice {
+    /// The excess blob gas of the block.
+    pub excess_blob_gas: u64,
+    /// The calculated blob gas price based on the `excess_blob_gas`, See [calc_blob_gasprice]
+    pub blob_gasprice: u128,
+}
+
+impl BlobExcessGasAndPrice {
+    /// Creates a new instance by calculating the blob gas price with [`calc_blob_gasprice`].
+    pub fn new(excess_blob_gas: u64) -> Self {
+        let blob_gasprice = calc_blob_gasprice(excess_blob_gas);
+        Self {
+            excess_blob_gas,
+            blob_gasprice,
+        }
+    }
+}
 
 /// Calculates the `excess_blob_gas` from the parent header's `blob_gas_used` and `excess_blob_gas`.
 ///
@@ -62,7 +82,7 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::GAS_PER_BLOB;
+    use revm_primitives::GAS_PER_BLOB;
 
     // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L27
     #[test]

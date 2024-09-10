@@ -1,5 +1,6 @@
-use crate::{db::Database, Block, SpecId, Transaction};
+use crate::{Block, SpecId, Transaction};
 use core::{fmt::Debug, hash::Hash};
+use revm_database_interface::Database;
 
 /// The type that enumerates the chain's hardforks.
 pub trait HardforkTrait: Clone + Copy + Default + PartialEq + Eq + Into<SpecId> {}
