@@ -373,12 +373,14 @@ pub fn execute_test_suite(
                     .cloned()
                     .unwrap_or_default();
 
-                env.tx.authorization_list =
-                    unit.transaction.authorization_list.as_ref().map(|auths| {
-                        AuthorizationList::Recovered(
+                match unit.transaction.authorization_list {
+                    Some(auths) => {
+                        env.tx.authorization_list = Some(AuthorizationList::Recovered(
                             auths.iter().map(|auth| auth.into_recovered()).collect(),
-                        )
-                    });
+                        ));
+                    }
+                    None => continue,
+                }
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),
