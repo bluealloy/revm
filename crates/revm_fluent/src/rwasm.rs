@@ -266,6 +266,12 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
 
     fn storage(&self, address: &Address, slot: &U256) -> (U256, IsColdAccess) {
         let mut ctx = self.evm_context.borrow_mut();
+        let load_result = ctx
+            .load_account_exist(*address)
+            .unwrap_or_else(|_| panic!("internal storage error"));
+        if load_result.is_empty {
+            return (U256::ZERO, load_result.is_cold);
+        }
         ctx.sload(*address, *slot)
             .ok()
             .expect("failed to read storage slot")
@@ -293,9 +299,9 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
         ctx.journaled_state.tstore(address, index, value);
     }
 
-    fn transient_storage(&self, address: Address, index: U256) -> U256 {
+    fn transient_storage(&self, address: &Address, index: &U256) -> U256 {
         let mut ctx = self.evm_context.borrow_mut();
-        ctx.journaled_state.tload(address, index)
+        ctx.journaled_state.tload(*address, *index)
     }
 
     fn write_log(&mut self, address: Address, data: Bytes, topics: Vec<B256>) {

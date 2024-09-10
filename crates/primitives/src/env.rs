@@ -13,7 +13,6 @@ use crate::{
     GAS_PER_BLOB,
     KECCAK_EMPTY,
     MAX_BLOB_NUMBER_PER_BLOCK,
-
     U256,
     VERSIONED_HASH_VERSION_KZG,
 };

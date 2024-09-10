@@ -360,16 +360,40 @@ impl Interpreter {
         // Get current opcode.
         let opcode = unsafe { *self.instruction_pointer };
 
-        #[cfg(target_arch = "wasm32")]
-        unsafe {
-            #[link(wasm_import_module = "fluentbase_v1preview")]
-            extern "C" {
-                pub fn _debug_log(msg_ptr: *const u8, msg_len: u32);
-            }
-            let opcode = crate::opcode::OPCODE_INFO_JUMPTABLE[opcode as usize].unwrap();
-            let message = std::format!("opcode={}", opcode.name());
-            _debug_log(message.as_ptr(), message.len() as u32);
-        }
+        // {
+        //     use revm_primitives::hex;
+        //     use std::vec::Vec;
+        //     let opcode = crate::opcode::OPCODE_INFO_JUMPTABLE[opcode as usize].unwrap();
+        //     let stack = self
+        //         .stack
+        //         .data()
+        //         .iter()
+        //         .map(|v| {
+        //             let mut buffer = v.to_be_bytes_trimmed_vec();
+        //             if buffer.is_empty() {
+        //                 buffer.push(0);
+        //             }
+        //             hex::encode(buffer)
+        //         })
+        //         .collect::<Vec<_>>();
+        //     let message = std::format!("opcode={} stack={:?}", opcode.name(), stack);
+        //
+        //     #[cfg(target_arch = "wasm32")]
+        //     {
+        //         #[link(wasm_import_module = "fluentbase_v1preview")]
+        //         extern "C" {
+        //             pub fn _debug_log(msg_ptr: *const u8, msg_len: u32);
+        //         }
+        //         unsafe {
+        //             _debug_log(message.as_ptr(), message.len() as u32);
+        //         }
+        //     }
+        //
+        //     #[cfg(feature = "std")]
+        //     {
+        //         // println!("{}", message);
+        //     }
+        // }
 
         // SAFETY: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last

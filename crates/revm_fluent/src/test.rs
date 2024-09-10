@@ -19,7 +19,7 @@ use crate::{
 };
 use core::{mem::take, str::from_utf8};
 use fluentbase_genesis::{
-    devnet::{devnet_genesis_from_file, KECCAK_HASH_KEY, POSEIDON_HASH_KEY},
+    devnet::{devnet_genesis_from_file, GENESIS_KECCAK_HASH_SLOT, GENESIS_POSEIDON_HASH_SLOT},
     Genesis,
     EXAMPLE_GREETING_ADDRESS,
 };
@@ -69,7 +69,7 @@ impl EvmTestingContext {
             let poseidon_hash = v
                 .storage
                 .as_ref()
-                .and_then(|v| v.get(&POSEIDON_HASH_KEY).cloned())
+                .and_then(|v| v.get(&GENESIS_POSEIDON_HASH_SLOT).cloned())
                 .unwrap_or_else(|| {
                     v.code
                         .as_ref()
@@ -79,7 +79,7 @@ impl EvmTestingContext {
             let keccak_hash = v
                 .storage
                 .as_ref()
-                .and_then(|v| v.get(&KECCAK_HASH_KEY).cloned())
+                .and_then(|v| v.get(&GENESIS_KECCAK_HASH_SLOT).cloned())
                 .unwrap_or_else(|| {
                     v.code
                         .as_ref()

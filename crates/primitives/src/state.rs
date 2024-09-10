@@ -1,4 +1,4 @@
-use crate::{Address, Bytecode, HashMap, B256, KECCAK_EMPTY, U256};
+use crate::{Address, Bytecode, HashMap, B256, KECCAK_EMPTY, POSEIDON_EMPTY, U256};
 use bitflags::bitflags;
 use core::hash::{Hash, Hasher};
 
@@ -318,7 +318,11 @@ impl AccountInfo {
     /// Returns true if the code hash is the Keccak256 hash of the empty string `""`.
     #[inline]
     pub fn is_empty_code_hash(&self) -> bool {
-        self.code_hash == KECCAK_EMPTY
+        if cfg!(feature = "rwasm") {
+            self.code_hash == KECCAK_EMPTY && self.rwasm_code_hash == POSEIDON_EMPTY
+        } else {
+            self.code_hash == KECCAK_EMPTY
+        }
     }
 
     /// Take bytecode from account. Code will be set to None.
