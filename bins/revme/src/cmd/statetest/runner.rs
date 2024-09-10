@@ -374,7 +374,7 @@ pub fn execute_test_suite(
                     .unwrap_or_default();
 
                 match unit.transaction.authorization_list {
-                    Some(auths) => {
+                    Some(ref auths) => {
                         env.tx.authorization_list = Some(AuthorizationList::Recovered(
                             auths.iter().map(|auth| auth.into_recovered()).collect(),
                         ));
