@@ -143,10 +143,10 @@ impl TestAuthorization {
         let authority = self
             .signature()
             .recover_address_from_prehash(&authorization.signature_hash())
-            .unwrap();
+            .ok();
         RecoveredAuthorization::new_unchecked(
             authorization.into_signed(self.signature()),
-            Some(authority),
+            authority,
         )
     }
 }
