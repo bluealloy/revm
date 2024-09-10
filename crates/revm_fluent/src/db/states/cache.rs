@@ -123,11 +123,11 @@ impl CacheState {
     pub fn insert_account_with_storage(
         &mut self,
         address: Address,
-        info: AccountInfo,
+        mut info: AccountInfo,
         storage: PlainStorage,
     ) {
         #[cfg(feature = "rwasm")]
-        self.insert_contract(&mut info.clone().into());
+        self.insert_contract(&mut info);
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, storage)
         } else {

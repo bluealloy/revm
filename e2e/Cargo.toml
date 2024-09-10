@@ -77,7 +77,6 @@ e2e = [
 ]
 debug_use_fluent_storage = []
 debug-print = [
-    #    "e2e",
     "revm/debug-print",
     "revm-fluent/debug-print",
 ]

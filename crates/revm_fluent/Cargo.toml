@@ -120,8 +120,6 @@ std = [
     "rwasm?/std",
 ]
 e2e = [
-    "fluentbase-core/e2e",
-    "fluentbase-sdk/e2e",
     "revm-precompile/e2e",
     "revm-interpreter/e2e",
 ]
