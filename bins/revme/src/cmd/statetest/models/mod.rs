@@ -5,8 +5,8 @@ use deserializer::*;
 pub use spec::SpecName;
 
 use revm::primitives::{
-    AccessList, Address, Authorization, Bytes, HashMap, RecoveredAuthorization, Signature, B256,
-    U256,
+    alloy_primitives::Parity, AccessList, Address, Authorization, Bytes, HashMap,
+    RecoveredAuthorization, Signature, B256, U256,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -130,7 +130,8 @@ pub struct TestAuthorization {
 
 impl TestAuthorization {
     pub fn signature(&self) -> Signature {
-        let parity = self.v != U256::ZERO;
+        let v = u64::try_from(self.v).unwrap();
+        let parity = Parity::try_from(v).unwrap();
         Signature::from_rs_and_parity(self.r, self.s, parity).unwrap()
     }
 
