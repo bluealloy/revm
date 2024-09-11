@@ -1,4 +1,6 @@
-use crate::primitives::{Address, Bytes, Eof, TxEnv, U256};
+use revm_primitives::EvmWiring;
+
+use crate::primitives::{Address, Bytes, Eof, Transaction, U256};
 
 /// EOF create can be called from two places:
 /// * EOFCREATE opcode
@@ -73,13 +75,13 @@ impl EOFCreateInputs {
     }
 
     /// Creates new EOFCreateInputs from transaction.
-    pub fn new_tx(tx: &TxEnv, gas_limit: u64) -> Self {
+    pub fn new_tx<EvmWiringT: EvmWiring>(tx: &EvmWiringT::Transaction, gas_limit: u64) -> Self {
         EOFCreateInputs::new(
-            tx.caller,
-            tx.value,
+            *tx.caller(),
+            *tx.value(),
             gas_limit,
             EOFCreateKind::Tx {
-                initdata: tx.data.clone(),
+                initdata: tx.data().clone(),
             },
         )
     }

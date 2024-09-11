@@ -469,20 +469,25 @@ pub fn resize_memory(memory: &mut SharedMemory, gas: &mut Gas, new_size: usize) 
 mod tests {
     use super::*;
     use crate::{opcode::InstructionTable, DummyHost};
-    use revm_primitives::CancunSpec;
+    use revm_primitives::{CancunSpec, DefaultEthereumWiring};
 
     #[test]
     fn object_safety() {
         let mut interp = Interpreter::new(Contract::default(), u64::MAX, false);
 
-        let mut host = crate::DummyHost::default();
-        let table: &InstructionTable<DummyHost> =
-            &crate::opcode::make_instruction_table::<DummyHost, CancunSpec>();
+        let mut host = crate::DummyHost::<DefaultEthereumWiring>::default();
+        let table: &InstructionTable<DummyHost<DefaultEthereumWiring>> =
+            &crate::opcode::make_instruction_table::<DummyHost<DefaultEthereumWiring>, CancunSpec>(
+            );
         let _ = interp.run(EMPTY_SHARED_MEMORY, table, &mut host);
 
-        let host: &mut dyn Host = &mut host as &mut dyn Host;
-        let table: &InstructionTable<dyn Host> =
-            &crate::opcode::make_instruction_table::<dyn Host, CancunSpec>();
+        let host: &mut dyn Host<EvmWiringT = DefaultEthereumWiring> =
+            &mut host as &mut dyn Host<EvmWiringT = DefaultEthereumWiring>;
+        let table: &InstructionTable<dyn Host<EvmWiringT = DefaultEthereumWiring>> =
+            &crate::opcode::make_instruction_table::<
+                dyn Host<EvmWiringT = DefaultEthereumWiring>,
+                CancunSpec,
+            >();
         let _ = interp.run(EMPTY_SHARED_MEMORY, table, host);
     }
 }

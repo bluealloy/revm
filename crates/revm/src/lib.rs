@@ -16,12 +16,11 @@ pub mod test_utils;
 
 pub mod db;
 mod evm;
+mod evm_wiring;
 mod frame;
 pub mod handler;
 mod inspector;
 mod journaled_state;
-#[cfg(feature = "optimism")]
-pub mod optimism;
 
 // Export items.
 
@@ -29,21 +28,18 @@ pub use builder::EvmBuilder;
 pub use context::{
     Context, ContextPrecompile, ContextPrecompiles, ContextStatefulPrecompile,
     ContextStatefulPrecompileArc, ContextStatefulPrecompileBox, ContextStatefulPrecompileMut,
-    ContextWithHandlerCfg, EvmContext, InnerEvmContext,
+    ContextWithEvmWiring, EvmContext, InnerEvmContext,
 };
 pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
 };
 pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
 pub use evm::{Evm, CALL_STACK_LIMIT};
+pub use evm_wiring::EvmWiring;
 pub use frame::{CallFrame, CreateFrame, Frame, FrameData, FrameOrResult, FrameResult};
-pub use handler::Handler;
+pub use handler::{register::EvmHandler, Handler};
 pub use inspector::{inspector_handle_register, inspectors, GetInspector, Inspector};
 pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
-// export Optimism types, helpers, and constants
-#[cfg(feature = "optimism")]
-pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
-
 // Reexport libraries
 
 #[doc(inline)]

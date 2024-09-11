@@ -4,8 +4,8 @@ use regex::bytes::Regex;
 use revm::{
     db::{CacheDB, EmptyDB},
     primitives::{
-        address, hex, keccak256, AccountInfo, Address, Bytecode, Bytes, ExecutionResult, Output,
-        TxKind, B256, U256,
+        address, hex, keccak256, AccountInfo, Address, Bytecode, Bytes, EthereumWiring,
+        ExecutionResult, Output, TxKind, B256, U256,
     },
     Evm,
 };
@@ -28,6 +28,8 @@ sol! {
     }
 }
 
+type EthereumCacheDbWiring = EthereumWiring<CacheDB<EmptyDB>, ()>;
+
 fn main() {
     let (seed, iterations) = try_init_env_vars().expect("Failed to parse env vars");
 
@@ -35,7 +37,7 @@ fn main() {
 
     let db = init_db();
 
-    let mut evm = Evm::builder()
+    let mut evm = Evm::<EthereumCacheDbWiring>::builder()
         .modify_tx_env(|tx| {
             tx.caller = address!("1000000000000000000000000000000000000000");
             tx.transact_to = TxKind::Call(BURNTPIX_MAIN_ADDRESS);

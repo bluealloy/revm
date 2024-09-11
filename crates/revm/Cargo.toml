@@ -28,7 +28,7 @@ revm-precompile = { path = "../precompile", version = "11.0.1", default-features
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
-cfg-if = "1.0"
+derive-where = { version = "1.2.7", default-features = false }
 dyn-clone = "1.0"
 
 # Optional
@@ -54,11 +54,11 @@ alloy-eips = { version = "0.3", optional = true, default-features = false }
 alloy-transport = { version = "0.3", optional = true, default-features = false }
 
 [dev-dependencies]
-alloy-sol-types = { version = "0.8.0", default-features = false, features = [
+alloy-sol-types = { version = "0.8.2", default-features = false, features = [
     "std",
 ] }
 ethers-contract = { version = "2.0.14", default-features = false }
-anyhow = "1.0.83"
+anyhow = "1.0.87"
 criterion = "0.5"
 indicatif = "0.17"
 reqwest = { version = "0.12" }
@@ -83,18 +83,6 @@ asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
 portable = ["revm-precompile/portable", "revm-interpreter/portable"]
 
 test-utils = []
-
-optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
-# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
-optimism-default-handler = [
-    "optimism",
-    "revm-precompile/optimism-default-handler",
-    "revm-interpreter/optimism-default-handler",
-]
-negate-optimism-default-handler = [
-    "revm-precompile/negate-optimism-default-handler",
-    "revm-interpreter/negate-optimism-default-handler",
-]
 
 ethersdb = ["std", "dep:tokio", "dep:ethers-providers", "dep:ethers-core"]
 

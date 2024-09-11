@@ -189,13 +189,13 @@ mod test {
     use super::*;
     use crate::{
         opcode::{make_instruction_table, RETURNDATACOPY, RETURNDATALOAD},
-        primitives::{bytes, Bytecode, PragueSpec},
+        primitives::{bytes, Bytecode, DefaultEthereumWiring, PragueSpec},
         DummyHost, Gas, InstructionResult,
     };
 
     #[test]
     fn returndataload() {
-        let table = make_instruction_table::<_, PragueSpec>();
+        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
         let mut host = DummyHost::default();
 
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
@@ -254,7 +254,7 @@ mod test {
     #[test]
     fn returndatacopy() {
         let table = make_instruction_table::<_, PragueSpec>();
-        let mut host = DummyHost::default();
+        let mut host = DummyHost::<DefaultEthereumWiring>::default();
 
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
             [

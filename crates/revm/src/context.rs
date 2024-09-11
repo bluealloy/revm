@@ -6,6 +6,7 @@ pub use context_precompiles::{
     ContextPrecompile, ContextPrecompiles, ContextStatefulPrecompile, ContextStatefulPrecompileArc,
     ContextStatefulPrecompileBox, ContextStatefulPrecompileMut,
 };
+use derive_where::derive_where;
 pub use evm_context::EvmContext;
 pub use inner_evm_context::InnerEvmContext;
 use revm_interpreter::{as_u64_saturated, Eip7702CodeLoad, StateLoad};
@@ -13,39 +14,24 @@ use revm_interpreter::{as_u64_saturated, Eip7702CodeLoad, StateLoad};
 use crate::{
     db::{Database, EmptyDB},
     interpreter::{AccountLoad, Host, SStoreResult, SelfDestructResult},
-    primitives::{Address, Bytes, Env, HandlerCfg, Log, B256, BLOCK_HASH_HISTORY, U256},
+    primitives::{
+        Address, Block, Bytes, EnvWiring, EthereumWiring, Log, B256, BLOCK_HASH_HISTORY, U256,
+    },
+    EvmWiring,
 };
 use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
-pub struct Context<EXT, DB: Database> {
+#[derive_where(Clone; EvmWiringT::Block, EvmWiringT::ChainContext, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error, EvmWiringT::ExternalContext)]
+pub struct Context<EvmWiringT: EvmWiring> {
     /// Evm Context (internal context).
-    pub evm: EvmContext<DB>,
+    pub evm: EvmContext<EvmWiringT>,
     /// External contexts.
-    pub external: EXT,
+    pub external: EvmWiringT::ExternalContext,
 }
 
-impl<EXT: Clone, DB: Database + Clone> Clone for Context<EXT, DB>
-where
-    DB::Error: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            evm: self.evm.clone(),
-            external: self.external.clone(),
-        }
-    }
-}
-
-impl Default for Context<(), EmptyDB> {
+impl Default for Context<EthereumWiring<EmptyDB, ()>> {
     fn default() -> Self {
-        Self::new_empty()
-    }
-}
-
-impl Context<(), EmptyDB> {
-    /// Creates empty context. This is useful for testing.
-    pub fn new_empty() -> Context<(), EmptyDB> {
         Context {
             evm: EvmContext::new(EmptyDB::new()),
             external: (),
@@ -53,9 +39,13 @@ impl Context<(), EmptyDB> {
     }
 }
 
-impl<DB: Database> Context<(), DB> {
+impl<DB: Database, EvmWiringT> Context<EvmWiringT>
+where
+    EvmWiringT:
+        EvmWiring<Block: Default, Transaction: Default, ExternalContext = (), Database = DB>,
+{
     /// Creates new context with database.
-    pub fn new_with_db(db: DB) -> Context<(), DB> {
+    pub fn new_with_db(db: DB) -> Context<EvmWiringT> {
         Context {
             evm: EvmContext::new_with_env(db, Box::default()),
             external: (),
@@ -63,53 +53,47 @@ impl<DB: Database> Context<(), DB> {
     }
 }
 
-impl<EXT, DB: Database> Context<EXT, DB> {
+impl<EvmWiringT: EvmWiring> Context<EvmWiringT> {
     /// Creates new context with external and database.
-    pub fn new(evm: EvmContext<DB>, external: EXT) -> Context<EXT, DB> {
+    pub fn new(
+        evm: EvmContext<EvmWiringT>,
+        external: EvmWiringT::ExternalContext,
+    ) -> Context<EvmWiringT> {
         Context { evm, external }
     }
 }
 
 /// Context with handler configuration.
-pub struct ContextWithHandlerCfg<EXT, DB: Database> {
+#[derive_where(Clone; EvmWiringT::Block, EvmWiringT::ChainContext, EvmWiringT::Transaction,EvmWiringT::Database, <EvmWiringT::Database as Database>::Error, EvmWiringT::ExternalContext)]
+pub struct ContextWithEvmWiring<EvmWiringT: EvmWiring> {
     /// Context of execution.
-    pub context: Context<EXT, DB>,
+    pub context: Context<EvmWiringT>,
     /// Handler configuration.
-    pub cfg: HandlerCfg,
+    pub spec_id: EvmWiringT::Hardfork,
 }
 
-impl<EXT, DB: Database> ContextWithHandlerCfg<EXT, DB> {
+impl<EvmWiringT: EvmWiring> ContextWithEvmWiring<EvmWiringT> {
     /// Creates new context with handler configuration.
-    pub fn new(context: Context<EXT, DB>, cfg: HandlerCfg) -> Self {
-        Self { cfg, context }
+    pub fn new(context: Context<EvmWiringT>, spec_id: EvmWiringT::Hardfork) -> Self {
+        Self { spec_id, context }
     }
 }
 
-impl<EXT: Clone, DB: Database + Clone> Clone for ContextWithHandlerCfg<EXT, DB>
-where
-    DB::Error: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            context: self.context.clone(),
-            cfg: self.cfg,
-        }
-    }
-}
+impl<EvmWiringT: EvmWiring> Host for Context<EvmWiringT> {
+    type EvmWiringT = EvmWiringT;
 
-impl<EXT, DB: Database> Host for Context<EXT, DB> {
     /// Returns reference to Environment.
     #[inline]
-    fn env(&self) -> &Env {
+    fn env(&self) -> &EnvWiring<Self::EvmWiringT> {
         &self.evm.env
     }
 
-    fn env_mut(&mut self) -> &mut Env {
+    fn env_mut(&mut self) -> &mut EnvWiring<EvmWiringT> {
         &mut self.evm.env
     }
 
     fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
-        let block_number = as_u64_saturated!(self.env().block.number);
+        let block_number = as_u64_saturated!(*self.env().block.number());
 
         let Some(diff) = block_number.checked_sub(requested_number) else {
             return Some(B256::ZERO);

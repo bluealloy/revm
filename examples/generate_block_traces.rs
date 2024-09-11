@@ -6,7 +6,7 @@ use ethers_providers::{Http, Provider};
 use indicatif::ProgressBar;
 use revm::db::{CacheDB, EthersDB, StateBuilder};
 use revm::inspectors::TracerEip3155;
-use revm::primitives::{AccessListItem, Address, TxKind, B256, U256};
+use revm::primitives::{AccessListItem, Address, EthereumWiring, TxKind, B256, U256};
 use revm::{inspector_handle_register, Evm};
 use std::fs::OpenOptions;
 use std::io::BufWriter;
@@ -75,7 +75,7 @@ async fn main() -> anyhow::Result<()> {
     let state_db = EthersDB::new(client, Some(prev_id)).expect("panic");
     let cache_db: CacheDB<EthersDB<Provider<Http>>> = CacheDB::new(state_db);
     let mut state = StateBuilder::new_with_database(cache_db).build();
-    let mut evm = Evm::builder()
+    let mut evm = Evm::<EthereumWiring<_, _>>::builder()
         .with_db(&mut state)
         .with_external_context(TracerEip3155::new(Box::new(std::io::stdout())))
         .modify_block_env(|b| {
@@ -124,7 +124,7 @@ async fn main() -> anyhow::Result<()> {
                 );
                 etx.gas_priority_fee = Some(gas_priority_fee);
                 etx.chain_id = Some(chain_id);
-                etx.nonce = Some(tx.nonce.as_u64());
+                etx.nonce = tx.nonce.as_u64();
                 if let Some(access_list) = tx.access_list {
                     etx.access_list = access_list
                         .0

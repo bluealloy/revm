@@ -24,8 +24,8 @@ impl fmt::Display for OpCodeError {
     }
 }
 
-#[cfg(all(feature = "std", feature = "parse"))]
-impl std::error::Error for OpCodeError {}
+#[cfg(feature = "parse")]
+impl core::error::Error for OpCodeError {}
 
 /// An EVM opcode.
 ///
@@ -497,7 +497,7 @@ opcodes! {
     0x3D => RETURNDATASIZE => system::returndatasize::<H, SPEC> => stack_io(0, 1);
     0x3E => RETURNDATACOPY => system::returndatacopy::<H, SPEC> => stack_io(3, 0);
     0x3F => EXTCODEHASH    => host::extcodehash::<H, SPEC>      => stack_io(1, 1), not_eof;
-    0x40 => BLOCKHASH      => host::blockhash::<H, SPEC>          => stack_io(1, 1);
+    0x40 => BLOCKHASH      => host::blockhash::<H, SPEC>        => stack_io(1, 1);
     0x41 => COINBASE       => host_env::coinbase                => stack_io(0, 1);
     0x42 => TIMESTAMP      => host_env::timestamp               => stack_io(0, 1);
     0x43 => NUMBER         => host_env::block_number            => stack_io(0, 1);
