@@ -1,9 +1,7 @@
 use super::i256::{i256_div, i256_mod};
-use crate::{
-    gas,
-    primitives::{Spec, U256},
-    Host, Interpreter,
-};
+use crate::{gas, Host, Interpreter};
+use primitives::U256;
+use specification::hardfork::Spec;
 
 pub fn add<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);

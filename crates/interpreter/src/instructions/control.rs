@@ -1,9 +1,7 @@
 use super::utility::{read_i16, read_u16};
-use crate::{
-    gas,
-    primitives::{Bytes, Spec, U256},
-    Host, InstructionResult, Interpreter, InterpreterResult,
-};
+use crate::{gas, Host, InstructionResult, Interpreter, InterpreterResult};
+use primitives::{Bytes, U256};
+use specification::hardfork::Spec;
 
 pub fn rjump<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     require_eof!(interpreter);
@@ -204,17 +202,19 @@ pub fn unknown<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 
 #[cfg(test)]
 mod test {
-    use std::sync::Arc;
-
-    use revm_primitives::{
-        bytes, eof::TypesSection, Bytecode, DefaultEthereumWiring, Eof, PragueSpec,
-    };
-
     use super::*;
     use crate::{
         opcode::{make_instruction_table, CALLF, JUMPF, NOP, RETF, RJUMP, RJUMPI, RJUMPV, STOP},
         DummyHost, FunctionReturnFrame, Gas, Interpreter,
     };
+    use bytecode::{
+        eof::{Eof, TypesSection},
+        Bytecode,
+    };
+    use primitives::bytes;
+    use specification::hardfork::PragueSpec;
+    use std::sync::Arc;
+    use wiring::DefaultEthereumWiring;
 
     #[test]
     fn rjump() {

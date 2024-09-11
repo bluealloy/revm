@@ -1,4 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use primitives::{hex, keccak256, U256, VERSIONED_HASH_VERSION_KZG};
 use revm_precompile::{
     bn128::{
         add::ISTANBUL_ADD_GAS_COST,
@@ -9,9 +10,9 @@ use revm_precompile::{
     secp256k1::ec_recover_run,
     Bytes,
 };
-use revm_primitives::{hex, keccak256, CfgEnv, U256, VERSIONED_HASH_VERSION_KZG};
 use secp256k1::{Message, SecretKey, SECP256K1};
 use sha2::{Digest, Sha256};
+use wiring::default::CfgEnv;
 
 /// Benchmarks different cryptography-related precompiles.
 pub fn benchmark_crypto_precompiles(c: &mut Criterion) {

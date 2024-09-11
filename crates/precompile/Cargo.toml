@@ -22,7 +22,11 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-revm-primitives = { path = "../primitives", version = "9.0.1", default-features = false }
+primitives.workspace = true
+wiring.workspace = true
+specification.workspace = true
+
+# revm
 once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
 
 # ecRecover
@@ -62,6 +66,7 @@ p256 = { version = "0.13.2", optional = true, default-features = false, features
 
 # utils
 cfg-if = { version = "1.0", default-features = false }
+dyn-clone = "1.0"
 
 [dev-dependencies]
 criterion = "0.5"
@@ -75,7 +80,7 @@ serde_derive = "1.0"
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
-    "revm-primitives/std",
+    "primitives/std",
     "k256/std",
     "once_cell/std",
     "ripemd/std",
@@ -83,8 +88,8 @@ std = [
     "c-kzg?/std",
     "secp256k1?/std",
 ]
-hashbrown = ["revm-primitives/hashbrown"]
-asm-keccak = ["revm-primitives/asm-keccak"]
+hashbrown = ["primitives/hashbrown"]
+asm-keccak = ["primitives/asm-keccak"]
 
 # Enables the p256verify precompile.
 secp256r1 = ["dep:p256"]
@@ -92,11 +97,11 @@ secp256r1 = ["dep:p256"]
 # These libraries may not work on all no_std platforms as they depend on C.
 
 # Enables the KZG point evaluation precompile.
-c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
+c-kzg = ["dep:c-kzg", "primitives/c-kzg", "wiring/c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
-kzg-rs = ["dep:kzg-rs", "revm-primitives/kzg-rs"]
+kzg-rs = ["dep:kzg-rs", "primitives/kzg-rs", "wiring/kzg-rs"]
 
-portable = ["revm-primitives/portable", "c-kzg?/portable"]
+portable = ["primitives/portable", "c-kzg?/portable"]
 
 # Use `secp256k1` as a faster alternative to `k256`.
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.

@@ -22,9 +22,10 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-revm-primitives = { path = "../primitives", version = "9.0.1", default-features = false }
-revm-wiring = { path = "../wiring", version = "1.0.0", default-features = false }
-revm-bytecode = { path = "../bytecode", version = "1.0.0", default-features = false }
+bytecode.workspace = true
+primitives.workspace = true
+specification.workspace = true
+wiring.workspace = true
 
 derive-where = { version = "1.2.7", default-features = false }
 paste = { version = "1.0", optional = true }
@@ -39,18 +40,19 @@ serde = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 [dev-dependencies]
+database-interface.workspace = true
 walkdir = "2.5"
 serde_json = "1.0"
 bincode = "1.3"
 
 [features]
 default = ["std", "parse"]
-std = ["serde?/std", "revm-primitives/std"]
-hashbrown = ["revm-primitives/hashbrown"]
-serde = ["dep:serde", "revm-primitives/serde"]
-arbitrary = ["std", "revm-primitives/arbitrary"]
-asm-keccak = ["revm-primitives/asm-keccak"]
-portable = ["revm-primitives/portable"]
+std = ["serde?/std", "primitives/std", "wiring/std"]
+hashbrown = ["primitives/hashbrown"]
+serde = ["dep:serde", "primitives/serde", "bytecode/serde", "wiring/serde"]
+arbitrary = ["std", "primitives/arbitrary"]
+asm-keccak = ["primitives/asm-keccak"]
+portable = ["primitives/portable"]
 parse = ["dep:paste", "dep:phf"]
 
 dev = [
@@ -62,12 +64,12 @@ dev = [
     "optional_no_base_fee",
     "optional_beneficiary_reward",
 ]
-memory_limit = ["revm-primitives/memory_limit"]
-optional_balance_check = ["revm-primitives/optional_balance_check"]
-optional_block_gas_limit = ["revm-primitives/optional_block_gas_limit"]
-optional_eip3607 = ["revm-primitives/optional_eip3607"]
-optional_gas_refund = ["revm-primitives/optional_gas_refund"]
-optional_no_base_fee = ["revm-primitives/optional_no_base_fee"]
-optional_beneficiary_reward = ["revm-primitives/optional_beneficiary_reward"]
+memory_limit = ["primitives/memory_limit"]
+optional_balance_check = ["primitives/optional_balance_check"]
+optional_block_gas_limit = ["primitives/optional_block_gas_limit"]
+optional_eip3607 = ["primitives/optional_eip3607"]
+optional_gas_refund = ["primitives/optional_gas_refund"]
+optional_no_base_fee = ["primitives/optional_no_base_fee"]
+optional_beneficiary_reward = ["primitives/optional_beneficiary_reward"]
 
-kzg-rs = ["revm-primitives/kzg-rs"]
+kzg-rs = ["primitives/kzg-rs"]

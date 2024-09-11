@@ -1,6 +1,6 @@
 use crate::eip7702::{Authorization, SignedAuthorization};
 use core::ops::Deref;
-use revm_primitives::Address;
+use primitives::Address;
 
 /// A recovered authorization.
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]

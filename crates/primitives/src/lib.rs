@@ -10,7 +10,6 @@ extern crate alloc as std;
 mod constants;
 #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg;
-pub mod specification;
 pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, keccak256, ruint, uint, Address,
     Bytes, FixedBytes, Log, LogData, TxKind, B256, I256, U256,
@@ -29,7 +28,6 @@ cfg_if::cfg_if! {
 
 #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub use kzg::{EnvKzgSettings, KzgSettings};
-pub use specification::*;
 
 #[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 // silence kzg-rs lint as c-kzg will be used as default if both are enabled.

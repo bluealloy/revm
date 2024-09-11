@@ -6,7 +6,7 @@
 extern crate alloc as std;
 
 use auto_impl::auto_impl;
-use revm_state::{
+use state::{
     bytecode::Bytecode,
     primitives::{Address, HashMap, B256, U256},
     Account, AccountInfo,

@@ -23,8 +23,9 @@ all = "warn"
 
 [dependencies]
 # revm
-revm-primitives = { path = "../primitives", version = "9.0.1", default-features = false }
-revm-bytecode = { path = "../bytecode", version = "1.0.0", default-features = false }
+primitives.workspace = true
+bytecode.workspace = true
+specification.workspace = true
 
 # misc
 bitflags = { version = "2.6.0", default-features = false }
@@ -45,8 +46,10 @@ alloy-sol-types = "0.8"
 
 [features]
 default = ["std"]
-std = [
-    "serde?/std",
-    "revm-primitives/std",
+std = ["serde?/std", "primitives/std"]
+serde = [
+    "dep:serde",
+    "primitives/serde",
+    "bitflags/serde",
+    "specification/serde",
 ]
-serde = ["dep:serde", "revm-primitives/serde"]

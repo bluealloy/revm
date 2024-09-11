@@ -1,4 +1,4 @@
-use revm_primitives::{b256, Bytes, B256};
+use primitives::{b256, Bytes, B256};
 use std::borrow::Cow;
 
 /// Right-pads the given slice at `offset` with zeroes until `LEN`.

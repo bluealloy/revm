@@ -1,10 +1,7 @@
-use crate::{
-    gas,
-    interpreter::Interpreter,
-    primitives::{Bytes, Spec, SpecId::*, U256},
-    AccountLoad,
-};
+use crate::{gas, interpreter::Interpreter, AccountLoad};
 use core::{cmp::min, ops::Range};
+use primitives::{Bytes, U256};
+use specification::hardfork::{Spec, SpecId::*};
 
 #[inline]
 pub fn get_memory_input_and_out_ranges(

@@ -8,7 +8,7 @@ pub use header::EofHeader;
 pub use types_section::TypesSection;
 
 use core::cmp::min;
-use revm_primitives::{b256, bytes, Bytes, B256};
+use primitives::{b256, bytes, Bytes, B256};
 use std::{fmt, vec, vec::Vec};
 
 /// Hash of EF00 bytes that is used for EXTCODEHASH when called from legacy bytecode.
@@ -188,7 +188,7 @@ impl core::error::Error for EofDecodeError {}
 mod test {
 
     use super::*;
-    use revm_primitives::bytes;
+    use primitives::bytes;
 
     #[test]
     fn decode_eof() {

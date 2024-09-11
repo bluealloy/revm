@@ -1,6 +1,7 @@
 use super::utils::{fp_from_bendian, fp_to_bytes, remove_padding, PADDED_FP_LENGTH};
-use crate::primitives::{Bytes, PrecompileError};
+use crate::PrecompileError;
 use blst::{blst_p1_affine, blst_p1_affine_in_g1, blst_p1_affine_on_curve};
+use primitives::Bytes;
 
 /// Length of each of the elements in a g1 operation input.
 pub(super) const G1_INPUT_ITEM_LENGTH: usize = 128;

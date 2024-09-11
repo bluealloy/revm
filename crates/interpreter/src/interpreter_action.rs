@@ -6,7 +6,7 @@ mod eof_create_inputs;
 
 pub use call_inputs::{CallInputs, CallScheme, CallValue};
 pub use call_outcome::CallOutcome;
-pub use create_inputs::{CreateInputs, CreateScheme};
+pub use create_inputs::CreateInputs;
 pub use create_outcome::CreateOutcome;
 pub use eof_create_inputs::{EOFCreateInputs, EOFCreateKind};
 

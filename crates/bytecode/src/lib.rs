@@ -7,16 +7,17 @@ extern crate alloc as std;
 
 pub mod eip7702;
 pub mod eof;
+pub mod errors;
 pub mod legacy;
 
 pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
 
 use core::fmt::Debug;
-use eip7702::{Eip7702Bytecode, Eip7702DecodeError, EIP7702_MAGIC_BYTES};
-use eof::EofDecodeError;
-use revm_primitives::{keccak256, Address, Bytes, B256, KECCAK_EMPTY};
-use std::{fmt, sync::Arc};
+use eip7702::{Eip7702Bytecode, EIP7702_MAGIC_BYTES};
+use errors::BytecodeDecodeError;
+use primitives::{keccak256, Address, Bytes, B256, KECCAK_EMPTY};
+use std::sync::Arc;
 
 /// State of the [`Bytecode`] analysis.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -215,39 +216,6 @@ impl Bytecode {
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
-    }
-}
-
-/// EOF decode errors.
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum BytecodeDecodeError {
-    /// EOF decode error
-    Eof(EofDecodeError),
-    /// EIP-7702 decode error
-    Eip7702(Eip7702DecodeError),
-}
-
-impl From<EofDecodeError> for BytecodeDecodeError {
-    fn from(error: EofDecodeError) -> Self {
-        Self::Eof(error)
-    }
-}
-
-impl From<Eip7702DecodeError> for BytecodeDecodeError {
-    fn from(error: Eip7702DecodeError) -> Self {
-        Self::Eip7702(error)
-    }
-}
-
-impl core::error::Error for BytecodeDecodeError {}
-
-impl fmt::Display for BytecodeDecodeError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Eof(e) => fmt::Display::fmt(e, f),
-            Self::Eip7702(e) => fmt::Display::fmt(e, f),
-        }
     }
 }
 

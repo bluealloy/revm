@@ -23,8 +23,10 @@ all = "warn"
 
 [dependencies]
 # revm
-revm-primitives = { path = "../primitives", version = "9.0.1", default-features = false }
-revm-database-interface = { path = "../database/interface", version = "1.0.0", default-features = false }
+primitives.workspace = true
+database-interface.workspace = true
+specification.workspace = true
+state.workspace = true
 
 # mics
 dyn-clone = "1.0"
@@ -41,5 +43,6 @@ serde = { version = "1.0", default-features = false, features = [
 [features]
 default = ["std"]
 std = ["serde?/std"]
-serde = ["dep:serde"]
-serde-json = ["serde"]
+serde = ["dep:serde", "primitives/serde", "specification/serde", "state/serde"]
+c-kzg = ["primitives/c-kzg"]
+kzg-rs = ["primitives/kzg-rs"]

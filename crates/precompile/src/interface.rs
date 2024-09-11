@@ -1,8 +1,8 @@
-use crate::default::CfgEnv;
 use core::fmt;
 use dyn_clone::DynClone;
 use primitives::Bytes;
 use std::{boxed::Box, string::String, sync::Arc};
+use wiring::default::CfgEnv;
 
 /// A precompile operation result.
 ///

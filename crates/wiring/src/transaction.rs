@@ -1,4 +1,7 @@
-use crate::{AccessListItem, Address, AuthorizationList, Bytes, TxKind, B256, GAS_PER_BLOB, U256};
+use primitives::{Address, Bytes, TxKind, B256, GAS_PER_BLOB, U256};
+use specification::{eip2930, eip7702};
+use core::fmt::Debug;
+//{AccessListItem, Address, AuthorizationList, Bytes, TxKind, B256, GAS_PER_BLOB, U256};
 
 /// Trait for retrieving transaction information required for execution.
 pub trait Transaction {
@@ -27,7 +30,7 @@ pub trait Transaction {
     /// Added in [EIP-2930].
     ///
     /// [EIP-2930]: https://eips.ethereum.org/EIPS/eip-2930
-    fn access_list(&self) -> &[AccessListItem];
+    fn access_list(&self) -> &[eip2930::AccessListItem];
     /// The maximum priority fee per gas the sender is willing to pay.
     ///
     /// Incorporated as part of the London upgrade via [EIP-1559].
@@ -53,7 +56,7 @@ pub trait Transaction {
     /// Set EOA account code for one transaction
     ///
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
-    fn authorization_list(&self) -> Option<&AuthorizationList>;
+    fn authorization_list(&self) -> Option<&eip7702::AuthorizationList>;
 
     /// See [EIP-4844], [`crate::Env::calc_data_fee`], and [`crate::Env::calc_max_data_fee`].
     ///
@@ -61,4 +64,9 @@ pub trait Transaction {
     fn get_total_blob_gas(&self) -> u64 {
         GAS_PER_BLOB * self.blob_hashes().len() as u64
     }
+}
+
+pub trait TransactionValidation {
+    /// An error that occurs when validating a transaction.
+    type ValidationError: Debug + core::error::Error;
 }

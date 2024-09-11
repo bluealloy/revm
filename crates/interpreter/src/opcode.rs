@@ -9,8 +9,9 @@ pub use tables::{
     InstructionTables,
 };
 
-use crate::{instructions::*, primitives::Spec, Host};
+use crate::{instructions::*, Host};
 use core::{fmt, ptr::NonNull};
+use specification::hardfork::Spec;
 
 /// An error indicating that an opcode is invalid.
 #[derive(Debug, PartialEq, Eq)]

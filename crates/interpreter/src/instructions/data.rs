@@ -2,9 +2,9 @@ use crate::{
     gas::{cost_per_word, BASE, DATA_LOAD_GAS, VERYLOW},
     instructions::utility::read_u16,
     interpreter::Interpreter,
-    primitives::U256,
     Host,
 };
+use primitives::U256;
 
 pub fn data_load<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     require_eof!(interpreter);
@@ -83,8 +83,11 @@ pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
 
 #[cfg(test)]
 mod test {
-    use revm_primitives::{b256, bytes, Bytecode, Bytes, DefaultEthereumWiring, Eof, PragueSpec};
+    use bytecode::{Bytecode, Eof};
+    use primitives::{b256, bytes, Bytes};
+    use specification::hardfork::PragueSpec;
     use std::sync::Arc;
+    use wiring::DefaultEthereumWiring;
 
     use super::*;
     use crate::{

@@ -1,5 +1,5 @@
 use bitvec::vec::BitVec;
-use revm_primitives::hex;
+use primitives::hex;
 use std::{fmt::Debug, sync::Arc};
 
 /// A map of valid `jump` destinations.

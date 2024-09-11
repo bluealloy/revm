@@ -1,4 +1,4 @@
-use revm_primitives::U256;
+use primitives::U256;
 
 /// The order of the secp256k1 curve, divided by two. Signatures that should be checked according
 /// to EIP-2 should have an S value less than or equal to this.

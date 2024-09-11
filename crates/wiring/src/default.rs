@@ -1,13 +1,23 @@
-use crate::{
-    calc_blob_gasprice, AccessListItem, Account, Address, AuthorizationList, Block, Bytes,
-    EvmWiring, InvalidHeader, InvalidTransaction, Spec, SpecId, Transaction, TransactionValidation,
-    B256, MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256,
-    VERSIONED_HASH_VERSION_KZG,
-};
+pub mod block;
+pub mod transaction;
+
+use crate::block::blob::calc_blob_gasprice;
+use crate::result::InvalidHeader;
+use crate::transaction::TransactionValidation;
+use crate::{result::InvalidTransaction, Block, EvmWiring, Transaction};
 use core::cmp::{min, Ordering};
 use core::fmt::Debug;
 use core::hash::Hash;
-use revm_primitives::TxKind;
+use primitives::{
+    Address, Bytes, TxKind, B256, MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE,
+    U256, VERSIONED_HASH_VERSION_KZG,
+};
+use specification::{
+    eip2930::AccessListItem,
+    eip7702::AuthorizationList,
+    hardfork::{Spec, SpecId},
+};
+use state::Account;
 use std::boxed::Box;
 use std::vec::Vec;
 
@@ -298,7 +308,7 @@ pub struct CfgEnv {
     /// KZG Settings for point evaluation precompile. By default, this is loaded from the ethereum mainnet trusted setup.
     #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub kzg_settings: crate::kzg::EnvKzgSettings,
+    pub kzg_settings: primitives::kzg::EnvKzgSettings,
     /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
     /// This is very beneficial for testing and speeds up execution of that bytecode if called multiple times.
     ///
@@ -432,7 +442,7 @@ impl Default for CfgEnv {
             limit_contract_code_size: None,
             disable_nonce_check: false,
             #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
-            kzg_settings: crate::kzg::EnvKzgSettings::Default,
+            kzg_settings: primitives::kzg::EnvKzgSettings::Default,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]
@@ -669,6 +679,8 @@ pub enum AnalysisKind {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::default::block::BlockEnv;
+    use specification::hardfork::{FrontierSpec, LatestSpec};
 
     #[test]
     fn test_validate_tx_chain_id() {
@@ -676,7 +688,7 @@ mod tests {
         env.tx.chain_id = Some(1);
         env.cfg.chain_id = 2;
         assert_eq!(
-            env.validate_tx::<crate::LatestSpec>(),
+            env.validate_tx::<LatestSpec>(),
             Err(InvalidTransaction::InvalidChainId)
         );
     }
@@ -689,7 +701,7 @@ mod tests {
             storage_keys: vec![],
         }];
         assert_eq!(
-            env.validate_tx::<crate::FrontierSpec>(),
+            env.validate_tx::<FrontierSpec>(),
             Err(InvalidTransaction::AccessListNotSupported)
         );
     }

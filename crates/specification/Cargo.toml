@@ -4,7 +4,7 @@ description = "Revm Database interface"
 edition = "2021"
 keywords = ["ethereum", "evm", "revm", "no_std"]
 license = "MIT"
-name = "revm-database-traits"
+name = "revm-specification"
 repository = "https://github.com/bluealloy/revm"
 version = "1.0.0"
 readme = "../../README.md"
@@ -22,13 +22,16 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-revm-primitives = { path = "../primitives", version = "9.0.1", default-features = false }
+primitives = { path = "../primitives", package = "revm-primitives",  version = "9.0.1", default-features = false }
 
 # alloy
 alloy-eips = { version = "0.3", default-features = false, features = ["k256"] }
 alloy-primitives = { version = "0.8.2", default-features = false, features = [
     "rlp",
 ] }
+
+# misc
+enumn = { version = "0.1" }
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [

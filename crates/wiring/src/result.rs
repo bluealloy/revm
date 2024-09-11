@@ -1,8 +1,9 @@
-use crate::{
-    db::Database, eip7702::authorization_list::InvalidAuthorization, Address, Bytes, EvmState,
-    EvmWiring, HaltReasonTrait, Log, TransactionValidation, U256,
-};
+use crate::{evm_wiring::HaltReasonTrait, transaction::TransactionValidation, EvmWiring};
 use core::fmt::{self, Debug};
+use database_interface::Database;
+use primitives::{Address, Bytes, Log, U256};
+use specification::eip7702::InvalidAuthorization;
+use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
 
 /// Result of EVM execution.

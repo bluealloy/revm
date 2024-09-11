@@ -9,13 +9,14 @@ mod account_info;
 mod types;
 
 pub use account_info::AccountInfo;
+pub use bytecode;
+pub use primitives;
 pub use types::{EvmState, EvmStorage, TransientStorage};
-pub use revm_bytecode as bytecode;
-pub use revm_primitives as primitives;
 
 use bitflags::bitflags;
 use core::hash::Hash;
-use revm_primitives::{HashMap, SpecId, U256};
+use primitives::{HashMap, U256};
+use specification::hardfork::SpecId;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -229,7 +230,7 @@ impl EvmStorageSlot {
 #[cfg(test)]
 mod tests {
     use crate::Account;
-    use revm_primitives::{KECCAK_EMPTY, U256};
+    use primitives::{KECCAK_EMPTY, U256};
 
     #[test]
     fn account_is_empty_balance() {

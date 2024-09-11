@@ -1,8 +1,6 @@
-use crate::{
-    primitives::{B256, U256},
-    InstructionResult,
-};
+use crate::InstructionResult;
 use core::{fmt, ptr};
+use primitives::{B256, U256};
 use std::vec::Vec;
 
 /// EVM interpreter stack limit.

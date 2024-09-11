@@ -22,7 +22,8 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-revm-state = { path = "../../state", version = "1.0.0", default-features = false }
+state.workspace = true
+primitives.workspace = true
 
 auto_impl = "1.2"
 

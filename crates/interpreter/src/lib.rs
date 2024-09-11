@@ -38,11 +38,9 @@ pub use interpreter::{
     EMPTY_SHARED_MEMORY, STACK_LIMIT,
 };
 pub use interpreter_action::{
-    CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome, CreateScheme,
-    EOFCreateInputs, EOFCreateKind, InterpreterAction,
+    CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome, EOFCreateInputs,
+    EOFCreateKind, InterpreterAction,
 };
 pub use opcode::{Instruction, OpCode, OPCODE_INFO_JUMPTABLE};
 pub use primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
-
-#[doc(hidden)]
-pub use revm_primitives as primitives;
+pub use wiring::default::CreateScheme;

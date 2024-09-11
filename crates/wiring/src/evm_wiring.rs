@@ -1,6 +1,11 @@
-use crate::{Block, SpecId, Transaction};
+use crate::{
+    result::HaltReason,
+    transaction::{Transaction, TransactionValidation},
+    Block,
+};
 use core::{fmt::Debug, hash::Hash};
-use revm_database_interface::Database;
+use database_interface::{Database, EmptyDB};
+use specification::hardfork::SpecId;
 
 /// The type that enumerates the chain's hardforks.
 pub trait HardforkTrait: Clone + Copy + Default + PartialEq + Eq + Into<SpecId> {}
@@ -10,16 +15,11 @@ impl<HardforkT> HardforkTrait for HardforkT where
 {
 }
 
-pub trait HaltReasonTrait: Clone + Debug + PartialEq + Eq + From<crate::HaltReason> {}
+pub trait HaltReasonTrait: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
 
 impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
-    HaltReasonT: Clone + Debug + PartialEq + Eq + From<crate::HaltReason>
+    HaltReasonT: Clone + Debug + PartialEq + Eq + From<HaltReason>
 {
-}
-
-pub trait TransactionValidation {
-    /// An error that occurs when validating a transaction.
-    type ValidationError: Debug + core::error::Error;
 }
 
 pub trait EvmWiring: Sized {
@@ -54,10 +54,10 @@ impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
     type Database = DB;
     type ExternalContext = EXT;
     type ChainContext = ();
-    type Block = crate::BlockEnv;
-    type Transaction = crate::TxEnv;
+    type Block = crate::default::block::BlockEnv;
+    type Transaction = crate::default::TxEnv;
     type Hardfork = SpecId;
-    type HaltReason = crate::HaltReason;
+    type HaltReason = crate::result::HaltReason;
 }
 
-pub type DefaultEthereumWiring = EthereumWiring<crate::db::EmptyDB, ()>;
+pub type DefaultEthereumWiring = EthereumWiring<EmptyDB, ()>;

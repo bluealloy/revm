@@ -1,5 +1,5 @@
 use super::{Account, EvmStorageSlot};
-use revm_primitives::{Address, HashMap, U256};
+use primitives::{Address, HashMap, U256};
 
 /// EVM State is a mapping from addresses to accounts.
 pub type EvmState = HashMap<Address, Account>;

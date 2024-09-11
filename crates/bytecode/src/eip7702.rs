@@ -1,5 +1,5 @@
 use core::fmt;
-use revm_primitives::{bytes, Address, Bytes};
+use primitives::{bytes, Address, Bytes};
 
 /// EIP-7702 Version Magic in u16 form.
 pub const EIP7702_MAGIC: u16 = 0xEF01;

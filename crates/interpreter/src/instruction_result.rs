@@ -1,9 +1,9 @@
 use core::fmt::Debug;
 
 use derive_where::derive_where;
-use revm_primitives::EvmWiring;
+use wiring::EvmWiring;
 
-use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
+use wiring::result::{HaltReason, OutOfGasError, SuccessReason};
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]

@@ -1,6 +1,6 @@
 use core::hash::{Hash, Hasher};
-use revm_bytecode::Bytecode;
-use revm_primitives::{B256, KECCAK_EMPTY, U256};
+use bytecode::Bytecode;
+use primitives::{B256, KECCAK_EMPTY, U256};
 
 /// AccountInfo account information.
 #[derive(Clone, Debug, Eq)]

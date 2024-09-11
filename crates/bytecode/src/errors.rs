@@ -1,3 +1,6 @@
+use crate::{eip7702::Eip7702DecodeError, eof::EofDecodeError};
+use core::fmt::Debug;
+use std::fmt;
 
 /// EOF decode errors.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]

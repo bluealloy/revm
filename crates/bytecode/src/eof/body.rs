@@ -1,5 +1,5 @@
 use super::{Eof, EofDecodeError, EofHeader, TypesSection};
-use revm_primitives::Bytes;
+use primitives::Bytes;
 use std::vec::Vec;
 
 /// EOF container body.

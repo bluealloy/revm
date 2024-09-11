@@ -1,5 +1,5 @@
 use crate::{Gas, InstructionResult, InterpreterResult};
-use revm_primitives::{Address, Bytes};
+use primitives::{Address, Bytes};
 
 /// Represents the outcome of a create operation in an interpreter.
 ///
