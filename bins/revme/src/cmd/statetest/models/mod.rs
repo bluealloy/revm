@@ -9,7 +9,7 @@ use revm::primitives::{
     RecoveredAuthorization, Signature, B256, U256,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, u64};
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct TestSuite(pub BTreeMap<String, TestUnit>);
@@ -130,7 +130,7 @@ pub struct TestAuthorization {
 
 impl TestAuthorization {
     pub fn signature(&self) -> Signature {
-        let v = u64::try_from(self.v).unwrap();
+        let v = u64::try_from(self.v).unwrap_or(u64::MAX);
         let parity = Parity::try_from(v).unwrap();
         Signature::from_rs_and_parity(self.r, self.s, parity).unwrap()
     }
