@@ -7,14 +7,17 @@ pub mod register;
 pub use handle_types::*;
 
 // Includes.
-use crate::{
-    interpreter::{opcode::InstructionTables, Host, InterpreterAction, SharedMemory},
-    primitives::{spec_to_generic, EVMResultGeneric, InvalidTransaction, TransactionValidation},
-    Context, EvmWiring, Frame,
-};
+
+use crate::{Context, EvmWiring, Frame};
 use core::mem;
+use interpreter::{opcode::InstructionTables, Host, InterpreterAction, SharedMemory};
 use register::{EvmHandler, HandleRegisters};
+use specification::spec_to_generic;
 use std::vec::Vec;
+use wiring::{
+    result::{EVMResultGeneric, InvalidTransaction},
+    transaction::TransactionValidation,
+};
 
 use self::register::{HandleRegister, HandleRegisterBox};
 
@@ -167,16 +170,13 @@ impl<'a, EvmWiringT: EvmWiring> EvmHandler<'a, EvmWiringT> {
 #[cfg(test)]
 mod test {
     use core::cell::RefCell;
-
-    use crate::{
-        db::EmptyDB,
-        primitives::{self, EVMError},
-    };
+    use database_interface::EmptyDB;
     use std::{rc::Rc, sync::Arc};
+    use wiring::{result::EVMError, EthereumWiring, EvmWiring};
 
     use super::*;
 
-    type TestEvmWiring = primitives::EthereumWiring<EmptyDB, ()>;
+    type TestEvmWiring = EthereumWiring<EmptyDB, ()>;
 
     #[test]
     fn test_handler_register_pop() {
@@ -189,7 +189,7 @@ mod test {
         };
 
         let mut handler = EvmHandler::<'_, TestEvmWiring>::mainnet_with_spec(
-            <TestEvmWiring as primitives::EvmWiring>::Hardfork::default(),
+            <TestEvmWiring as EvmWiring>::Hardfork::default(),
         );
         let test = Rc::new(RefCell::new(0));
 

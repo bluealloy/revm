@@ -37,19 +37,13 @@ serde = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 
-[dev-dependencies]
-anyhow = "1.0.83"
-criterion = "0.5"
-indicatif = "0.17"
-rstest = "0.22.0"
-alloy-sol-types = "0.8"
-
 [features]
-default = ["std"]
-std = ["serde?/std", "primitives/std"]
 serde = [
     "dep:serde",
     "primitives/serde",
     "bitflags/serde",
+    "bytecode/serde",
     "specification/serde",
 ]
+default = ["std"]
+std = ["serde?/std", "primitives/std"]

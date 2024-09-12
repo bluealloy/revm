@@ -1,18 +1,19 @@
 use crate::{
-    frame::EOFCreateFrame,
-    interpreter::{
-        return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
-        SharedMemory,
-    },
-    primitives::{EVMError, EVMResultGeneric, Spec, Transaction},
-    CallFrame, Context, CreateFrame, EvmWiring, Frame, FrameOrResult, FrameResult,
+    frame::EOFCreateFrame, CallFrame, Context, CreateFrame, EvmWiring, Frame, FrameOrResult,
+    FrameResult,
 };
 use core::mem;
-use revm_interpreter::{
-    opcode::InstructionTables, CallOutcome, EOFCreateInputs, InterpreterAction, InterpreterResult,
-    EMPTY_SHARED_MEMORY,
+use interpreter::{
+    opcode::InstructionTables, return_ok, return_revert, CallInputs, CallOutcome, CreateInputs,
+    CreateOutcome, EOFCreateInputs, Gas, InstructionResult, InterpreterAction, InterpreterResult,
+    SharedMemory, EMPTY_SHARED_MEMORY,
 };
+use specification::hardfork::Spec;
 use std::boxed::Box;
+use wiring::{
+    result::{EVMError, EVMResultGeneric},
+    Transaction,
+};
 
 /// Execute frame
 #[inline]
@@ -193,8 +194,9 @@ pub fn insert_eofcreate_outcome<EvmWiringT: EvmWiring>(
 mod tests {
     use super::*;
     use crate::handler::mainnet::refund;
-    use crate::primitives::{CancunSpec, DefaultEthereumWiring, EnvWiring};
-    use revm_precompile::Bytes;
+    use primitives::Bytes;
+    use specification::hardfork::CancunSpec;
+    use wiring::{default::EnvWiring, DefaultEthereumWiring};
 
     /// Creates frame result.
     fn call_last_frame_return(instruction_result: InstructionResult, gas: Gas) -> Gas {

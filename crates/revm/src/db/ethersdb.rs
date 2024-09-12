@@ -4,8 +4,10 @@ use ethers_core::types::{Block, BlockId, TxHash, H160 as eH160, H256, U64 as eU6
 use ethers_providers::Middleware;
 use tokio::runtime::{Handle, Runtime};
 
-use crate::primitives::{AccountInfo, Address, Bytecode, B256, U256};
 use crate::{Database, DatabaseRef};
+use bytecode::Bytecode;
+use primitives::{Address, B256, U256};
+use state::AccountInfo;
 
 use super::utils::HandleOrRuntime;
 

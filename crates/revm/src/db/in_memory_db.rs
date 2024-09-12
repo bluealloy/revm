@@ -1,11 +1,10 @@
-use super::{DatabaseCommit, DatabaseRef, EmptyDB};
-use crate::primitives::{
-    hash_map::Entry, Account, AccountInfo, Address, Bytecode, EthereumWiring, HashMap, Log, B256,
-    KECCAK_EMPTY, U256,
-};
-use crate::Database;
+use bytecode::Bytecode;
 use core::convert::Infallible;
+use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
+use primitives::{hash_map::Entry, Address, HashMap, Log, B256, KECCAK_EMPTY, U256};
+use state::{Account, AccountInfo};
 use std::vec::Vec;
+use wiring::EthereumWiring;
 
 /// A [Database] implementation that stores all state changes in memory.
 pub type InMemoryDB = CacheDB<EmptyDB>;
@@ -414,7 +413,9 @@ impl Database for BenchmarkDB {
 #[cfg(test)]
 mod tests {
     use super::{CacheDB, EmptyDB};
-    use crate::primitives::{db::Database, AccountInfo, Address, U256};
+    use database_interface::Database;
+    use primitives::{Address, U256};
+    use state::AccountInfo;
 
     #[test]
     fn test_insert_account_storage() {

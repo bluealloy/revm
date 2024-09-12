@@ -23,8 +23,14 @@ all = "warn"
 
 [dependencies]
 # revm
-revm-interpreter = { path = "../interpreter", version = "10.0.1", default-features = false }
-revm-precompile = { path = "../precompile", version = "11.0.1", default-features = false }
+interpreter.workspace = true
+precompile.workspace = true
+wiring.workspace = true
+primitives.workspace = true
+database-interface.workspace = true
+state.workspace = true
+specification.workspace = true
+bytecode.workspace = true
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
@@ -72,15 +78,15 @@ std = [
     "serde?/std",
     "serde_json?/std",
     "serde_json?/preserve_order",
-    "revm-interpreter/std",
-    "revm-precompile/std",
+    "interpreter/std",
+    "precompile/std",
 ]
-hashbrown = ["revm-interpreter/hashbrown", "revm-precompile/hashbrown"]
-serde = ["dep:serde", "revm-interpreter/serde"]
+hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
+serde = ["dep:serde", "interpreter/serde"]
 serde-json = ["serde", "dep:serde_json"]
-arbitrary = ["revm-interpreter/arbitrary"]
-asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
-portable = ["revm-precompile/portable", "revm-interpreter/portable"]
+arbitrary = ["interpreter/arbitrary"]
+asm-keccak = ["interpreter/asm-keccak", "precompile/asm-keccak"]
+portable = ["precompile/portable", "interpreter/portable"]
 
 test-utils = []
 
@@ -103,20 +109,20 @@ dev = [
     "optional_no_base_fee",
     "optional_beneficiary_reward",
 ]
-memory_limit = ["revm-interpreter/memory_limit"]
-optional_balance_check = ["revm-interpreter/optional_balance_check"]
-optional_block_gas_limit = ["revm-interpreter/optional_block_gas_limit"]
-optional_eip3607 = ["revm-interpreter/optional_eip3607"]
-optional_gas_refund = ["revm-interpreter/optional_gas_refund"]
-optional_no_base_fee = ["revm-interpreter/optional_no_base_fee"]
-optional_beneficiary_reward = ["revm-interpreter/optional_beneficiary_reward"]
+memory_limit = ["interpreter/memory_limit"]
+optional_balance_check = ["interpreter/optional_balance_check"]
+optional_block_gas_limit = ["interpreter/optional_block_gas_limit"]
+optional_eip3607 = ["interpreter/optional_eip3607"]
+optional_gas_refund = ["interpreter/optional_gas_refund"]
+optional_no_base_fee = ["interpreter/optional_no_base_fee"]
+optional_beneficiary_reward = ["interpreter/optional_beneficiary_reward"]
 
-# See comments in `revm-precompile`
-secp256k1 = ["revm-precompile/secp256k1"]
-c-kzg = ["revm-precompile/c-kzg"]
+# See comments in `precompile`
+secp256k1 = ["precompile/secp256k1"]
+c-kzg = ["precompile/c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
-kzg-rs = ["revm-precompile/kzg-rs"]
-blst = ["revm-precompile/blst"]
+kzg-rs = ["precompile/kzg-rs"]
+blst = ["precompile/blst"]
 
 [[example]]
 name = "fork_ref_transact"

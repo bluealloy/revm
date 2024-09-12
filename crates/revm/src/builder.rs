@@ -1,11 +1,13 @@
-use crate::{
-    db::EmptyDB,
-    handler::register,
-    primitives::{CfgEnv, EnvWiring, EthereumWiring, InvalidTransaction, TransactionValidation},
-    Context, Evm, EvmContext, EvmWiring, Handler,
-};
+use crate::{handler::register, Context, Evm, EvmContext, EvmWiring, Handler};
 use core::marker::PhantomData;
+use database_interface::EmptyDB;
 use std::boxed::Box;
+use wiring::{
+    default::{CfgEnv, EnvWiring},
+    result::InvalidTransaction,
+    transaction::TransactionValidation,
+    EthereumWiring,
+};
 
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that changes underlying structures
@@ -460,12 +462,13 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        interpreter::Interpreter,
-        primitives::{address, AccountInfo, Bytecode, EthereumWiring, TxKind, U256},
-        Context, Evm, InMemoryDB,
-    };
+    use crate::{Context, Evm, InMemoryDB};
+    use bytecode::Bytecode;
+    use interpreter::Interpreter;
+    use primitives::{address, TxKind, U256};
+    use state::AccountInfo;
     use std::{cell::RefCell, rc::Rc};
+    use wiring::EthereumWiring;
 
     /// Custom evm context
     #[derive(Default, Clone, Debug)]

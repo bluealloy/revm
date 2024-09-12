@@ -1,13 +1,14 @@
 use crate::{
     inspectors::GasInspector,
-    interpreter::{
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
-    },
-    primitives::{hex, HashMap, Transaction, B256, U256},
     EvmContext, EvmWiring, Inspector,
 };
 use derive_where::derive_where;
-use revm_interpreter::OpCode;
+
+use primitives::{hex, HashMap, B256, U256};
+use wiring::Transaction;
+use interpreter::{
+    CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult, OpCode,
+};
 use serde::Serialize;
 use std::io::Write;
 

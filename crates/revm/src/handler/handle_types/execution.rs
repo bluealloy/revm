@@ -1,15 +1,14 @@
 use crate::{
-    frame::EOFCreateFrame,
-    handler::mainnet,
-    interpreter::{CallInputs, CreateInputs, SharedMemory},
-    primitives::{EVMResultGeneric, Spec},
-    CallFrame, Context, CreateFrame, EvmWiring, Frame, FrameOrResult, FrameResult,
+    frame::EOFCreateFrame, handler::mainnet, CallFrame, Context, CreateFrame, EvmWiring, Frame,
+    FrameOrResult, FrameResult,
 };
-use revm_interpreter::{
-    opcode::InstructionTables, CallOutcome, CreateOutcome, EOFCreateInputs, InterpreterAction,
-    InterpreterResult,
+use interpreter::{
+    opcode::InstructionTables, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
+    EOFCreateInputs, InterpreterAction, InterpreterResult, SharedMemory,
 };
+use specification::hardfork::Spec;
 use std::{boxed::Box, sync::Arc};
+use wiring::result::EVMResultGeneric;
 
 /// Handles first frame return handle.
 pub type LastFrameReturnHandle<'a, EvmWiringT> = Arc<

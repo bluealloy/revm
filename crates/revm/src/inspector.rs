@@ -8,14 +8,13 @@ mod noop;
 
 pub use handler_register::{inspector_handle_register, GetInspector};
 
-use crate::{
-    interpreter::{
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
-    },
-    primitives::{Address, Log, U256},
-    EvmContext, EvmWiring,
+use interpreter::{
+    CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
 };
+
+use crate::{EvmContext, EvmWiring};
 use auto_impl::auto_impl;
+use primitives::{Address, Log, U256};
 
 /// [Inspector] implementations.
 pub mod inspectors {

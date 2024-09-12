@@ -1,11 +1,7 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
 
-use revm_interpreter::CallOutcome;
-
-use crate::{
-    interpreter::{CallInputs, CreateInputs, CreateOutcome},
-    EvmContext, EvmWiring, Inspector,
-};
+use crate::{EvmContext, EvmWiring, Inspector};
+use interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter};
 
 /// Helper [Inspector] that keeps track of gas.
 #[allow(dead_code)]
@@ -28,25 +24,17 @@ impl GasInspector {
 impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for GasInspector {
     fn initialize_interp(
         &mut self,
-        interp: &mut crate::interpreter::Interpreter,
+        interp: &mut Interpreter,
         _context: &mut EvmContext<EvmWiringT>,
     ) {
         self.gas_remaining = interp.gas.limit();
     }
 
-    fn step(
-        &mut self,
-        interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<EvmWiringT>,
-    ) {
+    fn step(&mut self, interp: &mut Interpreter, _context: &mut EvmContext<EvmWiringT>) {
         self.gas_remaining = interp.gas.remaining();
     }
 
-    fn step_end(
-        &mut self,
-        interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<EvmWiringT>,
-    ) {
+    fn step_end(&mut self, interp: &mut Interpreter, _context: &mut EvmContext<EvmWiringT>) {
         let remaining = interp.gas.remaining();
         self.last_gas_cost = self.gas_remaining.saturating_sub(remaining);
         self.gas_remaining = remaining;
@@ -82,13 +70,13 @@ impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for GasInspector {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{db::BenchmarkDB, inspector::inspector_handle_register, Evm, EvmWiring};
+    use bytecode::Bytecode;
+    use interpreter::{opcode, Interpreter};
+    use primitives::{address, Bytes, Log, TxKind};
+    use wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring as PrimitiveEvmWiring};
 
-    use crate::{
-        interpreter::Interpreter,
-        primitives::{self, EthereumWiring, Log},
-    };
-
-    type TestEvmWiring = primitives::DefaultEthereumWiring;
+    type TestEvmWiring = DefaultEthereumWiring;
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -164,14 +152,6 @@ mod tests {
 
     #[test]
     fn test_gas_inspector() {
-        use crate::{
-            db::BenchmarkDB,
-            inspector::inspector_handle_register,
-            interpreter::opcode,
-            primitives::{address, Bytecode, Bytes, TxKind},
-            Evm,
-        };
-
         let contract_data: Bytes = Bytes::from(vec![
             opcode::PUSH1,
             0x1,
@@ -193,7 +173,7 @@ mod tests {
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
             .with_default_ext_ctx()
             .modify_tx_env(|tx| {
-                *tx = <TestEvmWiring as primitives::EvmWiring>::Transaction::default();
+                *tx = <TestEvmWiring as PrimitiveEvmWiring>::Transaction::default();
 
                 tx.caller = address!("1000000000000000000000000000000000000000");
                 tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));

@@ -1,12 +1,11 @@
 use crate::{
-    handler::register::EvmHandler,
-    interpreter::{opcode, InstructionResult, Interpreter},
-    primitives::EVMResultGeneric,
-    Context, EvmWiring, FrameOrResult, FrameResult, Inspector, JournalEntry,
+    handler::register::EvmHandler, Context, EvmWiring, FrameOrResult, FrameResult, Inspector,
+    JournalEntry,
 };
 use core::cell::RefCell;
-use revm_interpreter::opcode::DynInstruction;
+use interpreter::{opcode, opcode::DynInstruction, InstructionResult, Interpreter};
 use std::{rc::Rc, sync::Arc, vec::Vec};
+use wiring::result::EVMResultGeneric;
 
 /// Provides access to an `Inspector` instance.
 pub trait GetInspector<EvmWiringT: EvmWiring> {
@@ -263,13 +262,16 @@ fn inspector_instruction<EvmWiringT>(
 mod tests {
     use super::*;
     use crate::{
-        inspectors::NoOpInspector,
-        interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome},
-        primitives::{self, db::EmptyDB, EthereumWiring},
-        Evm, EvmContext,
+        db::BenchmarkDB, inspector::inspector_handle_register, inspectors::NoOpInspector, Evm,
+        EvmContext, EvmWiring,
     };
+    use bytecode::Bytecode;
+    use database_interface::EmptyDB;
+    use interpreter::{opcode, CallInputs, CallOutcome, CreateInputs, CreateOutcome};
+    use primitives::{address, Bytes, TxKind};
+    use wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring as PrimitiveEvmWiring};
 
-    type TestEvmWiring = primitives::DefaultEthereumWiring;
+    type TestEvmWiring = DefaultEthereumWiring;
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -349,14 +351,6 @@ mod tests {
 
     #[test]
     fn test_inspector_handlers() {
-        use crate::{
-            db::BenchmarkDB,
-            inspector::inspector_handle_register,
-            interpreter::opcode,
-            primitives::{address, Bytecode, Bytes, TxKind},
-            Evm,
-        };
-
         let contract_data: Bytes = Bytes::from(vec![
             opcode::PUSH1,
             0x1,
@@ -378,7 +372,7 @@ mod tests {
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
             .with_external_context(StackInspector::default())
             .modify_tx_env(|tx| {
-                *tx = <TestEvmWiring as primitives::EvmWiring>::Transaction::default();
+                *tx = <TestEvmWiring as PrimitiveEvmWiring>::Transaction::default();
 
                 tx.caller = address!("1000000000000000000000000000000000000000");
                 tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));

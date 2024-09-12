@@ -2,8 +2,8 @@ use super::{
     reverts::AccountInfoRevert, AccountRevert, AccountStatus, RevertToSlot, StorageSlot,
     StorageWithOriginalValues, TransitionAccount,
 };
-use revm_interpreter::primitives::{AccountInfo, U256};
-use revm_precompile::HashMap;
+use primitives::{HashMap, U256};
+use state::AccountInfo;
 
 /// Account information focused on creating of database changesets
 /// and Reverts.

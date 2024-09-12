@@ -3138,8 +3138,14 @@ dependencies = [
  "ethers-providers",
  "indicatif",
  "reqwest 0.12.7",
+ "revm-bytecode",
+ "revm-database-interface",
  "revm-interpreter",
  "revm-precompile",
+ "revm-primitives",
+ "revm-specification",
+ "revm-state",
+ "revm-wiring",
  "rstest",
  "serde",
  "serde_json",
@@ -3260,15 +3266,10 @@ dependencies = [
 name = "revm-state"
 version = "1.0.0"
 dependencies = [
- "alloy-sol-types",
- "anyhow",
  "bitflags 2.6.0",
- "criterion",
- "indicatif",
  "revm-bytecode",
  "revm-primitives",
  "revm-specification",
- "rstest",
  "serde",
 ]
 

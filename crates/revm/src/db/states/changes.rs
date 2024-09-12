@@ -1,5 +1,7 @@
 use super::RevertToSlot;
-use revm_interpreter::primitives::{AccountInfo, Address, Bytecode, B256, U256};
+use bytecode::Bytecode;
+use primitives::{Address, B256, U256};
+use state::AccountInfo;
 use std::vec::Vec;
 
 /// accounts/storages/contracts for inclusion into database.

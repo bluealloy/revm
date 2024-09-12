@@ -1,21 +1,26 @@
 use derive_where::derive_where;
 
-use crate::{
-    db::Database,
-    interpreter::{
-        analysis::to_analysed, gas, return_ok, AccountLoad, Eip7702CodeLoad, InstructionResult,
-        InterpreterResult, SStoreResult, SelfDestructResult, StateLoad,
-    },
-    journaled_state::JournaledState,
-    primitives::{
-        AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, EnvWiring, Eof,
-        EvmWiring, HashSet, Spec,
-        SpecId::{self, *},
-        Transaction, B256, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
-    },
-    JournalCheckpoint,
+use crate::{journaled_state::JournaledState, JournalCheckpoint};
+use bytecode::{Bytecode, Eof, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
+use database_interface::Database;
+use interpreter::{
+    analysis::to_analysed, gas, return_ok, AccountLoad, Eip7702CodeLoad, InstructionResult,
+    InterpreterResult, SStoreResult, SelfDestructResult, StateLoad,
 };
+use primitives::{Address, Bytes, HashSet, B256, U256};
+use specification::{
+    eip2930::AccessListItem,
+    hardfork::{
+        Spec,
+        SpecId::{self, *},
+    },
+};
+use state::Account;
 use std::{boxed::Box, sync::Arc};
+use wiring::{
+    default::{AnalysisKind, CfgEnv, EnvWiring},
+    EvmWiring, Transaction,
+};
 
 /// EVM contexts contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; EvmWiringT::Block, EvmWiringT::ChainContext, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error)]
