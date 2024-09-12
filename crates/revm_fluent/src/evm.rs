@@ -659,7 +659,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         Ok(result)
     }
 
-    /// Main contract call of the FVM.
+    /*/// Main contract call of the FVM.
     #[cfg(feature = "rwasm")]
     fn blend_fuel_inner(
         &mut self,
@@ -690,5 +690,5 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             },
             memory_offset: Default::default(),
         })
-    }
+    }*/
 }
