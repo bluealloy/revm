@@ -11,10 +11,8 @@ use crate::{
         EVMResult,
         EVMResultGeneric,
         EnvWithHandlerCfg,
-        ExecutionEnvironment,
         ExecutionResult,
         HandlerCfg,
-        InvalidTransaction,
         ResultAndState,
         TransactTo,
         TxEnv,
@@ -25,28 +23,16 @@ use crate::{
 };
 use alloc::vec::Vec;
 use core::{fmt, mem::take};
-use fluentbase_core::{
-    blended::BlendedRuntime,
-    fvm::{exec::_exec_fuel_tx, types::STORAGE_ADDRESSES},
-    helpers::evm_error_from_exit_code,
-};
+use fluentbase_core::{blended::BlendedRuntime, fvm::types::STORAGE_ADDRESSES};
 use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
 use fluentbase_sdk::{
     journal::{JournalState, JournalStateBuilder},
     BlockContext,
-    Bytes,
     ContractContext,
     NativeAPI,
     TxContext,
 };
-use revm_interpreter::{
-    CallInputs,
-    CallOutcome,
-    CreateInputs,
-    CreateOutcome,
-    Gas,
-    InterpreterResult,
-};
+use revm_interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
