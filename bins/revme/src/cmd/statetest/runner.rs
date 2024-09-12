@@ -404,6 +404,7 @@ pub fn execute_test_suite(
                         .with_external_context(
                             TracerEip3155::new(Box::new(stderr())).without_summary(),
                         )
+                        .with_spec_id(spec_id)
                         .append_handler_register(inspector_handle_register)
                         .build();
 
@@ -466,6 +467,7 @@ pub fn execute_test_suite(
                     .with_env(env.clone())
                     .reset_handler_with_external_context::<EthereumWiring<_, TracerEip3155>>()
                     .with_external_context(TracerEip3155::new(Box::new(stdout())).without_summary())
+                    .with_spec_id(spec_id)
                     .append_handler_register(inspector_handle_register)
                     .build();
                 let _ = evm.transact_commit();
