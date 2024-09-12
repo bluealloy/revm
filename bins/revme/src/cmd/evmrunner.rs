@@ -1,3 +1,4 @@
+use clap::Parser;
 use revm::{
     db::BenchmarkDB,
     inspector_handle_register,
@@ -9,9 +10,6 @@ use std::io::Error as IoError;
 use std::path::PathBuf;
 use std::time::Duration;
 use std::{borrow::Cow, fs};
-use structopt::StructOpt;
-
-extern crate alloc;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Errors {
@@ -31,26 +29,26 @@ pub enum Errors {
 
 /// Evm runner command allows running arbitrary evm bytecode.
 /// Bytecode can be provided from cli or from file with --path option.
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 pub struct Cmd {
-    /// Bytecode to be executed.
-    #[structopt(default_value = "")]
-    bytecode: String,
-    /// Path to file containing the evm bytecode.
-    /// Overrides the bytecode option.
-    #[structopt(long)]
+    /// Hex-encoded EVM bytecode to be executed.
+    #[arg(required_unless_present = "path")]
+    bytecode: Option<String>,
+    /// Path to a file containing the hex-encoded EVM bytecode to be executed.
+    /// Overrides the positional `bytecode` argument.
+    #[arg(long)]
     path: Option<PathBuf>,
     /// Run in benchmarking mode.
-    #[structopt(long)]
+    #[arg(long)]
     bench: bool,
-    /// Input bytes.
-    #[structopt(long, default_value = "")]
+    /// Hex-encoded input/calldata bytes.
+    #[arg(long, default_value = "")]
     input: String,
     /// Print the state.
-    #[structopt(long)]
+    #[arg(long)]
     state: bool,
     /// Print the trace.
-    #[structopt(long)]
+    #[arg(long)]
     trace: bool,
 }
 
@@ -64,9 +62,11 @@ impl Cmd {
             if !path.exists() {
                 return Err(Errors::PathNotExists);
             }
-            fs::read_to_string(path)?.to_owned().into()
+            fs::read_to_string(path)?.into()
+        } else if let Some(bytecode) = &self.bytecode {
+            bytecode.as_str().into()
         } else {
-            self.bytecode.as_str().into()
+            unreachable!()
         };
 
         let bytecode = hex::decode(bytecode_str.trim()).map_err(|_| Errors::InvalidBytecode)?;
