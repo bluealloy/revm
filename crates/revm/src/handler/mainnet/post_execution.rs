@@ -112,7 +112,7 @@ pub fn output<EvmWiringT: EvmWiring>(
     // reset journal and return present state.
     let (state, logs) = context.evm.journaled_state.finalize();
 
-    let result = match SuccessOrHalt::<EvmWiringT>::from(instruction_result.result) {
+    let result = match SuccessOrHalt::<EvmWiringT::HaltReason>::from(instruction_result.result) {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {
             reason,
             gas_used: final_gas_used,
