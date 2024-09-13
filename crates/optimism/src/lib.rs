@@ -20,7 +20,10 @@ pub use handler_register::{
 };
 pub use l1block::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
 pub use result::{OptimismHaltReason, OptimismInvalidTransaction};
-use revm::primitives::{Bytes, TransactionValidation, B256};
+use revm::{
+    primitives::{Bytes, B256},
+    wiring::TransactionValidation,
+};
 pub use spec::*;
 
 pub trait OptimismContext {

@@ -1,6 +1,9 @@
 use crate::fast_lz::flz_compress_len;
 use core::ops::Mul;
-use revm::primitives::{address, db::Database, Address, U256};
+use revm::{
+    database_interface::Database,
+    primitives::{address, Address, U256},
+};
 
 use super::OptimismSpecId;
 

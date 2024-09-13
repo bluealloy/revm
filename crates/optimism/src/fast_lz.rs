@@ -109,8 +109,10 @@ mod tests {
     use alloy_sol_types::sol;
     use alloy_sol_types::SolCall;
     use revm::{
+        bytecode::Bytecode,
         db::BenchmarkDB,
-        primitives::{address, bytes, Bytecode, Bytes, EthereumWiring, TxKind, U256},
+        primitives::{address, bytes, Bytes, TxKind, U256},
+        wiring::EthereumWiring,
         Evm,
     };
     use std::vec::Vec;

@@ -1,6 +1,6 @@
 pub mod blob;
 
-pub use blob::BlobExcessGasAndPrice;
+pub use blob::{calc_excess_blob_gas, BlobExcessGasAndPrice};
 
 use primitives::{Address, B256, U256};
 

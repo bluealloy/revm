@@ -1,9 +1,6 @@
 use super::{cache::CacheState, state::DBBox, BundleState, State, TransitionState};
-use crate::db::EmptyDB;
-use revm_interpreter::primitives::{
-    db::{Database, DatabaseRef, WrapDatabaseRef},
-    B256,
-};
+use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
+use primitives::B256;
 use std::collections::BTreeMap;
 
 /// Allows building of State and initializing it with different options.

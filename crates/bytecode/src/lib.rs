@@ -11,11 +11,11 @@ pub mod errors;
 pub mod legacy;
 
 pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
+pub use errors::BytecodeDecodeError;
 pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
 
 use core::fmt::Debug;
 use eip7702::{Eip7702Bytecode, EIP7702_MAGIC_BYTES};
-use errors::BytecodeDecodeError;
 use primitives::{keccak256, Address, Bytes, B256, KECCAK_EMPTY};
 use std::sync::Arc;
 

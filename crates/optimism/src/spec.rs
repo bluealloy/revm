@@ -3,9 +3,12 @@ use crate::{
 };
 use core::marker::PhantomData;
 use revm::{
+    database_interface::Database,
     handler::register::HandleRegisters,
     precompile::PrecompileSpecId,
-    primitives::{db::Database, BlockEnv, EvmWiring, Spec, SpecId},
+    specification::hardfork::{Spec, SpecId},
+    wiring::default::block::BlockEnv,
+    wiring::EvmWiring,
     EvmHandler,
 };
 
@@ -184,7 +187,7 @@ impl From<OptimismSpecId> for PrecompileSpecId {
 /// String identifiers for Optimism hardforks.
 pub mod id {
     // Re-export the Ethereum hardforks.
-    pub use revm::primitives::specification::id::*;
+    pub use revm::specification::hardfork::id::*;
 
     pub const BEDROCK: &str = "Bedrock";
     pub const REGOLITH: &str = "Regolith";

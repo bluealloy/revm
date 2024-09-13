@@ -82,7 +82,7 @@ std = [
     "precompile/std",
 ]
 hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
-serde = ["dep:serde", "interpreter/serde"]
+serde = ["dep:serde", "interpreter/serde", "database-interface/serde"]
 serde-json = ["serde", "dep:serde_json"]
 arbitrary = ["interpreter/arbitrary"]
 asm-keccak = ["interpreter/asm-keccak", "precompile/asm-keccak"]

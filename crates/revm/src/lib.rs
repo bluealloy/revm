@@ -6,11 +6,19 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
-// Define modules.
+// reexport dependencies
+pub use bytecode;
+pub use database_interface;
+pub use interpreter;
+pub use precompile;
+pub use primitives;
+pub use specification;
+pub use state;
+pub use wiring;
 
+// Define modules.
 mod builder;
 mod context;
-
 #[cfg(any(test, feature = "test-utils"))]
 pub mod test_utils;
 
