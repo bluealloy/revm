@@ -109,20 +109,23 @@ mod test {
                 let Some(gas) = vector.gas else {
                     panic!("gas is missing in {test_name}");
                 };
-                let (actual_gas, actual_output) =
-                    res.unwrap_or_else(|e| panic!("precompile call failed for {test_name}: {e}"));
+                let outcome = res.unwrap_or_else(|e: revm_primitives::PrecompileErrors| {
+                    panic!("precompile call failed for {test_name}: {e}")
+                });
                 assert_eq!(
-                    gas, actual_gas,
+                    gas, outcome.gas_used,
                     "expected gas: {}, actual gas: {} in {test_name}",
-                    gas, actual_gas
+                    gas, outcome.gas_used
                 );
                 let Some(expected) = vector.expected else {
                     panic!("expected output is missing in {test_name}");
                 };
                 let expected_output = Bytes::from_hex(expected).unwrap();
                 assert_eq!(
-                    expected_output, actual_output,
-                    "expected output: {expected_output}, actual output: {actual_output} in {test_name}");
+                    expected_output, outcome.bytes,
+                    "expected output: {expected_output}, actual output: {:?} in {test_name}",
+                    outcome.bytes
+                );
             }
         }
     }

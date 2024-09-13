@@ -1,6 +1,12 @@
 use crate::{Address, Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use c_kzg::{Bytes32, Bytes48, KzgProof, KzgSettings};
-use revm_primitives::{hex_literal::hex, Bytes, Env};
+cfg_if::cfg_if! {
+    if #[cfg(feature = "c-kzg")] {
+        use c_kzg::{Bytes32, Bytes48, KzgProof, KzgSettings};
+    } else if #[cfg(feature = "kzg-rs")] {
+        use kzg_rs::{Bytes32, Bytes48, KzgProof, KzgSettings};
+    }
+}
+use revm_primitives::{hex_literal::hex, Bytes, CfgEnv, PrecompileOutput};
 use sha2::{Digest, Sha256};
 
 pub const POINT_EVALUATION: PrecompileWithAddress =
@@ -24,21 +30,21 @@ pub const RETURN_VALUE: &[u8; 64] = &hex!(
 /// | versioned_hash |  z  |  y  | commitment | proof |
 /// |     32         | 32  | 32  |     48     |   48  |
 /// with z and y being padded 32 byte big endian values
-pub fn run(input: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
+pub fn run(input: &Bytes, gas_limit: u64, cfg: &CfgEnv) -> PrecompileResult {
     if gas_limit < GAS_COST {
-        return Err(Error::OutOfGas);
+        return Err(Error::OutOfGas.into());
     }
 
     // Verify input length.
     if input.len() != 192 {
-        return Err(Error::BlobInvalidInputLength);
+        return Err(Error::BlobInvalidInputLength.into());
     }
 
     // Verify commitment matches versioned_hash
     let versioned_hash = &input[..32];
     let commitment = &input[96..144];
     if kzg_to_versioned_hash(commitment) != versioned_hash {
-        return Err(Error::BlobMismatchedVersion);
+        return Err(Error::BlobMismatchedVersion.into());
     }
 
     // Verify KZG proof with z and y in big endian format
@@ -46,12 +52,12 @@ pub fn run(input: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
     let z = as_bytes32(&input[32..64]);
     let y = as_bytes32(&input[64..96]);
     let proof = as_bytes48(&input[144..192]);
-    if !verify_kzg_proof(commitment, z, y, proof, env.cfg.kzg_settings.get()) {
-        return Err(Error::BlobVerifyKzgProofFailed);
+    if !verify_kzg_proof(commitment, z, y, proof, cfg.kzg_settings.get()) {
+        return Err(Error::BlobVerifyKzgProofFailed.into());
     }
 
     // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
-    Ok((GAS_COST, RETURN_VALUE.into()))
+    Ok(PrecompileOutput::new(GAS_COST, RETURN_VALUE.into()))
 }
 
 /// `VERSIONED_HASH_VERSION_KZG ++ sha256(commitment)[1..]`
@@ -112,9 +118,9 @@ mod tests {
 
         let expected_output = hex!("000000000000000000000000000000000000000000000000000000000000100073eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
         let gas = 50000;
-        let env = Env::default();
-        let (actual_gas, actual_output) = run(&input.into(), gas, &env).unwrap();
-        assert_eq!(actual_gas, gas);
-        assert_eq!(actual_output[..], expected_output);
+        let env = CfgEnv::default();
+        let output = run(&input.into(), gas, &env).unwrap();
+        assert_eq!(output.gas_used, gas);
+        assert_eq!(output.bytes[..], expected_output);
     }
 }

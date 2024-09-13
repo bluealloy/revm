@@ -15,7 +15,7 @@ It is set up to be compatible with environments that do not include Rust's stand
 - [specification](./primitives/specifications.md): This module defines types related to Ethereum specifications (also known as hard forks).
 - [state](./primitives/state.md): This module provides types and functions for managing Ethereum state, including accounts and storage.
 - [utilities](./primitives/utils.md): This module provides utility functions used in multiple places across the EVM implementation.
-- [kzg](./primitives/kzg.md): This module provides types and functions related to KZG commitment, it is empolyed visibly in the Point Evalution Precompile.
+- [kzg](./primitives/kzg.md): This module provides types and functions related to KZG commitment, it is empolyed visibly in the Point Evaluation Precompile.
 
 ### External Crates:
 

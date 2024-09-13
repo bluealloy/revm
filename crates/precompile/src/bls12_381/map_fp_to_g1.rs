@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{u64_to_address, PrecompileWithAddress};
 use blst::{blst_map_to_g1, blst_p1, blst_p1_affine, blst_p1_to_affine};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileResult};
+use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileOutput, PrecompileResult};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_MAP_FP_TO_G1 precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
@@ -21,14 +21,15 @@ const MAP_FP_TO_G1_BASE: u64 = 5500;
 /// See also: <https://eips.ethereum.org/EIPS/eip-2537#abi-for-mapping-fp-element-to-g1-point>
 pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     if MAP_FP_TO_G1_BASE > gas_limit {
-        return Err(PrecompileError::OutOfGas);
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     if input.len() != PADDED_FP_LENGTH {
         return Err(PrecompileError::Other(format!(
             "MAP_FP_TO_G1 input should be {PADDED_FP_LENGTH} bytes, was {}",
             input.len()
-        )));
+        ))
+        .into());
     }
 
     let input_p0 = remove_padding(input)?;
@@ -44,7 +45,7 @@ pub(super) fn map_fp_to_g1(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     unsafe { blst_p1_to_affine(&mut p_aff, &p) };
 
     let out = encode_g1_point(&p_aff);
-    Ok((MAP_FP_TO_G1_BASE, out))
+    Ok(PrecompileOutput::new(MAP_FP_TO_G1_BASE, out))
 }
 
 #[cfg(test)]
@@ -58,7 +59,7 @@ mod test {
         let fail = map_fp_to_g1(&input, MAP_FP_TO_G1_BASE);
         assert_eq!(
             fail,
-            Err(PrecompileError::Other("non-canonical fp value".to_string()))
+            Err(PrecompileError::Other("non-canonical fp value".to_string()).into())
         );
     }
 }

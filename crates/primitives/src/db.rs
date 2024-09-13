@@ -2,9 +2,12 @@ use crate::{Account, AccountInfo, Address, Bytecode, HashMap, B256, U256};
 use auto_impl::auto_impl;
 
 pub mod components;
+pub mod emptydb;
+
 pub use components::{
     BlockHash, BlockHashRef, DatabaseComponentError, DatabaseComponents, State, StateRef,
 };
+pub use emptydb::{EmptyDB, EmptyDBTyped};
 
 /// EVM database interface.
 #[auto_impl(&mut, Box)]
@@ -22,7 +25,7 @@ pub trait Database {
     fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error>;
 
     /// Get block hash by block number.
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error>;
+    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error>;
 }
 
 /// EVM database commit interface.
@@ -53,7 +56,7 @@ pub trait DatabaseRef {
     fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error>;
 
     /// Get block hash by block number.
-    fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error>;
+    fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error>;
 }
 
 /// Wraps a [`DatabaseRef`] to provide a [`Database`] implementation.
@@ -65,12 +68,6 @@ impl<F: DatabaseRef> From<F> for WrapDatabaseRef<F> {
     fn from(f: F) -> Self {
         WrapDatabaseRef(f)
     }
-}
-
-pub trait DatabaseWithDebugError: Database
-where
-    <Self as Database>::Error: std::fmt::Debug + std::fmt::Display,
-{
 }
 
 impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
@@ -92,7 +89,7 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     }
 
     #[inline]
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         self.0.block_hash_ref(number)
     }
 }
@@ -101,45 +98,5 @@ impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
     #[inline]
     fn commit(&mut self, changes: HashMap<Address, Account>) {
         self.0.commit(changes)
-    }
-}
-
-/// Wraps a `dyn DatabaseRef` to provide a [`Database`] implementation.
-#[doc(hidden)]
-#[deprecated = "use `WrapDatabaseRef` instead"]
-pub struct RefDBWrapper<'a, E> {
-    pub db: &'a dyn DatabaseRef<Error = E>,
-}
-
-#[allow(deprecated)]
-impl<'a, E> RefDBWrapper<'a, E> {
-    #[inline]
-    pub fn new(db: &'a dyn DatabaseRef<Error = E>) -> Self {
-        Self { db }
-    }
-}
-
-#[allow(deprecated)]
-impl<'a, E> Database for RefDBWrapper<'a, E> {
-    type Error = E;
-
-    #[inline]
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        self.db.basic_ref(address)
-    }
-
-    #[inline]
-    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
-        self.db.code_by_hash_ref(code_hash)
-    }
-
-    #[inline]
-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
-        self.db.storage_ref(address, index)
-    }
-
-    #[inline]
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        self.db.block_hash_ref(number)
     }
 }

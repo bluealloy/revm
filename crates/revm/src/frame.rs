@@ -4,9 +4,7 @@ use crate::{
     JournalCheckpoint,
 };
 use core::ops::Range;
-use revm_interpreter::{
-    CallOutcome, CreateOutcome, EOFCreateOutcome, Gas, InstructionResult, InterpreterResult,
-};
+use revm_interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
 use std::boxed::Box;
 
 /// Call CallStackFrame.
@@ -33,7 +31,6 @@ pub struct CreateFrame {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EOFCreateFrame {
     pub created_address: Address,
-    pub return_memory_range: Range<usize>,
     pub frame_data: FrameData,
 }
 
@@ -56,10 +53,11 @@ pub enum Frame {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug)]
 pub enum FrameResult {
     Call(CallOutcome),
     Create(CreateOutcome),
-    EOFCreate(EOFCreateOutcome),
+    EOFCreate(CreateOutcome),
 }
 
 impl FrameResult {
@@ -81,8 +79,8 @@ impl FrameResult {
             FrameResult::Create(outcome) => {
                 Output::Create(outcome.result.output.clone(), outcome.address)
             }
-            FrameResult::EOFCreate(_) => {
-                panic!("EOFCreate can't be called from external world.");
+            FrameResult::EOFCreate(outcome) => {
+                Output::Create(outcome.result.output.clone(), outcome.address)
             }
         }
     }
@@ -136,6 +134,7 @@ impl FrameResult {
 
 /// Contains either a frame or a result.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug)]
 pub enum FrameOrResult {
     /// Boxed call or create frame.
     Frame(Frame),
@@ -240,13 +239,11 @@ impl FrameOrResult {
 
     pub fn new_eofcreate_frame(
         created_address: Address,
-        return_memory_range: Range<usize>,
         checkpoint: JournalCheckpoint,
         interpreter: Interpreter,
     ) -> Self {
         Self::Frame(Frame::EOFCreate(Box::new(EOFCreateFrame {
             created_address,
-            return_memory_range,
             frame_data: FrameData {
                 checkpoint,
                 interpreter,
@@ -280,13 +277,11 @@ impl FrameOrResult {
 
     pub fn new_eofcreate_result(
         interpreter_result: InterpreterResult,
-        address: Address,
-        return_memory_range: Range<usize>,
+        address: Option<Address>,
     ) -> Self {
-        FrameOrResult::Result(FrameResult::EOFCreate(EOFCreateOutcome {
+        FrameOrResult::Result(FrameResult::EOFCreate(CreateOutcome {
             result: interpreter_result,
             address,
-            return_memory_range,
         }))
     }
 

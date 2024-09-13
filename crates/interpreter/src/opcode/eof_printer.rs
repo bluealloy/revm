@@ -26,11 +26,13 @@ pub fn print_eof_code(code: &[u8]) {
 
         print!("{}", opcode.name());
         if opcode.immediate_size() != 0 {
-            print!(
-                " : 0x{:}",
-                hex::encode(&code[i + 1..i + 1 + opcode.immediate_size() as usize])
-            );
+            let immediate = &code[i + 1..i + 1 + opcode.immediate_size() as usize];
+            print!(" : 0x{:}", hex::encode(immediate));
+            if opcode.immediate_size() == 2 {
+                print!(" ({})", i16::from_be_bytes(immediate.try_into().unwrap()));
+            }
         }
+        println!();
 
         let mut rjumpv_additional_immediates = 0;
         if op == RJUMPV {
@@ -47,7 +49,7 @@ pub fn print_eof_code(code: &[u8]) {
 
             for vtablei in 0..len {
                 let offset = unsafe { read_i16(code.as_ptr().add(i + 2 + 2 * vtablei)) } as isize;
-                println!("RJUMPV[{vtablei}]: 0x{offset:04X}({offset})");
+                println!("RJUMPV[{vtablei}]: 0x{offset:04X} ({offset})");
             }
         }
 

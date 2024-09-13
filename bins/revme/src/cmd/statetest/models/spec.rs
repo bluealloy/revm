@@ -20,9 +20,12 @@ pub enum SpecName {
     Berlin,
     BerlinToLondonAt5,
     London,
+    Paris,
     Merge,
     Shanghai,
     Cancun,
+    Prague,
+    Osaka, // SKIPPED
     #[serde(other)]
     Unknown,
 }
@@ -41,12 +44,14 @@ impl SpecName {
             Self::Istanbul => SpecId::ISTANBUL,
             Self::Berlin => SpecId::BERLIN,
             Self::London | Self::BerlinToLondonAt5 => SpecId::LONDON,
-            Self::Merge => SpecId::MERGE,
+            Self::Paris | Self::Merge => SpecId::MERGE,
             Self::Shanghai => SpecId::SHANGHAI,
             Self::Cancun => SpecId::CANCUN,
+            Self::Prague => SpecId::PRAGUE,
             Self::ByzantiumToConstantinopleAt5 | Self::Constantinople => {
                 panic!("Overridden with PETERSBURG")
             }
+            Self::Osaka => panic!("Osaka is not implemented"),
             Self::Unknown => panic!("Unknown spec"),
         }
     }

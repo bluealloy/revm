@@ -1,60 +1,63 @@
 use crate::{
     handler::mainnet,
-    primitives::{db::Database, EVMError, Env, Spec},
-    Context,
+    primitives::{EVMResultGeneric, EnvWiring, InvalidTransaction, Spec, TransactionValidation},
+    Context, EvmWiring,
 };
 use std::sync::Arc;
 
 /// Handle that validates env.
-pub type ValidateEnvHandle<'a, DB> =
-    Arc<dyn Fn(&Env) -> Result<(), EVMError<<DB as Database>::Error>> + 'a>;
+pub type ValidateEnvHandle<'a, EvmWiringT> =
+    Arc<dyn Fn(&EnvWiring<EvmWiringT>) -> EVMResultGeneric<(), EvmWiringT> + 'a>;
 
 /// Handle that validates transaction environment against the state.
 /// Second parametar is initial gas.
-pub type ValidateTxEnvAgainstState<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<EXT, DB>) -> Result<(), EVMError<<DB as Database>::Error>> + 'a>;
+pub type ValidateTxEnvAgainstState<'a, EvmWiringT> =
+    Arc<dyn Fn(&mut Context<EvmWiringT>) -> EVMResultGeneric<(), EvmWiringT> + 'a>;
 
 /// Initial gas calculation handle
-pub type ValidateInitialTxGasHandle<'a, DB> =
-    Arc<dyn Fn(&Env) -> Result<u64, EVMError<<DB as Database>::Error>> + 'a>;
+pub type ValidateInitialTxGasHandle<'a, EvmWiringT> =
+    Arc<dyn Fn(&EnvWiring<EvmWiringT>) -> EVMResultGeneric<u64, EvmWiringT> + 'a>;
 
 /// Handles related to validation.
-pub struct ValidationHandler<'a, EXT, DB: Database> {
+pub struct ValidationHandler<'a, EvmWiringT: EvmWiring> {
     /// Validate and calculate initial transaction gas.
-    pub initial_tx_gas: ValidateInitialTxGasHandle<'a, DB>,
+    pub initial_tx_gas: ValidateInitialTxGasHandle<'a, EvmWiringT>,
     /// Validate transactions against state data.
-    pub tx_against_state: ValidateTxEnvAgainstState<'a, EXT, DB>,
+    pub tx_against_state: ValidateTxEnvAgainstState<'a, EvmWiringT>,
     /// Validate Env.
-    pub env: ValidateEnvHandle<'a, DB>,
+    pub env: ValidateEnvHandle<'a, EvmWiringT>,
 }
 
-impl<'a, EXT: 'a, DB: Database + 'a> ValidationHandler<'a, EXT, DB> {
+impl<'a, EvmWiringT: EvmWiring + 'a> ValidationHandler<'a, EvmWiringT>
+where
+    <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
+{
     /// Create new ValidationHandles
     pub fn new<SPEC: Spec + 'a>() -> Self {
         Self {
-            initial_tx_gas: Arc::new(mainnet::validate_initial_tx_gas::<SPEC, DB>),
-            env: Arc::new(mainnet::validate_env::<SPEC, DB>),
-            tx_against_state: Arc::new(mainnet::validate_tx_against_state::<SPEC, EXT, DB>),
+            initial_tx_gas: Arc::new(mainnet::validate_initial_tx_gas::<EvmWiringT, SPEC>),
+            env: Arc::new(mainnet::validate_env::<EvmWiringT, SPEC>),
+            tx_against_state: Arc::new(mainnet::validate_tx_against_state::<EvmWiringT, SPEC>),
         }
     }
 }
 
-impl<'a, EXT, DB: Database> ValidationHandler<'a, EXT, DB> {
+impl<'a, EvmWiringT: EvmWiring> ValidationHandler<'a, EvmWiringT> {
     /// Validate env.
-    pub fn env(&self, env: &Env) -> Result<(), EVMError<DB::Error>> {
+    pub fn env(&self, env: &EnvWiring<EvmWiringT>) -> EVMResultGeneric<(), EvmWiringT> {
         (self.env)(env)
     }
 
     /// Initial gas
-    pub fn initial_tx_gas(&self, env: &Env) -> Result<u64, EVMError<DB::Error>> {
+    pub fn initial_tx_gas(&self, env: &EnvWiring<EvmWiringT>) -> EVMResultGeneric<u64, EvmWiringT> {
         (self.initial_tx_gas)(env)
     }
 
     /// Validate ttansaction against the state.
     pub fn tx_against_state(
         &self,
-        context: &mut Context<EXT, DB>,
-    ) -> Result<(), EVMError<DB::Error>> {
+        context: &mut Context<EvmWiringT>,
+    ) -> EVMResultGeneric<(), EvmWiringT> {
         (self.tx_against_state)(context)
     }
 }

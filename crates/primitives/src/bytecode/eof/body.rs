@@ -2,9 +2,11 @@ use super::{Eof, EofDecodeError, EofHeader, TypesSection};
 use crate::Bytes;
 use std::vec::Vec;
 
-/// EOF Body, contains types, code, container and data sections.
+/// EOF container body.
 ///
-/// Can be used to create new EOF object.
+/// Contains types, code, container and data sections.
+///
+/// Can be used to create a new EOF container using the [`into_eof`](EofBody::into_eof) method.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EofBody {
@@ -16,12 +18,12 @@ pub struct EofBody {
 }
 
 impl EofBody {
-    // Get code section
+    /// Returns the code section at the given index.
     pub fn code(&self, index: usize) -> Option<&Bytes> {
         self.code_section.get(index)
     }
 
-    /// Create EOF from body.
+    /// Creates an EOF container from this body.
     pub fn into_eof(self) -> Eof {
         // TODO add bounds checks.
         let header = EofHeader {
@@ -46,7 +48,7 @@ impl EofBody {
         }
     }
 
-    /// Encode Body into buffer.
+    /// Encodes this body into the given buffer.
     pub fn encode(&self, buffer: &mut Vec<u8>) {
         for types_section in &self.types_section {
             types_section.encode(buffer);
@@ -63,7 +65,7 @@ impl EofBody {
         buffer.extend_from_slice(&self.data_section);
     }
 
-    /// Decode EOF body from buffer and Header.
+    /// Decodes an EOF container body from the given buffer and header.
     pub fn decode(input: &Bytes, header: &EofHeader) -> Result<Self, EofDecodeError> {
         let header_len = header.size();
         let partial_body_len =

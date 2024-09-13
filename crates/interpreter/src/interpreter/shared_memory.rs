@@ -256,7 +256,7 @@ impl SharedMemory {
     ///
     /// # Panics
     ///
-    /// Panics on out of bounds.
+    /// Panics if memory is out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {

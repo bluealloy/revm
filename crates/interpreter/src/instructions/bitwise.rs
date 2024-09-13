@@ -39,7 +39,7 @@ pub fn eq<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 pub fn iszero<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1);
-    *op1 = U256::from(*op1 == U256::ZERO);
+    *op1 = U256::from(op1.is_zero());
 }
 
 pub fn bitand<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -112,25 +112,12 @@ pub fn sar<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
     pop_top!(interpreter, op1, op2);
 
     let shift = as_usize_saturated!(op1);
-    *op2 = if shift >= 256 {
-        // If the shift is 256 or more, the result depends on the sign of the last bit.
-        if op2.bit(255) {
-            U256::MAX // Negative number, all bits set to one.
-        } else {
-            U256::ZERO // Non-negative number, all bits set to zero.
-        }
+    *op2 = if shift < 256 {
+        op2.arithmetic_shr(shift)
+    } else if op2.bit(255) {
+        U256::MAX
     } else {
-        // Normal shift
-        if op2.bit(255) {
-            // Check the most significant bit.
-            // Arithmetic right shift for negative numbers.
-            let shifted_value = *op2 >> shift;
-            let mask = U256::MAX << (256 - shift); // Mask for the sign bits.
-            shifted_value | mask // Apply the mask to simulate the filling of sign bits.
-        } else {
-            // Logical right shift for non-negative numbers.
-            *op2 >> shift
-        }
+        U256::ZERO
     };
 }
 
@@ -138,7 +125,7 @@ pub fn sar<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
 mod tests {
     use crate::instructions::bitwise::{byte, sar, shl, shr};
     use crate::{Contract, DummyHost, Interpreter};
-    use revm_primitives::{uint, Env, LatestSpec, U256};
+    use revm_primitives::{uint, DefaultEthereumWiring, Env, LatestSpec, U256};
 
     #[test]
     fn test_shift_left() {
@@ -215,7 +202,7 @@ mod tests {
             host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shl::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
+            shl::<DummyHost<DefaultEthereumWiring>, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, test.expected);
         }
@@ -296,7 +283,7 @@ mod tests {
             host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shr::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
+            shr::<DummyHost<DefaultEthereumWiring>, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, test.expected);
         }
@@ -402,7 +389,7 @@ mod tests {
             host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            sar::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
+            sar::<DummyHost<DefaultEthereumWiring>, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, test.expected);
         }
@@ -416,7 +403,7 @@ mod tests {
             expected: U256,
         }
 
-        let mut host = DummyHost::new(Env::default());
+        let mut host = DummyHost::<DefaultEthereumWiring>::new(Env::default());
         let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
 
         let input_value = U256::from(0x1234567890abcdef1234567890abcdef_u128);

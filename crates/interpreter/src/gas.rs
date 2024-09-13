@@ -66,17 +66,15 @@ impl Gas {
         self.limit - self.remaining
     }
 
-    #[doc(hidden)]
-    #[inline]
-    #[deprecated(note = "use `spent` instead")]
-    pub const fn spend(&self) -> u64 {
-        self.spent()
-    }
-
     /// Returns the amount of gas remaining.
     #[inline]
     pub const fn remaining(&self) -> u64 {
         self.remaining
+    }
+
+    /// Return remaining gas after subtracting 63/64 parts.
+    pub const fn remaining_63_of_64_parts(&self) -> u64 {
+        self.remaining - self.remaining / 64
     }
 
     /// Erases a gas cost from the totals.

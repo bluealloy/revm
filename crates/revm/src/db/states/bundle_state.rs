@@ -79,30 +79,44 @@ impl BundleBuilder {
         }
     }
 
+    /// Apply a transformation to the builder.
+    pub fn apply<F>(self, f: F) -> Self
+    where
+        F: FnOnce(Self) -> Self,
+    {
+        f(self)
+    }
+
+    /// Apply a mutable transformation to the builder.
+    pub fn apply_mut<F>(&mut self, f: F) -> &mut Self
+    where
+        F: FnOnce(&mut Self),
+    {
+        f(self);
+        self
+    }
+
     /// Collect address info of BundleState state
     pub fn state_address(mut self, address: Address) -> Self {
-        self.states.insert(address);
+        self.set_state_address(address);
         self
     }
 
     /// Collect account info of BundleState state
     pub fn state_original_account_info(mut self, address: Address, original: AccountInfo) -> Self {
-        self.states.insert(address);
-        self.state_original.insert(address, original);
+        self.set_state_original_account_info(address, original);
         self
     }
 
     /// Collect account info of BundleState state
     pub fn state_present_account_info(mut self, address: Address, present: AccountInfo) -> Self {
-        self.states.insert(address);
-        self.state_present.insert(address, present);
+        self.set_state_present_account_info(address, present);
         self
     }
 
     /// Collect storage info of BundleState state
     pub fn state_storage(mut self, address: Address, storage: HashMap<U256, (U256, U256)>) -> Self {
-        self.states.insert(address);
-        self.state_storage.insert(address, storage);
+        self.set_state_storage(address, storage);
         self
     }
 
@@ -111,7 +125,7 @@ impl BundleBuilder {
     /// `block_number` must respect `revert_range`, or the input
     /// will be ignored during the final build process
     pub fn revert_address(mut self, block_number: u64, address: Address) -> Self {
-        self.reverts.insert((block_number, address));
+        self.set_revert_address(block_number, address);
         self
     }
 
@@ -125,8 +139,7 @@ impl BundleBuilder {
         address: Address,
         account: Option<Option<AccountInfo>>,
     ) -> Self {
-        self.reverts.insert((block_number, address));
-        self.revert_account.insert((block_number, address), account);
+        self.set_revert_account_info(block_number, address, account);
         self
     }
 
@@ -140,13 +153,87 @@ impl BundleBuilder {
         address: Address,
         storage: Vec<(U256, U256)>,
     ) -> Self {
-        self.reverts.insert((block_number, address));
-        self.revert_storage.insert((block_number, address), storage);
+        self.set_revert_storage(block_number, address, storage);
         self
     }
 
     /// Collect contracts info
     pub fn contract(mut self, address: B256, bytecode: Bytecode) -> Self {
+        self.set_contract(address, bytecode);
+        self
+    }
+
+    /// Set address info of BundleState state.
+    pub fn set_state_address(&mut self, address: Address) -> &mut Self {
+        self.states.insert(address);
+        self
+    }
+
+    /// Set original account info of BundleState state.
+    pub fn set_state_original_account_info(
+        &mut self,
+        address: Address,
+        original: AccountInfo,
+    ) -> &mut Self {
+        self.states.insert(address);
+        self.state_original.insert(address, original);
+        self
+    }
+
+    /// Set present account info of BundleState state.
+    pub fn set_state_present_account_info(
+        &mut self,
+        address: Address,
+        present: AccountInfo,
+    ) -> &mut Self {
+        self.states.insert(address);
+        self.state_present.insert(address, present);
+        self
+    }
+
+    /// Set storage info of BundleState state.
+    pub fn set_state_storage(
+        &mut self,
+        address: Address,
+        storage: HashMap<U256, (U256, U256)>,
+    ) -> &mut Self {
+        self.states.insert(address);
+        self.state_storage.insert(address, storage);
+        self
+    }
+
+    /// Set address info of BundleState reverts.
+    pub fn set_revert_address(&mut self, block_number: u64, address: Address) -> &mut Self {
+        self.reverts.insert((block_number, address));
+        self
+    }
+
+    /// Set account info of BundleState reverts.
+    pub fn set_revert_account_info(
+        &mut self,
+        block_number: u64,
+        address: Address,
+        account: Option<Option<AccountInfo>>,
+    ) -> &mut Self {
+        self.reverts.insert((block_number, address));
+        self.revert_account.insert((block_number, address), account);
+        self
+    }
+
+    /// Set storage info of BundleState reverts.
+    pub fn set_revert_storage(
+        &mut self,
+        block_number: u64,
+        address: Address,
+        storage: Vec<(U256, U256)>,
+    ) -> &mut Self {
+        self.reverts.insert((block_number, address));
+        self.revert_storage.insert((block_number, address), storage);
+        self
+    }
+
+    /// Set contracts info.
+    pub fn set_contract(&mut self, address: B256, bytecode: Bytecode) -> &mut Self {
         self.contracts.insert(address, bytecode);
         self
     }
@@ -233,6 +320,53 @@ impl BundleBuilder {
     pub fn get_states(&self) -> &HashSet<Address> {
         &self.states
     }
+
+    /// Mutable getter for `states` field
+    pub fn get_states_mut(&mut self) -> &mut HashSet<Address> {
+        &mut self.states
+    }
+
+    /// Mutable getter for `state_original` field
+    pub fn get_state_original_mut(&mut self) -> &mut HashMap<Address, AccountInfo> {
+        &mut self.state_original
+    }
+
+    /// Mutable getter for `state_present` field
+    pub fn get_state_present_mut(&mut self) -> &mut HashMap<Address, AccountInfo> {
+        &mut self.state_present
+    }
+
+    /// Mutable getter for `state_storage` field
+    pub fn get_state_storage_mut(&mut self) -> &mut HashMap<Address, HashMap<U256, (U256, U256)>> {
+        &mut self.state_storage
+    }
+
+    /// Mutable getter for `reverts` field
+    pub fn get_reverts_mut(&mut self) -> &mut BTreeSet<(u64, Address)> {
+        &mut self.reverts
+    }
+
+    /// Mutable getter for `revert_range` field
+    pub fn get_revert_range_mut(&mut self) -> &mut RangeInclusive<u64> {
+        &mut self.revert_range
+    }
+
+    /// Mutable getter for `revert_account` field
+    pub fn get_revert_account_mut(
+        &mut self,
+    ) -> &mut HashMap<(u64, Address), Option<Option<AccountInfo>>> {
+        &mut self.revert_account
+    }
+
+    /// Mutable getter for `revert_storage` field
+    pub fn get_revert_storage_mut(&mut self) -> &mut HashMap<(u64, Address), Vec<(U256, U256)>> {
+        &mut self.revert_storage
+    }
+
+    /// Mutable getter for `contracts` field
+    pub fn get_contracts_mut(&mut self) -> &mut HashMap<B256, Bytecode> {
+        &mut self.contracts
+    }
 }
 
 /// Bundle retention policy for applying substate to the bundle.
@@ -259,6 +393,7 @@ impl BundleRetention {
 /// Reverts and created when TransitionState is applied to BundleState.
 /// And can be used to revert BundleState to the state before transition.
 #[derive(Default, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BundleState {
     /// Account state.
     pub state: HashMap<Address, BundleAccount>,
@@ -391,9 +526,11 @@ impl BundleState {
         self.contracts.get(hash).cloned()
     }
 
-    /// Consume `TransitionState` by applying the changes and creating the reverts
+    /// Consume [`TransitionState`] by applying the changes and creating the
+    /// reverts.
     ///
-    /// If [BundleRetention::includes_reverts] is `true`, then the reverts will be retained.
+    /// If [BundleRetention::includes_reverts] is `true`, then the reverts will
+    /// be retained.
     pub fn apply_transitions_and_create_reverts(
         &mut self,
         transitions: TransitionState,
@@ -470,7 +607,7 @@ impl BundleState {
             for (key, slot) in account.storage {
                 // If storage was destroyed that means that storage was wiped.
                 // In that case we need to check if present storage value is different then ZERO.
-                let destroyed_and_not_zero = was_destroyed && slot.present_value != U256::ZERO;
+                let destroyed_and_not_zero = was_destroyed && !slot.present_value.is_zero();
 
                 // If account is not destroyed check if original values was changed,
                 // so we can update it.
@@ -1101,5 +1238,69 @@ mod tests {
         );
         // account2 got inserted
         assert_eq!(test.state.get(&address2).unwrap().info, Some(account2));
+    }
+
+    #[test]
+    fn test_getters() {
+        let mut builder = BundleBuilder::new(0..=3);
+
+        // Test get_states and get_states_mut
+        assert!(builder.get_states().is_empty());
+        builder.get_states_mut().insert(account1());
+        assert!(builder.get_states().contains(&account1()));
+
+        // Test get_state_original_mut
+        assert!(builder.get_state_original_mut().is_empty());
+        builder
+            .get_state_original_mut()
+            .insert(account1(), AccountInfo::default());
+        assert!(builder.get_state_original_mut().contains_key(&account1()));
+
+        // Test get_state_present_mut
+        assert!(builder.get_state_present_mut().is_empty());
+        builder
+            .get_state_present_mut()
+            .insert(account1(), AccountInfo::default());
+        assert!(builder.get_state_present_mut().contains_key(&account1()));
+
+        // Test get_state_storage_mut
+        assert!(builder.get_state_storage_mut().is_empty());
+        builder
+            .get_state_storage_mut()
+            .insert(account1(), HashMap::new());
+        assert!(builder.get_state_storage_mut().contains_key(&account1()));
+
+        // Test get_reverts_mut
+        assert!(builder.get_reverts_mut().is_empty());
+        builder.get_reverts_mut().insert((0, account1()));
+        assert!(builder.get_reverts_mut().contains(&(0, account1())));
+
+        // Test get_revert_range_mut
+        assert_eq!(builder.get_revert_range_mut().clone(), 0..=3);
+
+        // Test get_revert_account_mut
+        assert!(builder.get_revert_account_mut().is_empty());
+        builder
+            .get_revert_account_mut()
+            .insert((0, account1()), Some(None));
+        assert!(builder
+            .get_revert_account_mut()
+            .contains_key(&(0, account1())));
+
+        // Test get_revert_storage_mut
+        assert!(builder.get_revert_storage_mut().is_empty());
+        builder
+            .get_revert_storage_mut()
+            .insert((0, account1()), vec![(slot1(), U256::from(0))]);
+        assert!(builder
+            .get_revert_storage_mut()
+            .contains_key(&(0, account1())));
+
+        // Test get_contracts_mut
+        assert!(builder.get_contracts_mut().is_empty());
+        builder
+            .get_contracts_mut()
+            .insert(B256::default(), Bytecode::default());
+        assert!(builder.get_contracts_mut().contains_key(&B256::default()));
     }
 }

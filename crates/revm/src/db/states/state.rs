@@ -171,6 +171,9 @@ impl<DB: Database> State<DB> {
         }
     }
 
+    /// Get a mutable reference to the [`CacheAccount`] for the given address.
+    /// If the account is not found in the cache, it will be loaded from the
+    /// database and inserted into the cache.
     pub fn load_cache_account(&mut self, address: Address) -> Result<&mut CacheAccount, DB::Error> {
         match self.cache.accounts.entry(address) {
             hash_map::Entry::Vacant(entry) => {
@@ -198,15 +201,15 @@ impl<DB: Database> State<DB> {
     }
 
     // TODO make cache aware of transitions dropping by having global transition counter.
-    /// Takes changeset and reverts from state and replaces it with empty one.
-    /// This will trop pending Transition and any transitions would be lost.
+    /// Takes the [`BundleState`] changeset from the [`State`], replacing it
+    /// with an empty one.
     ///
-    /// NOTE: If either:
-    /// * The [State] has not been built with [StateBuilder::with_bundle_update], or
-    /// * The [State] has a [TransitionState] set to `None` when
-    /// [State::merge_transitions] is called,
+    /// This will not apply any pending [`TransitionState`]. It is recommended
+    /// to call [`State::merge_transitions`] before taking the bundle.
     ///
-    /// this will panic.
+    /// If the `State` has been built with the
+    /// [`StateBuilder::with_bundle_prestate`] option, the pre-state will be
+    /// taken along with any changes made by [`State::merge_transitions`].
     pub fn take_bundle(&mut self) -> BundleState {
         core::mem::take(&mut self.bundle_state)
     }
@@ -268,16 +271,14 @@ impl<DB: Database> Database for State<DB> {
         }
     }
 
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        // block number is never bigger then u64::MAX.
-        let u64num: u64 = number.to();
-        match self.block_hashes.entry(u64num) {
+    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
+        match self.block_hashes.entry(number) {
             btree_map::Entry::Occupied(entry) => Ok(*entry.get()),
             btree_map::Entry::Vacant(entry) => {
                 let ret = *entry.insert(self.database.block_hash(number)?);
 
                 // prune all hashes that are older then BLOCK_HASH_HISTORY
-                let last_block = u64num.saturating_sub(BLOCK_HASH_HISTORY as u64);
+                let last_block = number.saturating_sub(BLOCK_HASH_HISTORY);
                 while let Some(entry) = self.block_hashes.first_entry() {
                     if *entry.key() < last_block {
                         entry.remove();
@@ -311,10 +312,10 @@ mod tests {
     #[test]
     fn block_hash_cache() {
         let mut state = State::builder().build();
-        state.block_hash(U256::from(1)).unwrap();
-        state.block_hash(U256::from(2)).unwrap();
+        state.block_hash(1u64).unwrap();
+        state.block_hash(2u64).unwrap();
 
-        let test_number = BLOCK_HASH_HISTORY as u64 + 2;
+        let test_number = BLOCK_HASH_HISTORY + 2;
 
         let block1_hash = keccak256(U256::from(1).to_string().as_bytes());
         let block2_hash = keccak256(U256::from(2).to_string().as_bytes());
@@ -325,7 +326,7 @@ mod tests {
             BTreeMap::from([(1, block1_hash), (2, block2_hash)])
         );
 
-        state.block_hash(U256::from(test_number)).unwrap();
+        state.block_hash(test_number).unwrap();
         assert_eq!(
             state.block_hashes,
             BTreeMap::from([(test_number, block_test_hash), (2, block2_hash)])

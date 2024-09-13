@@ -1,4 +1,4 @@
-use crate::{Address, Bytecode, HashMap, B256, KECCAK_EMPTY, U256};
+use crate::{Address, Bytecode, HashMap, SpecId, B256, KECCAK_EMPTY, U256};
 use bitflags::bitflags;
 use core::hash::{Hash, Hasher};
 
@@ -41,6 +41,8 @@ bitflags! {
         /// used only for pre spurious dragon hardforks where existing and empty were two separate states.
         /// it became same state after EIP-161: State trie clearing
         const LoadedAsNotExisting = 0b0001000;
+        /// used to mark account as cold
+        const Cold = 0b0010000;
     }
 }
 
@@ -57,6 +59,18 @@ impl Account {
             info: AccountInfo::default(),
             storage: HashMap::new(),
             status: AccountStatus::LoadedAsNotExisting,
+        }
+    }
+
+    /// Check if account is empty and check if empty state before spurious dragon hardfork.
+    #[inline]
+    pub fn state_clear_aware_is_empty(&self, spec: SpecId) -> bool {
+        if SpecId::enabled(spec, SpecId::SPURIOUS_DRAGON) {
+            self.is_empty()
+        } else {
+            let loaded_not_existing = self.is_loaded_as_not_existing();
+            let is_not_touched = !self.is_touched();
+            loaded_not_existing && is_not_touched
         }
     }
 
@@ -98,6 +112,21 @@ impl Account {
     /// Unmark created flag.
     pub fn unmark_created(&mut self) {
         self.status -= AccountStatus::Created;
+    }
+
+    /// Mark account as cold.
+    pub fn mark_cold(&mut self) {
+        self.status |= AccountStatus::Cold;
+    }
+
+    /// Mark account as warm and return true if it was previously cold.
+    pub fn mark_warm(&mut self) -> bool {
+        if self.status.contains(AccountStatus::Cold) {
+            self.status -= AccountStatus::Cold;
+            true
+        } else {
+            false
+        }
     }
 
     /// Is account loaded as not existing from database
@@ -143,6 +172,8 @@ pub struct EvmStorageSlot {
     pub original_value: U256,
     /// Present value of the storage slot.
     pub present_value: U256,
+    /// Represents if the storage slot is cold.
+    pub is_cold: bool,
 }
 
 impl EvmStorageSlot {
@@ -151,6 +182,7 @@ impl EvmStorageSlot {
         Self {
             original_value: original,
             present_value: original,
+            is_cold: false,
         }
     }
 
@@ -159,6 +191,7 @@ impl EvmStorageSlot {
         Self {
             original_value,
             present_value,
+            is_cold: false,
         }
     }
     /// Returns true if the present value differs from the original value
@@ -175,6 +208,16 @@ impl EvmStorageSlot {
     pub fn present_value(&self) -> U256 {
         self.present_value
     }
+
+    /// Marks the storage slot as cold.
+    pub fn mark_cold(&mut self) {
+        self.is_cold = true;
+    }
+
+    /// Marks the storage slot as warm and returns a bool indicating if it was previously cold.
+    pub fn mark_warm(&mut self) -> bool {
+        core::mem::replace(&mut self.is_cold, false)
+    }
 }
 
 /// AccountInfo account information.
@@ -188,7 +231,7 @@ pub struct AccountInfo {
     /// code hash,
     pub code_hash: B256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
-    /// inside of `revm`.
+    /// inside `revm`.
     pub code: Option<Bytecode>,
 }
 
@@ -242,8 +285,8 @@ impl AccountInfo {
     /// - balance is zero
     /// - nonce is zero
     pub fn is_empty(&self) -> bool {
-        let code_empty = self.is_empty_code_hash() || self.code_hash == B256::ZERO;
-        code_empty && self.balance == U256::ZERO && self.nonce == 0
+        let code_empty = self.is_empty_code_hash() || self.code_hash.is_zero();
+        code_empty && self.balance.is_zero() && self.nonce == 0
     }
 
     /// Returns `true` if the account is not empty.
@@ -257,7 +300,7 @@ impl AccountInfo {
     }
 
     /// Return bytecode hash associated with this account.
-    /// If account does not have code, it return's `KECCAK_EMPTY` hash.
+    /// If account does not have code, it returns `KECCAK_EMPTY` hash.
     pub fn code_hash(&self) -> B256 {
         self.code_hash
     }
@@ -277,6 +320,17 @@ impl AccountInfo {
         AccountInfo {
             balance,
             ..Default::default()
+        }
+    }
+
+    pub fn from_bytecode(bytecode: Bytecode) -> Self {
+        let hash = bytecode.hash_slow();
+
+        AccountInfo {
+            balance: U256::ZERO,
+            nonce: 1,
+            code: Some(bytecode),
+            code_hash: hash,
         }
     }
 }
@@ -342,5 +396,25 @@ mod tests {
         account.unmark_selfdestruct();
         assert!(account.is_touched());
         assert!(!account.is_selfdestructed());
+    }
+
+    #[test]
+    fn account_is_cold() {
+        let mut account = Account::default();
+
+        // Account is not cold by default
+        assert!(!account.status.contains(crate::AccountStatus::Cold));
+
+        // When marking warm account as warm again, it should return false
+        assert!(!account.mark_warm());
+
+        // Mark account as cold
+        account.mark_cold();
+
+        // Account is cold
+        assert!(account.status.contains(crate::AccountStatus::Cold));
+
+        // When marking cold account as warm, it should return true
+        assert!(account.mark_warm());
     }
 }

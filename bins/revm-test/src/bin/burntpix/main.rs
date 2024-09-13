@@ -4,8 +4,8 @@ use regex::bytes::Regex;
 use revm::{
     db::{CacheDB, EmptyDB},
     primitives::{
-        address, hex, keccak256, AccountInfo, Address, Bytecode, Bytes, ExecutionResult, Output,
-        TransactTo, B256, U256,
+        address, hex, keccak256, AccountInfo, Address, Bytecode, Bytes, EthereumWiring,
+        ExecutionResult, Output, TxKind, B256, U256,
     },
     Evm,
 };
@@ -28,6 +28,8 @@ sol! {
     }
 }
 
+type EthereumCacheDbWiring = EthereumWiring<CacheDB<EmptyDB>, ()>;
+
 fn main() {
     let (seed, iterations) = try_init_env_vars().expect("Failed to parse env vars");
 
@@ -35,10 +37,10 @@ fn main() {
 
     let db = init_db();
 
-    let mut evm = Evm::builder()
+    let mut evm = Evm::<EthereumCacheDbWiring>::builder()
         .modify_tx_env(|tx| {
             tx.caller = address!("1000000000000000000000000000000000000000");
-            tx.transact_to = TransactTo::Call(BURNTPIX_MAIN_ADDRESS);
+            tx.transact_to = TxKind::Call(BURNTPIX_MAIN_ADDRESS);
             tx.data = run_call_data.clone().into();
         })
         .with_db(db)
@@ -100,7 +102,7 @@ fn try_from_hex_to_u32(hex: &str) -> eyre::Result<u32> {
 }
 
 fn insert_account_info(cache_db: &mut CacheDB<EmptyDB>, addr: Address, code: Bytes) {
-    let code_hash = hex::encode(keccak256(code.clone()));
+    let code_hash = hex::encode(keccak256(&code));
     let account_info = AccountInfo::new(
         U256::from(0),
         0,

@@ -1,7 +1,7 @@
 use revm::{
-    db::BenchmarkDB,
+    db::{BenchmarkDB, EthereumBenchmarkWiring},
     interpreter::analysis::to_analysed,
-    primitives::{address, bytes, Bytecode, Bytes, TransactTo},
+    primitives::{address, bytes, Bytecode, Bytes, TxKind},
     Evm,
 };
 use std::time::Instant;
@@ -13,11 +13,11 @@ fn main() {
     let bytecode_analysed = to_analysed(Bytecode::new_raw(contract_data));
 
     // BenchmarkDB is dummy state that implements Database trait.
-    let mut evm = Evm::builder()
+    let mut evm = Evm::<EthereumBenchmarkWiring>::builder()
         .modify_tx_env(|tx| {
             // execution globals block hash/gas_limit/coinbase/timestamp..
             tx.caller = address!("1000000000000000000000000000000000000000");
-            tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+            tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
             //evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
             tx.data = bytes!("8035F0CE");
         })
@@ -37,7 +37,7 @@ fn main() {
 
     let mut evm = evm
         .modify()
-        .reset_handler_with_db(BenchmarkDB::new_bytecode(bytecode_analysed))
+        .with_db(BenchmarkDB::new_bytecode(bytecode_analysed))
         .build();
 
     let timer = Instant::now();

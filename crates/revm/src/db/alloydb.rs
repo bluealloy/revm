@@ -1,65 +1,88 @@
 use crate::{
     db::{Database, DatabaseRef},
-    primitives::{AccountInfo, Address, Bytecode, B256, KECCAK_EMPTY, U256},
+    primitives::{AccountInfo, Address, Bytecode, B256, U256},
 };
-use alloy_provider::{Network, Provider};
-use alloy_rpc_types::BlockId;
+use alloy_eips::BlockId;
+use alloy_provider::{
+    network::{BlockResponse, HeaderResponse},
+    Network, Provider,
+};
 use alloy_transport::{Transport, TransportError};
-use tokio::runtime::{Builder, Handle};
+use std::future::IntoFuture;
+use tokio::runtime::{Handle, Runtime};
+
+use super::utils::HandleOrRuntime;
 
 /// An alloy-powered REVM [Database].
 ///
 /// When accessing the database, it'll use the given provider to fetch the corresponding account's data.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct AlloyDB<T: Transport + Clone, N: Network, P: Provider<T, N>> {
     /// The provider to fetch the data from.
     provider: P,
     /// The block number on which the queries will be based on.
     block_number: BlockId,
+    /// handle to the tokio runtime
+    rt: HandleOrRuntime,
     _marker: std::marker::PhantomData<fn() -> (T, N)>,
 }
 
 impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
-    /// Create a new AlloyDB instance, with a [Provider] and a block (Use None for latest).
-    pub fn new(provider: P, block_number: BlockId) -> Self {
+    /// Create a new AlloyDB instance, with a [Provider] and a block.
+    ///
+    /// Returns `None` if no tokio runtime is available or if the current runtime is a current-thread runtime.
+    pub fn new(provider: P, block_number: BlockId) -> Option<Self> {
+        let rt = match Handle::try_current() {
+            Ok(handle) => match handle.runtime_flavor() {
+                tokio::runtime::RuntimeFlavor::CurrentThread => return None,
+                _ => HandleOrRuntime::Handle(handle),
+            },
+            Err(_) => return None,
+        };
+        Some(Self {
+            provider,
+            block_number,
+            rt,
+            _marker: std::marker::PhantomData,
+        })
+    }
+
+    /// Create a new AlloyDB instance, with a provider and a block and a runtime.
+    ///
+    /// Refer to [tokio::runtime::Builder] on how to create a runtime if you are in synchronous world.
+    /// If you are already using something like [tokio::main], call AlloyDB::new instead.
+    pub fn with_runtime(provider: P, block_number: BlockId, runtime: Runtime) -> Self {
+        let rt = HandleOrRuntime::Runtime(runtime);
         Self {
             provider,
             block_number,
+            rt,
+            _marker: std::marker::PhantomData,
+        }
+    }
+
+    /// Create a new AlloyDB instance, with a provider and a block and a runtime handle.
+    ///
+    /// This generally allows you to pass any valid runtime handle, refer to [tokio::runtime::Handle] on how
+    /// to obtain a handle. If you are already in asynchronous world, like [tokio::main], use AlloyDB::new instead.
+    pub fn with_handle(provider: P, block_number: BlockId, handle: Handle) -> Self {
+        let rt = HandleOrRuntime::Handle(handle);
+        Self {
+            provider,
+            block_number,
+            rt,
             _marker: std::marker::PhantomData,
         }
     }
 
     /// Internal utility function that allows us to block on a future regardless of the runtime flavor.
     #[inline]
-    fn block_on<F>(f: F) -> F::Output
+    fn block_on<F>(&self, f: F) -> F::Output
     where
         F: std::future::Future + Send,
         F::Output: Send,
     {
-        match Handle::try_current() {
-            Ok(handle) => match handle.runtime_flavor() {
-                // This is essentially equal to tokio::task::spawn_blocking because tokio doesn't
-                // allow the current_thread runtime to block_in_place.
-                // See <https://docs.rs/tokio/latest/tokio/task/fn.block_in_place.html> for more info.
-                tokio::runtime::RuntimeFlavor::CurrentThread => std::thread::scope(move |s| {
-                    s.spawn(move || {
-                        Builder::new_current_thread()
-                            .enable_all()
-                            .build()
-                            .unwrap()
-                            .block_on(f)
-                    })
-                    .join()
-                    .unwrap()
-                }),
-                _ => tokio::task::block_in_place(move || handle.block_on(f)),
-            },
-            Err(_) => Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .unwrap()
-                .block_on(f),
-        }
+        self.rt.block_on(f)
     }
 
     /// Set the block number on which the queries will be based on.
@@ -75,13 +98,24 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> DatabaseRef for AlloyD
         let f = async {
             let nonce = self
                 .provider
-                .get_transaction_count(address, self.block_number);
-            let balance = self.provider.get_balance(address, self.block_number);
-            let code = self.provider.get_code_at(address, self.block_number);
-            tokio::join!(nonce, balance, code)
+                .get_transaction_count(address)
+                .block_id(self.block_number);
+            let balance = self
+                .provider
+                .get_balance(address)
+                .block_id(self.block_number);
+            let code = self
+                .provider
+                .get_code_at(address)
+                .block_id(self.block_number);
+            tokio::join!(
+                nonce.into_future(),
+                balance.into_future(),
+                code.into_future()
+            )
         };
 
-        let (nonce, balance, code) = Self::block_on(f);
+        let (nonce, balance, code) = self.block_on(f);
 
         let balance = balance?;
         let code = Bytecode::new_raw(code?.0.into());
@@ -91,19 +125,14 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> DatabaseRef for AlloyD
         Ok(Some(AccountInfo::new(balance, nonce, code_hash, code)))
     }
 
-    fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error> {
-        // Saturate usize
-        if number > U256::from(u64::MAX) {
-            return Ok(KECCAK_EMPTY);
-        }
-
-        let block = Self::block_on(
+    fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
+        let block = self.block_on(
             self.provider
                 // SAFETY: We know number <= u64::MAX, so we can safely convert it to u64
-                .get_block_by_number(number.to::<u64>().into(), false),
+                .get_block_by_number(number.into(), false),
         )?;
         // SAFETY: If the number is given, the block is supposed to be finalized, so unwrapping is safe.
-        Ok(B256::new(*block.unwrap().header.hash.unwrap()))
+        Ok(B256::new(*block.unwrap().header().hash()))
     }
 
     fn code_by_hash_ref(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
@@ -112,11 +141,11 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> DatabaseRef for AlloyD
     }
 
     fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
-        let slot_val = Self::block_on(self.provider.get_storage_at(
-            address,
-            index,
-            self.block_number,
-        ))?;
+        let f = self
+            .provider
+            .get_storage_at(address, index)
+            .block_id(self.block_number);
+        let slot_val = self.block_on(f.into_future())?;
         Ok(slot_val)
     }
 }
@@ -140,18 +169,18 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> Database for AlloyDB<T
     }
 
     #[inline]
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         <Self as DatabaseRef>::block_hash_ref(self, number)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use alloy_provider::ProviderBuilder;
 
-    use super::*;
-
     #[test]
+    #[ignore = "flaky RPC"]
     fn can_get_basic() {
         let client = ProviderBuilder::new().on_http(
             "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27"
@@ -165,7 +194,7 @@ mod tests {
             .parse()
             .unwrap();
 
-        let acc_info = alloydb.basic_ref(address).unwrap().unwrap();
+        let acc_info = alloydb.unwrap().basic_ref(address).unwrap().unwrap();
         assert!(acc_info.exists());
     }
 }

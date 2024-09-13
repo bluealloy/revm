@@ -12,9 +12,10 @@ pub mod blake2;
 #[cfg(feature = "blst")]
 pub mod bls12_381;
 pub mod bn128;
+pub mod fatal_precompile;
 pub mod hash;
 pub mod identity;
-#[cfg(feature = "c-kzg")]
+#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg_point_evaluation;
 pub mod modexp;
 pub mod secp256k1;
@@ -22,40 +23,33 @@ pub mod secp256k1;
 pub mod secp256r1;
 pub mod utilities;
 
-use core::hash::Hash;
-use once_cell::race::OnceBox;
+pub use fatal_precompile::fatal_precompile;
+
+#[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
+// silence kzg-rs lint as c-kzg will be used as default if both are enabled.
+use kzg_rs as _;
+pub use primitives::{
+    precompile::{PrecompileError as Error, *},
+    Address, Bytes, HashMap, HashSet, Log, B256,
+};
 #[doc(hidden)]
 pub use revm_primitives as primitives;
-pub use revm_primitives::{
-    precompile::{PrecompileError as Error, *},
-    Address, Bytes, HashMap, Log, B256,
-};
+
+use cfg_if::cfg_if;
+use core::hash::Hash;
+use once_cell::race::OnceBox;
 use std::{boxed::Box, vec::Vec};
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
-pub struct PrecompileOutput {
-    pub cost: u64,
-    pub output: Vec<u8>,
-    pub logs: Vec<Log>,
-}
-
-impl PrecompileOutput {
-    pub fn without_logs(cost: u64, output: Vec<u8>) -> Self {
-        Self {
-            cost,
-            output,
-            logs: Vec::new(),
-        }
-    }
-}
 #[derive(Clone, Default, Debug)]
 pub struct Precompiles {
     /// Precompiles.
-    pub inner: HashMap<Address, Precompile>,
+    inner: HashMap<Address, Precompile>,
+    /// Addresses of precompile.
+    addresses: HashSet<Address>,
 }
 
 impl Precompiles {
@@ -87,6 +81,11 @@ impl Precompiles {
         })
     }
 
+    /// Returns inner HashMap of precompiles.
+    pub fn inner(&self) -> &HashMap<Address, Precompile> {
+        &self.inner
+    }
+
     /// Returns precompiles for Byzantium spec.
     pub fn byzantium() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
@@ -111,12 +110,12 @@ impl Precompiles {
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::byzantium().clone();
             precompiles.extend([
-                // EIP-152: Add BLAKE2 compression function `F` precompile.
-                blake2::FUN,
                 // EIP-1108: Reduce alt_bn128 precompile gas costs.
                 bn128::add::ISTANBUL,
                 bn128::mul::ISTANBUL,
                 bn128::pair::ISTANBUL,
+                // EIP-152: Add BLAKE2 compression function `F` precompile.
+                blake2::FUN,
             ]);
             Box::new(precompiles)
         })
@@ -142,18 +141,21 @@ impl Precompiles {
     pub fn cancun() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let precompiles = Self::berlin().clone();
+            let mut precompiles = Self::berlin().clone();
 
-            // Don't include KZG point evaluation precompile in no_std builds.
-            #[cfg(feature = "c-kzg")]
-            let precompiles = {
-                let mut precompiles = precompiles;
-                precompiles.extend([
-                    // EIP-4844: Shard Blob Transactions
-                    kzg_point_evaluation::POINT_EVALUATION,
-                ]);
-                precompiles
-            };
+            // EIP-4844: Shard Blob Transactions
+            cfg_if! {
+                if #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))] {
+                    let precompile = kzg_point_evaluation::POINT_EVALUATION.clone();
+                } else {
+                    // TODO move constants to separate file.
+                    let precompile = fatal_precompile(u64_to_address(0x0A), "c-kzg feature is not enabled".into());
+                }
+            }
+
+            precompiles.extend([
+                precompile,
+            ]);
 
             Box::new(precompiles)
         })
@@ -184,13 +186,13 @@ impl Precompiles {
 
     /// Returns an iterator over the precompiles addresses.
     #[inline]
-    pub fn addresses(&self) -> impl Iterator<Item = &Address> {
+    pub fn addresses(&self) -> impl ExactSizeIterator<Item = &Address> {
         self.inner.keys()
     }
 
     /// Consumes the type and returns all precompile addresses.
     #[inline]
-    pub fn into_addresses(self) -> impl Iterator<Item = Address> {
+    pub fn into_addresses(self) -> impl ExactSizeIterator<Item = Address> {
         self.inner.into_keys()
     }
 
@@ -222,11 +224,19 @@ impl Precompiles {
         self.inner.len()
     }
 
+    /// Returns the precompiles addresses as a set.
+    pub fn addresses_set(&self) -> &HashSet<Address> {
+        &self.addresses
+    }
+
     /// Extends the precompiles with the given precompiles.
     ///
     /// Other precompiles with overwrite existing precompiles.
+    #[inline]
     pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
-        self.inner.extend(other.into_iter().map(Into::into));
+        let items = other.into_iter().collect::<Vec<_>>();
+        self.addresses.extend(items.iter().map(|p| *p.address()));
+        self.inner.extend(items.into_iter().map(Into::into));
     }
 }
 
@@ -242,6 +252,20 @@ impl From<(Address, Precompile)> for PrecompileWithAddress {
 impl From<PrecompileWithAddress> for (Address, Precompile) {
     fn from(value: PrecompileWithAddress) -> Self {
         (value.0, value.1)
+    }
+}
+
+impl PrecompileWithAddress {
+    /// Returns reference of address.
+    #[inline]
+    pub fn address(&self) -> &Address {
+        &self.0
+    }
+
+    /// Returns reference of precompile.
+    #[inline]
+    pub fn precompile(&self) -> &Precompile {
+        &self.1
     }
 }
 
@@ -268,12 +292,8 @@ impl PrecompileSpecId {
             ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
             BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
             CANCUN => Self::CANCUN,
-            PRAGUE => Self::PRAGUE,
+            PRAGUE | PRAGUE_EOF => Self::PRAGUE,
             LATEST => Self::LATEST,
-            #[cfg(feature = "optimism")]
-            BEDROCK | REGOLITH | CANYON => Self::BERLIN,
-            #[cfg(feature = "optimism")]
-            ECOTONE | FJORD => Self::CANCUN,
         }
     }
 }

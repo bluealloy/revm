@@ -1,0 +1,49 @@
+{
+  "tx_blob_gas_price": {
+    "env": {
+      "currentBaseFee": "0x3e7",
+      "currentCoinbase": "0x00000000000000000000000000000000c014bace",
+      "currentGasLimit": "0xf4240",
+      "currentNumber": "0x1",
+      "currentTimestamp": "0x0"
+    },
+    "post": {
+      "Cancun": [
+        {
+          "hash": "0x182fa30bb45ddd3ad1bf72363ff29973c08d633471da15405f9af5856c580a93",
+          "indexes": {
+            "data": 0,
+            "gas": 0,
+            "value": 0
+          },
+          "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+        }
+      ]
+    },
+    "pre": {
+      "0xe100713fc15400d1e94096a545879e7c6407001e": {
+        "balance": "0x17f1698",
+        "code": "0x",
+        "nonce": "0x1",
+        "storage": {}
+      }
+    },
+    "transaction": {
+      "data": [
+        "0x"
+      ],
+      "gasLimit": [
+        "0x61a8"
+      ],
+      "maxFeePerGas": "0x3e7",
+      "maxPriorityFeePerGas": "0x0",
+      "nonce": "0x1",
+      "secretKey": "0x00000000000000000000000000000000000000000000000000000002b1263d2b",
+      "sender": "0xe100713fc15400d1e94096a545879e7c6407001e",
+      "to": "0x000000000000000000000000000000000000c0de",
+      "value": [
+        "0x0"
+      ]
+    }
+  }
+}

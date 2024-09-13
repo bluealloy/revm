@@ -6,6 +6,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.1](https://github.com/bluealloy/revm/compare/revm-precompile-v11.0.0...revm-precompile-v11.0.1) - 2024-08-30
+
+### Other
+- Bump new logo ([#1735](https://github.com/bluealloy/revm/pull/1735))
+- bump kzg-rs version ([#1734](https://github.com/bluealloy/revm/pull/1734))
+
+## [10.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v10.0.0...revm-precompile-v10.1.0) - 2024-08-29
+
+### Added
+- c-kzg bump, cleanup on kzgsetting ([#1719](https://github.com/bluealloy/revm/pull/1719))
+
+### Other
+- bump `kzg-rs` version ([#1726](https://github.com/bluealloy/revm/pull/1726))
+- switch gas check order in blake2 precompile ([#1718](https://github.com/bluealloy/revm/pull/1718))
+
+## [9.3.0](https://github.com/bluealloy/revm/compare/revm-precompile-v9.2.0...revm-precompile-v9.3.0) - 2024-08-08
+
+### Added
+- use batch bn256 pair operation ([#1643](https://github.com/bluealloy/revm/pull/1643))
+
+### Other
+- Add OP-Granite hardfork, limiting bn256Pairing input size ([#1685](https://github.com/bluealloy/revm/pull/1685))
+- *(deps)* bump rstest from 0.21.0 to 0.22.0 ([#1681](https://github.com/bluealloy/revm/pull/1681))
+- *(deps)* bump blst from 0.3.12 to 0.3.13 ([#1669](https://github.com/bluealloy/revm/pull/1669))
+- *(clippy)* 1.80 rust clippy list paragraph ident ([#1661](https://github.com/bluealloy/revm/pull/1661))
+- use `is_zero` for `U256` and `B256` ([#1638](https://github.com/bluealloy/revm/pull/1638))
+
+## [9.1.0](https://github.com/bluealloy/revm/compare/revm-precompile-v9.0.0...revm-precompile-v9.1.0) - 2024-07-16
+
+### Added
+- use `kzg-rs` for kzg point evaluation ([#1558](https://github.com/bluealloy/revm/pull/1558))
+
+### Other
+- main CHANGELOG ([#1592](https://github.com/bluealloy/revm/pull/1592))
+
+## [9.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v8.0.0...revm-precompile-v8.1.0) - 2024-07-08
+
+### Added
+- *(Precompiles)* Throw fatal error if c-kzg is disabled ([#1589](https://github.com/bluealloy/revm/pull/1589))
+
+## [8.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v7.0.0...revm-precompile-v8.0.0) - 2024-06-20
+
+### Added
+- *(precompiles)* fatal error for precompiles ([#1499](https://github.com/bluealloy/revm/pull/1499))
+- add ecAdd to precompile bench ([#1496](https://github.com/bluealloy/revm/pull/1496))
+- *(optimism)* Add secp256r1 precompile for Fjord ([#1436](https://github.com/bluealloy/revm/pull/1436))
+
+### Fixed
+- *(eof)* fixture 2 tests ([#1550](https://github.com/bluealloy/revm/pull/1550))
+- check canonical Fp elements ([#1434](https://github.com/bluealloy/revm/pull/1434))
+- *(precompile)* ignore infinity points in G1 MSM ([#1432](https://github.com/bluealloy/revm/pull/1432))
+- *(precompile)* BLS G2 MSM ([#1428](https://github.com/bluealloy/revm/pull/1428))
+
+### Other
+- avoid cloning precompiles ([#1486](https://github.com/bluealloy/revm/pull/1486))
+- *(precompiles)* Fix some nits in bls12_381 ([#1495](https://github.com/bluealloy/revm/pull/1495))
+- *(deps)* allow multiple versions of secp256k1 ([#1490](https://github.com/bluealloy/revm/pull/1490))
+- *(deps)* bump rstest from 0.19.0 to 0.21.0 ([#1482](https://github.com/bluealloy/revm/pull/1482))
+- *(deps)* bump blst from 0.3.11 to 0.3.12 ([#1481](https://github.com/bluealloy/revm/pull/1481))
+- add test for map_fp_to_g1 precompile ([#1465](https://github.com/bluealloy/revm/pull/1465))
+- add docs for BLS scalar input decoding ([#1446](https://github.com/bluealloy/revm/pull/1446))
+
 ## [7.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v6.0.0...revm-precompile-v7.0.0) - 2024-05-12
 
 ### Added
