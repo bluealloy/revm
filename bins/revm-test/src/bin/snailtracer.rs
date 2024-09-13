@@ -1,5 +1,5 @@
 use revm::{
-    db::BenchmarkDB,
+    db::{BenchmarkDB, EthereumBenchmarkWiring},
     interpreter::analysis::to_analysed,
     primitives::{address, bytes, Bytecode, Bytes, TxKind},
     Evm,
@@ -9,7 +9,7 @@ pub fn simple_example() {
     let bytecode = to_analysed(Bytecode::new_raw(CONTRACT_DATA.clone()));
 
     // BenchmarkDB is dummy state that implements Database trait.
-    let mut evm = Evm::builder()
+    let mut evm = Evm::<EthereumBenchmarkWiring>::builder()
         .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
         .modify_tx_env(|tx| {
             // execution globals block hash/gas_limit/coinbase/timestamp..

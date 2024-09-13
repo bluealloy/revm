@@ -3,13 +3,13 @@ mod call_helpers;
 pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_memory};
 
 use crate::{
-    gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD},
+    gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD, MIN_CALLEE_GAS},
     interpreter::Interpreter,
     primitives::{
-        eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, U256,
+        eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, B256, U256,
     },
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, Host,
-    InstructionResult, InterpreterAction, InterpreterResult, LoadAccountResult, MAX_INITCODE_SIZE,
+    InstructionResult, InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE,
 };
 use core::cmp::max;
 use std::boxed::Box;
@@ -17,6 +17,7 @@ use std::boxed::Box;
 /// EOF Create instruction
 pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     require_eof!(interpreter);
+    require_non_staticcall!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
     let initcontainer_index = unsafe { *interpreter.instruction_pointer };
     pop!(interpreter, value, salt, data_offset, data_size);
@@ -165,18 +166,12 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
     target: Address,
     transfers_value: bool,
 ) -> Option<u64> {
-    let Some(load_result) = host.load_account(target) else {
+    let Some(account_load) = host.load_account_delegated(target) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return None;
     };
-
-    // TODO(EOF) is_empty should only be checked on delegatecall
-    let call_cost = gas::call_cost(
-        BerlinSpec::SPEC_ID,
-        transfers_value,
-        load_result.is_cold,
-        load_result.is_empty,
-    );
+    // account_load.is_empty will be accounted if there is transfer value.
+    let call_cost = gas::call_cost(BerlinSpec::SPEC_ID, transfers_value, account_load);
     gas!(interpreter, call_cost, None);
 
     // 7. Calculate the gas available to callee as caller’s
@@ -184,10 +179,17 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
     let gas_reduce = max(interpreter.gas.remaining() / 64, 5000);
     let gas_limit = interpreter.gas().remaining().saturating_sub(gas_reduce);
 
-    if gas_limit < 2300 {
-        interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
-        // TODO(EOF) error;
-        // interpreter.instruction_result = InstructionResult::CallGasTooLow;
+    // The MIN_CALLEE_GAS rule is a replacement for stipend:
+    // it simplifies the reasoning about the gas costs and is
+    // applied uniformly for all introduced EXT*CALL instructions.
+    //
+    // If Gas available to callee is less than MIN_CALLEE_GAS trigger light failure (Same as Revert).
+    if gas_limit < MIN_CALLEE_GAS {
+        // Push 1 to stack to indicate that call light failed.
+        // It is safe to ignore stack overflow error as we already popped multiple values from stack.
+        let _ = interpreter.stack_mut().push(U256::from(1));
+        interpreter.return_data_buffer.clear();
+        // Return none to continue execution.
         return None;
     }
 
@@ -195,11 +197,29 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
     Some(gas_limit)
 }
 
+/// Pop target address from stack and check if it is valid.
+///
+/// Valid address has first 12 bytes as zeroes.
+#[inline]
+pub fn pop_extcall_target_address(interpreter: &mut Interpreter) -> Option<Address> {
+    pop_ret!(interpreter, target_address, None);
+    let target_address = B256::from(target_address);
+    // Check if target is left padded with zeroes.
+    if target_address[..12].iter().any(|i| *i != 0) {
+        interpreter.instruction_result = InstructionResult::InvalidEXTCALLTarget;
+        return None;
+    }
+    // discard first 12 bytes.
+    Some(Address::from_word(target_address))
+}
+
 pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     require_eof!(interpreter);
-    pop_address!(interpreter, target_address);
 
-    // TODO check if target is left padded with zeroes.
+    // pop target address
+    let Some(target_address) = pop_extcall_target_address(interpreter) else {
+        return;
+    };
 
     // input call
     let Some(input) = extcall_input(interpreter) else {
@@ -207,12 +227,15 @@ pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
     };
 
     pop!(interpreter, value);
-    let has_transfer = value != U256::ZERO;
+    let has_transfer = !value.is_zero();
+    if interpreter.is_static && has_transfer {
+        interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
+        return;
+    }
 
     let Some(gas_limit) = extcall_gas_calc(interpreter, host, target_address, has_transfer) else {
         return;
     };
-    // TODO Check if static and value 0
 
     // Call host to interact with target contract
     interpreter.next_action = InterpreterAction::Call {
@@ -223,7 +246,7 @@ pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
             caller: interpreter.contract.target_address,
             bytecode_address: target_address,
             value: CallValue::Transfer(value),
-            scheme: CallScheme::Call,
+            scheme: CallScheme::ExtCall,
             is_static: interpreter.is_static,
             is_eof: true,
             return_memory_offset: 0..0,
@@ -234,9 +257,11 @@ pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
 
 pub fn extdelegatecall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     require_eof!(interpreter);
-    pop_address!(interpreter, target_address);
 
-    // TODO check if target is left paddded with zeroes.
+    // pop target address
+    let Some(target_address) = pop_extcall_target_address(interpreter) else {
+        return;
+    };
 
     // input call
     let Some(input) = extcall_input(interpreter) else {
@@ -246,19 +271,17 @@ pub fn extdelegatecall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpret
     let Some(gas_limit) = extcall_gas_calc(interpreter, host, target_address, false) else {
         return;
     };
-    // TODO Check if static and value 0
 
     // Call host to interact with target contract
     interpreter.next_action = InterpreterAction::Call {
         inputs: Box::new(CallInputs {
             input,
             gas_limit,
-            target_address,
-            caller: interpreter.contract.target_address,
+            target_address: interpreter.contract.target_address,
+            caller: interpreter.contract.caller,
             bytecode_address: target_address,
             value: CallValue::Apparent(interpreter.contract.call_value),
-            // TODO(EOF) should be EofDelegateCall?
-            scheme: CallScheme::DelegateCall,
+            scheme: CallScheme::ExtDelegateCall,
             is_static: interpreter.is_static,
             is_eof: true,
             return_memory_offset: 0..0,
@@ -269,9 +292,11 @@ pub fn extdelegatecall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpret
 
 pub fn extstaticcall<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     require_eof!(interpreter);
-    pop_address!(interpreter, target_address);
 
-    // TODO check if target is left padded with zeroes.
+    // pop target address
+    let Some(target_address) = pop_extcall_target_address(interpreter) else {
+        return;
+    };
 
     // input call
     let Some(input) = extcall_input(interpreter) else {
@@ -291,7 +316,7 @@ pub fn extstaticcall<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut
             caller: interpreter.contract.target_address,
             bytecode_address: target_address,
             value: CallValue::Transfer(U256::ZERO),
-            scheme: CallScheme::Call,
+            scheme: CallScheme::ExtStaticCall,
             is_static: true,
             is_eof: true,
             return_memory_offset: 0..0,
@@ -377,7 +402,7 @@ pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
     pop!(interpreter, value);
-    let has_transfer = value != U256::ZERO;
+    let has_transfer = !value.is_zero();
     if interpreter.is_static && has_transfer {
         interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
         return;
@@ -387,17 +412,13 @@ pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &
         return;
     };
 
-    let Some(LoadAccountResult { is_cold, is_empty }) = host.load_account(to) else {
+    let Some(account_load) = host.load_account_delegated(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-    let Some(mut gas_limit) = calc_call_gas::<SPEC>(
-        interpreter,
-        is_cold,
-        has_transfer,
-        is_empty,
-        local_gas_limit,
-    ) else {
+    let Some(mut gas_limit) =
+        calc_call_gas::<SPEC>(interpreter, account_load, has_transfer, local_gas_limit)
+    else {
         return;
     };
 
@@ -437,25 +458,22 @@ pub fn call_code<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
         return;
     };
 
-    let Some(LoadAccountResult { is_cold, .. }) = host.load_account(to) else {
+    let Some(mut load) = host.load_account_delegated(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-
-    let Some(mut gas_limit) = calc_call_gas::<SPEC>(
-        interpreter,
-        is_cold,
-        value != U256::ZERO,
-        false,
-        local_gas_limit,
-    ) else {
+    // set is_empty to false as we are not creating this account.
+    load.is_empty = false;
+    let Some(mut gas_limit) =
+        calc_call_gas::<SPEC>(interpreter, load, !value.is_zero(), local_gas_limit)
+    else {
         return;
     };
 
     gas!(interpreter, gas_limit);
 
     // add call stipend if there is value to be transferred.
-    if value != U256::ZERO {
+    if !value.is_zero() {
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }
 
@@ -488,13 +506,13 @@ pub fn delegate_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter
         return;
     };
 
-    let Some(LoadAccountResult { is_cold, .. }) = host.load_account(to) else {
+    let Some(mut load) = host.load_account_delegated(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-    let Some(gas_limit) =
-        calc_call_gas::<SPEC>(interpreter, is_cold, false, false, local_gas_limit)
-    else {
+    // set is_empty to false as we are not creating this account.
+    load.is_empty = false;
+    let Some(gas_limit) = calc_call_gas::<SPEC>(interpreter, load, false, local_gas_limit) else {
         return;
     };
 
@@ -529,14 +547,13 @@ pub fn static_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
         return;
     };
 
-    let Some(LoadAccountResult { is_cold, .. }) = host.load_account(to) else {
+    let Some(mut load) = host.load_account_delegated(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-
-    let Some(gas_limit) =
-        calc_call_gas::<SPEC>(interpreter, is_cold, false, false, local_gas_limit)
-    else {
+    // set is_empty to false as we are not creating this account.
+    load.is_empty = false;
+    let Some(gas_limit) = calc_call_gas::<SPEC>(interpreter, load, false, local_gas_limit) else {
         return;
     };
     gas!(interpreter, gas_limit);

@@ -1,6 +1,19 @@
+/// AccountStatus represents the various states an account can be in after being loaded from the database.
+///
 /// After account get loaded from database it can be in a lot of different states
 /// while we execute multiple transaction and even blocks over account that is in memory.
 /// This structure models all possible states that account can be in.
+///
+/// # Variants
+///
+/// - `LoadedNotExisting`: the account has been loaded but does not exist.
+/// - `Loaded`: the account has been loaded and exists.
+/// - `LoadedEmptyEIP161`: the account is loaded and empty, as per EIP-161.
+/// - `InMemoryChange`: there are changes in the account that exist only in memory.
+/// - `Changed`: the account has been modified.
+/// - `Destroyed`: the account has been destroyed.
+/// - `DestroyedChanged`: the account has been destroyed and then modified.
+/// - `DestroyedAgain`: the account has been destroyed again.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AccountStatus {

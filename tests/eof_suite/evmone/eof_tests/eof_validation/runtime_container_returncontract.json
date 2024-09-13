@@ -1,0 +1,34 @@
+{
+  "runtime_container_returncontract": {
+    "vectors": {
+      "runtime_container_returncontract_0": {
+        "code": "0xef000101000402000100060300010014040000000080000260006000ee00ef000101000402000100010400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_IncompatibleContainerKind",
+            "result": false
+          }
+        }
+      },
+      "runtime_container_returncontract_1": {
+        "code": "0xef000101000402000100060300010032040000000080000260006000ee00ef000101000402000100060300010014040000000080000260006000ee00ef000101000402000100010400000000800000fe",
+        "containerKind": "INITCODE",
+        "results": {
+          "Prague": {
+            "exception": "EOF_IncompatibleContainerKind",
+            "result": false
+          }
+        }
+      },
+      "runtime_container_returncontract_2": {
+        "code": "0xef0001010004020001000b030001005004000000008000046000600060006000ec0000ef000101000402000100060300010032040000000080000260006000ee00ef000101000402000100060300010014040000000080000260006000ee00ef000101000402000100010400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_IncompatibleContainerKind",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

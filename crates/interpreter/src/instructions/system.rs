@@ -54,7 +54,7 @@ pub fn codecopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) 
         memory_offset,
         code_offset,
         len,
-        &interpreter.contract.bytecode.original_bytes(),
+        interpreter.contract.bytecode.original_byte_slice(),
     );
 }
 
@@ -162,7 +162,7 @@ pub fn returndataload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &m
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, offset);
-    let offset_usize = as_usize_or_fail!(interpreter, offset);
+    let offset_usize = as_usize_saturated!(offset);
 
     let mut output = [0u8; 32];
     if let Some(available) = interpreter
@@ -189,13 +189,13 @@ mod test {
     use super::*;
     use crate::{
         opcode::{make_instruction_table, RETURNDATACOPY, RETURNDATALOAD},
-        primitives::{bytes, Bytecode, PragueSpec},
+        primitives::{bytes, Bytecode, DefaultEthereumWiring, PragueSpec},
         DummyHost, Gas, InstructionResult,
     };
 
     #[test]
     fn returndataload() {
-        let table = make_instruction_table::<_, PragueSpec>();
+        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
         let mut host = DummyHost::default();
 
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
@@ -254,7 +254,7 @@ mod test {
     #[test]
     fn returndatacopy() {
         let table = make_instruction_table::<_, PragueSpec>();
-        let mut host = DummyHost::default();
+        let mut host = DummyHost::<DefaultEthereumWiring>::default();
 
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
             [

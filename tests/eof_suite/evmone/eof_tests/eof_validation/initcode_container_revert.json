@@ -1,0 +1,23 @@
+{
+  "initcode_container_revert": {
+    "vectors": {
+      "initcode_container_revert_0": {
+        "code": "0xef00010100040200010005040000000080000260006000fd",
+        "containerKind": "INITCODE",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      },
+      "initcode_container_revert_1": {
+        "code": "0xef0001010004020001000b030001001804000000008000046000600060006000ec0000ef00010100040200010005040000000080000260006000fd",
+        "results": {
+          "Prague": {
+            "result": true
+          }
+        }
+      }
+    }
+  }
+}

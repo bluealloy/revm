@@ -60,7 +60,7 @@ pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     gas!(interpreter, VERYLOW);
     pop!(interpreter, mem_offset, offset, size);
 
-    // sizes more than u64::MAX will spend all the gas in memmory resize.
+    // sizes more than u64::MAX will spend all the gas in memory resize.
     let size = as_usize_or_fail!(interpreter, size);
     // size of zero should not change the memory
     if size == 0 {
@@ -75,7 +75,7 @@ pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     let offset = as_usize_saturated!(offset);
     let data = interpreter.contract.bytecode.eof().expect("eof").data();
 
-    // set data from the eof to the shared memory. Padd it with zeros.
+    // set data from the eof to the shared memory. Padded it with zeros.
     interpreter
         .shared_memory
         .set_data(mem_offset, offset, size, data);
@@ -83,7 +83,7 @@ pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
 
 #[cfg(test)]
 mod test {
-    use revm_primitives::{b256, bytes, Bytecode, Bytes, Eof, PragueSpec};
+    use revm_primitives::{b256, bytes, Bytecode, Bytes, DefaultEthereumWiring, Eof, PragueSpec};
     use std::sync::Arc;
 
     use super::*;
@@ -107,7 +107,7 @@ mod test {
 
     #[test]
     fn dataload_dataloadn() {
-        let table = make_instruction_table::<_, PragueSpec>();
+        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
         let mut host = DummyHost::default();
         let eof = dummy_eof(Bytes::from([
             DATALOAD, DATALOADN, 0x00, 0x00, DATALOAD, DATALOADN, 0x00, 35, DATALOAD, DATALOADN,
@@ -163,7 +163,7 @@ mod test {
 
     #[test]
     fn data_copy() {
-        let table = make_instruction_table::<_, PragueSpec>();
+        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
         let mut host = DummyHost::default();
         let eof = dummy_eof(Bytes::from([DATACOPY, DATACOPY, DATACOPY, DATACOPY]));
 

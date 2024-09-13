@@ -1,0 +1,24 @@
+{
+  "EOF1_trailing_bytes_in_subcontainer": {
+    "vectors": {
+      "EOF1_trailing_bytes_in_subcontainer_0": {
+        "code": "0xef0001010004020001000b030001001804000000008000046000600060006000ec0000ef000101000402000100010400000000800000fedeadbeef",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidSectionBodiesSize",
+            "result": false
+          }
+        }
+      },
+      "EOF1_trailing_bytes_in_subcontainer_1": {
+        "code": "0xef0001010004020001000b030001001a04000000008000046000600060006000ec0000ef000101000402000100010400020000800000feaabbdeadbeef",
+        "results": {
+          "Prague": {
+            "exception": "EOF_InvalidSectionBodiesSize",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

@@ -17,7 +17,7 @@ use std::boxed::Box;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InterpreterAction {
     /// CALL, CALLCODE, DELEGATECALL, STATICCALL
-    /// or EOF EXT instuction called.
+    /// or EOF EXT instruction called.
     Call { inputs: Box<CallInputs> },
     /// CREATE or CREATE2 instruction called.
     Create { inputs: Box<CreateInputs> },

@@ -5,18 +5,19 @@ use super::{
 };
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
-    db::EmptyDB,
+    db::{EmptyDB, State},
     inspector_handle_register,
     inspectors::TracerEip3155,
+    interpreter::analysis::to_analysed,
     primitives::{
-        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, Eof,
-        ExecutionResult, SpecId, TxKind, B256, EOF_MAGIC_BYTES,
+        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, EnvWiring,
+        EthereumWiring, ExecutionResult, HaltReason, SpecId, TxKind, B256,
     },
-    Evm, State,
+    Evm,
 };
 use serde_json::json;
 use std::{
-    convert::Infallible,
+    fmt::Debug,
     io::{stderr, stdout},
     path::{Path, PathBuf},
     sync::{
@@ -27,6 +28,9 @@ use std::{
 };
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
+
+type ExecEvmWiring<'a> = EthereumWiring<&'a mut State<EmptyDB>, ()>;
+type TraceEvmWiring<'a> = EthereumWiring<&'a mut State<EmptyDB>, TracerEip3155>;
 
 #[derive(Debug, Error)]
 #[error("Test {name} failed: {kind}")]
@@ -73,7 +77,6 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
 }
 
 fn skip_test(path: &Path) -> bool {
-    let path_str = path.to_str().expect("Path is not valid UTF-8");
     let name = path.file_name().unwrap().to_str().unwrap();
 
     matches!(
@@ -123,15 +126,27 @@ fn skip_test(path: &Path) -> bool {
         | "static_Call50000_sha256.json"
         | "loopMul.json"
         | "CALLBlake2f_MaxRounds.json"
-    ) || path_str.contains("stEOF")
+
+        // evmone statetest
+        | "initcode_transaction_before_prague.json"
+        | "invalid_tx_non_existing_sender.json"
+        | "tx_non_existing_sender.json"
+        | "block_apply_withdrawal.json"
+        | "block_apply_ommers_reward.json"
+        | "known_block_hash.json"
+        | "eip7516_blob_base_fee.json"
+    )
 }
 
-fn check_evm_execution<EXT>(
+fn check_evm_execution<EXT: Debug>(
     test: &Test,
     expected_output: Option<&Bytes>,
     test_name: &str,
-    exec_result: &EVMResultGeneric<ExecutionResult, Infallible>,
-    evm: &Evm<'_, EXT, &mut State<EmptyDB>>,
+    exec_result: &EVMResultGeneric<
+        ExecutionResult<HaltReason>,
+        EthereumWiring<&mut State<EmptyDB>, EXT>,
+    >,
+    evm: &Evm<'_, EthereumWiring<&mut State<EmptyDB>, EXT>>,
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
@@ -155,7 +170,7 @@ fn check_evm_execution<EXT>(
                     Err(e) => e.to_string(),
                 },
                 "postLogsHash": logs_root,
-                "fork": evm.handler.cfg().spec_id,
+                "fork": evm.handler.spec_id(),
                 "test": test_name,
                 "d": test.indexes.data,
                 "g": test.indexes.gas,
@@ -258,12 +273,7 @@ pub fn execute_test_suite(
         let mut cache_state = revm::CacheState::new(false);
         for (address, info) in unit.pre {
             let code_hash = keccak256(&info.code);
-            let bytecode = match info.code.get(..2) {
-                Some(magic) if magic == &EOF_MAGIC_BYTES => {
-                    Bytecode::Eof(Eof::decode(info.code.clone()).unwrap().into())
-                }
-                _ => Bytecode::new_raw(info.code),
-            };
+            let bytecode = to_analysed(Bytecode::new_raw(info.code));
             let acc_info = revm::primitives::AccountInfo {
                 balance: info.balance,
                 code_hash,
@@ -273,7 +283,7 @@ pub fn execute_test_suite(
             cache_state.insert_account_with_storage(address, acc_info, info.storage);
         }
 
-        let mut env = Box::<Env>::default();
+        let mut env = Box::<EnvWiring<ExecEvmWiring>>::default();
         // for mainnet
         env.cfg.chain_id = 1;
         // env.cfg.spec_id is set down the road
@@ -323,16 +333,24 @@ pub fn execute_test_suite(
 
         // post and execution
         for (spec_name, tests) in unit.post {
-            if matches!(
-                spec_name,
-                SpecName::ByzantiumToConstantinopleAt5
-                    | SpecName::Constantinople
-                    | SpecName::Unknown
-            ) {
+            // Constantinople was immediately extended by Petersburg.
+            // There isn't any production Constantinople transaction
+            // so we don't support it and skip right to Petersburg.
+            if spec_name == SpecName::Constantinople || spec_name == SpecName::Osaka {
                 continue;
             }
 
-            let spec_id = spec_name.to_spec_id();
+            // Enable EOF in Prague tests.
+            let spec_id = if spec_name == SpecName::Prague {
+                SpecId::PRAGUE_EOF
+            } else {
+                spec_name.to_spec_id()
+            };
+
+            if spec_id.is_enabled_in(SpecId::MERGE) && env.block.prevrandao.is_none() {
+                // if spec is merge and prevrandao is not set, set it to default
+                env.block.prevrandao = Some(B256::default());
+            }
 
             for (index, test) in tests.into_iter().enumerate() {
                 env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
@@ -343,6 +361,8 @@ pub fn execute_test_suite(
                     .get(test.indexes.data)
                     .unwrap()
                     .clone();
+
+                env.tx.nonce = u64::try_from(unit.transaction.nonce).unwrap();
                 env.tx.value = unit.transaction.value[test.indexes.value];
 
                 env.tx.access_list = unit
@@ -352,6 +372,10 @@ pub fn execute_test_suite(
                     .and_then(Option::as_deref)
                     .cloned()
                     .unwrap_or_default();
+                let Ok(auth_list) = test.eip7702_authorization_list() else {
+                    continue;
+                };
+                env.tx.authorization_list = auth_list;
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),
@@ -360,16 +384,14 @@ pub fn execute_test_suite(
                 env.tx.transact_to = to;
 
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(
-                    spec_id,
-                    revm::primitives::SpecId::SPURIOUS_DRAGON,
-                ));
+                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
                 let mut state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let mut evm = Evm::builder()
+                let mut evm = Evm::<ExecEvmWiring>::builder()
                     .with_db(&mut state)
+                    .with_default_ext_ctx()
                     .modify_env(|e| e.clone_from(&env))
                     .with_spec_id(spec_id)
                     .build();
@@ -378,9 +400,11 @@ pub fn execute_test_suite(
                 let (e, exec_result) = if trace {
                     let mut evm = evm
                         .modify()
-                        .reset_handler_with_external_context(
+                        .reset_handler_with_external_context::<EthereumWiring<_, TracerEip3155>>()
+                        .with_external_context(
                             TracerEip3155::new(Box::new(stderr())).without_summary(),
                         )
+                        .with_spec_id(spec_id)
                         .append_handler_register(inspector_handle_register)
                         .build();
 
@@ -429,22 +453,21 @@ pub fn execute_test_suite(
 
                 // re build to run with tracing
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(
-                    spec_id,
-                    revm::primitives::SpecId::SPURIOUS_DRAGON,
-                ));
-                let state = revm::db::State::builder()
+                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
+                let mut state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
 
                 let path = path.display();
                 println!("\nTraces:");
-                let mut evm = Evm::builder()
+                let mut evm = Evm::<TraceEvmWiring>::builder()
+                    .with_db(&mut state)
                     .with_spec_id(spec_id)
-                    .with_db(state)
                     .with_env(env.clone())
+                    .reset_handler_with_external_context::<EthereumWiring<_, TracerEip3155>>()
                     .with_external_context(TracerEip3155::new(Box::new(stdout())).without_summary())
+                    .with_spec_id(spec_id)
                     .append_handler_register(inspector_handle_register)
                     .build();
                 let _ = evm.transact_commit();

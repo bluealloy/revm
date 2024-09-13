@@ -1,0 +1,15 @@
+{
+  "EOF1_unreferenced_subcontainer_invalid": {
+    "vectors": {
+      "EOF1_unreferenced_subcontainer_invalid_0": {
+        "code": "0xef000101000402000100010300010014040000000080000000ef000101000402000100010400000000800000fe",
+        "results": {
+          "Prague": {
+            "exception": "EOF_UnreferencedSubcontainer",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

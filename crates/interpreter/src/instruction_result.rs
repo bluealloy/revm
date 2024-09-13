@@ -1,66 +1,102 @@
+use core::fmt::Debug;
+
+use derive_where::derive_where;
+use revm_primitives::EvmWiring;
+
 use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InstructionResult {
-    // success codes
+    // Success Codes
     #[default]
+    /// Execution should continue to the next one.
     Continue = 0x00,
+    /// Encountered a `STOP` opcode
     Stop,
+    /// Return from the current call.
     Return,
+    /// Self-destruct the current contract.
     SelfDestruct,
+    /// Return a contract (used in contract creation).
     ReturnContract,
 
-    // revert codes
-    Revert = 0x10, // revert opcode
+    // Revert Codes
+    /// Revert the transaction.
+    Revert = 0x10,
+    /// Exceeded maximum call depth.
     CallTooDeep,
+    /// Insufficient funds for transfer.
     OutOfFunds,
-    /// Revert if CREATE/CREATE2 starts with 0xEF00
+    /// Revert if `CREATE`/`CREATE2` starts with `0xEF00`.
     CreateInitCodeStartingEF00,
-    /// Invalid EOF initcode,
+    /// Invalid EVM Object Format (EOF) init code.
     InvalidEOFInitCode,
+    /// `ExtDelegateCall` calling a non EOF contract.
+    InvalidExtDelegateCallTarget,
 
-    // Actions
+    // Action Codes
+    /// Indicates a call or contract creation.
     CallOrCreate = 0x20,
 
-    // error codes
+    // Error Codes
+    /// Out of gas error.
     OutOfGas = 0x50,
+    /// Out of gas error encountered during memory expansion.
     MemoryOOG,
+    /// The memory limit of the EVM has been exceeded.
     MemoryLimitOOG,
+    /// Out of gas error encountered during the execution of a precompiled contract.
     PrecompileOOG,
+    /// Out of gas error encountered while calling an invalid operand.
     InvalidOperandOOG,
+    /// Unknown or invalid opcode.
     OpcodeNotFound,
+    /// Invalid `CALL` with value transfer in static context.
     CallNotAllowedInsideStatic,
+    /// Invalid state modification in static call.
     StateChangeDuringStaticCall,
-    InvalidEFOpcode,
+    /// An undefined bytecode value encountered during execution.
+    InvalidFEOpcode,
+    /// Invalid jump destination. Dynamic jumps points to invalid not jumpdest opcode.
     InvalidJump,
+    /// The feature or opcode is not activated in this version of the EVM.
     NotActivated,
+    /// Attempting to pop a value from an empty stack.
     StackUnderflow,
+    /// Attempting to push a value onto a full stack.
     StackOverflow,
+    /// Invalid memory or storage offset.
     OutOfOffset,
+    /// Address collision during contract creation.
     CreateCollision,
+    /// Payment amount overflow.
     OverflowPayment,
+    /// Error in precompiled contract execution.
     PrecompileError,
+    /// Nonce overflow.
     NonceOverflow,
-    /// Create init code size exceeds limit (runtime).
+    /// Exceeded contract size limit during creation.
     CreateContractSizeLimit,
-    /// Error on created contract that begins with EF
+    /// Created contract starts with invalid bytes (`0xEF`).
     CreateContractStartingWithEF,
-    /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
+    /// Exceeded init code size limit (EIP-3860:  Limit and meter initcode).
     CreateInitCodeSizeLimit,
     /// Fatal external error. Returned by database.
     FatalExternalError,
-    /// RETURNCONTRACT called in not init eof code.
+    /// `RETURNCONTRACT` called outside init EOF code.
     ReturnContractInNotInitEOF,
     /// Legacy contract is calling opcode that is enabled only in EOF.
     EOFOpcodeDisabledInLegacy,
-    /// EOF function stack overflow
+    /// Stack overflow in EOF subroutine function calls.
     EOFFunctionStackOverflow,
-    /// Aux data overflow, new aux data is larger tha u16 max size.
+    /// Aux data overflow, new aux data is larger than `u16` max size.
     EofAuxDataOverflow,
-    /// Aud data is smaller then already present data size.
+    /// Aux data is smaller then already present data size.
     EofAuxDataTooSmall,
+    /// `EXT*CALL` target address needs to be padded with 0s.
+    InvalidEXTCALLTarget,
 }
 
 impl From<SuccessReason> for InstructionResult {
@@ -85,7 +121,7 @@ impl From<HaltReason> for InstructionResult {
                 OutOfGasError::Precompile => Self::PrecompileOOG,
             },
             HaltReason::OpcodeNotFound => Self::OpcodeNotFound,
-            HaltReason::InvalidEFOpcode => Self::InvalidEFOpcode,
+            HaltReason::InvalidFEOpcode => Self::InvalidFEOpcode,
             HaltReason::InvalidJump => Self::InvalidJump,
             HaltReason::NotActivated => Self::NotActivated,
             HaltReason::StackOverflow => Self::StackOverflow,
@@ -105,8 +141,7 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::EofAuxDataOverflow => Self::EofAuxDataOverflow,
             HaltReason::EofAuxDataTooSmall => Self::EofAuxDataTooSmall,
             HaltReason::EOFFunctionStackOverflow => Self::EOFFunctionStackOverflow,
-            #[cfg(feature = "optimism")]
-            HaltReason::FailedDeposit => Self::FatalExternalError,
+            HaltReason::InvalidEXTCALLTarget => Self::InvalidEXTCALLTarget,
         }
     }
 }
@@ -130,6 +165,7 @@ macro_rules! return_revert {
             | InstructionResult::OutOfFunds
             | InstructionResult::InvalidEOFInitCode
             | InstructionResult::CreateInitCodeStartingEF00
+            | InstructionResult::InvalidExtDelegateCallTarget
     };
 }
 
@@ -144,7 +180,7 @@ macro_rules! return_error {
             | InstructionResult::OpcodeNotFound
             | InstructionResult::CallNotAllowedInsideStatic
             | InstructionResult::StateChangeDuringStaticCall
-            | InstructionResult::InvalidEFOpcode
+            | InstructionResult::InvalidFEOpcode
             | InstructionResult::InvalidJump
             | InstructionResult::NotActivated
             | InstructionResult::StackUnderflow
@@ -163,6 +199,7 @@ macro_rules! return_error {
             | InstructionResult::EOFFunctionStackOverflow
             | InstructionResult::EofAuxDataTooSmall
             | InstructionResult::EofAuxDataOverflow
+            | InstructionResult::InvalidEXTCALLTarget
     };
 }
 
@@ -195,18 +232,21 @@ pub enum InternalResult {
     InternalCallOrCreate,
     /// Internal CREATE/CREATE starts with 0xEF00
     CreateInitCodeStartingEF00,
+    /// Internal to ExtDelegateCall
+    InvalidExtDelegateCallTarget,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum SuccessOrHalt {
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive_where(Debug; EvmWiringT::HaltReason)]
+pub enum SuccessOrHalt<EvmWiringT: EvmWiring> {
     Success(SuccessReason),
     Revert,
-    Halt(HaltReason),
+    Halt(EvmWiringT::HaltReason),
     FatalExternalError,
     Internal(InternalResult),
 }
 
-impl SuccessOrHalt {
+impl<EvmWiringT: EvmWiring> SuccessOrHalt<EvmWiringT> {
     /// Returns true if the transaction returned successfully without halts.
     #[inline]
     pub fn is_success(self) -> bool {
@@ -236,7 +276,7 @@ impl SuccessOrHalt {
 
     /// Returns the [HaltReason] value the EVM has experienced an exceptional halt
     #[inline]
-    pub fn to_halt(self) -> Option<HaltReason> {
+    pub fn to_halt(self) -> Option<EvmWiringT::HaltReason> {
         match self {
             SuccessOrHalt::Halt(reason) => Some(reason),
             _ => None,
@@ -244,7 +284,7 @@ impl SuccessOrHalt {
     }
 }
 
-impl From<InstructionResult> for SuccessOrHalt {
+impl<EvmWiringT: EvmWiring> From<InstructionResult> for SuccessOrHalt<EvmWiringT> {
     fn from(result: InstructionResult) -> Self {
         match result {
             InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), // used only in interpreter loop
@@ -254,55 +294,71 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::Revert => Self::Revert,
             InstructionResult::CreateInitCodeStartingEF00 => Self::Revert,
             InstructionResult::CallOrCreate => Self::Internal(InternalResult::InternalCallOrCreate), // used only in interpreter loop
-            InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), // not gonna happen for first call
-            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), // Check for first call is done separately.
-            InstructionResult::OutOfGas => Self::Halt(HaltReason::OutOfGas(OutOfGasError::Basic)),
-            InstructionResult::MemoryLimitOOG => {
-                Self::Halt(HaltReason::OutOfGas(OutOfGasError::MemoryLimit))
+            InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep.into()), // not gonna happen for first call
+            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds.into()), // Check for first call is done separately.
+            InstructionResult::OutOfGas => {
+                Self::Halt(HaltReason::OutOfGas(OutOfGasError::Basic).into())
             }
-            InstructionResult::MemoryOOG => Self::Halt(HaltReason::OutOfGas(OutOfGasError::Memory)),
+            InstructionResult::MemoryLimitOOG => {
+                Self::Halt(HaltReason::OutOfGas(OutOfGasError::MemoryLimit).into())
+            }
+            InstructionResult::MemoryOOG => {
+                Self::Halt(HaltReason::OutOfGas(OutOfGasError::Memory).into())
+            }
             InstructionResult::PrecompileOOG => {
-                Self::Halt(HaltReason::OutOfGas(OutOfGasError::Precompile))
+                Self::Halt(HaltReason::OutOfGas(OutOfGasError::Precompile).into())
             }
             InstructionResult::InvalidOperandOOG => {
-                Self::Halt(HaltReason::OutOfGas(OutOfGasError::InvalidOperand))
+                Self::Halt(HaltReason::OutOfGas(OutOfGasError::InvalidOperand).into())
             }
             InstructionResult::OpcodeNotFound | InstructionResult::ReturnContractInNotInitEOF => {
-                Self::Halt(HaltReason::OpcodeNotFound)
+                Self::Halt(HaltReason::OpcodeNotFound.into())
             }
             InstructionResult::CallNotAllowedInsideStatic => {
-                Self::Halt(HaltReason::CallNotAllowedInsideStatic)
+                Self::Halt(HaltReason::CallNotAllowedInsideStatic.into())
             } // first call is not static call
             InstructionResult::StateChangeDuringStaticCall => {
-                Self::Halt(HaltReason::StateChangeDuringStaticCall)
+                Self::Halt(HaltReason::StateChangeDuringStaticCall.into())
             }
-            InstructionResult::InvalidEFOpcode => Self::Halt(HaltReason::InvalidEFOpcode),
-            InstructionResult::InvalidJump => Self::Halt(HaltReason::InvalidJump),
-            InstructionResult::NotActivated => Self::Halt(HaltReason::NotActivated),
-            InstructionResult::StackUnderflow => Self::Halt(HaltReason::StackUnderflow),
-            InstructionResult::StackOverflow => Self::Halt(HaltReason::StackOverflow),
-            InstructionResult::OutOfOffset => Self::Halt(HaltReason::OutOfOffset),
-            InstructionResult::CreateCollision => Self::Halt(HaltReason::CreateCollision),
-            InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment), // Check for first call is done separately.
-            InstructionResult::PrecompileError => Self::Halt(HaltReason::PrecompileError),
-            InstructionResult::NonceOverflow => Self::Halt(HaltReason::NonceOverflow),
+            InstructionResult::InvalidFEOpcode => Self::Halt(HaltReason::InvalidFEOpcode.into()),
+            InstructionResult::InvalidJump => Self::Halt(HaltReason::InvalidJump.into()),
+            InstructionResult::NotActivated => Self::Halt(HaltReason::NotActivated.into()),
+            InstructionResult::StackUnderflow => Self::Halt(HaltReason::StackUnderflow.into()),
+            InstructionResult::StackOverflow => Self::Halt(HaltReason::StackOverflow.into()),
+            InstructionResult::OutOfOffset => Self::Halt(HaltReason::OutOfOffset.into()),
+            InstructionResult::CreateCollision => Self::Halt(HaltReason::CreateCollision.into()),
+            InstructionResult::OverflowPayment => Self::Halt(HaltReason::OverflowPayment.into()), // Check for first call is done separately.
+            InstructionResult::PrecompileError => Self::Halt(HaltReason::PrecompileError.into()),
+            InstructionResult::NonceOverflow => Self::Halt(HaltReason::NonceOverflow.into()),
             InstructionResult::CreateContractSizeLimit
             | InstructionResult::CreateContractStartingWithEF => {
-                Self::Halt(HaltReason::CreateContractSizeLimit)
+                Self::Halt(HaltReason::CreateContractSizeLimit.into())
             }
             InstructionResult::CreateInitCodeSizeLimit => {
-                Self::Halt(HaltReason::CreateInitCodeSizeLimit)
+                Self::Halt(HaltReason::CreateInitCodeSizeLimit.into())
             }
             // TODO (EOF) add proper Revert subtype.
             InstructionResult::InvalidEOFInitCode => Self::Revert,
             InstructionResult::FatalExternalError => Self::FatalExternalError,
-            InstructionResult::EOFOpcodeDisabledInLegacy => Self::Halt(HaltReason::OpcodeNotFound),
+            InstructionResult::EOFOpcodeDisabledInLegacy => {
+                Self::Halt(HaltReason::OpcodeNotFound.into())
+            }
             InstructionResult::EOFFunctionStackOverflow => {
-                Self::Halt(HaltReason::EOFFunctionStackOverflow)
+                Self::Halt(HaltReason::EOFFunctionStackOverflow.into())
             }
             InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
-            InstructionResult::EofAuxDataOverflow => Self::Halt(HaltReason::EofAuxDataOverflow),
-            InstructionResult::EofAuxDataTooSmall => Self::Halt(HaltReason::EofAuxDataTooSmall),
+            InstructionResult::EofAuxDataOverflow => {
+                Self::Halt(HaltReason::EofAuxDataOverflow.into())
+            }
+            InstructionResult::EofAuxDataTooSmall => {
+                Self::Halt(HaltReason::EofAuxDataTooSmall.into())
+            }
+            InstructionResult::InvalidEXTCALLTarget => {
+                Self::Halt(HaltReason::InvalidEXTCALLTarget.into())
+            }
+            InstructionResult::InvalidExtDelegateCallTarget => {
+                Self::Internal(InternalResult::InvalidExtDelegateCallTarget)
+            }
         }
     }
 }
@@ -357,7 +413,7 @@ mod tests {
             InstructionResult::OpcodeNotFound,
             InstructionResult::CallNotAllowedInsideStatic,
             InstructionResult::StateChangeDuringStaticCall,
-            InstructionResult::InvalidEFOpcode,
+            InstructionResult::InvalidFEOpcode,
             InstructionResult::InvalidJump,
             InstructionResult::NotActivated,
             InstructionResult::StackUnderflow,

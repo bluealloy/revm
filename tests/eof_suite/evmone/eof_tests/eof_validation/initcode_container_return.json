@@ -1,0 +1,25 @@
+{
+  "initcode_container_return": {
+    "vectors": {
+      "initcode_container_return_0": {
+        "code": "0xef00010100040200010005040000000080000260006000f3",
+        "containerKind": "INITCODE",
+        "results": {
+          "Prague": {
+            "exception": "EOF_IncompatibleContainerKind",
+            "result": false
+          }
+        }
+      },
+      "initcode_container_return_1": {
+        "code": "0xef0001010004020001000b030001001804000000008000046000600060006000ec0000ef00010100040200010005040000000080000260006000f3",
+        "results": {
+          "Prague": {
+            "exception": "EOF_IncompatibleContainerKind",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

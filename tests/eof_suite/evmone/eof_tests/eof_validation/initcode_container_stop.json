@@ -1,0 +1,25 @@
+{
+  "initcode_container_stop": {
+    "vectors": {
+      "initcode_container_stop_0": {
+        "code": "0xef00010100040200010001040000000080000000",
+        "containerKind": "INITCODE",
+        "results": {
+          "Prague": {
+            "exception": "EOF_IncompatibleContainerKind",
+            "result": false
+          }
+        }
+      },
+      "initcode_container_stop_1": {
+        "code": "0xef0001010004020001000b030001001404000000008000046000600060006000ec0000ef00010100040200010001040000000080000000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_IncompatibleContainerKind",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

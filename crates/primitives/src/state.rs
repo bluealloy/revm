@@ -1,4 +1,4 @@
-use crate::{Address, Bytecode, HashMap, B256, KECCAK_EMPTY, U256};
+use crate::{Address, Bytecode, HashMap, SpecId, B256, KECCAK_EMPTY, U256};
 use bitflags::bitflags;
 use core::hash::{Hash, Hasher};
 
@@ -59,6 +59,18 @@ impl Account {
             info: AccountInfo::default(),
             storage: HashMap::new(),
             status: AccountStatus::LoadedAsNotExisting,
+        }
+    }
+
+    /// Check if account is empty and check if empty state before spurious dragon hardfork.
+    #[inline]
+    pub fn state_clear_aware_is_empty(&self, spec: SpecId) -> bool {
+        if SpecId::enabled(spec, SpecId::SPURIOUS_DRAGON) {
+            self.is_empty()
+        } else {
+            let loaded_not_existing = self.is_loaded_as_not_existing();
+            let is_not_touched = !self.is_touched();
+            loaded_not_existing && is_not_touched
         }
     }
 
@@ -219,7 +231,7 @@ pub struct AccountInfo {
     /// code hash,
     pub code_hash: B256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
-    /// inside of `revm`.
+    /// inside `revm`.
     pub code: Option<Bytecode>,
 }
 
@@ -273,8 +285,8 @@ impl AccountInfo {
     /// - balance is zero
     /// - nonce is zero
     pub fn is_empty(&self) -> bool {
-        let code_empty = self.is_empty_code_hash() || self.code_hash == B256::ZERO;
-        code_empty && self.balance == U256::ZERO && self.nonce == 0
+        let code_empty = self.is_empty_code_hash() || self.code_hash.is_zero();
+        code_empty && self.balance.is_zero() && self.nonce == 0
     }
 
     /// Returns `true` if the account is not empty.
@@ -288,7 +300,7 @@ impl AccountInfo {
     }
 
     /// Return bytecode hash associated with this account.
-    /// If account does not have code, it return's `KECCAK_EMPTY` hash.
+    /// If account does not have code, it returns `KECCAK_EMPTY` hash.
     pub fn code_hash(&self) -> B256 {
         self.code_hash
     }
@@ -308,6 +320,17 @@ impl AccountInfo {
         AccountInfo {
             balance,
             ..Default::default()
+        }
+    }
+
+    pub fn from_bytecode(bytecode: Bytecode) -> Self {
+        let hash = bytecode.hash_slow();
+
+        AccountInfo {
+            balance: U256::ZERO,
+            nonce: 1,
+            code: Some(bytecode),
+            code_hash: hash,
         }
     }
 }

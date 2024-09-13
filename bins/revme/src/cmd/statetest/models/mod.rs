@@ -1,12 +1,14 @@
-use revm::primitives::{AccessList, Address, Bytes, HashMap, B256, U256};
+mod deserializer;
+mod eip7702;
+mod spec;
+
+use deserializer::*;
+pub use eip7702::TxEip7702;
+pub use spec::SpecName;
+
+use revm::primitives::{AccessList, Address, AuthorizationList, Bytes, HashMap, B256, U256};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-
-mod deserializer;
-use deserializer::*;
-
-mod spec;
-pub use self::spec::SpecName;
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct TestSuite(pub BTreeMap<String, TestUnit>);
@@ -47,6 +49,26 @@ pub struct Test {
     pub txbytes: Option<Bytes>,
 }
 
+impl Test {
+    pub fn eip7702_authorization_list(
+        &self,
+    ) -> Result<Option<AuthorizationList>, alloy_rlp::Error> {
+        let Some(txbytes) = self.txbytes.as_ref() else {
+            return Ok(None);
+        };
+
+        if txbytes.first() == Some(&0x04) {
+            let mut txbytes = &txbytes[1..];
+            let tx = TxEip7702::decode(&mut txbytes)?;
+            return Ok(Some(
+                AuthorizationList::Signed(tx.authorization_list).into_recovered(),
+            ));
+        }
+
+        Ok(None)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TxPartIndices {
@@ -69,6 +91,7 @@ pub struct AccountInfo {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Env {
     pub current_coinbase: Address,
+    #[serde(default)]
     pub current_difficulty: U256,
     pub current_gas_limit: U256,
     pub current_number: U256,
@@ -86,7 +109,7 @@ pub struct Env {
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[serde(rename_all = "camelCase")]
 pub struct TransactionParts {
     pub data: Vec<Bytes>,
     pub gas_limit: Vec<U256>,
@@ -96,7 +119,7 @@ pub struct TransactionParts {
     /// if sender is not present we need to derive it from secret key.
     #[serde(default)]
     pub sender: Option<Address>,
-    #[serde(deserialize_with = "deserialize_maybe_empty")]
+    #[serde(default, deserialize_with = "deserialize_maybe_empty")]
     pub to: Option<Address>,
     pub value: Vec<U256>,
     pub max_fee_per_gas: Option<U256>,
@@ -104,10 +127,23 @@ pub struct TransactionParts {
 
     #[serde(default)]
     pub access_lists: Vec<Option<AccessList>>,
-
+    #[serde(default)]
+    pub authorization_list: Vec<Authorization>,
     #[serde(default)]
     pub blob_versioned_hashes: Vec<B256>,
     pub max_fee_per_blob_gas: Option<U256>,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Authorization {
+    chain_id: U256,
+    address: Address,
+    nonce: U256,
+    v: U256,
+    r: U256,
+    s: U256,
+    signer: Option<Address>,
 }
 
 #[cfg(test)]
