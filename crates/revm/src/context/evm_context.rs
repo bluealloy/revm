@@ -16,11 +16,11 @@ use std::{boxed::Box, sync::Arc};
 use wiring::{
     default::{CreateScheme, EnvWiring},
     result::{EVMError, EVMResultGeneric},
-    Transaction,
+    ChainSpec, Transaction,
 };
 
 /// EVM context that contains the inner EVM context and precompiles.
-#[derive_where(Clone, Debug; EvmWiringT::Block, EvmWiringT::ChainContext, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error)]
+#[derive_where(Clone, Debug; <EvmWiringT::ChainSpec as ChainSpec>::Block, <EvmWiringT::ChainSpec as ChainSpec>::ChainContext, <EvmWiringT::ChainSpec as ChainSpec>::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error)]
 pub struct EvmContext<EvmWiringT: EvmWiring> {
     /// Inner EVM context.
     pub inner: InnerEvmContext<EvmWiringT>,
@@ -44,7 +44,7 @@ impl<EvmWiringT: EvmWiring> DerefMut for EvmContext<EvmWiringT> {
 
 impl<EvmWiringT> EvmContext<EvmWiringT>
 where
-    EvmWiringT: EvmWiring<Block: Default, Transaction: Default>,
+    EvmWiringT: EvmWiring<ChainSpec: ChainSpec<Block: Default, Transaction: Default>>,
 {
     /// Create new context with database.
     pub fn new(db: EvmWiringT::Database) -> Self {
@@ -73,7 +73,12 @@ where
     /// Note that this will ignore the previous `error` if set.
     #[inline]
     pub fn with_db<
-        OEvmWiring: EvmWiring<Block = EvmWiringT::Block, Transaction = EvmWiringT::Transaction>,
+        OEvmWiring: EvmWiring<
+            ChainSpec: ChainSpec<
+                Block = <EvmWiringT::ChainSpec as ChainSpec>::Block,
+                Transaction = <EvmWiringT::ChainSpec as ChainSpec>::Transaction,
+            >,
+        >,
     >(
         self,
         db: OEvmWiring::Database,

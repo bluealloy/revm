@@ -2,20 +2,17 @@ use crate::{Host, SStoreResult, SelfDestructResult};
 use derive_where::derive_where;
 use primitives::{hash_map::Entry, Address, Bytes, HashMap, Log, B256, KECCAK_EMPTY, U256};
 use std::vec::Vec;
-use wiring::{
-    default::{Env, EnvWiring},
-    EvmWiring,
-};
+use wiring::{default::EnvWiring, ChainSpec, EvmWiring};
 
 use super::{AccountLoad, Eip7702CodeLoad, StateLoad};
 
 /// A dummy [Host] implementation.
-#[derive_where(Clone, Debug, Default; EvmWiringT::Block, EvmWiringT::Transaction)]
+#[derive_where(Clone, Debug, Default; <EvmWiringT::ChainSpec as ChainSpec>::Block, <EvmWiringT::ChainSpec as ChainSpec>::Transaction)]
 pub struct DummyHost<EvmWiringT>
 where
     EvmWiringT: EvmWiring,
 {
-    pub env: Env<EvmWiringT::Block, EvmWiringT::Transaction>,
+    pub env: EnvWiring<EvmWiringT>,
     pub storage: HashMap<U256, U256>,
     pub transient_storage: HashMap<U256, U256>,
     pub log: Vec<Log>,
@@ -25,7 +22,7 @@ impl<EvmWiringT> DummyHost<EvmWiringT>
 where
     EvmWiringT: EvmWiring,
 {
-    /// Create a new dummy host with the given [`Env`].
+    /// Create a new dummy host with the given [`EnvWiring`].
     #[inline]
     pub fn new(env: EnvWiring<EvmWiringT>) -> Self {
         Self {

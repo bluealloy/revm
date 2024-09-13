@@ -16,7 +16,7 @@ use std::{boxed::Box, vec::Vec};
 use wiring::{
     default::{CfgEnv, EnvWiring},
     result::{EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState},
-    Transaction,
+    ChainSpec, Transaction,
 };
 
 /// EVM call stack limit.
@@ -34,8 +34,11 @@ pub struct Evm<'a, EvmWiringT: EvmWiring> {
 
 impl<EvmWiringT> Debug for Evm<'_, EvmWiringT>
 where
-    EvmWiringT:
-        EvmWiring<Block: Debug, Transaction: Debug, Database: Debug, ExternalContext: Debug>,
+    EvmWiringT: EvmWiring<
+        ChainSpec: ChainSpec<Block: Debug, Transaction: Debug>,
+        Database: Debug,
+        ExternalContext: Debug,
+    >,
     <EvmWiringT::Database as Database>::Error: Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -49,7 +52,10 @@ impl<EvmWiringT: EvmWiring<Database: DatabaseCommit>> Evm<'_, EvmWiringT> {
     /// Commit the changes to the database.
     pub fn transact_commit(
         &mut self,
-    ) -> EVMResultGeneric<ExecutionResult<EvmWiringT::HaltReason>, EvmWiringT> {
+    ) -> EVMResultGeneric<
+        ExecutionResult<<EvmWiringT::ChainSpec as ChainSpec>::HaltReason>,
+        EvmWiringT,
+    > {
         let ResultAndState { result, state } = self.transact()?;
         self.context.evm.db.commit(state);
         Ok(result)
@@ -58,8 +64,8 @@ impl<EvmWiringT: EvmWiring<Database: DatabaseCommit>> Evm<'_, EvmWiringT> {
 
 impl<'a, EvmWiringT: EvmWiring> Evm<'a, EvmWiringT>
 where
-    EvmWiringT::Transaction: Default,
-    EvmWiringT::Block: Default,
+    <EvmWiringT::ChainSpec as ChainSpec>::Transaction: Default,
+    <EvmWiringT::ChainSpec as ChainSpec>::Block: Default,
 {
     /// Returns evm builder with the mainnet chain spec, empty database, and empty external context.
     pub fn builder() -> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
@@ -201,7 +207,7 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
     /// Returns specification (hardfork) that the EVM is instanced with.
     ///
     /// SpecId depends on the handler.
-    pub fn spec_id(&self) -> EvmWiringT::Hardfork {
+    pub fn spec_id(&self) -> <EvmWiringT::ChainSpec as ChainSpec>::Hardfork {
         self.handler.spec_id
     }
 
@@ -280,13 +286,13 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
 
     /// Returns the reference of transaction
     #[inline]
-    pub fn tx(&self) -> &EvmWiringT::Transaction {
+    pub fn tx(&self) -> &<EvmWiringT::ChainSpec as ChainSpec>::Transaction {
         &self.context.evm.env.tx
     }
 
     /// Returns the mutable reference of transaction
     #[inline]
-    pub fn tx_mut(&mut self) -> &mut EvmWiringT::Transaction {
+    pub fn tx_mut(&mut self) -> &mut <EvmWiringT::ChainSpec as ChainSpec>::Transaction {
         &mut self.context.evm.env.tx
     }
 
@@ -304,18 +310,18 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
 
     /// Returns the reference of block
     #[inline]
-    pub fn block(&self) -> &EvmWiringT::Block {
+    pub fn block(&self) -> &<EvmWiringT::ChainSpec as ChainSpec>::Block {
         &self.context.evm.env.block
     }
 
     /// Returns the mutable reference of block
     #[inline]
-    pub fn block_mut(&mut self) -> &mut EvmWiringT::Block {
+    pub fn block_mut(&mut self) -> &mut <EvmWiringT::ChainSpec as ChainSpec>::Block {
         &mut self.context.evm.env.block
     }
 
     /// Modify spec id, this will create new EVM that matches this spec id.
-    pub fn modify_spec_id(&mut self, spec_id: EvmWiringT::Hardfork) {
+    pub fn modify_spec_id(&mut self, spec_id: <EvmWiringT::ChainSpec as ChainSpec>::Hardfork) {
         self.context.evm.journaled_state.set_spec_id(spec_id.into());
         self.handler.modify_spec_id(spec_id);
     }
@@ -333,7 +339,7 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
     ) -> (
         EvmWiringT::Database,
         Box<EnvWiring<EvmWiringT>>,
-        EvmWiringT::Hardfork,
+        <EvmWiringT::ChainSpec as ChainSpec>::Hardfork,
     ) {
         (
             self.context.evm.inner.db,

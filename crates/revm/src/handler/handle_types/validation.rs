@@ -5,6 +5,7 @@ use wiring::{
     default::EnvWiring,
     result::{EVMResultGeneric, InvalidTransaction},
     transaction::TransactionValidation,
+    ChainSpec,
 };
 
 /// Handle that validates env.
@@ -32,7 +33,8 @@ pub struct ValidationHandler<'a, EvmWiringT: EvmWiring> {
 
 impl<'a, EvmWiringT: EvmWiring + 'a> ValidationHandler<'a, EvmWiringT>
 where
-    <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
+    <<EvmWiringT::ChainSpec as ChainSpec>::Transaction as TransactionValidation>::ValidationError:
+        From<InvalidTransaction>,
 {
     /// Create new ValidationHandles
     pub fn new<SPEC: Spec + 'a>() -> Self {

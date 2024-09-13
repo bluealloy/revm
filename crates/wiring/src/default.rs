@@ -4,6 +4,7 @@ pub mod transaction;
 use crate::block::blob::calc_blob_gasprice;
 use crate::result::InvalidHeader;
 use crate::transaction::TransactionValidation;
+use crate::ChainSpec;
 use crate::{result::InvalidTransaction, Block, EvmWiring, Transaction};
 use core::cmp::{min, Ordering};
 use core::fmt::Debug;
@@ -22,8 +23,10 @@ use std::boxed::Box;
 use std::vec::Vec;
 
 /// Subtype
-pub type EnvWiring<EvmWiringT> =
-    Env<<EvmWiringT as EvmWiring>::Block, <EvmWiringT as EvmWiring>::Transaction>;
+pub type EnvWiring<EvmWiringT> = Env<
+    <<EvmWiringT as EvmWiring>::ChainSpec as ChainSpec>::Block,
+    <<EvmWiringT as EvmWiring>::ChainSpec as ChainSpec>::Transaction,
+>;
 
 #[derive(Clone, Debug, Default)]
 /// EVM environment configuration.

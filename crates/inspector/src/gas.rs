@@ -79,8 +79,9 @@ mod tests {
         bytecode::Bytecode,
         interpreter::{opcode, Interpreter},
         primitives::{address, Bytes, Log, TxKind},
-        wiring::EvmWiring as PrimitiveEvmWiring,
-        wiring::{DefaultEthereumWiring, EthereumWiring},
+        wiring::{
+            ChainSpec, DefaultEthereumWiring, EthereumWiring, EvmWiring as PrimitiveEvmWiring,
+        },
         Evm, EvmWiring,
     };
 
@@ -181,7 +182,7 @@ mod tests {
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
             .with_default_ext_ctx()
             .modify_tx_env(|tx| {
-                *tx = <TestEvmWiring as PrimitiveEvmWiring>::Transaction::default();
+                *tx = <<TestEvmWiring as PrimitiveEvmWiring>::ChainSpec as ChainSpec>::Transaction::default();
 
                 tx.caller = address!("1000000000000000000000000000000000000000");
                 tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));

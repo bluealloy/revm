@@ -22,15 +22,9 @@ impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
 {
 }
 
-pub trait EvmWiring: Sized {
-    /// External context type
-    type ExternalContext: Sized;
-
+pub trait ChainSpec: Sized {
     /// Chain context type.
     type ChainContext: Sized + Default + Debug;
-
-    /// Database type.
-    type Database: Database;
 
     /// The type that contains all block information.
     type Block: Block;
@@ -45,19 +39,37 @@ pub trait EvmWiring: Sized {
     type HaltReason: HaltReasonTrait;
 }
 
+pub trait EvmWiring: Sized {
+    /// Chain specification type.
+    type ChainSpec: ChainSpec;
+
+    /// External context type
+    type ExternalContext: Sized;
+
+    /// Database type.
+    type Database: Database;
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EthereumChainSpec;
+
+impl ChainSpec for EthereumChainSpec {
+    type ChainContext = ();
+    type Block = crate::default::block::BlockEnv;
+    type Transaction = crate::default::TxEnv;
+    type Hardfork = SpecId;
+    type HaltReason = crate::result::HaltReason;
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EthereumWiring<DB: Database, EXT> {
     phantom: core::marker::PhantomData<(DB, EXT)>,
 }
 
 impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
+    type ChainSpec = EthereumChainSpec;
     type Database = DB;
     type ExternalContext = EXT;
-    type ChainContext = ();
-    type Block = crate::default::block::BlockEnv;
-    type Transaction = crate::default::TxEnv;
-    type Hardfork = SpecId;
-    type HaltReason = crate::result::HaltReason;
 }
 
 pub type DefaultEthereumWiring = EthereumWiring<EmptyDB, ()>;

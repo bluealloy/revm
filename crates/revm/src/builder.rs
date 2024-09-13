@@ -6,7 +6,7 @@ use wiring::{
     default::{CfgEnv, EnvWiring},
     result::InvalidTransaction,
     transaction::TransactionValidation,
-    EthereumWiring,
+    ChainSpec, EthereumWiring,
 };
 
 /// Evm Builder allows building or modifying EVM.
@@ -38,8 +38,8 @@ impl<'a> Default for EvmBuilder<'a, SetGenericStage, EthereumWiring<EmptyDB, ()>
 
 impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT>
 where
-    EvmWiringT::Transaction: Default,
-    EvmWiringT::Block: Default,
+    <EvmWiringT::ChainSpec as ChainSpec>::Transaction: Default,
+    <EvmWiringT::ChainSpec as ChainSpec>::Block: Default,
 {
     /// Sets the [`EvmWiring`] that will be used by [`Evm`].
     pub fn new() -> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
@@ -47,7 +47,9 @@ where
             database: None,
             external_context: None,
             env: Some(Box::new(EnvWiring::<EvmWiringT>::default())),
-            handler: EvmWiringT::handler::<'a>(EvmWiringT::Hardfork::default()),
+            handler: EvmWiringT::handler::<'a>(
+                <EvmWiringT::ChainSpec as ChainSpec>::Hardfork::default(),
+            ),
             phantom: PhantomData,
         }
     }
@@ -73,14 +75,16 @@ impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
         self,
     ) -> EvmBuilder<'a, SetGenericStage, NewEvmWiringT>
     where
-        NewEvmWiringT::Transaction: Default,
-        NewEvmWiringT::Block: Default,
+        <NewEvmWiringT::ChainSpec as ChainSpec>::Transaction: Default,
+        <NewEvmWiringT::ChainSpec as ChainSpec>::Block: Default,
     {
         EvmBuilder {
             database: None,
             external_context: None,
             env: Some(Box::new(EnvWiring::<NewEvmWiringT>::default())),
-            handler: NewEvmWiringT::handler::<'a>(NewEvmWiringT::Hardfork::default()),
+            handler: NewEvmWiringT::handler::<'a>(
+                <NewEvmWiringT::ChainSpec as ChainSpec>::Hardfork::default(),
+            ),
             phantom: PhantomData,
         }
     }
@@ -88,10 +92,12 @@ impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
     pub fn reset_handler_with_external_context<
         NewEvmWiringT: EvmWiring<
             Database = EvmWiringT::Database,
-            Block = EvmWiringT::Block,
-            Transaction = EvmWiringT::Transaction,
-            Hardfork = EvmWiringT::Hardfork,
-            HaltReason = EvmWiringT::HaltReason,
+            ChainSpec: ChainSpec<
+                Block = <EvmWiringT::ChainSpec as ChainSpec>::Block,
+                Transaction = <EvmWiringT::ChainSpec as ChainSpec>::Transaction,
+                Hardfork = <EvmWiringT::ChainSpec as ChainSpec>::Hardfork,
+                HaltReason = <EvmWiringT::ChainSpec as ChainSpec>::HaltReason,
+            >,
         >,
     >(
         self,
@@ -101,7 +107,9 @@ impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
             external_context: None,
             env: self.env,
             // Handler that will be used by EVM. It contains handle registers
-            handler: NewEvmWiringT::handler::<'a>(NewEvmWiringT::Hardfork::default()),
+            handler: NewEvmWiringT::handler::<'a>(
+                <NewEvmWiringT::ChainSpec as ChainSpec>::Hardfork::default(),
+            ),
             phantom: PhantomData,
         }
     }
@@ -109,10 +117,12 @@ impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
     pub fn reset_new_database<
         NewEvmWiringT: EvmWiring<
             ExternalContext = EvmWiringT::ExternalContext,
-            Block = EvmWiringT::Block,
-            Transaction = EvmWiringT::Transaction,
-            Hardfork = EvmWiringT::Hardfork,
-            HaltReason = EvmWiringT::HaltReason,
+            ChainSpec: ChainSpec<
+                Block = <EvmWiringT::ChainSpec as ChainSpec>::Block,
+                Transaction = <EvmWiringT::ChainSpec as ChainSpec>::Transaction,
+                Hardfork = <EvmWiringT::ChainSpec as ChainSpec>::Hardfork,
+                HaltReason = <EvmWiringT::ChainSpec as ChainSpec>::HaltReason,
+            >,
         >,
     >(
         self,
@@ -122,7 +132,9 @@ impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
             external_context: self.external_context,
             env: self.env,
             // Handler that will be used by EVM. It contains handle registers
-            handler: NewEvmWiringT::handler::<'a>(NewEvmWiringT::Hardfork::default()),
+            handler: NewEvmWiringT::handler::<'a>(
+                <NewEvmWiringT::ChainSpec as ChainSpec>::Hardfork::default(),
+            ),
             phantom: PhantomData,
         }
     }
@@ -130,8 +142,11 @@ impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
 
 impl<'a, EvmWiringT> EvmBuilder<'a, SetGenericStage, EvmWiringT>
 where
-    EvmWiringT:
-        EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
+    EvmWiringT: EvmWiring<
+        ChainSpec: ChainSpec<
+            Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>,
+        >,
+    >,
 {
     /// Creates the default [EvmWiring]::[crate::Database] that will be used by [`Evm`].
     pub fn with_default_db(mut self) -> EvmBuilder<'a, SetGenericStage, EvmWiringT>
@@ -376,25 +391,37 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring> EvmBuilder<'a, BuilderStage, EvmWi
     }
 
     /// Allows modification of Evm's Transaction Environment.
-    pub fn modify_tx_env(mut self, f: impl FnOnce(&mut EvmWiringT::Transaction)) -> Self {
+    pub fn modify_tx_env(
+        mut self,
+        f: impl FnOnce(&mut <EvmWiringT::ChainSpec as ChainSpec>::Transaction),
+    ) -> Self {
         f(&mut self.env.as_mut().unwrap().tx);
         self
     }
 
     /// Sets Evm's Transaction Environment.
-    pub fn with_tx_env(mut self, tx_env: EvmWiringT::Transaction) -> Self {
+    pub fn with_tx_env(
+        mut self,
+        tx_env: <EvmWiringT::ChainSpec as ChainSpec>::Transaction,
+    ) -> Self {
         self.env.as_mut().unwrap().tx = tx_env;
         self
     }
 
     /// Allows modification of Evm's Block Environment.
-    pub fn modify_block_env(mut self, f: impl FnOnce(&mut EvmWiringT::Block)) -> Self {
+    pub fn modify_block_env(
+        mut self,
+        f: impl FnOnce(&mut <EvmWiringT::ChainSpec as ChainSpec>::Block),
+    ) -> Self {
         f(&mut self.env.as_mut().unwrap().block);
         self
     }
 
     /// Sets Evm's Block Environment.
-    pub fn with_block_env(mut self, block_env: EvmWiringT::Block) -> Self {
+    pub fn with_block_env(
+        mut self,
+        block_env: <EvmWiringT::ChainSpec as ChainSpec>::Block,
+    ) -> Self {
         self.env.as_mut().unwrap().block = block_env;
         self
     }
@@ -408,29 +435,30 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring> EvmBuilder<'a, BuilderStage, EvmWi
 
 impl<'a, BuilderStage, EvmWiringT> EvmBuilder<'a, BuilderStage, EvmWiringT>
 where
-    EvmWiringT: EvmWiring<Block: Default>,
+    EvmWiringT: EvmWiring<ChainSpec: ChainSpec<Block: Default>>,
 {
     /// Clears Block environment of EVM.
     pub fn with_clear_block_env(mut self) -> Self {
-        self.env.as_mut().unwrap().block = EvmWiringT::Block::default();
+        self.env.as_mut().unwrap().block = <EvmWiringT::ChainSpec as ChainSpec>::Block::default();
         self
     }
 }
 
 impl<'a, BuilderStage, EvmWiringT> EvmBuilder<'a, BuilderStage, EvmWiringT>
 where
-    EvmWiringT: EvmWiring<Transaction: Default>,
+    EvmWiringT: EvmWiring<ChainSpec: ChainSpec<Transaction: Default>>,
 {
     /// Clears Transaction environment of EVM.
     pub fn with_clear_tx_env(mut self) -> Self {
-        self.env.as_mut().unwrap().tx = EvmWiringT::Transaction::default();
+        self.env.as_mut().unwrap().tx =
+            <EvmWiringT::ChainSpec as ChainSpec>::Transaction::default();
         self
     }
 }
 
 impl<'a, BuilderStage, EvmWiringT> EvmBuilder<'a, BuilderStage, EvmWiringT>
 where
-    EvmWiringT: EvmWiring<Block: Default, Transaction: Default>,
+    EvmWiringT: EvmWiring<ChainSpec: ChainSpec<Block: Default, Transaction: Default>>,
 {
     /// Clears Environment of EVM.
     pub fn with_clear_env(mut self) -> Self {
@@ -441,8 +469,11 @@ where
 
 impl<'a, BuilderStage, EvmWiringT: EvmWiring> EvmBuilder<'a, BuilderStage, EvmWiringT>
 where
-    EvmWiringT:
-        EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
+    EvmWiringT: EvmWiring<
+        ChainSpec: ChainSpec<
+            Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>,
+        >,
+    >,
 {
     /// Sets specification Id , that will mark the version of EVM.
     /// It represent the hard fork of ethereum.
@@ -451,7 +482,7 @@ where
     ///
     /// When changed it will reapply all handle registers, this can be
     /// expensive operation depending on registers.
-    pub fn with_spec_id(mut self, spec_id: EvmWiringT::Hardfork) -> Self {
+    pub fn with_spec_id(mut self, spec_id: <EvmWiringT::ChainSpec as ChainSpec>::Hardfork) -> Self {
         self.handler.modify_spec_id(spec_id);
         self
     }

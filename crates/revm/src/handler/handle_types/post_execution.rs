@@ -3,7 +3,10 @@ use crate::{handler::mainnet, Context, EvmWiring, FrameResult};
 use interpreter::Gas;
 use specification::hardfork::Spec;
 use std::sync::Arc;
-use wiring::result::{EVMResult, EVMResultGeneric, ResultAndState};
+use wiring::{
+    result::{EVMResult, EVMResultGeneric, ResultAndState},
+    ChainSpec,
+};
 
 /// Reimburse the caller with ethereum it didn't spent.
 pub type ReimburseCallerHandle<'a, EvmWiringT> =
@@ -98,7 +101,10 @@ impl<'a, EvmWiringT: EvmWiring> PostExecutionHandler<'a, EvmWiringT> {
     pub fn end(
         &self,
         context: &mut Context<EvmWiringT>,
-        end_output: EVMResultGeneric<ResultAndState<EvmWiringT::HaltReason>, EvmWiringT>,
+        end_output: EVMResultGeneric<
+            ResultAndState<<EvmWiringT::ChainSpec as ChainSpec>::HaltReason>,
+            EvmWiringT,
+        >,
     ) -> EVMResult<EvmWiringT> {
         (self.end)(context, end_output)
     }

@@ -22,7 +22,7 @@ pub use l1block::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_REC
 pub use result::{OptimismHaltReason, OptimismInvalidTransaction};
 use revm::{
     primitives::{Bytes, B256},
-    wiring::TransactionValidation,
+    wiring::{ChainSpec, TransactionValidation},
 };
 pub use spec::*;
 
@@ -63,8 +63,8 @@ pub trait OptimismTransaction {
 }
 
 /// Trait for an Optimism chain spec.
-pub trait OptimismWiring:
-    revm::EvmWiring<
+pub trait OptimismChainSpec:
+    ChainSpec<
     ChainContext: OptimismContext,
     Hardfork = OptimismSpecId,
     HaltReason = OptimismHaltReason,
@@ -74,13 +74,21 @@ pub trait OptimismWiring:
 {
 }
 
-impl<EvmWiringT> OptimismWiring for EvmWiringT where
-    EvmWiringT: revm::EvmWiring<
+impl<ChainSpecT> OptimismChainSpec for ChainSpecT where
+    ChainSpecT: ChainSpec<
         ChainContext: OptimismContext,
         Hardfork = OptimismSpecId,
         HaltReason = OptimismHaltReason,
         Transaction: OptimismTransaction
                          + TransactionValidation<ValidationError = OptimismInvalidTransaction>,
     >
+{
+}
+
+/// Trait for Optimism `EvmWiring`.
+pub trait OptimismWiring: revm::EvmWiring<ChainSpec: OptimismChainSpec> {}
+
+impl<EvmWiringT> OptimismWiring for EvmWiringT where
+    EvmWiringT: revm::EvmWiring<ChainSpec: OptimismChainSpec>
 {
 }

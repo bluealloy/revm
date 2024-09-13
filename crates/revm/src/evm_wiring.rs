@@ -7,15 +7,15 @@ use interpreter::opcode::InstructionTables;
 use specification::spec_to_generic;
 use std::fmt::Debug;
 use std::vec::Vec;
-use wiring::{EthereumWiring, EvmWiring as PrimitiveEvmWiring};
+use wiring::{ChainSpec, EthereumWiring, EvmWiring as PrimitiveEvmWiring};
 
 pub trait EvmWiring: PrimitiveEvmWiring {
     /// Creates a new handler with the given hardfork.
-    fn handler<'evm>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self>;
+    fn handler<'evm>(hardfork: <Self::ChainSpec as ChainSpec>::Hardfork) -> EvmHandler<'evm, Self>;
 }
 
 impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
-    fn handler<'evm>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self>
+    fn handler<'evm>(hardfork: <Self::ChainSpec as ChainSpec>::Hardfork) -> EvmHandler<'evm, Self>
     where
         DB: Database,
     {

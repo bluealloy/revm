@@ -17,6 +17,7 @@ use std::vec::Vec;
 use wiring::{
     result::{EVMResultGeneric, InvalidTransaction},
     transaction::TransactionValidation,
+    ChainSpec,
 };
 
 use self::register::{HandleRegister, HandleRegisterBox};
@@ -26,7 +27,7 @@ use self::register::{HandleRegister, HandleRegisterBox};
 /// to disable some mainnet behavior.
 pub struct Handler<'a, EvmWiringT: EvmWiring, H: Host + 'a> {
     /// Handler hardfork
-    pub spec_id: EvmWiringT::Hardfork,
+    pub spec_id: <EvmWiringT::ChainSpec as ChainSpec>::Hardfork,
     /// Instruction table type.
     pub instruction_table: InstructionTables<'a, H>,
     /// Registers that will be called on initialization.
@@ -43,11 +44,14 @@ pub struct Handler<'a, EvmWiringT: EvmWiring, H: Host + 'a> {
 
 impl<'a, EvmWiringT> EvmHandler<'a, EvmWiringT>
 where
-    EvmWiringT:
-        EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
+    EvmWiringT: EvmWiring<
+        ChainSpec: ChainSpec<
+            Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>,
+        >,
+    >,
 {
     /// Creates a base/vanilla Ethereum handler with the provided spec id.
-    pub fn mainnet_with_spec(spec_id: EvmWiringT::Hardfork) -> Self {
+    pub fn mainnet_with_spec(spec_id: <EvmWiringT::ChainSpec as ChainSpec>::Hardfork) -> Self {
         spec_to_generic!(
             spec_id.into(),
             Self {
@@ -65,7 +69,7 @@ where
 
 impl<'a, EvmWiringT: EvmWiring> EvmHandler<'a, EvmWiringT> {
     /// Returns the specification ID.
-    pub fn spec_id(&self) -> EvmWiringT::Hardfork {
+    pub fn spec_id(&self) -> <EvmWiringT::ChainSpec as ChainSpec>::Hardfork {
         self.spec_id
     }
 
@@ -150,7 +154,7 @@ impl<'a, EvmWiringT: EvmWiring> EvmHandler<'a, EvmWiringT> {
     }
 
     /// Creates the Handler with variable SpecId, inside it will call function with Generic Spec.
-    pub fn modify_spec_id(&mut self, spec_id: EvmWiringT::Hardfork) {
+    pub fn modify_spec_id(&mut self, spec_id: <EvmWiringT::ChainSpec as ChainSpec>::Hardfork) {
         if self.spec_id == spec_id {
             return;
         }
@@ -189,7 +193,7 @@ mod test {
         };
 
         let mut handler = EvmHandler::<'_, TestEvmWiring>::mainnet_with_spec(
-            <TestEvmWiring as EvmWiring>::Hardfork::default(),
+            <<TestEvmWiring as EvmWiring>::ChainSpec as ChainSpec>::Hardfork::default(),
         );
         let test = Rc::new(RefCell::new(0));
 

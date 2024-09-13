@@ -19,11 +19,11 @@ use state::Account;
 use std::{boxed::Box, sync::Arc};
 use wiring::{
     default::{AnalysisKind, CfgEnv, EnvWiring},
-    EvmWiring, Transaction,
+    ChainSpec, EvmWiring, Transaction,
 };
 
 /// EVM contexts contains data that EVM needs for execution.
-#[derive_where(Clone, Debug; EvmWiringT::Block, EvmWiringT::ChainContext, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error)]
+#[derive_where(Clone, Debug; <EvmWiringT::ChainSpec as ChainSpec>::Block, <EvmWiringT::ChainSpec as ChainSpec>::ChainContext, <EvmWiringT::ChainSpec as ChainSpec>::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error)]
 pub struct InnerEvmContext<EvmWiringT: EvmWiring> {
     /// EVM Environment contains all the information about config, block and transaction that
     /// evm needs.
@@ -33,14 +33,14 @@ pub struct InnerEvmContext<EvmWiringT: EvmWiring> {
     /// Database to load data from.
     pub db: EvmWiringT::Database,
     /// Inner context.
-    pub chain: EvmWiringT::ChainContext,
+    pub chain: <EvmWiringT::ChainSpec as ChainSpec>::ChainContext,
     /// Error that happened during execution.
     pub error: Result<(), <EvmWiringT::Database as Database>::Error>,
 }
 
 impl<EvmWiringT> InnerEvmContext<EvmWiringT>
 where
-    EvmWiringT: EvmWiring<Block: Default, Transaction: Default>,
+    EvmWiringT: EvmWiring<ChainSpec: ChainSpec<Block: Default, Transaction: Default>>,
 {
     pub fn new(db: EvmWiringT::Database) -> Self {
         Self {
@@ -71,7 +71,12 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
     /// Note that this will ignore the previous `error` if set.
     #[inline]
     pub fn with_db<
-        OWiring: EvmWiring<Block = EvmWiringT::Block, Transaction = EvmWiringT::Transaction>,
+        OWiring: EvmWiring<
+            ChainSpec: ChainSpec<
+                Block = <EvmWiringT::ChainSpec as ChainSpec>::Block,
+                Transaction = <EvmWiringT::ChainSpec as ChainSpec>::Transaction,
+            >,
+        >,
     >(
         self,
         db: OWiring::Database,

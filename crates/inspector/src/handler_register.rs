@@ -269,7 +269,9 @@ mod tests {
         database_interface::EmptyDB,
         interpreter::{opcode, CallInputs, CallOutcome, CreateInputs, CreateOutcome},
         primitives::{address, Bytes, TxKind},
-        wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring as PrimitiveEvmWiring},
+        wiring::{
+            ChainSpec, DefaultEthereumWiring, EthereumWiring, EvmWiring as PrimitiveEvmWiring,
+        },
         Evm, EvmContext, EvmWiring,
     };
 
@@ -374,7 +376,7 @@ mod tests {
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
             .with_external_context(StackInspector::default())
             .modify_tx_env(|tx| {
-                *tx = <TestEvmWiring as PrimitiveEvmWiring>::Transaction::default();
+                *tx = <<TestEvmWiring as PrimitiveEvmWiring>::ChainSpec as ChainSpec>::Transaction::default();
 
                 tx.caller = address!("1000000000000000000000000000000000000000");
                 tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));

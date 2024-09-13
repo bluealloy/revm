@@ -8,27 +8,34 @@ use revm::{
     precompile::PrecompileSpecId,
     specification::hardfork::{Spec, SpecId},
     wiring::default::block::BlockEnv,
-    wiring::EvmWiring,
+    wiring::{ChainSpec, EvmWiring},
     EvmHandler,
 };
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct OptimismChainSpec;
+
+impl ChainSpec for OptimismChainSpec {
+    type Block = BlockEnv;
+    type ChainContext = Context;
+    type Transaction = TxEnv;
+    type Hardfork = OptimismSpecId;
+    type HaltReason = OptimismHaltReason;
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct OptimismEvmWiring<DB: Database, EXT> {
-    _phantom: PhantomData<(DB, EXT)>,
+    phantom: PhantomData<(DB, EXT)>,
 }
 
 impl<DB: Database, EXT> EvmWiring for OptimismEvmWiring<DB, EXT> {
-    type Block = BlockEnv;
+    type ChainSpec = OptimismChainSpec;
     type Database = DB;
-    type ChainContext = Context;
     type ExternalContext = EXT;
-    type Hardfork = OptimismSpecId;
-    type HaltReason = OptimismHaltReason;
-    type Transaction = TxEnv;
 }
 
 impl<DB: Database, EXT> revm::EvmWiring for OptimismEvmWiring<DB, EXT> {
-    fn handler<'evm>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self>
+    fn handler<'evm>(hardfork: <Self::ChainSpec as ChainSpec>::Hardfork) -> EvmHandler<'evm, Self>
     where
         DB: Database,
     {

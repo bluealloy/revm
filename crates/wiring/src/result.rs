@@ -1,4 +1,8 @@
-use crate::{evm_wiring::HaltReasonTrait, transaction::TransactionValidation, EvmWiring};
+use crate::{
+    evm_wiring::{ChainSpec, HaltReasonTrait},
+    transaction::TransactionValidation,
+    EvmWiring,
+};
 use core::fmt::{self, Debug};
 use database_interface::Database;
 use primitives::{Address, Bytes, Log, U256};
@@ -7,16 +11,18 @@ use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
 
 /// Result of EVM execution.
-pub type EVMResult<EvmWiringT> =
-    EVMResultGeneric<ResultAndState<<EvmWiringT as EvmWiring>::HaltReason>, EvmWiringT>;
+pub type EVMResult<EvmWiringT> = EVMResultGeneric<
+    ResultAndState<<<EvmWiringT as EvmWiring>::ChainSpec as ChainSpec>::HaltReason>,
+    EvmWiringT,
+>;
 
 /// Generic result of EVM execution. Used to represent error and generic output.
-pub type EVMResultGeneric<T, EvmWiringT> = core::result::Result<T, EVMErrorForChain<EvmWiringT>>;
+pub type EVMResultGeneric<T, EvmWiringT> = core::result::Result<T, EVMErrorWiring<EvmWiringT>>;
 
 /// EVM error type for a specific chain.
-pub type EVMErrorForChain<EvmWiringT> = EVMError<
-    <<EvmWiringT as EvmWiring>::Database as Database>::Error,
-    <<EvmWiringT as EvmWiring>::Transaction as TransactionValidation>::ValidationError,
+pub type EVMErrorForChain<ChainSpecT, DatabaseErrorT> = EVMError<
+    DatabaseErrorT,
+    <<ChainSpecT as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
 >;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -147,7 +153,7 @@ impl Output {
 
 pub type EVMErrorWiring<EvmWiringT> = EVMError<
     <<EvmWiringT as EvmWiring>::Database as Database>::Error,
-    <<EvmWiringT as EvmWiring>::Transaction as TransactionValidation>::ValidationError,
+    <<<EvmWiringT as EvmWiring>::ChainSpec as ChainSpec>::Transaction as TransactionValidation>::ValidationError,
 >;
 
 /// Main EVM error.
