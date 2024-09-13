@@ -133,6 +133,11 @@ name = "db_by_ref"
 path = "../../examples/db_by_ref.rs"
 required-features = ["std", "serde-json"]
 
+[[example]]
+name = "deploy"
+path = "../../examples/deploy.rs"
+required-features = []
+
 #[[example]]
 #name = "uniswap_v2_usdc_swap"
 #path = "../../examples/uniswap_v2_usdc_swap.rs"
