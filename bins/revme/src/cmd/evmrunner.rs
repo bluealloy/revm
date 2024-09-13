@@ -1,13 +1,15 @@
 use clap::Parser;
 use revm::{
-    db::BenchmarkDB,
+    db::{BenchmarkDB, EthereumBenchmarkWiring},
     inspector_handle_register,
     inspectors::TracerEip3155,
     interpreter::{
         analysis::to_analysed, opcode::make_instruction_table, Contract, DummyHost, Interpreter,
         EMPTY_SHARED_MEMORY,
     },
-    primitives::{address, Address, Bytecode, BytecodeDecodeError,  Bytes, EthereumWiring, LatestSpec, TxKind},
+    primitives::{
+        address, Address, Bytecode, BytecodeDecodeError, Bytes, EthereumWiring, LatestSpec, TxKind,
+    },
     Database, Evm,
 };
 use std::io::Error as IoError;
@@ -81,7 +83,7 @@ impl Cmd {
             run_benchmark(bytecode_str);
             return Ok(());
         }
-        
+
         let mut db = BenchmarkDB::new_bytecode(Bytecode::new_raw_checked(bytecode.into())?);
 
         let nonce = db.basic(CALLER).unwrap().map_or(0, |account| account.nonce);
@@ -97,12 +99,12 @@ impl Cmd {
                 tx.data = input;
                 tx.nonce = nonce;
             })
+            .with_external_context(TracerEip3155::new(Box::new(std::io::stdout())))
             .build();
 
         let out = if self.trace {
             let mut evm = evm
                 .modify()
-                .with_external_context(TracerEip3155::new(Box::new(std::io::stdout())))
                 .append_handler_register(inspector_handle_register)
                 .build();
 
@@ -122,16 +124,19 @@ impl Cmd {
 }
 
 fn run_benchmark(bytecode_str: Cow<str>) {
-    let evm = Evm::builder()
+    let evm = Evm::<EthereumBenchmarkWiring>::builder()
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
         .modify_tx_env(|tx| {
-            tx.caller = address!("1000000000000000000000000000000000000000");
-            tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
+            tx.caller = "1000000000000000000000000000000000000000".parse().unwrap();
+            tx.transact_to =
+                TxKind::Call("0000000000000000000000000000000000000000".parse().unwrap());
         })
+        .with_external_context(())
         .build();
 
     let host = DummyHost::new(*evm.context.evm.env.clone());
-    let instruction_table = make_instruction_table::<DummyHost, LatestSpec>();
+    let instruction_table =
+        make_instruction_table::<DummyHost<EthereumWiring<BenchmarkDB, ()>>, LatestSpec>();
     let contract = Contract {
         input: Bytes::from(hex::decode("").unwrap()),
         bytecode: to_analysed(Bytecode::new_raw(
