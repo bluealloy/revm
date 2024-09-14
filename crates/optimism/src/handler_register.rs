@@ -278,12 +278,10 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 ) -> EVMResultGeneric<(), EvmWiringT> {
     let is_deposit = context.evm.inner.env.tx.source_hash().is_some();
 
-    // transfer fee to coinbase/beneficiary.
+    // transfer fee to coinbase/beneficiary if the transaction is not a deposit.
     if !is_deposit {
         mainnet::reward_beneficiary::<EvmWiringT, SPEC>(context, gas)?;
-    }
 
-    if !is_deposit {
         // If the transaction is not a deposit transaction, fees are paid out
         // to both the Base Fee Vault as well as the L1 Fee Vault.
         let l1_block_info = context
@@ -299,32 +297,36 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
         };
 
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, SPEC::OPTIMISM_SPEC_ID);
-
-        // Send the L1 cost of the transaction to the L1 Fee Vault.
-        let mut l1_fee_vault_account = context
-            .evm
-            .inner
-            .journaled_state
-            .load_account(L1_FEE_RECIPIENT, &mut context.evm.inner.db)
-            .map_err(EVMError::Database)?;
-        l1_fee_vault_account.mark_touch();
-        l1_fee_vault_account.info.balance += l1_cost;
+        if l1_cost.gt(&U256::ZERO) {
+            // Send the L1 cost of the transaction to the L1 Fee Vault.
+            let mut l1_fee_vault_account = context
+                .evm
+                .inner
+                .journaled_state
+                .load_account(L1_FEE_RECIPIENT, &mut context.evm.inner.db)
+                .map_err(EVMError::Database)?;
+            l1_fee_vault_account.mark_touch();
+            l1_fee_vault_account.info.balance += l1_cost;
+        }
 
         // Send the base fee of the transaction to the Base Fee Vault.
-        let mut base_fee_vault_account = context
-            .evm
-            .inner
-            .journaled_state
-            .load_account(BASE_FEE_RECIPIENT, &mut context.evm.inner.db)
-            .map_err(EVMError::Database)?;
-        base_fee_vault_account.mark_touch();
-        base_fee_vault_account.info.balance += context
+        let reward = context
             .evm
             .inner
             .env
             .block
             .basefee()
             .mul(U256::from(gas.spent() - gas.refunded() as u64));
+        if reward.gt(&U256::ZERO) {
+            let mut base_fee_vault_account = context
+                .evm
+                .inner
+                .journaled_state
+                .load_account(BASE_FEE_RECIPIENT, &mut context.evm.inner.db)
+                .map_err(EVMError::Database)?;
+            base_fee_vault_account.mark_touch();
+            base_fee_vault_account.info.balance += reward;
+        }
     }
     Ok(())
 }
