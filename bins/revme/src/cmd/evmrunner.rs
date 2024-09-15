@@ -5,7 +5,7 @@ use revm::{
     inspectors::TracerEip3155,
     interpreter::{
         analysis::to_analysed, opcode::make_instruction_table, Contract, DummyHost, Interpreter,
-        EMPTY_SHARED_MEMORY,
+        SharedMemory,
     },
     primitives::{
         address, Address, Bytecode, BytecodeDecodeError, Bytes, EthereumWiring, LatestSpec, TxKind,
@@ -144,13 +144,16 @@ fn run_benchmark(bytecode_str: Cow<str>) {
         )),
         ..Default::default()
     };
-    let mut criterion = criterion::Criterion::default();
 
+    let mut criterion = criterion::Criterion::default()
+        .warm_up_time(std::time::Duration::from_millis(100))
+        .measurement_time(std::time::Duration::from_secs(1))
+        .without_plots();
     let mut criterion_group = criterion.benchmark_group("revme");
     criterion_group.bench_function("bytecode", |b| {
         b.iter(|| {
             Interpreter::new(contract.clone(), u64::MAX, false).run(
-                EMPTY_SHARED_MEMORY,
+                SharedMemory::new(),
                 &instruction_table,
                 &mut host.clone(),
             );
