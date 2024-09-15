@@ -18,8 +18,8 @@ use std::{
 #[derive(Debug)]
 pub struct BundleBuilder {
     states: HashSet<Address>,
-    state_original: HashMap<Address, AccountInfo>,
-    state_present: HashMap<Address, AccountInfo>,
+    state_original: HashMap<Address, Option<AccountInfo>>,
+    state_present: HashMap<Address, Option<AccountInfo>>,
     state_storage: HashMap<Address, HashMap<U256, (U256, U256)>>,
 
     reverts: BTreeSet<(u64, Address)>,
@@ -103,13 +103,21 @@ impl BundleBuilder {
     }
 
     /// Collect account info of BundleState state
-    pub fn state_original_account_info(mut self, address: Address, original: AccountInfo) -> Self {
+    pub fn state_original_account_info(
+        mut self,
+        address: Address,
+        original: Option<AccountInfo>,
+    ) -> Self {
         self.set_state_original_account_info(address, original);
         self
     }
 
     /// Collect account info of BundleState state
-    pub fn state_present_account_info(mut self, address: Address, present: AccountInfo) -> Self {
+    pub fn state_present_account_info(
+        mut self,
+        address: Address,
+        present: Option<AccountInfo>,
+    ) -> Self {
         self.set_state_present_account_info(address, present);
         self
     }
@@ -173,7 +181,7 @@ impl BundleBuilder {
     pub fn set_state_original_account_info(
         &mut self,
         address: Address,
-        original: AccountInfo,
+        original: Option<AccountInfo>,
     ) -> &mut Self {
         self.states.insert(address);
         self.state_original.insert(address, original);
@@ -184,7 +192,7 @@ impl BundleBuilder {
     pub fn set_state_present_account_info(
         &mut self,
         address: Address,
-        present: AccountInfo,
+        present: Option<AccountInfo>,
     ) -> &mut Self {
         self.states.insert(address);
         self.state_present.insert(address, present);
@@ -255,8 +263,8 @@ impl BundleBuilder {
                     })
                     .unwrap_or_default();
                 let bundle_account = BundleAccount::new(
-                    self.state_original.remove(&address),
-                    self.state_present.remove(&address),
+                    self.state_original.remove(&address).unwrap_or_default(),
+                    self.state_present.remove(&address).unwrap_or_default(),
                     storage,
                     AccountStatus::Changed,
                 );
@@ -327,12 +335,12 @@ impl BundleBuilder {
     }
 
     /// Mutable getter for `state_original` field
-    pub fn get_state_original_mut(&mut self) -> &mut HashMap<Address, AccountInfo> {
+    pub fn get_state_original_mut(&mut self) -> &mut HashMap<Address, Option<AccountInfo>> {
         &mut self.state_original
     }
 
     /// Mutable getter for `state_present` field
-    pub fn get_state_present_mut(&mut self) -> &mut HashMap<Address, AccountInfo> {
+    pub fn get_state_present_mut(&mut self) -> &mut HashMap<Address, Option<AccountInfo>> {
         &mut self.state_present
     }
 
@@ -960,12 +968,12 @@ mod tests {
         BundleState::builder(0..=0)
             .state_present_account_info(
                 account1(),
-                AccountInfo {
+                Some(AccountInfo {
                     nonce: 1,
                     balance: U256::from(10),
                     code_hash: KECCAK_EMPTY,
                     code: None,
-                },
+                }),
             )
             .state_storage(
                 account1(),
@@ -974,12 +982,12 @@ mod tests {
             .state_address(account2())
             .state_present_account_info(
                 account2(),
-                AccountInfo {
+                Some(AccountInfo {
                     nonce: 1,
                     balance: U256::from(10),
                     code_hash: KECCAK_EMPTY,
                     code: None,
-                },
+                }),
             )
             .revert_address(0, account1())
             .revert_account_info(0, account1(), Some(None))
@@ -993,12 +1001,12 @@ mod tests {
         BundleState::builder(0..=0)
             .state_present_account_info(
                 account1(),
-                AccountInfo {
+                Some(AccountInfo {
                     nonce: 3,
                     balance: U256::from(20),
                     code_hash: KECCAK_EMPTY,
                     code: None,
-                },
+                }),
             )
             .state_storage(
                 account1(),
@@ -1215,12 +1223,12 @@ mod tests {
         };
 
         let present_state = BundleState::builder(2..=2)
-            .state_present_account_info(address1, account1_changed.clone())
+            .state_present_account_info(address1, Some(account1_changed.clone()))
             .build();
         assert_eq!(present_state.reverts.len(), 1);
         let previous_state = BundleState::builder(1..=1)
-            .state_present_account_info(address1, account1)
-            .state_present_account_info(address2, account2.clone())
+            .state_present_account_info(address1, Some(account1))
+            .state_present_account_info(address2, Some(account2.clone()))
             .build();
         assert_eq!(previous_state.reverts.len(), 1);
 
@@ -1253,14 +1261,14 @@ mod tests {
         assert!(builder.get_state_original_mut().is_empty());
         builder
             .get_state_original_mut()
-            .insert(account1(), AccountInfo::default());
+            .insert(account1(), Some(AccountInfo::default()));
         assert!(builder.get_state_original_mut().contains_key(&account1()));
 
         // Test get_state_present_mut
         assert!(builder.get_state_present_mut().is_empty());
         builder
             .get_state_present_mut()
-            .insert(account1(), AccountInfo::default());
+            .insert(account1(), Some(AccountInfo::default()));
         assert!(builder.get_state_present_mut().contains_key(&account1()));
 
         // Test get_state_storage_mut
@@ -1302,5 +1310,28 @@ mod tests {
             .get_contracts_mut()
             .insert(B256::default(), Bytecode::default());
         assert!(builder.get_contracts_mut().contains_key(&B256::default()));
+    }
+
+    #[test]
+    fn destroyed_account() {
+        let address1 = account1();
+        let address2 = account2();
+
+        // Test to insert None as present state account info
+        let present_state = BundleState::builder(2..=2)
+            .state_present_account_info(address1, None)
+            .build();
+        assert!(present_state.state.get(&address1).unwrap().info.is_none());
+
+        // Test to insert None as original state account info
+        let original_state = BundleState::builder(2..=2)
+            .state_original_account_info(address2, None)
+            .build();
+        assert!(original_state
+            .state
+            .get(&address2)
+            .unwrap()
+            .original_info
+            .is_none());
     }
 }
