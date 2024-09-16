@@ -581,6 +581,68 @@ impl BundleState {
         self.reverts.push(reverts);
     }
 
+    /// Generate a [`StateChangeset`] from the bundle state without consuming
+    /// it.
+    pub fn to_plain_state(&self, is_value_known: OriginalValuesKnown) -> StateChangeset {
+        // pessimistically pre-allocate assuming _all_ accounts changed.
+        let state_len = self.state.len();
+        let mut accounts = Vec::with_capacity(state_len);
+        let mut storage = Vec::with_capacity(state_len);
+
+        for (address, account) in self.state.iter() {
+            // append account info if it is changed.
+            let was_destroyed = account.was_destroyed();
+            if is_value_known.is_not_known() || account.is_info_changed() {
+                let info = account.info.as_ref().map(AccountInfo::without_code);
+                accounts.push((*address, info));
+            }
+
+            // append storage changes
+
+            // NOTE: Assumption is that revert is going to remove whole plain storage from
+            // database so we can check if plain state was wiped or not.
+            let mut account_storage_changed = Vec::with_capacity(account.storage.len());
+
+            for (key, slot) in account.storage.iter().map(|(k, v)| (*k, *v)) {
+                // If storage was destroyed that means that storage was wiped.
+                // In that case we need to check if present storage value is different then ZERO.
+                let destroyed_and_not_zero = was_destroyed && !slot.present_value.is_zero();
+
+                // If account is not destroyed check if original values was changed,
+                // so we can update it.
+                let not_destroyed_and_changed = !was_destroyed && slot.is_changed();
+
+                if is_value_known.is_not_known()
+                    || destroyed_and_not_zero
+                    || not_destroyed_and_changed
+                {
+                    account_storage_changed.push((key, slot.present_value));
+                }
+            }
+
+            if !account_storage_changed.is_empty() || was_destroyed {
+                // append storage changes to account.
+                storage.push(PlainStorageChangeset {
+                    address: *address,
+                    wipe_storage: was_destroyed,
+                    storage: account_storage_changed,
+                });
+            }
+        }
+
+        let contracts = self
+            .contracts
+            .iter()
+            // remove empty bytecodes
+            .filter_map(|(b, code)| (*b != KECCAK_EMPTY).then_some((*b, code.clone())))
+            .collect::<Vec<_>>();
+        StateChangeset {
+            accounts,
+            storage,
+            contracts,
+        }
+    }
+
     /// Consume the bundle state and return plain state.
     pub fn into_plain_state(self, is_value_known: OriginalValuesKnown) -> StateChangeset {
         // pessimistically pre-allocate assuming _all_ accounts changed.
@@ -592,7 +654,7 @@ impl BundleState {
             // append account info if it is changed.
             let was_destroyed = account.was_destroyed();
             if is_value_known.is_not_known() || account.is_info_changed() {
-                let info = account.info.map(AccountInfo::without_code);
+                let info = account.info.as_ref().map(AccountInfo::without_code);
                 accounts.push((address, info));
             }
 

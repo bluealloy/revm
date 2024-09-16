@@ -261,9 +261,13 @@ impl AccountInfo {
     }
 
     /// Returns account info without the code.
-    pub fn without_code(mut self) -> Self {
-        self.take_bytecode();
-        self
+    pub fn without_code(&self) -> Self {
+        Self {
+            balance: self.balance,
+            nonce: self.nonce,
+            code_hash: self.code_hash,
+            code: None,
+        }
     }
 
     /// Returns if an account is empty.
