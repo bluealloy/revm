@@ -6,11 +6,8 @@
 extern crate alloc as std;
 
 use auto_impl::auto_impl;
-use state::{
-    bytecode::Bytecode,
-    primitives::{Address, HashMap, B256, U256},
-    Account, AccountInfo,
-};
+use primitives::{Address, HashMap, B256, U256};
+use state::{Account, AccountInfo, Bytecode};
 
 pub mod empty_db;
 

@@ -1,7 +1,8 @@
 use revm::{
+    bytecode::Bytecode,
     db::{BenchmarkDB, EthereumBenchmarkWiring},
     interpreter::analysis::to_analysed,
-    primitives::{address, bytes, Bytecode, Bytes, TxKind},
+    primitives::{address, bytes, Bytes, TxKind},
     Evm,
 };
 
@@ -11,6 +12,7 @@ pub fn simple_example() {
     // BenchmarkDB is dummy state that implements Database trait.
     let mut evm = Evm::<EthereumBenchmarkWiring>::builder()
         .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
+        .with_default_ext_ctx()
         .modify_tx_env(|tx| {
             // execution globals block hash/gas_limit/coinbase/timestamp..
             tx.caller = address!("1000000000000000000000000000000000000000");
@@ -22,7 +24,7 @@ pub fn simple_example() {
     let _ = evm.transact().unwrap();
 }
 
-fn main() {
+pub fn run() {
     println!("Running snailtracer example!");
     let start = std::time::Instant::now();
     simple_example();

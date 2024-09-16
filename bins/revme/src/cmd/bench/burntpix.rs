@@ -1,25 +1,29 @@
-use alloy_sol_macro::sol;
-use alloy_sol_types::SolCall;
-use regex::bytes::Regex;
-use revm::{
-    db::{CacheDB, EmptyDB},
-    primitives::{
-        address, hex, keccak256, AccountInfo, Address, Bytecode, Bytes, EthereumWiring,
-        ExecutionResult, Output, TxKind, B256, U256,
-    },
-    Evm,
-};
+pub mod static_data;
+
 use static_data::{
     BURNTPIX_ADDRESS_ONE, BURNTPIX_ADDRESS_THREE, BURNTPIX_ADDRESS_TWO, BURNTPIX_BYTECODE_FOUR,
     BURNTPIX_BYTECODE_ONE, BURNTPIX_BYTECODE_THREE, BURNTPIX_BYTECODE_TWO, BURNTPIX_MAIN_ADDRESS,
     STORAGE_ONE, STORAGE_TWO, STORAGE_ZERO,
 };
 
+use alloy_sol_macro::sol;
+use alloy_sol_types::SolCall;
+use revm::{
+    database_interface::EmptyDB,
+    db::CacheDB,
+    primitives::{address, hex, keccak256, Address, Bytes, TxKind, B256, U256},
+    state::{AccountInfo, Bytecode},
+    wiring::{
+        result::{ExecutionResult, Output},
+        EthereumWiring,
+    },
+    Evm,
+};
+
 use std::fs::File;
 use std::{error::Error, time::Instant};
 
 use std::{io::Write, str::FromStr};
-pub mod static_data;
 
 sol! {
     #[derive(Debug, PartialEq, Eq)]
@@ -30,7 +34,7 @@ sol! {
 
 type EthereumCacheDbWiring = EthereumWiring<CacheDB<EmptyDB>, ()>;
 
-fn main() {
+pub fn run() {
     let (seed, iterations) = try_init_env_vars().expect("Failed to parse env vars");
 
     let run_call_data = IBURNTPIX::runCall { seed, iterations }.abi_encode();
@@ -44,6 +48,7 @@ fn main() {
             tx.data = run_call_data.clone().into();
         })
         .with_db(db)
+        .with_default_ext_ctx()
         .build();
 
     let started = Instant::now();
@@ -67,8 +72,9 @@ fn main() {
     let data = &return_data[returndata_offset..];
 
     // remove trailing zeros
-    let re = Regex::new(r"[0\x00]+$").unwrap();
-    let trimmed_data = re.replace_all(data, &[]);
+    let trimmed_data = data
+        .split_at(data.len() - data.iter().rev().filter(|&x| *x == 0).count())
+        .0;
     let file_name = format!("{}_{}", seed, iterations);
 
     svg(file_name, &trimmed_data).expect("Failed to store svg");
@@ -96,9 +102,9 @@ fn try_init_env_vars() -> Result<(u32, U256), Box<dyn Error>> {
     Ok((seed, iterations))
 }
 
-fn try_from_hex_to_u32(hex: &str) -> eyre::Result<u32> {
+fn try_from_hex_to_u32(hex: &str) -> Result<u32, Box<dyn Error>> {
     let trimmed = hex.strip_prefix("0x").unwrap_or(hex);
-    u32::from_str_radix(trimmed, 16).map_err(|e| eyre::eyre!("Failed to parse hex: {}", e))
+    u32::from_str_radix(trimmed, 16).map_err(|e| format!("Failed to parse hex: {}", e).into())
 }
 
 fn insert_account_info(cache_db: &mut CacheDB<EmptyDB>, addr: Address, code: Bytes) {

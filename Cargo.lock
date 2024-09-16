@@ -3267,20 +3267,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "revm-test"
-version = "0.1.0"
-dependencies = [
- "alloy-sol-macro",
- "alloy-sol-types",
- "bytes",
- "eyre",
- "hex",
- "microbench",
- "regex",
- "revm",
-]
-
-[[package]]
 name = "revm-wiring"
 version = "1.0.0"
 dependencies = [
@@ -3297,6 +3283,8 @@ name = "revme"
 version = "0.10.1"
 dependencies = [
  "alloy-rlp",
+ "alloy-sol-macro",
+ "alloy-sol-types",
  "clap",
  "hash-db",
  "hashbrown",

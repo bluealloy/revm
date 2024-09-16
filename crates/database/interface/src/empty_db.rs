@@ -1,7 +1,7 @@
 use crate::{Database, DatabaseRef};
 use core::{convert::Infallible, fmt, marker::PhantomData};
 use primitives::{keccak256, Address, B256, U256};
-use state::{bytecode::Bytecode, AccountInfo};
+use state::{AccountInfo, Bytecode};
 use std::string::ToString;
 
 /// An empty database that always returns default values when queried.
