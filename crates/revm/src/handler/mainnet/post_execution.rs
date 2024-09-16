@@ -37,24 +37,36 @@ pub fn reward_beneficiary<EvmWiringT: EvmWiring, SPEC: Spec>(
     // transfer fee to coinbase/beneficiary.
     // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
     let coinbase_gas_price = if SPEC::enabled(LONDON) {
-        effective_gas_price.saturating_sub(*context.evm.env.block.basefee())
+        let basefee = *context.evm.env.block.basefee();
+
+        // Skip the transfer if basefee and max priority fee per gas is zero, like geth.
+        if basefee.is_zero()
+            && context
+                .evm
+                .env
+                .tx
+                .max_priority_fee_per_gas()
+                .unwrap_or(&U256::ZERO)
+                .is_zero()
+        {
+            return Ok(());
+        }
+
+        effective_gas_price.saturating_sub(basefee)
     } else {
         effective_gas_price
     };
 
     let reward = coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64);
-    if reward.gt(&U256::ZERO) {
-        let coinbase_account = context
-            .evm
-            .inner
-            .journaled_state
-            .load_account(beneficiary, &mut context.evm.inner.db)
-            .map_err(EVMError::Database)?;
+    let coinbase_account = context
+        .evm
+        .inner
+        .journaled_state
+        .load_account(beneficiary, &mut context.evm.inner.db)
+        .map_err(EVMError::Database)?;
 
-        coinbase_account.data.mark_touch();
-        coinbase_account.data.info.balance =
-            coinbase_account.data.info.balance.saturating_add(reward);
-    }
+    coinbase_account.data.mark_touch();
+    coinbase_account.data.info.balance = coinbase_account.data.info.balance.saturating_add(reward);
 
     Ok(())
 }
