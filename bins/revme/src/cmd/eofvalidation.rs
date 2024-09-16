@@ -3,24 +3,24 @@ mod test_suite;
 pub use test_suite::{PragueTestResult, TestResult, TestSuite, TestUnit, TestVector};
 
 use crate::{cmd::Error, dir_utils::find_all_json_tests};
+use clap::Parser;
 use revm::interpreter::analysis::{validate_raw_eof_inner, CodeType, EofError};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
-use structopt::StructOpt;
 
-/// Eof validation command.
-#[derive(StructOpt, Debug)]
+/// `eof-validation` subcommand.
+#[derive(Parser, Debug)]
 pub struct Cmd {
-    /// Input path to eof validation test
-    #[structopt(required = true)]
-    path: Vec<PathBuf>,
+    /// Input paths to EOF validation tests.
+    #[arg(required = true, num_args = 1..)]
+    paths: Vec<PathBuf>,
 }
 
 impl Cmd {
     /// Run statetest command.
     pub fn run(&self) -> Result<(), Error> {
         // check if path exists.
-        for path in &self.path {
+        for path in &self.paths {
             if !path.exists() {
                 return Err(Error::Custom("The specified path does not exist"));
             }

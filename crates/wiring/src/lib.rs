@@ -13,5 +13,5 @@ pub mod result;
 pub mod transaction;
 
 pub use block::Block;
-pub use evm_wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring};
+pub use evm_wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring, HaltReasonTrait};
 pub use transaction::{Transaction, TransactionValidation};
