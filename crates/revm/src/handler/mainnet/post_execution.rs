@@ -2,7 +2,8 @@ use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
         Block, EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState, Spec,
-        SpecId, SpecId::LONDON, Transaction, U256,
+        SpecId::{self, LONDON},
+        Transaction, U256,
     },
     Context, EvmWiring, FrameResult,
 };
