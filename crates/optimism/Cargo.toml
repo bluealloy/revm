@@ -39,7 +39,7 @@ serde = { version = "1.0", default-features = false, features = [
 
 
 [dev-dependencies]
-anyhow = "1.0.83"
+anyhow = "1.0.89"
 criterion = "0.5"
 indicatif = "0.17"
 rstest = "0.22.0"
