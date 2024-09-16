@@ -1,7 +1,6 @@
 use core::fmt::Debug;
 
-use derive_where::derive_where;
-use revm_primitives::EvmWiring;
+use revm_primitives::HaltReasonTrait;
 
 use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
 
@@ -236,17 +235,16 @@ pub enum InternalResult {
     InvalidExtDelegateCallTarget,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
-#[derive_where(Debug; EvmWiringT::HaltReason)]
-pub enum SuccessOrHalt<EvmWiringT: EvmWiring> {
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum SuccessOrHalt<HaltReasonT: HaltReasonTrait> {
     Success(SuccessReason),
     Revert,
-    Halt(EvmWiringT::HaltReason),
+    Halt(HaltReasonT),
     FatalExternalError,
     Internal(InternalResult),
 }
 
-impl<EvmWiringT: EvmWiring> SuccessOrHalt<EvmWiringT> {
+impl<HaltReasonT: HaltReasonTrait> SuccessOrHalt<HaltReasonT> {
     /// Returns true if the transaction returned successfully without halts.
     #[inline]
     pub fn is_success(self) -> bool {
@@ -276,7 +274,7 @@ impl<EvmWiringT: EvmWiring> SuccessOrHalt<EvmWiringT> {
 
     /// Returns the [HaltReason] value the EVM has experienced an exceptional halt
     #[inline]
-    pub fn to_halt(self) -> Option<EvmWiringT::HaltReason> {
+    pub fn to_halt(self) -> Option<HaltReasonT> {
         match self {
             SuccessOrHalt::Halt(reason) => Some(reason),
             _ => None,
@@ -284,7 +282,7 @@ impl<EvmWiringT: EvmWiring> SuccessOrHalt<EvmWiringT> {
     }
 }
 
-impl<EvmWiringT: EvmWiring> From<InstructionResult> for SuccessOrHalt<EvmWiringT> {
+impl<HaltReasonT: HaltReasonTrait> From<InstructionResult> for SuccessOrHalt<HaltReasonT> {
     fn from(result: InstructionResult) -> Self {
         match result {
             InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), // used only in interpreter loop
