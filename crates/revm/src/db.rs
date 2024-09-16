@@ -1,19 +1,17 @@
 //! [Database] implementations.
 
-#[cfg(any(feature = "alloydb", feature = "ethersdb"))]
+#[cfg(any(feature = "alloydb"))]
 mod utils;
 
 #[cfg(feature = "alloydb")]
 mod alloydb;
-#[cfg(feature = "ethersdb")]
-mod ethersdb;
+
 pub mod in_memory_db;
 pub mod states;
 
 #[cfg(feature = "alloydb")]
 pub use alloydb::AlloyDB;
-#[cfg(feature = "ethersdb")]
-pub use ethersdb::EthersDB;
+
 pub use in_memory_db::*;
 pub use states::{
     AccountRevert, AccountStatus, BundleAccount, BundleState, CacheState, DBBox,

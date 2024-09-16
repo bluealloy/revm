@@ -11,7 +11,6 @@ version = "0.10.1"
 [dependencies]
 # revm
 revm = { workspace = true, features = [
-    "ethersdb",
     "std",
     "serde-json",
     "c-kzg",

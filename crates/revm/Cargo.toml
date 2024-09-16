@@ -46,15 +46,11 @@ serde_json = { version = "1.0", default-features = false, features = [
     "alloc",
 ], optional = true }
 
-# ethersdb
+# alloydb
 tokio = { version = "1.40", features = [
     "rt-multi-thread",
     "macros",
 ], optional = true }
-ethers-providers = { version = "2.0", optional = true }
-ethers-core = { version = "2.0", optional = true }
-
-# alloydb
 alloy-provider = { version = "0.3", optional = true, default-features = false }
 alloy-eips = { version = "0.3", optional = true, default-features = false }
 alloy-transport = { version = "0.3", optional = true, default-features = false }
@@ -89,8 +85,6 @@ asm-keccak = ["interpreter/asm-keccak", "precompile/asm-keccak"]
 portable = ["precompile/portable", "interpreter/portable"]
 
 test-utils = []
-
-ethersdb = ["std", "dep:tokio", "dep:ethers-providers", "dep:ethers-core"]
 
 alloydb = [
     "std",
@@ -127,12 +121,12 @@ blst = ["precompile/blst"]
 [[example]]
 name = "fork_ref_transact"
 path = "../../examples/fork_ref_transact.rs"
-required-features = ["ethersdb"]
+required-features = ["alloydb"]
 
 [[example]]
 name = "generate_block_traces"
 path = "../../examples/generate_block_traces.rs"
-required-features = ["std", "serde-json", "ethersdb"]
+required-features = ["std", "serde-json", "alloydb"]
 
 [[example]]
 name = "db_by_ref"

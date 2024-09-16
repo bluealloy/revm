@@ -1,21 +1,27 @@
+use alloy_eips::BlockId;
+use alloy_provider::ProviderBuilder;
 use alloy_sol_types::sol;
 use alloy_sol_types::SolCall;
-use ethers_providers::{Http, Provider};
-use revm::primitives::EthereumWiring;
 use revm::{
-    db::{CacheDB, EmptyDB, EthersDB},
-    primitives::{address, ExecutionResult, Output, TxKind, U256},
-    Database, Evm,
+    database_interface::Database,
+    database_interface::EmptyDB,
+    db::{AlloyDB, CacheDB},
+    primitives::{address, TxKind, U256},
+    wiring::{
+        result::{ExecutionResult, Output},
+        EthereumWiring,
+    },
+    Evm,
 };
-use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // Set up the HTTP transport which is consumed by the RPC client.
+    let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
+
     // create ethers client and wrap it in Arc<M>
-    let client = Provider::<Http>::try_from(
-        "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27",
-    )?;
-    let client = Arc::new(client);
+    let client = ProviderBuilder::new().on_http(rpc_url);
+    let mut client = AlloyDB::new(client, BlockId::latest()).unwrap();
 
     // ----------------------------------------------------------- //
     //             Storage slots of UniV2Pair contract             //
@@ -43,14 +49,11 @@ async fn main() -> anyhow::Result<()> {
     // encode abi into Bytes
     let encoded = getReservesCall::new(()).abi_encode();
 
-    // initialize new EthersDB
-    let mut ethersdb = EthersDB::new(client, None).unwrap();
-
     // query basic properties of an account incl bytecode
-    let acc_info = ethersdb.basic(pool_address).unwrap().unwrap();
+    let acc_info = client.basic(pool_address).unwrap().unwrap();
 
     // query value of storage slot at account address
-    let value = ethersdb.storage(pool_address, slot).unwrap();
+    let value = client.storage(pool_address, slot).unwrap();
 
     // initialise empty in-memory-db
     let mut cache_db = CacheDB::new(EmptyDB::default());
@@ -66,6 +69,7 @@ async fn main() -> anyhow::Result<()> {
     // initialise an empty (default) EVM
     let mut evm = Evm::<EthereumWiring<CacheDB<EmptyDB>, ()>>::builder()
         .with_db(cache_db)
+        .with_default_ext_ctx()
         .modify_tx_env(|tx| {
             // fill in missing bits of env struct
             // change that to whatever caller you want to be

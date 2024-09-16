@@ -1,11 +1,15 @@
 use core::error::Error;
 use core::fmt::Debug;
 use revm::{
-    db::{CacheDB, EmptyDB, WrapDatabaseRef},
+    database_interface::{EmptyDB, WrapDatabaseRef},
+    db::CacheDB,
     handler::register::HandleRegister,
     inspector_handle_register,
     inspectors::{NoOpInspector, TracerEip3155},
-    primitives::{EthereumWiring, HaltReason, ResultAndState},
+    wiring::{
+        result::{HaltReason, ResultAndState},
+        EthereumWiring,
+    },
     DatabaseCommit, DatabaseRef, Evm,
 };
 

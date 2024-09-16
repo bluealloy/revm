@@ -1,6 +1,8 @@
 use crate::{
-    db::{Database, DatabaseRef},
-    primitives::{AccountInfo, Address, Bytecode, B256, U256},
+    bytecode::Bytecode,
+    database_interface::{Database, DatabaseRef},
+    primitives::{Address, B256, U256},
+    state::AccountInfo,
 };
 use alloy_eips::BlockId;
 use alloy_provider::{
