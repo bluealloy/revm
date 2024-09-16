@@ -23,8 +23,8 @@ all = "warn"
 
 [dependencies]
 # revm
-revm = { path = "../revm", version = "14.0.1", default-features = false }
-revm-precompile = { path = "../precompile", version = "11.0.1", default-features = false, features = [
+revm = { path = "../revm", version = "15.0.0", default-features = false }
+revm-precompile = { path = "../precompile", version = "11.1.0", default-features = false, features = [
     "secp256r1",
 ] }
 
