@@ -235,6 +235,7 @@ impl EofHeader {
 mod tests {
     use super::*;
     use primitives::hex;
+    use std::vec;
 
     #[test]
     fn sanity_header_decode() {
