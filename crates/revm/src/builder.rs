@@ -293,6 +293,7 @@ impl<'a, BuilderStage, EvmWiringT: EvmWiring> EvmBuilder<'a, BuilderStage, EvmWi
     /// use wiring::EthereumWiring;
     /// use database_interface::EmptyDB;
     /// use specification::hardfork::{SpecId,CancunSpec};
+    ///
     /// let builder = EvmBuilder::default().with_default_db().with_default_ext_ctx();
     ///
     /// // get the desired handler

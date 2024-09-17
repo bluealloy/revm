@@ -28,10 +28,13 @@ impl EnvKzgSettings {
                     if #[cfg(feature = "c-kzg")] {
                         c_kzg::ethereum_kzg_settings()
                     } else if #[cfg(feature = "kzg-rs")] {
-                        static DEFAULT: Once<KzgSettings> = Once::new();
-                        DEFAULT.call_once(|| {
-                            KzgSettings::load_trusted_setup_file()
-                                .expect("failed to load default trusted setup")
+                        use once_cell::race::OnceBox;
+                        use std::boxed::Box;
+
+                        static DEFAULT : OnceBox<KzgSettings> = OnceBox::new();
+                        &DEFAULT.get_or_init(|| {
+                            Box::new(KzgSettings::load_trusted_setup_file()
+                                .expect("failed to load default trusted setup"))
                         })
                     } else {
                         unimplemented!()

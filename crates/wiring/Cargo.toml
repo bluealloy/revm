@@ -45,6 +45,9 @@ c-kzg = { version = "1.0.3", default-features = false, optional = true, features
 ] }
 kzg-rs = { version = "0.2.3", default-features = false, optional = true }
 cfg-if = { version = "1", default-features = false, optional = true }
+once_cell = { version = "1.19", default-features = false, optional = true, features = [
+    "alloc",
+] }
 
 [dev-dependencies]
 
@@ -57,7 +60,7 @@ portable = ["c-kzg?/portable"]
 c-kzg = ["dep:c-kzg", "dep:cfg-if"]
 # `kzg-rs` is not audited but useful for `no_std` environment.
 #    use it with causing and default to `c-kzg` if possible!
-kzg-rs = ["dep:kzg-rs", "dep:cfg-if"]
+kzg-rs = ["dep:kzg-rs", "dep:cfg-if", "dep:once_cell"]
 
 # Enable additional features for development
 dev = [
