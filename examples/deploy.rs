@@ -1,19 +1,41 @@
 use anyhow::{anyhow, bail};
 use revm::{
+    interpreter::opcode,
     primitives::{bytes::Bytes, hex, EthereumWiring, ExecutionResult, Output, TxKind, U256},
     Evm, InMemoryDB,
 };
 
-/// [ PUSH1, 0x01, PUSH1, 0x17, PUSH1, 0x1f, CODECOPY, PUSH0, MLOAD, PUSH0, SSTORE ]
+/// Load number parameter and set to storage with slot 0
 const INIT_CODE: &[u8] = &[
-    0x60, 0x01, 0x60, 0x17, 0x60, 0x1f, 0x39, 0x5f, 0x51, 0x5f, 0x55,
+    opcode::PUSH1,
+    0x01,
+    opcode::PUSH1,
+    0x17,
+    opcode::PUSH1,
+    0x1f,
+    opcode::CODECOPY,
+    opcode::PUSH0,
+    opcode::MLOAD,
+    opcode::PUSH0,
+    opcode::SSTORE,
 ];
 
-/// [ PUSH1, 0x02, PUSH1, 0x15, PUSH0, CODECOPY, PUSH1, 0x02, PUSH0, RETURN]
-const RET: &[u8] = &[0x60, 0x02, 0x60, 0x15, 0x5f, 0x39, 0x60, 0x02, 0x5f, 0xf3];
+/// Copy runtime bytecode to memory and return
+const RET: &[u8] = &[
+    opcode::PUSH1,
+    0x02,
+    opcode::PUSH1,
+    0x15,
+    opcode::PUSH0,
+    opcode::CODECOPY,
+    opcode::PUSH1,
+    0x02,
+    opcode::PUSH0,
+    opcode::RETURN,
+];
 
-/// [ PUSH0 SLOAD ]
-const RUNTIME_BYTECODE: &[u8] = &[0x5f, 0x54];
+/// Load storage from slot zero to memory
+const RUNTIME_BYTECODE: &[u8] = &[opcode::PUSH0, opcode::SLOAD];
 
 fn main() -> anyhow::Result<()> {
     let param = 0x42;
