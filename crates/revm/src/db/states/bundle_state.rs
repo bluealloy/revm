@@ -593,7 +593,7 @@ impl BundleState {
             // append account info if it is changed.
             let was_destroyed = account.was_destroyed();
             if is_value_known.is_not_known() || account.is_info_changed() {
-                let info = account.info.as_ref().map(AccountInfo::without_code);
+                let info = account.info.as_ref().map(AccountInfo::copy_without_code);
                 accounts.push((*address, info));
             }
 
@@ -634,7 +634,8 @@ impl BundleState {
             .contracts
             .iter()
             // remove empty bytecodes
-            .filter_map(|(b, code)| (*b != KECCAK_EMPTY).then_some((*b, code.clone())))
+            .filter(|(b, _)| **b != KECCAK_EMPTY)
+            .map(|(b, code)| (*b, code.clone()))
             .collect::<Vec<_>>();
         StateChangeset {
             accounts,
@@ -643,74 +644,32 @@ impl BundleState {
         }
     }
 
-    /// Consume the bundle state and return plain state.
+    /// Convert the bundle state into a [`StateChangeset`].
+    #[deprecated = "Use `to_plain_state` instead"]
     pub fn into_plain_state(self, is_value_known: OriginalValuesKnown) -> StateChangeset {
-        // pessimistically pre-allocate assuming _all_ accounts changed.
-        let state_len = self.state.len();
-        let mut accounts = Vec::with_capacity(state_len);
-        let mut storage = Vec::with_capacity(state_len);
-
-        for (address, account) in self.state {
-            // append account info if it is changed.
-            let was_destroyed = account.was_destroyed();
-            if is_value_known.is_not_known() || account.is_info_changed() {
-                let info = account.info.as_ref().map(AccountInfo::without_code);
-                accounts.push((address, info));
-            }
-
-            // append storage changes
-
-            // NOTE: Assumption is that revert is going to remove whole plain storage from
-            // database so we can check if plain state was wiped or not.
-            let mut account_storage_changed = Vec::with_capacity(account.storage.len());
-
-            for (key, slot) in account.storage {
-                // If storage was destroyed that means that storage was wiped.
-                // In that case we need to check if present storage value is different then ZERO.
-                let destroyed_and_not_zero = was_destroyed && !slot.present_value.is_zero();
-
-                // If account is not destroyed check if original values was changed,
-                // so we can update it.
-                let not_destroyed_and_changed = !was_destroyed && slot.is_changed();
-
-                if is_value_known.is_not_known()
-                    || destroyed_and_not_zero
-                    || not_destroyed_and_changed
-                {
-                    account_storage_changed.push((key, slot.present_value));
-                }
-            }
-
-            if !account_storage_changed.is_empty() || was_destroyed {
-                // append storage changes to account.
-                storage.push(PlainStorageChangeset {
-                    address,
-                    wipe_storage: was_destroyed,
-                    storage: account_storage_changed,
-                });
-            }
-        }
-        let contracts = self
-            .contracts
-            .into_iter()
-            // remove empty bytecodes
-            .filter(|(b, _)| *b != KECCAK_EMPTY)
-            .collect::<Vec<_>>();
-        StateChangeset {
-            accounts,
-            storage,
-            contracts,
-        }
+        self.to_plain_state(is_value_known)
     }
 
-    /// Consume the bundle state and split it into reverts and plain state.
-    pub fn into_plain_state_and_reverts(
-        mut self,
+    /// Generate a [`StateChangeset`] and [`PlainStateReverts`] from the bundle
+    /// state.
+    pub fn to_plain_state_and_reverts(
+        &self,
         is_value_known: OriginalValuesKnown,
     ) -> (StateChangeset, PlainStateReverts) {
-        let reverts = self.take_all_reverts();
-        let plain_state = self.into_plain_state(is_value_known);
-        (plain_state, reverts.into_plain_state_reverts())
+        (
+            self.to_plain_state(is_value_known),
+            self.reverts.to_plain_state_reverts(),
+        )
+    }
+
+    /// Consume the bundle state and split it into a [`StateChangeset`] and a
+    /// [`PlainStateReverts`].
+    #[deprecated = "Use `to_plain_state_and_reverts` instead"]
+    pub fn into_plain_state_and_reverts(
+        self,
+        is_value_known: OriginalValuesKnown,
+    ) -> (StateChangeset, PlainStateReverts) {
+        self.to_plain_state_and_reverts(is_value_known)
     }
 
     /// Extend the bundle with other state
