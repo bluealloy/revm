@@ -9,7 +9,7 @@ use revm::primitives::{
     RecoveredAuthorization, Signature, B256, U256,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, fmt};
+use std::collections::BTreeMap;
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct TestSuite(pub BTreeMap<String, TestUnit>);
@@ -115,21 +115,6 @@ pub struct TransactionParts {
     pub max_fee_per_blob_gas: Option<U256>,
 }
 
-#[derive(Debug)]
-pub enum TransactionException {
-    Type4InvalidAuthoritySignature,
-}
-
-impl fmt::Display for TransactionException {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            TransactionException::Type4InvalidAuthoritySignature => {
-                write!(f, "TransactionException.TYPE_4_INVALID_AUTHORITY_SIGNATURE")
-            }
-        }
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TestAuthorization {
@@ -145,9 +130,8 @@ pub struct TestAuthorization {
 impl TestAuthorization {
     pub fn signature(&self) -> Signature {
         let v = u64::try_from(self.v).unwrap_or(u64::MAX);
-        let parity =
-            Parity::try_from(v).map_err(|_| TransactionException::Type4InvalidAuthoritySignature);
-        Signature::from_rs_and_parity(self.r, self.s, parity.unwrap()).unwrap()
+        let parity = Parity::try_from(v).unwrap();
+        Signature::from_rs_and_parity(self.r, self.s, parity).unwrap()
     }
 
     pub fn into_recovered(self) -> RecoveredAuthorization {
