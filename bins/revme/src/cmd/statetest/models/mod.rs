@@ -145,11 +145,12 @@ pub struct TestAuthorization {
 impl TestAuthorization {
     pub fn signature(&self) -> Signature {
         let v = u64::try_from(self.v).unwrap_or(u64::MAX);
-        let parity = Parity::try_from(v).unwrap();
-        Signature::from_rs_and_parity(self.r, self.s, parity).unwrap()
+        let parity =
+            Parity::try_from(v).map_err(|_| TransactionException::Type4InvalidAuthoritySignature);
+        Signature::from_rs_and_parity(self.r, self.s, parity.unwrap()).unwrap()
     }
 
-    pub fn into_recovered(self) -> Result<RecoveredAuthorization, TransactionException> {
+    pub fn into_recovered(self) -> RecoveredAuthorization {
         let authorization = Authorization {
             chain_id: self.chain_id,
             address: self.address,
@@ -158,11 +159,11 @@ impl TestAuthorization {
         let authority = self
             .signature()
             .recover_address_from_prehash(&authorization.signature_hash())
-            .map_err(|_| TransactionException::Type4InvalidAuthoritySignature);
-        Ok(RecoveredAuthorization::new_unchecked(
+            .ok();
+        RecoveredAuthorization::new_unchecked(
             authorization.into_signed(self.signature()),
-            authority.ok(),
-        ))
+            authority,
+        )
     }
 }
 

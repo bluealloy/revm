@@ -380,7 +380,7 @@ pub fn execute_test_suite(
                     unit.transaction
                         .authorization_list
                         .iter()
-                        .filter_map(|auth| auth.into_recovered().ok())
+                        .map(|auth| auth.into_recovered())
                         .collect(),
                 ));
 
