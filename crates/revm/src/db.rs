@@ -1,4 +1,4 @@
-//! [Database] implementations.
+//! Database implementations.
 
 #[cfg(feature = "alloydb")]
 mod utils;

@@ -38,7 +38,7 @@ pub trait Transaction {
     /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
     fn max_priority_fee_per_gas(&self) -> Option<&U256>;
     /// The list of blob versioned hashes. Per EIP there should be at least
-    /// one blob present if [`Self::max_fee_per_blob_gas`] is `Some`.
+    /// one blob present if [`Transaction::max_fee_per_blob_gas`] is `Some`.
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
@@ -58,7 +58,7 @@ pub trait Transaction {
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
     fn authorization_list(&self) -> Option<&eip7702::AuthorizationList>;
 
-    /// See [EIP-4844], [`crate::Env::calc_data_fee`], and [`crate::Env::calc_max_data_fee`].
+    /// See [EIP-4844], [`crate::default::Env::calc_data_fee`], and [`crate::default::Env::calc_max_data_fee`].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     fn get_total_blob_gas(&self) -> u64 {

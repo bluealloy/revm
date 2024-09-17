@@ -318,8 +318,8 @@ pub struct CfgEnv {
     /// By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
     /// Skips the nonce validation against the account's nonce:
-    /// [`crate::InvalidTransaction::NonceTooHigh`] and
-    /// [`crate::InvalidTransaction::NonceTooLow`]
+    /// [`crate::default::InvalidTransaction::NonceTooHigh`] and
+    /// [`crate::default::InvalidTransaction::NonceTooLow`]
     pub disable_nonce_check: bool,
     /// A hard memory limit in bytes beyond which [crate::result::OutOfGasError::Memory] cannot be resized.
     ///

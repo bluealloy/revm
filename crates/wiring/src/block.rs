@@ -1,6 +1,6 @@
 pub mod blob;
 
-pub use blob::{calc_excess_blob_gas, BlobExcessGasAndPrice};
+pub use blob::{calc_blob_gasprice, calc_excess_blob_gas, BlobExcessGasAndPrice};
 
 use primitives::{Address, B256, U256};
 
@@ -40,17 +40,17 @@ pub trait Block {
     fn prevrandao(&self) -> Option<&B256>;
 
     /// Excess blob gas and blob gasprice.
-    /// See also [`crate::calc_excess_blob_gas`]
-    /// and [`crate::calc_blob_gasprice`].
+    /// See also [`calc_excess_blob_gas`]
+    /// and [`calc_blob_gasprice`].
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     fn blob_excess_gas_and_price(&self) -> Option<&BlobExcessGasAndPrice>;
 
-    /// See [EIP-4844] and [`crate::calc_blob_gasprice`].
+    /// See [EIP-4844] and [`calc_blob_gasprice`].
     ///
-    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`crate::Env::validate_block_env`].
+    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`crate::default::Env::validate_block_env`].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     fn get_blob_gasprice(&self) -> Option<&u128> {
@@ -59,7 +59,7 @@ pub trait Block {
 
     /// Return `blob_excess_gas` header field. See [EIP-4844].
     ///
-    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`crate::Env::validate_block_env`].
+    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`crate::default::Env::validate_block_env`].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     fn get_blob_excess_gas(&self) -> Option<u64> {

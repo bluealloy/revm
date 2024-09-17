@@ -287,7 +287,7 @@ pub enum InvalidTransaction {
     /// Blob transaction can't be a create transaction.
     /// `to` must be present
     BlobCreateTransaction,
-    /// Transaction has more then [`crate::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
+    /// Transaction has more then [`primitives::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
     TooManyBlobs {
         max: usize,
         have: usize,
@@ -378,7 +378,7 @@ impl fmt::Display for InvalidTransaction {
     }
 }
 
-/// Errors related to misconfiguration of a [`crate::env::BlockEnv`].
+/// Errors related to misconfiguration of a [`crate::default::block::BlockEnv`].
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidHeader {

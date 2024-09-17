@@ -280,7 +280,7 @@ pub enum PrecompileSpecId {
 }
 
 impl PrecompileSpecId {
-    /// Returns the appropriate precompile Spec for the primitive [SpecId](primitivesSpecId)
+    /// Returns the appropriate precompile Spec for the primitive [SpecId](specification::hardfork::SpecId)
     pub const fn from_spec_id(spec_id: specification::hardfork::SpecId) -> Self {
         use specification::hardfork::SpecId::*;
         match spec_id {
