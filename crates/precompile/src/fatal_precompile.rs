@@ -1,5 +1,5 @@
 use crate::primitives::{
-    Address, Bytes, CfgEnv, Precompile, PrecompileErrors, PrecompileResult, StatefulPrecompile,
+    Address, Bytes, Env, Precompile, PrecompileErrors, PrecompileResult, StatefulPrecompile,
 };
 use crate::PrecompileWithAddress;
 use std::{string::String, sync::Arc};
@@ -27,7 +27,7 @@ impl FatalPrecompile {
 }
 
 impl StatefulPrecompile for FatalPrecompile {
-    fn call(&self, _: &Bytes, _: u64, _: &CfgEnv) -> PrecompileResult {
+    fn call(&self, _: &Bytes, _: u64, _: &Env) -> PrecompileResult {
         Err(PrecompileErrors::Fatal {
             msg: self.msg.clone(),
         })

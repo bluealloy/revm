@@ -1,52 +1,63 @@
 use super::InnerEvmContext;
 use crate::{
     precompile::{Precompile, PrecompileResult},
-    primitives::{Address, Bytes, EvmWiring, HashMap, HashSet},
+    primitives::{db::Database, Address, Bytes, HashMap, HashSet},
 };
-use core::fmt::Debug;
-use derive_where::derive_where;
 use dyn_clone::DynClone;
 use revm_precompile::{PrecompileSpecId, PrecompileWithAddress, Precompiles};
 use std::{boxed::Box, sync::Arc};
 
 /// A single precompile handler.
-#[derive_where(Clone)]
-pub enum ContextPrecompile<EvmWiringT: EvmWiring> {
+pub enum ContextPrecompile<DB: Database> {
     /// Ordinary precompiles
     Ordinary(Precompile),
     /// Stateful precompile that is Arc over [`ContextStatefulPrecompile`] trait.
     /// It takes a reference to input, gas limit and Context.
-    ContextStateful(ContextStatefulPrecompileArc<EvmWiringT>),
+    ContextStateful(ContextStatefulPrecompileArc<DB>),
     /// Mutable stateful precompile that is Box over [`ContextStatefulPrecompileMut`] trait.
     /// It takes a reference to input, gas limit and context.
-    ContextStatefulMut(ContextStatefulPrecompileBox<EvmWiringT>),
+    ContextStatefulMut(ContextStatefulPrecompileBox<DB>),
 }
 
-impl<EvmWiringT: EvmWiring> Debug for ContextPrecompile<EvmWiringT> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+impl<DB: Database> Clone for ContextPrecompile<DB> {
+    fn clone(&self) -> Self {
         match self {
-            Self::Ordinary(p) => f.debug_tuple("Ordinary").field(p).finish(),
-            Self::ContextStateful(_) => f.debug_tuple("ContextStateful").finish(),
-            Self::ContextStatefulMut(_) => f.debug_tuple("ContextStatefulMut").finish(),
+            Self::Ordinary(p) => Self::Ordinary(p.clone()),
+            Self::ContextStateful(p) => Self::ContextStateful(p.clone()),
+            Self::ContextStatefulMut(p) => Self::ContextStatefulMut(p.clone()),
         }
     }
 }
 
-#[derive_where(Clone, Debug)]
-enum PrecompilesCow<EvmWiringT: EvmWiring> {
+enum PrecompilesCow<DB: Database> {
     /// Default precompiles, returned by `Precompiles::new`. Used to fast-path the default case.
     StaticRef(&'static Precompiles),
-    Owned(HashMap<Address, ContextPrecompile<EvmWiringT>>),
+    Owned(HashMap<Address, ContextPrecompile<DB>>),
+}
+
+impl<DB: Database> Clone for PrecompilesCow<DB> {
+    fn clone(&self) -> Self {
+        match *self {
+            PrecompilesCow::StaticRef(p) => PrecompilesCow::StaticRef(p),
+            PrecompilesCow::Owned(ref inner) => PrecompilesCow::Owned(inner.clone()),
+        }
+    }
 }
 
 /// Precompiles context.
-
-#[derive_where(Clone, Debug, Default)]
-pub struct ContextPrecompiles<EvmWiringT: EvmWiring> {
-    inner: PrecompilesCow<EvmWiringT>,
+pub struct ContextPrecompiles<DB: Database> {
+    inner: PrecompilesCow<DB>,
 }
 
-impl<EvmWiringT: EvmWiring> ContextPrecompiles<EvmWiringT> {
+impl<DB: Database> Clone for ContextPrecompiles<DB> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+        }
+    }
+}
+
+impl<DB: Database> ContextPrecompiles<DB> {
     /// Creates a new precompiles context at the given spec ID.
     ///
     /// This is a cheap operation that does not allocate by reusing the global precompiles.
@@ -68,7 +79,7 @@ impl<EvmWiringT: EvmWiring> ContextPrecompiles<EvmWiringT> {
 
     /// Creates a new precompiles context from the given precompiles.
     #[inline]
-    pub fn from_precompiles(precompiles: HashMap<Address, ContextPrecompile<EvmWiringT>>) -> Self {
+    pub fn from_precompiles(precompiles: HashMap<Address, ContextPrecompile<DB>>) -> Self {
         Self {
             inner: PrecompilesCow::Owned(precompiles),
         }
@@ -84,7 +95,7 @@ impl<EvmWiringT: EvmWiring> ContextPrecompiles<EvmWiringT> {
 
     /// Returns precompiles addresses.
     #[inline]
-    pub fn addresses(&self) -> Box<dyn ExactSizeIterator<Item = &Address> + '_> {
+    pub fn addresses<'a>(&'a self) -> Box<dyn ExactSizeIterator<Item = &'a Address> + 'a> {
         match self.inner {
             PrecompilesCow::StaticRef(inner) => Box::new(inner.addresses()),
             PrecompilesCow::Owned(ref inner) => Box::new(inner.keys()),
@@ -109,14 +120,12 @@ impl<EvmWiringT: EvmWiring> ContextPrecompiles<EvmWiringT> {
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-        evmctx: &mut InnerEvmContext<EvmWiringT>,
+        evmctx: &mut InnerEvmContext<DB>,
     ) -> Option<PrecompileResult> {
         Some(match self.inner {
-            PrecompilesCow::StaticRef(p) => {
-                p.get(address)?.call_ref(bytes, gas_limit, &evmctx.env.cfg)
-            }
+            PrecompilesCow::StaticRef(p) => p.get(address)?.call_ref(bytes, gas_limit, &evmctx.env),
             PrecompilesCow::Owned(ref mut owned) => match owned.get_mut(address)? {
-                ContextPrecompile::Ordinary(p) => p.call(bytes, gas_limit, &evmctx.env.cfg),
+                ContextPrecompile::Ordinary(p) => p.call(bytes, gas_limit, &evmctx.env),
                 ContextPrecompile::ContextStateful(p) => p.call(bytes, gas_limit, evmctx),
                 ContextPrecompile::ContextStatefulMut(p) => p.call_mut(bytes, gas_limit, evmctx),
             },
@@ -127,7 +136,7 @@ impl<EvmWiringT: EvmWiring> ContextPrecompiles<EvmWiringT> {
     ///
     /// Clones the precompiles map if it is shared.
     #[inline]
-    pub fn to_mut(&mut self) -> &mut HashMap<Address, ContextPrecompile<EvmWiringT>> {
+    pub fn to_mut(&mut self) -> &mut HashMap<Address, ContextPrecompile<DB>> {
         if let PrecompilesCow::StaticRef(_) = self.inner {
             self.mutate_into_owned();
         }
@@ -155,18 +164,13 @@ impl<EvmWiringT: EvmWiring> ContextPrecompiles<EvmWiringT> {
     }
 }
 
-impl<EvmWiringT: EvmWiring> Extend<(Address, ContextPrecompile<EvmWiringT>)>
-    for ContextPrecompiles<EvmWiringT>
-{
-    fn extend<T: IntoIterator<Item = (Address, ContextPrecompile<EvmWiringT>)>>(
-        &mut self,
-        iter: T,
-    ) {
+impl<DB: Database> Extend<(Address, ContextPrecompile<DB>)> for ContextPrecompiles<DB> {
+    fn extend<T: IntoIterator<Item = (Address, ContextPrecompile<DB>)>>(&mut self, iter: T) {
         self.to_mut().extend(iter.into_iter().map(Into::into))
     }
 }
 
-impl<EvmWiringT: EvmWiring> Extend<PrecompileWithAddress> for ContextPrecompiles<EvmWiringT> {
+impl<DB: Database> Extend<PrecompileWithAddress> for ContextPrecompiles<DB> {
     fn extend<T: IntoIterator<Item = PrecompileWithAddress>>(&mut self, iter: T) {
         self.to_mut().extend(iter.into_iter().map(|precompile| {
             let (address, precompile) = precompile.into();
@@ -175,7 +179,15 @@ impl<EvmWiringT: EvmWiring> Extend<PrecompileWithAddress> for ContextPrecompiles
     }
 }
 
-impl<EvmWiringT: EvmWiring> Default for PrecompilesCow<EvmWiringT> {
+impl<DB: Database> Default for ContextPrecompiles<DB> {
+    fn default() -> Self {
+        Self {
+            inner: Default::default(),
+        }
+    }
+}
+
+impl<DB: Database> Default for PrecompilesCow<DB> {
     fn default() -> Self {
         Self::Owned(Default::default())
     }
@@ -183,36 +195,35 @@ impl<EvmWiringT: EvmWiring> Default for PrecompilesCow<EvmWiringT> {
 
 /// Context aware stateful precompile trait. It is used to create
 /// a arc precompile in [`ContextPrecompile`].
-pub trait ContextStatefulPrecompile<EvmWiringT: EvmWiring>: Sync + Send {
+pub trait ContextStatefulPrecompile<DB: Database>: Sync + Send {
     fn call(
         &self,
         bytes: &Bytes,
         gas_limit: u64,
-        evmctx: &mut InnerEvmContext<EvmWiringT>,
+        evmctx: &mut InnerEvmContext<DB>,
     ) -> PrecompileResult;
 }
 
 /// Context aware mutable stateful precompile trait. It is used to create
 /// a boxed precompile in [`ContextPrecompile`].
-pub trait ContextStatefulPrecompileMut<EvmWiringT: EvmWiring>: DynClone + Send + Sync {
+pub trait ContextStatefulPrecompileMut<DB: Database>: DynClone + Send + Sync {
     fn call_mut(
         &mut self,
         bytes: &Bytes,
         gas_limit: u64,
-        evmctx: &mut InnerEvmContext<EvmWiringT>,
+        evmctx: &mut InnerEvmContext<DB>,
     ) -> PrecompileResult;
 }
 
-dyn_clone::clone_trait_object!(<EvmWiringT> ContextStatefulPrecompileMut<EvmWiringT>);
+dyn_clone::clone_trait_object!(<DB> ContextStatefulPrecompileMut<DB>);
 
 /// Arc over context stateful precompile.
-pub type ContextStatefulPrecompileArc<EvmWiringT> = Arc<dyn ContextStatefulPrecompile<EvmWiringT>>;
+pub type ContextStatefulPrecompileArc<DB> = Arc<dyn ContextStatefulPrecompile<DB>>;
 
 /// Box over context mutable stateful precompile
-pub type ContextStatefulPrecompileBox<EvmWiringT> =
-    Box<dyn ContextStatefulPrecompileMut<EvmWiringT>>;
+pub type ContextStatefulPrecompileBox<DB> = Box<dyn ContextStatefulPrecompileMut<DB>>;
 
-impl<EvmWiringT: EvmWiring> From<Precompile> for ContextPrecompile<EvmWiringT> {
+impl<DB: Database> From<Precompile> for ContextPrecompile<DB> {
     fn from(p: Precompile) -> Self {
         ContextPrecompile::Ordinary(p)
     }
@@ -221,14 +232,13 @@ impl<EvmWiringT: EvmWiring> From<Precompile> for ContextPrecompile<EvmWiringT> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::DefaultEthereumWiring;
+    use crate::db::EmptyDB;
 
     #[test]
     fn test_precompiles_context() {
         let custom_address = Address::with_last_byte(0xff);
 
-        let mut precompiles =
-            ContextPrecompiles::<DefaultEthereumWiring>::new(PrecompileSpecId::HOMESTEAD);
+        let mut precompiles = ContextPrecompiles::<EmptyDB>::new(PrecompileSpecId::HOMESTEAD);
         assert_eq!(precompiles.addresses().count(), 4);
         assert!(matches!(precompiles.inner, PrecompilesCow::StaticRef(_)));
         assert!(!precompiles.contains(&custom_address));

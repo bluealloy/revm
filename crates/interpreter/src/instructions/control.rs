@@ -206,9 +206,7 @@ pub fn unknown<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 mod test {
     use std::sync::Arc;
 
-    use revm_primitives::{
-        bytes, eof::TypesSection, Bytecode, DefaultEthereumWiring, Eof, PragueSpec,
-    };
+    use revm_primitives::{bytes, eof::TypesSection, Bytecode, Eof, PragueSpec};
 
     use super::*;
     use crate::{
@@ -218,7 +216,7 @@ mod test {
 
     #[test]
     fn rjump() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
+        let table = make_instruction_table::<_, PragueSpec>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
             RJUMP, 0x00, 0x02, STOP, STOP,
@@ -232,7 +230,7 @@ mod test {
 
     #[test]
     fn rjumpi() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
+        let table = make_instruction_table::<_, PragueSpec>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
             RJUMPI, 0x00, 0x03, RJUMPI, 0x00, 0x01, STOP, STOP,
@@ -252,7 +250,7 @@ mod test {
 
     #[test]
     fn rjumpv() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
+        let table = make_instruction_table::<_, PragueSpec>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
             RJUMPV,
@@ -334,7 +332,7 @@ mod test {
     #[test]
     fn callf_retf_stop() {
         let table = make_instruction_table::<_, PragueSpec>();
-        let mut host = DummyHost::<DefaultEthereumWiring>::default();
+        let mut host = DummyHost::default();
 
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01, STOP]);
         let bytes2 = Bytes::from([RETF]);
@@ -365,7 +363,7 @@ mod test {
     #[test]
     fn callf_stop() {
         let table = make_instruction_table::<_, PragueSpec>();
-        let mut host = DummyHost::<DefaultEthereumWiring>::default();
+        let mut host = DummyHost::default();
 
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01]);
         let bytes2 = Bytes::from([STOP]);
@@ -389,7 +387,7 @@ mod test {
     #[test]
     fn callf_stack_overflow() {
         let table = make_instruction_table::<_, PragueSpec>();
-        let mut host = DummyHost::<DefaultEthereumWiring>::default();
+        let mut host = DummyHost::default();
 
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01]);
         let bytes2 = Bytes::from([STOP]);
@@ -406,7 +404,7 @@ mod test {
     #[test]
     fn jumpf_stop() {
         let table = make_instruction_table::<_, PragueSpec>();
-        let mut host = DummyHost::<DefaultEthereumWiring>::default();
+        let mut host = DummyHost::default();
 
         let bytes1 = Bytes::from([JUMPF, 0x00, 0x01]);
         let bytes2 = Bytes::from([STOP]);
@@ -427,7 +425,7 @@ mod test {
     #[test]
     fn jumpf_stack_overflow() {
         let table = make_instruction_table::<_, PragueSpec>();
-        let mut host = DummyHost::<DefaultEthereumWiring>::default();
+        let mut host = DummyHost::default();
 
         let bytes1 = Bytes::from([JUMPF, 0x00, 0x01]);
         let bytes2 = Bytes::from([STOP]);

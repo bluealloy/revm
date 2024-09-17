@@ -23,7 +23,7 @@ all = "warn"
 
 [dependencies]
 revm-primitives = { path = "../primitives", version = "9.0.1", default-features = false }
-once_cell = { version = "1.20", default-features = false, features = ["alloc"] }
+once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
 
 # ecRecover
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
@@ -85,6 +85,16 @@ std = [
 ]
 hashbrown = ["revm-primitives/hashbrown"]
 asm-keccak = ["revm-primitives/asm-keccak"]
+
+optimism = ["revm-primitives/optimism", "secp256r1"]
+# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
+optimism-default-handler = [
+    "optimism",
+    "revm-primitives/optimism-default-handler",
+]
+negate-optimism-default-handler = [
+    "revm-primitives/negate-optimism-default-handler",
+]
 
 # Enables the p256verify precompile.
 secp256r1 = ["dep:p256"]

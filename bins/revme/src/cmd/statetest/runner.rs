@@ -5,19 +5,19 @@ use super::{
 };
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
-    db::{EmptyDB, State},
+    db::EmptyDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
     interpreter::analysis::to_analysed,
     primitives::{
-        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, EnvWiring,
-        EthereumWiring, ExecutionResult, HaltReason, SpecId, TxKind, B256,
+        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, ExecutionResult,
+        SpecId, TxKind, B256,
     },
-    Evm,
+    Evm, State,
 };
 use serde_json::json;
 use std::{
-    fmt::Debug,
+    convert::Infallible,
     io::{stderr, stdout},
     path::{Path, PathBuf},
     sync::{
@@ -28,9 +28,6 @@ use std::{
 };
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
-
-type ExecEvmWiring<'a> = EthereumWiring<&'a mut State<EmptyDB>, ()>;
-type TraceEvmWiring<'a> = EthereumWiring<&'a mut State<EmptyDB>, TracerEip3155>;
 
 #[derive(Debug, Error)]
 #[error("Test {name} failed: {kind}")]
@@ -138,15 +135,12 @@ fn skip_test(path: &Path) -> bool {
     )
 }
 
-fn check_evm_execution<EXT: Debug>(
+fn check_evm_execution<EXT>(
     test: &Test,
     expected_output: Option<&Bytes>,
     test_name: &str,
-    exec_result: &EVMResultGeneric<
-        ExecutionResult<HaltReason>,
-        EthereumWiring<&mut State<EmptyDB>, EXT>,
-    >,
-    evm: &Evm<'_, EthereumWiring<&mut State<EmptyDB>, EXT>>,
+    exec_result: &EVMResultGeneric<ExecutionResult, Infallible>,
+    evm: &Evm<'_, EXT, &mut State<EmptyDB>>,
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
@@ -170,7 +164,7 @@ fn check_evm_execution<EXT: Debug>(
                     Err(e) => e.to_string(),
                 },
                 "postLogsHash": logs_root,
-                "fork": evm.handler.spec_id(),
+                "fork": evm.handler.cfg().spec_id,
                 "test": test_name,
                 "d": test.indexes.data,
                 "g": test.indexes.gas,
@@ -283,7 +277,7 @@ pub fn execute_test_suite(
             cache_state.insert_account_with_storage(address, acc_info, info.storage);
         }
 
-        let mut env = Box::<EnvWiring<ExecEvmWiring>>::default();
+        let mut env = Box::<Env>::default();
         // for mainnet
         env.cfg.chain_id = 1;
         // env.cfg.spec_id is set down the road
@@ -361,8 +355,6 @@ pub fn execute_test_suite(
                     .get(test.indexes.data)
                     .unwrap()
                     .clone();
-
-                env.tx.nonce = u64::try_from(unit.transaction.nonce).unwrap();
                 env.tx.value = unit.transaction.value[test.indexes.value];
 
                 env.tx.access_list = unit
@@ -384,14 +376,16 @@ pub fn execute_test_suite(
                 env.tx.transact_to = to;
 
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
+                cache.set_state_clear_flag(SpecId::enabled(
+                    spec_id,
+                    revm::primitives::SpecId::SPURIOUS_DRAGON,
+                ));
                 let mut state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let mut evm = Evm::<ExecEvmWiring>::builder()
+                let mut evm = Evm::builder()
                     .with_db(&mut state)
-                    .with_default_ext_ctx()
                     .modify_env(|e| e.clone_from(&env))
                     .with_spec_id(spec_id)
                     .build();
@@ -400,11 +394,9 @@ pub fn execute_test_suite(
                 let (e, exec_result) = if trace {
                     let mut evm = evm
                         .modify()
-                        .reset_handler_with_external_context::<EthereumWiring<_, TracerEip3155>>()
-                        .with_external_context(
+                        .reset_handler_with_external_context(
                             TracerEip3155::new(Box::new(stderr())).without_summary(),
                         )
-                        .with_spec_id(spec_id)
                         .append_handler_register(inspector_handle_register)
                         .build();
 
@@ -453,21 +445,22 @@ pub fn execute_test_suite(
 
                 // re build to run with tracing
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
-                let mut state = revm::db::State::builder()
+                cache.set_state_clear_flag(SpecId::enabled(
+                    spec_id,
+                    revm::primitives::SpecId::SPURIOUS_DRAGON,
+                ));
+                let state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
 
                 let path = path.display();
                 println!("\nTraces:");
-                let mut evm = Evm::<TraceEvmWiring>::builder()
-                    .with_db(&mut state)
+                let mut evm = Evm::builder()
                     .with_spec_id(spec_id)
+                    .with_db(state)
                     .with_env(env.clone())
-                    .reset_handler_with_external_context::<EthereumWiring<_, TracerEip3155>>()
                     .with_external_context(TracerEip3155::new(Box::new(stdout())).without_summary())
-                    .with_spec_id(spec_id)
                     .append_handler_register(inspector_handle_register)
                     .build();
                 let _ = evm.transact_commit();

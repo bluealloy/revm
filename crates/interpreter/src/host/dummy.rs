@@ -1,10 +1,5 @@
-use derive_where::derive_where;
-use revm_primitives::EnvWiring;
-
 use crate::{
-    primitives::{
-        hash_map::Entry, Address, Bytes, Env, EvmWiring, HashMap, Log, B256, KECCAK_EMPTY, U256,
-    },
+    primitives::{hash_map::Entry, Address, Bytes, Env, HashMap, Log, B256, KECCAK_EMPTY, U256},
     Host, SStoreResult, SelfDestructResult,
 };
 use std::vec::Vec;
@@ -12,29 +7,21 @@ use std::vec::Vec;
 use super::{AccountLoad, Eip7702CodeLoad, StateLoad};
 
 /// A dummy [Host] implementation.
-#[derive_where(Clone, Debug, Default; EvmWiringT::Block, EvmWiringT::Transaction)]
-pub struct DummyHost<EvmWiringT>
-where
-    EvmWiringT: EvmWiring,
-{
-    pub env: Env<EvmWiringT::Block, EvmWiringT::Transaction>,
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct DummyHost {
+    pub env: Env,
     pub storage: HashMap<U256, U256>,
     pub transient_storage: HashMap<U256, U256>,
     pub log: Vec<Log>,
 }
 
-impl<EvmWiringT> DummyHost<EvmWiringT>
-where
-    EvmWiringT: EvmWiring,
-{
+impl DummyHost {
     /// Create a new dummy host with the given [`Env`].
     #[inline]
-    pub fn new(env: EnvWiring<EvmWiringT>) -> Self {
+    pub fn new(env: Env) -> Self {
         Self {
             env,
-            storage: HashMap::new(),
-            transient_storage: HashMap::new(),
-            log: Vec::new(),
+            ..Default::default()
         }
     }
 
@@ -46,19 +33,14 @@ where
     }
 }
 
-impl<EvmWiringT> Host for DummyHost<EvmWiringT>
-where
-    EvmWiringT: EvmWiring,
-{
-    type EvmWiringT = EvmWiringT;
-
+impl Host for DummyHost {
     #[inline]
-    fn env(&self) -> &EnvWiring<Self::EvmWiringT> {
+    fn env(&self) -> &Env {
         &self.env
     }
 
     #[inline]
-    fn env_mut(&mut self) -> &mut EnvWiring<Self::EvmWiringT> {
+    fn env_mut(&mut self) -> &mut Env {
         &mut self.env
     }
 

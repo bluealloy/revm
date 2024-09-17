@@ -1,4 +1,3 @@
-use clap::Parser;
 use revm::{
     interpreter::{
         analysis::{validate_eof_inner, CodeType, EofError},
@@ -7,20 +6,21 @@ use revm::{
     primitives::{Bytes, Eof, MAX_INITCODE_SIZE},
 };
 use std::io;
+use structopt::StructOpt;
 
-/// `bytecode` subcommand.
-#[derive(Parser, Debug)]
+/// Statetest command
+#[derive(StructOpt, Debug)]
 pub struct Cmd {
     /// Is EOF code in INITCODE mode.
-    #[arg(long)]
+    #[structopt(long)]
     eof_initcode: bool,
     /// Is EOF code in RUNTIME mode.
-    #[arg(long)]
+    #[structopt(long)]
     eof_runtime: bool,
     /// Bytecode in hex format. If bytes start with 0xFE it will be interpreted as a EOF.
     /// Otherwise, it will be interpreted as a EOF bytecode.
     /// If not provided, it will operate in interactive EOF validation mode.
-    #[arg()]
+    #[structopt()]
     bytes: Option<String>,
 }
 

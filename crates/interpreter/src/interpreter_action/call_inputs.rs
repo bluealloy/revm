@@ -1,6 +1,4 @@
-use revm_primitives::Transaction;
-
-use crate::primitives::{Address, Bytes, TxKind, U256};
+use crate::primitives::{Address, Bytes, TxEnv, TxKind, U256};
 use core::ops::Range;
 use std::boxed::Box;
 
@@ -48,17 +46,17 @@ impl CallInputs {
     /// Creates new call inputs.
     ///
     /// Returns `None` if the transaction is not a call.
-    pub fn new(tx_env: &impl Transaction, gas_limit: u64) -> Option<Self> {
-        let TxKind::Call(target_address) = tx_env.kind() else {
+    pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
+        let TxKind::Call(target_address) = tx_env.transact_to else {
             return None;
         };
         Some(CallInputs {
-            input: tx_env.data().clone(),
+            input: tx_env.data.clone(),
             gas_limit,
             target_address,
             bytecode_address: target_address,
-            caller: *tx_env.caller(),
-            value: CallValue::Transfer(*tx_env.value()),
+            caller: tx_env.caller,
+            value: CallValue::Transfer(tx_env.value),
             scheme: CallScheme::Call,
             is_static: false,
             is_eof: false,
@@ -69,7 +67,7 @@ impl CallInputs {
     /// Creates new boxed call inputs.
     ///
     /// Returns `None` if the transaction is not a call.
-    pub fn new_boxed(tx_env: &impl Transaction, gas_limit: u64) -> Option<Box<Self>> {
+    pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
         Self::new(tx_env, gas_limit).map(Box::new)
     }
 
