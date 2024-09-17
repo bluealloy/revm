@@ -22,11 +22,12 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
+# revm
 primitives.workspace = true
 wiring.workspace = true
 specification.workspace = true
 
-# revm
+# static precompile sets.
 once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
 
 # ecRecover
