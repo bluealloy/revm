@@ -7,7 +7,9 @@ use crate::{
 use bytecode::EOF_MAGIC_BYTES;
 use core::fmt::{self, Debug};
 use database_interface::{Database, DatabaseCommit};
-use interpreter::{CallInputs, CreateInputs, EOFCreateInputs, Host, InterpreterAction, SharedMemory};
+use interpreter::{
+    CallInputs, CreateInputs, EOFCreateInputs, Host, InterpreterAction, SharedMemory,
+};
 use primitives::TxKind;
 use specification::hardfork::SpecId;
 use std::{boxed::Box, vec::Vec};

@@ -4,7 +4,6 @@ members = [
     "crates/revm",
     "crates/primitives",
     "crates/interpreter",
-    "crates/inspector",
     "crates/precompile",
     "crates/optimism",
     "crates/database/interface",

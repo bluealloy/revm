@@ -1,6 +1,6 @@
+use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, GAS_PER_BLOB, U256};
 use specification::{eip2930, eip7702};
-use core::fmt::Debug;
 //{AccessListItem, Address, AuthorizationList, Bytes, TxKind, B256, GAS_PER_BLOB, U256};
 
 /// Trait for retrieving transaction information required for execution.

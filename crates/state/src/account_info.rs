@@ -1,5 +1,5 @@
-use core::hash::{Hash, Hasher};
 use bytecode::Bytecode;
+use core::hash::{Hash, Hasher};
 use primitives::{B256, KECCAK_EMPTY, U256};
 
 /// AccountInfo account information.

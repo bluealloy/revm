@@ -77,7 +77,7 @@ pub fn run() {
         .0;
     let file_name = format!("{}_{}", seed, iterations);
 
-    svg(file_name, &trimmed_data).expect("Failed to store svg");
+    svg(file_name, trimmed_data).expect("Failed to store svg");
 }
 
 fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {

@@ -2863,13 +2863,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "revm-inspector"
-version = "1.0.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "revm-interpreter"
 version = "10.0.1"
 dependencies = [

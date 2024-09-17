@@ -1,5 +1,5 @@
 use super::i256::i256_cmp;
-use crate::{gas,  Host, Interpreter};
+use crate::{gas, Host, Interpreter};
 use core::cmp::Ordering;
 use primitives::U256;
 use specification::hardfork::Spec;

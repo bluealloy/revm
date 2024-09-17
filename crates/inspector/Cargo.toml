@@ -30,7 +30,9 @@ serde = { version = "1.0", default-features = false, features = [
 
 
 [features]
-default = ["std"]
-std = ["serde?/std"]
+default = ["std",]
+std = [
+    "serde?/std",
+]
 serde = ["dep:serde"]
 serde-json = ["serde"]

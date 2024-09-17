@@ -1,6 +1,4 @@
-use primitives::{
-    BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK,
-};
+use primitives::{BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK};
 
 /// Structure holding block blob excess gas and it calculates blob fee.
 ///

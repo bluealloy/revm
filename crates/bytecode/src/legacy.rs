@@ -2,8 +2,8 @@ mod jump_map;
 
 pub use jump_map::JumpTable;
 
-use primitives::Bytes;
 use bitvec::{bitvec, order::Lsb0};
+use primitives::Bytes;
 use std::sync::Arc;
 
 /// Legacy analyzed

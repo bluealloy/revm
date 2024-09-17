@@ -1,6 +1,6 @@
 //! [Database] implementations.
 
-#[cfg(any(feature = "alloydb"))]
+#[cfg(feature = "alloydb")]
 mod utils;
 
 #[cfg(feature = "alloydb")]
