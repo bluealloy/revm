@@ -9,7 +9,7 @@ use revm::primitives::{
     RecoveredAuthorization, Signature, B256, U256,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, u64};
+use std::{collections::BTreeMap, fmt};
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct TestSuite(pub BTreeMap<String, TestUnit>);
@@ -108,12 +108,26 @@ pub struct TransactionParts {
 
     #[serde(default)]
     pub access_lists: Vec<Option<AccessList>>,
-    // Some tx may not have authorization list
     #[serde(default)]
-    pub authorization_list: Option<Vec<TestAuthorization>>,
+    pub authorization_list: Vec<TestAuthorization>,
     #[serde(default)]
     pub blob_versioned_hashes: Vec<B256>,
     pub max_fee_per_blob_gas: Option<U256>,
+}
+
+#[derive(Debug)]
+pub enum TransactionException {
+    Type4InvalidAuthoritySignature,
+}
+
+impl fmt::Display for TransactionException {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            TransactionException::Type4InvalidAuthoritySignature => {
+                write!(f, "TransactionException.TYPE_4_INVALID_AUTHORITY_SIGNATURE")
+            }
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
@@ -135,7 +149,7 @@ impl TestAuthorization {
         Signature::from_rs_and_parity(self.r, self.s, parity).unwrap()
     }
 
-    pub fn into_recovered(self) -> RecoveredAuthorization {
+    pub fn into_recovered(self) -> Result<RecoveredAuthorization, TransactionException> {
         let authorization = Authorization {
             chain_id: self.chain_id,
             address: self.address,
@@ -144,11 +158,11 @@ impl TestAuthorization {
         let authority = self
             .signature()
             .recover_address_from_prehash(&authorization.signature_hash())
-            .ok();
-        RecoveredAuthorization::new_unchecked(
+            .map_err(|_| TransactionException::Type4InvalidAuthoritySignature);
+        Ok(RecoveredAuthorization::new_unchecked(
             authorization.into_signed(self.signature()),
-            authority,
-        )
+            authority.ok(),
+        ))
     }
 }
 
