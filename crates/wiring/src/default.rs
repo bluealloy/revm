@@ -308,7 +308,7 @@ pub struct CfgEnv {
     /// KZG Settings for point evaluation precompile. By default, this is loaded from the ethereum mainnet trusted setup.
     #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub kzg_settings: primitives::kzg::EnvKzgSettings,
+    pub kzg_settings: crate::kzg::EnvKzgSettings,
     /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
     /// This is very beneficial for testing and speeds up execution of that bytecode if called multiple times.
     ///
@@ -351,10 +351,6 @@ pub struct CfgEnv {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_no_base_fee")]
     pub disable_base_fee: bool,
-    /// Disables the payout of the reward to the beneficiary.
-    /// By default, it is set to `false`.
-    #[cfg(feature = "optional_beneficiary_reward")]
-    pub disable_beneficiary_reward: bool,
 }
 
 impl CfgEnv {
@@ -419,16 +415,6 @@ impl CfgEnv {
         false
     }
 
-    #[cfg(feature = "optional_beneficiary_reward")]
-    pub fn is_beneficiary_reward_disabled(&self) -> bool {
-        self.disable_beneficiary_reward
-    }
-
-    #[cfg(not(feature = "optional_beneficiary_reward"))]
-    pub fn is_beneficiary_reward_disabled(&self) -> bool {
-        false
-    }
-
     pub const fn is_nonce_check_disabled(&self) -> bool {
         self.disable_nonce_check
     }
@@ -442,7 +428,7 @@ impl Default for CfgEnv {
             limit_contract_code_size: None,
             disable_nonce_check: false,
             #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
-            kzg_settings: primitives::kzg::EnvKzgSettings::Default,
+            kzg_settings: crate::kzg::EnvKzgSettings::Default,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]
@@ -455,8 +441,6 @@ impl Default for CfgEnv {
             disable_gas_refund: false,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: false,
-            #[cfg(feature = "optional_beneficiary_reward")]
-            disable_beneficiary_reward: false,
         }
     }
 }

@@ -3,14 +3,12 @@ use crate::{
     opcode, OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
 };
 use bytecode::{
+    bitvec::prelude::{bitvec, BitVec, Lsb0},
     eof::{Eof, EofDecodeError, TypesSection},
     legacy::{JumpTable, LegacyAnalyzedBytecode},
     Bytecode,
 };
-use primitives::{
-    bitvec::prelude::{bitvec, BitVec, Lsb0},
-    Bytes, MAX_INITCODE_SIZE,
-};
+use primitives::{Bytes, MAX_INITCODE_SIZE};
 
 use core::{convert::identity, mem};
 use std::{borrow::Cow, fmt, sync::Arc, vec, vec::Vec};

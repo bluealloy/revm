@@ -2863,6 +2863,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "revm-inspector"
+version = "1.0.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "revm-interpreter"
 version = "10.0.1"
 dependencies = [
@@ -2929,12 +2936,9 @@ name = "revm-primitives"
 version = "9.0.1"
 dependencies = [
  "alloy-primitives",
- "bitvec",
- "c-kzg",
  "cfg-if",
  "hashbrown",
  "hex",
- "kzg-rs",
 ]
 
 [[package]]
@@ -2963,7 +2967,10 @@ dependencies = [
 name = "revm-wiring"
 version = "1.0.0"
 dependencies = [
+ "c-kzg",
+ "cfg-if",
  "dyn-clone",
+ "kzg-rs",
  "revm-database-interface",
  "revm-primitives",
  "revm-specification",

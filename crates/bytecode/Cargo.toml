@@ -23,8 +23,9 @@ all = "warn"
 
 [dependencies]
 # revm
-primitives = { path = "../primitives", package = "revm-primitives",  version = "9.0.1", default-features = false }
+primitives.workspace = true
 
+# Jumpmap
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
 
 # Optional
@@ -33,12 +34,9 @@ serde = { version = "1.0", default-features = false, features = [
     "rc",
 ], optional = true }
 
-
-[dev-dependencies]
-
 [features]
 default = ["std"]
 std = ["serde?/std", "primitives/std"]
 hashbrown = ["primitives/hashbrown"]
-serde = ["dep:serde", "primitives/serde"]
+serde = ["dep:serde", "primitives/serde", "bitvec/serde"]
 serde-json = ["serde"]

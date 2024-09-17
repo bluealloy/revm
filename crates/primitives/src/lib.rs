@@ -4,17 +4,12 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(not(feature = "std"))]
-extern crate alloc as std;
-
 mod constants;
-#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
-pub mod kzg;
 pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, keccak256, ruint, uint, Address,
     Bytes, FixedBytes, Log, LogData, TxKind, B256, I256, U256,
 };
-pub use bitvec;
+
 pub use constants::*;
 
 cfg_if::cfg_if! {
@@ -25,13 +20,6 @@ cfg_if::cfg_if! {
         pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
     }
 }
-
-#[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
-pub use kzg::{EnvKzgSettings, KzgSettings};
-
-#[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
-// silence kzg-rs lint as c-kzg will be used as default if both are enabled.
-use kzg_rs as _;
 
 /// The Keccak-256 hash of the empty string `""`.
 pub const KECCAK_EMPTY: B256 =

@@ -22,6 +22,7 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
+# revm
 bytecode.workspace = true
 primitives.workspace = true
 specification.workspace = true
@@ -51,25 +52,5 @@ std = ["serde?/std", "primitives/std", "wiring/std"]
 hashbrown = ["primitives/hashbrown"]
 serde = ["dep:serde", "primitives/serde", "bytecode/serde", "wiring/serde"]
 arbitrary = ["std", "primitives/arbitrary"]
-asm-keccak = ["primitives/asm-keccak"]
-portable = ["primitives/portable"]
 parse = ["dep:paste", "dep:phf"]
-
-dev = [
-    "memory_limit",
-    "optional_balance_check",
-    "optional_block_gas_limit",
-    "optional_eip3607",
-    "optional_gas_refund",
-    "optional_no_base_fee",
-    "optional_beneficiary_reward",
-]
-memory_limit = ["primitives/memory_limit"]
-optional_balance_check = ["primitives/optional_balance_check"]
-optional_block_gas_limit = ["primitives/optional_block_gas_limit"]
-optional_eip3607 = ["primitives/optional_eip3607"]
-optional_gas_refund = ["primitives/optional_gas_refund"]
-optional_no_base_fee = ["primitives/optional_no_base_fee"]
-optional_beneficiary_reward = ["primitives/optional_beneficiary_reward"]
-
-kzg-rs = ["primitives/kzg-rs"]
+memory_limit = ["wiring/memory_limit"]
