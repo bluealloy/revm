@@ -24,6 +24,9 @@ pub mod kzg;
 #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub use kzg::{EnvKzgSettings, KzgSettings};
 
-#[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 // silence kzg-rs lint as c-kzg will be used as default if both are enabled.
+
+#[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 use kzg_rs as _;
+#[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
+use once_cell as _;

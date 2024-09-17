@@ -13,6 +13,7 @@ version = "0.10.1"
 revm = { workspace = true, features = [
     "std",
     "serde-json",
+    "hashbrown",
     "c-kzg",
     "blst",
 ] }
