@@ -275,4 +275,3 @@ fn transfer(
 
     Ok(())
 }
-B
