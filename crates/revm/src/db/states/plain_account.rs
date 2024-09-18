@@ -21,7 +21,7 @@ impl PlainAccount {
 }
 
 /// This type keeps track of the current value of a storage slot.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StorageSlot {
     /// The value of the storage slot before it was changed.

@@ -272,7 +272,33 @@ impl AccountInfo {
         }
     }
 
-    /// Returns account info without the code.
+    /// Returns a copy of this account with the [`Bytecode`] removed. This is
+    /// useful when creating journals or snapshots of the state, where it is
+    /// desirable to store the code blobs elsewhere.
+    ///
+    /// ## Note
+    ///
+    /// This is distinct from [`AccountInfo::without_code`] in that it returns
+    /// a new `AccountInfo` instance with the code removed.
+    /// [`AccountInfo::without_code`] will modify and return the same instance.
+    pub fn copy_without_code(&self) -> Self {
+        Self {
+            balance: self.balance,
+            nonce: self.nonce,
+            code_hash: self.code_hash,
+            code: None,
+        }
+    }
+
+    /// Strip the [`Bytecode`] from this account and drop it. This is
+    /// useful when creating journals or snapshots of the state, where it is
+    /// desirable to store the code blobs elsewhere.
+    ///
+    /// ## Note
+    ///
+    /// This is distinct from [`AccountInfo::copy_without_code`] in that it
+    /// modifies the account in place. [`AccountInfo::copy_without_code`]
+    /// will copy the non-code fields and return a new `AccountInfo` instance.
     pub fn without_code(mut self) -> Self {
         self.take_bytecode();
         self
