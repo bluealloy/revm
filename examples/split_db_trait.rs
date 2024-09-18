@@ -85,8 +85,8 @@ impl<S: DatabaseCommit, BH: BlockHashRef> DatabaseCommit for DatabaseComponents<
 }
 
 
-//! BlockHash database component from [`crate::db::Database`]
-//! it is used inside [`crate::db::DatabaseComponents`]
+//! BlockHash database component from [`database::Database`]
+//! it is used inside [`database::DatabaseComponents`]
 
 use crate::B256;
 use auto_impl::auto_impl;
