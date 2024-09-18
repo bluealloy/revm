@@ -1,4 +1,8 @@
+//! Optimism-specific constants, types, and helpers.
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+
 use anyhow::{anyhow, bail};
+use database::InMemoryDB;
 use revm::{
     interpreter::opcode,
     primitives::{hex, Bytes, TxKind, U256},
@@ -6,7 +10,7 @@ use revm::{
         result::{ExecutionResult, Output},
         EthereumWiring,
     },
-    Evm, InMemoryDB,
+    Evm,
 };
 
 /// Load number parameter and set to storage with slot 0

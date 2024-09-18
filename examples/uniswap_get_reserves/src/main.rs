@@ -1,3 +1,6 @@
+//! Example of uniswap getReserves() call emulation.
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+
 use alloy_eips::BlockId;
 use alloy_provider::ProviderBuilder;
 use alloy_sol_types::sol;

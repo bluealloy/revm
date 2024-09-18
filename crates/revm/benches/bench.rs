@@ -1,10 +1,10 @@
 use criterion::{
     criterion_group, criterion_main, measurement::WallTime, BenchmarkGroup, Criterion,
 };
+use database::BenchmarkDB;
 use interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use revm::{
     bytecode::Bytecode,
-    db::BenchmarkDB,
     interpreter::{analysis::to_analysed, Contract, DummyHost, Interpreter},
     primitives::{address, bytes, hex, Bytes, TxKind, U256},
     specification::hardfork::BerlinSpec,

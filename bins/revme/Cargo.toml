@@ -1,14 +1,15 @@
 [package]
-authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-edition = "2021"
 name = "revme"
-keywords = ["ethereum", "evm"]
-license = "MIT"
-repository = "https://github.com/bluealloy/revm"
 description = "Rust Ethereum Virtual Machine Executable"
 version = "0.10.1"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
+database.workspace = true
 # revm
 revm = { workspace = true, features = [
     "std",

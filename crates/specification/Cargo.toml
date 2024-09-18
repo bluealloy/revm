@@ -1,13 +1,13 @@
 [package]
-authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "Revm Database interface"
-edition = "2021"
-keywords = ["ethereum", "evm", "revm", "no_std"]
-license = "MIT"
 name = "revm-specification"
-repository = "https://github.com/bluealloy/revm"
+description = "Ethereum hardforks and EIP specification structs and constants"
 version = "1.0.0"
-readme = "../../README.md"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true

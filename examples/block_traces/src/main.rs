@@ -1,3 +1,6 @@
+//! Optimism-specific constants, types, and helpers.
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+
 use alloy_eips::{BlockId, BlockNumberOrTag};
 use alloy_provider::{network::primitives::BlockTransactions, Provider, ProviderBuilder};
 use indicatif::ProgressBar;

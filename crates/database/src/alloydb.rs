@@ -1,19 +1,14 @@
-use crate::{
-    bytecode::Bytecode,
-    database_interface::{Database, DatabaseRef},
-    primitives::{Address, B256, U256},
-    state::AccountInfo,
-};
-use alloy_eips::BlockId;
+pub use alloy_eips::BlockId;
 use alloy_provider::{
     network::{BlockResponse, HeaderResponse},
     Network, Provider,
 };
 use alloy_transport::{Transport, TransportError};
+use database_interface::{Database, DatabaseRef};
+use primitives::{Address, B256, U256};
+use state::{AccountInfo, Bytecode};
 use std::future::IntoFuture;
 use tokio::runtime::{Handle, Runtime};
-
-use super::utils::HandleOrRuntime;
 
 /// An alloy-powered REVM [Database].
 ///
@@ -173,6 +168,27 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> Database for AlloyDB<T
     #[inline]
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         <Self as DatabaseRef>::block_hash_ref(self, number)
+    }
+}
+
+// Hold a tokio runtime handle or full runtime
+#[derive(Debug)]
+pub(crate) enum HandleOrRuntime {
+    Handle(Handle),
+    Runtime(Runtime),
+}
+
+impl HandleOrRuntime {
+    #[inline]
+    pub(crate) fn block_on<F>(&self, f: F) -> F::Output
+    where
+        F: std::future::Future + Send,
+        F::Output: Send,
+    {
+        match self {
+            Self::Handle(handle) => tokio::task::block_in_place(move || handle.block_on(f)),
+            Self::Runtime(rt) => rt.block_on(f),
+        }
     }
 }
 

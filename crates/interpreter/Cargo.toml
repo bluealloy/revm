@@ -1,13 +1,13 @@
 [package]
-authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "revm Interpreter"
-edition = "2021"
-keywords = ["no_std", "ethereum", "evm", "revm", "interpreter"]
-license = "MIT"
 name = "revm-interpreter"
-repository = "https://github.com/bluealloy/revm"
+description = "Revm Interpreter that executes bytecode."
 version = "10.0.1"
-readme = "../../README.md"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true

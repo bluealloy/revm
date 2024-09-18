@@ -1,13 +1,13 @@
 [package]
-authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "revm Precompiles - Ethereum compatible precompiled contracts"
-edition = "2021"
-keywords = ["no_std", "ethereum", "evm", "revm", "precompiles"]
-license = "MIT"
 name = "revm-precompile"
-repository = "https://github.com/bluealloy/revm"
+description = "Revm Precompiles - Ethereum compatible precompiled contracts"
 version = "11.0.1"
-readme = "../../README.md"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true

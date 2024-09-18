@@ -1,13 +1,13 @@
 [package]
-authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "revm - Rust Ethereum Virtual Machine"
-edition = "2021"
-keywords = ["no_std", "ethereum", "evm", "revm"]
-license = "MIT"
 name = "revm"
-repository = "https://github.com/bluealloy/revm"
+description = "Revm - Rust Ethereum Virtual Machine"
 version = "14.0.1"
-readme = "../../README.md"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -31,6 +31,7 @@ database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
 bytecode.workspace = true
+database = { workspace = true, optional = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
@@ -46,16 +47,8 @@ serde_json = { version = "1.0", default-features = false, features = [
     "alloc",
 ], optional = true }
 
-# alloydb
-tokio = { version = "1.40", features = [
-    "rt-multi-thread",
-    "macros",
-], optional = true }
-alloy-provider = { version = "0.3", optional = true, default-features = false }
-alloy-eips = { version = "0.3", optional = true, default-features = false }
-alloy-transport = { version = "0.3", optional = true, default-features = false }
-
 [dev-dependencies]
+database.workspace = true
 alloy-sol-types = { version = "0.8.2", default-features = false, features = [
     "std",
 ] }
@@ -84,15 +77,7 @@ arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
 portable = ["wiring/portable"]
 
-test-utils = []
-
-alloydb = [
-    "std",
-    "dep:tokio",
-    "dep:alloy-provider",
-    "dep:alloy-eips",
-    "dep:alloy-transport",
-]
+test-utils = ["database"]
 
 dev = [
     "memory_limit",
@@ -116,32 +101,27 @@ c-kzg = ["precompile/c-kzg"]
 kzg-rs = ["precompile/kzg-rs"]
 blst = ["precompile/blst"]
 
-[[example]]
-name = "fork_ref_transact"
-path = "../../examples/fork_ref_transact.rs"
-required-features = ["alloydb"]
+# [[example]]
+# name = "fork_ref_transact"
+# path = "../../examples/fork_ref_transact.rs"
+# required-features = ["alloydb"]
 
-[[example]]
-name = "generate_block_traces"
-path = "../../examples/generate_block_traces.rs"
-required-features = ["std", "serde-json", "alloydb"]
+# [[example]]
+# name = "generate_block_traces"
+# path = "../../examples/generate_block_traces.rs"
+# required-features = ["std", "serde-json", "alloydb"]
 
-[[example]]
-name = "db_by_ref"
-path = "../../examples/db_by_ref.rs"
-required-features = ["std", "serde-json"]
+# [[example]]
+# name = "db_by_ref"
+# path = "../../examples/db_by_ref.rs"
+# required-features = ["std", "serde-json"]
 
-[[example]]
-name = "deploy"
-path = "../../examples/deploy.rs"
-required-features = []
+# [[example]]
+# name = "deploy"
+# path = "../../examples/deploy.rs"
+# required-features = []
 
-#[[example]]
-#name = "uniswap_v2_usdc_swap"
-#path = "../../examples/uniswap_v2_usdc_swap.rs"
-#required-features = ["alloydb"]
-
-[[bench]]
-name = "bench"
-path = "benches/bench.rs"
-harness = false
+# [[bench]]
+# name = "bench"
+# path = "benches/bench.rs"
+# harness = false

@@ -429,9 +429,9 @@ pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 mod tests {
     use super::*;
     use crate::{BedrockSpec, L1BlockInfo, LatestSpec, OptimismEvmWiring, RegolithSpec};
+    use database::InMemoryDB;
     use revm::{
         database_interface::EmptyDB,
-        db::InMemoryDB,
         interpreter::{CallOutcome, InterpreterResult},
         primitives::{bytes, Address, Bytes, B256},
         state::AccountInfo,

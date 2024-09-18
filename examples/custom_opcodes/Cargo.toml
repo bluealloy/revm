@@ -1,7 +1,7 @@
 [package]
-name = "revm-interface"
-description = "Revm crate"
-version = "1.0.0"
+name = "example-custom-opcodes"
+version = "0.0.0"
+publish = false
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -22,14 +22,5 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-# Optional
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
-], optional = true }
-
-[features]
-default = ["std"]
-std = ["serde?/std"]
-serde = ["dep:serde"]
-serde-json = ["serde"]
+revm.workspace = true
+database.workspace = true

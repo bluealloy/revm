@@ -262,10 +262,10 @@ fn inspector_instruction<EvmWiringT>(
 mod tests {
     use super::*;
     use crate::{
-        db::BenchmarkDB, inspector::inspector_handle_register, inspectors::NoOpInspector, Evm,
-        EvmContext, EvmWiring,
+        inspector::inspector_handle_register, inspectors::NoOpInspector, Evm, EvmContext, EvmWiring,
     };
     use bytecode::Bytecode;
+    use database::BenchmarkDB;
     use database_interface::EmptyDB;
     use interpreter::{opcode, CallInputs, CallOutcome, CreateInputs, CreateOutcome};
     use primitives::{address, Bytes, TxKind};

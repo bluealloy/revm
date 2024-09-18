@@ -108,9 +108,9 @@ mod tests {
     use super::*;
     use alloy_sol_types::sol;
     use alloy_sol_types::SolCall;
+    use database::BenchmarkDB;
     use revm::{
         bytecode::Bytecode,
-        db::BenchmarkDB,
         primitives::{address, bytes, Bytes, TxKind, U256},
         wiring::EthereumWiring,
         Evm,

@@ -1,7 +1,7 @@
 use clap::Parser;
+use database::BenchmarkDB;
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
-    db::BenchmarkDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
     primitives::{address, Address, TxKind},

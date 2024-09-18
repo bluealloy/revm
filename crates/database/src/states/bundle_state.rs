@@ -857,7 +857,7 @@ impl BundleState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{db::StorageWithOriginalValues, TransitionAccount};
+    use crate::{StorageWithOriginalValues, TransitionAccount};
 
     #[test]
     fn transition_states() {

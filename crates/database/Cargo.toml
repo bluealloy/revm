@@ -1,6 +1,6 @@
 [package]
-name = "revm-database-interface"
-description = "Revm Database interface"
+name = "revm-database"
+description = "Revm Database implementations"
 version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
@@ -24,6 +24,9 @@ all = "warn"
 [dependencies]
 state.workspace = true
 primitives.workspace = true
+database-interface.workspace = true
+wiring.workspace = true
+bytecode.workspace = true
 
 auto_impl = "1.2"
 
@@ -33,8 +36,18 @@ serde = { version = "1.0", default-features = false, features = [
     "rc",
 ], optional = true }
 
+# alloydb
+tokio = { version = "1.40", features = [
+    "rt-multi-thread",
+    "macros",
+], optional = true }
+alloy-provider = { version = "0.3", optional = true, default-features = false }
+alloy-eips = { version = "0.3", optional = true, default-features = false }
+alloy-transport = { version = "0.3", optional = true, default-features = false }
+
 
 [dev-dependencies]
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 anyhow = "1.0.83"
 criterion = "0.5"
 indicatif = "0.17"
@@ -45,3 +58,10 @@ alloy-sol-types = "0.8"
 default = ["std"]
 std = ["serde?/std"]
 serde = ["dep:serde"]
+alloydb = [
+    "std",
+    "dep:tokio",
+    "dep:alloy-provider",
+    "dep:alloy-eips",
+    "dep:alloy-transport",
+]

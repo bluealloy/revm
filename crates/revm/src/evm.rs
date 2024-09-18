@@ -427,8 +427,8 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
 mod tests {
 
     use super::*;
-    use crate::db::BenchmarkDB;
     use bytecode::Bytecode;
+    use database::BenchmarkDB;
     use interpreter::opcode::{PUSH1, SSTORE};
     use primitives::{address, U256};
     use specification::eip7702::{Authorization, RecoveredAuthorization, Signature};

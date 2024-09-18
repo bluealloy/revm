@@ -465,8 +465,9 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::{Context, Evm, InMemoryDB};
+    use crate::{Context, Evm};
     use bytecode::Bytecode;
+    use database::InMemoryDB;
     use interpreter::Interpreter;
     use primitives::{address, TxKind, U256};
     use state::AccountInfo;

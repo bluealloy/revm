@@ -1,13 +1,13 @@
 [package]
-authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "Revm Optimism"
-edition = "2021"
-keywords = ["ethereum", "optimism", "evm", "revm", "no_std"]
-license = "MIT"
 name = "revm-optimism"
-repository = "https://github.com/bluealloy/revm"
+description = "Optimism extension of Revm"
 version = "1.0.0"
-readme = "../../README.md"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -37,6 +37,7 @@ serde = { version = "1.0", default-features = false, features = [
 
 
 [dev-dependencies]
+database.workspace = true
 anyhow = "1.0.89"
 criterion = "0.5"
 indicatif = "0.17"

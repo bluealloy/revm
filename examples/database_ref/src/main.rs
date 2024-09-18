@@ -1,8 +1,11 @@
+//! Optimism-specific constants, types, and helpers.
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+
 use core::error::Error;
 use core::fmt::Debug;
+use database::CacheDB;
 use revm::{
     database_interface::{EmptyDB, WrapDatabaseRef},
-    db::CacheDB,
     handler::register::HandleRegister,
     inspector_handle_register,
     inspectors::{NoOpInspector, TracerEip3155},

@@ -1,8 +1,7 @@
-use bytecode::Bytecode;
 use core::convert::Infallible;
 use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
 use primitives::{hash_map::Entry, Address, HashMap, Log, B256, KECCAK_EMPTY, U256};
-use state::{Account, AccountInfo};
+use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
 use wiring::EthereumWiring;
 
@@ -469,7 +468,7 @@ mod tests {
         assert_eq!(new_state.storage(account, key1), Ok(value1));
     }
 
-    #[cfg(feature = "serde-json")]
+    #[cfg(feature = "serde")]
     #[test]
     fn test_serialize_deserialize_cachedb() {
         let account = Address::with_last_byte(69);

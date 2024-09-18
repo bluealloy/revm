@@ -1,24 +1,38 @@
 [workspace]
+resolver = "2"
+default-members = ["crates/revm"]
 members = [
+    # binary 
     "bins/revme",
+
+    # libraries
     "crates/revm",
     "crates/primitives",
     "crates/interpreter",
     "crates/precompile",
     "crates/optimism",
+    "crates/database",
     "crates/database/interface",
     "crates/bytecode",
     "crates/state",
     "crates/wiring",
     "crates/specification",
+
+    # examples
+    #"examples/block_traces",
+    #"examples/contract_deployment",
+    #"examples/custom_opcodes",
+    #"examples/database_components",
+    #"examples/database_ref",
+    #"examples/uniswap_get_reserves",
+    #"examples/uniswap_v2_usdc_swap",
 ]
-resolver = "2"
-default-members = ["crates/revm"]
 
 [workspace.dependencies]
 # revm
 primitives = { path = "crates/primitives", package = "revm-primitives", version = "9.0.1", default-features = false }
 bytecode = { path = "crates/bytecode", package = "revm-bytecode", version = "1.0.0", default-features = false }
+database = { path = "crates/database", package = "revm-database", version = "1.0.0", default-features = false }
 database-interface = { path = "crates/database/interface", package = "revm-database-interface", version = "1.0.0", default-features = false }
 specification = { path = "crates/specification", package = "revm-specification", version = "1.0.0", default-features = false }
 state = { path = "crates/state", package = "revm-state", version = "1.0.0", default-features = false }
@@ -26,7 +40,16 @@ wiring = { path = "crates/wiring", package = "revm-wiring", version = "1.0.0", d
 revm = { path = "crates/revm", version = "14.0.1", default-features = false }
 interpreter = { path = "crates/interpreter", package = "revm-interpreter", version = "10.0.1", default-features = false }
 precompile = { path = "crates/precompile", package = "revm-precompile", version = "11.0.1", default-features = false }
-# misc
+
+[workspace.package]
+license = "MIT"
+authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
+categories = ["no-std", "compilers", "cryptography::cryptocurrencies"]
+keywords = ["revm", "evm", "ethereum", "blockchain", "no_std"]
+repository = "https://github.com/bluealloy/revm"
+documentation = "https://bluealloy.github.io/revm/"
+homepage = ""
+edition = "2021"
 
 [workspace.metadata.docs.rs]
 all-features = true

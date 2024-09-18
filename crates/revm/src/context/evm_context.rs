@@ -463,7 +463,8 @@ where
 #[cfg(any(test, feature = "test-utils"))]
 pub(crate) mod test_utils {
     use super::*;
-    use crate::{db::CacheDB, journaled_state::JournaledState};
+    use crate::journaled_state::JournaledState;
+    use database::CacheDB;
     use database_interface::EmptyDB;
     use interpreter::CallScheme;
     use primitives::{address, HashSet, B256, U256};
@@ -549,8 +550,9 @@ pub(crate) mod test_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{db::CacheDB, Frame, JournalEntry};
+    use crate::{Frame, JournalEntry};
     use bytecode::Bytecode;
+    use database::CacheDB;
     use database_interface::EmptyDB;
     use primitives::{address, U256};
     use state::AccountInfo;

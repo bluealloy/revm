@@ -302,7 +302,7 @@ impl<DB: Database> DatabaseCommit for State<DB> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::{
+    use crate::{
         states::{reverts::AccountInfoRevert, StorageSlot},
         AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
     };

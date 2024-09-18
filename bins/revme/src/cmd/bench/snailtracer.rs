@@ -1,6 +1,6 @@
+use database::{BenchmarkDB, EthereumBenchmarkWiring};
 use revm::{
     bytecode::Bytecode,
-    db::{BenchmarkDB, EthereumBenchmarkWiring},
     interpreter::analysis::to_analysed,
     primitives::{address, bytes, Bytes, TxKind},
     Evm,

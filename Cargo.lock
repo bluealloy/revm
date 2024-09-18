@@ -2812,10 +2812,8 @@ dependencies = [
 name = "revm"
 version = "14.0.1"
 dependencies = [
- "alloy-eips",
  "alloy-provider",
  "alloy-sol-types",
- "alloy-transport",
  "anyhow",
  "auto_impl",
  "criterion",
@@ -2825,6 +2823,7 @@ dependencies = [
  "indicatif",
  "reqwest",
  "revm-bytecode",
+ "revm-database",
  "revm-database-interface",
  "revm-interpreter",
  "revm-precompile",
@@ -2835,7 +2834,6 @@ dependencies = [
  "rstest",
  "serde",
  "serde_json",
- "tokio",
 ]
 
 [[package]]
@@ -2845,6 +2843,29 @@ dependencies = [
  "bitvec",
  "revm-primitives",
  "serde",
+]
+
+[[package]]
+name = "revm-database"
+version = "1.0.0"
+dependencies = [
+ "alloy-eips",
+ "alloy-provider",
+ "alloy-sol-types",
+ "alloy-transport",
+ "anyhow",
+ "auto_impl",
+ "criterion",
+ "indicatif",
+ "revm-bytecode",
+ "revm-database-interface",
+ "revm-primitives",
+ "revm-state",
+ "revm-wiring",
+ "rstest",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
@@ -2890,6 +2911,7 @@ dependencies = [
  "enumn",
  "indicatif",
  "revm",
+ "revm-database",
  "revm-precompile",
  "rstest",
  "serde",
@@ -2988,6 +3010,7 @@ dependencies = [
  "microbench",
  "plain_hasher",
  "revm",
+ "revm-database",
  "serde",
  "serde_json",
  "thiserror",

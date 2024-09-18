@@ -3,11 +3,11 @@ use super::{
     models::{SpecName, Test, TestSuite},
     utils::recover_address,
 };
+use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
     bytecode::Bytecode,
     database_interface::EmptyDB,
-    db::State,
     inspector_handle_register,
     inspectors::TracerEip3155,
     interpreter::analysis::to_analysed,
@@ -276,7 +276,7 @@ pub fn execute_test_suite(
 
     for (name, unit) in suite.0 {
         // Create database and insert cache
-        let mut cache_state = revm::CacheState::new(false);
+        let mut cache_state = database::CacheState::new(false);
         for (address, info) in unit.pre {
             let code_hash = keccak256(&info.code);
             let bytecode = to_analysed(Bytecode::new_raw(info.code));
@@ -397,7 +397,7 @@ pub fn execute_test_suite(
 
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
-                let mut state = revm::db::State::builder()
+                let mut state = database::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
@@ -466,7 +466,7 @@ pub fn execute_test_suite(
                 // re build to run with tracing
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
-                let mut state = revm::db::State::builder()
+                let mut state = database::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
