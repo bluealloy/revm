@@ -5,13 +5,19 @@ use super::{
 };
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use revm::{
-    db::{EmptyDB, State},
+    bytecode::Bytecode,
+    database_interface::EmptyDB,
+    db::State,
     inspector_handle_register,
     inspectors::TracerEip3155,
     interpreter::analysis::to_analysed,
-    primitives::{
-        calc_excess_blob_gas, keccak256, AuthorizationList, Bytecode, Bytes, EVMResultGeneric,
-        EnvWiring, EthereumWiring, ExecutionResult, HaltReason, SpecId, TxKind, B256,
+    primitives::{keccak256, Bytes, TxKind, B256},
+    specification::hardfork::SpecId,
+    wiring::{
+        block::calc_excess_blob_gas,
+        default::EnvWiring,
+        result::{EVMResultGeneric, ExecutionResult, HaltReason},
+        EthereumWiring,
     },
     Evm,
 };
@@ -274,7 +280,7 @@ pub fn execute_test_suite(
         for (address, info) in unit.pre {
             let code_hash = keccak256(&info.code);
             let bytecode = to_analysed(Bytecode::new_raw(info.code));
-            let acc_info = revm::primitives::AccountInfo {
+            let acc_info = revm::state::AccountInfo {
                 balance: info.balance,
                 code_hash,
                 code: Some(bytecode),
@@ -372,16 +378,10 @@ pub fn execute_test_suite(
                     .and_then(Option::as_deref)
                     .cloned()
                     .unwrap_or_default();
-
-                env.tx.authorization_list =
-                    unit.transaction
-                        .authorization_list
-                        .as_ref()
-                        .map(|auth_list| {
-                            AuthorizationList::Recovered(
-                                auth_list.iter().map(|auth| auth.into_recovered()).collect(),
-                            )
-                        });
+                let Ok(auth_list) = test.eip7702_authorization_list() else {
+                    continue;
+                };
+                env.tx.authorization_list = auth_list;
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),
@@ -410,6 +410,7 @@ pub fn execute_test_suite(
                         .with_external_context(
                             TracerEip3155::new(Box::new(stderr())).without_summary(),
                         )
+                        .with_spec_id(spec_id)
                         .append_handler_register(inspector_handle_register)
                         .build();
 
@@ -472,6 +473,7 @@ pub fn execute_test_suite(
                     .with_env(env.clone())
                     .reset_handler_with_external_context::<EthereumWiring<_, TracerEip3155>>()
                     .with_external_context(TracerEip3155::new(Box::new(stdout())).without_summary())
+                    .with_spec_id(spec_id)
                     .append_handler_register(inspector_handle_register)
                     .build();
                 let _ = evm.transact_commit();
