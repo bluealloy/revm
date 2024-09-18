@@ -130,7 +130,7 @@ pub struct TestAuthorization {
 impl TestAuthorization {
     pub fn signature(&self) -> Signature {
         let v = u64::try_from(self.v).unwrap_or(u64::MAX);
-        let parity = Parity::try_from(v).unwrap();
+        let parity = Parity::try_from(v).unwrap_or(Parity::Eip155(36));
         Signature::from_rs_and_parity(self.r, self.s, parity).unwrap()
     }
 
