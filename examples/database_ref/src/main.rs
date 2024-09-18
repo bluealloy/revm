@@ -1,3 +1,6 @@
+//! Optimism-specific constants, types, and helpers.
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+
 use core::error::Error;
 use core::fmt::Debug;
 use database::CacheDB;

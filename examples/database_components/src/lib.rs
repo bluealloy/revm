@@ -1,3 +1,6 @@
+//! Optimism-specific constants, types, and helpers.
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+
 
 
 //! Database that is split on State and BlockHash traits.

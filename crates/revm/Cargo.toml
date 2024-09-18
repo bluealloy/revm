@@ -31,6 +31,7 @@ database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
 bytecode.workspace = true
+database = { workspace = true, optional = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
@@ -76,7 +77,7 @@ arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
 portable = ["wiring/portable"]
 
-test-utils = []
+test-utils = ["database"]
 
 dev = [
     "memory_limit",
@@ -119,11 +120,6 @@ required-features = ["std", "serde-json"]
 name = "deploy"
 path = "../../examples/deploy.rs"
 required-features = []
-
-#[[example]]
-#name = "uniswap_v2_usdc_swap"
-#path = "../../examples/uniswap_v2_usdc_swap.rs"
-#required-features = ["alloydb"]
 
 [[bench]]
 name = "bench"

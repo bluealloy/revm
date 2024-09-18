@@ -1,0 +1,22 @@
+[package]
+name = "example-uniswap-get-reserves"
+version = "0.0.0"
+publish = false
+license.workspace = true
+edition.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+revm.workspace = true
+database.workspace = true

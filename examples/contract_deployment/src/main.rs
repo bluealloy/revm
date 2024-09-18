@@ -1,3 +1,6 @@
+//! Optimism-specific constants, types, and helpers.
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+
 use anyhow::{anyhow, bail};
 use database::InMemoryDB;
 use revm::{

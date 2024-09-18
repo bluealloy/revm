@@ -1,4 +1,4 @@
-use alloy_eips::BlockId;
+pub use alloy_eips::BlockId;
 use alloy_provider::{
     network::{BlockResponse, HeaderResponse},
     Network, Provider,
