@@ -1,32 +1,21 @@
-// Example Adapted From: https://github.com/bluealloy/revm/issues/672
-
-use ethers_core::types::BlockId;
-use ethers_providers::Middleware;
-use ethers_providers::{Http, Provider};
+use alloy_eips::{BlockId, BlockNumberOrTag};
+use alloy_provider::{network::primitives::BlockTransactions, Provider, ProviderBuilder};
 use indicatif::ProgressBar;
-use revm::db::{CacheDB, EthersDB, StateBuilder};
-use revm::inspectors::TracerEip3155;
-use revm::primitives::{AccessListItem, Address, EthereumWiring, TxKind, B256, U256};
-use revm::{inspector_handle_register, Evm};
+use revm::{
+    db::{AlloyDB, CacheDB, StateBuilder},
+    inspector_handle_register,
+    inspectors::TracerEip3155,
+    primitives::{TxKind, B256, U256},
+    specification::eip2930::AccessListItem,
+    wiring::EthereumWiring,
+    Evm,
+};
 use std::fs::OpenOptions;
 use std::io::BufWriter;
 use std::io::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Instant;
-
-macro_rules! local_fill {
-    ($left:expr, $right:expr, $fun:expr) => {
-        if let Some(right) = $right {
-            $left = $fun(right.0)
-        }
-    };
-    ($left:expr, $right:expr) => {
-        if let Some(right) = $right {
-            $left = Address::from(right.as_fixed_bytes())
-        }
-    };
-}
 
 struct FlushWriter {
     writer: Arc<Mutex<BufWriter<std::fs::File>>>,
@@ -50,46 +39,50 @@ impl Write for FlushWriter {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Create ethers client and wrap it in Arc<M>
-    let client = Provider::<Http>::try_from(
-        "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27",
-    )?;
-    let client = Arc::new(client);
+    // Set up the HTTP transport which is consumed by the RPC client.
+    let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
+
+    // create ethers client and wrap it in Arc<M>
+    let client = ProviderBuilder::new().on_http(rpc_url);
 
     // Params
     let chain_id: u64 = 1;
     let block_number = 10889447;
 
     // Fetch the transaction-rich block
-    let block = match client.get_block_with_txs(block_number).await {
+    let block = match client
+        .get_block_by_number(BlockNumberOrTag::Number(block_number), true)
+        .await
+    {
         Ok(Some(block)) => block,
         Ok(None) => anyhow::bail!("Block not found"),
         Err(error) => anyhow::bail!("Error: {:?}", error),
     };
-    println!("Fetched block number: {}", block.number.unwrap().0[0]);
+    println!("Fetched block number: {}", block.header.number);
     let previous_block_number = block_number - 1;
 
     // Use the previous block state as the db with caching
     let prev_id: BlockId = previous_block_number.into();
     // SAFETY: This cannot fail since this is in the top-level tokio runtime
-    let state_db = EthersDB::new(client, Some(prev_id)).expect("panic");
-    let cache_db: CacheDB<EthersDB<Provider<Http>>> = CacheDB::new(state_db);
+
+    let state_db = AlloyDB::new(client, prev_id).unwrap();
+    let cache_db: CacheDB<_> = CacheDB::new(state_db);
     let mut state = StateBuilder::new_with_database(cache_db).build();
     let mut evm = Evm::<EthereumWiring<_, _>>::builder()
         .with_db(&mut state)
         .with_external_context(TracerEip3155::new(Box::new(std::io::stdout())))
         .modify_block_env(|b| {
-            if let Some(number) = block.number {
-                let nn = number.0[0];
-                b.number = U256::from(nn);
-            }
-            local_fill!(b.coinbase, block.author);
-            local_fill!(b.timestamp, Some(block.timestamp), U256::from_limbs);
-            local_fill!(b.difficulty, Some(block.difficulty), U256::from_limbs);
-            local_fill!(b.gas_limit, Some(block.gas_limit), U256::from_limbs);
-            if let Some(base_fee) = block.base_fee_per_gas {
-                local_fill!(b.basefee, Some(base_fee), U256::from_limbs);
-            }
+            b.number = U256::from(block.header.number);
+            b.coinbase = block.header.miner;
+            b.timestamp = U256::from(block.header.timestamp);
+
+            b.difficulty = block.header.difficulty;
+            b.gas_limit = U256::from(block.header.gas_limit);
+            b.basefee = block
+                .header
+                .base_fee_per_gas
+                .map(U256::from)
+                .unwrap_or_default();
         })
         .modify_cfg_env(|c| {
             c.chain_id = chain_id;
@@ -107,24 +100,25 @@ async fn main() -> anyhow::Result<()> {
     std::fs::create_dir_all("traces").expect("Failed to create traces directory");
 
     // Fill in CfgEnv
-    for tx in block.transactions {
+    let BlockTransactions::Full(transactions) = block.transactions else {
+        panic!("Wrong transaction type")
+    };
+
+    for tx in transactions {
         evm = evm
             .modify()
             .modify_tx_env(|etx| {
-                etx.caller = Address::from(tx.from.as_fixed_bytes());
-                etx.gas_limit = tx.gas.as_u64();
-                local_fill!(etx.gas_price, tx.gas_price, U256::from_limbs);
-                local_fill!(etx.value, Some(tx.value), U256::from_limbs);
-                etx.data = tx.input.0.into();
-                let mut gas_priority_fee = U256::ZERO;
-                local_fill!(
-                    gas_priority_fee,
-                    tx.max_priority_fee_per_gas,
-                    U256::from_limbs
+                etx.caller = tx.from;
+                etx.gas_limit = tx.gas as u64;
+                etx.gas_price = U256::from(
+                    tx.gas_price
+                        .unwrap_or(tx.max_fee_per_gas.unwrap_or_default()),
                 );
-                etx.gas_priority_fee = Some(gas_priority_fee);
+                etx.value = tx.value;
+                etx.data = tx.input.0.into();
+                etx.gas_priority_fee = tx.max_priority_fee_per_gas.map(U256::from);
                 etx.chain_id = Some(chain_id);
-                etx.nonce = tx.nonce.as_u64();
+                etx.nonce = tx.nonce;
                 if let Some(access_list) = tx.access_list {
                     etx.access_list = access_list
                         .0
@@ -137,7 +131,7 @@ async fn main() -> anyhow::Result<()> {
                                 .collect();
 
                             AccessListItem {
-                                address: Address::new(item.address.0),
+                                address: item.address,
                                 storage_keys,
                             }
                         })
@@ -147,14 +141,14 @@ async fn main() -> anyhow::Result<()> {
                 }
 
                 etx.transact_to = match tx.to {
-                    Some(to_address) => TxKind::Call(Address::from(to_address.as_fixed_bytes())),
+                    Some(to_address) => TxKind::Call(to_address),
                     None => TxKind::Create,
                 };
             })
             .build();
 
         // Construct the file writer to write the trace to
-        let tx_number = tx.transaction_index.unwrap().0[0];
+        let tx_number = tx.transaction_index.unwrap_or_default();
         let file_name = format!("traces/{}.json", tx_number);
         let write = OpenOptions::new()
             .write(true)

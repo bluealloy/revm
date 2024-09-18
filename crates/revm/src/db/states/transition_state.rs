@@ -1,5 +1,5 @@
 use super::TransitionAccount;
-use revm_interpreter::primitives::{hash_map::Entry, Address, HashMap};
+use primitives::{hash_map::Entry, Address, HashMap};
 use std::vec::Vec;
 
 #[derive(Clone, Default, Debug, PartialEq, Eq)]

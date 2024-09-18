@@ -1,6 +1,10 @@
-use revm::primitives::{
-    AccessListItem, Address, AuthorizationList, Bytes, Transaction, TransactionValidation, TxKind,
-    B256, U256,
+use revm::{
+    primitives::{Address, Bytes, TxKind, B256, U256},
+    specification::{eip2930::AccessListItem, eip7702::AuthorizationList},
+    wiring::{
+        default::TxEnv as EthTxEnv,
+        transaction::{Transaction, TransactionValidation},
+    },
 };
 
 use super::{OptimismInvalidTransaction, OptimismTransaction};
@@ -10,7 +14,7 @@ use super::{OptimismInvalidTransaction, OptimismTransaction};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     #[cfg_attr(feature = "serde", serde(flatten))]
-    pub base: revm::primitives::TxEnv,
+    pub base: EthTxEnv,
 
     /// The source hash is used to make sure that deposit transactions do
     /// not have identical hashes.

@@ -1,9 +1,7 @@
-use crate::{
-    gas,
-    primitives::{Spec, B256, KECCAK_EMPTY, U256},
-    Host, InstructionResult, Interpreter,
-};
+use crate::{gas, Host, InstructionResult, Interpreter};
 use core::ptr;
+use primitives::{B256, KECCAK_EMPTY, U256};
+use specification::hardfork::Spec;
 
 pub fn keccak256<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     pop_top!(interpreter, offset, len_ptr);
@@ -14,7 +12,7 @@ pub fn keccak256<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     } else {
         let from = as_usize_or_fail!(interpreter, offset);
         resize_memory!(interpreter, from, len);
-        crate::primitives::keccak256(interpreter.shared_memory.slice(from, len))
+        primitives::keccak256(interpreter.shared_memory.slice(from, len))
     };
     *len_ptr = hash.into();
 }
@@ -189,9 +187,12 @@ mod test {
     use super::*;
     use crate::{
         opcode::{make_instruction_table, RETURNDATACOPY, RETURNDATALOAD},
-        primitives::{bytes, Bytecode, DefaultEthereumWiring, PragueSpec},
         DummyHost, Gas, InstructionResult,
     };
+    use bytecode::Bytecode;
+    use primitives::bytes;
+    use specification::hardfork::PragueSpec;
+    use wiring::DefaultEthereumWiring;
 
     #[test]
     fn returndataload() {

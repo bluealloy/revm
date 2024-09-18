@@ -1,0 +1,79 @@
+[package]
+authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
+description = "Revm generic types wiring"
+edition = "2021"
+keywords = ["ethereum", "evm", "revm", "no_std"]
+license = "MIT"
+name = "revm-wiring"
+repository = "https://github.com/bluealloy/revm"
+version = "1.0.0"
+readme = "../../README.md"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+# revm
+primitives.workspace = true
+database-interface.workspace = true
+specification.workspace = true
+state.workspace = true
+
+# mics
+dyn-clone = "1.0"
+
+# Optional
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+], optional = true }
+
+
+# For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
+# Optionally use `kzg-rs`(Not audited) for a pure Rust implementation of KZG.
+c-kzg = { version = "1.0.3", default-features = false, optional = true, features = [
+    "ethereum_kzg_settings",
+] }
+kzg-rs = { version = "0.2.3", default-features = false, optional = true }
+cfg-if = { version = "1", default-features = false, optional = true }
+once_cell = { version = "1.19", default-features = false, optional = true, features = [
+    "alloc",
+] }
+
+[dev-dependencies]
+
+[features]
+default = ["std", "portable"]
+std = ["serde?/std"]
+serde = ["dep:serde", "primitives/serde", "specification/serde", "state/serde"]
+portable = ["c-kzg?/portable"]
+
+c-kzg = ["dep:c-kzg", "dep:cfg-if"]
+# `kzg-rs` is not audited but useful for `no_std` environment.
+#    use it with causing and default to `c-kzg` if possible!
+kzg-rs = ["dep:kzg-rs", "dep:cfg-if", "dep:once_cell"]
+
+# Enable additional features for development
+dev = [
+    "memory_limit",
+    "optional_balance_check",
+    "optional_block_gas_limit",
+    "optional_eip3607",
+    "optional_gas_refund",
+    "optional_no_base_fee",
+]
+memory_limit = []
+optional_balance_check = []
+optional_block_gas_limit = []
+optional_eip3607 = []
+optional_gas_refund = []
+optional_no_base_fee = []

@@ -1,5 +1,5 @@
-use revm_precompile::{
-    bn128, {Error, Precompile, PrecompileResult, PrecompileWithAddress},
+use precompile::{
+    bn128, {Precompile, PrecompileError, PrecompileResult, PrecompileWithAddress},
 };
 
 pub(crate) mod pair {
@@ -13,7 +13,7 @@ pub(crate) mod pair {
 
     pub(crate) fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > GRANITE_MAX_INPUT_SIZE {
-            return Err(Error::Bn128PairLength.into());
+            return Err(PrecompileError::Bn128PairLength.into());
         }
         bn128::run_pair(
             input,
@@ -27,7 +27,7 @@ pub(crate) mod pair {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use revm::primitives::{hex, PrecompileErrors};
+    use revm::{precompile::PrecompileErrors, primitives::hex};
     use std::vec;
 
     #[test]
@@ -67,20 +67,23 @@ mod tests {
         let res = pair::run_pair(&input, 260_000);
         assert!(matches!(
             res,
-            Err(PrecompileErrors::Error(Error::Bn128PairLength))
+            Err(PrecompileErrors::Error(PrecompileError::Bn128PairLength))
         ));
 
         // valid input length shorter than 112687
         let input = vec![1u8; 586 * bn128::PAIR_ELEMENT_LEN];
         let res = pair::run_pair(&input, 260_000);
-        assert!(matches!(res, Err(PrecompileErrors::Error(Error::OutOfGas))));
+        assert!(matches!(
+            res,
+            Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
+        ));
 
         // input length longer than 112687
         let input = vec![1u8; 587 * bn128::PAIR_ELEMENT_LEN];
         let res = pair::run_pair(&input, 260_000);
         assert!(matches!(
             res,
-            Err(PrecompileErrors::Error(Error::Bn128PairLength))
+            Err(PrecompileErrors::Error(PrecompileError::Bn128PairLength))
         ));
     }
 }

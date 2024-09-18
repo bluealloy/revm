@@ -1,11 +1,7 @@
-use revm_primitives::eip7702;
-
 use super::constants::*;
-use crate::{
-    num_words,
-    primitives::{AccessListItem, SpecId, U256},
-    AccountLoad, Eip7702CodeLoad, SStoreResult, SelfDestructResult, StateLoad,
-};
+use crate::{num_words, AccountLoad, Eip7702CodeLoad, SStoreResult, SelfDestructResult, StateLoad};
+use primitives::U256;
+use specification::{eip2930::AccessListItem, eip7702, hardfork::SpecId};
 
 /// `const` Option `?`.
 macro_rules! tri {

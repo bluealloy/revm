@@ -1,8 +1,7 @@
-use crate::{
-    gas,
-    primitives::{Block, Spec, SpecId::*, Transaction, U256},
-    Host, Interpreter,
-};
+use crate::{gas, Host, Interpreter};
+use primitives::U256;
+use specification::hardfork::{Spec, SpecId::*};
+use wiring::{Block, Transaction};
 
 /// EIP-1344: ChainID opcode
 pub fn chainid<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {

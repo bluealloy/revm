@@ -1,9 +1,11 @@
 use clap::Parser;
 use revm::{
+    bytecode::{Bytecode, BytecodeDecodeError},
     db::BenchmarkDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
-    primitives::{address, Address, Bytecode, BytecodeDecodeError, EthereumWiring, TxKind},
+    primitives::{address, Address, TxKind},
+    wiring::EthereumWiring,
     Database, Evm,
 };
 use std::io::Error as IoError;

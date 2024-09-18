@@ -2,13 +2,19 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
-use crate::{
-    precompile::PrecompileSpecId,
-    primitives::{
-        eip7702, Account, Block, Bytecode, EVMError, EVMResultGeneric, EnvWiring, Spec, SpecId,
-        Transaction, BLOCKHASH_STORAGE_ADDRESS, PRAGUE, U256,
-    },
-    Context, ContextPrecompiles, EvmWiring,
+use crate::{Context, ContextPrecompiles, EvmWiring};
+use bytecode::Bytecode;
+use precompile::PrecompileSpecId;
+use primitives::{BLOCKHASH_STORAGE_ADDRESS, U256};
+use specification::{
+    eip7702,
+    hardfork::{Spec, SpecId},
+};
+use state::Account;
+use wiring::{
+    default::EnvWiring,
+    result::{EVMError, EVMResultGeneric},
+    Block, Transaction,
 };
 
 /// Main precompile load
@@ -108,7 +114,7 @@ pub fn apply_eip7702_auth_list<EvmWiringT: EvmWiring, SPEC: Spec>(
     context: &mut Context<EvmWiringT>,
 ) -> EVMResultGeneric<u64, EvmWiringT> {
     // EIP-7702. Load bytecode to authorized accounts.
-    if !SPEC::enabled(PRAGUE) {
+    if !SPEC::enabled(SpecId::PRAGUE) {
         return Ok(0);
     }
 

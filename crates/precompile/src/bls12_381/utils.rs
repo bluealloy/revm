@@ -1,8 +1,8 @@
+use crate::PrecompileError;
 use blst::{
     blst_bendian_from_fp, blst_fp, blst_fp_from_bendian, blst_scalar, blst_scalar_from_bendian,
 };
 use core::cmp::Ordering;
-use revm_primitives::PrecompileError;
 
 /// Number of bits used in the BLS12-381 curve finite field elements.
 pub(super) const NBITS: usize = 256;

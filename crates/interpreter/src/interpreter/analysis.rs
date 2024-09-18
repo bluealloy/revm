@@ -1,16 +1,15 @@
-use revm_primitives::MAX_INITCODE_SIZE;
-
 use crate::{
     instructions::utility::{read_i16, read_u16},
-    opcode,
-    primitives::{
-        bitvec::prelude::{bitvec, BitVec, Lsb0},
-        eof::{EofDecodeError, TypesSection},
-        legacy::JumpTable,
-        Bytecode, Bytes, Eof, LegacyAnalyzedBytecode,
-    },
-    OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
+    opcode, OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
 };
+use bytecode::{
+    bitvec::prelude::{bitvec, BitVec, Lsb0},
+    eof::{Eof, EofDecodeError, TypesSection},
+    legacy::{JumpTable, LegacyAnalyzedBytecode},
+    Bytecode,
+};
+use primitives::{Bytes, MAX_INITCODE_SIZE};
+
 use core::{convert::identity, mem};
 use std::{borrow::Cow, fmt, sync::Arc, vec, vec::Vec};
 
@@ -807,7 +806,7 @@ pub fn validate_eof_code(
 #[cfg(test)]
 mod test {
     use super::*;
-    use revm_primitives::hex;
+    use primitives::hex;
 
     #[test]
     fn test1() {

@@ -1,0 +1,41 @@
+[package]
+authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
+description = "Revm Database interface"
+edition = "2021"
+keywords = ["ethereum", "evm", "revm", "no_std"]
+license = "MIT"
+name = "revm-gas"
+repository = "https://github.com/bluealloy/revm"
+version = "1.0.0"
+readme = "../../README.md"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+
+# Optional
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+], optional = true }
+
+
+[dev-dependencies]
+
+[features]
+default = ["std",]
+std = [
+    "serde?/std",
+]
+serde = ["dep:serde"]
+serde-json = ["serde"]

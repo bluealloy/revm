@@ -1,5 +1,5 @@
-use crate::primitives::U256;
 use core::cmp::Ordering;
+use primitives::U256;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(i8)]
@@ -132,8 +132,8 @@ pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::uint;
     use core::num::Wrapping;
+    use primitives::uint;
 
     #[test]
     fn div_i256() {

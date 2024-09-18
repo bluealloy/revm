@@ -1,9 +1,11 @@
-use crate::{
-    handler::mainnet,
-    primitives::{EVMResultGeneric, EnvWiring, InvalidTransaction, Spec, TransactionValidation},
-    Context, EvmWiring,
-};
+use crate::{handler::mainnet, Context, EvmWiring};
+use specification::hardfork::Spec;
 use std::sync::Arc;
+use wiring::{
+    default::EnvWiring,
+    result::{EVMResultGeneric, InvalidTransaction},
+    transaction::TransactionValidation,
+};
 
 /// Handle that validates env.
 pub type ValidateEnvHandle<'a, EvmWiringT> =

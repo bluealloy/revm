@@ -1,13 +1,16 @@
 use criterion::{
     criterion_group, criterion_main, measurement::WallTime, BenchmarkGroup, Criterion,
 };
+use interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use revm::{
+    bytecode::Bytecode,
     db::BenchmarkDB,
     interpreter::{analysis::to_analysed, Contract, DummyHost, Interpreter},
-    primitives::{address, bytes, hex, BerlinSpec, Bytecode, Bytes, EthereumWiring, TxKind, U256},
+    primitives::{address, bytes, hex, Bytes, TxKind, U256},
+    specification::hardfork::BerlinSpec,
+    wiring::EthereumWiring,
     Evm,
 };
-use revm_interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use std::time::Duration;
 
 fn analysis(c: &mut Criterion) {

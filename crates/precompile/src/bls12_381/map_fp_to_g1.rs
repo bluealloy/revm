@@ -3,8 +3,9 @@ use super::{
     utils::{fp_from_bendian, remove_padding, PADDED_FP_LENGTH},
 };
 use crate::{u64_to_address, PrecompileWithAddress};
+use crate::{Precompile, PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{blst_map_to_g1, blst_p1, blst_p1_affine, blst_p1_to_affine};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileOutput, PrecompileResult};
+use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_MAP_FP_TO_G1 precompile.
 pub const PRECOMPILE: PrecompileWithAddress =

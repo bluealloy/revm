@@ -2,11 +2,10 @@ use super::{
     bundle_state::BundleRetention, cache::CacheState, plain_account::PlainStorage, BundleState,
     CacheAccount, StateBuilder, TransitionAccount, TransitionState,
 };
-use crate::db::EmptyDB;
-use revm_interpreter::primitives::{
-    db::{Database, DatabaseCommit},
-    hash_map, Account, AccountInfo, Address, Bytecode, HashMap, B256, BLOCK_HASH_HISTORY, U256,
-};
+use bytecode::Bytecode;
+use database_interface::{Database, DatabaseCommit, EmptyDB};
+use primitives::{hash_map, Address, HashMap, B256, BLOCK_HASH_HISTORY, U256};
+use state::{Account, AccountInfo};
 use std::{
     boxed::Box,
     collections::{btree_map, BTreeMap},
@@ -307,7 +306,7 @@ mod tests {
         states::{reverts::AccountInfoRevert, StorageSlot},
         AccountRevert, AccountStatus, BundleAccount, RevertToSlot,
     };
-    use revm_interpreter::primitives::keccak256;
+    use primitives::keccak256;
 
     #[test]
     fn block_hash_cache() {

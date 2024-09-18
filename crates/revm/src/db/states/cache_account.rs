@@ -2,8 +2,8 @@ use super::{
     plain_account::PlainStorage, AccountStatus, BundleAccount, PlainAccount,
     StorageWithOriginalValues, TransitionAccount,
 };
-use revm_interpreter::primitives::{AccountInfo, U256};
-use revm_precompile::HashMap;
+use primitives::{HashMap, U256};
+use state::AccountInfo;
 
 /// Cache account contains plain state that gets updated
 /// at every transaction when evm output is applied to CacheState.

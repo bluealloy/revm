@@ -1,5 +1,12 @@
 use alloy_rlp::{Decodable, Error as RlpError, Header};
-use revm::primitives::{AccessList, Bytes, Signature, SignedAuthorization, TxKind, U256};
+use revm::{
+    primitives::{Bytes, TxKind, U256},
+    specification::{
+        eip2930::AccessList,
+        eip7702::{Signature, SignedAuthorization},
+    },
+};
+
 use std::vec::Vec;
 
 /// TODO remove it when new tests are generated that has a Authorization json field.

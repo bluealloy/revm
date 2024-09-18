@@ -1,13 +1,13 @@
 use super::InnerEvmContext;
-use crate::{
-    precompile::{Precompile, PrecompileResult},
-    primitives::{Address, Bytes, EvmWiring, HashMap, HashSet},
-};
 use core::fmt::Debug;
 use derive_where::derive_where;
 use dyn_clone::DynClone;
-use revm_precompile::{PrecompileSpecId, PrecompileWithAddress, Precompiles};
+use precompile::{
+    Precompile, PrecompileResult, PrecompileSpecId, PrecompileWithAddress, Precompiles,
+};
+use primitives::{Address, Bytes, HashMap, HashSet};
 use std::{boxed::Box, sync::Arc};
+use wiring::EvmWiring;
 
 /// A single precompile handler.
 #[derive_where(Clone)]
@@ -221,7 +221,7 @@ impl<EvmWiringT: EvmWiring> From<Precompile> for ContextPrecompile<EvmWiringT> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::DefaultEthereumWiring;
+    use wiring::DefaultEthereumWiring;
 
     #[test]
     fn test_precompiles_context() {

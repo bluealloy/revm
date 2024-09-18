@@ -1,13 +1,14 @@
-use revm_interpreter::Eip7702CodeLoad;
-
-use crate::{
-    interpreter::{AccountLoad, InstructionResult, SStoreResult, SelfDestructResult, StateLoad},
-    primitives::{
-        db::Database, hash_map::Entry, Account, Address, Bytecode, EvmState, EvmStorageSlot,
-        HashMap, HashSet, Log, SpecId, SpecId::*, TransientStorage, B256, KECCAK_EMPTY,
-        PRECOMPILE3, U256,
-    },
+use bytecode::Bytecode;
+use database_interface::Database;
+use interpreter::{
+    AccountLoad, Eip7702CodeLoad, InstructionResult, SStoreResult, SelfDestructResult, StateLoad,
 };
+use primitives::{
+    hash_map::Entry, Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, PRECOMPILE3, U256,
+};
+use specification::hardfork::{SpecId, SpecId::*};
+use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
+
 use core::mem;
 use std::vec::Vec;
 

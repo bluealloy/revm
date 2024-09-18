@@ -1,10 +1,11 @@
 use clap::Parser;
 use revm::{
+    bytecode::Eof,
     interpreter::{
         analysis::{validate_eof_inner, CodeType, EofError},
         opcode::eof_printer::print_eof_code,
     },
-    primitives::{Bytes, Eof, MAX_INITCODE_SIZE},
+    primitives::{Bytes, MAX_INITCODE_SIZE},
 };
 use std::io;
 

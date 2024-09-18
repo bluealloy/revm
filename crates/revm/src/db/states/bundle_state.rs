@@ -4,11 +4,13 @@ use super::{
     AccountRevert, AccountStatus, BundleAccount, PlainStateReverts, RevertToSlot, StorageSlot,
     TransitionState,
 };
+use bytecode::Bytecode;
 use core::{mem, ops::RangeInclusive};
-use revm_interpreter::primitives::{
+use primitives::{
     hash_map::{self, Entry},
-    AccountInfo, Address, Bytecode, HashMap, HashSet, B256, KECCAK_EMPTY, U256,
+    Address, HashMap, HashSet, B256, KECCAK_EMPTY, U256,
 };
+use state::AccountInfo;
 use std::{
     collections::{BTreeMap, BTreeSet},
     vec::Vec,

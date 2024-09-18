@@ -1,8 +1,6 @@
-use crate::{
-    gas,
-    primitives::{Spec, U256},
-    Host, Interpreter,
-};
+use crate::{gas, Host, Interpreter};
+use primitives::U256;
+use specification::hardfork::Spec;
 
 pub fn pop<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
@@ -90,9 +88,12 @@ mod test {
     use super::*;
     use crate::{
         opcode::{make_instruction_table, DUPN, EXCHANGE, SWAPN},
-        primitives::{Bytecode, Bytes, DefaultEthereumWiring, PragueSpec},
         DummyHost, Gas, InstructionResult,
     };
+    use bytecode::Bytecode;
+    use primitives::Bytes;
+    use specification::hardfork::PragueSpec;
+    use wiring::DefaultEthereumWiring;
 
     #[test]
     fn dupn() {

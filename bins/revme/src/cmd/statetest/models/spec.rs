@@ -1,4 +1,4 @@
-use revm::primitives::SpecId;
+use revm::specification::hardfork::SpecId;
 use serde::Deserialize;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Hash)]

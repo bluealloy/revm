@@ -1,11 +1,13 @@
 use crate::{
     handler::{ExecutionHandler, PostExecutionHandler, PreExecutionHandler, ValidationHandler},
-    interpreter::opcode::InstructionTables,
-    primitives::{db::Database, spec_to_generic, EthereumWiring, EvmWiring as PrimitiveEvmWiring},
     EvmHandler,
 };
+use database_interface::Database;
+use interpreter::opcode::InstructionTables;
+use specification::spec_to_generic;
 use std::fmt::Debug;
 use std::vec::Vec;
+use wiring::{EthereumWiring, EvmWiring as PrimitiveEvmWiring};
 
 pub trait EvmWiring: PrimitiveEvmWiring {
     /// Creates a new handler with the given hardfork.

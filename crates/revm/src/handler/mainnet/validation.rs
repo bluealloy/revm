@@ -1,11 +1,10 @@
-use revm_interpreter::gas;
-
-use crate::{
-    primitives::{
-        EVMError, EVMResultGeneric, EnvWiring, InvalidTransaction, Spec, Transaction,
-        TransactionValidation,
-    },
-    Context, EvmWiring,
+use crate::{Context, EvmWiring};
+use interpreter::gas;
+use specification::hardfork::Spec;
+use wiring::{
+    default::EnvWiring,
+    result::{EVMError, EVMResultGeneric, InvalidTransaction},
+    transaction::{Transaction, TransactionValidation},
 };
 
 /// Validate environment for the mainnet.

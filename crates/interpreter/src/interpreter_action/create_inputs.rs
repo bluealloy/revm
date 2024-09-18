@@ -1,8 +1,6 @@
-use revm_primitives::Transaction;
-
-pub use crate::primitives::CreateScheme;
-use crate::primitives::{Address, Bytes, TxKind, U256};
+use primitives::{Address, Bytes, TxKind, U256};
 use std::boxed::Box;
+use wiring::{default::CreateScheme, Transaction};
 
 /// Inputs for a create call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

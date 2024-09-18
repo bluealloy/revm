@@ -1,8 +1,7 @@
-use revm_primitives::Transaction;
-
-use crate::primitives::{Address, Bytes, TxKind, U256};
 use core::ops::Range;
+use primitives::{Address, Bytes, TxKind, U256};
 use std::boxed::Box;
+use wiring::Transaction;
 
 /// Inputs for a call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

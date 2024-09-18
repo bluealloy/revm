@@ -1,0 +1,42 @@
+[package]
+authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
+description = "Revm Database interface"
+edition = "2021"
+keywords = ["ethereum", "evm", "revm", "no_std"]
+license = "MIT"
+name = "revm-bytecode"
+repository = "https://github.com/bluealloy/revm"
+version = "1.0.0"
+readme = "../../README.md"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+# revm
+primitives.workspace = true
+
+# Jumpmap
+bitvec = { version = "1", default-features = false, features = ["alloc"] }
+
+# Optional
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+], optional = true }
+
+[features]
+default = ["std"]
+std = ["serde?/std", "primitives/std"]
+hashbrown = ["primitives/hashbrown"]
+serde = ["dep:serde", "primitives/serde", "bitvec/serde"]
+serde-json = ["serde"]

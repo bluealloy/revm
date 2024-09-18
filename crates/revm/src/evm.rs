@@ -1,19 +1,23 @@
-use revm_interpreter::Host as _;
-
 use crate::{
     builder::{EvmBuilder, SetGenericStage},
-    db::{Database, DatabaseCommit},
     handler::Handler,
-    interpreter::{CallInputs, CreateInputs, EOFCreateInputs, InterpreterAction, SharedMemory},
-    primitives::{
-        CfgEnv, EVMError, EVMResult, EVMResultGeneric, EnvWiring, ExecutionResult, ResultAndState,
-        SpecId, Transaction, TxKind, EOF_MAGIC_BYTES,
-    },
     Context, ContextWithEvmWiring, EvmContext, EvmWiring, Frame, FrameOrResult, FrameResult,
     InnerEvmContext,
 };
+use bytecode::EOF_MAGIC_BYTES;
 use core::fmt::{self, Debug};
+use database_interface::{Database, DatabaseCommit};
+use interpreter::{
+    CallInputs, CreateInputs, EOFCreateInputs, Host, InterpreterAction, SharedMemory,
+};
+use primitives::TxKind;
+use specification::hardfork::SpecId;
 use std::{boxed::Box, vec::Vec};
+use wiring::{
+    default::{CfgEnv, EnvWiring},
+    result::{EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState},
+    Transaction,
+};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -423,14 +427,12 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
 mod tests {
 
     use super::*;
-    use crate::{
-        db::BenchmarkDB,
-        interpreter::opcode::{PUSH1, SSTORE},
-        primitives::{
-            address, Authorization, Bytecode, EthereumWiring, RecoveredAuthorization, Signature,
-            U256,
-        },
-    };
+    use crate::db::BenchmarkDB;
+    use bytecode::Bytecode;
+    use interpreter::opcode::{PUSH1, SSTORE};
+    use primitives::{address, U256};
+    use specification::eip7702::{Authorization, RecoveredAuthorization, Signature};
+    use wiring::EthereumWiring;
 
     #[test]
     fn sanity_eip7702_tx() {

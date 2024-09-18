@@ -22,87 +22,22 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-alloy-eips = { version = "0.3", default-features = false, features = ["k256"] }
 alloy-primitives = { version = "0.8.2", default-features = false, features = [
     "rlp",
 ] }
 hashbrown = "0.14"
-auto_impl = "1.2"
-bitvec = { version = "1", default-features = false, features = ["alloc"] }
-bitflags = { version = "2.6.0", default-features = false }
 
-# For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
-c-kzg = { version = "1.0.3", default-features = false, optional = true, features = [
-    "ethereum_kzg_settings",
-] }
-
-# Optionally use `kzg-rs` for a pure Rust implementation of KZG.
-kzg-rs = { version = "0.2.3", default-features = false, optional = true }
-
-# utility
-enumn = "0.1"
-cfg-if = "1"
-dyn-clone = "1.0"
-
-# optional
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
-], optional = true }
+# utils
+cfg-if = { version = "1.0", default-features = false }
 
 [build-dependencies]
 hex = { version = "0.4", default-features = false }
 
 [features]
-default = ["std", "c-kzg", "portable"]
-std = [
-    "serde?/std",
-    "alloy-eips/std",
-    "alloy-primitives/std",
-    "hex/std",
-    "bitvec/std",
-    "bitflags/std",
-]
+default = ["std"]
+std = ["alloy-primitives/std", "hex/std"]
 hashbrown = []
-serde = [
-    "dep:serde",
-    "alloy-eips/serde",
-    "alloy-primitives/serde",
-    "hex/serde",
-    "hashbrown/serde",
-    "bitvec/serde",
-    "bitflags/serde",
-    "c-kzg?/serde",
-]
-arbitrary = [
-    "std",
-    "alloy-eips/arbitrary",
-    "alloy-primitives/arbitrary",
-    "bitflags/arbitrary",
-]
+serde = ["alloy-primitives/serde", "hex/serde", "hashbrown/serde"]
+arbitrary = ["std", "alloy-primitives/arbitrary"]
 asm-keccak = ["alloy-primitives/asm-keccak"]
-portable = ["c-kzg?/portable"]
-
-dev = [
-    "memory_limit",
-    "optional_balance_check",
-    "optional_block_gas_limit",
-    "optional_eip3607",
-    "optional_gas_refund",
-    "optional_no_base_fee",
-    "optional_beneficiary_reward",
-]
-memory_limit = []
-optional_balance_check = []
-optional_block_gas_limit = []
-optional_eip3607 = []
-optional_gas_refund = []
-optional_no_base_fee = []
-optional_beneficiary_reward = []
 rand = ["alloy-primitives/rand"]
-
-# See comments in `revm-precompile`
-c-kzg = ["dep:c-kzg"]
-# `kzg-rs` is not audited but useful for `no_std` environment.
-#   use it with causing and default to `c-kzg` if possible!
-kzg-rs = ["dep:kzg-rs"]

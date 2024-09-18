@@ -1,5 +1,5 @@
 use core::fmt::Display;
-use revm::primitives::{EVMError, HaltReason, InvalidTransaction};
+use revm::wiring::result::{EVMError, HaltReason, InvalidTransaction};
 
 /// Optimism transaction validation error.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

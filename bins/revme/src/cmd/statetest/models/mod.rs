@@ -6,7 +6,10 @@ use deserializer::*;
 pub use eip7702::TxEip7702;
 pub use spec::SpecName;
 
-use revm::primitives::{AccessList, Address, AuthorizationList, Bytes, HashMap, B256, U256};
+use revm::{
+    primitives::{Address, Bytes, HashMap, B256, U256},
+    specification::{eip2930::AccessList, eip7702::AuthorizationList},
+};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 

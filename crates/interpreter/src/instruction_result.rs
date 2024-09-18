@@ -1,8 +1,8 @@
 use core::fmt::Debug;
-
-use revm_primitives::HaltReasonTrait;
-
-use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
+use wiring::{
+    result::{HaltReason, OutOfGasError, SuccessReason},
+    HaltReasonTrait,
+};
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]

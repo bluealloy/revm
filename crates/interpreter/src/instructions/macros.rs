@@ -38,8 +38,8 @@ macro_rules! require_init_eof {
 macro_rules! check {
     ($interp:expr, $min:ident) => {
         if const {
-            !<SPEC as $crate::primitives::Spec>::SPEC_ID
-                .is_enabled_in($crate::primitives::SpecId::$min)
+            !<SPEC as specification::hardfork::Spec>::SPEC_ID
+                .is_enabled_in(specification::hardfork::SpecId::$min)
         } {
             $interp.instruction_result = $crate::InstructionResult::NotActivated;
             return;
@@ -132,7 +132,7 @@ macro_rules! pop_address_ret {
             return $ret;
         }
         // SAFETY: Length is checked above.
-        let $x1 = $crate::primitives::Address::from_word($crate::primitives::B256::from(unsafe {
+        let $x1 = ::primitives::Address::from_word(::primitives::B256::from(unsafe {
             $interp.stack.pop_unsafe()
         }));
     };
@@ -142,10 +142,10 @@ macro_rules! pop_address_ret {
             return $ret;
         }
         // SAFETY: Length is checked above.
-        let $x1 = $crate::primitives::Address::from_word($crate::primitives::B256::from(unsafe {
+        let $x1 = ::primitives::Address::from_word(::primitives::B256::from(unsafe {
             $interp.stack.pop_unsafe()
         }));
-        let $x2 = $crate::primitives::Address::from_word($crate::primitives::B256::from(unsafe {
+        let $x2 = ::primitives::Address::from_word(::primitives::B256::from(unsafe {
             $interp.stack.pop_unsafe()
         }));
     };

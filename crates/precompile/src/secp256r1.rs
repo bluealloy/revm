@@ -6,9 +6,12 @@
 //! The main purpose of this precompile is to verify ECDSA signatures that use the secp256r1, or
 //! P256 elliptic curve. The [`P256VERIFY`] const represents the implementation of this precompile,
 //! with the address that it is currently deployed at.
-use crate::{u64_to_address, Precompile, PrecompileWithAddress};
+use crate::{
+    u64_to_address, Precompile, PrecompileError, PrecompileOutput, PrecompileResult,
+    PrecompileWithAddress,
+};
 use p256::ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey};
-use revm_primitives::{Bytes, PrecompileError, PrecompileOutput, PrecompileResult, B256};
+use primitives::{Bytes, B256};
 
 /// Base gas fee for secp256r1 p256verify operation.
 const P256VERIFY_BASE: u64 = 3450;
@@ -73,7 +76,8 @@ pub fn verify_impl(input: &[u8]) -> Option<()> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::primitives::{hex::FromHex, PrecompileErrors};
+    use crate::PrecompileErrors;
+    use primitives::hex::FromHex;
     use rstest::rstest;
 
     #[rstest]

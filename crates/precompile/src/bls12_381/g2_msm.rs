@@ -5,8 +5,9 @@ use super::{
     utils::{extract_scalar_input, NBITS, SCALAR_LENGTH},
 };
 use crate::{u64_to_address, PrecompileWithAddress};
+use crate::{Precompile, PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{blst_p2, blst_p2_affine, blst_p2_from_affine, blst_p2_to_affine, p2_affines};
-use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileOutput, PrecompileResult};
+use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2MSM precompile.
 pub const PRECOMPILE: PrecompileWithAddress =

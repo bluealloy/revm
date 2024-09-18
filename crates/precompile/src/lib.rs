@@ -15,6 +15,7 @@ pub mod bn128;
 pub mod fatal_precompile;
 pub mod hash;
 pub mod identity;
+pub mod interface;
 #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg_point_evaluation;
 pub mod modexp;
@@ -25,15 +26,13 @@ pub mod utilities;
 
 pub use fatal_precompile::fatal_precompile;
 
+pub use interface::*;
 #[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
 // silence kzg-rs lint as c-kzg will be used as default if both are enabled.
 use kzg_rs as _;
-pub use primitives::{
-    precompile::{PrecompileError as Error, *},
-    Address, Bytes, HashMap, HashSet, Log, B256,
-};
-#[doc(hidden)]
-pub use revm_primitives as primitives;
+pub use primitives::{Address, Bytes, HashMap, HashSet, Log, B256};
+
+pub use primitives;
 
 use cfg_if::cfg_if;
 use core::hash::Hash;
@@ -281,9 +280,9 @@ pub enum PrecompileSpecId {
 }
 
 impl PrecompileSpecId {
-    /// Returns the appropriate precompile Spec for the primitive [SpecId](revm_primitives::SpecId)
-    pub const fn from_spec_id(spec_id: revm_primitives::SpecId) -> Self {
-        use revm_primitives::SpecId::*;
+    /// Returns the appropriate precompile Spec for the primitive [SpecId](specification::hardfork::SpecId)
+    pub const fn from_spec_id(spec_id: specification::hardfork::SpecId) -> Self {
+        use specification::hardfork::SpecId::*;
         match spec_id {
             FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
                 Self::HOMESTEAD

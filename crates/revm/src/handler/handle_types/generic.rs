@@ -1,5 +1,6 @@
-use crate::{primitives::EVMResultGeneric, Context};
+use crate::Context;
 use std::sync::Arc;
+use wiring::result::EVMResultGeneric;
 
 /// Generic Handle that takes a mutable reference to the context and returns a result.
 pub type GenericContextHandle<'a, EvmWiring> = GenericContextHandleRet<'a, EvmWiring, ()>;

@@ -2,7 +2,7 @@
 pub fn print_eof_code(code: &[u8]) {
     use super::*;
     use crate::instructions::utility::read_i16;
-    use revm_primitives::hex;
+    use primitives::hex;
 
     // We can check validity and jump destinations in one pass.
     let mut i = 0;
@@ -60,7 +60,7 @@ pub fn print_eof_code(code: &[u8]) {
 #[cfg(test)]
 mod test {
     use super::*;
-    use revm_primitives::hex;
+    use primitives::hex;
 
     #[test]
     fn sanity_test() {

@@ -1,11 +1,9 @@
 // Includes.
-use crate::{
-    handler::mainnet,
-    interpreter::Gas,
-    primitives::{EVMResult, EVMResultGeneric, ResultAndState, Spec},
-    Context, EvmWiring, FrameResult,
-};
+use crate::{handler::mainnet, Context, EvmWiring, FrameResult};
+use interpreter::Gas;
+use specification::hardfork::Spec;
 use std::sync::Arc;
+use wiring::result::{EVMResult, EVMResultGeneric, ResultAndState};
 
 /// Reimburse the caller with ethereum it didn't spent.
 pub type ReimburseCallerHandle<'a, EvmWiringT> =

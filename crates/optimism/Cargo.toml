@@ -23,10 +23,8 @@ all = "warn"
 
 [dependencies]
 # revm
-revm = { path = "../revm", version = "14.0.1", default-features = false }
-revm-precompile = { path = "../precompile", version = "11.0.1", default-features = false, features = [
-    "secp256r1",
-] }
+revm.workspace = true
+precompile = { workspace = true, features = ["secp256r1"] }
 
 # misc
 enumn = { version = "0.1" }
@@ -47,11 +45,7 @@ alloy-sol-types = "0.8"
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
-std = [
-    "serde?/std",
-    "revm/std",
-    "revm-precompile/std",
-]
+std = ["serde?/std", "revm/std", "precompile/std"]
 hashbrown = ["revm/hashbrown"]
 serde = ["dep:serde", "revm/serde"]
 serde-json = ["serde", "revm/serde-json"]
@@ -64,7 +58,6 @@ dev = [
     "optional_eip3607",
     "optional_gas_refund",
     "optional_no_base_fee",
-    "optional_beneficiary_reward",
 ]
 memory_limit = ["revm/memory_limit"]
 optional_balance_check = ["revm/optional_balance_check"]
@@ -72,7 +65,6 @@ optional_block_gas_limit = ["revm/optional_block_gas_limit"]
 optional_eip3607 = ["revm/optional_eip3607"]
 optional_gas_refund = ["revm/optional_gas_refund"]
 optional_no_base_fee = ["revm/optional_no_base_fee"]
-optional_beneficiary_reward = ["revm/optional_beneficiary_reward"]
 
 # See comments in `revm-precompile`
 secp256k1 = ["revm/secp256k1"]

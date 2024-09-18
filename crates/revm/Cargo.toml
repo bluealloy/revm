@@ -23,8 +23,14 @@ all = "warn"
 
 [dependencies]
 # revm
-revm-interpreter = { path = "../interpreter", version = "10.0.1", default-features = false }
-revm-precompile = { path = "../precompile", version = "11.0.1", default-features = false }
+interpreter.workspace = true
+precompile.workspace = true
+wiring.workspace = true
+primitives.workspace = true
+database-interface.workspace = true
+state.workspace = true
+specification.workspace = true
+bytecode.workspace = true
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
@@ -40,15 +46,11 @@ serde_json = { version = "1.0", default-features = false, features = [
     "alloc",
 ], optional = true }
 
-# ethersdb
+# alloydb
 tokio = { version = "1.40", features = [
     "rt-multi-thread",
     "macros",
 ], optional = true }
-ethers-providers = { version = "2.0", optional = true }
-ethers-core = { version = "2.0", optional = true }
-
-# alloydb
 alloy-provider = { version = "0.3", optional = true, default-features = false }
 alloy-eips = { version = "0.3", optional = true, default-features = false }
 alloy-transport = { version = "0.3", optional = true, default-features = false }
@@ -72,19 +74,17 @@ std = [
     "serde?/std",
     "serde_json?/std",
     "serde_json?/preserve_order",
-    "revm-interpreter/std",
-    "revm-precompile/std",
+    "interpreter/std",
+    "precompile/std",
 ]
-hashbrown = ["revm-interpreter/hashbrown", "revm-precompile/hashbrown"]
-serde = ["dep:serde", "revm-interpreter/serde"]
+hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
+serde = ["dep:serde", "interpreter/serde", "database-interface/serde"]
 serde-json = ["serde", "dep:serde_json"]
-arbitrary = ["revm-interpreter/arbitrary"]
-asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
-portable = ["revm-precompile/portable", "revm-interpreter/portable"]
+arbitrary = ["primitives/arbitrary"]
+asm-keccak = ["primitives/asm-keccak"]
+portable = ["wiring/portable"]
 
 test-utils = []
-
-ethersdb = ["std", "dep:tokio", "dep:ethers-providers", "dep:ethers-core"]
 
 alloydb = [
     "std",
@@ -101,32 +101,30 @@ dev = [
     "optional_eip3607",
     "optional_gas_refund",
     "optional_no_base_fee",
-    "optional_beneficiary_reward",
 ]
-memory_limit = ["revm-interpreter/memory_limit"]
-optional_balance_check = ["revm-interpreter/optional_balance_check"]
-optional_block_gas_limit = ["revm-interpreter/optional_block_gas_limit"]
-optional_eip3607 = ["revm-interpreter/optional_eip3607"]
-optional_gas_refund = ["revm-interpreter/optional_gas_refund"]
-optional_no_base_fee = ["revm-interpreter/optional_no_base_fee"]
-optional_beneficiary_reward = ["revm-interpreter/optional_beneficiary_reward"]
+memory_limit = ["wiring/memory_limit", "interpreter/memory_limit"]
+optional_balance_check = ["wiring/optional_balance_check"]
+optional_block_gas_limit = ["wiring/optional_block_gas_limit"]
+optional_eip3607 = ["wiring/optional_eip3607"]
+optional_gas_refund = ["wiring/optional_gas_refund"]
+optional_no_base_fee = ["wiring/optional_no_base_fee"]
 
-# See comments in `revm-precompile`
-secp256k1 = ["revm-precompile/secp256k1"]
-c-kzg = ["revm-precompile/c-kzg"]
+# See comments in `precompile`
+secp256k1 = ["precompile/secp256k1"]
+c-kzg = ["precompile/c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
-kzg-rs = ["revm-precompile/kzg-rs"]
-blst = ["revm-precompile/blst"]
+kzg-rs = ["precompile/kzg-rs"]
+blst = ["precompile/blst"]
 
 [[example]]
 name = "fork_ref_transact"
 path = "../../examples/fork_ref_transact.rs"
-required-features = ["ethersdb"]
+required-features = ["alloydb"]
 
 [[example]]
 name = "generate_block_traces"
 path = "../../examples/generate_block_traces.rs"
-required-features = ["std", "serde-json", "ethersdb"]
+required-features = ["std", "serde-json", "alloydb"]
 
 [[example]]
 name = "db_by_ref"
