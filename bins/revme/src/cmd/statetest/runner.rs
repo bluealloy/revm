@@ -12,7 +12,7 @@ use revm::{
     inspectors::TracerEip3155,
     interpreter::analysis::to_analysed,
     primitives::{keccak256, Bytes, TxKind, B256},
-    specification::hardfork::SpecId,
+    specification::{eip7702::AuthorizationList, hardfork::SpecId},
     wiring::{
         block::calc_excess_blob_gas,
         default::EnvWiring,
@@ -378,10 +378,16 @@ pub fn execute_test_suite(
                     .and_then(Option::as_deref)
                     .cloned()
                     .unwrap_or_default();
-                let Ok(auth_list) = test.eip7702_authorization_list() else {
-                    continue;
-                };
-                env.tx.authorization_list = auth_list;
+
+                env.tx.authorization_list =
+                    unit.transaction
+                        .authorization_list
+                        .as_ref()
+                        .map(|auth_list| {
+                            AuthorizationList::Recovered(
+                                auth_list.iter().map(|auth| auth.into_recovered()).collect(),
+                            )
+                        });
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),
