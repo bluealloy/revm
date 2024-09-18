@@ -371,6 +371,50 @@ mod tests {
     }
 
     #[test]
+    fn calculate_tx_l1_cost_ecotone() {
+        // rig
+
+        // l1 block info for OP mainnet ecotone block 118024092
+        // 1710374401 (ecotone timestamp)
+        // 1711603765 (block 118024092 timestamp)
+        // 1720627201 (fjord timestamp)
+        // <https://optimistic.etherscan.io/block/118024092>
+        // decoded from
+        let l1_block_info = L1BlockInfo {
+            l1_base_fee: U256::from_be_bytes(hex!(
+                "0000000000000000000000000000000000000000000000000000000af39ac327"
+            )), // 47036678951
+            l1_base_fee_scalar: U256::from(1368),
+            l1_blob_base_fee: Some(U256::from_be_bytes(hex!(
+                "0000000000000000000000000000000000000000000000000000000d5ea528d2"
+            ))), // 57422457042
+            l1_blob_base_fee_scalar: Some(U256::from(810949)),
+            ..Default::default()
+        };
+
+        // second tx in OP mainnet ecotone block 118024092
+        // <https://optimistic.etherscan.io/tx/0xa75ef696bf67439b4d5b61da85de9f3ceaa2e145abe982212101b244b63749c2>
+        const TX: &[u8] = &hex!("02f8b30a832253fc8402d11f39842c8a46398301388094dc6ff44d5d932cbd77b52e5612ba0529dc6226f180b844a9059cbb000000000000000000000000d43e02db81f4d46cdf8521f623d21ea0ec7562a50000000000000000000000000000000000000000000000008ac7230489e80000c001a02947e24750723b48f886931562c55d9e07f856d8e06468e719755e18bbc3a570a0784da9ce59fd7754ea5be6e17a86b348e441348cd48ace59d174772465eadbd1");
+
+        // l1 gas used for tx and l1 fee for tx, from OP mainnet block scanner
+        // <https://optimistic.etherscan.io/tx/0xa75ef696bf67439b4d5b61da85de9f3ceaa2e145abe982212101b244b63749c2>
+        let expected_l1_gas_used = U256::from(2456);
+        let expected_l1_fee = U256::from_be_bytes(hex!(
+            "000000000000000000000000000000000000000000000000000006a510bd7431" // 7306020222001 wei
+        ));
+
+        // test
+
+        let gas_used = l1_block_info.data_gas(TX, OptimismSpecId::ECOTONE);
+
+        assert_eq!(gas_used, expected_l1_gas_used);
+
+        let l1_fee = l1_block_info.calculate_tx_l1_cost_ecotone(TX, OptimismSpecId::ECOTONE);
+
+        assert_eq!(l1_fee, expected_l1_fee)
+    }
+
+    #[test]
     fn test_calculate_tx_l1_cost_fjord() {
         // l1FeeScaled = baseFeeScalar*l1BaseFee*16 + blobFeeScalar*l1BlobBaseFee
         //             = 1000 * 1000 * 16 + 1000 * 1000
