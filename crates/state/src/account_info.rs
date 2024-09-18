@@ -54,7 +54,6 @@ impl AccountInfo {
         }
     }
 
-
     /// Returns a copy of this account with the [`Bytecode`] removed. This is
     /// useful when creating journals or snapshots of the state, where it is
     /// desirable to store the code blobs elsewhere.
