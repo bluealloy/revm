@@ -111,8 +111,9 @@ impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for CustomPrintTracer {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{inspector_handle_register, Evm, InMemoryDB};
+    use crate::{inspector_handle_register, Evm};
     use bytecode::Bytecode;
+    use database::InMemoryDB;
     use primitives::{address, bytes, keccak256, Bytes, TxKind, U256};
     use specification::hardfork::SpecId;
     use state::AccountInfo;

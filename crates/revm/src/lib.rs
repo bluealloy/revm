@@ -22,7 +22,6 @@ mod context;
 #[cfg(any(test, feature = "test-utils"))]
 pub mod test_utils;
 
-pub mod db;
 mod evm;
 mod evm_wiring;
 mod frame;
@@ -39,10 +38,6 @@ pub use context::{
     ContextWithEvmWiring, EvmContext, InnerEvmContext,
 };
 pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
-pub use db::InMemoryDB;
-pub use db::{
-    CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
-};
 pub use evm::{Evm, CALL_STACK_LIMIT};
 pub use evm_wiring::EvmWiring;
 pub use frame::{CallFrame, CreateFrame, Frame, FrameData, FrameOrResult, FrameResult};

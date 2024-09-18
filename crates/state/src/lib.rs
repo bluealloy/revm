@@ -4,6 +4,7 @@
 
 mod account_info;
 mod types;
+pub use bytecode;
 
 pub use account_info::AccountInfo;
 pub use bytecode::Bytecode;

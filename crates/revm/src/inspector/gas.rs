@@ -70,8 +70,9 @@ impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for GasInspector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{db::BenchmarkDB, inspector::inspector_handle_register, Evm, EvmWiring};
+    use crate::{inspector::inspector_handle_register, Evm, EvmWiring};
     use bytecode::Bytecode;
+    use database::BenchmarkDB;
     use interpreter::{opcode, Interpreter};
     use primitives::{address, Bytes, Log, TxKind};
     use wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring as PrimitiveEvmWiring};

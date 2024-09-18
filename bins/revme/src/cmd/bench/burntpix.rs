@@ -8,9 +8,9 @@ use static_data::{
 
 use alloy_sol_macro::sol;
 use alloy_sol_types::SolCall;
+use database::CacheDB;
 use revm::{
     database_interface::EmptyDB,
-    db::CacheDB,
     primitives::{address, hex, keccak256, Address, Bytes, TxKind, B256, U256},
     state::{AccountInfo, Bytecode},
     wiring::{

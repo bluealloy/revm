@@ -9,6 +9,7 @@ description = "Rust Ethereum Virtual Machine Executable"
 version = "0.10.1"
 
 [dependencies]
+database.workspace = true
 # revm
 revm = { workspace = true, features = [
     "std",

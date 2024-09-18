@@ -1,9 +1,6 @@
 //! Database implementations.
 
 #[cfg(feature = "alloydb")]
-mod utils;
-
-#[cfg(feature = "alloydb")]
 mod alloydb;
 
 pub mod in_memory_db;

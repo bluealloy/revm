@@ -46,16 +46,8 @@ serde_json = { version = "1.0", default-features = false, features = [
     "alloc",
 ], optional = true }
 
-# alloydb
-tokio = { version = "1.40", features = [
-    "rt-multi-thread",
-    "macros",
-], optional = true }
-alloy-provider = { version = "0.3", optional = true, default-features = false }
-alloy-eips = { version = "0.3", optional = true, default-features = false }
-alloy-transport = { version = "0.3", optional = true, default-features = false }
-
 [dev-dependencies]
+database.workspace = true
 alloy-sol-types = { version = "0.8.2", default-features = false, features = [
     "std",
 ] }
@@ -86,14 +78,6 @@ portable = ["wiring/portable"]
 
 test-utils = []
 
-alloydb = [
-    "std",
-    "dep:tokio",
-    "dep:alloy-provider",
-    "dep:alloy-eips",
-    "dep:alloy-transport",
-]
-
 dev = [
     "memory_limit",
     "optional_balance_check",
@@ -119,12 +103,12 @@ blst = ["precompile/blst"]
 [[example]]
 name = "fork_ref_transact"
 path = "../../examples/fork_ref_transact.rs"
-required-features = ["alloydb"]
+required-features = ["database/alloydb"]
 
 [[example]]
 name = "generate_block_traces"
 path = "../../examples/generate_block_traces.rs"
-required-features = ["std", "serde-json", "alloydb"]
+required-features = ["std", "serde-json", "database/alloydb"]
 
 [[example]]
 name = "db_by_ref"
