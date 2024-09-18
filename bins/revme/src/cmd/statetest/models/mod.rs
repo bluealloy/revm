@@ -1,14 +1,16 @@
 mod deserializer;
-mod eip7702;
 mod spec;
 
 use deserializer::*;
-pub use eip7702::TxEip7702;
+
 pub use spec::SpecName;
 
 use revm::{
     primitives::{Address, Bytes, HashMap, B256, U256},
-    specification::{eip2930::AccessList, eip7702::AuthorizationList},
+    specification::{
+        eip2930::AccessList,
+        eip7702::{Authorization, Parity, RecoveredAuthorization, Signature},
+    },
 };
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -50,26 +52,6 @@ pub struct Test {
 
     /// Tx bytes
     pub txbytes: Option<Bytes>,
-}
-
-impl Test {
-    pub fn eip7702_authorization_list(
-        &self,
-    ) -> Result<Option<AuthorizationList>, alloy_rlp::Error> {
-        let Some(txbytes) = self.txbytes.as_ref() else {
-            return Ok(None);
-        };
-
-        if txbytes.first() == Some(&0x04) {
-            let mut txbytes = &txbytes[1..];
-            let tx = TxEip7702::decode(&mut txbytes)?;
-            return Ok(Some(
-                AuthorizationList::Signed(tx.authorization_list).into_recovered(),
-            ));
-        }
-
-        Ok(None)
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
@@ -130,16 +112,15 @@ pub struct TransactionParts {
 
     #[serde(default)]
     pub access_lists: Vec<Option<AccessList>>,
-    #[serde(default)]
-    pub authorization_list: Vec<Authorization>,
+    pub authorization_list: Option<Vec<TestAuthorization>>,
     #[serde(default)]
     pub blob_versioned_hashes: Vec<B256>,
     pub max_fee_per_blob_gas: Option<U256>,
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct Authorization {
+pub struct TestAuthorization {
     chain_id: U256,
     address: Address,
     nonce: U256,
@@ -147,6 +128,30 @@ pub struct Authorization {
     r: U256,
     s: U256,
     signer: Option<Address>,
+}
+
+impl TestAuthorization {
+    pub fn signature(&self) -> Signature {
+        let v = u64::try_from(self.v).unwrap_or(u64::MAX);
+        let parity = Parity::try_from(v).unwrap_or(Parity::Eip155(36));
+        Signature::from_rs_and_parity(self.r, self.s, parity).unwrap()
+    }
+
+    pub fn into_recovered(self) -> RecoveredAuthorization {
+        let authorization = Authorization {
+            chain_id: self.chain_id,
+            address: self.address,
+            nonce: u64::try_from(self.nonce).unwrap(),
+        };
+        let authority = self
+            .signature()
+            .recover_address_from_prehash(&authorization.signature_hash())
+            .ok();
+        RecoveredAuthorization::new_unchecked(
+            authorization.into_signed(self.signature()),
+            authority,
+        )
+    }
 }
 
 #[cfg(test)]
