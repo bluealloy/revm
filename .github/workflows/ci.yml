@@ -106,4 +106,3 @@ jobs:
         with:
           config: ./Typos.toml
           isolated: true
-

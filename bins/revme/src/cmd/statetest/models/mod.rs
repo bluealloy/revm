@@ -108,8 +108,7 @@ pub struct TransactionParts {
 
     #[serde(default)]
     pub access_lists: Vec<Option<AccessList>>,
-    #[serde(default)]
-    pub authorization_list: Vec<TestAuthorization>,
+    pub authorization_list: Option<Vec<TestAuthorization>>,
     #[serde(default)]
     pub blob_versioned_hashes: Vec<B256>,
     pub max_fee_per_blob_gas: Option<U256>,
