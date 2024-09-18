@@ -1,7 +1,11 @@
 use anyhow::{anyhow, bail};
 use revm::{
     interpreter::opcode,
-    primitives::{bytes::Bytes, hex, EthereumWiring, ExecutionResult, Output, TxKind, U256},
+    primitives::{hex, Bytes, TxKind, U256},
+    wiring::{
+        result::{ExecutionResult, Output},
+        EthereumWiring,
+    },
     Evm, InMemoryDB,
 };
 
@@ -46,7 +50,7 @@ fn main() -> anyhow::Result<()> {
             .with_default_ext_ctx()
             .modify_tx_env(|tx| {
                 tx.transact_to = TxKind::Create;
-                *tx.data = bytecode.clone();
+                tx.data = bytecode.clone();
             })
             .build();
 
@@ -65,7 +69,7 @@ fn main() -> anyhow::Result<()> {
         .modify()
         .modify_tx_env(|tx| {
             tx.transact_to = TxKind::Call(address);
-            *tx.data = Default::default();
+            tx.data = Default::default();
             tx.nonce += 1;
         })
         .build();
