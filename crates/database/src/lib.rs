@@ -7,7 +7,7 @@ pub mod in_memory_db;
 pub mod states;
 
 #[cfg(feature = "alloydb")]
-pub use alloydb::AlloyDB;
+pub use alloydb::{AlloyDB, BlockId};
 
 pub use in_memory_db::*;
 pub use states::{

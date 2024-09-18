@@ -1,13 +1,13 @@
 [package]
-authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "revm - Rust Ethereum Virtual Machine"
-edition = "2021"
-keywords = ["no_std", "ethereum", "evm", "revm"]
-license = "MIT"
 name = "revm"
-repository = "https://github.com/bluealloy/revm"
+description = "Revm - Rust Ethereum Virtual Machine"
 version = "14.0.1"
-readme = "../../README.md"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -101,27 +101,27 @@ c-kzg = ["precompile/c-kzg"]
 kzg-rs = ["precompile/kzg-rs"]
 blst = ["precompile/blst"]
 
-[[example]]
-name = "fork_ref_transact"
-path = "../../examples/fork_ref_transact.rs"
-required-features = ["database/alloydb"]
+# [[example]]
+# name = "fork_ref_transact"
+# path = "../../examples/fork_ref_transact.rs"
+# required-features = ["alloydb"]
 
-[[example]]
-name = "generate_block_traces"
-path = "../../examples/generate_block_traces.rs"
-required-features = ["std", "serde-json", "database/alloydb"]
+# [[example]]
+# name = "generate_block_traces"
+# path = "../../examples/generate_block_traces.rs"
+# required-features = ["std", "serde-json", "alloydb"]
 
-[[example]]
-name = "db_by_ref"
-path = "../../examples/db_by_ref.rs"
-required-features = ["std", "serde-json"]
+# [[example]]
+# name = "db_by_ref"
+# path = "../../examples/db_by_ref.rs"
+# required-features = ["std", "serde-json"]
 
-[[example]]
-name = "deploy"
-path = "../../examples/deploy.rs"
-required-features = []
+# [[example]]
+# name = "deploy"
+# path = "../../examples/deploy.rs"
+# required-features = []
 
-[[bench]]
-name = "bench"
-path = "benches/bench.rs"
-harness = false
+# [[bench]]
+# name = "bench"
+# path = "benches/bench.rs"
+# harness = false

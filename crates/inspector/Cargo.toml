@@ -1,13 +1,13 @@
 [package]
-authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "Revm Database interface"
-edition = "2021"
-keywords = ["ethereum", "evm", "revm", "no_std"]
-license = "MIT"
 name = "revm-inspector"
-repository = "https://github.com/bluealloy/revm"
+description = "Revm inspector interface"
 version = "1.0.0"
-readme = "../../README.md"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -30,9 +30,7 @@ serde = { version = "1.0", default-features = false, features = [
 
 
 [features]
-default = ["std",]
-std = [
-    "serde?/std",
-]
+default = ["std"]
+std = ["serde?/std"]
 serde = ["dep:serde"]
 serde-json = ["serde"]

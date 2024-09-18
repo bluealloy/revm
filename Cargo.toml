@@ -1,4 +1,6 @@
 [workspace]
+resolver = "2"
+default-members = ["crates/revm"]
 members = [
     # binary 
     "bins/revme",
@@ -17,16 +19,14 @@ members = [
     "crates/specification",
 
     # examples
-    "examples/block_traces",
-    "examples/contract_deployment",
-    "examples/custom_opcodes",
-    "examples/database_components",
-    "examples/database_ref",
-    "examples/uniswap_get_reserves",
-    "examples/uniswap_v2_usdc_swap",
+    #"examples/block_traces",
+    #"examples/contract_deployment",
+    #"examples/custom_opcodes",
+    #"examples/database_components",
+    #"examples/database_ref",
+    #"examples/uniswap_get_reserves",
+    #"examples/uniswap_v2_usdc_swap",
 ]
-resolver = "2"
-default-members = ["crates/revm"]
 
 [workspace.dependencies]
 # revm
@@ -42,14 +42,13 @@ interpreter = { path = "crates/interpreter", package = "revm-interpreter", versi
 precompile = { path = "crates/precompile", package = "revm-precompile", version = "11.0.1", default-features = false }
 
 [workspace.package]
-license-file = "LICENSE"
+license = "MIT"
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-categories = ["no-std",]
+categories = ["no-std", "compilers", "cryptography::cryptocurrencies"]
 keywords = ["revm", "evm", "ethereum", "blockchain", "no_std"]
 repository = "https://github.com/bluealloy/revm"
 documentation = "https://bluealloy.github.io/revm/"
 homepage = ""
-licence = "MIT"
 edition = "2021"
 
 [workspace.metadata.docs.rs]

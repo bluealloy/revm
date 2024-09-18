@@ -2,8 +2,12 @@
 name = "example-db-by-ref"
 version = "0.0.0"
 publish = false
-license.workspace = true
+authors.workspace = true
 edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
