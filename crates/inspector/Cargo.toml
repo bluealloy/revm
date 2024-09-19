@@ -39,7 +39,7 @@ serde_json = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 [dev-dependencies]
-database.workspace = true
+database = { workspace = true, features = ["serde"] }
 
 [features]
 default = ["std"]
