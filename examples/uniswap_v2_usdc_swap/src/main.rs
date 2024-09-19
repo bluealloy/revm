@@ -2,16 +2,19 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use alloy_provider::{network::Ethereum, ProviderBuilder, RootProvider};
-use alloy_rpc_types::BlockId;
+use alloy_eips::BlockId;
 use alloy_sol_types::{sol, SolCall, SolValue};
 use alloy_transport_http::Http;
 use anyhow::{anyhow, Result};
 use reqwest::Client;
+use database::{AlloyDB, CacheDB};
 use revm::{
-    db::{AlloyDB, CacheDB},
     primitives::{
-        address, keccak256, AccountInfo, Address, Bytes, ExecutionResult, Output, TxKind, U256,
+        address, keccak256, Address, Bytes,  TxKind, U256,
     },
+    state::{AccountInfo},
+    wiring::{result::{ExecutionResult,Output}},
+    database_interface::Database,
     Evm,
 };
 use std::ops::Div;

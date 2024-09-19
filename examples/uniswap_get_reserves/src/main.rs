@@ -5,10 +5,10 @@ use alloy_eips::BlockId;
 use alloy_provider::ProviderBuilder;
 use alloy_sol_types::sol;
 use alloy_sol_types::SolCall;
+use database::{AlloyDB, CacheDB};
 use revm::{
     database_interface::Database,
     database_interface::EmptyDB,
-    db::{AlloyDB, CacheDB},
     primitives::{address, TxKind, U256},
     wiring::{
         result::{ExecutionResult, Output},
