@@ -12,7 +12,7 @@ use revm::{
 pub trait Inspector<EvmWiringT: EvmWiring> {
     /// Called before the interpreter is initialized.
     ///
-    /// If `interp.instruction_result` is set to anything other than [crate::interpreter::InstructionResult::Continue] then the execution of the interpreter
+    /// If `interp.instruction_result` is set to anything other than [revm::interpreter::InstructionResult::Continue] then the execution of the interpreter
     /// is skipped.
     #[inline]
     fn initialize_interp(
@@ -40,7 +40,7 @@ pub trait Inspector<EvmWiringT: EvmWiring> {
 
     /// Called after `step` when the instruction has been executed.
     ///
-    /// Setting `interp.instruction_result` to anything other than [crate::interpreter::InstructionResult::Continue] alters the execution
+    /// Setting `interp.instruction_result` to anything other than [revm::interpreter::InstructionResult::Continue] alters the execution
     /// of the interpreter.
     #[inline]
     fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>) {
@@ -58,7 +58,7 @@ pub trait Inspector<EvmWiringT: EvmWiring> {
 
     /// Called whenever a call to a contract is about to start.
     ///
-    /// InstructionResulting anything other than [crate::interpreter::InstructionResult::Continue] overrides the result of the call.
+    /// InstructionResulting anything other than [revm::interpreter::InstructionResult::Continue] overrides the result of the call.
     #[inline]
     fn call(
         &mut self,
