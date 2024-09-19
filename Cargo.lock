@@ -104,9 +104,9 @@ dependencies = [
 
 [[package]]
 name = "alloy-eips"
-version = "0.3.0"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "159eab0e4e15b88571f55673af37314f4b8f17630dc1b393c3d70f2128a1d494"
+checksum = "f923dd5fca5f67a43d81ed3ebad0880bd41f6dd0ada930030353ac356c54cd0f"
 dependencies = [
  "alloy-eip2930",
  "alloy-eip7702",
@@ -114,6 +114,7 @@ dependencies = [
  "alloy-rlp",
  "alloy-serde",
  "c-kzg",
+ "derive_more 1.0.0",
  "once_cell",
  "serde",
  "sha2",
@@ -2970,7 +2971,8 @@ dependencies = [
 name = "revm-specification"
 version = "1.0.0"
 dependencies = [
- "alloy-eips",
+ "alloy-eip2930",
+ "alloy-eip7702",
  "alloy-primitives",
  "enumn",
  "revm-primitives",
