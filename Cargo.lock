@@ -1383,6 +1383,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-database-components"
+version = "0.0.0"
+dependencies = [
+ "auto_impl",
+ "revm",
+]
+
+[[package]]
 name = "eyre"
 version = "0.6.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"

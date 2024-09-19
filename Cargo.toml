@@ -23,7 +23,7 @@ members = [
     #"examples/block_traces",
     "examples/contract_deployment",
     #"examples/custom_opcodes",
-    #"examples/database_components",
+    "examples/database_components",
     #"examples/database_ref",
     #"examples/uniswap_get_reserves",
     #"examples/uniswap_v2_usdc_swap",
