@@ -1,9 +1,8 @@
 use clap::Parser;
 use database::BenchmarkDB;
+use inspector::{inspector_handle_register, inspectors::TracerEip3155};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
-    inspector_handle_register,
-    inspectors::TracerEip3155,
     primitives::{address, Address, TxKind},
     wiring::EthereumWiring,
     Database, Evm,

@@ -1,13 +1,16 @@
-use crate::{inspectors::GasInspector, EvmContext, EvmWiring, Inspector};
+use crate::{inspectors::GasInspector, Inspector};
 use derive_where::derive_where;
-
-use interpreter::{
-    CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult, OpCode,
+use revm::{
+    interpreter::{
+        CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
+        OpCode,
+    },
+    primitives::{hex, HashMap, B256, U256},
+    wiring::Transaction,
+    EvmContext, EvmWiring,
 };
-use primitives::{hex, HashMap, B256, U256};
 use serde::Serialize;
 use std::io::Write;
-use wiring::Transaction;
 
 /// [EIP-3155](https://eips.ethereum.org/EIPS/eip-3155) tracer [Inspector].
 #[derive_where(Debug)]

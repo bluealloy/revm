@@ -1,9 +1,12 @@
 //! Custom print inspector, it has step level information of execution.
 //! It is a great tool if some debugging is needed.
 
-use crate::{inspectors::GasInspector, EvmContext, EvmWiring, Inspector};
-use interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, OpCode};
-use primitives::{Address, U256};
+use crate::{inspectors::GasInspector, Inspector};
+use revm::{
+    interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, OpCode},
+    primitives::{Address, U256},
+    EvmContext, EvmWiring,
+};
 
 /// Custom print [Inspector], it has step level information of execution.
 ///
@@ -111,13 +114,17 @@ impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for CustomPrintTracer {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{inspector_handle_register, Evm};
-    use bytecode::Bytecode;
+    use crate::inspector_handle_register;
+
     use database::InMemoryDB;
-    use primitives::{address, bytes, keccak256, Bytes, TxKind, U256};
-    use specification::hardfork::SpecId;
-    use state::AccountInfo;
-    use wiring::EthereumWiring;
+    use revm::{
+        bytecode::Bytecode,
+        primitives::{address, bytes, keccak256, Bytes, TxKind, U256},
+        specification::hardfork::SpecId,
+        state::AccountInfo,
+        wiring::EthereumWiring,
+        Evm,
+    };
 
     #[test]
     fn gas_calculation_underflow() {

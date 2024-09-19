@@ -1,7 +1,10 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
 
-use crate::{EvmContext, EvmWiring, Inspector};
-use interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter};
+use crate::Inspector;
+use revm::{
+    interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter},
+    EvmContext, EvmWiring,
+};
 
 /// Helper [Inspector] that keeps track of gas.
 #[allow(dead_code)]
@@ -70,12 +73,16 @@ impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for GasInspector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{inspector::inspector_handle_register, Evm, EvmWiring};
-    use bytecode::Bytecode;
+    use crate::inspector_handle_register;
     use database::BenchmarkDB;
-    use interpreter::{opcode, Interpreter};
-    use primitives::{address, Bytes, Log, TxKind};
-    use wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring as PrimitiveEvmWiring};
+    use revm::{
+        bytecode::Bytecode,
+        interpreter::{opcode, Interpreter},
+        primitives::{address, Bytes, Log, TxKind},
+        wiring::EvmWiring as PrimitiveEvmWiring,
+        wiring::{DefaultEthereumWiring, EthereumWiring},
+        Evm, EvmWiring,
+    };
 
     type TestEvmWiring = DefaultEthereumWiring;
 

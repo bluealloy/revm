@@ -1,37 +1,18 @@
-#[cfg(feature = "std")]
-mod customprinter;
-#[cfg(all(feature = "std", feature = "serde-json"))]
-mod eip3155;
-mod gas;
-mod handler_register;
-mod noop;
-
-pub use handler_register::{inspector_handle_register, GetInspector};
-
-use interpreter::{
-    CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
-};
-
-use crate::{EvmContext, EvmWiring};
 use auto_impl::auto_impl;
-use primitives::{Address, Log, U256};
-
-/// [Inspector] implementations.
-pub mod inspectors {
-    #[cfg(feature = "std")]
-    pub use super::customprinter::CustomPrintTracer;
-    #[cfg(all(feature = "std", feature = "serde-json"))]
-    pub use super::eip3155::TracerEip3155;
-    pub use super::gas::GasInspector;
-    pub use super::noop::NoOpInspector;
-}
+use revm::{
+    interpreter::{
+        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
+    },
+    primitives::{Address, Log, U256},
+    EvmContext, EvmWiring,
+};
 
 /// EVM [Interpreter] callbacks.
 #[auto_impl(&mut, Box)]
 pub trait Inspector<EvmWiringT: EvmWiring> {
     /// Called before the interpreter is initialized.
     ///
-    /// If `interp.instruction_result` is set to anything other than [crate::interpreter::InstructionResult::Continue] then the execution of the interpreter
+    /// If `interp.instruction_result` is set to anything other than [revm::interpreter::InstructionResult::Continue] then the execution of the interpreter
     /// is skipped.
     #[inline]
     fn initialize_interp(
@@ -59,7 +40,7 @@ pub trait Inspector<EvmWiringT: EvmWiring> {
 
     /// Called after `step` when the instruction has been executed.
     ///
-    /// Setting `interp.instruction_result` to anything other than [crate::interpreter::InstructionResult::Continue] alters the execution
+    /// Setting `interp.instruction_result` to anything other than [revm::interpreter::InstructionResult::Continue] alters the execution
     /// of the interpreter.
     #[inline]
     fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>) {
@@ -77,7 +58,7 @@ pub trait Inspector<EvmWiringT: EvmWiring> {
 
     /// Called whenever a call to a contract is about to start.
     ///
-    /// InstructionResulting anything other than [crate::interpreter::InstructionResult::Continue] overrides the result of the call.
+    /// InstructionResulting anything other than [revm::interpreter::InstructionResult::Continue] overrides the result of the call.
     #[inline]
     fn call(
         &mut self,

@@ -2815,7 +2815,6 @@ dependencies = [
  "alloy-provider",
  "alloy-sol-types",
  "anyhow",
- "auto_impl",
  "criterion",
  "derive-where",
  "dyn-clone",
@@ -2833,7 +2832,6 @@ dependencies = [
  "revm-wiring",
  "rstest",
  "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -2881,6 +2879,18 @@ dependencies = [
  "revm-state",
  "rstest",
  "serde",
+]
+
+[[package]]
+name = "revm-inspector"
+version = "1.0.0"
+dependencies = [
+ "auto_impl",
+ "derive-where",
+ "revm",
+ "revm-database",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -3011,6 +3021,7 @@ dependencies = [
  "plain_hasher",
  "revm",
  "revm-database",
+ "revm-inspector",
  "serde",
  "serde_json",
  "thiserror",

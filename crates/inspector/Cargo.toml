@@ -22,15 +22,28 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
+# revm
+revm.workspace = true
+
+# mics
+auto_impl = { version = "1.2", default-features = false }
+derive-where = { version = "1.2.7", default-features = false }
+
 # Optional
 serde = { version = "1.0", default-features = false, features = [
     "derive",
     "rc",
 ], optional = true }
+serde_json = { version = "1.0", default-features = false, features = [
+    "alloc",
+], optional = true }
 
+[dev-dependencies]
+database = { workspace = true, features = ["serde"] }
 
 [features]
 default = ["std"]
-std = ["serde?/std"]
-serde = ["dep:serde"]
-serde-json = ["serde"]
+# Preserve ordeder of json
+std = ["serde?/std", "serde_json?/std", "serde_json?/preserve_order"]
+serde = ["dep:serde", "revm/serde", "database/serde"]
+serde-json = ["serde", "dep:serde_json"]
