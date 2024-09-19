@@ -34,7 +34,6 @@ bytecode.workspace = true
 database = { workspace = true, optional = true }
 
 # misc
-auto_impl = { version = "1.2", default-features = false }
 derive-where = { version = "1.2.7", default-features = false }
 dyn-clone = "1.0"
 
@@ -42,9 +41,6 @@ dyn-clone = "1.0"
 serde = { version = "1.0", default-features = false, features = [
     "derive",
     "rc",
-], optional = true }
-serde_json = { version = "1.0", default-features = false, features = [
-    "alloc",
 ], optional = true }
 
 [dev-dependencies]
@@ -65,14 +61,11 @@ alloy-provider = "0.3"
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
     "serde?/std",
-    "serde_json?/std",
-    "serde_json?/preserve_order",
     "interpreter/std",
     "precompile/std",
 ]
 hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
 serde = ["dep:serde", "interpreter/serde", "database-interface/serde"]
-serde-json = ["serde", "dep:serde_json"]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
 portable = ["wiring/portable"]

@@ -26,7 +26,6 @@ mod evm;
 mod evm_wiring;
 mod frame;
 pub mod handler;
-mod inspector;
 mod journaled_state;
 
 // Export items.
@@ -42,5 +41,4 @@ pub use evm::{Evm, CALL_STACK_LIMIT};
 pub use evm_wiring::EvmWiring;
 pub use frame::{CallFrame, CreateFrame, Frame, FrameData, FrameOrResult, FrameResult};
 pub use handler::{register::EvmHandler, Handler};
-pub use inspector::{inspector_handle_register, inspectors, GetInspector, Inspector};
 pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};

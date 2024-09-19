@@ -5,11 +5,10 @@ use super::{
 };
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
+use inspector::{inspector_handle_register, inspectors::TracerEip3155};
 use revm::{
     bytecode::Bytecode,
     database_interface::EmptyDB,
-    inspector_handle_register,
-    inspectors::TracerEip3155,
     interpreter::analysis::to_analysed,
     primitives::{keccak256, Bytes, TxKind, B256},
     specification::{eip7702::AuthorizationList, hardfork::SpecId},

@@ -9,6 +9,7 @@ members = [
     "crates/revm",
     "crates/primitives",
     "crates/interpreter",
+    "crates/inspector",
     "crates/precompile",
     "crates/optimism",
     "crates/database",
@@ -39,6 +40,7 @@ state = { path = "crates/state", package = "revm-state", version = "1.0.0", defa
 wiring = { path = "crates/wiring", package = "revm-wiring", version = "1.0.0", default-features = false }
 revm = { path = "crates/revm", version = "14.0.1", default-features = false }
 interpreter = { path = "crates/interpreter", package = "revm-interpreter", version = "10.0.1", default-features = false }
+inspector = { path = "crates/inspector", package = "revm-inspector", version = "1.0.0", default-features = false }
 precompile = { path = "crates/precompile", package = "revm-precompile", version = "11.0.1", default-features = false }
 
 [workspace.package]

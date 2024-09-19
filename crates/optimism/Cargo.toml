@@ -49,7 +49,6 @@ default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = ["serde?/std", "revm/std", "precompile/std"]
 hashbrown = ["revm/hashbrown"]
 serde = ["dep:serde", "revm/serde"]
-serde-json = ["serde", "revm/serde-json"]
 portable = ["revm/portable"]
 
 dev = [

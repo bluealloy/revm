@@ -1,4 +1,5 @@
-use crate::{EvmWiring, Inspector};
+use crate::Inspector;
+use revm::EvmWiring;
 
 /// Dummy [Inspector], helpful as standalone replacement.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]

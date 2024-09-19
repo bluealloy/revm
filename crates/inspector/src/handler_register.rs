@@ -1,11 +1,12 @@
-use crate::{
-    handler::register::EvmHandler, Context, EvmWiring, FrameOrResult, FrameResult, Inspector,
-    JournalEntry,
-};
+use crate::Inspector;
 use core::cell::RefCell;
-use interpreter::{opcode, opcode::DynInstruction, InstructionResult, Interpreter};
+use revm::{
+    handler::register::EvmHandler,
+    interpreter::{opcode, opcode::DynInstruction, InstructionResult, Interpreter},
+    wiring::result::EVMResultGeneric,
+    Context, EvmWiring, FrameOrResult, FrameResult, JournalEntry,
+};
 use std::{rc::Rc, sync::Arc, vec::Vec};
-use wiring::result::EVMResultGeneric;
 
 /// Provides access to an `Inspector` instance.
 pub trait GetInspector<EvmWiringT: EvmWiring> {
@@ -261,15 +262,16 @@ fn inspector_instruction<EvmWiringT>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        inspector::inspector_handle_register, inspectors::NoOpInspector, Evm, EvmContext, EvmWiring,
-    };
-    use bytecode::Bytecode;
+    use crate::{inspector_handle_register, inspectors::NoOpInspector};
     use database::BenchmarkDB;
-    use database_interface::EmptyDB;
-    use interpreter::{opcode, CallInputs, CallOutcome, CreateInputs, CreateOutcome};
-    use primitives::{address, Bytes, TxKind};
-    use wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring as PrimitiveEvmWiring};
+    use revm::{
+        bytecode::Bytecode,
+        database_interface::EmptyDB,
+        interpreter::{opcode, CallInputs, CallOutcome, CreateInputs, CreateOutcome},
+        primitives::{address, Bytes, TxKind},
+        wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring as PrimitiveEvmWiring},
+        Evm, EvmContext, EvmWiring,
+    };
 
     type TestEvmWiring = DefaultEthereumWiring;
 

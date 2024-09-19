@@ -11,13 +11,8 @@ repository.workspace = true
 [dependencies]
 database.workspace = true
 # revm
-revm = { workspace = true, features = [
-    "std",
-    "serde-json",
-    "hashbrown",
-    "c-kzg",
-    "blst",
-] }
+revm = { workspace = true, features = ["std", "hashbrown", "c-kzg", "blst"] }
+inspector = { workspace = true, features = ["serde", "serde-json"] }
 
 hash-db = "0.15"
 hex = "0.4"
