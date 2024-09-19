@@ -89,7 +89,7 @@ fn main() -> anyhow::Result<()> {
         bail!("Failed to write storage in the init code: {result:#?}");
     };
 
-    println!("storage U256(0) at{address}:  {storage0:#?}");
+    println!("storage U256(0) at {address}:  {storage0:#?}");
     assert_eq!(storage0.present_value(), param.try_into()?, "{result:#?}");
     Ok(())
 }
