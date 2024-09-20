@@ -1406,7 +1406,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "example-db-by-ref"
+name = "example-database-ref"
 version = "0.0.0"
 dependencies = [
  "anyhow",

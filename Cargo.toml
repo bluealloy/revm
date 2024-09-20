@@ -27,6 +27,8 @@ members = [
     "examples/uniswap_get_reserves",
     "examples/uniswap_v2_usdc_swap",
     #"examples/custom_opcodes",
+
+    #example-block-traces,example-contract-deployment,example-database-components,example-database-ref,example-uniswap-get-reserves,example-uniswap-v2-usdc-swap
 ]
 
 [workspace.dependencies]
