@@ -1,5 +1,4 @@
-//! BlockHash database component from [`crate::db::Database`]
-//! it is used inside [`crate::db::DatabaseComponents`]
+//! BlockHash database component from [`revm::Database`]
 
 use auto_impl::auto_impl;
 use core::ops::Deref;

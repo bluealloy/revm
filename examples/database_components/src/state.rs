@@ -1,5 +1,4 @@
-//! State database component from [`crate::db::Database`]
-//! it is used inside [`crate::db::DatabaseComponents`]
+//! State database component from [`crate::Database`]
 
 use auto_impl::auto_impl;
 use core::ops::Deref;
