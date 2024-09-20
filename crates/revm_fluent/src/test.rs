@@ -22,7 +22,6 @@ use core::{
     mem::take,
     str::{from_utf8, FromStr},
 };
-use fluentbase_core::fvm::{helpers::FUEL_TESTNET_BASE_ASSET_ID, types::WasmStorage};
 use fluentbase_genesis::{
     devnet::{devnet_genesis_from_file, GENESIS_KECCAK_HASH_SLOT, GENESIS_POSEIDON_HASH_SLOT},
     Genesis,
@@ -66,6 +65,7 @@ use fuel_core_types::{
     fuel_types::{canonical::Serialize, BlockHeight, ChainId},
     fuel_vm::SecretKey,
 };
+use fuel_ee_core::fvm::{helpers::FUEL_TESTNET_BASE_ASSET_ID, types::WasmStorage};
 use fuel_tx::TransactionBuilder;
 use fuel_vm::storage::MemoryStorage;
 use rwasm::{
@@ -1067,6 +1067,7 @@ fn test_fuel_asset_transfer() {
     let tx1 = test_builder.build().transaction().clone();
     let tx1: fuel_tx::Transaction = fuel_tx::Transaction::Script(tx1);
     let fuel_tx_bytes = Bytes::from(tx1.to_bytes());
+    println!("fuel_tx_bytes hex: {}", hex::encode(&fuel_tx_bytes));
 
     // top up address1 for initial balance
     let tx_id: TxId =

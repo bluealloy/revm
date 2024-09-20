@@ -23,7 +23,7 @@ use crate::{
 };
 use alloc::vec::Vec;
 use core::{fmt, mem::take};
-use fluentbase_core::{blended::BlendedRuntime, fvm::types::STORAGE_ADDRESSES};
+use fluentbase_core::blended::BlendedRuntime;
 use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
 use fluentbase_sdk::{
     journal::{JournalState, JournalStateBuilder},
@@ -32,6 +32,7 @@ use fluentbase_sdk::{
     NativeAPI,
     TxContext,
 };
+use fuel_ee_core::fvm::types::STORAGE_ADDRESSES;
 use revm_interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome};
 
 /// EVM call stack limit.

@@ -40,6 +40,9 @@ fluentbase-sdk = { path = "../../../crates/sdk", default-features = false }
 fluentbase-runtime = { path = "../../../crates/runtime", default-features = false, optional = true }
 fluentbase-genesis = { path = "../../../crates/genesis", default-features = false, optional = true }
 
+# fluent's fuel
+fuel-ee-core = { workspace = true, default-features = false, features = [] }
+
 rwasm = { workspace = true, default-features = false, optional = true }
 
 # misc
@@ -88,6 +91,7 @@ alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "61140ec
 # needed for enabling TLS to use HTTPS connections when testing alloy DB
 alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "61140ec", default-features = false }
 
+# fuel
 fuel-vm = { workspace = true, default-features = false, features = ["alloc", "test-helpers"] }
 fuel-tx = { workspace = true, default-features = false, features = ["alloc", "test-helpers"] }
 fuel-core = { workspace = true, features = ["test-helpers"] }
