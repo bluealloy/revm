@@ -12,7 +12,7 @@ repository.workspace = true
 # revm
 database.workspace = true
 revm = { workspace = true, features = ["std", "hashbrown", "c-kzg", "blst"] }
-inspector = { workspace = true, features = ["std", "serde", "serde-json"] }
+inspector = { workspace = true, features = ["std", "serde-json"] }
 
 hash-db = "0.15"
 hex = "0.4"

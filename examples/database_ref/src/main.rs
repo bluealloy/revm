@@ -4,11 +4,13 @@
 use core::error::Error;
 use core::fmt::Debug;
 use database::CacheDB;
+use inspector::{
+    inspector_handle_register,
+    inspectors::{NoOpInspector, TracerEip3155},
+};
 use revm::{
     database_interface::{EmptyDB, WrapDatabaseRef},
     handler::register::HandleRegister,
-    inspector_handle_register,
-    inspectors::{NoOpInspector, TracerEip3155},
     wiring::{
         result::{HaltReason, ResultAndState},
         EthereumWiring,

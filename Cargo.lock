@@ -1375,6 +1375,75 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-block-traces"
+version = "0.0.0"
+dependencies = [
+ "alloy-eips",
+ "alloy-provider",
+ "anyhow",
+ "indicatif",
+ "revm",
+ "revm-database",
+ "revm-inspector",
+ "tokio",
+]
+
+[[package]]
+name = "example-contract-deployment"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "revm",
+ "revm-database",
+]
+
+[[package]]
+name = "example-database-components"
+version = "0.0.0"
+dependencies = [
+ "auto_impl",
+ "revm",
+]
+
+[[package]]
+name = "example-database-ref"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "revm",
+ "revm-database",
+ "revm-inspector",
+]
+
+[[package]]
+name = "example-uniswap-get-reserves"
+version = "0.0.0"
+dependencies = [
+ "alloy-eips",
+ "alloy-provider",
+ "alloy-sol-types",
+ "anyhow",
+ "revm",
+ "revm-database",
+ "tokio",
+]
+
+[[package]]
+name = "example-uniswap-v2-usdc-swap"
+version = "0.0.0"
+dependencies = [
+ "alloy-eips",
+ "alloy-provider",
+ "alloy-sol-types",
+ "alloy-transport-http",
+ "anyhow",
+ "reqwest",
+ "revm",
+ "revm-database",
+ "tokio",
+]
+
+[[package]]
 name = "eyre"
 version = "0.6.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"

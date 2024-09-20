@@ -23,4 +23,18 @@ all = "warn"
 
 [dependencies]
 revm.workspace = true
-database.workspace = true
+database = { workspace = true, features = ["std", "alloydb"] }
+inspector = { workspace = true, features = ["std", "serde-json"] }
+
+# tokio
+tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
+
+# alloy
+alloy-eips = "0.3.6"
+alloy-provider = "0.3"
+
+# progress bar
+indicatif = "0.17"
+
+# mics
+anyhow = "1.0.89"

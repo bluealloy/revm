@@ -1,5 +1,5 @@
 [package]
-name = "example-db-by-ref"
+name = "example-database-ref"
 version = "0.0.0"
 publish = false
 authors.workspace = true
@@ -23,3 +23,8 @@ all = "warn"
 
 [dependencies]
 revm.workspace = true
+database.workspace = true
+inspector = { workspace = true, features = ["std", "serde-json"] }
+
+# mics
+anyhow = "1.0.89"

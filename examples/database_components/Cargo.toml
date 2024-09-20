@@ -22,5 +22,8 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
+# srevm 
 revm.workspace = true
-database.workspace = true
+
+# mics
+auto_impl = "1.2"

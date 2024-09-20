@@ -23,4 +23,17 @@ all = "warn"
 
 [dependencies]
 revm.workspace = true
-database.workspace = true
+database = { workspace = true, features = ["std", "alloydb"] }
+
+# tokio
+tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
+
+# alloy
+alloy-sol-types = { version = "0.8.2", default-features = false, features = [
+    "std",
+] }
+alloy-eips = "0.3.6"
+alloy-transport-http = "0.3"
+alloy-provider = "0.3"
+reqwest = { version = "0.12" }
+anyhow = "1.0.89"

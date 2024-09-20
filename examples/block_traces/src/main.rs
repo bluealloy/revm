@@ -3,11 +3,10 @@
 
 use alloy_eips::{BlockId, BlockNumberOrTag};
 use alloy_provider::{network::primitives::BlockTransactions, Provider, ProviderBuilder};
+use database::{AlloyDB, CacheDB, StateBuilder};
 use indicatif::ProgressBar;
+use inspector::{inspector_handle_register, inspectors::TracerEip3155};
 use revm::{
-    db::{AlloyDB, CacheDB, StateBuilder},
-    inspector_handle_register,
-    inspectors::TracerEip3155,
     primitives::{TxKind, B256, U256},
     specification::eip2930::AccessListItem,
     wiring::EthereumWiring,

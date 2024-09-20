@@ -20,13 +20,13 @@ members = [
     "crates/specification",
 
     # examples
-    #"examples/block_traces",
-    #"examples/contract_deployment",
+    "examples/block_traces",
+    "examples/contract_deployment",
+    "examples/database_components",
+    "examples/database_ref",
+    "examples/uniswap_get_reserves",
+    "examples/uniswap_v2_usdc_swap",
     #"examples/custom_opcodes",
-    #"examples/database_components",
-    #"examples/database_ref",
-    #"examples/uniswap_get_reserves",
-    #"examples/uniswap_v2_usdc_swap",
 ]
 
 [workspace.dependencies]

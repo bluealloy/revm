@@ -22,5 +22,19 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
+# revm
 revm.workspace = true
-database.workspace = true
+database = { workspace = true, features = ["std", "alloydb"] }
+
+# tokio
+tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
+
+# alloy
+alloy-sol-types = { version = "0.8.2", default-features = false, features = [
+    "std",
+] }
+alloy-eips = "0.3.6"
+alloy-provider = "0.3"
+
+# mics
+anyhow = "1.0.89"

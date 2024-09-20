@@ -1,33 +1,36 @@
 //! Example of uniswap getReserves() call emulation.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
+use alloy_eips::BlockId;
 use alloy_provider::{network::Ethereum, ProviderBuilder, RootProvider};
-use alloy_rpc_types::BlockId;
 use alloy_sol_types::{sol, SolCall, SolValue};
 use alloy_transport_http::Http;
 use anyhow::{anyhow, Result};
+use database::{AlloyDB, CacheDB};
 use reqwest::Client;
 use revm::{
-    db::{AlloyDB, CacheDB},
-    primitives::{
-        address, keccak256, AccountInfo, Address, Bytes, ExecutionResult, Output, TxKind, U256,
+    primitives::{address, keccak256, Address, Bytes, TxKind, U256},
+    state::AccountInfo,
+    wiring::{
+        result::{ExecutionResult, Output},
+        EthereumWiring,
     },
     Evm,
 };
 use std::ops::Div;
-use std::sync::Arc;
 
-type AlloyCacheDB = CacheDB<AlloyDB<Http<Client>, Ethereum, Arc<RootProvider<Http<Client>>>>>;
+type AlloyCacheDB = CacheDB<AlloyDB<Http<Client>, Ethereum, RootProvider<Http<Client>>>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let client = ProviderBuilder::new().on_http(
-        "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27"
-            .parse()
-            .unwrap(),
-    );
-    let client = Arc::new(client);
-    let mut cache_db = CacheDB::new(AlloyDB::new(client, BlockId::default()));
+    // Set up the HTTP transport which is consumed by the RPC client.
+    let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
+
+    // create ethers client and wrap it in Arc<M>
+    let client = ProviderBuilder::new().on_http(rpc_url);
+
+    let alloy = AlloyDB::new(client, BlockId::latest()).unwrap();
+    let mut cache_db = CacheDB::new(alloy);
 
     // Random empty account
     let account = address!("18B06aaF27d44B756FCF16Ca20C1f183EB49111f");
@@ -83,18 +86,20 @@ async fn main() -> Result<()> {
     let acc_usdc_balance_after = balance_of(usdc, account, &mut cache_db)?;
     println!("USDC balance after swap: {}", acc_usdc_balance_after);
 
+    println!("OK");
     Ok(())
 }
 
-fn balance_of(token: Address, address: Address, cache_db: &mut AlloyCacheDB) -> Result<U256> {
+fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> Result<U256> {
     sol! {
         function balanceOf(address account) public returns (uint256);
     }
 
     let encoded = balanceOfCall { account: address }.abi_encode();
 
-    let mut evm = Evm::builder()
-        .with_db(cache_db)
+    let mut evm = Evm::<EthereumWiring<&mut AlloyCacheDB, ()>>::builder()
+        .with_db(alloy_db)
+        .with_default_ext_ctx()
         .modify_tx_env(|tx| {
             // 0x1 because calling USDC proxy from zero address fails
             tx.caller = address!("0000000000000000000000000000000000000001");
@@ -138,8 +143,9 @@ async fn get_amount_out(
     }
     .abi_encode();
 
-    let mut evm = Evm::builder()
+    let mut evm = Evm::<EthereumWiring<&mut AlloyCacheDB, ()>>::builder()
         .with_db(cache_db)
+        .with_default_ext_ctx()
         .modify_tx_env(|tx| {
             tx.caller = address!("0000000000000000000000000000000000000000");
             tx.transact_to = TxKind::Call(uniswap_v2_router);
@@ -171,8 +177,9 @@ fn get_reserves(pair_address: Address, cache_db: &mut AlloyCacheDB) -> Result<(U
 
     let encoded = getReservesCall {}.abi_encode();
 
-    let mut evm = Evm::builder()
+    let mut evm = Evm::<EthereumWiring<&mut AlloyCacheDB, ()>>::builder()
         .with_db(cache_db)
+        .with_default_ext_ctx()
         .modify_tx_env(|tx| {
             tx.caller = address!("0000000000000000000000000000000000000000");
             tx.transact_to = TxKind::Call(pair_address);
@@ -220,13 +227,15 @@ fn swap(
     }
     .abi_encode();
 
-    let mut evm = Evm::builder()
+    let mut evm = Evm::<EthereumWiring<&mut AlloyCacheDB, ()>>::builder()
         .with_db(cache_db)
+        .with_default_ext_ctx()
         .modify_tx_env(|tx| {
             tx.caller = from;
             tx.transact_to = TxKind::Call(pool_address);
             tx.data = encoded.into();
             tx.value = U256::from(0);
+            tx.nonce = 1;
         })
         .build();
 
@@ -253,8 +262,9 @@ fn transfer(
 
     let encoded = transferCall { to, amount }.abi_encode();
 
-    let mut evm = Evm::builder()
+    let mut evm = Evm::<EthereumWiring<&mut AlloyCacheDB, ()>>::builder()
         .with_db(cache_db)
+        .with_default_ext_ctx()
         .modify_tx_env(|tx| {
             tx.caller = from;
             tx.transact_to = TxKind::Call(token);
