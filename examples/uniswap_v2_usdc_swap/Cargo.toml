@@ -35,7 +35,5 @@ alloy-sol-types = { version = "0.8.2", default-features = false, features = [
 alloy-eips = "0.3.6"
 alloy-transport-http = "0.3"
 alloy-provider = "0.3"
-indicatif = "0.17"
 reqwest = { version = "0.12" }
-rstest = "0.22.0"
 anyhow = "1.0.89"
