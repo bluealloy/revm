@@ -142,9 +142,7 @@ pub fn sstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host:
         interpreter.instruction_result = InstructionResult::ReentrancySentryOOG;
         return;
     }
-    gas_or_fail!(interpreter, {
-        gas::sstore_cost(SPEC::SPEC_ID, &state_load.data, state_load.is_cold)
-    });
+    gas::sstore_cost(SPEC::SPEC_ID, &state_load.data, state_load.is_cold);
     refund!(
         interpreter,
         gas::sstore_refund(SPEC::SPEC_ID, &state_load.data)

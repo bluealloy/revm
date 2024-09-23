@@ -185,8 +185,8 @@ pub const fn sload_cost(spec_id: SpecId, is_cold: bool) -> u64 {
 
 /// `SSTORE` opcode cost calculation.
 #[inline]
-pub fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, is_cold: bool) -> Option<u64> {
-    Some(if spec_id.is_enabled_in(SpecId::BERLIN) {
+pub fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, is_cold: bool) -> u64 {
+    if spec_id.is_enabled_in(SpecId::BERLIN) {
         // Berlin specification logic
         let mut gas_cost = istanbul_sstore_cost::<WARM_STORAGE_READ_COST, WARM_SSTORE_RESET>(vals);
 
@@ -200,7 +200,7 @@ pub fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, is_cold: bool) -> Optio
     } else {
         // Frontier logic
         frontier_sstore_cost(vals)
-    })
+    }
 }
 
 /// EIP-2200: Structured Definitions for Net Gas Metering
