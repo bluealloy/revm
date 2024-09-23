@@ -8,7 +8,7 @@ use core::{fmt, ptr::NonNull};
 /// An EVM opcode.
 ///
 /// This is always a valid opcode, as declared in the [`opcode`][self] module or the
-/// [`OPCODE_INFO_JUMPTABLE`] constant.
+/// [`OPCODE_INFO`] constant.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct OpCode(u8);

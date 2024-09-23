@@ -58,11 +58,11 @@ pub fn print(code: &[u8]) {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use primitives::hex;
 
+    #[cfg(feature = "std")]
     #[test]
     fn sanity_test() {
-        print(&hex!("6001e200ffff00"));
+        super::print(&hex!("6001e200ffff00"));
     }
 }

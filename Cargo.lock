@@ -3092,6 +3092,7 @@ dependencies = [
  "microbench",
  "plain_hasher",
  "revm",
+ "revm-bytecode",
  "revm-database",
  "revm-inspector",
  "serde",
