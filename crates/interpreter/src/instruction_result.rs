@@ -50,6 +50,8 @@ pub enum InstructionResult {
     PrecompileOOG,
     /// Out of gas error encountered while calling an invalid operand.
     InvalidOperandOOG,
+    /// Out of gas error encountered while checking for reentrancy sentry.
+    ReentrancySentryOOG,
     /// Unknown or invalid opcode.
     OpcodeNotFound,
     /// Invalid `CALL` with value transfer in static context.
@@ -118,6 +120,7 @@ impl From<HaltReason> for InstructionResult {
                 OutOfGasError::Memory => Self::MemoryOOG,
                 OutOfGasError::MemoryLimit => Self::MemoryLimitOOG,
                 OutOfGasError::Precompile => Self::PrecompileOOG,
+                OutOfGasError::ReentrancySentry => Self::ReentrancySentryOOG,
             },
             HaltReason::OpcodeNotFound => Self::OpcodeNotFound,
             HaltReason::InvalidFEOpcode => Self::InvalidFEOpcode,
@@ -176,6 +179,7 @@ macro_rules! return_error {
             | InstructionResult::MemoryLimitOOG
             | InstructionResult::PrecompileOOG
             | InstructionResult::InvalidOperandOOG
+            | InstructionResult::ReentrancySentryOOG
             | InstructionResult::OpcodeNotFound
             | InstructionResult::CallNotAllowedInsideStatic
             | InstructionResult::StateChangeDuringStaticCall
@@ -308,6 +312,9 @@ impl<HaltReasonT: HaltReasonTrait> From<InstructionResult> for SuccessOrHalt<Hal
             }
             InstructionResult::InvalidOperandOOG => {
                 Self::Halt(HaltReason::OutOfGas(OutOfGasError::InvalidOperand).into())
+            }
+            InstructionResult::ReentrancySentryOOG => {
+                Self::Halt(HaltReason::OutOfGas(OutOfGasError::ReentrancySentry).into())
             }
             InstructionResult::OpcodeNotFound | InstructionResult::ReturnContractInNotInitEOF => {
                 Self::Halt(HaltReason::OpcodeNotFound.into())

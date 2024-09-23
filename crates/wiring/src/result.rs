@@ -463,4 +463,6 @@ pub enum OutOfGasError {
     // When performing something that takes a U256 and casts down to a u64, if its too large this would fire
     // i.e. in `as_usize_or_fail`
     InvalidOperand,
+    // When performing SSTORE the gasleft is less than or equal to 2300
+    ReentrancySentry,
 }

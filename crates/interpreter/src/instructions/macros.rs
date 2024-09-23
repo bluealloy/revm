@@ -250,7 +250,7 @@ macro_rules! pop_top {
 /// Pushes `B256` values onto the stack. Fails the instruction if the stack is full.
 #[macro_export]
 macro_rules! push_b256 {
-	($interp:expr, $($x:expr),* $(,)?) => ($(
+    ($interp:expr, $($x:expr),* $(,)?) => ($(
         match $interp.stack.push_b256($x) {
             Ok(()) => {},
             Err(e) => {
