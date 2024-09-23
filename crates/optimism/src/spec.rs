@@ -88,6 +88,7 @@ pub enum OptimismSpecId {
     GRANITE = 23,
     PRAGUE = 24,
     PRAGUE_EOF = 25,
+    HOLOCENE = 26,
     #[default]
     LATEST = u8::MAX,
 }
@@ -136,7 +137,8 @@ impl OptimismSpecId {
             OptimismSpecId::CANCUN
             | OptimismSpecId::ECOTONE
             | OptimismSpecId::FJORD
-            | OptimismSpecId::GRANITE => SpecId::CANCUN,
+            | OptimismSpecId::GRANITE
+            | OptimismSpecId::HOLOCENE => SpecId::CANCUN,
             OptimismSpecId::PRAGUE => SpecId::PRAGUE,
             OptimismSpecId::PRAGUE_EOF => SpecId::PRAGUE_EOF,
             OptimismSpecId::LATEST => SpecId::LATEST,
@@ -195,6 +197,7 @@ pub mod id {
     pub const ECOTONE: &str = "Ecotone";
     pub const FJORD: &str = "Fjord";
     pub const GRANITE: &str = "Granite";
+    pub const HOLOCENE: &str = "Holocene";
 }
 
 impl From<&str> for OptimismSpecId {
@@ -260,6 +263,7 @@ impl From<OptimismSpecId> for &'static str {
             OptimismSpecId::ECOTONE => id::ECOTONE,
             OptimismSpecId::FJORD => id::FJORD,
             OptimismSpecId::GRANITE => id::GRANITE,
+            OptimismSpecId::HOLOCENE => id::HOLOCENE,
             OptimismSpecId::LATEST => id::LATEST,
         }
     }
@@ -321,6 +325,7 @@ spec!(CANYON, CanyonSpec);
 spec!(ECOTONE, EcotoneSpec);
 spec!(FJORD, FjordSpec);
 spec!(GRANITE, GraniteSpec);
+spec!(HOLOCENE, HoloceneSpec);
 
 #[macro_export]
 macro_rules! optimism_spec_to_generic {
@@ -411,6 +416,10 @@ macro_rules! optimism_spec_to_generic {
             }
             $crate::OptimismSpecId::FJORD => {
                 use $crate::FjordSpec as SPEC;
+                $e
+            }
+            $crate::OptimismSpecId::HOLOCENE => {
+                use $crate::HoloceneSpec as SPEC;
                 $e
             }
         }
@@ -626,6 +635,10 @@ mod tests {
         optimism_spec_to_generic!(
             OptimismSpecId::PRAGUE_EOF,
             assert_eq!(SPEC::OPTIMISM_SPEC_ID, OptimismSpecId::PRAGUE_EOF)
+        );
+        optimism_spec_to_generic!(
+            OptimismSpecId::HOLOCENE,
+            assert_eq!(SPEC::OPTIMISM_SPEC_ID, OptimismSpecId::HOLOCENE)
         );
         optimism_spec_to_generic!(
             OptimismSpecId::LATEST,

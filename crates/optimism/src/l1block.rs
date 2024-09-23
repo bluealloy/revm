@@ -1,8 +1,7 @@
 use crate::fast_lz::flz_compress_len;
 use core::ops::Mul;
 use revm::{
-    database_interface::Database,
-    primitives::{address, Address, U256},
+    database_interface::Database, interpreter::Gas, primitives::{address, Address, U256}
 };
 
 use super::OptimismSpecId;
@@ -16,6 +15,10 @@ const BASE_FEE_SCALAR_OFFSET: usize = 16;
 /// The two 4-byte Ecotone fee scalar values are packed into the same storage slot as the 8-byte sequence number.
 /// Byte offset within the storage slot of the 4-byte blobBaseFeeScalar attribute.
 const BLOB_BASE_FEE_SCALAR_OFFSET: usize = 20;
+/// YUWENTODO doc comments
+const CONFIGURABLE_FEE_SCALAR_OFFSET: usize = 0;
+/// YUWENTODO doc comments
+const CONFIGURABLE_FEE_CONSTANT_OFFSET: usize = 8;
 
 const L1_BASE_FEE_SLOT: U256 = U256::from_limbs([1u64, 0, 0, 0]);
 const L1_OVERHEAD_SLOT: U256 = U256::from_limbs([5u64, 0, 0, 0]);
@@ -63,8 +66,14 @@ pub struct L1BlockInfo {
     pub l1_blob_base_fee: Option<U256>,
     /// The current L1 blob base fee scalar. None if Ecotone is not activated.
     pub l1_blob_base_fee_scalar: Option<U256>,
+    /// The current L1 blob base fee. None if Holocene is not activated, except if `empty_scalars` is `true`.
+    pub configurable_fee_scalar: Option<U256>,
+    /// The current L1 blob base fee scalar. None if Holocene is not activated.
+    pub configurable_fee_constant: Option<U256>,
     /// True if Ecotone is activated, but the L1 fee scalars have not yet been set.
-    pub(crate) empty_scalars: bool,
+    pub(crate) empty_ecotone_scalars: bool,
+    /// True if Holocene is activated, but the configurable fee scalars have not yet been set.
+    pub(crate) empty_holocene_scalars: bool,
 }
 
 impl L1BlockInfo {
@@ -107,21 +116,58 @@ impl L1BlockInfo {
 
             // Check if the L1 fee scalars are empty. If so, we use the Bedrock cost function. The L1 fee overhead is
             // only necessary if `empty_scalars` is true, as it was deprecated in Ecotone.
-            let empty_scalars = l1_blob_base_fee.is_zero()
+            let empty_ecotone_scalars = l1_blob_base_fee.is_zero()
                 && l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
                     == EMPTY_SCALARS;
-            let l1_fee_overhead = empty_scalars
+
+            let empty_holocene_scalars = l1_blob_base_fee.is_zero()
+                && l1_fee_scalars
+                    [CONFIGURABLE_FEE_SCALAR_OFFSET..CONFIGURABLE_FEE_CONSTANT_OFFSET + 4]
+                    == EMPTY_SCALARS;
+
+            let l1_fee_overhead = empty_ecotone_scalars
                 .then(|| db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT))
                 .transpose()?;
 
-            Ok(L1BlockInfo {
-                l1_base_fee,
-                l1_base_fee_scalar,
-                l1_blob_base_fee: Some(l1_blob_base_fee),
-                l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
-                empty_scalars,
-                l1_fee_overhead,
-            })
+            // Pre-holocene L1 block info
+            if !spec_id.is_enabled_in(OptimismSpecId::HOLOCENE) {
+                Ok(L1BlockInfo {
+                    l1_base_fee,
+                    l1_base_fee_scalar,
+                    l1_blob_base_fee: Some(l1_blob_base_fee),
+                    l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
+                    empty_ecotone_scalars,
+                    l1_fee_overhead,
+                    empty_holocene_scalars,
+                    ..Default::default()
+                })
+            } else {
+                // Post-holocene L1 block info
+                let configurable_fee_scalar = U256::from_be_slice(
+                    l1_fee_scalars
+                        [CONFIGURABLE_FEE_SCALAR_OFFSET..CONFIGURABLE_FEE_SCALAR_OFFSET + 4]
+                        .as_ref(),
+                );
+                let configurable_fee_constant = U256::from_be_slice(
+                    l1_fee_scalars
+                        [CONFIGURABLE_FEE_CONSTANT_OFFSET..CONFIGURABLE_FEE_CONSTANT_OFFSET + 4]
+                        .as_ref(),
+                );
+                let empty_holocene_scalars = l1_blob_base_fee.is_zero()
+                    && l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
+                        == EMPTY_SCALARS;
+                Ok(L1BlockInfo {
+                    l1_base_fee,
+                    l1_base_fee_scalar,
+                    l1_blob_base_fee: Some(l1_blob_base_fee),
+                    l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
+                    empty_ecotone_scalars,
+                    l1_fee_overhead,
+                    configurable_fee_scalar: Some(configurable_fee_scalar),
+                    configurable_fee_constant: Some(configurable_fee_constant),
+                    empty_holocene_scalars,
+                })
+            }
         }
     }
 
@@ -155,6 +201,43 @@ impl L1BlockInfo {
         }
 
         rollup_data_gas_cost
+    }
+
+    /// Calculate the configurable fee for executing this transaction.
+    ///
+    /// Introduced in holocene. Prior to holocene, the configurable fee is always zero.
+    pub fn configurable_fee_charge(&self, gas_spent: U256, spec_id: OptimismSpecId) -> U256 {
+        if !spec_id.is_enabled_in(OptimismSpecId::HOLOCENE) {
+            return U256::ZERO;
+        }
+
+        let configurable_fee_scalar = self
+            .configurable_fee_scalar
+            .expect("Missing configurable fee scalar for holocene L1 Block");
+        let configurable_fee_constant = self
+            .configurable_fee_constant
+            .expect("Missing configurable fee constant for holocene L1 Block");
+
+        gas_spent
+            .saturating_mul(configurable_fee_scalar)
+            .saturating_add(configurable_fee_constant)
+    }
+
+    /// Calculate the configurable fee for executing this transaction.
+    ///
+    /// Introduced in holocene. Prior to holocene, the configurable fee is always zero.
+    pub fn configurable_fee_refund(&self, gas: &Gas, spec_id: OptimismSpecId) -> U256 {
+        if !spec_id.is_enabled_in(OptimismSpecId::HOLOCENE) {
+            return U256::ZERO;
+        }
+
+        let configurable_fee_scalar = self
+            .configurable_fee_scalar
+            .expect("Missing configurable fee scalar for holocene L1 Block");
+
+        // We subtract fee_used from fee_spent, so no need to add the constant.
+
+        configurable_fee_scalar.saturating_mul(U256::from(gas.remaining() + gas.refunded() as u64))
     }
 
     // Calculate the estimated compressed transaction size in bytes, scaled by 1e6.
@@ -209,7 +292,7 @@ impl L1BlockInfo {
         // There is an edgecase where, for the very first Ecotone block (unless it is activated at Genesis), we must
         // use the Bedrock cost function. To determine if this is the case, we can check if the Ecotone parameters are
         // unset.
-        if self.empty_scalars {
+        if self.empty_ecotone_scalars {
             return self.calculate_tx_l1_cost_bedrock(input, spec_id);
         }
 
@@ -367,7 +450,7 @@ mod tests {
         assert_eq!(gas_cost, U256::ZERO);
 
         // If the scalars are empty, the bedrock cost function should be used.
-        l1_block_info.empty_scalars = true;
+        l1_block_info.empty_ecotone_scalars = true;
         let input = bytes!("FACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, OptimismSpecId::ECOTONE);
         assert_eq!(gas_cost, U256::from(1048));

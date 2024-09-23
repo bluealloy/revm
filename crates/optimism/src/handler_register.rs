@@ -47,6 +47,7 @@ where
         // Refund is calculated differently then mainnet.
         handler.execution.last_frame_return = Arc::new(last_frame_return::<EvmWiringT, SPEC>);
         handler.post_execution.refund = Arc::new(refund::<EvmWiringT, SPEC>);
+        handler.post_execution.reimburse_caller = Arc::new(reimburse_caller::<EvmWiringT, SPEC>);
         handler.post_execution.reward_beneficiary =
             Arc::new(reward_beneficiary::<EvmWiringT, SPEC>);
         // In case of halt of deposit transaction return Error.
@@ -177,6 +178,39 @@ pub fn refund<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     }
 }
 
+/// Reimburse the transaction caller.
+#[inline]
+pub fn reimburse_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
+    context: &mut Context<EvmWiringT>,
+    gas: &Gas,
+) -> EVMResultGeneric<(), EvmWiringT> {
+    mainnet::reimburse_caller::<EvmWiringT>(context, gas)?;
+    let caller = *context.evm.env.tx.caller();
+    // return balance of not spend gas.
+    let caller_account = context
+        .evm
+        .inner
+        .journaled_state
+        .load_account(caller, &mut context.evm.inner.db)
+        .map_err(EVMError::Database)?;
+    // In additional to the normal transaction fee, additionally refund the caller
+    // for the configurable fee.
+    let configurable_fee_refund = context
+        .evm
+        .inner
+        .chain
+        .l1_block_info()
+        .expect("L1BlockInfo should be loaded")
+        .configurable_fee_refund(gas, SPEC::OPTIMISM_SPEC_ID);
+
+    caller_account.data.info.balance =
+        caller_account.data.info.balance.saturating_add(
+            configurable_fee_refund 
+        );
+
+    Ok(())    
+}
+
 /// Load precompiles for Optimism chain.
 #[inline]
 pub fn load_precompiles<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
@@ -248,6 +282,7 @@ pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 
     // If the transaction is not a deposit transaction, subtract the L1 data fee from the
     // caller's balance directly after minting the requested amount of ETH.
+    // Additionally deduct the configurable fee from the caller's account.
     if context.evm.inner.env.tx.source_hash().is_none() {
         // get envelope
         let Some(enveloped_tx) = &context.evm.inner.env.tx.enveloped_tx() else {
@@ -273,6 +308,22 @@ pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
             ));
         }
         caller_account.info.balance = caller_account.info.balance.saturating_sub(tx_l1_cost);
+
+        // Deduct the configurable fee from the caller's account.
+        let gas_limit = U256::from(context.evm.inner.env.tx.gas_limit());
+
+        let configurable_fee_charge = context
+            .evm
+            .inner
+            .chain
+            .l1_block_info()
+            .expect("L1BlockInfo should be loaded")
+            .configurable_fee_charge(gas_limit, SPEC::OPTIMISM_SPEC_ID);
+
+        caller_account.info.balance = caller_account
+            .info
+            .balance
+            .saturating_sub(configurable_fee_charge);
     }
     Ok(())
 }
@@ -306,6 +357,10 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
         };
 
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, SPEC::OPTIMISM_SPEC_ID);
+        let configurable_fee_cost = l1_block_info.configurable_fee_charge(
+            U256::from(gas.spent() - gas.refunded() as u64),
+            SPEC::OPTIMISM_SPEC_ID,
+        );
 
         // Send the L1 cost of the transaction to the L1 Fee Vault.
         let mut l1_fee_vault_account = context
@@ -332,6 +387,23 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
             .block
             .basefee()
             .mul(U256::from(gas.spent() - gas.refunded() as u64));
+
+        // Send the configurable fee of the transaction to the coinbase.
+        let beneficiary = *context.evm.env.block.coinbase();
+
+        // Don't need to `mark_touch` as it's already been done in `reward_beneficiary`.
+        let coinbase_account = context
+            .evm
+            .inner
+            .journaled_state
+            .load_account(beneficiary, &mut context.evm.inner.db)
+            .map_err(EVMError::Database)?;
+
+        coinbase_account.data.info.balance = coinbase_account
+            .data
+            .info
+            .balance
+            .saturating_add(configurable_fee_cost);
     }
     Ok(())
 }
@@ -428,13 +500,13 @@ pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{BedrockSpec, L1BlockInfo, LatestSpec, OptimismEvmWiring, RegolithSpec};
+    use crate::{BedrockSpec, HoloceneSpec, L1BlockInfo, LatestSpec, OptimismEvmWiring, RegolithSpec};
     use database::InMemoryDB;
     use revm::{
         database_interface::EmptyDB,
         interpreter::{CallOutcome, InterpreterResult},
-        primitives::{bytes, Address, Bytes, B256},
-        state::AccountInfo,
+        primitives::{address, bytes, hex, Address, Bytes, TxKind, B256},
+        state::{AccountInfo, Bytecode}, Evm,
     };
     use std::boxed::Box;
 
@@ -631,6 +703,41 @@ mod tests {
     }
 
     #[test]
+    fn test_remove_configurable_cost() {
+        let caller = Address::ZERO;
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(10_501),
+                ..Default::default()
+            },
+        );
+        let mut context = Context::<TestMemOpWiring>::new_with_db(db);
+        *context.evm.chain.l1_block_info_mut() = Some(L1BlockInfo {
+            configurable_fee_scalar: Some(U256::from(1_000)),
+            configurable_fee_constant: Some(U256::from(500)),
+            ..Default::default()
+        });
+        context.evm.inner.env.tx.base.gas_limit = 10;
+
+        // configurable fee cost is configurable_fee_scalar * gas_limit + configurable_fee_constant
+        // 1_000 * 10 + 500 = 10_500
+        context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
+        deduct_caller::<TestMemOpWiring, HoloceneSpec>(&mut context).unwrap();
+
+        // Check the account balance is updated.
+        let account = context
+            .evm
+            .inner
+            .journaled_state
+            .load_account(caller, &mut context.evm.inner.db)
+            .unwrap();
+        assert_eq!(account.info.balance, U256::from(1));
+
+    }
+
+    #[test]
     fn test_remove_l1_cost_lack_of_funds() {
         let caller = Address::ZERO;
         let mut db = InMemoryDB::default();
@@ -696,4 +803,45 @@ mod tests {
         // Nonce and balance checks should be skipped for deposit transactions.
         assert!(validate_env::<TestEmptyOpWiring, LatestSpec>(&env).is_ok());
     }
+
+    // #[test]
+    // fn test_optimism_fee_distribution() {
+    //     // second tx in OP mainnet ecotone block 118024092
+    //     // <https://optimistic.etherscan.io/tx/0xa75ef696bf67439b4d5b61da85de9f3ceaa2e145abe982212101b244b63749c2>
+    //     // Used 51508 gas total
+    //     const TX: &[u8] = &hex!("02f8b30a832253fc8402d11f39842c8a46398301388094dc6ff44d5d932cbd77b52e5612ba0529dc6226f180b844a9059cbb000000000000000000000000d43e02db81f4d46cdf8521f623d21ea0ec7562a50000000000000000000000000000000000000000000000008ac7230489e80000c001a02947e24750723b48f886931562c55d9e07f856d8e06468e719755e18bbc3a570a0784da9ce59fd7754ea5be6e17a86b348e441348cd48ace59d174772465eadbd1");
+    //     let code = Bytecode::new_raw(TX.into());
+    //     let code_hash = code.hash_slow();
+    //     let to_addr = address!("ffffffffffffffffffffffffffffffffffffffff");
+
+    //     let mut db = InMemoryDB::default();
+    //     db.insert_account_info(
+    //         to_addr,
+    //         AccountInfo {
+    //             balance: U256::from(10_501),
+    //             ..Default::default()
+    //         },
+    //     );
+    //     // Execute this transaction
+    //     let mut evm = Evm::<TestMemOpWiring>::builder()
+    //         .with_default_db()
+    //         .with_default_ext_ctx()
+    //         .modify_db(|db| {
+    //             db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
+    //         })
+    //         .modify_tx_env(|tx| {
+    //             let transact_to = &mut tx.base.transact_to;
+
+    //             *transact_to = TxKind::Call(to_addr)
+    //         }).build();
+
+    //     let _result_and_state = evm.transact().unwrap();
+        
+    //     // Check the caller account balance.
+    //     let account = evm
+    //         .context
+    //         .evm
+    //         .journaled_state
+    //         .load_account(address, db)
+    // }      
 }
