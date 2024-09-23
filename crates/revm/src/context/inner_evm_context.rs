@@ -4,8 +4,8 @@ use crate::{journaled_state::JournaledState, JournalCheckpoint};
 use bytecode::{Bytecode, Eof, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 use database_interface::Database;
 use interpreter::{
-    analysis::to_analysed, gas, return_ok, AccountLoad, Eip7702CodeLoad, InstructionResult,
-    InterpreterResult, SStoreResult, SelfDestructResult, StateLoad,
+    gas, return_ok, AccountLoad, Eip7702CodeLoad, InstructionResult, InterpreterResult,
+    SStoreResult, SelfDestructResult, StateLoad,
 };
 use primitives::{Address, Bytes, HashSet, B256, U256};
 use specification::{
@@ -424,7 +424,7 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
         let bytecode = match self.env.cfg.perf_analyse_created_bytecodes {
             AnalysisKind::Raw => Bytecode::new_legacy(interpreter_result.output.clone()),
             AnalysisKind::Analyse => {
-                to_analysed(Bytecode::new_legacy(interpreter_result.output.clone()))
+                Bytecode::new_legacy(interpreter_result.output.clone()).into_analyzed()
             }
         };
 

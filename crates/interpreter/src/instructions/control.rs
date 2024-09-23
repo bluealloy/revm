@@ -203,10 +203,8 @@ pub fn unknown<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{
-        opcode::{make_instruction_table, CALLF, JUMPF, NOP, RETF, RJUMP, RJUMPI, RJUMPV, STOP},
-        DummyHost, FunctionReturnFrame, Gas, Interpreter,
-    };
+    use crate::{table::make_instruction_table, DummyHost, FunctionReturnFrame, Gas, Interpreter};
+    use bytecode::opcode::{CALLF, JUMPF, NOP, RETF, RJUMP, RJUMPI, RJUMPV, STOP};
     use bytecode::{
         eof::{Eof, TypesSection},
         Bytecode,
@@ -220,9 +218,8 @@ mod test {
     fn rjump() {
         let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
         let mut host = DummyHost::default();
-        let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
-            RJUMP, 0x00, 0x02, STOP, STOP,
-        ])));
+        let mut interp =
+            Interpreter::new_bytecode(Bytecode::LegacyRaw([RJUMP, 0x00, 0x02, STOP, STOP].into()));
         interp.is_eof = true;
         interp.gas = Gas::new(10000);
 
@@ -234,9 +231,9 @@ mod test {
     fn rjumpi() {
         let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
         let mut host = DummyHost::default();
-        let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
-            RJUMPI, 0x00, 0x03, RJUMPI, 0x00, 0x01, STOP, STOP,
-        ])));
+        let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
+            [RJUMPI, 0x00, 0x03, RJUMPI, 0x00, 0x01, STOP, STOP].into(),
+        ));
         interp.is_eof = true;
         interp.stack.push(U256::from(1)).unwrap();
         interp.stack.push(U256::from(0)).unwrap();
@@ -254,21 +251,24 @@ mod test {
     fn rjumpv() {
         let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
         let mut host = DummyHost::default();
-        let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
-            RJUMPV,
-            0x01, // max index, 0 and 1
-            0x00, // first x0001
-            0x01,
-            0x00, // second 0x002
-            0x02,
-            NOP,
-            NOP,
-            NOP,
-            RJUMP,
-            0xFF,
-            (-12i8) as u8,
-            STOP,
-        ])));
+        let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
+            [
+                RJUMPV,
+                0x01, // max index, 0 and 1
+                0x00, // first x0001
+                0x01,
+                0x00, // second 0x002
+                0x02,
+                NOP,
+                NOP,
+                NOP,
+                RJUMP,
+                0xFF,
+                (-12i8) as u8,
+                STOP,
+            ]
+            .into(),
+        ));
         interp.is_eof = true;
         interp.gas = Gas::new(1000);
 

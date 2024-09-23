@@ -6,8 +6,8 @@ use database_interface::Database;
 use derive_where::derive_where;
 use interpreter::CallValue;
 use interpreter::{
-    analysis::validate_eof, return_ok, CallInputs, Contract, CreateInputs, EOFCreateInputs,
-    EOFCreateKind, Gas, InstructionResult, Interpreter, InterpreterResult,
+    return_ok, CallInputs, Contract, CreateInputs, EOFCreateInputs, EOFCreateKind, Gas,
+    InstructionResult, Interpreter, InterpreterResult,
 };
 use precompile::PrecompileErrors;
 use primitives::{keccak256, Address, Bytes, B256};
@@ -380,7 +380,7 @@ where
                     return return_error(InstructionResult::InvalidEOFInitCode);
                 };
 
-                if validate_eof(&eof).is_err() {
+                if eof.validate().is_err() {
                     // TODO (EOF) new error type.
                     self.journaled_state.inc_nonce(inputs.caller);
                     return return_error(InstructionResult::InvalidEOFInitCode);

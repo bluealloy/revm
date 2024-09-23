@@ -76,8 +76,8 @@ mod tests {
     use crate::inspector_handle_register;
     use database::BenchmarkDB;
     use revm::{
-        bytecode::Bytecode,
-        interpreter::{opcode, Interpreter},
+        bytecode::{opcode, Bytecode},
+        interpreter::Interpreter,
         primitives::{address, Bytes, Log, TxKind},
         wiring::EvmWiring as PrimitiveEvmWiring,
         wiring::{DefaultEthereumWiring, EthereumWiring},

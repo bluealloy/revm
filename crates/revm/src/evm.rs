@@ -427,9 +427,11 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
 mod tests {
 
     use super::*;
-    use bytecode::Bytecode;
+    use bytecode::{
+        opcode::{PUSH1, SSTORE},
+        Bytecode,
+    };
     use database::BenchmarkDB;
-    use interpreter::opcode::{PUSH1, SSTORE};
     use primitives::{address, U256};
     use specification::eip7702::{Authorization, RecoveredAuthorization, Signature};
     use wiring::EthereumWiring;

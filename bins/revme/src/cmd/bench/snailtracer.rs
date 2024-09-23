@@ -1,13 +1,12 @@
 use database::{BenchmarkDB, EthereumBenchmarkWiring};
 use revm::{
     bytecode::Bytecode,
-    interpreter::analysis::to_analysed,
     primitives::{address, bytes, Bytes, TxKind},
     Evm,
 };
 
 pub fn simple_example() {
-    let bytecode = to_analysed(Bytecode::new_raw(CONTRACT_DATA.clone()));
+    let bytecode = Bytecode::new_raw(CONTRACT_DATA.clone()).into_analyzed();
 
     // BenchmarkDB is dummy state that implements Database trait.
     let mut evm = Evm::<EthereumBenchmarkWiring>::builder()

@@ -24,7 +24,7 @@ mod instruction_result;
 pub mod instructions;
 pub mod interpreter;
 pub mod interpreter_action;
-pub mod opcode;
+pub mod table;
 
 // Reexport primary types.
 pub use function_stack::{FunctionReturnFrame, FunctionStack};
@@ -34,13 +34,13 @@ pub use host::{
 };
 pub use instruction_result::*;
 pub use interpreter::{
-    analysis, num_words, Contract, Interpreter, InterpreterResult, SharedMemory, Stack,
-    EMPTY_SHARED_MEMORY, STACK_LIMIT,
+    num_words, Contract, Interpreter, InterpreterResult, SharedMemory, Stack, EMPTY_SHARED_MEMORY,
+    STACK_LIMIT,
 };
 pub use interpreter_action::{
     CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome, EOFCreateInputs,
     EOFCreateKind, InterpreterAction,
 };
-pub use opcode::{Instruction, OpCode, OPCODE_INFO_JUMPTABLE};
 pub use primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
+pub use table::Instruction;
 pub use wiring::default::CreateScheme;

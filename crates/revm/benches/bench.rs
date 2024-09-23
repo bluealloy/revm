@@ -2,10 +2,10 @@ use criterion::{
     criterion_group, criterion_main, measurement::WallTime, BenchmarkGroup, Criterion,
 };
 use database::BenchmarkDB;
-use interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
+use interpreter::{table::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use revm::{
     bytecode::Bytecode,
-    interpreter::{analysis::to_analysed, Contract, DummyHost, Interpreter},
+    interpreter::{Contract, DummyHost, Interpreter},
     primitives::{address, bytes, hex, Bytes, TxKind, U256},
     specification::hardfork::BerlinSpec,
     wiring::EthereumWiring,
@@ -35,7 +35,7 @@ fn analysis(c: &mut Criterion) {
     let mut evm = evm.modify().with_db(BenchmarkDB::new_bytecode(raw)).build();
     bench_transact(&mut g, &mut evm);
 
-    let analysed = to_analysed(Bytecode::new_raw(contract_data));
+    let analysed = Bytecode::new_raw(contract_data).into_analyzed();
     let mut evm = evm
         .modify()
         .with_db(BenchmarkDB::new_bytecode(analysed))
@@ -102,7 +102,7 @@ fn bench_eval(
     g.bench_function("eval", |b| {
         let contract = Contract {
             input: evm.context.evm.env.tx.data.clone(),
-            bytecode: to_analysed(evm.context.evm.db.0.clone()),
+            bytecode: evm.context.evm.db.0.clone().into_analyzed(),
             ..Default::default()
         };
         let mut shared_memory = SharedMemory::new();
@@ -123,7 +123,7 @@ fn bench_eval(
 }
 
 fn bytecode(s: &str) -> Bytecode {
-    to_analysed(Bytecode::new_raw(hex::decode(s).unwrap().into()))
+    Bytecode::new_raw(hex::decode(s).unwrap().into()).into_analyzed()
 }
 
 #[rustfmt::skip]

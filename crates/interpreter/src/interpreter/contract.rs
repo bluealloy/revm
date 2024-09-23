@@ -1,4 +1,3 @@
-use super::analysis::to_analysed;
 use crate::CallInputs;
 use bytecode::Bytecode;
 use primitives::{Address, Bytes, TxKind, B256, U256};
@@ -38,7 +37,7 @@ impl Contract {
         caller: Address,
         call_value: U256,
     ) -> Self {
-        let bytecode = to_analysed(bytecode);
+        let bytecode = bytecode.into_analyzed();
 
         Self {
             input,

@@ -1,14 +1,13 @@
 #[cfg(feature = "std")]
-pub fn print_eof_code(code: &[u8]) {
-    use super::*;
-    use crate::instructions::utility::read_i16;
+pub fn print(code: &[u8]) {
+    use crate::{opcode::*, utils::read_i16};
     use primitives::hex;
 
     // We can check validity and jump destinations in one pass.
     let mut i = 0;
     while i < code.len() {
         let op = code[i];
-        let opcode = &OPCODE_INFO_JUMPTABLE[op as usize];
+        let opcode = &OPCODE_INFO[op as usize];
 
         let Some(opcode) = opcode else {
             println!("Unknown opcode: 0x{:02X}", op);
@@ -64,6 +63,6 @@ mod test {
 
     #[test]
     fn sanity_test() {
-        print_eof_code(&hex!("6001e200ffff00"));
+        print(&hex!("6001e200ffff00"));
     }
 }

@@ -3,7 +3,7 @@ use crate::{
     EvmHandler,
 };
 use database_interface::Database;
-use interpreter::opcode::InstructionTables;
+use interpreter::table::InstructionTables;
 use specification::spec_to_generic;
 use std::fmt::Debug;
 use std::vec::Vec;

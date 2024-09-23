@@ -90,10 +90,8 @@ mod test {
     use wiring::DefaultEthereumWiring;
 
     use super::*;
-    use crate::{
-        opcode::{make_instruction_table, DATACOPY, DATALOAD, DATALOADN, DATASIZE},
-        DummyHost, Gas, Interpreter,
-    };
+    use crate::{table::make_instruction_table, DummyHost, Gas, Interpreter};
+    use bytecode::opcode::{DATACOPY, DATALOAD, DATALOADN, DATASIZE};
 
     fn dummy_eof(code_bytes: Bytes) -> Bytecode {
         let bytes = bytes!("ef000101000402000100010400000000800000fe");
