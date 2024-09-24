@@ -353,7 +353,7 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
         let spec_id = self.spec_id();
         let ctx = &mut self.context;
         let pre_exec = self.handler.pre_execution();
-    
+
         // load access list and beneficiary if needed.
         pre_exec.load_accounts(ctx)?;
 

@@ -76,8 +76,6 @@ pub struct L1BlockInfo {
     pub configurable_fee_constant: Option<U256>,
     /// True if Ecotone is activated, but the L1 fee scalars have not yet been set.
     pub(crate) empty_ecotone_scalars: bool,
-    /// True if Holocene is activated, but the configurable fee scalars have not yet been set.
-    pub(crate) empty_holocene_scalars: bool,
 }
 
 impl L1BlockInfo {
@@ -124,11 +122,6 @@ impl L1BlockInfo {
                 && l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
                     == EMPTY_SCALARS;
 
-            let empty_holocene_scalars = l1_blob_base_fee.is_zero()
-                && l1_fee_scalars
-                    [CONFIGURABLE_FEE_SCALAR_OFFSET..CONFIGURABLE_FEE_CONSTANT_OFFSET + 4]
-                    == EMPTY_SCALARS;
-
             let l1_fee_overhead = empty_ecotone_scalars
                 .then(|| db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT))
                 .transpose()?;
@@ -142,7 +135,6 @@ impl L1BlockInfo {
                     l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
                     empty_ecotone_scalars,
                     l1_fee_overhead,
-                    empty_holocene_scalars,
                     ..Default::default()
                 })
             } else {
@@ -157,9 +149,6 @@ impl L1BlockInfo {
                         [CONFIGURABLE_FEE_CONSTANT_OFFSET..CONFIGURABLE_FEE_CONSTANT_OFFSET + 8]
                         .as_ref(),
                 );
-                let empty_holocene_scalars = l1_blob_base_fee.is_zero()
-                    && l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
-                        == EMPTY_SCALARS;
                 Ok(L1BlockInfo {
                     l1_base_fee,
                     l1_base_fee_scalar,
@@ -169,7 +158,6 @@ impl L1BlockInfo {
                     l1_fee_overhead,
                     configurable_fee_scalar: Some(configurable_fee_scalar),
                     configurable_fee_constant: Some(configurable_fee_constant),
-                    empty_holocene_scalars,
                 })
             }
         }
@@ -239,7 +227,7 @@ impl L1BlockInfo {
             .expect("Missing configurable fee scalar for holocene L1 Block");
 
         // We're computing the difference between two configurable fees, so no need to include the
-        // constant. 
+        // constant.
 
         configurable_fee_scalar.saturating_mul(U256::from(gas.remaining() + gas.refunded() as u64))
     }
