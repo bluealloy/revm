@@ -185,10 +185,8 @@ pub fn gas<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{
-        opcode::{make_instruction_table, RETURNDATACOPY, RETURNDATALOAD},
-        DummyHost, Gas, InstructionResult,
-    };
+    use crate::{table::make_instruction_table, DummyHost, Gas, InstructionResult};
+    use bytecode::opcode::{RETURNDATACOPY, RETURNDATALOAD};
     use bytecode::Bytecode;
     use primitives::bytes;
     use specification::hardfork::PragueSpec;

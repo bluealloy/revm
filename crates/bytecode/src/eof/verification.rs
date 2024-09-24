@@ -1,68 +1,13 @@
 use crate::{
-    instructions::utility::{read_i16, read_u16},
-    opcode, OPCODE_INFO_JUMPTABLE, STACK_LIMIT,
-};
-use bytecode::{
-    bitvec::prelude::{bitvec, BitVec, Lsb0},
     eof::{Eof, EofDecodeError, TypesSection},
-    legacy::{JumpTable, LegacyAnalyzedBytecode},
-    Bytecode,
+    opcode::{self, OPCODE_INFO},
+    utils::{read_i16, read_u16},
 };
 use primitives::{Bytes, MAX_INITCODE_SIZE};
+use specification::constantans::STACK_LIMIT;
 
 use core::{convert::identity, mem};
-use std::{borrow::Cow, fmt, sync::Arc, vec, vec::Vec};
-
-/// Perform bytecode analysis.
-///
-/// The analysis finds and caches valid jump destinations for later execution as an optimization step.
-///
-/// If the bytecode is already analyzed, it is returned as-is.
-#[inline]
-pub fn to_analysed(bytecode: Bytecode) -> Bytecode {
-    let (bytes, len) = match bytecode {
-        Bytecode::LegacyRaw(bytecode) => {
-            let len = bytecode.len();
-            let mut padded_bytecode = Vec::with_capacity(len + 33);
-            padded_bytecode.extend_from_slice(&bytecode);
-            padded_bytecode.resize(len + 33, 0);
-            (Bytes::from(padded_bytecode), len)
-        }
-        n => return n,
-    };
-    let jump_table = analyze(bytes.as_ref());
-
-    Bytecode::LegacyAnalyzed(LegacyAnalyzedBytecode::new(bytes, len, jump_table))
-}
-
-/// Analyze bytecode to build a jump map.
-fn analyze(code: &[u8]) -> JumpTable {
-    let mut jumps: BitVec<u8> = bitvec![u8, Lsb0; 0; code.len()];
-
-    let range = code.as_ptr_range();
-    let start = range.start;
-    let mut iterator = start;
-    let end = range.end;
-    while iterator < end {
-        let opcode = unsafe { *iterator };
-        if opcode::JUMPDEST == opcode {
-            // SAFETY: jumps are max length of the code
-            unsafe { jumps.set_unchecked(iterator.offset_from(start) as usize, true) }
-            iterator = unsafe { iterator.offset(1) };
-        } else {
-            let push_offset = opcode.wrapping_sub(opcode::PUSH1);
-            if push_offset < 32 {
-                // SAFETY: iterator access range is checked in the while loop
-                iterator = unsafe { iterator.offset((push_offset + 2) as isize) };
-            } else {
-                // SAFETY: iterator access range is checked in the while loop
-                iterator = unsafe { iterator.offset(1) };
-            }
-        }
-    }
-
-    JumpTable(Arc::new(jumps))
-}
+use std::{borrow::Cow, fmt, vec, vec::Vec};
 
 /// Decodes `raw` into an [`Eof`] container and validates it.
 pub fn validate_raw_eof(raw: Bytes) -> Result<Eof, EofError> {
@@ -507,7 +452,7 @@ pub fn validate_eof_code(
     // We can check validity and jump destinations in one pass.
     while i < code.len() {
         let op = code[i];
-        let opcode = &OPCODE_INFO_JUMPTABLE[op as usize];
+        let opcode = &OPCODE_INFO[op as usize];
 
         let Some(opcode) = opcode else {
             // err unknown opcode.

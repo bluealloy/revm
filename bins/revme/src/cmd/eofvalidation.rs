@@ -4,7 +4,7 @@ pub use test_suite::{PragueTestResult, TestResult, TestSuite, TestUnit, TestVect
 
 use crate::{cmd::Error, dir_utils::find_all_json_tests};
 use clap::Parser;
-use revm::interpreter::analysis::{validate_raw_eof_inner, CodeType, EofError};
+use revm::bytecode::eof::{validate_raw_eof_inner, CodeType, EofError};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 

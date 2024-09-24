@@ -9,7 +9,6 @@ use inspector::{inspector_handle_register, inspectors::TracerEip3155};
 use revm::{
     bytecode::Bytecode,
     database_interface::EmptyDB,
-    interpreter::analysis::to_analysed,
     primitives::{keccak256, Bytes, TxKind, B256},
     specification::{eip7702::AuthorizationList, hardfork::SpecId},
     wiring::{
@@ -278,7 +277,7 @@ pub fn execute_test_suite(
         let mut cache_state = database::CacheState::new(false);
         for (address, info) in unit.pre {
             let code_hash = keccak256(&info.code);
-            let bytecode = to_analysed(Bytecode::new_raw(info.code));
+            let bytecode = Bytecode::new_raw(info.code).into_analyzed();
             let acc_info = revm::state::AccountInfo {
                 balance: info.balance,
                 code_hash,

@@ -1,11 +1,14 @@
 mod body;
 mod decode_helpers;
 mod header;
+pub mod printer;
 mod types_section;
+pub mod verification;
 
 pub use body::EofBody;
 pub use header::EofHeader;
 pub use types_section::TypesSection;
+pub use verification::*;
 
 use core::cmp::min;
 use primitives::{b256, bytes, Bytes, B256};
@@ -48,6 +51,18 @@ impl Default for Eof {
 }
 
 impl Eof {
+    pub fn validate(&self) -> Result<(), EofError> {
+        validate_eof(self)
+    }
+
+    pub fn valitate_raw(bytes: Bytes) -> Result<Eof, EofError> {
+        validate_raw_eof(bytes)
+    }
+
+    pub fn validate_mode(&self, mode: CodeType) -> Result<(), EofError> {
+        validate_eof_inner(self, Some(mode))
+    }
+
     /// Creates a new EOF container from the given body.
     pub fn new(body: EofBody) -> Self {
         body.into_eof()

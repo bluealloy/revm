@@ -1,9 +1,9 @@
 use crate::{inspectors::GasInspector, Inspector};
 use derive_where::derive_where;
 use revm::{
+    bytecode::opcode::OpCode,
     interpreter::{
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
-        OpCode,
     },
     primitives::{hex, HashMap, B256, U256},
     wiring::Transaction,

@@ -2909,7 +2909,10 @@ name = "revm-bytecode"
 version = "1.0.0"
 dependencies = [
  "bitvec",
+ "paste",
+ "phf",
  "revm-primitives",
+ "revm-specification",
  "serde",
 ]
 
@@ -2969,8 +2972,6 @@ version = "10.0.1"
 dependencies = [
  "bincode",
  "derive-where",
- "paste",
- "phf",
  "revm-bytecode",
  "revm-database-interface",
  "revm-primitives",
@@ -3091,6 +3092,7 @@ dependencies = [
  "microbench",
  "plain_hasher",
  "revm",
+ "revm-bytecode",
  "revm-database",
  "revm-inspector",
  "serde",

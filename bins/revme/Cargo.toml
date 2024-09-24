@@ -13,6 +13,8 @@ repository.workspace = true
 database.workspace = true
 revm = { workspace = true, features = ["std", "hashbrown", "c-kzg", "blst"] }
 inspector = { workspace = true, features = ["std", "serde-json"] }
+# enable parse std and parse feature. 
+bytecode = { workspace = true, features = ["std", "parse"] }
 
 hash-db = "0.15"
 hex = "0.4"

@@ -10,7 +10,7 @@ pub use handle_types::*;
 
 use crate::{Context, EvmWiring, Frame};
 use core::mem;
-use interpreter::{opcode::InstructionTables, Host, InterpreterAction, SharedMemory};
+use interpreter::{table::InstructionTables, Host, InterpreterAction, SharedMemory};
 use register::{EvmHandler, HandleRegisters};
 use specification::spec_to_generic;
 use std::vec::Vec;

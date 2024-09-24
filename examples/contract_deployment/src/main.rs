@@ -4,7 +4,7 @@
 use anyhow::{anyhow, bail};
 use database::InMemoryDB;
 use revm::{
-    interpreter::opcode,
+    bytecode::opcode,
     primitives::{hex, Bytes, TxKind, U256},
     wiring::{
         result::{ExecutionResult, Output},

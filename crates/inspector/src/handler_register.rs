@@ -1,8 +1,9 @@
 use crate::Inspector;
 use core::cell::RefCell;
 use revm::{
+    bytecode::opcode,
     handler::register::EvmHandler,
-    interpreter::{opcode, opcode::DynInstruction, InstructionResult, Interpreter},
+    interpreter::{table::DynInstruction, InstructionResult, Interpreter},
     wiring::result::EVMResultGeneric,
     Context, EvmWiring, FrameOrResult, FrameResult, JournalEntry,
 };
@@ -265,9 +266,9 @@ mod tests {
     use crate::{inspector_handle_register, inspectors::NoOpInspector};
     use database::BenchmarkDB;
     use revm::{
-        bytecode::Bytecode,
+        bytecode::{opcode, Bytecode},
         database_interface::EmptyDB,
-        interpreter::{opcode, CallInputs, CallOutcome, CreateInputs, CreateOutcome},
+        interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome},
         primitives::{address, Bytes, TxKind},
         wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring as PrimitiveEvmWiring},
         Evm, EvmContext, EvmWiring,
