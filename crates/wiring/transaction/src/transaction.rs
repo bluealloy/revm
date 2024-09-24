@@ -1,9 +1,52 @@
+use crate::{
+    CommonTxFields, Eip1559Tx, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx, TransactionType,
+};
 use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, GAS_PER_BLOB, U256};
 use specification::{eip2930, eip7702};
 
-/// Trait for retrieving transaction information required for execution.
 pub trait Transaction {
+    type Legacy: LegacyTx;
+    type Eip1559: Eip1559Tx;
+    type Eip2930: Eip2930Tx;
+    type Eip4844: Eip4844Tx;
+    type Eip7702: Eip7702Tx;
+
+    fn tx_type(&self) -> impl Into<TransactionType>;
+
+    fn legacy(&self) -> &Self::Legacy {
+        unimplemented!("legacy tx not supported")
+    }
+
+    fn eip2930(&self) -> &Self::Eip2930 {
+        unimplemented!("Eip2930 tx not supported")
+    }
+
+    fn eip1559(&self) -> &Self::Eip1559 {
+        unimplemented!("Eip1559 tx not supported")
+    }
+
+    fn eip4844(&self) -> &Self::Eip4844 {
+        unimplemented!("Eip4844 tx not supported")
+    }
+
+    fn eip7702(&self) -> &Self::Eip7702 {
+        unimplemented!("Eip7702 tx not supported")
+    }
+
+    fn common_fields(&self) -> &dyn CommonTxFields {
+        match self.tx_type().into() {
+            TransactionType::Legacy => self.legacy(),
+            TransactionType::Eip2930 => self.eip2930(),
+            TransactionType::Eip1559 => self.eip1559(),
+            TransactionType::Eip4844 => self.eip4844(),
+            TransactionType::Eip7702 => self.eip7702(),
+        }
+    }
+}
+
+/// Trait for retrieving transaction information required for execution.
+pub trait TransactionOld {
     /// Caller aka Author aka transaction signer.
     fn caller(&self) -> &Address;
     /// The maximum amount of gas the transaction can use.

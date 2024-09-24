@@ -3061,6 +3061,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "revm-transaction-wiring"
+version = "1.0.0"
+dependencies = [
+ "revm-primitives",
+ "revm-specification",
+ "serde",
+]
+
+[[package]]
 name = "revm-wiring"
 version = "1.0.0"
 dependencies = [

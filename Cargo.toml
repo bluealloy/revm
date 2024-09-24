@@ -17,6 +17,7 @@ members = [
     "crates/bytecode",
     "crates/state",
     "crates/wiring",
+    "crates/wiring/transaction",
     "crates/specification",
 
     # examples
