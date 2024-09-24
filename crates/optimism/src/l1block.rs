@@ -17,12 +17,12 @@ const BASE_FEE_SCALAR_OFFSET: usize = 16;
 /// The two 4-byte Ecotone fee scalar values are packed into the same storage slot as the 8-byte sequence number.
 /// Byte offset within the storage slot of the 4-byte blobBaseFeeScalar attribute.
 const BLOB_BASE_FEE_SCALAR_OFFSET: usize = 20;
-/// The two 8-byte Holocene configurable fee scalar values are similarly packed. Byte offset within
-/// the storage slot of the 8-byte configurableFeeScalar attribute.
-const CONFIGURABLE_FEE_SCALAR_OFFSET: usize = 0;
-/// The two 8-byte Holocene configurable fee scalar values are similarly packed. Byte offset within
-/// the storage slot of the 8-byte configurableFeeConstant attribute.
-const CONFIGURABLE_FEE_CONSTANT_OFFSET: usize = 8;
+/// The two 8-byte Holocene operator fee scalar values are similarly packed. Byte offset within
+/// the storage slot of the 8-byte operatorFeeScalar attribute.
+const OPERATOR_FEE_SCALAR_OFFSET: usize = 0;
+/// The two 8-byte Holocene operator fee scalar values are similarly packed. Byte offset within
+/// the storage slot of the 8-byte operatorFeeConstant attribute.
+const OPERATOR_FEE_CONSTANT_OFFSET: usize = 8;
 
 const L1_BASE_FEE_SLOT: U256 = U256::from_limbs([1u64, 0, 0, 0]);
 const L1_OVERHEAD_SLOT: U256 = U256::from_limbs([5u64, 0, 0, 0]);
@@ -71,9 +71,9 @@ pub struct L1BlockInfo {
     /// The current L1 blob base fee scalar. None if Ecotone is not activated.
     pub l1_blob_base_fee_scalar: Option<U256>,
     /// The current L1 blob base fee. None if Holocene is not activated, except if `empty_scalars` is `true`.
-    pub configurable_fee_scalar: Option<U256>,
+    pub operator_fee_scalar: Option<U256>,
     /// The current L1 blob base fee scalar. None if Holocene is not activated.
-    pub configurable_fee_constant: Option<U256>,
+    pub operator_fee_constant: Option<U256>,
     /// True if Ecotone is activated, but the L1 fee scalars have not yet been set.
     pub(crate) empty_ecotone_scalars: bool,
 }
@@ -139,14 +139,14 @@ impl L1BlockInfo {
                 })
             } else {
                 // Post-holocene L1 block info
-                let configurable_fee_scalar = U256::from_be_slice(
+                let operator_fee_scalar = U256::from_be_slice(
                     l1_fee_scalars
-                        [CONFIGURABLE_FEE_SCALAR_OFFSET..CONFIGURABLE_FEE_SCALAR_OFFSET + 8]
+                        [OPERATOR_FEE_SCALAR_OFFSET..OPERATOR_FEE_SCALAR_OFFSET + 8]
                         .as_ref(),
                 );
-                let configurable_fee_constant = U256::from_be_slice(
+                let operator_fee_constant = U256::from_be_slice(
                     l1_fee_scalars
-                        [CONFIGURABLE_FEE_CONSTANT_OFFSET..CONFIGURABLE_FEE_CONSTANT_OFFSET + 8]
+                        [OPERATOR_FEE_CONSTANT_OFFSET..OPERATOR_FEE_CONSTANT_OFFSET + 8]
                         .as_ref(),
                 );
                 Ok(L1BlockInfo {
@@ -156,8 +156,8 @@ impl L1BlockInfo {
                     l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
                     empty_ecotone_scalars,
                     l1_fee_overhead,
-                    configurable_fee_scalar: Some(configurable_fee_scalar),
-                    configurable_fee_constant: Some(configurable_fee_constant),
+                    operator_fee_scalar: Some(operator_fee_scalar),
+                    operator_fee_constant: Some(operator_fee_constant),
                 })
             }
         }
@@ -195,41 +195,41 @@ impl L1BlockInfo {
         rollup_data_gas_cost
     }
 
-    /// Calculate the configurable fee for executing this transaction.
+    /// Calculate the operator fee for executing this transaction.
     ///
-    /// Introduced in holocene. Prior to holocene, the configurable fee is always zero.
-    pub fn configurable_fee_charge(&self, gas_limit: U256, spec_id: OptimismSpecId) -> U256 {
+    /// Introduced in holocene. Prior to holocene, the operator fee is always zero.
+    pub fn operator_fee_charge(&self, gas_limit: U256, spec_id: OptimismSpecId) -> U256 {
         if !spec_id.is_enabled_in(OptimismSpecId::HOLOCENE) {
             return U256::ZERO;
         }
-        let configurable_fee_scalar = self
-            .configurable_fee_scalar
-            .expect("Missing configurable fee scalar for holocene L1 Block");
-        let configurable_fee_constant = self
-            .configurable_fee_constant
-            .expect("Missing configurable fee constant for holocene L1 Block");
+        let operator_fee_scalar = self
+            .operator_fee_scalar
+            .expect("Missing operator fee scalar for holocene L1 Block");
+        let operator_fee_constant = self
+            .operator_fee_constant
+            .expect("Missing operator fee constant for holocene L1 Block");
 
         gas_limit
-            .saturating_mul(configurable_fee_scalar)
-            .saturating_add(configurable_fee_constant)
+            .saturating_mul(operator_fee_scalar)
+            .saturating_add(operator_fee_constant)
     }
 
-    /// Calculate the configurable fee for executing this transaction.
+    /// Calculate the operator fee for executing this transaction.
     ///
-    /// Introduced in holocene. Prior to holocene, the configurable fee is always zero.
-    pub fn configurable_fee_refund(&self, gas: &Gas, spec_id: OptimismSpecId) -> U256 {
+    /// Introduced in holocene. Prior to holocene, the operator fee is always zero.
+    pub fn operator_fee_refund(&self, gas: &Gas, spec_id: OptimismSpecId) -> U256 {
         if !spec_id.is_enabled_in(OptimismSpecId::HOLOCENE) {
             return U256::ZERO;
         }
 
-        let configurable_fee_scalar = self
-            .configurable_fee_scalar
-            .expect("Missing configurable fee scalar for holocene L1 Block");
+        let operator_fee_scalar = self
+            .operator_fee_scalar
+            .expect("Missing operator fee scalar for holocene L1 Block");
 
-        // We're computing the difference between two configurable fees, so no need to include the
+        // We're computing the difference between two operator fees, so no need to include the
         // constant.
 
-        configurable_fee_scalar.saturating_mul(U256::from(gas.remaining() + gas.refunded() as u64))
+        operator_fee_scalar.saturating_mul(U256::from(gas.remaining() + gas.refunded() as u64))
     }
 
     // Calculate the estimated compressed transaction size in bytes, scaled by 1e6.
