@@ -79,7 +79,7 @@ where
 
     // Cast exponent length to usize, since it does not make sense to handle larger values.
     let Ok(exp_len) = usize::try_from(exp_len) else {
-        return Err(PrecompileError::ModexpModOverflow.into());
+        return Err(PrecompileError::ModexpExpOverflow.into());
     };
 
     // Used to extract ADJUSTED_EXPONENT_LENGTH.
