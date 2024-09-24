@@ -146,7 +146,7 @@ impl L1BlockInfo {
                         [OPERATOR_FEE_SCALAR_OFFSET..OPERATOR_FEE_SCALAR_OFFSET + 4]
                         .as_ref(),
                 );
-                // The `operator_fee_constant` is stored as a big endian u32 at 
+                // The `operator_fee_constant` is stored as a big endian u64 at 
                 // OPERATOR_FEE_CONSTANT_OFFSET. 
                 let operator_fee_constant = U256::from_be_slice(
                     l1_fee_scalars
