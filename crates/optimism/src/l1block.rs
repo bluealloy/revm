@@ -139,18 +139,16 @@ impl L1BlockInfo {
                 })
             } else {
                 // Post-holocene L1 block info
-                // The `operator_fee_scalar` is stored as a big endian u32 at 
-                // OPERATOR_FEE_SCALAR_OFFSET. 
+                // The `operator_fee_scalar` is stored as a big endian u32 at
+                // OPERATOR_FEE_SCALAR_OFFSET.
                 let operator_fee_scalar = U256::from_be_slice(
-                    l1_fee_scalars
-                        [OPERATOR_FEE_SCALAR_OFFSET..OPERATOR_FEE_SCALAR_OFFSET + 4]
+                    l1_fee_scalars[OPERATOR_FEE_SCALAR_OFFSET..OPERATOR_FEE_SCALAR_OFFSET + 4]
                         .as_ref(),
                 );
-                // The `operator_fee_constant` is stored as a big endian u64 at 
-                // OPERATOR_FEE_CONSTANT_OFFSET. 
+                // The `operator_fee_constant` is stored as a big endian u64 at
+                // OPERATOR_FEE_CONSTANT_OFFSET.
                 let operator_fee_constant = U256::from_be_slice(
-                    l1_fee_scalars
-                        [OPERATOR_FEE_CONSTANT_OFFSET..OPERATOR_FEE_CONSTANT_OFFSET + 8]
+                    l1_fee_scalars[OPERATOR_FEE_CONSTANT_OFFSET..OPERATOR_FEE_CONSTANT_OFFSET + 8]
                         .as_ref(),
                 );
                 Ok(L1BlockInfo {
