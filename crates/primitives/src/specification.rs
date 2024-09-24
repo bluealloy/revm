@@ -442,6 +442,7 @@ mod tests {
         spec_to_generic!(FJORD, assert_eq!(SPEC::SPEC_ID, FJORD));
         #[cfg(feature = "optimism")]
         spec_to_generic!(GRANITE, assert_eq!(SPEC::SPEC_ID, GRANITE));
+        #[cfg(feature = "optimism")]
         spec_to_generic!(HOLOCENE, assert_eq!(SPEC::SPEC_ID, HOLOCENE));
         spec_to_generic!(PRAGUE, assert_eq!(SPEC::SPEC_ID, PRAGUE));
         spec_to_generic!(PRAGUE_EOF, assert_eq!(SPEC::SPEC_ID, PRAGUE_EOF));
