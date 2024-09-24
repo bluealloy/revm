@@ -73,11 +73,14 @@ macro_rules! refund {
 #[macro_export]
 macro_rules! gas_or_fail {
     ($interp:expr, $gas:expr) => {
+        $crate::gas_or_fail!($interp, $gas, ())
+    };
+    ($interp:expr, $gas:expr, $ret:expr) => {
         match $gas {
-            Some(gas_used) => $crate::gas!($interp, gas_used),
+            Some(gas_used) => $crate::gas!($interp, gas_used, $ret),
             None => {
                 $interp.instruction_result = $crate::InstructionResult::OutOfGas;
-                return;
+                return $ret;
             }
         }
     };
