@@ -3093,6 +3093,7 @@ dependencies = [
  "revm",
  "revm-database",
  "revm-inspector",
+ "revm-optimism",
  "serde",
  "serde_json",
  "thiserror",

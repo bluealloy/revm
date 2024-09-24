@@ -1,5 +1,6 @@
 pub mod analysis;
 pub mod burntpix;
+pub mod optimism;
 pub mod snailtracer;
 pub mod transfer;
 
@@ -11,6 +12,7 @@ pub enum BenchName {
     Burntpix,
     Snailtracer,
     Transfer,
+    Optimism,
 }
 
 /// `bytecode` subcommand.
@@ -25,6 +27,7 @@ impl Cmd {
     pub fn run(&self) {
         match self.name {
             BenchName::Analysis => analysis::run(),
+            BenchName::Optimism => optimism::run(),
             BenchName::Burntpix => burntpix::run(),
             BenchName::Snailtracer => snailtracer::run(),
             BenchName::Transfer => transfer::run(),

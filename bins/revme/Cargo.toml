@@ -11,6 +11,7 @@ repository.workspace = true
 [dependencies]
 # revm
 database.workspace = true
+revm-optimism = { path = "../../crates/optimism" }
 revm = { workspace = true, features = ["std", "hashbrown", "c-kzg", "blst"] }
 inspector = { workspace = true, features = ["std", "serde-json"] }
 

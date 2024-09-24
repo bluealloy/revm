@@ -1,7 +1,9 @@
 use crate::fast_lz::flz_compress_len;
 use core::ops::Mul;
 use revm::{
-    database_interface::Database, interpreter::Gas, primitives::{address, Address, U256}
+    database_interface::Database,
+    interpreter::Gas,
+    primitives::{address, Address, U256},
 };
 
 use super::OptimismSpecId;
@@ -15,9 +17,11 @@ const BASE_FEE_SCALAR_OFFSET: usize = 16;
 /// The two 4-byte Ecotone fee scalar values are packed into the same storage slot as the 8-byte sequence number.
 /// Byte offset within the storage slot of the 4-byte blobBaseFeeScalar attribute.
 const BLOB_BASE_FEE_SCALAR_OFFSET: usize = 20;
-/// YUWENTODO doc comments
+/// The two 8-byte Holocene configurable fee scalar values are similarly packed. Byte offset within
+/// the storage slot of the 8-byte configurableFeeScalar attribute.
 const CONFIGURABLE_FEE_SCALAR_OFFSET: usize = 0;
-/// YUWENTODO doc comments
+/// The two 8-byte Holocene configurable fee scalar values are similarly packed. Byte offset within
+/// the storage slot of the 8-byte configurableFeeConstant attribute.
 const CONFIGURABLE_FEE_CONSTANT_OFFSET: usize = 8;
 
 const L1_BASE_FEE_SLOT: U256 = U256::from_limbs([1u64, 0, 0, 0]);
@@ -145,12 +149,12 @@ impl L1BlockInfo {
                 // Post-holocene L1 block info
                 let configurable_fee_scalar = U256::from_be_slice(
                     l1_fee_scalars
-                        [CONFIGURABLE_FEE_SCALAR_OFFSET..CONFIGURABLE_FEE_SCALAR_OFFSET + 4]
+                        [CONFIGURABLE_FEE_SCALAR_OFFSET..CONFIGURABLE_FEE_SCALAR_OFFSET + 8]
                         .as_ref(),
                 );
                 let configurable_fee_constant = U256::from_be_slice(
                     l1_fee_scalars
-                        [CONFIGURABLE_FEE_CONSTANT_OFFSET..CONFIGURABLE_FEE_CONSTANT_OFFSET + 4]
+                        [CONFIGURABLE_FEE_CONSTANT_OFFSET..CONFIGURABLE_FEE_CONSTANT_OFFSET + 8]
                         .as_ref(),
                 );
                 let empty_holocene_scalars = l1_blob_base_fee.is_zero()
@@ -206,11 +210,10 @@ impl L1BlockInfo {
     /// Calculate the configurable fee for executing this transaction.
     ///
     /// Introduced in holocene. Prior to holocene, the configurable fee is always zero.
-    pub fn configurable_fee_charge(&self, gas_spent: U256, spec_id: OptimismSpecId) -> U256 {
+    pub fn configurable_fee_charge(&self, gas_limit: U256, spec_id: OptimismSpecId) -> U256 {
         if !spec_id.is_enabled_in(OptimismSpecId::HOLOCENE) {
             return U256::ZERO;
         }
-
         let configurable_fee_scalar = self
             .configurable_fee_scalar
             .expect("Missing configurable fee scalar for holocene L1 Block");
@@ -218,7 +221,7 @@ impl L1BlockInfo {
             .configurable_fee_constant
             .expect("Missing configurable fee constant for holocene L1 Block");
 
-        gas_spent
+        gas_limit
             .saturating_mul(configurable_fee_scalar)
             .saturating_add(configurable_fee_constant)
     }
@@ -235,7 +238,8 @@ impl L1BlockInfo {
             .configurable_fee_scalar
             .expect("Missing configurable fee scalar for holocene L1 Block");
 
-        // We subtract fee_used from fee_spent, so no need to add the constant.
+        // We're computing the difference between two configurable fees, so no need to include the
+        // constant. 
 
         configurable_fee_scalar.saturating_mul(U256::from(gas.remaining() + gas.refunded() as u64))
     }

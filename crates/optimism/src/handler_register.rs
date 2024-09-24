@@ -186,7 +186,6 @@ pub fn reimburse_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 ) -> EVMResultGeneric<(), EvmWiringT> {
     mainnet::reimburse_caller::<EvmWiringT>(context, gas)?;
     let caller = *context.evm.env.tx.caller();
-    // return balance of not spend gas.
     let caller_account = context
         .evm
         .inner
@@ -203,12 +202,13 @@ pub fn reimburse_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
         .expect("L1BlockInfo should be loaded")
         .configurable_fee_refund(gas, SPEC::OPTIMISM_SPEC_ID);
 
-    caller_account.data.info.balance =
-        caller_account.data.info.balance.saturating_add(
-            configurable_fee_refund 
-        );
+    caller_account.data.info.balance = caller_account
+        .data
+        .info
+        .balance
+        .saturating_add(configurable_fee_refund);
 
-    Ok(())    
+    Ok(())
 }
 
 /// Load precompiles for Optimism chain.
@@ -500,13 +500,15 @@ pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{BedrockSpec, HoloceneSpec, L1BlockInfo, LatestSpec, OptimismEvmWiring, RegolithSpec};
+    use crate::{
+        BedrockSpec, HoloceneSpec, L1BlockInfo, LatestSpec, OptimismEvmWiring, RegolithSpec,
+    };
     use database::InMemoryDB;
     use revm::{
         database_interface::EmptyDB,
         interpreter::{CallOutcome, InterpreterResult},
-        primitives::{address, bytes, hex, Address, Bytes, TxKind, B256},
-        state::{AccountInfo, Bytecode}, Evm,
+        primitives::{bytes, Address, Bytes, B256},
+        state::AccountInfo,
     };
     use std::boxed::Box;
 
@@ -734,7 +736,6 @@ mod tests {
             .load_account(caller, &mut context.evm.inner.db)
             .unwrap();
         assert_eq!(account.info.balance, U256::from(1));
-
     }
 
     #[test]
@@ -803,45 +804,4 @@ mod tests {
         // Nonce and balance checks should be skipped for deposit transactions.
         assert!(validate_env::<TestEmptyOpWiring, LatestSpec>(&env).is_ok());
     }
-
-    // #[test]
-    // fn test_optimism_fee_distribution() {
-    //     // second tx in OP mainnet ecotone block 118024092
-    //     // <https://optimistic.etherscan.io/tx/0xa75ef696bf67439b4d5b61da85de9f3ceaa2e145abe982212101b244b63749c2>
-    //     // Used 51508 gas total
-    //     const TX: &[u8] = &hex!("02f8b30a832253fc8402d11f39842c8a46398301388094dc6ff44d5d932cbd77b52e5612ba0529dc6226f180b844a9059cbb000000000000000000000000d43e02db81f4d46cdf8521f623d21ea0ec7562a50000000000000000000000000000000000000000000000008ac7230489e80000c001a02947e24750723b48f886931562c55d9e07f856d8e06468e719755e18bbc3a570a0784da9ce59fd7754ea5be6e17a86b348e441348cd48ace59d174772465eadbd1");
-    //     let code = Bytecode::new_raw(TX.into());
-    //     let code_hash = code.hash_slow();
-    //     let to_addr = address!("ffffffffffffffffffffffffffffffffffffffff");
-
-    //     let mut db = InMemoryDB::default();
-    //     db.insert_account_info(
-    //         to_addr,
-    //         AccountInfo {
-    //             balance: U256::from(10_501),
-    //             ..Default::default()
-    //         },
-    //     );
-    //     // Execute this transaction
-    //     let mut evm = Evm::<TestMemOpWiring>::builder()
-    //         .with_default_db()
-    //         .with_default_ext_ctx()
-    //         .modify_db(|db| {
-    //             db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
-    //         })
-    //         .modify_tx_env(|tx| {
-    //             let transact_to = &mut tx.base.transact_to;
-
-    //             *transact_to = TxKind::Call(to_addr)
-    //         }).build();
-
-    //     let _result_and_state = evm.transact().unwrap();
-        
-    //     // Check the caller account balance.
-    //     let account = evm
-    //         .context
-    //         .evm
-    //         .journaled_state
-    //         .load_account(address, db)
-    // }      
 }
