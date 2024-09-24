@@ -19,7 +19,7 @@ const BASE_FEE_SCALAR_OFFSET: usize = 16;
 const BLOB_BASE_FEE_SCALAR_OFFSET: usize = 20;
 /// The two 8-byte Holocene operator fee scalar values are similarly packed. Byte offset within
 /// the storage slot of the 8-byte operatorFeeScalar attribute.
-const OPERATOR_FEE_SCALAR_OFFSET: usize = 0;
+const OPERATOR_FEE_SCALAR_OFFSET: usize = 4;
 /// The two 8-byte Holocene operator fee scalar values are similarly packed. Byte offset within
 /// the storage slot of the 8-byte operatorFeeConstant attribute.
 const OPERATOR_FEE_CONSTANT_OFFSET: usize = 8;
@@ -139,11 +139,15 @@ impl L1BlockInfo {
                 })
             } else {
                 // Post-holocene L1 block info
+                // The `operator_fee_scalar` is stored as a big endian u32 at 
+                // OPERATOR_FEE_SCALAR_OFFSET. 
                 let operator_fee_scalar = U256::from_be_slice(
                     l1_fee_scalars
-                        [OPERATOR_FEE_SCALAR_OFFSET..OPERATOR_FEE_SCALAR_OFFSET + 8]
+                        [OPERATOR_FEE_SCALAR_OFFSET..OPERATOR_FEE_SCALAR_OFFSET + 4]
                         .as_ref(),
                 );
+                // The `operator_fee_constant` is stored as a big endian u32 at 
+                // OPERATOR_FEE_CONSTANT_OFFSET. 
                 let operator_fee_constant = U256::from_be_slice(
                     l1_fee_scalars
                         [OPERATOR_FEE_CONSTANT_OFFSET..OPERATOR_FEE_CONSTANT_OFFSET + 8]
