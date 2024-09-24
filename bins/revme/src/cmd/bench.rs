@@ -1,6 +1,5 @@
 pub mod analysis;
 pub mod burntpix;
-pub mod optimism;
 pub mod snailtracer;
 pub mod transfer;
 
