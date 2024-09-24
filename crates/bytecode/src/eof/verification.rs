@@ -4,7 +4,7 @@ use crate::{
     utils::{read_i16, read_u16},
 };
 use primitives::{Bytes, MAX_INITCODE_SIZE};
-use specification::constantans::STACK_LIMIT;
+use specification::constants::STACK_LIMIT;
 
 use core::{convert::identity, mem};
 use std::{borrow::Cow, fmt, vec, vec::Vec};
