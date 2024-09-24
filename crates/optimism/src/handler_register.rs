@@ -711,20 +711,20 @@ mod tests {
         db.insert_account_info(
             caller,
             AccountInfo {
-                balance: U256::from(10_501),
+                balance: U256::from(151),
                 ..Default::default()
             },
         );
         let mut context = Context::<TestMemOpWiring>::new_with_db(db);
         *context.evm.chain.l1_block_info_mut() = Some(L1BlockInfo {
-            operator_fee_scalar: Some(U256::from(1_000)),
-            operator_fee_constant: Some(U256::from(500)),
+            operator_fee_scalar: Some(U256::from(10_000_000)),
+            operator_fee_constant: Some(U256::from(50)),
             ..Default::default()
         });
         context.evm.inner.env.tx.base.gas_limit = 10;
 
-        // operator fee cost is operator_fee_scalar * gas_limit + operator_fee_constant
-        // 1_000 * 10 + 500 = 10_500
+        // operator fee cost is operator_fee_scalar * gas_limit / 1e6 + operator_fee_constant
+        // 10_000_000 * 10 / 1_000_000 + 50 = 150
         context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
         deduct_caller::<TestMemOpWiring, HoloceneSpec>(&mut context).unwrap();
 

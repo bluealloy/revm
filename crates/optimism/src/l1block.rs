@@ -24,6 +24,11 @@ const OPERATOR_FEE_SCALAR_OFFSET: usize = 4;
 /// the storage slot of the 8-byte operatorFeeConstant attribute.
 const OPERATOR_FEE_CONSTANT_OFFSET: usize = 8;
 
+/// The fixed point decimal scaling factor associated with the operator fee scalar.
+///
+/// Allows users to use 6 decimal points of precision when specifying the operator_fee_scalar.
+const OPERATOR_FEE_SCALAR_DECIMAL: u64 = 1_000_000;
+
 const L1_BASE_FEE_SLOT: U256 = U256::from_limbs([1u64, 0, 0, 0]);
 const L1_OVERHEAD_SLOT: U256 = U256::from_limbs([5u64, 0, 0, 0]);
 const L1_SCALAR_SLOT: U256 = U256::from_limbs([6u64, 0, 0, 0]);
@@ -211,9 +216,10 @@ impl L1BlockInfo {
             .operator_fee_constant
             .expect("Missing operator fee constant for holocene L1 Block");
 
-        gas_limit
-            .saturating_mul(operator_fee_scalar)
-            .saturating_add(operator_fee_constant)
+        let product = gas_limit.saturating_mul(operator_fee_scalar)
+            / (U256::from(OPERATOR_FEE_SCALAR_DECIMAL));
+
+        product.saturating_add(operator_fee_constant)
     }
 
     /// Calculate the operator fee for executing this transaction.
