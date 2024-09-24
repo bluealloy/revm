@@ -1,5 +1,5 @@
 use crate::{
-    gas::{self, warm_cold_cost, warm_cold_cost_with_delegation},
+    gas::{self, warm_cold_cost, warm_cold_cost_with_delegation, CALL_STIPEND},
     interpreter::Interpreter,
     Host, InstructionResult,
 };
@@ -136,15 +136,16 @@ pub fn sstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host:
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-    gas_or_fail!(interpreter, {
-        let remaining_gas = interpreter.gas.remaining();
-        gas::sstore_cost(
-            SPEC::SPEC_ID,
-            &state_load.data,
-            remaining_gas,
-            state_load.is_cold,
-        )
-    });
+
+    // EIP-1706 Disable SSTORE with gasleft lower than call stipend
+    if SPEC::SPEC_ID.is_enabled_in(ISTANBUL) && interpreter.gas.remaining() <= CALL_STIPEND {
+        interpreter.instruction_result = InstructionResult::ReentrancySentryOOG;
+        return;
+    }
+    gas!(
+        interpreter,
+        gas::sstore_cost(SPEC::SPEC_ID, &state_load.data, state_load.is_cold)
+    );
     refund!(
         interpreter,
         gas::sstore_refund(SPEC::SPEC_ID, &state_load.data)

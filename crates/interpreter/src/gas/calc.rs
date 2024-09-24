@@ -185,12 +185,7 @@ pub const fn sload_cost(spec_id: SpecId, is_cold: bool) -> u64 {
 
 /// `SSTORE` opcode cost calculation.
 #[inline]
-pub fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, gas: u64, is_cold: bool) -> Option<u64> {
-    // EIP-1706 Disable SSTORE with gasleft lower than call stipend
-    if spec_id.is_enabled_in(SpecId::ISTANBUL) && gas <= CALL_STIPEND {
-        return None;
-    }
-
+pub fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, is_cold: bool) -> u64 {
     if spec_id.is_enabled_in(SpecId::BERLIN) {
         // Berlin specification logic
         let mut gas_cost = istanbul_sstore_cost::<WARM_STORAGE_READ_COST, WARM_SSTORE_RESET>(vals);
@@ -198,15 +193,13 @@ pub fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, gas: u64, is_cold: bool
         if is_cold {
             gas_cost += COLD_SLOAD_COST;
         }
-        Some(gas_cost)
+        gas_cost
     } else if spec_id.is_enabled_in(SpecId::ISTANBUL) {
         // Istanbul logic
-        Some(istanbul_sstore_cost::<INSTANBUL_SLOAD_GAS, SSTORE_RESET>(
-            vals,
-        ))
+        istanbul_sstore_cost::<INSTANBUL_SLOAD_GAS, SSTORE_RESET>(vals)
     } else {
         // Frontier logic
-        Some(frontier_sstore_cost(vals))
+        frontier_sstore_cost(vals)
     }
 }
 
