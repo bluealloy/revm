@@ -13,7 +13,7 @@ pub use types::{EvmState, EvmStorage, TransientStorage};
 
 use bitflags::bitflags;
 use core::hash::Hash;
-use primitives::{HashMap, U256};
+use primitives::U256;
 use specification::hardfork::SpecId;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -32,7 +32,7 @@ impl Account {
     pub fn new_not_existing() -> Self {
         Self {
             info: AccountInfo::default(),
-            storage: HashMap::new(),
+            storage: Default::default(),
             status: AccountStatus::LoadedAsNotExisting,
         }
     }
@@ -124,7 +124,7 @@ impl Account {
     /// Returns an iterator over the storage slots that have been changed.
     ///
     /// See also [EvmStorageSlot::is_changed]
-    pub fn changed_storage_slots(&self) -> impl Iterator<Item = (&U256, &EvmStorageSlot)> {
+    pub fn changed_storage_slots(&self) -> impl Iterator<Item=(&U256, &EvmStorageSlot)> {
         self.storage.iter().filter(|(_, slot)| slot.is_changed())
     }
 }
@@ -133,7 +133,7 @@ impl From<AccountInfo> for Account {
     fn from(info: AccountInfo) -> Self {
         Self {
             info,
-            storage: HashMap::new(),
+            storage: Default::default(),
             status: AccountStatus::Loaded,
         }
     }

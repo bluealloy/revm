@@ -1,7 +1,7 @@
 use core::convert::Infallible;
 use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
 use primitives::{hash_map::Entry, Address, HashMap, Log, B256, KECCAK_EMPTY, U256};
-use state::{Account, AccountInfo, Bytecode};
+use state::{AccountInfo, Bytecode, EvmState};
 use std::vec::Vec;
 use wiring::EthereumWiring;
 
@@ -126,7 +126,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 }
 
 impl<ExtDB> DatabaseCommit for CacheDB<ExtDB> {
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
+    fn commit(&mut self, changes: EvmState) {
         for (address, mut account) in changes {
             if !account.is_touched() {
                 continue;

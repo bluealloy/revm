@@ -4,13 +4,15 @@ use interpreter::{
     AccountLoad, Eip7702CodeLoad, InstructionResult, SStoreResult, SelfDestructResult, StateLoad,
 };
 use primitives::{
-    hash_map::Entry, Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, PRECOMPILE3, U256,
+    hash_map::Entry, Address, HashSet, Log, B256, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use specification::hardfork::{SpecId, SpecId::*};
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 
 use core::mem;
 use std::vec::Vec;
+
+
 
 /// A journal of state changes internal to the EVM.
 ///
@@ -61,7 +63,7 @@ impl JournaledState {
     /// And will not take into account if account is not existing or empty.
     pub fn new(spec: SpecId, warm_preloaded_addresses: HashSet<Address>) -> JournaledState {
         Self {
-            state: HashMap::new(),
+            state: Default::default(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: vec![vec![]],

@@ -5,7 +5,7 @@ use super::{
 use bytecode::Bytecode;
 use database_interface::{Database, DatabaseCommit, EmptyDB};
 use primitives::{hash_map, Address, HashMap, B256, BLOCK_HASH_HISTORY, U256};
-use state::{Account, AccountInfo};
+use state::{AccountInfo, EvmState};
 use std::{
     boxed::Box,
     collections::{btree_map, BTreeMap},
@@ -293,7 +293,7 @@ impl<DB: Database> Database for State<DB> {
 }
 
 impl<DB: Database> DatabaseCommit for State<DB> {
-    fn commit(&mut self, evm_state: HashMap<Address, Account>) {
+    fn commit(&mut self, evm_state: EvmState) {
         let transitions = self.cache.apply_evm_state(evm_state);
         self.apply_transition(transitions);
     }
