@@ -1,7 +1,7 @@
 use database::{BenchmarkDB, EthereumBenchmarkWiring};
 use revm::{
     bytecode::Bytecode,
-    primitives::{address, bytes, Bytes, TxKind},
+    primitives::{address, bytes, hex, Bytes, TxKind},
     Evm,
 };
 use std::time::Instant;
