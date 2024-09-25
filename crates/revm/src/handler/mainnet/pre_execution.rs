@@ -2,7 +2,7 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
-use crate::{Context, ContextPrecompiles, EvmWiring};
+use crate::{Context, ContextPrecompiles, EvmWiring, JournalEntry};
 use bytecode::Bytecode;
 use precompile::PrecompileSpecId;
 use primitives::{BLOCKHASH_STORAGE_ADDRESS, U256};
@@ -105,6 +105,20 @@ pub fn deduct_caller<EvmWiringT: EvmWiring, SPEC: Spec>(
     // deduct gas cost from caller's account.
     deduct_caller_inner::<EvmWiringT, SPEC>(caller_account.data, &context.evm.inner.env);
 
+    // Ensure tx kind is call
+    if context.evm.inner.env.tx.kind().is_call() {
+        // Push NonceChange entry
+        context
+            .evm
+            .inner
+            .journaled_state
+            .journal
+            .last_mut()
+            .unwrap()
+            .push(JournalEntry::NonceChange {
+                address: *context.evm.inner.env.tx.caller(),
+            });
+    }
     Ok(())
 }
 
