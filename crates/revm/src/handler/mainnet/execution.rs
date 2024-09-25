@@ -5,8 +5,8 @@ use crate::{
 use core::mem;
 use interpreter::{
     return_ok, return_revert, table::InstructionTables, CallInputs, CallOutcome, CreateInputs,
-    CreateOutcome, EOFCreateInputs, Gas, InstructionResult, InterpreterAction, InterpreterResult,
-    SharedMemory, EMPTY_SHARED_MEMORY,
+    CreateOutcome, EOFCreateInputs, Gas, InterpreterAction, InterpreterResult, SharedMemory,
+    EMPTY_SHARED_MEMORY,
 };
 use specification::hardfork::Spec;
 use std::boxed::Box;
@@ -194,6 +194,7 @@ pub fn insert_eofcreate_outcome<EvmWiringT: EvmWiring>(
 mod tests {
     use super::*;
     use crate::handler::mainnet::refund;
+    use interpreter::InstructionResult;
     use primitives::Bytes;
     use specification::hardfork::CancunSpec;
     use wiring::{default::EnvWiring, DefaultEthereumWiring};

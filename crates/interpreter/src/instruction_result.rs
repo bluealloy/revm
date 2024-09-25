@@ -151,58 +151,58 @@ impl From<HaltReason> for InstructionResult {
 #[macro_export]
 macro_rules! return_ok {
     () => {
-        InstructionResult::Continue
-            | InstructionResult::Stop
-            | InstructionResult::Return
-            | InstructionResult::SelfDestruct
-            | InstructionResult::ReturnContract
+        $crate::InstructionResult::Continue
+            | $crate::InstructionResult::Stop
+            | $crate::InstructionResult::Return
+            | $crate::InstructionResult::SelfDestruct
+            | $crate::InstructionResult::ReturnContract
     };
 }
 
 #[macro_export]
 macro_rules! return_revert {
     () => {
-        InstructionResult::Revert
-            | InstructionResult::CallTooDeep
-            | InstructionResult::OutOfFunds
-            | InstructionResult::InvalidEOFInitCode
-            | InstructionResult::CreateInitCodeStartingEF00
-            | InstructionResult::InvalidExtDelegateCallTarget
+        $crate::InstructionResult::Revert
+            | $crate::InstructionResult::CallTooDeep
+            | $crate::InstructionResult::OutOfFunds
+            | $crate::InstructionResult::InvalidEOFInitCode
+            | $crate::InstructionResult::CreateInitCodeStartingEF00
+            | $crate::InstructionResult::InvalidExtDelegateCallTarget
     };
 }
 
 #[macro_export]
 macro_rules! return_error {
     () => {
-        InstructionResult::OutOfGas
-            | InstructionResult::MemoryOOG
-            | InstructionResult::MemoryLimitOOG
-            | InstructionResult::PrecompileOOG
-            | InstructionResult::InvalidOperandOOG
-            | InstructionResult::ReentrancySentryOOG
-            | InstructionResult::OpcodeNotFound
-            | InstructionResult::CallNotAllowedInsideStatic
-            | InstructionResult::StateChangeDuringStaticCall
-            | InstructionResult::InvalidFEOpcode
-            | InstructionResult::InvalidJump
-            | InstructionResult::NotActivated
-            | InstructionResult::StackUnderflow
-            | InstructionResult::StackOverflow
-            | InstructionResult::OutOfOffset
-            | InstructionResult::CreateCollision
-            | InstructionResult::OverflowPayment
-            | InstructionResult::PrecompileError
-            | InstructionResult::NonceOverflow
-            | InstructionResult::CreateContractSizeLimit
-            | InstructionResult::CreateContractStartingWithEF
-            | InstructionResult::CreateInitCodeSizeLimit
-            | InstructionResult::FatalExternalError
-            | InstructionResult::ReturnContractInNotInitEOF
-            | InstructionResult::EOFOpcodeDisabledInLegacy
-            | InstructionResult::EOFFunctionStackOverflow
-            | InstructionResult::EofAuxDataTooSmall
-            | InstructionResult::EofAuxDataOverflow
-            | InstructionResult::InvalidEXTCALLTarget
+        $crate::InstructionResult::OutOfGas
+            | $crate::InstructionResult::MemoryOOG
+            | $crate::InstructionResult::MemoryLimitOOG
+            | $crate::InstructionResult::PrecompileOOG
+            | $crate::InstructionResult::InvalidOperandOOG
+            | $crate::InstructionResult::ReentrancySentryOOG
+            | $crate::InstructionResult::OpcodeNotFound
+            | $crate::InstructionResult::CallNotAllowedInsideStatic
+            | $crate::InstructionResult::StateChangeDuringStaticCall
+            | $crate::InstructionResult::InvalidFEOpcode
+            | $crate::InstructionResult::InvalidJump
+            | $crate::InstructionResult::NotActivated
+            | $crate::InstructionResult::StackUnderflow
+            | $crate::InstructionResult::StackOverflow
+            | $crate::InstructionResult::OutOfOffset
+            | $crate::InstructionResult::CreateCollision
+            | $crate::InstructionResult::OverflowPayment
+            | $crate::InstructionResult::PrecompileError
+            | $crate::InstructionResult::NonceOverflow
+            | $crate::InstructionResult::CreateContractSizeLimit
+            | $crate::InstructionResult::CreateContractStartingWithEF
+            | $crate::InstructionResult::CreateInitCodeSizeLimit
+            | $crate::InstructionResult::FatalExternalError
+            | $crate::InstructionResult::ReturnContractInNotInitEOF
+            | $crate::InstructionResult::EOFOpcodeDisabledInLegacy
+            | $crate::InstructionResult::EOFFunctionStackOverflow
+            | $crate::InstructionResult::EofAuxDataTooSmall
+            | $crate::InstructionResult::EofAuxDataOverflow
+            | $crate::InstructionResult::InvalidEXTCALLTarget
     };
 }
 
