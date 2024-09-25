@@ -194,7 +194,7 @@ fn deploy_evm_tx(ctx: &mut EvmTestingContext, deployer: Address, init_bytecode: 
     // deploy greeting EVM contract
     let result = TxBuilder::create(ctx, deployer, init_bytecode.clone().into()).exec();
     assert!(result.is_success());
-    let contract_address = calc_create_address(&ctx.sdk, &deployer, 0);
+    let contract_address = calc_create_address::<TestingContext>(&deployer, 0);
     assert_eq!(contract_address, deployer.create(0));
     // let contract_account = ctx.db.accounts.get(&contract_address).unwrap();
     // if bytecode_type == BytecodeType::EVM {
@@ -405,7 +405,7 @@ fn test_evm_self_destruct() {
     .gas_price(gas_price)
     .value(U256::from(1e18))
     .exec();
-    let contract_address = calc_create_address(&ctx.sdk, &SENDER_ADDRESS, 0);
+    let contract_address = calc_create_address::<TestingContext>(&SENDER_ADDRESS, 0);
     assert!(result.is_success());
     assert_eq!(ctx.get_balance(SENDER_ADDRESS), U256::from(1e18));
     assert_eq!(ctx.get_balance(contract_address), U256::from(1e18));
@@ -444,7 +444,7 @@ fn test_bridge_contract() {
     ctx.add_balance(SENDER_ADDRESS, U256::from(2e18));
     let gas_price = U256::from(0);
     // now send success tx
-    let contract_address = calc_create_address(&ctx.sdk, &SENDER_ADDRESS, 0);
+    let contract_address = calc_create_address::<TestingContext>(&SENDER_ADDRESS, 0);
     let mut tx_builder = TxBuilder::create(
         &mut ctx,
         SENDER_ADDRESS,
