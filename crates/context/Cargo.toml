@@ -1,6 +1,6 @@
 [package]
 name = "revm-context"
-description = "Revm context crate"
+description = "Revm context crates"
 version = "1.0.0"
 authors.workspace = true
 edition.workspace = true

@@ -41,6 +41,6 @@ pub use interpreter_action::{
     CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome, EOFCreateInputs,
     EOFCreateKind, InterpreterAction,
 };
-pub use primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
+pub use specification::constantans::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 pub use table::Instruction;
 pub use wiring::default::CreateScheme;

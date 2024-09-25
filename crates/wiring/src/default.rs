@@ -1,5 +1,4 @@
 pub mod block;
-pub mod transaction;
 
 use crate::block::blob::calc_blob_gasprice;
 use crate::result::InvalidHeader;
@@ -8,12 +7,12 @@ use crate::{result::InvalidTransaction, Block, EvmWiring, Transaction};
 use core::cmp::{min, Ordering};
 use core::fmt::Debug;
 use core::hash::Hash;
-use primitives::{
-    Address, Bytes, TxKind, B256, MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE,
-    U256, VERSIONED_HASH_VERSION_KZG,
-};
+use primitives::{Address, Bytes, TxKind, B256, U256};
+use specification::eip4844::MAX_BLOB_NUMBER_PER_BLOCK;
 use specification::{
+    constantans::{MAX_CODE_SIZE, MAX_INITCODE_SIZE},
     eip2930::AccessListItem,
+    eip4844::VERSIONED_HASH_VERSION_KZG,
     eip7702::AuthorizationList,
     hardfork::{Spec, SpecId},
 };
@@ -42,17 +41,6 @@ impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
     #[inline]
     pub fn boxed(cfg: CfgEnv, block: BlockT, tx: TxT) -> Box<Self> {
         Box::new(Self { cfg, block, tx })
-    }
-
-    /// Calculates the effective gas price of the transaction.
-    #[inline]
-    pub fn effective_gas_price(&self) -> U256 {
-        let gas_price = self.tx.gas_price();
-        if let Some(priority_fee) = self.tx.max_priority_fee_per_gas() {
-            min(*gas_price, self.block.basefee() + priority_fee)
-        } else {
-            *gas_price
-        }
     }
 
     /// Calculates the [EIP-4844] `data_fee` of the transaction.
@@ -128,11 +116,12 @@ impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
             }
 
             // check minimal cost against basefee
-            if !self.cfg.is_base_fee_check_disabled()
-                && self.effective_gas_price() < *self.block.basefee()
-            {
-                return Err(InvalidTransaction::GasPriceLessThanBasefee);
-            }
+            // TODO uncomment when basefee is implemented
+            // if !self.cfg.is_base_fee_check_disabled()
+            //     && self.effective_gas_price() < *self.block.basefee()
+            // {
+            //     return Err(InvalidTransaction::GasPriceLessThanBasefee);
+            // }
         }
 
         // EIP-3860: Limit and meter initcode

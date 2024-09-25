@@ -1,7 +1,7 @@
-use crate::CommonTxFields;
+use crate::Eip1559Tx;
 use specification::eip7702::AuthorizationList;
 
-pub trait Eip7702Tx: CommonTxFields {
+pub trait Eip7702Tx: Eip1559Tx {
     /// List of authorizations, that contains the signature that authorizes this
     /// caller to place the code to signer account.
     ///

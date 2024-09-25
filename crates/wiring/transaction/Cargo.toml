@@ -1,5 +1,5 @@
 [package]
-name = "revm-transaction-wiring"
+name = "revm-transaction"
 description = "Revm crate"
 version = "1.0.0"
 authors.workspace = true

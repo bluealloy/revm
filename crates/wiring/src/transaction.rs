@@ -1,6 +1,6 @@
 use core::fmt::Debug;
-use primitives::{Address, Bytes, TxKind, B256, GAS_PER_BLOB, U256};
-use specification::{eip2930, eip7702};
+use primitives::{Address, Bytes, TxKind, B256, U256};
+use specification::{eip2930, eip4844::GAS_PER_BLOB, eip7702};
 
 /// Trait for retrieving transaction information required for execution.
 pub trait Transaction {
