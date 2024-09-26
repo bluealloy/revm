@@ -1,5 +1,16 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v45 tag
+date: 26.09.2024
+
+Maintainance release.
+
+* `revme`: 0.10.2 -> 0.10.3 (✓ API compatible changes)
+* `revm`: 14.0.2 -> 14.0.3 (✓ API compatible changes)
+* `revm-primitives`: 9.0.2 -> 10.0.0 (✓ API compatible changes)
+* `revm-interpreter`: 10.0.2 -> 10.0.3
+* `revm-precompile`: 11.0.2 -> 11.0.3
+
 # v44 tag
 date: 18.09.2024
 

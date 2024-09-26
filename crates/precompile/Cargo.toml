@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm", "precompiles"]
 license = "MIT"
 name = "revm-precompile"
 repository = "https://github.com/bluealloy/revm"
-version = "11.0.2"
+version = "11.0.3"
 readme = "../../README.md"
 
 [package.metadata.docs.rs]
