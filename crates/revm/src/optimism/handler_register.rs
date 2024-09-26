@@ -369,7 +369,7 @@ pub fn end<SPEC: Spec, EXT, DB: Database>(
                 acc.mark_touch();
                 acc
             };
-            let state = HashMap::from([(caller, account)]);
+            let state = HashMap::from_iter([(caller, account)]);
 
             // The gas used of a failed deposit post-regolith is the gas
             // limit of the transaction. pre-regolith, it is the gas limit

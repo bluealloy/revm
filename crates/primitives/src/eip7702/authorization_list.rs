@@ -1,4 +1,4 @@
-pub use alloy_eips::eip7702::{Authorization, SignedAuthorization};
+pub use alloy_eip7702::{Authorization, SignedAuthorization};
 pub use alloy_primitives::{Parity, Signature};
 
 use super::SECP256K1N_HALF;

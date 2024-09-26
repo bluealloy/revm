@@ -11,7 +11,7 @@ pub struct TransitionState {
 impl TransitionState {
     /// Create new transition state containing one [`TransitionAccount`].
     pub fn single(address: Address, transition: TransitionAccount) -> Self {
-        let mut transitions = HashMap::new();
+        let mut transitions = HashMap::default();
         transitions.insert(address, transition);
         TransitionState { transitions }
     }

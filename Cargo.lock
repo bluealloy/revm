@@ -117,7 +117,6 @@ dependencies = [
  "alloy-primitives",
  "alloy-rlp",
  "alloy-serde",
- "arbitrary",
  "c-kzg",
  "once_cell",
  "serde",
@@ -184,9 +183,9 @@ dependencies = [
 
 [[package]]
 name = "alloy-primitives"
-version = "0.8.2"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccb865df835f851b367ae439d6c82b117ded971628c8888b24fed411a290e38a"
+checksum = "260d3ff3bff0bb84599f032a2f2c6828180b0ea0cd41fdaf44f39cef3ba41861"
 dependencies = [
  "alloy-rlp",
  "arbitrary",
@@ -196,15 +195,20 @@ dependencies = [
  "derive_arbitrary",
  "derive_more 1.0.0",
  "getrandom",
+ "hashbrown",
  "hex-literal",
+ "indexmap",
  "itoa",
  "k256",
  "keccak-asm",
+ "paste",
  "proptest",
  "proptest-derive",
  "rand",
  "ruint",
+ "rustc-hash",
  "serde",
+ "sha3",
  "tiny-keccak",
 ]
 
@@ -311,7 +315,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bfd260ede54f0b53761fdd04133acc10ae70427f66a69aa9590529bbd066cd58"
 dependencies = [
  "alloy-primitives",
- "arbitrary",
  "serde",
  "serde_json",
 ]
@@ -2080,12 +2083,14 @@ checksum = "ce23b50ad8242c51a442f3ff322d56b02f08852c77e4c0b4d3fd684abc89c683"
 
 [[package]]
 name = "indexmap"
-version = "2.2.6"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "168fb715dda47215e360912c096649d23d58bf392ac62f73919e831745e40f26"
+checksum = "68b900aa2f7301e21c36462b170ee99994de34dff39a4a6a528e80e7376d07e5"
 dependencies = [
+ "arbitrary",
  "equivalent",
  "hashbrown",
+ "serde",
 ]
 
 [[package]]
@@ -2941,6 +2946,7 @@ dependencies = [
  "libc",
  "rand_chacha",
  "rand_core",
+ "serde",
 ]
 
 [[package]]
@@ -3188,7 +3194,8 @@ dependencies = [
 name = "revm-primitives"
 version = "9.0.2"
 dependencies = [
- "alloy-eips",
+ "alloy-eip2930",
+ "alloy-eip7702",
  "alloy-primitives",
  "auto_impl",
  "bitflags 2.6.0",
@@ -3197,7 +3204,6 @@ dependencies = [
  "cfg-if",
  "dyn-clone",
  "enumn",
- "hashbrown",
  "hex",
  "kzg-rs",
  "serde",
@@ -3375,6 +3381,15 @@ name = "rustc-demangle"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "719b953e2095829ee67db738b3bfa9fa368c94900df327b3f07fe6e794d2fe1f"
+
+[[package]]
+name = "rustc-hash"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "583034fd73374156e66797ed8e5b0d5690409c9226b22d87cb7f19821c05d152"
+dependencies = [
+ "rand",
+]
 
 [[package]]
 name = "rustc-hex"
