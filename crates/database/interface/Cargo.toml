@@ -33,6 +33,9 @@ serde = { version = "1.0", default-features = false, features = [
     "rc",
 ], optional = true }
 
+# asyncdb
+tokio = { version = "1.40", optional = true }
+
 
 [dev-dependencies]
 anyhow = "1.0.83"
@@ -45,3 +48,6 @@ alloy-sol-types = "0.8"
 default = ["std"]
 std = ["serde?/std"]
 serde = ["dep:serde"]
+asyncdb = [
+    "dep:tokio",
+]

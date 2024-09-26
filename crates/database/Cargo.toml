@@ -60,6 +60,7 @@ std = ["serde?/std"]
 serde = ["dep:serde"]
 alloydb = [
     "std",
+    "database-interface/asyncdb",
     "dep:tokio",
     "dep:alloy-provider",
     "dep:alloy-eips",

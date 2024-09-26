@@ -9,8 +9,12 @@ use auto_impl::auto_impl;
 use primitives::{Address, HashMap, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
 
+#[cfg(feature = "asyncdb")]
+pub mod async_db;
 pub mod empty_db;
 
+#[cfg(feature = "asyncdb")]
+pub use async_db::{DatabaseAsync, WrapDatabaseAsync};
 pub use empty_db::{EmptyDB, EmptyDBTyped};
 
 /// EVM database interface.
