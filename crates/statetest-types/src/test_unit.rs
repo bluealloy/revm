@@ -4,6 +4,7 @@ use std::collections::{BTreeMap, HashMap};
 use crate::{AccountInfo, Env, SpecName, Test, TransactionParts};
 use revm::primitives::{Address, Bytes};
 
+/// A single test unit.
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TestUnit {

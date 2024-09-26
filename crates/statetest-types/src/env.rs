@@ -1,6 +1,7 @@
 use revm::primitives::{Address, B256, U256};
 use serde::Deserialize;
 
+/// Environment variables.
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Env {

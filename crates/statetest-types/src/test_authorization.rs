@@ -4,6 +4,7 @@ use revm::{
 };
 use serde::{Deserialize, Serialize};
 
+/// Test authorization.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TestAuthorization {
@@ -17,12 +18,14 @@ pub struct TestAuthorization {
 }
 
 impl TestAuthorization {
+    /// Get the signature using the v, r, s values.
     pub fn signature(&self) -> Signature {
         let v = u64::try_from(self.v).unwrap_or(u64::MAX);
         let parity = Parity::try_from(v).unwrap_or(Parity::Eip155(36));
         Signature::from_rs_and_parity(self.r, self.s, parity).unwrap()
     }
 
+    /// Convert to a recovered authorization.
     pub fn into_recovered(self) -> RecoveredAuthorization {
         let authorization = Authorization {
             chain_id: self.chain_id,

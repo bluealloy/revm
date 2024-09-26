@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{deserializer::deserialize_maybe_empty, TestAuthorization};
 
+/// Transaction parts.
 #[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionParts {
@@ -31,6 +32,7 @@ pub struct TransactionParts {
     pub max_fee_per_blob_gas: Option<U256>,
 }
 
+/// Transaction part indices.
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TxPartIndices {
