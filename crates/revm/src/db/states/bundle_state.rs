@@ -55,15 +55,15 @@ impl OriginalValuesKnown {
 impl Default for BundleBuilder {
     fn default() -> Self {
         BundleBuilder {
-            states: HashSet::new(),
-            state_original: HashMap::new(),
-            state_present: HashMap::new(),
-            state_storage: HashMap::new(),
+            states: HashSet::default(),
+            state_original: HashMap::default(),
+            state_present: HashMap::default(),
+            state_storage: HashMap::default(),
             reverts: BTreeSet::new(),
             revert_range: 0..=0,
-            revert_account: HashMap::new(),
-            revert_storage: HashMap::new(),
-            contracts: HashMap::new(),
+            revert_account: HashMap::default(),
+            revert_storage: HashMap::default(),
+            contracts: HashMap::default(),
         }
     }
 }
@@ -782,7 +782,7 @@ impl BundleState {
                         let mut account = BundleAccount::new(
                             None,
                             None,
-                            HashMap::new(),
+                            HashMap::default(),
                             AccountStatus::LoadedNotExisting,
                         );
                         if !account.revert(revert_account) {
@@ -897,7 +897,7 @@ mod tests {
                         code_hash: KECCAK_EMPTY,
                         code: None,
                     }),
-                    HashMap::from([
+                    HashMap::from_iter([
                         (slot1(), (U256::from(0), U256::from(10))),
                         (slot2(), (U256::from(0), U256::from(15))),
                     ]),
@@ -911,7 +911,7 @@ mod tests {
                         code_hash: KECCAK_EMPTY,
                         code: None,
                     }),
-                    HashMap::from([]),
+                    HashMap::default(),
                 ),
             ],
             vec![vec![
@@ -939,7 +939,7 @@ mod tests {
                     code_hash: KECCAK_EMPTY,
                     code: None,
                 }),
-                HashMap::from([(slot1(), (U256::from(0), U256::from(15)))]),
+                HashMap::from_iter([(slot1(), (U256::from(0), U256::from(15)))]),
             )],
             vec![vec![(
                 account1(),
@@ -969,7 +969,7 @@ mod tests {
             )
             .state_storage(
                 account1(),
-                HashMap::from([(slot1(), (U256::from(0), U256::from(10)))]),
+                HashMap::from_iter([(slot1(), (U256::from(0), U256::from(10)))]),
             )
             .state_address(account2())
             .state_present_account_info(
@@ -1002,7 +1002,7 @@ mod tests {
             )
             .state_storage(
                 account1(),
-                HashMap::from([(slot1(), (U256::from(0), U256::from(15)))]),
+                HashMap::from_iter([(slot1(), (U256::from(0), U256::from(15)))]),
             )
             .revert_address(0, account1())
             .revert_account_info(
@@ -1132,7 +1132,7 @@ mod tests {
             Some(&BundleAccount::new(
                 None,
                 Some(AccountInfo::default()),
-                HashMap::new(),
+                HashMap::default(),
                 AccountStatus::Changed
             ))
         );
@@ -1267,7 +1267,7 @@ mod tests {
         assert!(builder.get_state_storage_mut().is_empty());
         builder
             .get_state_storage_mut()
-            .insert(account1(), HashMap::new());
+            .insert(account1(), HashMap::default());
         assert!(builder.get_state_storage_mut().contains_key(&account1()));
 
         // Test get_reverts_mut

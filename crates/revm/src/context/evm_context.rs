@@ -526,7 +526,7 @@ pub(crate) mod test_utils {
         EvmContext {
             inner: InnerEvmContext {
                 env,
-                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
+                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::default()),
                 db,
                 error: Ok(()),
                 #[cfg(feature = "optimism")]
@@ -541,7 +541,7 @@ pub(crate) mod test_utils {
         EvmContext {
             inner: InnerEvmContext {
                 env,
-                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
+                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::default()),
                 db,
                 error: Ok(()),
                 #[cfg(feature = "optimism")]

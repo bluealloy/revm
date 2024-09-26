@@ -57,7 +57,7 @@ impl Account {
     pub fn new_not_existing() -> Self {
         Self {
             info: AccountInfo::default(),
-            storage: HashMap::new(),
+            storage: HashMap::default(),
             status: AccountStatus::LoadedAsNotExisting,
         }
     }
@@ -158,7 +158,7 @@ impl From<AccountInfo> for Account {
     fn from(info: AccountInfo) -> Self {
         Self {
             info,
-            storage: HashMap::new(),
+            storage: HashMap::default(),
             status: AccountStatus::Loaded,
         }
     }
