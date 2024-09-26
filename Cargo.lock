@@ -2952,6 +2952,7 @@ dependencies = [
  "revm-state",
  "rstest",
  "serde",
+ "tokio",
 ]
 
 [[package]]

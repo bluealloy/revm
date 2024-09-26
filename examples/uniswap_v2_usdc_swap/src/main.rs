@@ -9,6 +9,7 @@ use anyhow::{anyhow, Result};
 use database::{AlloyDB, CacheDB};
 use reqwest::Client;
 use revm::{
+    database_interface::WrapDatabaseAsync,
     primitives::{address, keccak256, Address, Bytes, TxKind, U256},
     state::AccountInfo,
     wiring::{
@@ -19,7 +20,8 @@ use revm::{
 };
 use std::ops::Div;
 
-type AlloyCacheDB = CacheDB<AlloyDB<Http<Client>, Ethereum, RootProvider<Http<Client>>>>;
+type AlloyCacheDB =
+    CacheDB<WrapDatabaseAsync<AlloyDB<Http<Client>, Ethereum, RootProvider<Http<Client>>>>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -29,7 +31,7 @@ async fn main() -> Result<()> {
     // create ethers client and wrap it in Arc<M>
     let client = ProviderBuilder::new().on_http(rpc_url);
 
-    let alloy = AlloyDB::new(client, BlockId::latest()).unwrap();
+    let alloy = WrapDatabaseAsync::new(AlloyDB::new(client, BlockId::latest())).unwrap();
     let mut cache_db = CacheDB::new(alloy);
 
     // Random empty account
