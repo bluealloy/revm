@@ -3192,7 +3192,7 @@ dependencies = [
 
 [[package]]
 name = "revm-primitives"
-version = "9.0.2"
+version = "10.0.0"
 dependencies = [
  "alloy-eip2930",
  "alloy-eip7702",
