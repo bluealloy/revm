@@ -12,6 +12,7 @@ repository.workspace = true
 # revm
 database.workspace = true
 revm = { workspace = true, features = ["std", "hashbrown", "c-kzg", "blst"] }
+statetest-types = { workspace = true }
 inspector = { workspace = true, features = ["std", "serde-json"] }
 # enable parse std and parse feature. 
 bytecode = { workspace = true, features = ["std", "parse"] }

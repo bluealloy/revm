@@ -3061,6 +3061,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "revm-statetest-types"
+version = "1.0.0"
+dependencies = [
+ "revm",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "revm-wiring"
 version = "1.0.0"
 dependencies = [
@@ -3095,6 +3104,7 @@ dependencies = [
  "revm-bytecode",
  "revm-database",
  "revm-inspector",
+ "revm-statetest-types",
  "serde",
  "serde_json",
  "thiserror",
