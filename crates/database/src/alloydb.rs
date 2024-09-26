@@ -8,7 +8,7 @@ use database_interface::async_db::DatabaseAsyncRef;
 use primitives::{Address, B256, U256};
 use state::{AccountInfo, Bytecode};
 
-/// An alloy-powered REVM [Database].
+/// An alloy-powered REVM [database_interface::Database].
 ///
 /// When accessing the database, it'll use the given provider to fetch the corresponding account's data.
 #[derive(Debug)]
