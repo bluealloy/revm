@@ -18,6 +18,7 @@ members = [
     "crates/state",
     "crates/wiring",
     "crates/specification",
+    "crates/statetest-types",
 
     # examples
     "examples/block_traces",
@@ -42,6 +43,7 @@ revm = { path = "crates/revm", version = "14.0.1", default-features = false }
 interpreter = { path = "crates/interpreter", package = "revm-interpreter", version = "10.0.1", default-features = false }
 inspector = { path = "crates/inspector", package = "revm-inspector", version = "1.0.0", default-features = false }
 precompile = { path = "crates/precompile", package = "revm-precompile", version = "11.0.1", default-features = false }
+statetest-types = { path = "crates/statetest-types", package = "revm-statetest-types", version = "1.0.0", default-features = false }
 
 [workspace.package]
 license = "MIT"
