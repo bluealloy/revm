@@ -43,6 +43,14 @@ impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
         Box::new(Self { cfg, block, tx })
     }
 
+    pub fn effective_gas_price(&self) -> U256 {
+        U256::ZERO
+        // self.tx.max_priority_fee_per_gas().map_or_else(
+        //     || self.tx.gas_price().clone(),
+        //     |priority_fee| min(priority_fee, self.tx.gas_price().clone()),
+        // )
+    }
+
     /// Calculates the [EIP-4844] `data_fee` of the transaction.
     ///
     /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].

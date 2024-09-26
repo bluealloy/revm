@@ -16,6 +16,8 @@ pub trait Transaction {
     type Eip4844: Eip4844Tx;
     type Eip7702: Eip7702Tx;
 
+    /// Transaction type. Depending on this field other functions should be called.
+    /// If transaction is Legacy, then `legacy()` should be called.
     fn tx_type(&self) -> impl Into<TransactionType>;
 
     fn legacy(&self) -> &Self::Legacy {
@@ -60,12 +62,12 @@ pub trait Transaction {
                 self.eip1559().max_priority_fee_per_gas(),
             ),
             TransactionType::Eip4844 => (
-                self.eip1559().max_fee_per_gas(),
-                self.eip1559().max_priority_fee_per_gas(),
+                self.eip4844().max_fee_per_gas(),
+                self.eip4844().max_priority_fee_per_gas(),
             ),
             TransactionType::Eip7702 => (
-                self.eip1559().max_fee_per_gas(),
-                self.eip1559().max_priority_fee_per_gas(),
+                self.eip7702().max_fee_per_gas(),
+                self.eip7702().max_priority_fee_per_gas(),
             ),
         };
 

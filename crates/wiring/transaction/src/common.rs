@@ -1,11 +1,8 @@
-use crate::TransactionType;
 use primitives::{Address, Bytes, U256};
 
 /// Trait that contains all common field that are shared by all transactions.
 /// This trait is base for Legacy, EIp2930 and Eip1559 transactions.
 pub trait CommonTxFields {
-    /// Transaction type;
-    fn transaction_type(&self) -> TransactionType;
     /// Caller aka Author aka transaction signer.
     fn caller(&self) -> &Address;
     /// The maximum amount of gas the transaction can use.
