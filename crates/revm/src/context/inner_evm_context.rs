@@ -225,7 +225,10 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
     ) -> Result<Eip7702CodeLoad<B256>, <EvmWiringT::Database as Database>::Error> {
         let acc = self.journaled_state.load_code(address, &mut self.db)?;
         if acc.is_empty() {
-            return Ok(Eip7702CodeLoad::new_not_delegated(B256::ZERO, acc.is_cold));
+            return Ok(Eip7702CodeLoad::new_not_delegated(
+                KECCAK_EMPTY,
+                acc.is_cold,
+            ));
         }
         // SAFETY: safe to unwrap as load_code will insert code if it is empty.
         let code = acc.info.code.as_ref().unwrap();
@@ -238,7 +241,7 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
             let delegated_account = self.journaled_state.load_code(address, &mut self.db)?;
 
             let hash = if delegated_account.is_empty() {
-                B256::ZERO
+                KECCAK_EMPTY
             } else if delegated_account.info.code.as_ref().unwrap().is_eof() {
                 EOF_MAGIC_HASH
             } else {
