@@ -4,9 +4,7 @@ use crate::{
 };
 use core::mem;
 use interpreter::{
-    return_ok, return_revert, table::InstructionTables, CallInputs, CallOutcome, CreateInputs,
-    CreateOutcome, EOFCreateInputs, Gas, InstructionResult, InterpreterAction, InterpreterResult,
-    SharedMemory, EMPTY_SHARED_MEMORY,
+    return_ok, return_revert, table::InstructionTables, CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Gas, InstructionResult, InterpreterAction, InterpreterResult, NewFrameAction, SharedMemory, EMPTY_SHARED_MEMORY
 };
 use specification::hardfork::Spec;
 use std::boxed::Box;
@@ -33,6 +31,77 @@ pub fn execute_frame<EvmWiringT: EvmWiring, SPEC: Spec>(
     *shared_memory = interpreter.take_memory();
 
     Ok(next_action)
+}
+
+/// First frame creation.
+pub fn first_frame_creation<EvmWiringT: EvmWiring>(
+    context: &mut Context<EvmWiringT>,
+) -> EVMResultGeneric<NewFrameAction, EvmWiringT> {
+    // Make new frame action.
+
+    // impl CallInputs {
+    //     /// Creates new call inputs.
+    //     ///
+    //     /// Returns `None` if the transaction is not a call.
+    //     pub fn new(tx_env: &impl Transaction, gas_limit: u64) -> Option<Self> {
+    //         let TxKind::Call(target_address) = tx_env.kind() else {
+    //             return None;
+    //         };
+    //         Some(CallInputs {
+    //             input: tx_env.data().clone(),
+    //             gas_limit,
+    //             target_address,
+    //             bytecode_address: target_address,
+    //             caller: *tx_env.caller(),
+    //             value: CallValue::Transfer(*tx_env.value()),
+    //             scheme: CallScheme::Call,
+    //             is_static: false,
+    //             is_eof: false,
+    //             return_memory_offset: 0..0,
+    //         })
+    //     }
+    // }
+    //     /// Creates new boxed call inputs.
+    // ///
+    // /// Returns `None` if the transaction is not a call.
+    // pub fn new_boxed(tx_env: &impl Transaction, gas_limit: u64) -> Option<Box<Self>> {
+    //     Self::new(tx_env, gas_limit).map(Box::new)
+    // }
+
+    // impl CreateInputs {
+    //     /// Creates new create inputs.
+    //     pub fn new(tx_env: &impl Transaction, gas_limit: u64) -> Option<Self> {
+    //         let TxKind::Create = tx_env.kind() else {
+    //             return None;
+    //         };
+
+    //         Some(CreateInputs {
+    //             caller: *tx_env.caller(),
+    //             scheme: CreateScheme::Create,
+    //             value: *tx_env.value(),
+    //             init_code: tx_env.data().clone(),
+    //             gas_limit,
+    //         })
+    //     }
+
+    //     /// Returns boxed create inputs.
+    //     pub fn new_boxed(tx_env: &impl Transaction, gas_limit: u64) -> Option<Box<Self>> {
+    //         Self::new(tx_env, gas_limit).map(Box::new)
+    //     }
+
+    // /// Creates new EOFCreateInputs from transaction.
+    // pub fn new_tx<EvmWiringT: EvmWiring>(tx: &EvmWiringT::Transaction, gas_limit: u64) -> Self {
+    //     EOFCreateInputs::new(
+    //         *tx.caller(),
+    //         *tx.value(),
+    //         gas_limit,
+    //         EOFCreateKind::Tx {
+    //             initdata: tx.data().clone(),
+    //         },
+    //     )
+    // }
+
+    context.evm.make_first_frame()
 }
 
 /// Handle output of the transaction

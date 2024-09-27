@@ -2899,6 +2899,7 @@ dependencies = [
  "revm-primitives",
  "revm-specification",
  "revm-state",
+ "revm-transaction",
  "revm-wiring",
  "rstest",
  "serde",

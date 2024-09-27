@@ -1,16 +1,15 @@
 use crate::{Context, EvmWiring};
 use interpreter::gas;
-use primitives::{Address, U256};
+use primitives::U256;
 use specification::{
     constantans::MAX_INITCODE_SIZE,
     eip4844,
     hardfork::{Spec, SpecId},
 };
+use transaction::Transaction;
 use wiring::{
-    block,
     default::{CfgEnv, EnvWiring},
     result::{EVMError, EVMResultGeneric, InvalidTransaction},
-    transaction::{Transaction, TransactionValidation},
     Block,
 };
 
@@ -19,7 +18,7 @@ pub fn validate_env<EvmWiringT: EvmWiring, SPEC: Spec>(
     env: &EnvWiring<EvmWiringT>,
 ) -> EVMResultGeneric<(), EvmWiringT>
 where
-    <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
+    <EvmWiringT::Transaction as Transaction>::TransactionError: From<InvalidTransaction>,
 {
     // Important: validate block before tx.
     validate_env_block::<EvmWiringT, SPEC>(&env.block, &env.cfg)?;
@@ -66,7 +65,9 @@ pub fn validate_env_tx<EvmWiringT: EvmWiring, SPEC: Spec>(
         }
 
         // check minimal cost against basefee
-        if !cfg.is_base_fee_check_disabled() && self.effective_gas_price() < *block.basefee() {
+        let base_fee = *block.basefee();
+        if !cfg.is_base_fee_check_disabled() && tx.effective_gas_price(base_fee) < *block.basefee()
+        {
             return Err(InvalidTransaction::GasPriceLessThanBasefee);
         }
     }
@@ -161,7 +162,7 @@ pub fn validate_tx_against_state<EvmWiringT: EvmWiring, SPEC: Spec>(
     context: &mut Context<EvmWiringT>,
 ) -> EVMResultGeneric<(), EvmWiringT>
 where
-    <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
+    <EvmWiringT::Transaction as Transaction>::TransactionError: From<InvalidTransaction>,
 {
     // load acc
     let tx_caller = *context.evm.env.tx.caller();
@@ -187,7 +188,7 @@ pub fn validate_initial_tx_gas<EvmWiringT: EvmWiring, SPEC: Spec>(
     env: &EnvWiring<EvmWiringT>,
 ) -> EVMResultGeneric<u64, EvmWiringT>
 where
-    <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
+    <EvmWiringT::Transaction as Transaction>::TransactionError: From<InvalidTransaction>,
 {
     let input = &env.tx.data();
     let is_create = env.tx.kind().is_create();

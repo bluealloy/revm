@@ -1,7 +1,5 @@
 use core::ops::Range;
-use primitives::{Address, Bytes, TxKind, U256};
-use std::boxed::Box;
-use wiring::Transaction;
+use primitives::{Address, Bytes, U256};
 
 /// Inputs for a call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -44,34 +42,6 @@ pub struct CallInputs {
 }
 
 impl CallInputs {
-    /// Creates new call inputs.
-    ///
-    /// Returns `None` if the transaction is not a call.
-    pub fn new(tx_env: &impl Transaction, gas_limit: u64) -> Option<Self> {
-        let TxKind::Call(target_address) = tx_env.kind() else {
-            return None;
-        };
-        Some(CallInputs {
-            input: tx_env.data().clone(),
-            gas_limit,
-            target_address,
-            bytecode_address: target_address,
-            caller: *tx_env.caller(),
-            value: CallValue::Transfer(*tx_env.value()),
-            scheme: CallScheme::Call,
-            is_static: false,
-            is_eof: false,
-            return_memory_offset: 0..0,
-        })
-    }
-
-    /// Creates new boxed call inputs.
-    ///
-    /// Returns `None` if the transaction is not a call.
-    pub fn new_boxed(tx_env: &impl Transaction, gas_limit: u64) -> Option<Box<Self>> {
-        Self::new(tx_env, gas_limit).map(Box::new)
-    }
-
     /// Returns `true` if the call will transfer a non-zero value.
     #[inline]
     pub fn transfers_value(&self) -> bool {

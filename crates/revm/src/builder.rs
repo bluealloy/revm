@@ -2,10 +2,10 @@ use crate::{handler::register, Context, Evm, EvmContext, EvmWiring, Handler};
 use core::marker::PhantomData;
 use database_interface::EmptyDB;
 use std::boxed::Box;
+use transaction::TransactionError;
 use wiring::{
     default::{CfgEnv, EnvWiring},
     result::InvalidTransaction,
-    transaction::TransactionValidation,
     EthereumWiring,
 };
 
