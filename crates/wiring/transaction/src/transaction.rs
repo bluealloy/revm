@@ -6,9 +6,18 @@ use core::cmp::min;
 use core::fmt::Debug;
 use primitives::U256;
 
+/// Transaction validity error type.
+pub trait TransactionError: Debug + core::error::Error {}
+
+/// Main Transaction trait that abstracts and specifies all transaction currently supported by Ethereum.
+///
+/// Access to any associated type is gaited behind `tx_type` function.
+///
+/// It can be extended to support new transaction types and only transaction types can be
+/// deprecated by not returning tx_type.
 pub trait Transaction {
     /// An error that occurs when validating a transaction.
-    type ValidationError: Debug + core::error::Error;
+    type TransactionError: TransactionError;
 
     type Legacy: LegacyTx;
     type Eip1559: Eip1559Tx;

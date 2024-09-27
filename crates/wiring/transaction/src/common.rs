@@ -13,10 +13,4 @@ pub trait CommonTxFields {
     fn input(&self) -> &Bytes;
     /// The nonce of the transaction.
     fn nonce(&self) -> u64;
-    /// The chain ID of the transaction. If set to `None`, no checks are performed.
-    ///
-    /// Incorporated as part of the Spurious Dragon upgrade via [EIP-155].
-    ///
-    /// [EIP-155]: https://eips.ethereum.org/EIPS/eip-155
-    fn chain_id(&self) -> Option<u64>;
 }

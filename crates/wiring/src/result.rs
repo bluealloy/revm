@@ -1,10 +1,11 @@
-use crate::{evm_wiring::HaltReasonTrait, transaction::TransactionValidation, EvmWiring};
+use crate::{evm_wiring::HaltReasonTrait, EvmWiring};
 use core::fmt::{self, Debug};
 use database_interface::Database;
 use primitives::{Address, Bytes, Log, U256};
 use specification::eip7702::InvalidAuthorization;
 use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
+use transaction::{Transaction, TransactionError};
 
 /// Result of EVM execution.
 pub type EVMResult<EvmWiringT> =
@@ -16,7 +17,7 @@ pub type EVMResultGeneric<T, EvmWiringT> = core::result::Result<T, EVMErrorForCh
 /// EVM error type for a specific chain.
 pub type EVMErrorForChain<EvmWiringT> = EVMError<
     <<EvmWiringT as EvmWiring>::Database as Database>::Error,
-    <<EvmWiringT as EvmWiring>::Transaction as TransactionValidation>::ValidationError,
+    <<EvmWiringT as EvmWiring>::Transaction as Transaction>::TransactionError,
 >;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -147,15 +148,15 @@ impl Output {
 
 pub type EVMErrorWiring<EvmWiringT> = EVMError<
     <<EvmWiringT as EvmWiring>::Database as Database>::Error,
-    <<EvmWiringT as EvmWiring>::Transaction as TransactionValidation>::ValidationError,
+    <<EvmWiringT as EvmWiring>::Transaction as Transaction>::TransactionError,
 >;
 
 /// Main EVM error.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum EVMError<DBError, TransactionValidationErrorT> {
+pub enum EVMError<DBError, TransactionError> {
     /// Transaction validation error.
-    Transaction(TransactionValidationErrorT),
+    Transaction(TransactionError),
     /// Header validation error.
     Header(InvalidHeader),
     /// Database error.
@@ -305,6 +306,8 @@ pub enum InvalidTransaction {
     /// Invalid EIP-7702 Authorization List
     InvalidAuthorizationList(InvalidAuthorization),
 }
+
+impl TransactionError for InvalidTransaction {}
 
 impl From<InvalidAuthorization> for InvalidTransaction {
     fn from(value: InvalidAuthorization) -> Self {

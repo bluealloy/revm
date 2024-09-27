@@ -1,4 +1,7 @@
+
+/// Transaction types of all Ethereum transaction.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactionType {
     /// Legacy transaction type.
     Legacy,

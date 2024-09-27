@@ -1,8 +1,12 @@
 pub mod block;
+pub mod tx;
+
+use specification::eip2930::AccessList;
+use transaction::{Eip4844Tx, TransactionType};
+pub use tx::TxEnv;
 
 use crate::block::blob::calc_blob_gasprice;
 use crate::result::InvalidHeader;
-use crate::transaction::TransactionValidation;
 use crate::{result::InvalidTransaction, Block, EvmWiring, Transaction};
 use core::cmp::{min, Ordering};
 use core::fmt::Debug;
@@ -58,9 +62,12 @@ impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
     pub fn calc_data_fee(&self) -> Option<U256> {
-        self.block.get_blob_gasprice().map(|blob_gas_price| {
-            U256::from(*blob_gas_price).saturating_mul(U256::from(self.tx.get_total_blob_gas()))
-        })
+        if self.tx.tx_type().into() == TransactionType::Eip4844 {
+            let blob_gas = self.tx.eip4844().total_blob_gas();
+            let blob_gas_price = self.block.blob_gasprice().cloned().unwrap_or_default();
+            return Some(U256::from(blob_gas_price).saturating_mul(U256::from(blob_gas)));
+        }
+        None
     }
 
     /// Calculates the maximum [EIP-4844] `data_fee` of the transaction.
@@ -442,142 +449,6 @@ impl Default for CfgEnv {
     }
 }
 
-/// The transaction environment.
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct TxEnv {
-    /// Caller aka Author aka transaction signer.
-    pub caller: Address,
-    /// The gas limit of the transaction.
-    pub gas_limit: u64,
-    /// The gas price of the transaction.
-    pub gas_price: U256,
-    /// The destination of the transaction.
-    pub transact_to: TxKind,
-    /// The value sent to `transact_to`.
-    pub value: U256,
-    /// The data of the transaction.
-    pub data: Bytes,
-
-    /// The nonce of the transaction.
-    pub nonce: u64,
-
-    /// The chain ID of the transaction. If set to `None`, no checks are performed.
-    ///
-    /// Incorporated as part of the Spurious Dragon upgrade via [EIP-155].
-    ///
-    /// [EIP-155]: https://eips.ethereum.org/EIPS/eip-155
-    pub chain_id: Option<u64>,
-
-    /// A list of addresses and storage keys that the transaction plans to access.
-    ///
-    /// Added in [EIP-2930].
-    ///
-    /// [EIP-2930]: https://eips.ethereum.org/EIPS/eip-2930
-    pub access_list: Vec<AccessListItem>,
-
-    /// The priority fee per gas.
-    ///
-    /// Incorporated as part of the London upgrade via [EIP-1559].
-    ///
-    /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
-    pub gas_priority_fee: Option<U256>,
-
-    /// The list of blob versioned hashes. Per EIP there should be at least
-    /// one blob present if [`Self::max_fee_per_blob_gas`] is `Some`.
-    ///
-    /// Incorporated as part of the Cancun upgrade via [EIP-4844].
-    ///
-    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub blob_hashes: Vec<B256>,
-
-    /// The max fee per blob gas.
-    ///
-    /// Incorporated as part of the Cancun upgrade via [EIP-4844].
-    ///
-    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub max_fee_per_blob_gas: Option<U256>,
-
-    /// List of authorizations, that contains the signature that authorizes this
-    /// caller to place the code to signer account.
-    ///
-    /// Set EOA account code for one transaction
-    ///
-    /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
-    pub authorization_list: Option<AuthorizationList>,
-}
-
-impl Transaction for TxEnv {
-    #[inline]
-    fn caller(&self) -> &Address {
-        &self.caller
-    }
-
-    #[inline]
-    fn gas_limit(&self) -> u64 {
-        self.gas_limit
-    }
-
-    #[inline]
-    fn gas_price(&self) -> &U256 {
-        &self.gas_price
-    }
-
-    #[inline]
-    fn kind(&self) -> TxKind {
-        self.transact_to
-    }
-
-    #[inline]
-    fn value(&self) -> &U256 {
-        &self.value
-    }
-
-    #[inline]
-    fn data(&self) -> &Bytes {
-        &self.data
-    }
-
-    #[inline]
-    fn nonce(&self) -> u64 {
-        self.nonce
-    }
-
-    #[inline]
-    fn chain_id(&self) -> Option<u64> {
-        self.chain_id
-    }
-
-    #[inline]
-    fn access_list(&self) -> &[AccessListItem] {
-        &self.access_list
-    }
-
-    #[inline]
-    fn max_priority_fee_per_gas(&self) -> Option<&U256> {
-        self.gas_priority_fee.as_ref()
-    }
-
-    #[inline]
-    fn blob_hashes(&self) -> &[B256] {
-        &self.blob_hashes
-    }
-
-    #[inline]
-    fn max_fee_per_blob_gas(&self) -> Option<&U256> {
-        self.max_fee_per_blob_gas.as_ref()
-    }
-
-    #[inline]
-    fn authorization_list(&self) -> Option<&AuthorizationList> {
-        self.authorization_list.as_ref()
-    }
-}
-
-impl TransactionValidation for TxEnv {
-    type ValidationError = InvalidTransaction;
-}
-
 pub enum TxType {
     Legacy,
     Eip1559,
@@ -588,6 +459,7 @@ pub enum TxType {
 impl Default for TxEnv {
     fn default() -> Self {
         Self {
+            tx_type: TransactionType::Legacy,
             caller: Address::ZERO,
             gas_limit: u64::MAX,
             gas_price: U256::ZERO,
@@ -597,7 +469,7 @@ impl Default for TxEnv {
             data: Bytes::new(),
             chain_id: None,
             nonce: 0,
-            access_list: Vec::new(),
+            access_list: AccessList::default(),
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: None,
             authorization_list: None,
@@ -680,7 +552,8 @@ mod tests {
         env.tx.access_list = vec![AccessListItem {
             address: Address::ZERO,
             storage_keys: vec![],
-        }];
+        }]
+        .into();
         assert_eq!(
             env.validate_tx::<FrontierSpec>(),
             Err(InvalidTransaction::AccessListNotSupported)

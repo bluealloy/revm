@@ -3082,6 +3082,7 @@ dependencies = [
  "revm-primitives",
  "revm-specification",
  "revm-state",
+ "revm-transaction",
  "serde",
 ]
 
