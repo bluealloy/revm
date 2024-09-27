@@ -27,6 +27,7 @@ bytecode.workspace = true
 primitives.workspace = true
 specification.workspace = true
 wiring.workspace = true
+transaction.workspace = true
 
 # mics
 derive-where = { version = "1.2.7", default-features = false }

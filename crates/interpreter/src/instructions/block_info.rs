@@ -55,7 +55,7 @@ pub fn blob_basefee<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter,
         U256::from(
             host.env()
                 .block
-                .get_blob_gasprice()
+                .blob_gasprice()
                 .copied()
                 .unwrap_or_default()
         )

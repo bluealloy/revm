@@ -76,16 +76,16 @@ pub struct TxEnv {
 }
 
 impl CommonTxFields for TxEnv {
-    fn caller(&self) -> &Address {
-        &self.caller
+    fn caller(&self) -> Address {
+        self.caller
     }
 
     fn gas_limit(&self) -> u64 {
         self.gas_limit
     }
 
-    fn value(&self) -> &U256 {
-        &self.value
+    fn value(&self) -> U256 {
+        self.value
     }
 
     fn input(&self) -> &Bytes {
@@ -156,6 +156,13 @@ impl Eip1559Tx for TxEnv {
 }
 
 impl Eip4844Tx for TxEnv {
+    fn destination(&self) -> Address {
+        match self.transact_to {
+            TxKind::Call(addr) => addr,
+            TxKind::Create => panic!("Create transaction are not allowed in Eip4844"),
+        }
+    }
+
     fn blob_versioned_hashes(&self) -> &[B256] {
         &self.blob_hashes
     }
@@ -166,6 +173,13 @@ impl Eip4844Tx for TxEnv {
 }
 
 impl Eip7702Tx for TxEnv {
+    fn destination(&self) -> Address {
+        match self.transact_to {
+            TxKind::Call(addr) => addr,
+            TxKind::Create => panic!("Create transaction are not allowed in Eip7702"),
+        }
+    }
+
     fn authorization_list(&self) -> Option<&AuthorizationList> {
         self.authorization_list.as_ref()
     }

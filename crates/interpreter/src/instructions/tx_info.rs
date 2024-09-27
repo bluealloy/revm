@@ -1,7 +1,8 @@
 use crate::{gas, Host, Interpreter};
 use primitives::U256;
 use specification::hardfork::Spec;
-use wiring::Transaction;
+use transaction::Eip4844Tx;
+use wiring::{Transaction, TransactionType};
 
 pub fn gasprice<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
@@ -10,7 +11,10 @@ pub fn gasprice<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
 
 pub fn origin<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, host.env().tx.caller().into_word());
+    push_b256!(
+        interpreter,
+        host.env().tx.common_fields().caller().into_word()
+    );
 }
 
 // EIP-4844: Shard Blob Transactions
@@ -19,8 +23,15 @@ pub fn blob_hash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, index);
     let i = as_usize_saturated!(index);
-    *index = match host.env().tx.blob_hashes().get(i) {
-        Some(hash) => U256::from_be_bytes(hash.0),
-        None => U256::ZERO,
+    let tx = &host.env().tx;
+    *index = if tx.tx_type().into() == TransactionType::Eip4844 {
+        tx.eip4844()
+            .blob_versioned_hashes()
+            .get(i)
+            .cloned()
+            .map(|b| U256::from_be_bytes(*b))
+            .unwrap_or(U256::ZERO)
+    } else {
+        U256::ZERO
     };
 }

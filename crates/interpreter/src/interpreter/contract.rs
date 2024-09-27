@@ -57,22 +57,20 @@ impl Contract {
         bytecode: Bytecode,
         hash: Option<B256>,
     ) -> Self {
-        let contract_address = match env.tx.kind() {
-            TxKind::Call(caller) => caller,
-            TxKind::Create => Address::ZERO,
-        };
         let bytecode_address = match env.tx.kind() {
             TxKind::Call(caller) => Some(caller),
             TxKind::Create => None,
         };
+        let target_address = bytecode_address.unwrap_or_default();
+
         Self::new(
-            env.tx.data().clone(),
+            env.tx.common_fields().input().clone(),
             bytecode,
             hash,
-            contract_address,
+            target_address,
             bytecode_address,
-            *env.tx.caller(),
-            *env.tx.value(),
+            env.tx.common_fields().caller(),
+            env.tx.common_fields().value(),
         )
     }
 

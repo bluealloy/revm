@@ -10,6 +10,10 @@ use specification::hardfork::Spec;
 use std::{boxed::Box, sync::Arc};
 use wiring::result::EVMResultGeneric;
 
+/// Handles creation of first frame
+pub type FirstFrameCreation<'a, EvmWiringT> =
+    Arc<dyn Fn(&mut Context<EvmWiringT>) -> EVMResultGeneric<InterpreterAction, EvmWiringT> + 'a>;
+
 /// Handles first frame return handle.
 pub type LastFrameReturnHandle<'a, EvmWiringT> = Arc<
     dyn Fn(&mut Context<EvmWiringT>, &mut FrameResult) -> EVMResultGeneric<(), EvmWiringT> + 'a,

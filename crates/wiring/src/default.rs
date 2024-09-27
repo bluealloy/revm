@@ -63,9 +63,10 @@ impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
     #[inline]
     pub fn calc_data_fee(&self) -> Option<U256> {
         if self.tx.tx_type().into() == TransactionType::Eip4844 {
-            let blob_gas = self.tx.eip4844().total_blob_gas();
-            let blob_gas_price = self.block.blob_gasprice().cloned().unwrap_or_default();
-            return Some(U256::from(blob_gas_price).saturating_mul(U256::from(blob_gas)));
+            let blob_gas = U256::from(self.tx.eip4844().total_blob_gas());
+            let blob_gas_price =
+                U256::from(self.block.blob_gasprice().cloned().unwrap_or_default());
+            return Some(blob_gas_price.saturating_mul(blob_gas));
         }
         None
     }
@@ -78,9 +79,12 @@ impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
     /// See EIP-4844:
     /// <https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#execution-layer-validation>
     pub fn calc_max_data_fee(&self) -> Option<U256> {
-        self.tx.max_fee_per_blob_gas().map(|max_fee_per_blob_gas| {
-            max_fee_per_blob_gas.saturating_mul(U256::from(self.tx.get_total_blob_gas()))
-        })
+        if self.tx.tx_type().into() == TransactionType::Eip4844 {
+            let blob_gas = U256::from(self.tx.eip4844().total_blob_gas());
+            let max_blob_fee = U256::from(self.tx.eip4844().max_fee_per_blob_gas());
+            return Some(max_blob_fee.saturating_mul(blob_gas));
+        }
+        None
     }
 
     /// Validate the block environment.
@@ -97,200 +101,200 @@ impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
         Ok(())
     }
 
-    /// Validate transaction data that is set inside ENV and return error if something is wrong.
-    ///
-    /// Return initial spend gas (Gas needed to execute transaction).
-    #[inline]
-    pub fn validate_tx<SPEC: Spec>(&self) -> Result<(), InvalidTransaction> {
-        // Check if the transaction's chain id is correct
-        if let Some(tx_chain_id) = self.tx.chain_id() {
-            if tx_chain_id != self.cfg.chain_id {
-                return Err(InvalidTransaction::InvalidChainId);
-            }
-        }
+    // /// Validate transaction data that is set inside ENV and return error if something is wrong.
+    // ///
+    // /// Return initial spend gas (Gas needed to execute transaction).
+    // #[inline]
+    // pub fn validate_tx<SPEC: Spec>(&self) -> Result<(), InvalidTransaction> {
+    //     // Check if the transaction's chain id is correct
+    //     if let Some(tx_chain_id) = self.tx.chain_id() {
+    //         if tx_chain_id != self.cfg.chain_id {
+    //             return Err(InvalidTransaction::InvalidChainId);
+    //         }
+    //     }
 
-        // Check if gas_limit is more than block_gas_limit
-        if !self.cfg.is_block_gas_limit_disabled()
-            && U256::from(self.tx.gas_limit()) > *self.block.gas_limit()
-        {
-            return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
-        }
+    //     // Check if gas_limit is more than block_gas_limit
+    //     if !self.cfg.is_block_gas_limit_disabled()
+    //         && U256::from(self.tx.gas_limit()) > *self.block.gas_limit()
+    //     {
+    //         return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
+    //     }
 
-        // Check that access list is empty for transactions before BERLIN
-        if !SPEC::enabled(SpecId::BERLIN) && !self.tx.access_list().is_empty() {
-            return Err(InvalidTransaction::AccessListNotSupported);
-        }
+    //     // Check that access list is empty for transactions before BERLIN
+    //     if !SPEC::enabled(SpecId::BERLIN) && !self.tx.access_list().is_empty() {
+    //         return Err(InvalidTransaction::AccessListNotSupported);
+    //     }
 
-        // BASEFEE tx check
-        if SPEC::enabled(SpecId::LONDON) {
-            if let Some(priority_fee) = self.tx.max_priority_fee_per_gas() {
-                if priority_fee > self.tx.gas_price() {
-                    // or gas_max_fee for eip1559
-                    return Err(InvalidTransaction::PriorityFeeGreaterThanMaxFee);
-                }
-            }
+    //     // BASEFEE tx check
+    //     if SPEC::enabled(SpecId::LONDON) {
+    //         if let Some(priority_fee) = self.tx.max_priority_fee_per_gas() {
+    //             if priority_fee > self.tx.gas_price() {
+    //                 // or gas_max_fee for eip1559
+    //                 return Err(InvalidTransaction::PriorityFeeGreaterThanMaxFee);
+    //             }
+    //         }
 
-            // check minimal cost against basefee
-            // TODO uncomment when basefee is implemented
-            // if !self.cfg.is_base_fee_check_disabled()
-            //     && self.effective_gas_price() < *self.block.basefee()
-            // {
-            //     return Err(InvalidTransaction::GasPriceLessThanBasefee);
-            // }
-        }
+    //         // check minimal cost against basefee
+    //         // TODO uncomment when basefee is implemented
+    //         // if !self.cfg.is_base_fee_check_disabled()
+    //         //     && self.effective_gas_price() < *self.block.basefee()
+    //         // {
+    //         //     return Err(InvalidTransaction::GasPriceLessThanBasefee);
+    //         // }
+    //     }
 
-        // EIP-3860: Limit and meter initcode
-        if SPEC::enabled(SpecId::SHANGHAI) && self.tx.kind().is_create() {
-            let max_initcode_size = self
-                .cfg
-                .limit_contract_code_size
-                .map(|limit| limit.saturating_mul(2))
-                .unwrap_or(MAX_INITCODE_SIZE);
-            if self.tx.data().len() > max_initcode_size {
-                return Err(InvalidTransaction::CreateInitCodeSizeLimit);
-            }
-        }
+    //     // EIP-3860: Limit and meter initcode
+    //     if SPEC::enabled(SpecId::SHANGHAI) && self.tx.kind().is_create() {
+    //         let max_initcode_size = self
+    //             .cfg
+    //             .limit_contract_code_size
+    //             .map(|limit| limit.saturating_mul(2))
+    //             .unwrap_or(MAX_INITCODE_SIZE);
+    //         if self.tx.data().len() > max_initcode_size {
+    //             return Err(InvalidTransaction::CreateInitCodeSizeLimit);
+    //         }
+    //     }
 
-        // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not set
-        if !SPEC::enabled(SpecId::CANCUN)
-            && (self.tx.max_fee_per_blob_gas().is_some() || !self.tx.blob_hashes().is_empty())
-        {
-            return Err(InvalidTransaction::BlobVersionedHashesNotSupported);
-        }
+    //     // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not set
+    //     if !SPEC::enabled(SpecId::CANCUN)
+    //         && (self.tx.max_fee_per_blob_gas().is_some() || !self.tx.blob_hashes().is_empty())
+    //     {
+    //         return Err(InvalidTransaction::BlobVersionedHashesNotSupported);
+    //     }
 
-        // Presence of max_fee_per_blob_gas means that this is blob transaction.
-        if let Some(max) = self.tx.max_fee_per_blob_gas() {
-            // ensure that the user was willing to at least pay the current blob gasprice
-            let price = self.block.get_blob_gasprice().expect("already checked");
-            if U256::from(*price) > *max {
-                return Err(InvalidTransaction::BlobGasPriceGreaterThanMax);
-            }
+    //     // Presence of max_fee_per_blob_gas means that this is blob transaction.
+    //     if let Some(max) = self.tx.max_fee_per_blob_gas() {
+    //         // ensure that the user was willing to at least pay the current blob gasprice
+    //         let price = self.block.get_blob_gasprice().expect("already checked");
+    //         if U256::from(*price) > *max {
+    //             return Err(InvalidTransaction::BlobGasPriceGreaterThanMax);
+    //         }
 
-            // there must be at least one blob
-            if self.tx.blob_hashes().is_empty() {
-                return Err(InvalidTransaction::EmptyBlobs);
-            }
+    //         // there must be at least one blob
+    //         if self.tx.blob_hashes().is_empty() {
+    //             return Err(InvalidTransaction::EmptyBlobs);
+    //         }
 
-            // The field `to` deviates slightly from the semantics with the exception
-            // that it MUST NOT be nil and therefore must always represent
-            // a 20-byte address. This means that blob transactions cannot
-            // have the form of a create transaction.
-            if self.tx.kind().is_create() {
-                return Err(InvalidTransaction::BlobCreateTransaction);
-            }
+    //         // The field `to` deviates slightly from the semantics with the exception
+    //         // that it MUST NOT be nil and therefore must always represent
+    //         // a 20-byte address. This means that blob transactions cannot
+    //         // have the form of a create transaction.
+    //         if self.tx.kind().is_create() {
+    //             return Err(InvalidTransaction::BlobCreateTransaction);
+    //         }
 
-            // all versioned blob hashes must start with VERSIONED_HASH_VERSION_KZG
-            for blob in self.tx.blob_hashes() {
-                if blob[0] != VERSIONED_HASH_VERSION_KZG {
-                    return Err(InvalidTransaction::BlobVersionNotSupported);
-                }
-            }
+    //         // all versioned blob hashes must start with VERSIONED_HASH_VERSION_KZG
+    //         for blob in self.tx.blob_hashes() {
+    //             if blob[0] != VERSIONED_HASH_VERSION_KZG {
+    //                 return Err(InvalidTransaction::BlobVersionNotSupported);
+    //             }
+    //         }
 
-            // ensure the total blob gas spent is at most equal to the limit
-            // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
-            let num_blobs = self.tx.blob_hashes().len();
-            if num_blobs > MAX_BLOB_NUMBER_PER_BLOCK as usize {
-                return Err(InvalidTransaction::TooManyBlobs {
-                    have: num_blobs,
-                    max: MAX_BLOB_NUMBER_PER_BLOCK as usize,
-                });
-            }
-        } else {
-            // if max_fee_per_blob_gas is not set, then blob_hashes must be empty
-            if !self.tx.blob_hashes().is_empty() {
-                return Err(InvalidTransaction::BlobVersionedHashesNotSupported);
-            }
-        }
+    //         // ensure the total blob gas spent is at most equal to the limit
+    //         // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
+    //         let num_blobs = self.tx.blob_hashes().len();
+    //         if num_blobs > MAX_BLOB_NUMBER_PER_BLOCK as usize {
+    //             return Err(InvalidTransaction::TooManyBlobs {
+    //                 have: num_blobs,
+    //                 max: MAX_BLOB_NUMBER_PER_BLOCK as usize,
+    //             });
+    //         }
+    //     } else {
+    //         // if max_fee_per_blob_gas is not set, then blob_hashes must be empty
+    //         if !self.tx.blob_hashes().is_empty() {
+    //             return Err(InvalidTransaction::BlobVersionedHashesNotSupported);
+    //         }
+    //     }
 
-        // check if EIP-7702 transaction is enabled.
-        if !SPEC::enabled(SpecId::PRAGUE) && self.tx.authorization_list().is_some() {
-            return Err(InvalidTransaction::AuthorizationListNotSupported);
-        }
+    //     // check if EIP-7702 transaction is enabled.
+    //     if !SPEC::enabled(SpecId::PRAGUE) && self.tx.authorization_list().is_some() {
+    //         return Err(InvalidTransaction::AuthorizationListNotSupported);
+    //     }
 
-        if let Some(auth_list) = &self.tx.authorization_list() {
-            // The transaction is considered invalid if the length of authorization_list is zero.
-            if auth_list.is_empty() {
-                return Err(InvalidTransaction::EmptyAuthorizationList);
-            }
+    //     if let Some(auth_list) = &self.tx.authorization_list() {
+    //         // The transaction is considered invalid if the length of authorization_list is zero.
+    //         if auth_list.is_empty() {
+    //             return Err(InvalidTransaction::EmptyAuthorizationList);
+    //         }
 
-            // Check validity of authorization_list
-            auth_list.is_valid(self.cfg.chain_id)?;
+    //         // Check validity of authorization_list
+    //         auth_list.is_valid(self.cfg.chain_id)?;
 
-            // Check if other fields are unset.
-            if self.tx.max_fee_per_blob_gas().is_some() || !self.tx.blob_hashes().is_empty() {
-                return Err(InvalidTransaction::AuthorizationListInvalidFields);
-            }
-        }
+    //         // Check if other fields are unset.
+    //         if self.tx.max_fee_per_blob_gas().is_some() || !self.tx.blob_hashes().is_empty() {
+    //             return Err(InvalidTransaction::AuthorizationListInvalidFields);
+    //         }
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    /// Validate transaction against state.
-    ///
-    /// # Panics
-    ///
-    /// If account code is not loaded.
-    #[inline]
-    pub fn validate_tx_against_state<SPEC: Spec>(
-        &self,
-        account: &mut Account,
-    ) -> Result<(), InvalidTransaction> {
-        // EIP-3607: Reject transactions from senders with deployed code
-        // This EIP is introduced after london but there was no collision in past
-        // so we can leave it enabled always
-        if !self.cfg.is_eip3607_disabled() {
-            let bytecode = &account.info.code.as_ref().unwrap();
-            // allow EOAs whose code is a valid delegation designation,
-            // i.e. 0xef0100 || address, to continue to originate transactions.
-            if !bytecode.is_empty() && !bytecode.is_eip7702() {
-                return Err(InvalidTransaction::RejectCallerWithCode);
-            }
-        }
+    // /// Validate transaction against state.
+    // ///
+    // /// # Panics
+    // ///
+    // /// If account code is not loaded.
+    // #[inline]
+    // pub fn validate_tx_against_state<SPEC: Spec>(
+    //     &self,
+    //     account: &mut Account,
+    // ) -> Result<(), InvalidTransaction> {
+    //     // EIP-3607: Reject transactions from senders with deployed code
+    //     // This EIP is introduced after london but there was no collision in past
+    //     // so we can leave it enabled always
+    //     if !self.cfg.is_eip3607_disabled() {
+    //         let bytecode = &account.info.code.as_ref().unwrap();
+    //         // allow EOAs whose code is a valid delegation designation,
+    //         // i.e. 0xef0100 || address, to continue to originate transactions.
+    //         if !bytecode.is_empty() && !bytecode.is_eip7702() {
+    //             return Err(InvalidTransaction::RejectCallerWithCode);
+    //         }
+    //     }
 
-        // Check that the transaction's nonce is correct
-        if !self.cfg.is_nonce_check_disabled() {
-            let tx = self.tx.nonce();
-            let state = account.info.nonce;
-            match tx.cmp(&state) {
-                Ordering::Greater => {
-                    return Err(InvalidTransaction::NonceTooHigh { tx, state });
-                }
-                Ordering::Less => {
-                    return Err(InvalidTransaction::NonceTooLow { tx, state });
-                }
-                _ => {}
-            }
-        }
+    //     // Check that the transaction's nonce is correct
+    //     if !self.cfg.is_nonce_check_disabled() {
+    //         let tx = self.tx.common_fields().nonce();
+    //         let state = account.info.nonce;
+    //         match tx.cmp(&state) {
+    //             Ordering::Greater => {
+    //                 return Err(InvalidTransaction::NonceTooHigh { tx, state });
+    //             }
+    //             Ordering::Less => {
+    //                 return Err(InvalidTransaction::NonceTooLow { tx, state });
+    //             }
+    //             _ => {}
+    //         }
+    //     }
 
-        let mut balance_check = U256::from(self.tx.gas_limit())
-            .checked_mul(*self.tx.gas_price())
-            .and_then(|gas_cost| gas_cost.checked_add(*self.tx.value()))
-            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+    //     let mut balance_check = U256::from(self.tx.gas_limit())
+    //         .checked_mul(*self.tx.gas_price())
+    //         .and_then(|gas_cost| gas_cost.checked_add(*self.tx.common_fields().svalue()))
+    //         .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
-        if SPEC::enabled(SpecId::CANCUN) {
-            // if the tx is not a blob tx, this will be None, so we add zero
-            let data_fee = self.calc_max_data_fee().unwrap_or_default();
-            balance_check = balance_check
-                .checked_add(U256::from(data_fee))
-                .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
-        }
+    //     if SPEC::enabled(SpecId::CANCUN) {
+    //         // if the tx is not a blob tx, this will be None, so we add zero
+    //         let data_fee = self.calc_max_data_fee().unwrap_or_default();
+    //         balance_check = balance_check
+    //             .checked_add(U256::from(data_fee))
+    //             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+    //     }
 
-        // Check if account has enough balance for gas_limit*gas_price and value transfer.
-        // Transfer will be done inside `*_inner` functions.
-        if balance_check > account.info.balance {
-            if self.cfg.is_balance_check_disabled() {
-                // Add transaction cost to balance to ensure execution doesn't fail.
-                account.info.balance = balance_check;
-            } else {
-                return Err(InvalidTransaction::LackOfFundForMaxFee {
-                    fee: Box::new(balance_check),
-                    balance: Box::new(account.info.balance),
-                });
-            }
-        }
+    //     // Check if account has enough balance for gas_limit*gas_price and value transfer.
+    //     // Transfer will be done inside `*_inner` functions.
+    //     if balance_check > account.info.balance {
+    //         if self.cfg.is_balance_check_disabled() {
+    //             // Add transaction cost to balance to ensure execution doesn't fail.
+    //             account.info.balance = balance_check;
+    //         } else {
+    //             return Err(InvalidTransaction::LackOfFundForMaxFee {
+    //                 fee: Box::new(balance_check),
+    //                 balance: Box::new(account.info.balance),
+    //             });
+    //         }
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 }
 
 impl<BlockT: Block + Default, TxT: Transaction + Default> Env<BlockT, TxT> {
@@ -535,28 +539,28 @@ mod tests {
     use crate::default::block::BlockEnv;
     use specification::hardfork::{FrontierSpec, LatestSpec};
 
-    #[test]
-    fn test_validate_tx_chain_id() {
-        let mut env = Env::<BlockEnv, TxEnv>::default();
-        env.tx.chain_id = Some(1);
-        env.cfg.chain_id = 2;
-        assert_eq!(
-            env.validate_tx::<LatestSpec>(),
-            Err(InvalidTransaction::InvalidChainId)
-        );
-    }
+    // #[test]
+    // fn test_validate_tx_chain_id() {
+    //     let mut env = Env::<BlockEnv, TxEnv>::default();
+    //     env.tx.chain_id = Some(1);
+    //     env.cfg.chain_id = 2;
+    //     assert_eq!(
+    //         env.validate_tx::<LatestSpec>(),
+    //         Err(InvalidTransaction::InvalidChainId)
+    //     );
+    // }
 
-    #[test]
-    fn test_validate_tx_access_list() {
-        let mut env = Env::<BlockEnv, TxEnv>::default();
-        env.tx.access_list = vec![AccessListItem {
-            address: Address::ZERO,
-            storage_keys: vec![],
-        }]
-        .into();
-        assert_eq!(
-            env.validate_tx::<FrontierSpec>(),
-            Err(InvalidTransaction::AccessListNotSupported)
-        );
-    }
+    // #[test]
+    // fn test_validate_tx_access_list() {
+    //     let mut env = Env::<BlockEnv, TxEnv>::default();
+    //     env.tx.access_list = vec![AccessListItem {
+    //         address: Address::ZERO,
+    //         storage_keys: vec![],
+    //     }]
+    //     .into();
+    //     assert_eq!(
+    //         env.validate_tx::<FrontierSpec>(),
+    //         Err(InvalidTransaction::AccessListNotSupported)
+    //     );
+    // }
 }

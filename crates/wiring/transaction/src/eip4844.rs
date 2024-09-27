@@ -1,8 +1,11 @@
 use crate::eip1559::Eip1559CommonTxFields;
-use primitives::B256;
+use primitives::{Address, B256};
 use specification::eip4844::GAS_PER_BLOB;
 
 pub trait Eip4844Tx: Eip1559CommonTxFields {
+    /// Call destination
+    fn destination(&self) -> Address;
+
     /// Returns vector of fixed size hash(32 bytes)
     fn blob_versioned_hashes(&self) -> &[B256];
 

@@ -4,9 +4,9 @@ use crate::{
 };
 use core::cmp::min;
 use core::fmt::Debug;
-use primitives::U256;
+use primitives::{TxKind, U256};
 
-/// Transaction validity error type.
+/// Transaction validity error types.
 pub trait TransactionError: Debug + core::error::Error {}
 
 /// Main Transaction trait that abstracts and specifies all transaction currently supported by Ethereum.
@@ -82,4 +82,30 @@ pub trait Transaction {
 
         min(U256::from(max_fee), base_fee + U256::from(max_priority_fee))
     }
+
+    fn kind(&self) -> TxKind {
+        let tx_type = self.tx_type().into();
+        match tx_type {
+            TransactionType::Legacy => self.legacy().kind(),
+            TransactionType::Eip2930 => self.eip2930().kind(),
+            TransactionType::Eip1559 => self.eip1559().kind(),
+            TransactionType::Eip4844 => TxKind::Call(self.eip4844().destination()),
+            TransactionType::Eip7702 => TxKind::Call(self.eip7702().destination()),
+        }
+    }
 }
+
+pub trait TransactionExt {
+    fn effective_gas_price(&self, base_fee: U256) -> U256;
+}
+
+// impl<Tx : Transaction> TransactionExt for Tx {
+//     fn effective_gas_price(&self, base_fee: U256) -> U256 {
+//         Transaction::effective_gas_price(self, base_fee)
+//     }
+
+//     fn data(&self) -> &[u8] {
+//         self.common_fields().input().as_ref()
+//     }
+
+// }
