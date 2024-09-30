@@ -2,15 +2,20 @@ use crate::{
     frame::EOFCreateFrame, CallFrame, Context, CreateFrame, EvmWiring, Frame, FrameOrResult,
     FrameResult,
 };
+use bytecode::EOF_MAGIC_BYTES;
 use core::mem;
 use interpreter::{
-    return_ok, return_revert, table::InstructionTables, CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Gas, InstructionResult, InterpreterAction, InterpreterResult, NewFrameAction, SharedMemory, EMPTY_SHARED_MEMORY
+    return_ok, return_revert, table::InstructionTables, CallInputs, CallOutcome, CallScheme,
+    CallValue, CreateInputs, CreateOutcome, CreateScheme, EOFCreateInputs, EOFCreateKind, Gas,
+    InstructionResult, InterpreterAction, InterpreterResult, NewFrameAction, SharedMemory,
+    EMPTY_SHARED_MEMORY,
 };
-use specification::hardfork::Spec;
+use primitives::TxKind;
+use specification::hardfork::{Spec, SpecId};
 use std::boxed::Box;
 use wiring::{
     result::{EVMError, EVMResultGeneric},
-    Transaction,
+    Transaction, TransactionType,
 };
 
 /// Execute frame
@@ -34,74 +39,50 @@ pub fn execute_frame<EvmWiringT: EvmWiring, SPEC: Spec>(
 }
 
 /// First frame creation.
-pub fn first_frame_creation<EvmWiringT: EvmWiring>(
+pub fn first_frame_creation<EvmWiringT: EvmWiring, SPEC: Spec>(
     context: &mut Context<EvmWiringT>,
+    gas_limit: u64,
 ) -> EVMResultGeneric<NewFrameAction, EvmWiringT> {
     // Make new frame action.
+    let tx = &context.evm.env.tx;
 
-    // impl CallInputs {
-    //     /// Creates new call inputs.
-    //     ///
-    //     /// Returns `None` if the transaction is not a call.
-    //     pub fn new(tx_env: &impl Transaction, gas_limit: u64) -> Option<Self> {
-    //         let TxKind::Call(target_address) = tx_env.kind() else {
-    //             return None;
-    //         };
-    //         Some(CallInputs {
-    //             input: tx_env.data().clone(),
-    //             gas_limit,
-    //             target_address,
-    //             bytecode_address: target_address,
-    //             caller: *tx_env.caller(),
-    //             value: CallValue::Transfer(*tx_env.value()),
-    //             scheme: CallScheme::Call,
-    //             is_static: false,
-    //             is_eof: false,
-    //             return_memory_offset: 0..0,
-    //         })
-    //     }
-    // }
-    //     /// Creates new boxed call inputs.
-    // ///
-    // /// Returns `None` if the transaction is not a call.
-    // pub fn new_boxed(tx_env: &impl Transaction, gas_limit: u64) -> Option<Box<Self>> {
-    //     Self::new(tx_env, gas_limit).map(Box::new)
-    // }
+    let input = tx.common_fields().input().clone();
 
-    // impl CreateInputs {
-    //     /// Creates new create inputs.
-    //     pub fn new(tx_env: &impl Transaction, gas_limit: u64) -> Option<Self> {
-    //         let TxKind::Create = tx_env.kind() else {
-    //             return None;
-    //         };
+    let new_frame = match tx.kind() {
+        TxKind::Call(target_address) => NewFrameAction::Call(Box::new(CallInputs {
+            input,
+            gas_limit: tx.common_fields().gas_limit(),
+            target_address,
+            bytecode_address: target_address,
+            caller: tx.common_fields().caller(),
+            value: CallValue::Transfer(tx.common_fields().value()),
+            scheme: CallScheme::Call,
+            is_static: false,
+            is_eof: false,
+            return_memory_offset: 0..0,
+        })),
+        TxKind::Create => {
+            // if first byte of data is magic 0xEF00, then it is EOFCreate.
+            if SPEC::enabled(SpecId::PRAGUE_EOF) && input.starts_with(&EOF_MAGIC_BYTES) {
+                NewFrameAction::EOFCreate(Box::new(EOFCreateInputs::new(
+                    tx.common_fields().caller(),
+                    tx.common_fields().value(),
+                    gas_limit,
+                    EOFCreateKind::Tx { initdata: input },
+                )))
+            } else {
+                NewFrameAction::Create(Box::new(CreateInputs {
+                    caller: tx.common_fields().caller(),
+                    scheme: CreateScheme::Create,
+                    value: tx.common_fields().value(),
+                    init_code: input,
+                    gas_limit,
+                }))
+            }
+        }
+    };
 
-    //         Some(CreateInputs {
-    //             caller: *tx_env.caller(),
-    //             scheme: CreateScheme::Create,
-    //             value: *tx_env.value(),
-    //             init_code: tx_env.data().clone(),
-    //             gas_limit,
-    //         })
-    //     }
-
-    //     /// Returns boxed create inputs.
-    //     pub fn new_boxed(tx_env: &impl Transaction, gas_limit: u64) -> Option<Box<Self>> {
-    //         Self::new(tx_env, gas_limit).map(Box::new)
-    //     }
-
-    // /// Creates new EOFCreateInputs from transaction.
-    // pub fn new_tx<EvmWiringT: EvmWiring>(tx: &EvmWiringT::Transaction, gas_limit: u64) -> Self {
-    //     EOFCreateInputs::new(
-    //         *tx.caller(),
-    //         *tx.value(),
-    //         gas_limit,
-    //         EOFCreateKind::Tx {
-    //             initdata: tx.data().clone(),
-    //         },
-    //     )
-    // }
-
-    context.evm.make_first_frame()
+    Ok(new_frame)
 }
 
 /// Handle output of the transaction
@@ -116,7 +97,7 @@ pub fn last_frame_return<EvmWiringT: EvmWiring, SPEC: Spec>(
     let refunded = gas.refunded();
 
     // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-    *gas = Gas::new_spent(context.evm.env.tx.gas_limit());
+    *gas = Gas::new_spent(context.evm.env.tx.common_fields().gas_limit());
 
     match instruction_result {
         return_ok!() => {

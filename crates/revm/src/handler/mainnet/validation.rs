@@ -39,14 +39,19 @@ pub fn validate_env_tx<EvmWiringT: EvmWiring, SPEC: Spec>(
     cfg: &CfgEnv,
 ) -> Result<(), InvalidTransaction> {
     // Check if the transaction's chain id is correct
-    if let Some(tx_chain_id) = tx.chain_id() {
-        if tx_chain_id != cfg.chain_id {
-            return Err(InvalidTransaction::InvalidChainId);
-        }
-    }
+    let common_field = tx.common_fields();
+
+    // TODO if legacy do optional chain_id check.
+    // if let Some(tx_chain_id) = common_field.chain_id() {
+    //     if tx_chain_id != cfg.chain_id {
+    //         return Err(InvalidTransaction::InvalidChainId);
+    //     }
+    // }
 
     // Check if gas_limit is more than block_gas_limit
-    if !cfg.is_block_gas_limit_disabled() && U256::from(tx.gas_limit()) > *block.gas_limit() {
+    if !cfg.is_block_gas_limit_disabled()
+        && U256::from(common_field.gas_limit()) > *block.gas_limit()
+    {
         return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
     }
 

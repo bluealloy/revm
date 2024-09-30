@@ -76,7 +76,7 @@ pub fn reimburse_caller<EvmWiringT: EvmWiring>(
     context: &mut Context<EvmWiringT>,
     gas: &Gas,
 ) -> EVMResultGeneric<(), EvmWiringT> {
-    let caller = *context.evm.env.tx.caller();
+    let caller = context.evm.env.tx.common_fields().caller();
     let effective_gas_price = context.evm.env.effective_gas_price();
 
     // return balance of not spend gas.

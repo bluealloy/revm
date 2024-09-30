@@ -4,14 +4,9 @@ use crate::{
     Context, ContextWithEvmWiring, EvmContext, EvmWiring, Frame, FrameOrResult, FrameResult,
     InnerEvmContext,
 };
-use bytecode::EOF_MAGIC_BYTES;
 use core::fmt::{self, Debug};
 use database_interface::{Database, DatabaseCommit};
-use interpreter::{
-    CallInputs, CreateInputs, EOFCreateInputs, Host, InterpreterAction, SharedMemory,
-};
-use primitives::TxKind;
-use specification::hardfork::SpecId;
+use interpreter::{Host, InterpreterAction, NewFrameAction, SharedMemory};
 use std::{boxed::Box, vec::Vec};
 use wiring::{
     default::{CfgEnv, EnvWiring},
@@ -130,9 +125,13 @@ impl<'a, EvmWiringT: EvmWiring> Evm<'a, EvmWiringT> {
 
             let exec = &mut self.handler.execution;
             let frame_or_result = match next_action {
-                InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs)?,
-                InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs)?,
-                InterpreterAction::EOFCreate { inputs } => {
+                InterpreterAction::NewFrame(NewFrameAction::Call(inputs)) => {
+                    exec.call(&mut self.context, inputs)?
+                }
+                InterpreterAction::NewFrame(NewFrameAction::Create(inputs)) => {
+                    exec.create(&mut self.context, inputs)?
+                }
+                InterpreterAction::NewFrame(NewFrameAction::EOFCreate(inputs)) => {
                     exec.eofcreate(&mut self.context, inputs)?
                 }
                 InterpreterAction::Return { result } => {
@@ -364,41 +363,25 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
         // deduce caller balance with its limit.
         pre_exec.deduct_caller(ctx)?;
 
-        let gas_limit = ctx.evm.env.tx.gas_limit() - initial_gas_spend;
+        let gas_limit = ctx.evm.env.tx.common_fields().gas_limit() - initial_gas_spend;
 
         // apply EIP-7702 auth list.
         let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(ctx)? as i64;
 
+        // start execution
         let exec = self.handler.execution();
-        // call inner handling of call/create
-        let first_frame_or_result = match ctx.evm.env.tx.kind() {
-            TxKind::Call(_) => exec.call(
-                ctx,
-                CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-            )?,
-            TxKind::Create => {
-                // if first byte of data is magic 0xEF00, then it is EOFCreate.
-                if Into::<SpecId>::into(spec_id).is_enabled_in(SpecId::PRAGUE_EOF)
-                    && ctx.env().tx.data().starts_with(&EOF_MAGIC_BYTES)
-                {
-                    exec.eofcreate(
-                        ctx,
-                        Box::new(EOFCreateInputs::new_tx::<EvmWiringT>(
-                            &ctx.evm.env.tx,
-                            gas_limit,
-                        )),
-                    )?
-                } else {
-                    // Safe to unwrap because we are sure that it is create tx.
-                    exec.create(
-                        ctx,
-                        CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-                    )?
-                }
-            }
+
+        // create first frame action
+        let first_frame_action = exec.first_frame_creation(ctx, gas_limit)?;
+
+        // call handler to create first frame.
+        let first_frame_or_result = match first_frame_action {
+            NewFrameAction::Call(inputs) => exec.call(ctx, inputs)?,
+            NewFrameAction::Create(inputs) => exec.create(ctx, inputs)?,
+            NewFrameAction::EOFCreate(inputs) => exec.eofcreate(ctx, inputs)?,
         };
 
-        // Starts the main running loop.
+        // Starts the main running loop or return the result.
         let mut result = match first_frame_or_result {
             FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
             FrameOrResult::Result(result) => result,
@@ -432,8 +415,11 @@ mod tests {
         Bytecode,
     };
     use database::BenchmarkDB;
-    use primitives::{address, U256};
-    use specification::eip7702::{Authorization, RecoveredAuthorization, Signature};
+    use primitives::{address, TxKind, U256};
+    use specification::{
+        eip7702::{Authorization, RecoveredAuthorization, Signature},
+        hardfork::SpecId,
+    };
     use wiring::EthereumWiring;
 
     #[test]

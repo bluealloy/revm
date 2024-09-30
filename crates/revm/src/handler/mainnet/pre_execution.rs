@@ -11,10 +11,11 @@ use specification::{
     hardfork::{Spec, SpecId},
 };
 use state::Account;
+use transaction::Eip7702Tx;
 use wiring::{
     default::EnvWiring,
     result::{EVMError, EVMResultGeneric},
-    Block, Transaction,
+    Block, Transaction, TransactionType,
 };
 
 /// Main precompile load
@@ -65,7 +66,8 @@ pub fn deduct_caller_inner<EvmWiringT: EvmWiring, SPEC: Spec>(
 ) {
     // Subtract gas costs from the caller's account.
     // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
-    let mut gas_cost = U256::from(env.tx.gas_limit()).saturating_mul(env.effective_gas_price());
+    let mut gas_cost =
+        U256::from(env.tx.common_fields().gas_limit()).saturating_mul(env.effective_gas_price());
 
     // EIP-4844
     if SPEC::enabled(SpecId::CANCUN) {
@@ -97,7 +99,7 @@ pub fn deduct_caller<EvmWiringT: EvmWiring, SPEC: Spec>(
         .inner
         .journaled_state
         .load_account(
-            *context.evm.inner.env.tx.caller(),
+            context.evm.inner.env.tx.common_fields().caller(),
             &mut context.evm.inner.db,
         )
         .map_err(EVMError::Database)?;
@@ -119,9 +121,12 @@ pub fn apply_eip7702_auth_list<EvmWiringT: EvmWiring, SPEC: Spec>(
     }
 
     // return if there is no auth list.
-    let Some(authorization_list) = context.evm.inner.env.tx.authorization_list() else {
+    let tx = &context.evm.inner.env.tx;
+    if tx.tx_type().into() != TransactionType::Eip7702 {
         return Ok(0);
-    };
+    }
+
+    let authorization_list = tx.eip7702().authorization_list().unwrap();
 
     let mut refunded_accounts = 0;
     for authorization in authorization_list.recovered_iter() {

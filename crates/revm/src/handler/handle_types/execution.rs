@@ -12,7 +12,7 @@ use wiring::result::EVMResultGeneric;
 
 /// Handles creation of first frame
 pub type FirstFrameCreation<'a, EvmWiringT> =
-    Arc<dyn Fn(&mut Context<EvmWiringT>) -> EVMResultGeneric<NewFrameAction, EvmWiringT> + 'a>;
+    Arc<dyn Fn(&mut Context<EvmWiringT>, u64) -> EVMResultGeneric<NewFrameAction, EvmWiringT> + 'a>;
 
 /// Handles first frame return handle.
 pub type LastFrameReturnHandle<'a, EvmWiringT> = Arc<
@@ -168,6 +168,16 @@ impl<'a, EvmWiringT: EvmWiring> ExecutionHandler<'a, EvmWiringT> {
         context: &mut Context<EvmWiringT>,
     ) -> EVMResultGeneric<InterpreterAction, EvmWiringT> {
         (self.execute_frame)(frame, shared_memory, instruction_tables, context)
+    }
+
+    /// Handle call return, depending on instruction result gas will be reimbursed or not.
+    #[inline]
+    pub fn first_frame_creation(
+        &self,
+        context: &mut Context<EvmWiringT>,
+        gas_limit: u64,
+    ) -> EVMResultGeneric<NewFrameAction, EvmWiringT> {
+        (self.first_frame_creation)(context, gas_limit)
     }
 
     /// Handle call return, depending on instruction result gas will be reimbursed or not.

@@ -2,7 +2,7 @@ use crate::{handler::register, Context, Evm, EvmContext, EvmWiring, Handler};
 use core::marker::PhantomData;
 use database_interface::EmptyDB;
 use std::boxed::Box;
-use transaction::TransactionError;
+use transaction::Transaction;
 use wiring::{
     default::{CfgEnv, EnvWiring},
     result::InvalidTransaction,
@@ -130,8 +130,7 @@ impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
 
 impl<'a, EvmWiringT> EvmBuilder<'a, SetGenericStage, EvmWiringT>
 where
-    EvmWiringT:
-        EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
+    EvmWiringT: EvmWiring<Transaction: Transaction<TransactionError: From<InvalidTransaction>>>,
 {
     /// Creates the default [EvmWiring]::[crate::Database] that will be used by [`Evm`].
     pub fn with_default_db(mut self) -> EvmBuilder<'a, SetGenericStage, EvmWiringT>
@@ -441,8 +440,7 @@ where
 
 impl<'a, BuilderStage, EvmWiringT: EvmWiring> EvmBuilder<'a, BuilderStage, EvmWiringT>
 where
-    EvmWiringT:
-        EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
+    EvmWiringT: EvmWiring<Transaction: Transaction<TransactionError: From<InvalidTransaction>>>,
 {
     /// Sets specification Id , that will mark the version of EVM.
     /// It represent the hard fork of ethereum.
