@@ -305,6 +305,14 @@ pub enum InvalidTransaction {
     EmptyAuthorizationList,
     /// Invalid EIP-7702 Authorization List
     InvalidAuthorizationList(InvalidAuthorization),
+    /// EIP-2930 is not supported.
+    Eip2930NotSupported,
+    /// EIP-1559 is not supported.
+    Eip1559NotSupported,
+    /// EIP-4844 is not supported.
+    Eip4844NotSupported,
+    /// EIP-7702 is not supported.
+    Eip7702NotSupported,
 }
 
 impl TransactionError for InvalidTransaction {}
@@ -376,6 +384,10 @@ impl fmt::Display for InvalidTransaction {
                 write!(f, "authorization list tx has invalid fields")
             }
             Self::EmptyAuthorizationList => write!(f, "empty authorization list"),
+            Self::Eip2930NotSupported => write!(f, "Eip2930 is not supported"),
+            Self::Eip1559NotSupported => write!(f, "Eip1559 is not supported"),
+            Self::Eip4844NotSupported => write!(f, "Eip4844 is not supported"),
+            Self::Eip7702NotSupported => write!(f, "Eip7702 is not supported"),
             Self::InvalidAuthorizationList(i) => fmt::Display::fmt(i, f),
         }
     }

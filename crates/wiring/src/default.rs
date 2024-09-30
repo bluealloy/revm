@@ -7,20 +7,15 @@ pub use tx::TxEnv;
 
 use crate::block::blob::calc_blob_gasprice;
 use crate::result::InvalidHeader;
-use crate::{result::InvalidTransaction, Block, EvmWiring, Transaction};
-use core::cmp::{min, Ordering};
+use crate::{Block, EvmWiring, Transaction};
 use core::fmt::Debug;
 use core::hash::Hash;
-use primitives::{Address, Bytes, TxKind, B256, U256};
-use specification::eip4844::MAX_BLOB_NUMBER_PER_BLOCK;
+use primitives::{Address, Bytes, TxKind, U256};
 use specification::{
-    constantans::{MAX_CODE_SIZE, MAX_INITCODE_SIZE},
-    eip2930::AccessListItem,
-    eip4844::VERSIONED_HASH_VERSION_KZG,
+    constantans::MAX_CODE_SIZE,
     eip7702::AuthorizationList,
     hardfork::{Spec, SpecId},
 };
-use state::Account;
 use std::boxed::Box;
 use std::vec::Vec;
 
@@ -64,8 +59,7 @@ impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
     pub fn calc_data_fee(&self) -> Option<U256> {
         if self.tx.tx_type().into() == TransactionType::Eip4844 {
             let blob_gas = U256::from(self.tx.eip4844().total_blob_gas());
-            let blob_gas_price =
-                U256::from(self.block.blob_gasprice().cloned().unwrap_or_default());
+            let blob_gas_price = U256::from(self.block.blob_gasprice().unwrap_or_default());
             return Some(blob_gas_price.saturating_mul(blob_gas));
         }
         None
@@ -476,7 +470,7 @@ impl Default for TxEnv {
             access_list: AccessList::default(),
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: None,
-            authorization_list: None,
+            authorization_list: AuthorizationList::default(),
         }
     }
 }

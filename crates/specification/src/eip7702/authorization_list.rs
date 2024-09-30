@@ -12,6 +12,12 @@ pub enum AuthorizationList {
     Recovered(Vec<RecoveredAuthorization>),
 }
 
+impl Default for AuthorizationList {
+    fn default() -> Self {
+        Self::Signed(Vec::new())
+    }
+}
+
 impl From<Vec<SignedAuthorization>> for AuthorizationList {
     fn from(signed: Vec<SignedAuthorization>) -> Self {
         Self::Signed(signed)

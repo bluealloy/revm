@@ -96,6 +96,7 @@ pub trait Transaction {
 }
 
 pub trait TransactionExt {
+
     fn effective_gas_price(&self, base_fee: U256) -> U256;
 }
 

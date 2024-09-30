@@ -72,7 +72,7 @@ pub struct TxEnv {
     /// Set EOA account code for one transaction
     ///
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
-    pub authorization_list: Option<AuthorizationList>,
+    pub authorization_list: AuthorizationList,
 }
 
 impl CommonTxFields for TxEnv {
@@ -180,8 +180,8 @@ impl Eip7702Tx for TxEnv {
         }
     }
 
-    fn authorization_list(&self) -> Option<&AuthorizationList> {
-        self.authorization_list.as_ref()
+    fn authorization_list(&self) -> &AuthorizationList {
+        &self.authorization_list
     }
 }
 

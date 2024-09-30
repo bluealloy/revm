@@ -126,7 +126,7 @@ pub fn apply_eip7702_auth_list<EvmWiringT: EvmWiring, SPEC: Spec>(
         return Ok(0);
     }
 
-    let authorization_list = tx.eip7702().authorization_list().unwrap();
+    let authorization_list = tx.eip7702().authorization_list();
 
     let mut refunded_accounts = 0;
     for authorization in authorization_list.recovered_iter() {

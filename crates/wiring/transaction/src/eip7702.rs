@@ -13,5 +13,5 @@ pub trait Eip7702Tx: Eip1559Tx {
     /// Set EOA account code for one transaction
     ///
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
-    fn authorization_list(&self) -> Option<&AuthorizationList>;
+    fn authorization_list(&self) -> &AuthorizationList;
 }
