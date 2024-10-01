@@ -10,6 +10,7 @@ use fluentbase_sdk::{Account, AccountStatus, SovereignAPI};
 use fluentbase_types::{
     BlockContext,
     CallPrecompileResult,
+    ContextFreeNativeAPI,
     ContractContext,
     DestroyedAccountResult,
     ExitCode,
@@ -18,6 +19,7 @@ use fluentbase_types::{
     NativeAPI,
     SovereignStateResult,
     TxContext,
+    F254,
 };
 use revm_interpreter::{Gas, InstructionResult};
 
@@ -59,6 +61,32 @@ impl<'a, API: NativeAPI, DB: Database> RwasmDbWrapper<'a, API, DB> {
 
     fn transient_storage(&self, address: Address, index: U256) -> U256 {
         self.evm_context.borrow_mut().tload(address, index)
+    }
+}
+
+impl<'a, API: NativeAPI, DB: Database> ContextFreeNativeAPI for RwasmDbWrapper<'a, API, DB> {
+    fn keccak256(data: &[u8]) -> B256 {
+        API::keccak256(data)
+    }
+
+    fn sha256(data: &[u8]) -> B256 {
+        API::sha256(data)
+    }
+
+    fn poseidon(data: &[u8]) -> F254 {
+        API::poseidon(data)
+    }
+
+    fn poseidon_hash(fa: &F254, fb: &F254, fd: &F254) -> F254 {
+        API::poseidon_hash(fa, fb, fd)
+    }
+
+    fn ec_recover(digest: &B256, sig: &[u8; 64], rec_id: u8) -> [u8; 65] {
+        API::ec_recover(digest, sig, rec_id)
+    }
+
+    fn debug_log(message: &str) {
+        API::debug_log(message)
     }
 }
 
