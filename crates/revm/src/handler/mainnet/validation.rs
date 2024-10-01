@@ -1,4 +1,4 @@
-use core::cmp;
+use core::cmp::{self, Ordering};
 
 use crate::{Context, EvmWiring};
 use interpreter::gas;
@@ -8,6 +8,7 @@ use specification::{
     eip4844,
     hardfork::{Spec, SpecId},
 };
+use state::Account;
 use transaction::{Eip1559CommonTxFields, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx, Transaction};
 use wiring::{
     default::{CfgEnv, EnvWiring},
@@ -24,6 +25,7 @@ where
 {
     // Important: validate block before tx.
     validate_env_block::<EvmWiringT, SPEC>(&env.block, &env.cfg)?;
+
     validate_env_tx::<EvmWiringT, SPEC>(&env.tx, &env.block, &env.cfg)
         .map_err(|error| EVMError::Transaction(error.into()))?;
     Ok(())
@@ -32,17 +34,11 @@ pub fn validate_env_block<EvmWiringT: EvmWiring, SPEC: Spec>(
     block: &EvmWiringT::Block,
     cfg: &CfgEnv,
 ) -> EVMResultGeneric<(), EvmWiringT> {
+    // TODO
     Ok(())
 }
 
-// pub fn validate_legacy_tx(
-//     tx: &Eip7702Tx,
-//     block: &Block,
-//     cfg: &CfgEnv,
-// ) -> Result<(), InvalidTransaction> {
-//     Ok(())
-// }
-
+/// Validate priority fee tx
 pub fn validate_priority_fee_tx(
     max_fee: u128,
     max_priority_fee: u128,
@@ -67,6 +63,7 @@ pub fn validate_priority_fee_tx(
     Ok(())
 }
 
+/// Validate EIP-4844 transaction.
 pub fn validate_eip4844_tx(
     blobs: &[B256],
     max_blob_fee: u128,
@@ -100,6 +97,7 @@ pub fn validate_eip4844_tx(
     Ok(())
 }
 
+/// Validate environment transaction for the mainnet.
 pub fn validate_env_tx<EvmWiringT: EvmWiring, SPEC: Spec>(
     tx: &EvmWiringT::Transaction,
     block: &EvmWiringT::Block,
@@ -109,7 +107,7 @@ pub fn validate_env_tx<EvmWiringT: EvmWiring, SPEC: Spec>(
     let common_field = tx.common_fields();
     let tx_type = tx.tx_type().into();
 
-    let basefee = if cfg.is_base_fee_check_disabled() {
+    let base_fee = if cfg.is_base_fee_check_disabled() {
         None
     } else {
         Some(*block.basefee())
@@ -125,13 +123,28 @@ pub fn validate_env_tx<EvmWiringT: EvmWiring, SPEC: Spec>(
                     return Err(InvalidTransaction::InvalidChainId);
                 }
             }
+            // gas price must be at least basefee.
+            if let Some(base_fee) = base_fee {
+                if U256::from(tx.gas_price()) < base_fee {
+                    return Err(InvalidTransaction::GasPriceLessThanBasefee);
+                }
+            }
         }
         TransactionType::Eip2930 => {
             if !SPEC::enabled(SpecId::BERLIN) {
                 return Err(InvalidTransaction::Eip2930NotSupported);
             }
-            if cfg.chain_id != tx.eip2930().chain_id() {
+            let tx = tx.eip2930();
+
+            if cfg.chain_id != tx.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId);
+            }
+
+            // gas price must be at least basefee.
+            if let Some(base_fee) = base_fee {
+                if U256::from(tx.gas_price()) < base_fee {
+                    return Err(InvalidTransaction::GasPriceLessThanBasefee);
+                }
             }
         }
         TransactionType::Eip1559 => {
@@ -144,7 +157,11 @@ pub fn validate_env_tx<EvmWiringT: EvmWiring, SPEC: Spec>(
                 return Err(InvalidTransaction::InvalidChainId);
             }
 
-            validate_priority_fee_tx(tx.max_fee_per_gas(), tx.max_priority_fee_per_gas(), basefee)?;
+            validate_priority_fee_tx(
+                tx.max_fee_per_gas(),
+                tx.max_priority_fee_per_gas(),
+                base_fee,
+            )?;
         }
         TransactionType::Eip4844 => {
             if !SPEC::enabled(SpecId::CANCUN) {
@@ -156,7 +173,11 @@ pub fn validate_env_tx<EvmWiringT: EvmWiring, SPEC: Spec>(
                 return Err(InvalidTransaction::InvalidChainId);
             }
 
-            validate_priority_fee_tx(tx.max_fee_per_gas(), tx.max_priority_fee_per_gas(), basefee)?;
+            validate_priority_fee_tx(
+                tx.max_fee_per_gas(),
+                tx.max_priority_fee_per_gas(),
+                base_fee,
+            )?;
 
             validate_eip4844_tx(
                 tx.blob_versioned_hashes(),
@@ -175,7 +196,11 @@ pub fn validate_env_tx<EvmWiringT: EvmWiring, SPEC: Spec>(
                 return Err(InvalidTransaction::InvalidChainId);
             }
 
-            validate_priority_fee_tx(tx.max_fee_per_gas(), tx.max_priority_fee_per_gas(), basefee)?;
+            validate_priority_fee_tx(
+                tx.max_fee_per_gas(),
+                tx.max_priority_fee_per_gas(),
+                base_fee,
+            )?;
 
             let auth_list = tx.authorization_list();
             // The transaction is considered invalid if the length of authorization_list is zero.
@@ -209,6 +234,74 @@ pub fn validate_env_tx<EvmWiringT: EvmWiring, SPEC: Spec>(
     Ok(())
 }
 
+/// Validate account against the transaction.
+pub fn validate_tx_against_account<EvmWiringT: EvmWiring, SPEC: Spec>(
+    account: &mut Account,
+    tx: &EvmWiringT::Transaction,
+    cfg: &CfgEnv,
+) -> Result<(), InvalidTransaction>
+where
+    <EvmWiringT::Transaction as Transaction>::TransactionError: From<InvalidTransaction>,
+{
+    let tx_type = tx.tx_type().into();
+    // EIP-3607: Reject transactions from senders with deployed code
+    // This EIP is introduced after london but there was no collision in past
+    // so we can leave it enabled always
+    if !cfg.is_eip3607_disabled() {
+        let bytecode = &account.info.code.as_ref().unwrap();
+        // allow EOAs whose code is a valid delegation designation,
+        // i.e. 0xef0100 || address, to continue to originate transactions.
+        if !bytecode.is_empty() && !bytecode.is_eip7702() {
+            return Err(InvalidTransaction::RejectCallerWithCode.into());
+        }
+    }
+
+    // Check that the transaction's nonce is correct
+    if !cfg.is_nonce_check_disabled() {
+        let tx = tx.common_fields().nonce();
+        let state = account.info.nonce;
+        match tx.cmp(&state) {
+            Ordering::Greater => {
+                return Err(InvalidTransaction::NonceTooHigh { tx, state });
+            }
+            Ordering::Less => {
+                return Err(InvalidTransaction::NonceTooLow { tx, state });
+            }
+            _ => {}
+        }
+    }
+
+    let mut balance_check = U256::from(tx.common_fields().gas_limit())
+        .checked_mul(U256::from(tx.max_fee()))
+        .and_then(|gas_cost| gas_cost.checked_add(tx.common_fields().value()))
+        .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+
+    if tx_type == TransactionType::Eip4844 {
+        let tx = tx.eip4844();
+        // if the tx is not a blob tx, this will be None, so we add zero
+        let data_fee = tx.calc_max_data_fee();
+        balance_check = balance_check
+            .checked_add(U256::from(data_fee))
+            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+    }
+
+    // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
+    // Transfer will be done inside `*_inner` functions.
+    if balance_check > account.info.balance {
+        if cfg.is_balance_check_disabled() {
+            // Add transaction cost to balance to ensure execution doesn't fail.
+            account.info.balance = account.info.balance.saturating_add(balance_check);
+        } else {
+            return Err(InvalidTransaction::LackOfFundForMaxFee {
+                fee: Box::new(balance_check),
+                balance: Box::new(account.info.balance),
+            });
+        }
+    }
+
+    Ok(())
+}
+
 /// Validates transaction against the state.
 pub fn validate_tx_against_state<EvmWiringT: EvmWiring, SPEC: Spec>(
     context: &mut Context<EvmWiringT>,
@@ -216,21 +309,22 @@ pub fn validate_tx_against_state<EvmWiringT: EvmWiring, SPEC: Spec>(
 where
     <EvmWiringT::Transaction as Transaction>::TransactionError: From<InvalidTransaction>,
 {
-    // load acc
     let tx_caller = context.evm.env.tx.common_fields().caller();
-    let caller_account = context
-        .evm
-        .inner
+    // load acc
+
+    let inner = &mut context.evm.inner;
+
+    let caller_account = inner
         .journaled_state
-        .load_code(tx_caller, &mut context.evm.inner.db)
+        .load_code(tx_caller, &mut inner.db)
         .map_err(EVMError::Database)?;
 
-    context
-        .evm
-        .inner
-        .env
-        .validate_tx_against_state::<SPEC>(caller_account.data)
-        .map_err(|e| EVMError::Transaction(e.into()))?;
+    validate_tx_against_account::<EvmWiringT, SPEC>(
+        caller_account.data,
+        &inner.env.tx,
+        &inner.env.cfg,
+    )
+    .map_err(|e| EVMError::Transaction(e.into()))?;
 
     Ok(())
 }
@@ -242,15 +336,18 @@ pub fn validate_initial_tx_gas<EvmWiringT: EvmWiring, SPEC: Spec>(
 where
     <EvmWiringT::Transaction as Transaction>::TransactionError: From<InvalidTransaction>,
 {
-    let input = env.tx.common_fields().input();
+    let tx_type = env.tx.tx_type().into();
+
+    let authorization_list_num = if tx_type == TransactionType::Eip7702 {
+        env.tx.eip7702().authorization_list().len() as u64
+    } else {
+        0
+    };
+
+    let common_fields = env.tx.common_fields();
     let is_create = env.tx.kind().is_create();
+    let input = common_fields.input();
     let access_list = env.tx.access_list();
-    let authorization_list_num = env
-        .tx
-        .authorization_list()
-        .as_ref()
-        .map(|l| l.len() as u64)
-        .unwrap_or_default();
 
     let initial_gas_spend = gas::validate_initial_tx_gas(
         SPEC::SPEC_ID,
@@ -261,7 +358,7 @@ where
     );
 
     // Additional check to see if limit is big enough to cover initial gas.
-    if initial_gas_spend > env.tx.gas_limit() {
+    if initial_gas_spend > common_fields.gas_limit() {
         return Err(EVMError::Transaction(
             InvalidTransaction::CallGasCostMoreThanGasLimit.into(),
         ));

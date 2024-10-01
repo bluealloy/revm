@@ -435,18 +435,16 @@ mod tests {
             .with_db(BenchmarkDB::new_bytecode(bytecode))
             .with_default_ext_ctx()
             .modify_tx_env(|tx| {
-                tx.authorization_list = Some(
-                    vec![RecoveredAuthorization::new_unchecked(
-                        Authorization {
-                            chain_id: U256::from(1),
-                            address: delegate,
-                            nonce: 0,
-                        }
-                        .into_signed(Signature::test_signature()),
-                        Some(auth),
-                    )]
-                    .into(),
-                );
+                tx.authorization_list = vec![RecoveredAuthorization::new_unchecked(
+                    Authorization {
+                        chain_id: U256::from(1),
+                        address: delegate,
+                        nonce: 0,
+                    }
+                    .into_signed(Signature::test_signature()),
+                    Some(auth),
+                )]
+                .into();
                 tx.caller = caller;
                 tx.transact_to = TxKind::Call(auth);
             })

@@ -177,7 +177,8 @@ impl TracerEip3155 {
                 state_root: B256::ZERO.to_string(),
                 output: result.output.to_string(),
                 gas_used: hex_number(
-                    context.inner.env().tx.gas_limit() - self.gas_inspector.gas_remaining(),
+                    context.inner.env().tx.common_fields().gas_limit()
+                        - self.gas_inspector.gas_remaining(),
                 ),
                 pass: result.is_ok(),
                 time: None,

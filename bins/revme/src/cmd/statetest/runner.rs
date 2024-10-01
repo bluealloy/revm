@@ -375,17 +375,22 @@ pub fn execute_test_suite(
                     .get(test.indexes.data)
                     .and_then(Option::as_deref)
                     .cloned()
+                    .unwrap_or_default()
+                    .into();
+
+                env.tx.authorization_list = unit
+                    .transaction
+                    .authorization_list
+                    .as_ref()
+                    .map(|auth_list| {
+                        AuthorizationList::Recovered(
+                            auth_list.iter().map(|auth| auth.into_recovered()).collect(),
+                        )
+                    })
                     .unwrap_or_default();
 
-                env.tx.authorization_list =
-                    unit.transaction
-                        .authorization_list
-                        .as_ref()
-                        .map(|auth_list| {
-                            AuthorizationList::Recovered(
-                                auth_list.iter().map(|auth| auth.into_recovered()).collect(),
-                            )
-                        });
+                // TODO TX TYPE needs to be set
+                // env.tx.tx_type = unit.transaction.tx_type.clone();
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),

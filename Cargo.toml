@@ -11,7 +11,6 @@ members = [
     "crates/interpreter",
     "crates/inspector",
     "crates/precompile",
-    "crates/optimism",
     "crates/database",
     "crates/database/interface",
     "crates/bytecode",
@@ -19,6 +18,9 @@ members = [
     "crates/wiring",
     "crates/wiring/transaction",
     "crates/specification",
+
+    # variants
+    # "crates/optimism",
 
     # examples
     "examples/block_traces",

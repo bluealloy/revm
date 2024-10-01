@@ -15,7 +15,7 @@ use specification::hardfork::{Spec, SpecId};
 use std::boxed::Box;
 use wiring::{
     result::{EVMError, EVMResultGeneric},
-    Transaction, TransactionType,
+    Transaction,
 };
 
 /// Execute frame

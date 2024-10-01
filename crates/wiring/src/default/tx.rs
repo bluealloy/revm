@@ -5,8 +5,8 @@ use specification::eip2930::AccessList;
 use specification::eip7702::AuthorizationList;
 use std::vec::Vec;
 use transaction::{
-    eip2930::AccessListInterface, CommonTxFields, Eip1559CommonTxFields, Eip1559Tx, Eip2930Tx,
-    Eip4844Tx, Eip7702Tx, LegacyTx, TransactionType,
+    CommonTxFields, Eip1559CommonTxFields, Eip1559Tx, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx,
+    TransactionType,
 };
 
 /// The transaction environment.
@@ -132,7 +132,9 @@ impl LegacyTx for TxEnv {
 }
 
 impl Eip2930Tx for TxEnv {
-    fn access_list(&self) -> &impl AccessListInterface {
+    type AccessList = AccessList;
+
+    fn access_list(&self) -> &Self::AccessList {
         &self.access_list
     }
 
@@ -187,6 +189,8 @@ impl Eip7702Tx for TxEnv {
 
 impl Transaction for TxEnv {
     type TransactionError = InvalidTransaction;
+
+    type AccessList = <Self::Eip2930 as Eip2930Tx>::AccessList;
 
     type Legacy = Self;
 

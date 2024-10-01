@@ -2985,22 +2985,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "revm-optimism"
-version = "1.0.0"
-dependencies = [
- "alloy-sol-types",
- "anyhow",
- "criterion",
- "enumn",
- "indicatif",
- "revm",
- "revm-database",
- "revm-precompile",
- "rstest",
- "serde",
-]
-
-[[package]]
 name = "revm-precompile"
 version = "11.0.1"
 dependencies = [

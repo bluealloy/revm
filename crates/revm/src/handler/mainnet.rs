@@ -16,4 +16,7 @@ pub use post_execution::{clear, end, output, refund, reimburse_caller, reward_be
 pub use pre_execution::{
     apply_eip7702_auth_list, deduct_caller, deduct_caller_inner, load_accounts, load_precompiles,
 };
-pub use validation::{validate_env, validate_initial_tx_gas, validate_tx_against_state};
+pub use validation::{
+    validate_eip4844_tx, validate_env, validate_env_tx, validate_initial_tx_gas,
+    validate_priority_fee_tx, validate_tx_against_account, validate_tx_against_state,
+};

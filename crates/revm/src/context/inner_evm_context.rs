@@ -1,4 +1,5 @@
 use derive_where::derive_where;
+use transaction::eip2930::AccessListInterface;
 
 use crate::{journaled_state::JournaledState, JournalCheckpoint};
 use bytecode::{Bytecode, Eof, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
@@ -8,12 +9,9 @@ use interpreter::{
     SStoreResult, SelfDestructResult, StateLoad,
 };
 use primitives::{Address, Bytes, HashSet, B256, U256};
-use specification::{
-    eip2930::AccessListItem,
-    hardfork::{
-        Spec,
-        SpecId::{self, *},
-    },
+use specification::hardfork::{
+    Spec,
+    SpecId::{self, *},
 };
 use state::Account;
 use std::{boxed::Box, sync::Arc};
@@ -96,15 +94,14 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
     /// Loading of accounts/storages is needed to make them warm.
     #[inline]
     pub fn load_access_list(&mut self) -> Result<(), <EvmWiringT::Database as Database>::Error> {
-        
-        for AccessListItem {
-            address,
-            storage_keys,
-        } in self.env.tx.access_list()
-        {
+        let Some(access_list) = self.env.tx.access_list() else {
+            return Ok(());
+        };
+
+        for access_list in access_list.iter() {
             self.journaled_state.initial_account_load(
-                *address,
-                storage_keys.iter().map(|i| U256::from_be_bytes(i.0)),
+                access_list.0,
+                access_list.1.map(|i| U256::from_be_bytes(i.0)),
                 &mut self.db,
             )?;
         }
