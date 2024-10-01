@@ -14,7 +14,6 @@ use interpreter::{table::InstructionTables, Host, InterpreterAction, SharedMemor
 use register::{EvmHandler, HandleRegisters};
 use specification::spec_to_generic;
 use std::vec::Vec;
-use transaction::TransactionError;
 use wiring::{
     result::{EVMResultGeneric, InvalidTransaction},
     Transaction,

@@ -10,7 +10,6 @@ pub mod default;
 pub mod evm_wiring;
 pub mod precompile;
 pub mod result;
-mod transaction_old;
 
 pub use block::Block;
 pub use evm_wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring, HaltReasonTrait};

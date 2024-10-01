@@ -12,7 +12,7 @@ use state::Account;
 use transaction::{Eip1559CommonTxFields, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx, Transaction};
 use wiring::{
     default::{CfgEnv, EnvWiring},
-    result::{EVMError, EVMResultGeneric, InvalidTransaction},
+    result::{EVMError, EVMResultGeneric, InvalidHeader, InvalidTransaction},
     Block, TransactionType,
 };
 
@@ -24,17 +24,26 @@ where
     <EvmWiringT::Transaction as Transaction>::TransactionError: From<InvalidTransaction>,
 {
     // Important: validate block before tx.
-    validate_env_block::<EvmWiringT, SPEC>(&env.block, &env.cfg)?;
+    validate_block_env::<EvmWiringT, SPEC>(&env.block).map_err(|e| EVMError::Header(e))?;
 
-    validate_env_tx::<EvmWiringT, SPEC>(&env.tx, &env.block, &env.cfg)
-        .map_err(|error| EVMError::Transaction(error.into()))?;
+    validate_tx_env::<EvmWiringT, SPEC>(&env.tx, &env.block, &env.cfg)
+        .map_err(|e| EVMError::Transaction(e.into()))?;
     Ok(())
 }
-pub fn validate_env_block<EvmWiringT: EvmWiring, SPEC: Spec>(
+
+/// Validate the block environment.
+#[inline]
+pub fn validate_block_env<EvmWiringT: EvmWiring, SPEC: Spec>(
     block: &EvmWiringT::Block,
-    cfg: &CfgEnv,
-) -> EVMResultGeneric<(), EvmWiringT> {
-    // TODO
+) -> Result<(), InvalidHeader> {
+    // `prevrandao` is required for the merge
+    if SPEC::enabled(SpecId::MERGE) && block.prevrandao().is_none() {
+        return Err(InvalidHeader::PrevrandaoNotSet);
+    }
+    // `excess_blob_gas` is required for Cancun
+    if SPEC::enabled(SpecId::CANCUN) && block.blob_excess_gas_and_price().is_none() {
+        return Err(InvalidHeader::ExcessBlobGasNotSet);
+    }
     Ok(())
 }
 
@@ -98,7 +107,7 @@ pub fn validate_eip4844_tx(
 }
 
 /// Validate environment transaction for the mainnet.
-pub fn validate_env_tx<EvmWiringT: EvmWiring, SPEC: Spec>(
+pub fn validate_tx_env<EvmWiringT: EvmWiring, SPEC: Spec>(
     tx: &EvmWiringT::Transaction,
     block: &EvmWiringT::Block,
     cfg: &CfgEnv,
