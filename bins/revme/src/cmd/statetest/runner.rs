@@ -333,7 +333,7 @@ pub fn execute_test_suite(
             .unwrap_or_default();
         env.tx.gas_priority_fee = unit.transaction.max_priority_fee_per_gas;
         // EIP-4844
-        env.tx.blob_hashes = unit.transaction.blob_versioned_hashes;
+        env.tx.blob_hashes = unit.transaction.blob_versioned_hashes.clone();
         env.tx.max_fee_per_blob_gas = unit.transaction.max_fee_per_blob_gas;
 
         // post and execution
@@ -358,6 +358,9 @@ pub fn execute_test_suite(
             }
 
             for (index, test) in tests.into_iter().enumerate() {
+                // TODO TX TYPE needs to be set
+                env.tx.tx_type = unit.transaction.tx_type(test.indexes.data);
+
                 env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
 
                 env.tx.data = unit
@@ -389,9 +392,6 @@ pub fn execute_test_suite(
                         )
                     })
                     .unwrap_or_default();
-
-                // TODO TX TYPE needs to be set
-                // env.tx.tx_type = unit.transaction.tx_type.clone();
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),

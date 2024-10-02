@@ -1,6 +1,7 @@
 use revm::{
     primitives::{Address, Bytes, B256, U256},
     specification::eip2930::AccessList,
+    transaction::TransactionType,
 };
 use serde::{Deserialize, Serialize};
 
@@ -30,6 +31,37 @@ pub struct TransactionParts {
     #[serde(default)]
     pub blob_versioned_hashes: Vec<B256>,
     pub max_fee_per_blob_gas: Option<U256>,
+}
+
+impl TransactionParts {
+    /// Returns the transaction type.   
+    ///
+    /// As this information is derived from the fields it is not stored in the struct.
+    pub fn tx_type(&self, access_list_index: usize) -> TransactionType {
+        let mut tx_type = TransactionType::Legacy;
+
+        // if it has access list it is EIP-2930 tx
+        if self.access_lists.get(access_list_index).is_some() {
+            tx_type = TransactionType::Eip2930;
+        }
+
+        // If there is max_fee it is EIP-1559 tx
+        if self.max_fee_per_gas.is_some() {
+            tx_type = TransactionType::Eip1559;
+        }
+
+        // if it has max_fee_per_blob_gas it is EIP-4844 tx
+        if self.max_fee_per_blob_gas.is_some() {
+            tx_type = TransactionType::Eip4844;
+        }
+
+        // and if it has authorization list it is EIP-7702 tx
+        if self.authorization_list.is_some() {
+            tx_type = TransactionType::Eip7702;
+        }
+
+        tx_type
+    }
 }
 
 /// Transaction part indices.

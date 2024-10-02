@@ -108,7 +108,7 @@ pub fn validate_eip4844_tx(
     Ok(())
 }
 
-/// Validate transaction agains block and configuration for mainnet.
+/// Validate transaction against block and configuration for mainnet.
 pub fn validate_tx_env<EvmWiringT: EvmWiring, SPEC: Spec>(
     tx: &EvmWiringT::Transaction,
     block: &EvmWiringT::Block,
