@@ -189,9 +189,9 @@ impl<DB: Database> State<DB> {
                 let account = match info {
                     None => CacheAccount::new_loaded_not_existing(),
                     Some(acc) if acc.is_empty() => {
-                        CacheAccount::new_loaded_empty_eip161(HashMap::new())
+                        CacheAccount::new_loaded_empty_eip161(HashMap::default())
                     }
-                    Some(acc) => CacheAccount::new_loaded(acc, HashMap::new()),
+                    Some(acc) => CacheAccount::new_loaded(acc, HashMap::default()),
                 };
                 Ok(entry.insert(account))
             }
@@ -367,7 +367,7 @@ mod tests {
             nonce: 1,
             ..Default::default()
         };
-        let existing_account_initial_storage = HashMap::<U256, U256>::from([
+        let existing_account_initial_storage = HashMap::<U256, U256>::from_iter([
             (slot1, U256::from(100)), // 0x01 => 100
             (slot2, U256::from(200)), // 0x02 => 200
         ]);
@@ -395,7 +395,7 @@ mod tests {
                     info: Some(existing_account_changed_info.clone()),
                     previous_status: AccountStatus::Loaded,
                     previous_info: Some(existing_account_initial_info.clone()),
-                    storage: HashMap::from([(
+                    storage: HashMap::from_iter([(
                         slot1,
                         StorageSlot::new_changed(
                             *existing_account_initial_storage.get(&slot1).unwrap(),
@@ -428,7 +428,7 @@ mod tests {
                     info: Some(new_account_changed_info2.clone()),
                     previous_status: AccountStatus::InMemoryChange,
                     previous_info: Some(new_account_changed_info),
-                    storage: HashMap::from([(
+                    storage: HashMap::from_iter([(
                         slot1,
                         StorageSlot::new_changed(U256::ZERO, U256::from(1)),
                     )]),
@@ -442,7 +442,7 @@ mod tests {
                     info: Some(existing_account_changed_info.clone()),
                     previous_status: AccountStatus::InMemoryChange,
                     previous_info: Some(existing_account_changed_info.clone()),
-                    storage: HashMap::from([
+                    storage: HashMap::from_iter([
                         (
                             slot1,
                             StorageSlot::new_changed(U256::from(100), U256::from(1_000)),
@@ -479,7 +479,7 @@ mod tests {
                     AccountRevert {
                         account: AccountInfoRevert::DeleteIt,
                         previous_status: AccountStatus::LoadedNotExisting,
-                        storage: HashMap::from([(slot1, RevertToSlot::Some(U256::ZERO))]),
+                        storage: HashMap::from_iter([(slot1, RevertToSlot::Some(U256::ZERO))]),
                         wipe_storage: false,
                     }
                 ),
@@ -488,7 +488,7 @@ mod tests {
                     AccountRevert {
                         account: AccountInfoRevert::RevertTo(existing_account_initial_info.clone()),
                         previous_status: AccountStatus::Loaded,
-                        storage: HashMap::from([
+                        storage: HashMap::from_iter([
                             (
                                 slot1,
                                 RevertToSlot::Some(
@@ -518,7 +518,7 @@ mod tests {
                 info: Some(new_account_changed_info2),
                 original_info: None,
                 status: AccountStatus::InMemoryChange,
-                storage: HashMap::from([(
+                storage: HashMap::from_iter([(
                     slot1,
                     StorageSlot::new_changed(U256::ZERO, U256::from(1))
                 )]),
@@ -534,7 +534,7 @@ mod tests {
                 info: Some(existing_account_changed_info),
                 original_info: Some(existing_account_initial_info),
                 status: AccountStatus::InMemoryChange,
-                storage: HashMap::from([
+                storage: HashMap::from_iter([
                     (
                         slot1,
                         StorageSlot::new_changed(
@@ -622,7 +622,7 @@ mod tests {
                     info: Some(existing_account_with_storage_info.clone()),
                     previous_status: AccountStatus::Loaded,
                     previous_info: Some(existing_account_with_storage_info.clone()),
-                    storage: HashMap::from([
+                    storage: HashMap::from_iter([
                         (
                             slot1,
                             StorageSlot::new_changed(U256::from(1), U256::from(10)),
@@ -663,7 +663,7 @@ mod tests {
                     info: Some(existing_account_with_storage_info.clone()),
                     previous_status: AccountStatus::Changed,
                     previous_info: Some(existing_account_with_storage_info.clone()),
-                    storage: HashMap::from([
+                    storage: HashMap::from_iter([
                         (
                             slot1,
                             StorageSlot::new_changed(U256::from(10), U256::from(1)),
@@ -720,7 +720,7 @@ mod tests {
                 info: Some(existing_account_info.clone()),
                 previous_status: AccountStatus::Destroyed,
                 previous_info: None,
-                storage: HashMap::from([(
+                storage: HashMap::from_iter([(
                     slot1,
                     StorageSlot::new_changed(U256::ZERO, U256::from(1)),
                 )]),
@@ -750,7 +750,7 @@ mod tests {
                 info: Some(existing_account_info.clone()),
                 previous_status: AccountStatus::DestroyedAgain,
                 previous_info: None,
-                storage: HashMap::from([(
+                storage: HashMap::from_iter([(
                     slot2,
                     StorageSlot::new_changed(U256::ZERO, U256::from(2)),
                 )]),
@@ -764,12 +764,12 @@ mod tests {
 
         assert_eq!(
             bundle_state.state,
-            HashMap::from([(
+            HashMap::from_iter([(
                 existing_account_address,
                 BundleAccount {
                     info: Some(existing_account_info.clone()),
                     original_info: Some(existing_account_info.clone()),
-                    storage: HashMap::from([(
+                    storage: HashMap::from_iter([(
                         slot2,
                         StorageSlot::new_changed(U256::ZERO, U256::from(2))
                     )]),
@@ -785,7 +785,7 @@ mod tests {
                 AccountRevert {
                     account: AccountInfoRevert::DoNothing,
                     previous_status: AccountStatus::Loaded,
-                    storage: HashMap::from([(slot2, RevertToSlot::Destroyed)]),
+                    storage: HashMap::from_iter([(slot2, RevertToSlot::Destroyed)]),
                     wipe_storage: true,
                 }
             )])])

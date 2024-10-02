@@ -18,7 +18,6 @@ inspector = { workspace = true, features = ["std", "serde-json"] }
 bytecode = { workspace = true, features = ["std", "parse"] }
 
 hash-db = "0.15"
-hex = "0.4"
 hashbrown = "0.14"
 indicatif = "0.17"
 microbench = "0.5"

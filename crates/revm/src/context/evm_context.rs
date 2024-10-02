@@ -520,7 +520,7 @@ pub(crate) mod test_utils {
         EvmContext {
             inner: InnerEvmContext {
                 env,
-                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
+                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::default()),
                 db,
                 chain: Default::default(),
                 error: Ok(()),
@@ -537,7 +537,7 @@ pub(crate) mod test_utils {
         EvmContext {
             inner: InnerEvmContext {
                 env,
-                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
+                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::default()),
                 db,
                 chain: Default::default(),
                 error: Ok(()),

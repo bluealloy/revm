@@ -45,7 +45,7 @@ where
     pub fn new(db: EvmWiringT::Database) -> Self {
         Self {
             env: Box::default(),
-            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
+            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::default()),
             db,
             chain: Default::default(),
             error: Ok(()),
@@ -59,7 +59,7 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
     pub fn new_with_env(db: EvmWiringT::Database, env: Box<EnvWiring<EvmWiringT>>) -> Self {
         Self {
             env,
-            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
+            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::default()),
             db,
             chain: Default::default(),
             error: Ok(()),

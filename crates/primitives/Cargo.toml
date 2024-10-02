@@ -22,22 +22,16 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-alloy-primitives = { version = "0.8.2", default-features = false, features = [
+alloy-primitives = { version = "0.8.5", default-features = false, features = [
     "rlp",
+    "map",
 ] }
-hashbrown = "0.14"
-
-# utils
-cfg-if = { version = "1.0", default-features = false }
-
-[build-dependencies]
-hex = { version = "0.4", default-features = false }
 
 [features]
 default = ["std"]
-std = ["alloy-primitives/std", "hex/std"]
-hashbrown = []
-serde = ["alloy-primitives/serde", "hex/serde", "hashbrown/serde"]
+std = ["alloy-primitives/std"]
+hashbrown = ["alloy-primitives/map-hashbrown"]
+serde = ["alloy-primitives/serde"]
 arbitrary = ["std", "alloy-primitives/arbitrary"]
 asm-keccak = ["alloy-primitives/asm-keccak"]
 rand = ["alloy-primitives/rand"]

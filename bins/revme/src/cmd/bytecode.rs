@@ -1,7 +1,7 @@
 use clap::Parser;
 use revm::{
     bytecode::eof::{self, validate_eof_inner, CodeType, Eof, EofError},
-    primitives::{Bytes, MAX_INITCODE_SIZE},
+    primitives::{hex, Bytes, MAX_INITCODE_SIZE},
 };
 use std::io;
 

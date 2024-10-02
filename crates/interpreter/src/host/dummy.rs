@@ -30,8 +30,8 @@ where
     pub fn new(env: EnvWiring<EvmWiringT>) -> Self {
         Self {
             env,
-            storage: HashMap::new(),
-            transient_storage: HashMap::new(),
+            storage: HashMap::default(),
+            transient_storage: HashMap::default(),
             log: Vec::new(),
         }
     }
