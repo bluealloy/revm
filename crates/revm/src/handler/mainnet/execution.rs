@@ -50,7 +50,7 @@ pub fn first_frame_creation<EvmWiringT: EvmWiring, SPEC: Spec>(
     let new_frame = match tx.kind() {
         TxKind::Call(target_address) => NewFrameAction::Call(Box::new(CallInputs {
             input,
-            gas_limit: tx.common_fields().gas_limit(),
+            gas_limit,
             target_address,
             bytecode_address: target_address,
             caller: tx.common_fields().caller(),

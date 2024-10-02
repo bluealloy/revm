@@ -1,7 +1,6 @@
 pub mod block;
 pub mod tx;
 
-use specification::eip2930::AccessList;
 use transaction::{Eip4844Tx, TransactionType};
 pub use tx::TxEnv;
 
@@ -9,10 +8,9 @@ use crate::block::blob::calc_blob_gasprice;
 use crate::{Block, EvmWiring, Transaction};
 use core::fmt::Debug;
 use core::hash::Hash;
-use primitives::{Address, Bytes, TxKind, U256};
-use specification::{constants::MAX_CODE_SIZE, eip7702::AuthorizationList};
+use primitives::{TxKind, U256};
+use specification::constants::MAX_CODE_SIZE;
 use std::boxed::Box;
-use std::vec::Vec;
 
 /// Subtype
 pub type EnvWiring<EvmWiringT> =
@@ -226,34 +224,6 @@ impl Default for CfgEnv {
             disable_gas_refund: false,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: false,
-        }
-    }
-}
-
-pub enum TxType {
-    Legacy,
-    Eip1559,
-    BlobTx,
-    EofCreate,
-}
-
-impl Default for TxEnv {
-    fn default() -> Self {
-        Self {
-            tx_type: TransactionType::Legacy,
-            caller: Address::ZERO,
-            gas_limit: u64::MAX,
-            gas_price: U256::ZERO,
-            gas_priority_fee: None,
-            transact_to: TxKind::Call(Address::ZERO), // will do nothing
-            value: U256::ZERO,
-            data: Bytes::new(),
-            chain_id: None,
-            nonce: 0,
-            access_list: AccessList::default(),
-            blob_hashes: Vec::new(),
-            max_fee_per_blob_gas: None,
-            authorization_list: AuthorizationList::default(),
         }
     }
 }

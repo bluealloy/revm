@@ -10,7 +10,7 @@ use revm::{
 use super::{OptimismInvalidTransaction, OptimismTransaction};
 
 /// The Optimism transaction environment.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     #[cfg_attr(feature = "serde", serde(flatten))]

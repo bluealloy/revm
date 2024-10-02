@@ -493,12 +493,14 @@ mod test {
             .with_default_db()
             .with_default_ext_ctx()
             .modify_db(|db| {
-                db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
+                db.insert_account_info(
+                    to_addr,
+                    AccountInfo::new(U256::from(1_000_000), 0, code_hash, code),
+                )
             })
             .modify_tx_env(|tx| {
-                let transact_to = &mut tx.transact_to;
-
-                *transact_to = TxKind::Call(to_addr)
+                tx.transact_to = TxKind::Call(to_addr);
+                tx.gas_limit = 100_000;
             })
             // we need to use handle register box to capture the custom context in the handle
             // register

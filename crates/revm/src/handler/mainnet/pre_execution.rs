@@ -70,8 +70,7 @@ pub fn deduct_caller_inner<EvmWiringT: EvmWiring, SPEC: Spec>(
         U256::from(env.tx.common_fields().gas_limit()).saturating_mul(env.effective_gas_price());
 
     // EIP-4844
-    if SPEC::enabled(SpecId::CANCUN) {
-        let data_fee = env.calc_data_fee().expect("already checked");
+    if let Some(data_fee) = env.calc_data_fee() {
         gas_cost = gas_cost.saturating_add(data_fee);
     }
 

@@ -151,6 +151,7 @@ mod test {
                 tx.transact_to = TxKind::Call(callee);
                 tx.data = Bytes::new();
                 tx.value = U256::ZERO;
+                tx.gas_limit = 100_000;
             })
             .with_spec_id(SpecId::BERLIN)
             .append_handler_register(inspector_handle_register)

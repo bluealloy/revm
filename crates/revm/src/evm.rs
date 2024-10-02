@@ -419,6 +419,7 @@ mod tests {
         eip7702::{Authorization, RecoveredAuthorization, Signature},
         hardfork::SpecId,
     };
+    use transaction::TransactionType;
     use wiring::EthereumWiring;
 
     #[test]
@@ -434,6 +435,8 @@ mod tests {
             .with_db(BenchmarkDB::new_bytecode(bytecode))
             .with_default_ext_ctx()
             .modify_tx_env(|tx| {
+                tx.tx_type = TransactionType::Eip7702;
+                tx.gas_limit = 100_000;
                 tx.authorization_list = vec![RecoveredAuthorization::new_unchecked(
                     Authorization {
                         chain_id: U256::from(1),

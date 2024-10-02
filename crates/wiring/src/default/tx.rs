@@ -75,6 +75,27 @@ pub struct TxEnv {
     pub authorization_list: AuthorizationList,
 }
 
+impl Default for TxEnv {
+    fn default() -> Self {
+        Self {
+            tx_type: TransactionType::Legacy,
+            caller: Address::default(),
+            gas_limit: 0,
+            gas_price: U256::ZERO,
+            transact_to: TxKind::Call(Address::default()),
+            value: U256::ZERO,
+            data: Bytes::default(),
+            nonce: 0,
+            chain_id: Some(1), // Mainnet chain ID is 1
+            access_list: AccessList::default(),
+            gas_priority_fee: Some(U256::ZERO),
+            blob_hashes: Vec::new(),
+            max_fee_per_blob_gas: Some(U256::ZERO),
+            authorization_list: AuthorizationList::default(),
+        }
+    }
+}
+
 impl CommonTxFields for TxEnv {
     fn caller(&self) -> Address {
         self.caller
@@ -113,7 +134,7 @@ impl Eip1559CommonTxFields for TxEnv {
     }
 
     fn access_list(&self) -> &Self::AccessList {
-        todo!()
+        &self.access_list
     }
 }
 

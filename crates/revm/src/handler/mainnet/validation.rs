@@ -9,6 +9,7 @@ use specification::{
     hardfork::{Spec, SpecId},
 };
 use state::Account;
+use std::boxed::Box;
 use transaction::{Eip1559CommonTxFields, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx, Transaction};
 use wiring::{
     default::{CfgEnv, EnvWiring},
@@ -16,16 +17,17 @@ use wiring::{
     Block, TransactionType,
 };
 
-/// Validate environment for the mainnet.
+/// Validate environment (block and transaction) for the mainnet.
 pub fn validate_env<EvmWiringT: EvmWiring, SPEC: Spec>(
     env: &EnvWiring<EvmWiringT>,
 ) -> EVMResultGeneric<(), EvmWiringT>
 where
     <EvmWiringT::Transaction as Transaction>::TransactionError: From<InvalidTransaction>,
 {
-    // Important: validate block before tx.
+    // Important: validate block before tx as some field are used in transaction validation.
     validate_block_env::<EvmWiringT, SPEC>(&env.block).map_err(EVMError::Header)?;
 
+    // validate transaction.
     validate_tx_env::<EvmWiringT, SPEC>(&env.tx, &env.block, &env.cfg)
         .map_err(|e| EVMError::Transaction(e.into()))?;
     Ok(())
@@ -47,7 +49,7 @@ pub fn validate_block_env<EvmWiringT: EvmWiring, SPEC: Spec>(
     Ok(())
 }
 
-/// Validate priority fee tx
+/// Validate transaction that has EIP-1559 priority fee
 pub fn validate_priority_fee_tx(
     max_fee: u128,
     max_priority_fee: u128,
@@ -106,7 +108,7 @@ pub fn validate_eip4844_tx(
     Ok(())
 }
 
-/// Validate environment transaction for the mainnet.
+/// Validate transaction agains block and configuration for mainnet.
 pub fn validate_tx_env<EvmWiringT: EvmWiring, SPEC: Spec>(
     tx: &EvmWiringT::Transaction,
     block: &EvmWiringT::Block,
@@ -132,14 +134,10 @@ pub fn validate_tx_env<EvmWiringT: EvmWiring, SPEC: Spec>(
                     return Err(InvalidTransaction::InvalidChainId);
                 }
             }
-            // gas price must be at least basefee.
-            if let Some(base_fee) = base_fee {
-                if U256::from(tx.gas_price()) < base_fee {
-                    return Err(InvalidTransaction::GasPriceLessThanBasefee);
-                }
-            }
+            // gas price must be at least the basefee.
         }
         TransactionType::Eip2930 => {
+            // enabled in BERLIN hardfork
             if !SPEC::enabled(SpecId::BERLIN) {
                 return Err(InvalidTransaction::Eip2930NotSupported);
             }
@@ -220,7 +218,7 @@ pub fn validate_tx_env<EvmWiringT: EvmWiring, SPEC: Spec>(
             // Check validity of authorization_list
             auth_list.is_valid(cfg.chain_id)?;
         }
-    }
+    };
 
     // Check if gas_limit is more than block_gas_limit
     if !cfg.is_block_gas_limit_disabled()
@@ -280,6 +278,7 @@ where
         }
     }
 
+    // gas_limit * max_fee + value
     let mut balance_check = U256::from(tx.common_fields().gas_limit())
         .checked_mul(U256::from(tx.max_fee()))
         .and_then(|gas_cost| gas_cost.checked_add(tx.common_fields().value()))

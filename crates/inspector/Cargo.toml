@@ -39,6 +39,7 @@ serde_json = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 [dev-dependencies]
+revm = { workspace = true, features = ["serde"] }
 database = { workspace = true, features = ["serde"] }
 
 [features]
