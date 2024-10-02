@@ -142,7 +142,6 @@ fn skip_test(path: &Path) -> bool {
         | "eip7516_blob_base_fee.json"
         | "create_tx_collision_storage.json"
         | "create_collision_storage.json"
-        | "before_activation.json"
     )
 }
 
