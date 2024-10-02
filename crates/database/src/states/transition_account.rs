@@ -127,7 +127,7 @@ impl TransitionAccount {
         BundleAccount {
             info: self.previous_info.clone(),
             original_info: self.previous_info.clone(),
-            storage: StorageWithOriginalValues::new(),
+            storage: StorageWithOriginalValues::default(),
             status: self.previous_status,
         }
     }

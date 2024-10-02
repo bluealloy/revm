@@ -186,7 +186,7 @@ impl CacheAccount {
                 status: self.status,
                 previous_info,
                 previous_status,
-                storage: HashMap::new(),
+                storage: HashMap::default(),
                 storage_was_destroyed: true,
             })
         }
@@ -259,7 +259,7 @@ impl CacheAccount {
                 status: self.status,
                 previous_info,
                 previous_status,
-                storage: HashMap::new(),
+                storage: HashMap::default(),
                 storage_was_destroyed: false,
             },
         )

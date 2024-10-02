@@ -4,7 +4,7 @@ use crate::{Context, EvmWiring};
 use interpreter::gas;
 use primitives::{B256, U256};
 use specification::{
-    constantans::MAX_INITCODE_SIZE,
+    constants::MAX_INITCODE_SIZE,
     eip4844,
     hardfork::{Spec, SpecId},
 };

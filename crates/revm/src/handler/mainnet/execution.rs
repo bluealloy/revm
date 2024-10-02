@@ -7,8 +7,7 @@ use core::mem;
 use interpreter::{
     return_ok, return_revert, table::InstructionTables, CallInputs, CallOutcome, CallScheme,
     CallValue, CreateInputs, CreateOutcome, CreateScheme, EOFCreateInputs, EOFCreateKind, Gas,
-    InstructionResult, InterpreterAction, InterpreterResult, NewFrameAction, SharedMemory,
-    EMPTY_SHARED_MEMORY,
+    InterpreterAction, InterpreterResult, NewFrameAction, SharedMemory, EMPTY_SHARED_MEMORY,
 };
 use primitives::TxKind;
 use specification::hardfork::{Spec, SpecId};
@@ -244,6 +243,7 @@ pub fn insert_eofcreate_outcome<EvmWiringT: EvmWiring>(
 mod tests {
     use super::*;
     use crate::handler::mainnet::refund;
+    use interpreter::InstructionResult;
     use primitives::Bytes;
     use specification::hardfork::CancunSpec;
     use wiring::{default::EnvWiring, DefaultEthereumWiring};

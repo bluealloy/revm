@@ -84,8 +84,8 @@ pub(super) fn extract_scalar_input(input: &[u8]) -> Result<blst_scalar, Precompi
 
 /// Checks if the input is a valid big-endian representation of a field element.
 fn is_valid_be(input: &[u8; 48]) -> bool {
-    for (i, modul) in input.iter().zip(MODULUS_REPR.iter()) {
-        match i.cmp(modul) {
+    for (i, modulo) in input.iter().zip(MODULUS_REPR.iter()) {
+        match i.cmp(modulo) {
             Ordering::Greater => return false,
             Ordering::Less => return true,
             Ordering::Equal => continue,

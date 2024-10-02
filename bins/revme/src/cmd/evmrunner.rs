@@ -3,7 +3,7 @@ use database::BenchmarkDB;
 use inspector::{inspector_handle_register, inspectors::TracerEip3155};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
-    primitives::{address, Address, TxKind},
+    primitives::{address, hex, Address, TxKind},
     wiring::EthereumWiring,
     Database, Evm,
 };

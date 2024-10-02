@@ -57,9 +57,9 @@
         "_info": {
             "hash": "0x90bba88ea551f3ea53112d481c9340ab67d28d65e90a4181f13c374705fd89cf",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.12.0-6+commit.2d20cc63.dirty",
+            "filling-transition-tool": "evmone-t8n 0.13.0-9+commit.8e4a055c",
             "description": "Test function documentation:\nTest stack overflowing 1024 items in called function with inputs",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/60b2036d3a8090e36595948846578af102666e65/tests/prague/eip7692_eof_v1/eip4750_functions/test_callf_execution.py#L220",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/eip7692@v1.1.1/tests/prague/eip7692_eof_v1/eip4750_functions/test_callf_execution.py#L220",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4750.md",
             "reference-spec-version": "14400434e1199c57d912082127b1d22643788d11"
         }

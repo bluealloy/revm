@@ -1,6 +1,5 @@
 use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
-    models::{SpecName, Test, TestSuite},
     utils::recover_address,
 };
 use database::State;
@@ -20,6 +19,8 @@ use revm::{
     Evm,
 };
 use serde_json::json;
+use statetest_types::{SpecName, Test, TestSuite};
+
 use std::{
     fmt::Debug,
     io::{stderr, stdout},

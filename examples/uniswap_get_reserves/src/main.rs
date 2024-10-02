@@ -6,8 +6,9 @@ use alloy_provider::ProviderBuilder;
 use alloy_sol_types::sol;
 use alloy_sol_types::SolCall;
 use database::{AlloyDB, CacheDB};
+use revm::database_interface::WrapDatabaseAsync;
 use revm::{
-    database_interface::Database,
+    database_interface::DatabaseRef,
     database_interface::EmptyDB,
     primitives::{address, TxKind, U256},
     wiring::{
@@ -24,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
 
     // create ethers client and wrap it in Arc<M>
     let client = ProviderBuilder::new().on_http(rpc_url);
-    let mut client = AlloyDB::new(client, BlockId::latest()).unwrap();
+    let client = WrapDatabaseAsync::new(AlloyDB::new(client, BlockId::latest())).unwrap();
 
     // ----------------------------------------------------------- //
     //             Storage slots of UniV2Pair contract             //
@@ -53,10 +54,10 @@ async fn main() -> anyhow::Result<()> {
     let encoded = getReservesCall::new(()).abi_encode();
 
     // query basic properties of an account incl bytecode
-    let acc_info = client.basic(pool_address).unwrap().unwrap();
+    let acc_info = client.basic_ref(pool_address).unwrap().unwrap();
 
     // query value of storage slot at account address
-    let value = client.storage(pool_address, slot).unwrap();
+    let value = client.storage_ref(pool_address, slot).unwrap();
 
     // initialise empty in-memory-db
     let mut cache_db = CacheDB::new(EmptyDB::default());

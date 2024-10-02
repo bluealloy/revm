@@ -10,7 +10,7 @@ use crate::{Block, EvmWiring, Transaction};
 use core::fmt::Debug;
 use core::hash::Hash;
 use primitives::{Address, Bytes, TxKind, U256};
-use specification::{constantans::MAX_CODE_SIZE, eip7702::AuthorizationList};
+use specification::{constants::MAX_CODE_SIZE, eip7702::AuthorizationList};
 use std::boxed::Box;
 use std::vec::Vec;
 

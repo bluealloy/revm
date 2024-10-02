@@ -12,7 +12,7 @@ use revm::{
         mainnet::{self, deduct_caller_inner},
         register::EvmHandler,
     },
-    interpreter::{return_ok, return_revert, Gas, InstructionResult},
+    interpreter::{return_ok, return_revert, Gas},
     precompile::{secp256r1, PrecompileSpecId},
     primitives::{HashMap, U256},
     state::Account,
@@ -394,7 +394,7 @@ pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
                 acc.mark_touch();
                 acc
             };
-            let state = HashMap::from([(caller, account)]);
+            let state = HashMap::from_iter([(caller, account)]);
 
             // The gas used of a failed deposit post-regolith is the gas
             // limit of the transaction. pre-regolith, it is the gas limit
@@ -432,7 +432,7 @@ mod tests {
     use database::InMemoryDB;
     use revm::{
         database_interface::EmptyDB,
-        interpreter::{CallOutcome, InterpreterResult},
+        interpreter::{CallOutcome, InstructionResult, InterpreterResult},
         primitives::{bytes, Address, Bytes, B256},
         state::AccountInfo,
     };

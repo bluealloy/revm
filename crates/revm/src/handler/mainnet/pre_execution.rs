@@ -2,7 +2,7 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
-use crate::{Context, ContextPrecompiles, EvmWiring};
+use crate::{Context, ContextPrecompiles, EvmWiring, JournalEntry};
 use bytecode::Bytecode;
 use precompile::PrecompileSpecId;
 use primitives::{BLOCKHASH_STORAGE_ADDRESS, U256};
@@ -93,20 +93,30 @@ pub fn deduct_caller_inner<EvmWiringT: EvmWiring, SPEC: Spec>(
 pub fn deduct_caller<EvmWiringT: EvmWiring, SPEC: Spec>(
     context: &mut Context<EvmWiringT>,
 ) -> EVMResultGeneric<(), EvmWiringT> {
+    let caller = context.evm.inner.env.tx.common_fields().caller();
     // load caller's account.
     let caller_account = context
         .evm
         .inner
         .journaled_state
-        .load_account(
-            context.evm.inner.env.tx.common_fields().caller(),
-            &mut context.evm.inner.db,
-        )
+        .load_account(caller, &mut context.evm.inner.db)
         .map_err(EVMError::Database)?;
 
     // deduct gas cost from caller's account.
     deduct_caller_inner::<EvmWiringT, SPEC>(caller_account.data, &context.evm.inner.env);
 
+    // Ensure tx kind is call
+    if context.evm.inner.env.tx.kind().is_call() {
+        // Push NonceChange entry
+        context
+            .evm
+            .inner
+            .journaled_state
+            .journal
+            .last_mut()
+            .unwrap()
+            .push(JournalEntry::NonceChange { address: caller });
+    }
     Ok(())
 }
 

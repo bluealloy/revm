@@ -94,7 +94,7 @@ impl BundleAccount {
             AccountInfoRevert::DeleteIt => {
                 self.info = None;
                 if self.original_info.is_none() {
-                    self.storage = HashMap::new();
+                    self.storage = HashMap::default();
                     return true;
                 } else {
                     // set all storage to zero but preserve original values.
