@@ -2,11 +2,13 @@ use crate::{gas, Host, Interpreter};
 use primitives::U256;
 use specification::hardfork::Spec;
 use transaction::Eip4844Tx;
-use wiring::{Transaction, TransactionType};
+use wiring::{Block, Transaction, TransactionType};
 
 pub fn gasprice<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().effective_gas_price());
+    let env = host.env();
+    let basefee = *env.block.basefee();
+    push!(interpreter, env.tx.effective_gas_price(basefee));
 }
 
 pub fn origin<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {

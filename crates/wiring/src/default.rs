@@ -38,11 +38,8 @@ impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
     }
 
     pub fn effective_gas_price(&self) -> U256 {
-        U256::ZERO
-        // self.tx.max_priority_fee_per_gas().map_or_else(
-        //     || self.tx.gas_price().clone(),
-        //     |priority_fee| min(priority_fee, self.tx.gas_price().clone()),
-        // )
+        let basefee = *self.block.basefee();
+        self.tx.effective_gas_price(basefee)
     }
 
     /// Calculates the [EIP-4844] `data_fee` of the transaction.
