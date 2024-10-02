@@ -57,9 +57,9 @@
         "_info": {
             "hash": "0xc0f48d955da324e0ad47313be6cbe4f56be035c0bd23fdcaaf8d3e09a3ba0c26",
             "comment": "`execution-spec-tests` generated test",
-            "filling-transition-tool": "evmone-t8n 0.12.0-6+commit.2d20cc63.dirty",
+            "filling-transition-tool": "evmone-t8n 0.13.0-9+commit.8e4a055c",
             "description": "Test function documentation:\n\n    Verifies correct handling of a halt in EOF initcode",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/60b2036d3a8090e36595948846578af102666e65/tests/prague/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L108",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/eip7692@v1.1.1/tests/prague/eip7692_eof_v1/eip7620_eof_create/test_eofcreate_failures.py#L108",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7620.md",
             "reference-spec-version": "52ddbcdddcf72dd72427c319f2beddeb468e1737"
         }
