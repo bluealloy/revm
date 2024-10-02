@@ -288,7 +288,7 @@ pub enum InvalidTransaction {
     /// Blob transaction can't be a create transaction.
     /// `to` must be present
     BlobCreateTransaction,
-    /// Transaction has more then [`primitives::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
+    /// Transaction has more then [`specification::eip4844::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
     TooManyBlobs {
         max: usize,
         have: usize,

@@ -42,7 +42,7 @@ impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {
 
     /// Calculates the [EIP-4844] `data_fee` of the transaction.
     ///
-    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
+    /// Returns `None` if `Cancun` is not enabled.
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
@@ -100,9 +100,7 @@ pub struct CfgEnv {
     /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
     /// By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
-    /// Skips the nonce validation against the account's nonce:
-    /// [`crate::default::InvalidTransaction::NonceTooHigh`] and
-    /// [`crate::default::InvalidTransaction::NonceTooLow`]
+    /// Skips the nonce validation against the account's nonce.
     pub disable_nonce_check: bool,
     /// A hard memory limit in bytes beyond which [crate::result::OutOfGasError::Memory] cannot be resized.
     ///
