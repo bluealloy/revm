@@ -8,9 +8,7 @@ use indicatif::ProgressBar;
 use inspector::{inspector_handle_register, inspectors::TracerEip3155};
 use revm::{
     database_interface::WrapDatabaseAsync,
-    primitives::{TxKind, B256, U256},
-    specification::eip2930::AccessListItem,
-    specification::constants
+    primitives::{TxKind, U256},
     wiring::EthereumWiring,
     Evm,
 };

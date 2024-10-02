@@ -24,7 +24,7 @@ where
     <EvmWiringT::Transaction as Transaction>::TransactionError: From<InvalidTransaction>,
 {
     // Important: validate block before tx.
-    validate_block_env::<EvmWiringT, SPEC>(&env.block).map_err(|e| EVMError::Header(e))?;
+    validate_block_env::<EvmWiringT, SPEC>(&env.block).map_err(EVMError::Header)?;
 
     validate_tx_env::<EvmWiringT, SPEC>(&env.tx, &env.block, &env.cfg)
         .map_err(|e| EVMError::Transaction(e.into()))?;
@@ -261,7 +261,7 @@ where
         // allow EOAs whose code is a valid delegation designation,
         // i.e. 0xef0100 || address, to continue to originate transactions.
         if !bytecode.is_empty() && !bytecode.is_eip7702() {
-            return Err(InvalidTransaction::RejectCallerWithCode.into());
+            return Err(InvalidTransaction::RejectCallerWithCode);
         }
     }
 

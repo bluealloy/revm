@@ -31,7 +31,7 @@ use specification::eip2930::AccessList;
 impl AccessListInterface for AccessList {
     fn iter(&self) -> impl Iterator<Item = (Address, impl Iterator<Item = B256>)> {
         self.0.iter().map(|item| {
-            let slots = item.storage_keys.iter().map(|s| *s);
+            let slots = item.storage_keys.iter().copied();
             (item.address, slots)
         })
     }
