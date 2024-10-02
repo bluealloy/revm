@@ -28,7 +28,7 @@ alloy-primitives = { version = "0.8.5", default-features = false, features = [
 ] }
 
 [features]
-default = ["std", "alloy-primitives/default"]
+default = ["std"]
 std = ["alloy-primitives/std"]
 hashbrown = ["alloy-primitives/map-hashbrown"]
 serde = ["alloy-primitives/serde"]
