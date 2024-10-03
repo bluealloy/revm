@@ -1,17 +1,15 @@
 use revm::{
     primitives::{Address, Bytes, TxKind, B256, U256},
     specification::{eip2930::AccessListItem, eip7702::AuthorizationList},
-    wiring::{
-        default::TxEnv as EthTxEnv,
-        transaction::{Transaction, TransactionValidation},
-    },
+    transaction::{Transaction, TransactionError},
+    wiring::default::TxEnv as EthTxEnv,
 };
 
-use super::{OptimismInvalidTransaction, OptimismTransaction};
+//use super::OptimismInvalidTransaction;
 
-/// The Optimism transaction environment.
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+// /// The Optimism transaction environment.
+// #[derive(Clone, Debug, PartialEq, Eq)]
+// #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub base: EthTxEnv,
@@ -42,78 +40,78 @@ pub struct TxEnv {
     pub enveloped_tx: Option<Bytes>,
 }
 
-impl Transaction for TxEnv {
-    fn caller(&self) -> &Address {
-        self.base.caller()
-    }
+// impl Transaction for TxEnv {
+//     fn caller(&self) -> &Address {
+//         self.base.caller()
+//     }
 
-    fn gas_limit(&self) -> u64 {
-        self.base.gas_limit()
-    }
+//     fn gas_limit(&self) -> u64 {
+//         self.base.gas_limit()
+//     }
 
-    fn gas_price(&self) -> &U256 {
-        self.base.gas_price()
-    }
+//     fn gas_price(&self) -> &U256 {
+//         self.base.gas_price()
+//     }
 
-    fn kind(&self) -> TxKind {
-        self.base.kind()
-    }
+//     fn kind(&self) -> TxKind {
+//         self.base.kind()
+//     }
 
-    fn value(&self) -> &U256 {
-        self.base.value()
-    }
+//     fn value(&self) -> &U256 {
+//         self.base.value()
+//     }
 
-    fn data(&self) -> &Bytes {
-        self.base.data()
-    }
+//     fn data(&self) -> &Bytes {
+//         self.base.data()
+//     }
 
-    fn nonce(&self) -> u64 {
-        self.base.nonce()
-    }
+//     fn nonce(&self) -> u64 {
+//         self.base.nonce()
+//     }
 
-    fn chain_id(&self) -> Option<u64> {
-        self.base.chain_id()
-    }
+//     fn chain_id(&self) -> Option<u64> {
+//         self.base.chain_id()
+//     }
 
-    fn access_list(&self) -> &[AccessListItem] {
-        self.base.access_list()
-    }
+//     fn access_list(&self) -> &[AccessListItem] {
+//         self.base.access_list()
+//     }
 
-    fn max_priority_fee_per_gas(&self) -> Option<&U256> {
-        self.base.max_priority_fee_per_gas()
-    }
+//     fn max_priority_fee_per_gas(&self) -> Option<&U256> {
+//         self.base.max_priority_fee_per_gas()
+//     }
 
-    fn blob_hashes(&self) -> &[B256] {
-        self.base.blob_hashes()
-    }
+//     fn blob_hashes(&self) -> &[B256] {
+//         self.base.blob_hashes()
+//     }
 
-    fn max_fee_per_blob_gas(&self) -> Option<&U256> {
-        self.base.max_fee_per_blob_gas()
-    }
+//     fn max_fee_per_blob_gas(&self) -> Option<&U256> {
+//         self.base.max_fee_per_blob_gas()
+//     }
 
-    fn authorization_list(&self) -> Option<&AuthorizationList> {
-        self.base.authorization_list()
-    }
-}
+//     fn authorization_list(&self) -> Option<&AuthorizationList> {
+//         self.base.authorization_list()
+//     }
+// }
 
-impl OptimismTransaction for TxEnv {
-    fn source_hash(&self) -> Option<&B256> {
-        self.source_hash.as_ref()
-    }
+// impl OptimismTransaction for TxEnv {
+//     fn source_hash(&self) -> Option<&B256> {
+//         self.source_hash.as_ref()
+//     }
 
-    fn mint(&self) -> Option<&u128> {
-        self.mint.as_ref()
-    }
+//     fn mint(&self) -> Option<&u128> {
+//         self.mint.as_ref()
+//     }
 
-    fn is_system_transaction(&self) -> Option<bool> {
-        self.is_system_transaction
-    }
+//     fn is_system_transaction(&self) -> Option<bool> {
+//         self.is_system_transaction
+//     }
 
-    fn enveloped_tx(&self) -> Option<Bytes> {
-        self.enveloped_tx.clone()
-    }
-}
+//     fn enveloped_tx(&self) -> Option<Bytes> {
+//         self.enveloped_tx.clone()
+//     }
+// }
 
-impl TransactionValidation for TxEnv {
-    type ValidationError = OptimismInvalidTransaction;
-}
+// impl TransactionValidation for TxEnv {
+//     type ValidationError = OptimismInvalidTransaction;
+// }

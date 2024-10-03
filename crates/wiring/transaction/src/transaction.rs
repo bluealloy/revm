@@ -18,6 +18,7 @@ pub trait TransactionError: Debug + core::error::Error {}
 pub trait Transaction {
     /// An error that occurs when validating a transaction.
     type TransactionError: TransactionError;
+    type TransactionType: Into<TransactionType>;
 
     type AccessList: AccessListInterface;
 
@@ -29,7 +30,7 @@ pub trait Transaction {
 
     /// Transaction type. Depending on this field other functions should be called.
     /// If transaction is Legacy, then `legacy()` should be called.
-    fn tx_type(&self) -> impl Into<TransactionType>;
+    fn tx_type(&self) -> Self::TransactionType;
 
     fn legacy(&self) -> &Self::Legacy {
         unimplemented!("legacy tx not supported")
@@ -58,6 +59,7 @@ pub trait Transaction {
             TransactionType::Eip1559 => self.eip1559(),
             TransactionType::Eip4844 => self.eip4844(),
             TransactionType::Eip7702 => self.eip7702(),
+            TransactionType::Custom => unimplemented!("Custom tx not supported"),
         }
     }
 
@@ -68,6 +70,7 @@ pub trait Transaction {
             TransactionType::Eip1559 => self.eip1559().max_fee_per_gas(),
             TransactionType::Eip4844 => self.eip4844().max_fee_per_gas(),
             TransactionType::Eip7702 => self.eip7702().max_fee_per_gas(),
+            TransactionType::Custom => unimplemented!("Custom tx not supported"),
         }
     }
 
@@ -90,6 +93,7 @@ pub trait Transaction {
                 self.eip7702().max_fee_per_gas(),
                 self.eip7702().max_priority_fee_per_gas(),
             ),
+            TransactionType::Custom => unimplemented!("Custom tx not supported"),
         };
 
         min(U256::from(max_fee), base_fee + U256::from(max_priority_fee))
@@ -103,6 +107,7 @@ pub trait Transaction {
             TransactionType::Eip1559 => self.eip1559().kind(),
             TransactionType::Eip4844 => TxKind::Call(self.eip4844().destination()),
             TransactionType::Eip7702 => TxKind::Call(self.eip7702().destination()),
+            TransactionType::Custom => unimplemented!("Custom tx not supported"),
         }
     }
 
@@ -115,6 +120,7 @@ pub trait Transaction {
             TransactionType::Eip1559 => Some(self.eip1559().access_list()),
             TransactionType::Eip4844 => Some(self.eip4844().access_list()),
             TransactionType::Eip7702 => Some(self.eip7702().access_list()),
+            TransactionType::Custom => unimplemented!("Custom tx not supported"),
         }
     }
 }

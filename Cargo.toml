@@ -21,7 +21,7 @@ members = [
     "crates/statetest-types",
 
     # variants
-    # "crates/optimism",
+    "crates/optimism",
 
     # examples
     "examples/block_traces",

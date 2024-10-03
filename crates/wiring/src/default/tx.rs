@@ -210,6 +210,7 @@ impl Eip7702Tx for TxEnv {
 
 impl Transaction for TxEnv {
     type TransactionError = InvalidTransaction;
+    type TransactionType = TransactionType;
 
     type AccessList = <Self::Eip2930 as Eip2930Tx>::AccessList;
 
@@ -223,7 +224,7 @@ impl Transaction for TxEnv {
 
     type Eip7702 = Self;
 
-    fn tx_type(&self) -> impl Into<TransactionType> {
+    fn tx_type(&self) -> Self::TransactionType {
         self.tx_type
     }
 

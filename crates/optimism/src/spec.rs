@@ -1,60 +1,7 @@
-use crate::{
-    env::TxEnv, optimism_handle_register, L1BlockInfo, OptimismContext, OptimismHaltReason,
-};
-use core::marker::PhantomData;
 use revm::{
-    database_interface::Database,
-    handler::register::HandleRegisters,
     precompile::PrecompileSpecId,
     specification::hardfork::{Spec, SpecId},
-    wiring::default::block::BlockEnv,
-    wiring::EvmWiring,
-    EvmHandler,
 };
-
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct OptimismEvmWiring<DB: Database, EXT> {
-    _phantom: PhantomData<(DB, EXT)>,
-}
-
-impl<DB: Database, EXT> EvmWiring for OptimismEvmWiring<DB, EXT> {
-    type Block = BlockEnv;
-    type Database = DB;
-    type ChainContext = Context;
-    type ExternalContext = EXT;
-    type Hardfork = OptimismSpecId;
-    type HaltReason = OptimismHaltReason;
-    type Transaction = TxEnv;
-}
-
-impl<DB: Database, EXT> revm::EvmWiring for OptimismEvmWiring<DB, EXT> {
-    fn handler<'evm>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self>
-    where
-        DB: Database,
-    {
-        let mut handler = EvmHandler::mainnet_with_spec(hardfork);
-
-        handler.append_handler_register(HandleRegisters::Plain(optimism_handle_register::<Self>));
-
-        handler
-    }
-}
-
-/// Context for the Optimism chain.
-#[derive(Clone, Default, Debug, PartialEq, Eq)]
-pub struct Context {
-    l1_block_info: Option<L1BlockInfo>,
-}
-
-impl OptimismContext for Context {
-    fn l1_block_info(&self) -> Option<&L1BlockInfo> {
-        self.l1_block_info.as_ref()
-    }
-
-    fn l1_block_info_mut(&mut self) -> &mut Option<L1BlockInfo> {
-        &mut self.l1_block_info
-    }
-}
 
 /// Specification IDs for the optimism blockchain.
 #[repr(u8)]

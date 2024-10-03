@@ -218,6 +218,9 @@ pub fn validate_tx_env<EvmWiringT: EvmWiring, SPEC: Spec>(
             // Check validity of authorization_list
             auth_list.is_valid(cfg.chain_id)?;
         }
+        TransactionType::Custom => {
+            // custom transaction type check is not done here.
+        }
     };
 
     // Check if gas_limit is more than block_gas_limit
