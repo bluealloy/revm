@@ -1,3 +1,4 @@
+use crate::primitives::{address, alloy_primitives};
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
@@ -5,6 +6,9 @@ use crate::{
     },
     Context, FrameResult,
 };
+
+const WVM_TREASURY_ADDRESS: alloy_primitives::Address =
+    address!("a2A0D977847805fE224B789D8C4d3D711ab251e7");
 
 /// Mainnet end handle does not change the output.
 #[inline]
@@ -40,6 +44,12 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         effective_gas_price
     };
 
+    // WVM: if EIP-1559 enabled we send base fee back to treasury
+    // instead of burning it
+    if SPEC::enabled(LONDON) {
+        wvm_add_base_fee_to_treasury(context)?;
+    }
+
     let coinbase_account = context
         .evm
         .inner
@@ -52,6 +62,25 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         .info
         .balance
         .saturating_add(coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64));
+
+    Ok(())
+}
+
+/// WVM: send base fee back to treasury
+#[inline]
+fn wvm_add_base_fee_to_treasury<EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+) -> Result<(), EVMError<DB::Error>> {
+    let base_fee = context.evm.env.block.basefee.clone();
+    let treasury_account = context
+        .evm
+        .inner
+        .journaled_state
+        .load_account(WVM_TREASURY_ADDRESS, &mut context.evm.inner.db)?;
+
+    treasury_account.data.mark_touch();
+    treasury_account.data.info.balance =
+        treasury_account.data.info.balance.saturating_add(base_fee);
 
     Ok(())
 }
