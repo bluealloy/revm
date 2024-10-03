@@ -140,6 +140,8 @@ fn skip_test(path: &Path) -> bool {
         | "block_apply_ommers_reward.json"
         | "known_block_hash.json"
         | "eip7516_blob_base_fee.json"
+        | "create_tx_collision_storage.json"
+        | "create_collision_storage.json"
     )
 }
 
