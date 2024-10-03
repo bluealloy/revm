@@ -148,7 +148,7 @@ impl LegacyTx for TxEnv {
     }
 
     fn gas_price(&self) -> u128 {
-        self.gas_price.to()
+        self.gas_price.try_into().unwrap_or(u128::MAX)
     }
 }
 
