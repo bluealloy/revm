@@ -1,6 +1,7 @@
-use revm_interpreter::gas;
+use revm_interpreter::gas::{self, calc_tx_floor_cost};
 
 use crate::{
+    handler::SpecId,
     primitives::{db::Database, EVMError, Env, InvalidTransaction, Spec},
     Context,
 };
@@ -49,7 +50,7 @@ pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
         .map(|l| l.len() as u64)
         .unwrap_or_default();
 
-    let initial_gas_spend = gas::validate_initial_tx_gas(
+    let (initial_gas_spend, tokens_in_calldata) = gas::calculate_initial_tx_gas(
         SPEC::SPEC_ID,
         input,
         is_create,
@@ -57,8 +58,15 @@ pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
         authorization_list_num,
     );
 
+    // EIP-7623
+    let floor = if SPEC::SPEC_ID.is_enabled_in(SpecId::PRAGUE) {
+        calc_tx_floor_cost(tokens_in_calldata)
+    } else {
+        0
+    };
+
     // Additional check to see if limit is big enough to cover initial gas.
-    if initial_gas_spend > env.tx.gas_limit {
+    if initial_gas_spend.max(floor) > env.tx.gas_limit {
         return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
     }
     Ok(initial_gas_spend)

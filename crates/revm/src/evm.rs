@@ -1,3 +1,7 @@
+use revm_interpreter::gas::{
+    calc_tx_floor_cost, get_tokens_in_calldata, TOTAL_COST_FLOOR_PER_TOKEN,
+};
+
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
@@ -381,6 +385,21 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         self.handler
             .execution()
             .last_frame_return(ctx, &mut result)?;
+
+        // EIP-7623: Increase calldata cost
+        if ctx.evm.spec_id().is_enabled_in(SpecId::PRAGUE) {
+            let tokens_in_calldata = get_tokens_in_calldata(
+                ctx.env().tx.data.as_ref(),
+                true, // Istanbul is enabled in Prague
+            );
+            let floor = calc_tx_floor_cost(tokens_in_calldata);
+
+            let gas = result.gas_mut();
+            let gas_used = gas.spent();
+            if gas.spent() < floor {
+                gas.record_cost(floor - gas.spent());
+            }
+        }
 
         let post_exec = self.handler.post_execution();
         // calculate final refund and add EIP-7702 refund to gas.

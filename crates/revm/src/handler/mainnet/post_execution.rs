@@ -5,6 +5,7 @@ use crate::{
     },
     Context, FrameResult,
 };
+use revm_interpreter::{gas::*, Host};
 
 /// Mainnet end handle does not change the output.
 #[inline]

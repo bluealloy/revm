@@ -363,26 +363,22 @@ pub const fn memory_gas(num_words: u64) -> u64 {
 
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
-pub fn validate_initial_tx_gas(
+///
+/// # Returns
+///
+/// - Intrinsic gas
+/// - Number of tokens in calldata
+pub fn calculate_initial_tx_gas(
     spec_id: SpecId,
     input: &[u8],
     is_create: bool,
     access_list: &[AccessListItem],
     authorization_list_num: u64,
-) -> u64 {
+) -> (u64, u64) {
     let mut initial_gas = 0;
-    let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
-    let non_zero_data_len = input.len() as u64 - zero_data_len;
 
-    // initdate stipend
-    initial_gas += zero_data_len * TRANSACTION_ZERO_DATA;
-    // EIP-2028: Transaction data gas cost reduction
-    initial_gas += non_zero_data_len
-        * if spec_id.is_enabled_in(SpecId::ISTANBUL) {
-            16
-        } else {
-            68
-        };
+    let tokens_in_calldata = get_tokens_in_calldata(input, spec_id.is_enabled_in(SpecId::ISTANBUL));
+    initial_gas += tokens_in_calldata * STANDARD_TOKEN_COST;
 
     // get number of access list account and storages.
     if spec_id.is_enabled_in(SpecId::BERLIN) {
@@ -409,10 +405,30 @@ pub fn validate_initial_tx_gas(
         initial_gas += initcode_cost(input.len() as u64)
     }
 
-    //   EIP-7702
+    // EIP-7702
     if spec_id.is_enabled_in(SpecId::PRAGUE) {
         initial_gas += authorization_list_num * eip7702::PER_EMPTY_ACCOUNT_COST;
     }
 
-    initial_gas
+    (initial_gas, tokens_in_calldata)
+}
+
+/// Retrieve the total number of tokens in calldata.
+#[inline]
+pub fn get_tokens_in_calldata(input: &[u8], is_istanbul: bool) -> u64 {
+    let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
+    let non_zero_data_len = input.len() as u64 - zero_data_len;
+    let non_zero_data_multiplier = if is_istanbul {
+        // EIP-2028: Transaction data gas cost reduction
+        NON_ZERO_BYTE_MULTIPLIER_ISTANBUL
+    } else {
+        NON_ZERO_BYTE_MULTIPLIER
+    };
+    zero_data_len + non_zero_data_len * non_zero_data_multiplier
+}
+
+/// Calculate the transaction cost floor as specified in EIP-7623.
+#[inline]
+pub fn calc_tx_floor_cost(tokens_in_calldata: u64) -> u64 {
+    tokens_in_calldata * TOTAL_COST_FLOOR_PER_TOKEN + 21_000
 }
