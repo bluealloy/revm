@@ -109,6 +109,7 @@ Is a list of functions that are called after the execution. They are called in t
 
 * `reward_beneficiary`:
     Reward the beneficiary with the fee that was paid for the transaction.
+    WVM fork sends basefee back to treasury.
 
 * `output`:
     Returns the state changes and the result of the execution.

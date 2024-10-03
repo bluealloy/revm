@@ -5,6 +5,7 @@ use crate::{
     },
     Context, FrameResult,
 };
+use crate::primitives::{address};
 
 /// Mainnet end handle does not change the output.
 #[inline]
@@ -40,6 +41,9 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         effective_gas_price
     };
 
+    // WVM: send base fee back to treasury
+    wvm_add_base_fee_to_treasury(context, gas)?;
+
     let coinbase_account = context
         .evm
         .inner
@@ -52,6 +56,28 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         .info
         .balance
         .saturating_add(coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64));
+
+    Ok(())
+}
+
+/// WVM: send base fee back to treasury
+fn wvm_add_base_fee_to_treasury<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+    gas: &Gas,
+) -> Result<(), EVMError<DB::Error>> {
+    let treasury_address = address!("a2A0D977847805fE224B789D8C4d3D711ab251e7")?; // e.g treasury account
+    let treasury_account = context
+        .evm
+        .inner
+        .journaled_state
+        .load_account(treasury_address, &mut context.evm.inner.db)?;
+
+    treasury_account.data.mark_touch();
+    treasury_account.data.info.balance = treasury_account
+        .data
+        .info
+        .balance
+        .saturating_add(context.evm.env.block.basefee);
 
     Ok(())
 }
