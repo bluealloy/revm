@@ -55,7 +55,7 @@ indicatif = "0.17"
 reqwest = { version = "0.12" }
 rstest = "0.22.0"
 
-alloy-provider = "0.3"
+alloy-provider = "0.4.2"
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
