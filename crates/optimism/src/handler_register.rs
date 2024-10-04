@@ -3,8 +3,7 @@
 use crate::{
     optimism_spec_to_generic,
     transaction::{
-        deposit::DepositTransaction, error::OpTransactionError, OpTransaction, OpTransactionType,
-        OpTxTrait,
+        deposit::DepositTransaction, error::OpTransactionError, OpTransactionType, OpTxTrait,
     },
     wiring::{OptimismContextTrait, OptimismWiring},
     OptimismHaltReason, OptimismSpec, OptimismSpecId,
@@ -444,13 +443,17 @@ pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{wiring::OptimismEvmWiring, BedrockSpec, L1BlockInfo, LatestSpec, RegolithSpec};
+    use crate::{
+        transaction::deposit::TxDeposit, wiring::OptimismEvmWiring, BedrockSpec, L1BlockInfo,
+        LatestSpec, OpTransaction, RegolithSpec,
+    };
     use database::InMemoryDB;
     use revm::{
         database_interface::EmptyDB,
         interpreter::{CallOutcome, InstructionResult, InterpreterResult},
         primitives::{bytes, Address, Bytes, B256},
         state::AccountInfo,
+        wiring::default::TxEnv,
     };
     use std::boxed::Box;
 
@@ -484,8 +487,14 @@ mod tests {
     #[test]
     fn test_revert_gas() {
         let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.base.gas_limit = 100;
-        env.tx.source_hash = None;
+        let tx = TxEnv {
+            gas_limit: 100,
+            ..Default::default()
+        };
+        env.tx = OpTransaction::Base {
+            tx,
+            enveloped_tx: None,
+        };
 
         let gas =
             call_last_frame_return::<BedrockSpec>(env, InstructionResult::Revert, Gas::new(90));
@@ -497,8 +506,15 @@ mod tests {
     #[test]
     fn test_consume_gas() {
         let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.base.gas_limit = 100;
-        env.tx.source_hash = Some(B256::ZERO);
+        //env.tx.base.gas_limit = 100;
+        //env.tx.source_hash = Some(B256::ZERO);
+
+        let deposit = TxDeposit {
+            gas_limit: 100,
+            source_hash: B256::ZERO,
+            ..Default::default()
+        };
+        env.tx = OpTransaction::Deposit(deposit);
 
         let gas =
             call_last_frame_return::<RegolithSpec>(env, InstructionResult::Stop, Gas::new(90));
@@ -510,8 +526,14 @@ mod tests {
     #[test]
     fn test_consume_gas_with_refund() {
         let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.base.gas_limit = 100;
-        env.tx.source_hash = Some(B256::ZERO);
+        //env.tx.base.gas_limit = 100;
+        //env.tx.source_hash = Some(B256::ZERO);
+        let deposit = TxDeposit {
+            gas_limit: 100,
+            source_hash: B256::ZERO,
+            ..Default::default()
+        };
+        env.tx = OpTransaction::Deposit(deposit);
 
         let mut ret_gas = Gas::new(90);
         ret_gas.record_refund(20);
@@ -531,8 +553,15 @@ mod tests {
     #[test]
     fn test_consume_gas_sys_deposit_tx() {
         let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.base.gas_limit = 100;
-        env.tx.source_hash = Some(B256::ZERO);
+        //env.tx.base.gas_limit = 100;
+        //env.tx.source_hash = Some(B256::ZERO);
+
+        let deposit = TxDeposit {
+            gas_limit: 100,
+            source_hash: B256::ZERO,
+            ..Default::default()
+        };
+        env.tx = OpTransaction::Deposit(deposit);
 
         let gas = call_last_frame_return::<BedrockSpec>(env, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 0);
@@ -559,10 +588,18 @@ mod tests {
             l1_base_fee_scalar: U256::from(1_000),
             ..Default::default()
         });
-        // Enveloped needs to be some but it will deduce zero fee.
-        context.evm.inner.env.tx.enveloped_tx = Some(bytes!(""));
-        // added mint value is 10.
-        context.evm.inner.env.tx.mint = Some(10);
+        // // Enveloped needs to be some but it will deduce zero fee.
+        // context.evm.inner.env.tx.enveloped_tx = Some(bytes!(""));
+        // // added mint value is 10.
+        // context.evm.inner.env.tx.mint = Some(10);
+
+        let deposit = TxDeposit {
+            gas_limit: 100,
+            mint: Some(10),
+            source_hash: B256::ZERO,
+            ..Default::default()
+        };
+        context.evm.inner.env.tx = OpTransaction::Deposit(deposit);
 
         deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context).unwrap();
 
@@ -594,13 +631,20 @@ mod tests {
             l1_base_fee_scalar: U256::from(1_000),
             ..Default::default()
         });
-        // l1block cost is 1048 fee.
-        context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
-        // added mint value is 10.
-        context.evm.inner.env.tx.mint = Some(10);
-        // Putting source_hash to some makes it a deposit transaction.
-        // so enveloped_tx gas cost is ignored.
-        context.evm.inner.env.tx.source_hash = Some(B256::ZERO);
+        // // l1block cost is 1048 fee.
+        // context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
+        // // added mint value is 10.
+        // context.evm.inner.env.tx.mint = Some(10);
+        // // Putting source_hash to some makes it a deposit transaction.
+        // // so enveloped_tx gas cost is ignored.
+        // context.evm.inner.env.tx.source_hash = Some(B256::ZERO);
+
+        let deposit = TxDeposit {
+            mint: Some(10),
+            source_hash: B256::ZERO,
+            ..Default::default()
+        };
+        context.evm.inner.env.tx = OpTransaction::Deposit(deposit);
 
         deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context).unwrap();
 
@@ -633,7 +677,10 @@ mod tests {
             ..Default::default()
         });
         // l1block cost is 1048 fee.
-        context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
+        context.evm.inner.env.tx = OpTransaction::Base {
+            tx: TxEnv::default(),
+            enveloped_tx: Some(bytes!("FACADE")),
+        };
         deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context).unwrap();
 
         // Check the account balance is updated.
@@ -665,7 +712,10 @@ mod tests {
             ..Default::default()
         });
         // l1block cost is 1048 fee.
-        context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
+        context.evm.inner.env.tx = OpTransaction::Base {
+            tx: TxEnv::default(),
+            enveloped_tx: Some(bytes!("FACADE")),
+        };
 
         assert_eq!(
             deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context),
@@ -683,11 +733,14 @@ mod tests {
     fn test_validate_sys_tx() {
         // mark the tx as a system transaction.
         let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.is_system_transaction = Some(true);
+        env.tx = OpTransaction::Deposit(TxDeposit {
+            is_system_transaction: true,
+            ..Default::default()
+        });
         assert_eq!(
             validate_env::<TestEmptyOpWiring, RegolithSpec>(&env),
             Err(EVMError::Transaction(
-                OptimismInvalidTransaction::DepositSystemTxPostRegolith
+                OpTransactionError::DepositSystemTxPostRegolith
             ))
         );
 
@@ -699,7 +752,10 @@ mod tests {
     fn test_validate_deposit_tx() {
         // Set source hash.
         let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.source_hash = Some(B256::ZERO);
+        env.tx = OpTransaction::Deposit(TxDeposit {
+            source_hash: B256::ZERO,
+            ..Default::default()
+        });
         assert!(validate_env::<TestEmptyOpWiring, RegolithSpec>(&env).is_ok());
     }
 
@@ -707,7 +763,10 @@ mod tests {
     fn test_validate_tx_against_state_deposit_tx() {
         // Set source hash.
         let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.source_hash = Some(B256::ZERO);
+        env.tx = OpTransaction::Deposit(TxDeposit {
+            source_hash: B256::ZERO,
+            ..Default::default()
+        });
 
         // Nonce and balance checks should be skipped for deposit transactions.
         assert!(validate_env::<TestEmptyOpWiring, LatestSpec>(&env).is_ok());

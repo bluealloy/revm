@@ -6,7 +6,6 @@
 extern crate alloc as std;
 
 pub mod bn128;
-pub mod env;
 pub mod fast_lz;
 pub mod handler_register;
 pub mod l1block;
@@ -22,9 +21,5 @@ pub use handler_register::{
 };
 pub use l1block::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
 pub use result::OptimismHaltReason;
-use revm::{
-    primitives::{Bytes, B256},
-    transaction::Transaction,
-};
 pub use spec::*;
 pub use transaction::{error::OpTransactionError, OpTransaction, OpTransactionType};

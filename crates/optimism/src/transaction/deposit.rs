@@ -13,6 +13,8 @@ pub trait DepositTransaction: CommonTxFields {
     fn is_system_transaction(&self) -> bool;
 }
 
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxDeposit {
     /// Hash that uniquely identifies the source of the deposit.
     pub source_hash: B256,
