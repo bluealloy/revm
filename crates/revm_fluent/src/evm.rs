@@ -29,7 +29,7 @@ use fluentbase_core::{
     fvm::exec::_exec_fuel_tx,
     helpers::evm_error_from_exit_code,
 };
-use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
+use fluentbase_runtime::RuntimeContext;
 use fluentbase_sdk::{
     journal::{JournalState, JournalStateBuilder},
     BlockContext,
@@ -524,8 +524,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     ) -> Result<CreateOutcome, EVMError<DB::Error>> {
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
-            .with_fuel_limit(create_inputs.gas_limit)
-            .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
+            .with_fuel_limit(create_inputs.gas_limit);
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
         let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
 
@@ -632,8 +631,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
-            .with_fuel_limit(call_inputs.gas_limit)
-            .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
+            .with_fuel_limit(call_inputs.gas_limit);
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
         let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
 
@@ -651,8 +649,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     ) -> Result<CallOutcome, EVMError<DB::Error>> {
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
-            .with_fuel_limit(gas_limit)
-            .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
+            .with_fuel_limit(gas_limit);
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
         let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
 

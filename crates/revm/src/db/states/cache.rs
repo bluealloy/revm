@@ -4,7 +4,6 @@ use super::{
     CacheAccount,
     PlainAccount,
 };
-use fluentbase_types::{KECCAK_EMPTY, POSEIDON_EMPTY};
 use revm_interpreter::primitives::{
     Account,
     AccountInfo,

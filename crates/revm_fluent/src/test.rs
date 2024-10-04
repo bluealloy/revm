@@ -24,7 +24,7 @@ use fluentbase_genesis::{
     EXAMPLE_GREETING_ADDRESS,
 };
 use fluentbase_poseidon::poseidon_hash;
-use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
+use fluentbase_runtime::RuntimeContext;
 use fluentbase_sdk::{
     byteorder::{ByteOrder, LittleEndian},
     runtime::TestingContext,
@@ -159,9 +159,7 @@ impl EvmTestingContext {
         ) -> (),
     {
         let mut evm = Evm::builder().with_db(&mut self.db).build();
-        let runtime_context = RuntimeContext::default()
-            .with_depth(0u32)
-            .with_jzkt(Box::new(DefaultEmptyRuntimeDatabase::default()));
+        let runtime_context = RuntimeContext::default().with_depth(0u32);
         let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
         f(RwasmDbWrapper::new(&mut evm.context.evm, native_sdk))
     }
