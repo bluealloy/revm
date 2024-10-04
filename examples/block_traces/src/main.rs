@@ -112,7 +112,7 @@ async fn main() -> anyhow::Result<()> {
             .modify()
             .modify_tx_env(|etx| {
                 etx.caller = tx.from;
-                etx.gas_limit = tx.gas as u64;
+                etx.gas_limit = tx.gas;
                 etx.gas_price = U256::from(
                     tx.gas_price
                         .unwrap_or(tx.max_fee_per_gas.unwrap_or_default()),
