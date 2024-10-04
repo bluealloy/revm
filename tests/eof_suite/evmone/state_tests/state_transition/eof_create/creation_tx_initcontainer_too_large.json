@@ -5,6 +5,7 @@
       "currentCoinbase": "0x00000000000000000000000000000000c014bace",
       "currentGasLimit": "0x989680",
       "currentNumber": "0x1",
+      "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "currentTimestamp": "0x0"
     },
     "post": {
