@@ -41,9 +41,9 @@ tokio = { version = "1.40", features = [
     "rt-multi-thread",
     "macros",
 ], optional = true }
-alloy-provider = { version = "0.3", optional = true, default-features = false }
-alloy-eips = { version = "0.3", optional = true, default-features = false }
-alloy-transport = { version = "0.3", optional = true, default-features = false }
+alloy-provider = { version = "0.4.2", optional = true, default-features = false }
+alloy-eips = { version = "0.4.2", optional = true, default-features = false }
+alloy-transport = { version = "0.4.2", optional = true, default-features = false }
 
 
 [dev-dependencies]
