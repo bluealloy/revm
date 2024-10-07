@@ -47,6 +47,7 @@ where
         // Refund is calculated differently then mainnet.
         handler.execution.last_frame_return = Arc::new(last_frame_return::<EvmWiringT, SPEC>);
         handler.post_execution.refund = Arc::new(refund::<EvmWiringT, SPEC>);
+        handler.post_execution.reimburse_caller = Arc::new(reimburse_caller::<EvmWiringT, SPEC>);
         handler.post_execution.reward_beneficiary =
             Arc::new(reward_beneficiary::<EvmWiringT, SPEC>);
         // In case of halt of deposit transaction return Error.
@@ -177,6 +178,39 @@ pub fn refund<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     }
 }
 
+/// Reimburse the transaction caller.
+#[inline]
+pub fn reimburse_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
+    context: &mut Context<EvmWiringT>,
+    gas: &Gas,
+) -> EVMResultGeneric<(), EvmWiringT> {
+    mainnet::reimburse_caller::<EvmWiringT>(context, gas)?;
+    let caller = *context.evm.env.tx.caller();
+    let caller_account = context
+        .evm
+        .inner
+        .journaled_state
+        .load_account(caller, &mut context.evm.inner.db)
+        .map_err(EVMError::Database)?;
+    // In additional to the normal transaction fee, additionally refund the caller
+    // for the operator fee.
+    let operator_fee_refund = context
+        .evm
+        .inner
+        .chain
+        .l1_block_info()
+        .expect("L1BlockInfo should be loaded")
+        .operator_fee_refund(gas, SPEC::OPTIMISM_SPEC_ID);
+
+    caller_account.data.info.balance = caller_account
+        .data
+        .info
+        .balance
+        .saturating_add(operator_fee_refund);
+
+    Ok(())
+}
+
 /// Load precompiles for Optimism chain.
 #[inline]
 pub fn load_precompiles<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
@@ -248,6 +282,7 @@ pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 
     // If the transaction is not a deposit transaction, subtract the L1 data fee from the
     // caller's balance directly after minting the requested amount of ETH.
+    // Additionally deduct the operator fee from the caller's account.
     if context.evm.inner.env.tx.source_hash().is_none() {
         // get envelope
         let Some(enveloped_tx) = &context.evm.inner.env.tx.enveloped_tx() else {
@@ -273,6 +308,22 @@ pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
             ));
         }
         caller_account.info.balance = caller_account.info.balance.saturating_sub(tx_l1_cost);
+
+        // Deduct the operator fee from the caller's account.
+        let gas_limit = U256::from(context.evm.inner.env.tx.gas_limit());
+
+        let operator_fee_charge = context
+            .evm
+            .inner
+            .chain
+            .l1_block_info()
+            .expect("L1BlockInfo should be loaded")
+            .operator_fee_charge(gas_limit, SPEC::OPTIMISM_SPEC_ID);
+
+        caller_account.info.balance = caller_account
+            .info
+            .balance
+            .saturating_sub(operator_fee_charge);
     }
     Ok(())
 }
@@ -306,6 +357,10 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
         };
 
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, SPEC::OPTIMISM_SPEC_ID);
+        let operator_fee_cost = l1_block_info.operator_fee_charge(
+            U256::from(gas.spent() - gas.refunded() as u64),
+            SPEC::OPTIMISM_SPEC_ID,
+        );
 
         // Send the L1 cost of the transaction to the L1 Fee Vault.
         let mut l1_fee_vault_account = context
@@ -332,6 +387,23 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
             .block
             .basefee()
             .mul(U256::from(gas.spent() - gas.refunded() as u64));
+
+        // Send the operator fee of the transaction to the coinbase.
+        let beneficiary = *context.evm.env.block.coinbase();
+
+        // Don't need to `mark_touch` as it's already been done in `reward_beneficiary`.
+        let coinbase_account = context
+            .evm
+            .inner
+            .journaled_state
+            .load_account(beneficiary, &mut context.evm.inner.db)
+            .map_err(EVMError::Database)?;
+
+        coinbase_account.data.info.balance = coinbase_account
+            .data
+            .info
+            .balance
+            .saturating_add(operator_fee_cost);
     }
     Ok(())
 }
@@ -428,7 +500,9 @@ pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{BedrockSpec, L1BlockInfo, LatestSpec, OptimismEvmWiring, RegolithSpec};
+    use crate::{
+        BedrockSpec, HoloceneSpec, L1BlockInfo, LatestSpec, OptimismEvmWiring, RegolithSpec,
+    };
     use database::InMemoryDB;
     use revm::{
         database_interface::EmptyDB,
@@ -619,6 +693,40 @@ mod tests {
         // l1block cost is 1048 fee.
         context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
         deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context).unwrap();
+
+        // Check the account balance is updated.
+        let account = context
+            .evm
+            .inner
+            .journaled_state
+            .load_account(caller, &mut context.evm.inner.db)
+            .unwrap();
+        assert_eq!(account.info.balance, U256::from(1));
+    }
+
+    #[test]
+    fn test_remove_operator_cost() {
+        let caller = Address::ZERO;
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(151),
+                ..Default::default()
+            },
+        );
+        let mut context = Context::<TestMemOpWiring>::new_with_db(db);
+        *context.evm.chain.l1_block_info_mut() = Some(L1BlockInfo {
+            operator_fee_scalar: Some(U256::from(10_000_000)),
+            operator_fee_constant: Some(U256::from(50)),
+            ..Default::default()
+        });
+        context.evm.inner.env.tx.base.gas_limit = 10;
+
+        // operator fee cost is operator_fee_scalar * gas_limit / 1e6 + operator_fee_constant
+        // 10_000_000 * 10 / 1_000_000 + 50 = 150
+        context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
+        deduct_caller::<TestMemOpWiring, HoloceneSpec>(&mut context).unwrap();
 
         // Check the account balance is updated.
         let account = context
