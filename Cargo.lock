@@ -3092,6 +3092,7 @@ dependencies = [
 name = "revm-transaction"
 version = "1.0.0"
 dependencies = [
+ "auto_impl",
  "revm-primitives",
  "revm-specification",
  "serde",

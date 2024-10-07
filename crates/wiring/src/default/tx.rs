@@ -5,8 +5,8 @@ use specification::eip2930::AccessList;
 use specification::eip7702::AuthorizationList;
 use std::vec::Vec;
 use transaction::{
-    CommonTxFields, Eip1559CommonTxFields, Eip1559Tx, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx,
-    TransactionType,
+    eip7702::Authorization, CommonTxFields, Eip1559CommonTxFields, Eip1559Tx, Eip2930Tx, Eip4844Tx,
+    Eip7702Tx, LegacyTx, TransactionType,
 };
 
 /// The transaction environment.
@@ -203,8 +203,12 @@ impl Eip7702Tx for TxEnv {
         }
     }
 
-    fn authorization_list(&self) -> &AuthorizationList {
-        &self.authorization_list
+    fn authorization_list_len(&self) -> usize {
+        self.authorization_list.len()
+    }
+
+    fn authorization_list_iter(&self) -> impl Iterator<Item = impl Authorization> {
+        self.authorization_list.recovered_iter()
     }
 }
 

@@ -32,6 +32,9 @@ serde = { version = "1.0", default-features = false, features = [
     "rc",
 ], optional = true }
 
+# mics
+auto_impl = "1.2"
+
 [features]
 default = ["std"]
 std = ["serde?/std"]

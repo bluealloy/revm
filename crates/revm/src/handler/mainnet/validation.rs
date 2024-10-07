@@ -209,14 +209,15 @@ pub fn validate_tx_env<EvmWiringT: EvmWiring, SPEC: Spec>(
                 base_fee,
             )?;
 
-            let auth_list = tx.authorization_list();
+            let auth_list_len = tx.authorization_list_len();
             // The transaction is considered invalid if the length of authorization_list is zero.
-            if auth_list.is_empty() {
+            if auth_list_len == 0 {
                 return Err(InvalidTransaction::EmptyAuthorizationList);
             }
 
             // Check validity of authorization_list
-            auth_list.is_valid(cfg.chain_id)?;
+            // TODO
+            //.is_valid(cfg.chain_id)?;
         }
         TransactionType::Custom => {
             // custom transaction type check is not done here.
@@ -350,7 +351,7 @@ where
     let tx_type = env.tx.tx_type().into();
 
     let authorization_list_num = if tx_type == TransactionType::Eip7702 {
-        env.tx.eip7702().authorization_list().len() as u64
+        env.tx.eip7702().authorization_list_len() as u64
     } else {
         0
     };

@@ -26,6 +26,7 @@ pub trait Eip2930Tx: CommonTxFields {
     fn access_list(&self) -> &Self::AccessList;
 }
 
+// TODO move to default context
 use specification::eip2930::AccessList;
 
 impl AccessListInterface for AccessList {

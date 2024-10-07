@@ -11,7 +11,7 @@ use specification::{
     hardfork::{Spec, SpecId},
 };
 use state::Account;
-use transaction::Eip7702Tx;
+use transaction::{eip7702::Authorization, Eip7702Tx};
 use wiring::{
     default::EnvWiring,
     result::{EVMError, EVMResultGeneric},
@@ -135,10 +135,10 @@ pub fn apply_eip7702_auth_list<EvmWiringT: EvmWiring, SPEC: Spec>(
         return Ok(0);
     }
 
-    let authorization_list = tx.eip7702().authorization_list();
+    //let authorization_list = tx.eip7702().authorization_list();
 
     let mut refunded_accounts = 0;
-    for authorization in authorization_list.recovered_iter() {
+    for authorization in tx.eip7702().authorization_list_iter() {
         // 1. recover authority and authorized addresses.
         // authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]
         let Some(authority) = authorization.authority() else {
@@ -180,7 +180,7 @@ pub fn apply_eip7702_auth_list<EvmWiringT: EvmWiring, SPEC: Spec>(
         }
 
         // 7. Set the code of authority to be 0xef0100 || address. This is a delegation designation.
-        let bytecode = Bytecode::new_eip7702(authorization.address);
+        let bytecode = Bytecode::new_eip7702(authorization.address());
         authority_acc.info.code_hash = bytecode.hash_slow();
         authority_acc.info.code = Some(bytecode);
 
