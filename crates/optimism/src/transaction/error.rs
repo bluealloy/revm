@@ -27,7 +27,7 @@ pub enum OpTransactionError {
     /// Deposit transaction haults bubble up to the global main return handler, wiping state and
     /// only increasing the nonce + persisting the mint value.
     ///
-    /// This is a catch-all error for any deposit transaction that is results in a [HaltReason] error
+    /// This is a catch-all error for any deposit transaction that is results in a [crate::OptimismHaltReason] error
     /// post-regolith hardfork. This allows for a consumer to easily handle special cases where
     /// a deposit transaction fails during validation, but must still be included in the block.
     ///

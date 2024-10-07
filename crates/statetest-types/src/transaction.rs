@@ -57,7 +57,7 @@ impl TransactionParts {
         }
 
         // if it has max_fee_per_blob_gas it is EIP-4844 tx
-        if self.max_fee_per_blob_gas.is_some() && self.to.is_some() {
+        if self.max_fee_per_blob_gas.is_some() {
             if self.to.is_none() {
                 return None;
             }
