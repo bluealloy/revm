@@ -6,8 +6,9 @@ use crate::{
 };
 use core::{cell::RefCell, ops::Deref};
 use fluentbase_core::helpers::exit_code_from_evm_error;
-use fluentbase_sdk::{Account, AccountStatus, SovereignAPI};
-use fluentbase_types::{
+use fluentbase_sdk::{
+    Account,
+    AccountStatus,
     BlockContext,
     CallPrecompileResult,
     ContextFreeNativeAPI,
@@ -17,6 +18,7 @@ use fluentbase_types::{
     IsColdAccess,
     JournalCheckpoint,
     NativeAPI,
+    SovereignAPI,
     SovereignStateResult,
     TxContext,
     F254,
@@ -43,24 +45,6 @@ impl<'a, API: NativeAPI, DB: Database> RwasmDbWrapper<'a, API, DB> {
             block_context,
             tx_context,
         }
-    }
-}
-
-impl<'a, API: NativeAPI, DB: Database> RwasmDbWrapper<'a, API, DB> {
-    fn block_hash(&self, number: U256) -> B256 {
-        self.evm_context
-            .borrow_mut()
-            .block_hash(number)
-            .map_err(|_| "unexpected EVM error")
-            .unwrap()
-    }
-
-    fn write_transient_storage(&self, address: Address, index: U256, value: U256) {
-        self.evm_context.borrow_mut().tstore(address, index, value)
-    }
-
-    fn transient_storage(&self, address: Address, index: U256) -> U256 {
-        self.evm_context.borrow_mut().tload(address, index)
     }
 }
 
@@ -136,8 +120,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
         // copy all account info fields
         db_account.info.balance = account.balance;
         db_account.info.nonce = account.nonce;
-        db_account.info.code_hash = account.source_code_hash;
-        db_account.info.rwasm_code_hash = account.rwasm_code_hash;
+        db_account.info.code_hash = account.code_hash;
         // if this is an account deployment, then mark is as created (needed for SELFDESTRUCT)
         if status == AccountStatus::NewlyCreated {
             db_account.mark_created();
@@ -192,7 +175,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
             .load_account(address)
             .map_err(|_| panic!("database error"))
             .unwrap();
-        if account.info.code_hash == hash || account.info.rwasm_code_hash == hash {
+        if account.info.code_hash == hash {
             ctx.journaled_state
                 .set_code(address, Bytecode::new_raw(preimage), Some(hash));
             return;
@@ -232,9 +215,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
             .load_account_with_code(*address)
             .map_err(|_| panic!("database error"))
             .unwrap();
-        if account.info.rwasm_code_hash == *hash {
-            return account.info.rwasm_code.as_ref().map(|v| v.original_bytes());
-        } else if account.info.code_hash == *hash {
+        if account.info.code_hash == *hash {
             return account.info.code.as_ref().map(|v| v.original_bytes());
         }
         let preimage_address = Address::from_slice(&hash.0[12..]);
@@ -255,14 +236,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
             .load_account_with_code(*address)
             .map_err(|_| panic!("database error"))
             .unwrap();
-        if account.info.rwasm_code_hash == *hash {
-            return account
-                .info
-                .rwasm_code
-                .as_ref()
-                .map(|v| v.len() as u32)
-                .unwrap_or_default();
-        } else if account.info.code_hash == *hash {
+        if account.info.code_hash == *hash {
             return account
                 .info
                 .code

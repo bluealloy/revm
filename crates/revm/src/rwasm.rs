@@ -6,8 +6,9 @@ use crate::{
 };
 use core::{cell::RefCell, ops::Deref};
 use fluentbase_core::helpers::exit_code_from_evm_error;
-use fluentbase_sdk::{journal::JournalState, Account, AccountStatus, SovereignAPI};
-use fluentbase_types::{
+use fluentbase_sdk::{
+    Account,
+    AccountStatus,
     BlockContext,
     CallPrecompileResult,
     ContextFreeNativeAPI,
@@ -17,13 +18,14 @@ use fluentbase_types::{
     IsColdAccess,
     JournalCheckpoint,
     NativeAPI,
+    SovereignAPI,
     SovereignStateResult,
     TxContext,
     F254,
 };
 use revm_interpreter::{Gas, InstructionResult};
 
-pub(crate) struct RwasmDbWrapper<'a, API: NativeAPI, DB: Database> {
+pub struct RwasmDbWrapper<'a, API: NativeAPI, DB: Database> {
     evm_context: RefCell<&'a mut EvmContext<DB>>,
     native_sdk: API,
     block_context: BlockContext,
@@ -31,7 +33,7 @@ pub(crate) struct RwasmDbWrapper<'a, API: NativeAPI, DB: Database> {
 }
 
 impl<'a, API: NativeAPI, DB: Database> RwasmDbWrapper<'a, API, DB> {
-    pub(crate) fn new(
+    pub fn new(
         evm_context: &'a mut EvmContext<DB>,
         native_sdk: API,
     ) -> RwasmDbWrapper<'a, API, DB> {
@@ -43,24 +45,6 @@ impl<'a, API: NativeAPI, DB: Database> RwasmDbWrapper<'a, API, DB> {
             block_context,
             tx_context,
         }
-    }
-}
-
-impl<'a, API: NativeAPI, DB: Database> RwasmDbWrapper<'a, API, DB> {
-    fn block_hash(&self, number: U256) -> B256 {
-        self.evm_context
-            .borrow_mut()
-            .block_hash(number)
-            .map_err(|_| "unexpected EVM error")
-            .unwrap()
-    }
-
-    fn write_transient_storage(&self, address: Address, index: U256, value: U256) {
-        self.evm_context.borrow_mut().tstore(address, index, value)
-    }
-
-    fn transient_storage(&self, address: Address, index: U256) -> U256 {
-        self.evm_context.borrow_mut().tload(address, index)
     }
 }
 
@@ -136,8 +120,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
         // copy all account info fields
         db_account.info.balance = account.balance;
         db_account.info.nonce = account.nonce;
-        db_account.info.code_hash = account.source_code_hash;
-        db_account.info.rwasm_code_hash = account.rwasm_code_hash;
+        db_account.info.code_hash = account.code_hash;
         // if this is an account deployment, then mark is as created (needed for SELFDESTRUCT)
         if status == AccountStatus::NewlyCreated {
             db_account.mark_created();
@@ -188,25 +171,89 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
 
     fn write_preimage(&mut self, address: Address, hash: B256, preimage: Bytes) {
         let mut ctx = self.evm_context.borrow_mut();
+        let (account, _) = ctx
+            .load_account(address)
+            .map_err(|_| panic!("database error"))
+            .unwrap();
+        if account.info.code_hash == hash {
+            ctx.journaled_state
+                .set_code(address, Bytecode::new_raw(preimage), Some(hash));
+            return;
+        }
+        // calculate preimage address
+        let preimage_address = Address::from_slice(&hash.0[12..]);
+        let (preimage_account, _) = ctx
+            .load_account(preimage_address)
+            .map_err(|_| panic!("database error"))
+            .unwrap();
+        if !preimage_account.is_empty() {
+            assert_eq!(
+                preimage_account.info.code_hash, hash,
+                "unexpected preimage hash"
+            );
+            return;
+        }
+        // set default preimage account fields
+        preimage_account.info.nonce = 1;
+        preimage_account.info.code_hash = hash;
+        // write preimage as a bytecode for the account
         ctx.journaled_state
-            .set_code(address, Bytecode::new_raw(preimage), Some(hash))
+            .set_code(preimage_address, Bytecode::new_raw(preimage), Some(hash));
+        // // remember code hash
+        // ctx.sstore(
+        //     PRECOMPILE_EVM,
+        //     U256::from_le_bytes(address.into_word().0),
+        //     U256::from_le_bytes(hash.0),
+        // )
+        // .map_err(|_| panic!("database error"))
+        // .unwrap();
     }
 
     fn preimage(&self, address: &Address, hash: &B256) -> Option<Bytes> {
         let mut ctx = self.evm_context.borrow_mut();
-        let bytecode = ctx
-            .code_by_hash(*hash)
-            .map_err(|_| panic!("failed to get bytecode by hash"))
+        let (account, _) = ctx
+            .load_account_with_code(*address)
+            .map_err(|_| panic!("database error"))
             .unwrap();
-        Some(bytecode)
+        if account.info.code_hash == *hash {
+            return account.info.code.as_ref().map(|v| v.original_bytes());
+        }
+        let preimage_address = Address::from_slice(&hash.0[12..]);
+        let (preimage_account, _) = ctx
+            .load_account(preimage_address)
+            .map_err(|_| panic!("database error"))
+            .unwrap();
+        preimage_account
+            .info
+            .code
+            .as_ref()
+            .map(|v| v.original_bytes())
     }
 
-    fn preimage_size(&self, _address: &Address, hash: &B256) -> u32 {
-        self.evm_context
-            .borrow_mut()
-            .db
-            .code_by_hash(*hash)
-            .map(|b| b.bytecode().len() as u32)
+    fn preimage_size(&self, address: &Address, hash: &B256) -> u32 {
+        let mut ctx = self.evm_context.borrow_mut();
+        let (account, _) = ctx
+            .load_account_with_code(*address)
+            .map_err(|_| panic!("database error"))
+            .unwrap();
+        if account.info.code_hash == *hash {
+            return account
+                .info
+                .code
+                .as_ref()
+                .map(|v| v.len() as u32)
+                .unwrap_or_default();
+        }
+        let preimage_address = Address::from_slice(&hash.0[12..]);
+        let (preimage_account, _) = ctx
+            .load_account(preimage_address)
+            .map_err(|_| panic!("database error"))
+            .unwrap();
+        preimage_account
+            .info
+            .code
+            .as_ref()
+            .map(|v| v.len() as u32)
             .unwrap_or_default()
     }
 
@@ -221,6 +268,12 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
 
     fn storage(&self, address: &Address, slot: &U256) -> (U256, IsColdAccess) {
         let mut ctx = self.evm_context.borrow_mut();
+        let load_result = ctx
+            .load_account_exist(*address)
+            .unwrap_or_else(|_| panic!("internal storage error"));
+        if load_result.is_empty {
+            return (U256::ZERO, load_result.is_cold);
+        }
         ctx.sload(*address, *slot)
             .ok()
             .expect("failed to read storage slot")
@@ -248,9 +301,9 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
         ctx.journaled_state.tstore(address, index, value);
     }
 
-    fn transient_storage(&self, address: Address, index: U256) -> U256 {
+    fn transient_storage(&self, address: &Address, index: &U256) -> U256 {
         let mut ctx = self.evm_context.borrow_mut();
-        ctx.journaled_state.tload(address, index)
+        ctx.journaled_state.tload(*address, *index)
     }
 
     fn write_log(&mut self, address: Address, data: Bytes, topics: Vec<B256>) {

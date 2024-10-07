@@ -143,7 +143,7 @@ fn skip_test(path: &Path) -> bool {
 
 fn check_evm_execution<EXT1, EXT2>(
     test: &Test,
-    spec_name: &SpecName,
+    _spec_name: &SpecName,
     expected_output: Option<&Bytes>,
     test_name: &str,
     exec_result1: &EVMResultGeneric<ExecutionResult, Infallible>,
@@ -155,7 +155,7 @@ fn check_evm_execution<EXT1, EXT2>(
         &mut revm_fluent::State<revm_fluent::db::EmptyDBTyped<ExitCode>>,
     >,
     print_json_outcome: bool,
-    genesis_addresses: &HashSet<Address>,
+    _genesis_addresses: &HashSet<Address>,
 ) -> Result<(), TestError> {
     let logs_root1 = log_rlp_hash(exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default());
     let logs_root2 = log_rlp_hash(exec_result2.as_ref().map(|r| r.logs()).unwrap_or_default());
@@ -409,8 +409,8 @@ fn check_evm_execution<EXT1, EXT2>(
         }
     }
 
-    let exec_result1_res = exec_result1.as_ref().unwrap();
-    let exec_result2_res = exec_result2.as_ref().unwrap();
+    let _exec_result1_res = exec_result1.as_ref().unwrap();
+    let _exec_result2_res = exec_result2.as_ref().unwrap();
     // assert_eq!(
     //     exec_result1_res.gas_used(),
     //     exec_result2_res.gas_used(),
@@ -502,7 +502,7 @@ pub fn execute_test_suite(
 
         let mut genesis_addresses: HashSet<Address> = Default::default();
         for (address, info) in &devnet_genesis.alloc {
-            let source_code_hash = info
+            let _source_code_hash = info
                 .storage
                 .as_ref()
                 .and_then(|storage| storage.get(&GENESIS_KECCAK_HASH_SLOT))
@@ -517,10 +517,8 @@ pub fn execute_test_suite(
             let acc_info = AccountInfo {
                 balance: info.balance,
                 nonce: info.nonce.unwrap_or_default(),
-                code_hash: source_code_hash,
-                rwasm_code_hash,
-                code: Some(Bytecode::new()),
-                rwasm_code: Some(Bytecode::new_raw(info.code.clone().unwrap_or_default())),
+                code_hash: rwasm_code_hash,
+                code: Some(Bytecode::new_raw(info.code.clone().unwrap_or_default())),
             };
             let mut account_storage = PlainStorage::default();
             if let Some(storage) = info.storage.as_ref() {
@@ -557,8 +555,8 @@ pub fn execute_test_suite(
                 info.storage
                     .insert(EVM_CODE_HASH_SLOT, U256::from_le_bytes(evm_code_hash.0));
                 // set account info bytecode to the proxy loader
-                acc_info.rwasm_code_hash = proxy_bytecode_hash;
-                acc_info.rwasm_code = Some(Bytecode::new_raw(proxy_bytecode.clone()));
+                acc_info.code_hash = proxy_bytecode_hash;
+                acc_info.code = Some(Bytecode::new_raw(proxy_bytecode.clone()));
                 // put EVM preimage inside
                 let preimage_address = Address::from_slice(&evm_code_hash.0[12..]);
                 cache_state2.insert_account(

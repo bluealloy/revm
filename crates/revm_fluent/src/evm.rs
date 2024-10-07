@@ -10,10 +10,8 @@ use crate::{
         EVMError,
         EVMResult,
         EnvWithHandlerCfg,
-        ExecutionEnvironment,
         ExecutionResult,
         HandlerCfg,
-        InvalidTransaction,
         ResultAndState,
         TransactTo,
         TxEnv,
@@ -22,30 +20,13 @@ use crate::{
     ContextWithHandlerCfg,
     FrameResult,
 };
-use alloc::vec::Vec;
-use core::{fmt, mem::take};
-use fluentbase_core::{
-    blended::BlendedRuntime,
-    fvm::exec::_exec_fuel_tx,
-    helpers::evm_error_from_exit_code,
-};
+use core::fmt;
+#[cfg(feature = "rwasm")]
+use fluentbase_core::blended::BlendedRuntime;
+#[cfg(feature = "rwasm")]
 use fluentbase_runtime::RuntimeContext;
-use fluentbase_sdk::{
-    journal::{JournalState, JournalStateBuilder},
-    BlockContext,
-    Bytes,
-    ContractContext,
-    NativeAPI,
-    TxContext,
-};
-use revm_interpreter::{
-    CallInputs,
-    CallOutcome,
-    CreateInputs,
-    CreateOutcome,
-    Gas,
-    InterpreterResult,
-};
+#[cfg(feature = "rwasm")]
+use revm_interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -122,7 +103,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         let mut shared_memory =
             SharedMemory::new_with_memory_limit(self.context.evm.env.cfg.memory_limit);
         #[cfg(not(feature = "memory_limit"))]
-        let mut shared_memory = revm_interpreter::SharedMemory::new();
+        let mut shared_memory = SharedMemory::new();
 
         shared_memory.new_context();
 
@@ -363,8 +344,8 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// Transact pre-verified transaction.
-
     fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
+        #[cfg(not(feature = "rwasm"))]
         let spec_id = self.spec_id();
         let ctx = &mut self.context;
         let pre_exec = self.handler.pre_execution();
@@ -400,19 +381,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         let result = self.create_inner(inputs)?;
                         FrameResult::Create(result)
                     }
-                    TransactTo::Blended(execution_environment, raw_data) => {
-                        match execution_environment {
-                            ExecutionEnvironment::Fuel => {
-                                let gas_limit = ctx.evm.env.tx.gas_limit;
-                                let result =
-                                    self.blend_fuel_inner(gas_limit, gas_limit, raw_data)?;
-                                FrameResult::Call(result)
-                            }
-                            ExecutionEnvironment::Solana => {
-                                todo!("call blendedAPI.exec_fuel_tx")
-                            }
-                        }
-                    }
                 }
             }
             #[cfg(not(feature = "rwasm"))]
@@ -424,10 +392,13 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                     CreateInputs,
                     EOFCreateInputs,
                     EOFCreateOutcome,
+                    Gas,
+                    InstructionResult,
+                    InterpreterResult,
                 };
                 let exec = self.handler.execution();
                 // call inner handling of call/create
-                let first_frame_or_result = match ctx.evm.env.tx.transact_to {
+                let first_frame_or_result = match ctx.evm.env.tx.transact_to.clone() {
                     TransactTo::Call(_) => exec.call(
                         ctx,
                         CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
@@ -474,7 +445,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                                     EOFCreateOutcome::new(
                                         InterpreterResult::new(
                                             InstructionResult::Stop,
-                                            Bytes::new(),
+                                            Default::default(),
                                             Gas::new(gas_limit),
                                         ),
                                         ctx.env().tx.caller.create(nonce),
@@ -492,7 +463,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 };
 
                 // Starts the main running loop.
-                let mut result = match first_frame_or_result {
+                let result = match first_frame_or_result {
                     FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
                     FrameOrResult::Result(result) => result,
                 };
@@ -532,87 +503,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         Ok(result)
     }
 
-    #[cfg(feature = "std")]
-    fn create_sdk(
-        &mut self,
-        contract_context: Option<ContractContext>,
-    ) -> Result<JournalState<fluentbase_sdk::runtime::RuntimeContextWrapper>, EVMError<DB::Error>>
-    {
-        self.create_sdk_inner(
-            contract_context,
-            fluentbase_sdk::runtime::RuntimeContextWrapper::empty(),
-        )
-    }
-
-    #[cfg(not(feature = "std"))]
-    fn create_sdk(
-        &mut self,
-        contract_context: Option<ContractContext>,
-    ) -> Result<JournalState<fluentbase_sdk::rwasm::RwasmContext>, EVMError<DB::Error>> {
-        self.create_sdk_inner(contract_context, fluentbase_sdk::rwasm::RwasmContext {})
-    }
-
-    fn create_sdk_inner<API: NativeAPI>(
-        &mut self,
-        contract_context: Option<ContractContext>,
-        native_sdk: API,
-    ) -> Result<JournalState<API>, EVMError<DB::Error>> {
-        let mut builder = JournalStateBuilder::default();
-        let mut accounts_to_load = Vec::new();
-
-        // fill coinbase, signer and recipient
-        accounts_to_load.push(self.context.evm.env.block.coinbase);
-        accounts_to_load.push(self.context.evm.env.tx.caller);
-        if let TransactTo::Call(recipient) = self.context.evm.env.tx.transact_to {
-            accounts_to_load.push(recipient);
-        }
-
-        // fill SDK account/storage/preimage data from an access list
-        let access_list = take(&mut self.context.evm.env.tx.access_list);
-        for (address, slots) in access_list.iter() {
-            accounts_to_load.push(*address);
-            for slot in slots.iter() {
-                let (value, _) = self.context.evm.sload(*address, *slot)?;
-                builder.add_storage(*address, *slot, value);
-            }
-        }
-
-        // return access list we borrowed
-        self.context.evm.env.tx.access_list = access_list;
-
-        for address in accounts_to_load.into_iter() {
-            let (account, _) = self.context.evm.load_account_with_code(address)?;
-            builder.add_account(address, account.info.clone());
-            builder.add_preimage(
-                account.info.code_hash,
-                account
-                    .info
-                    .code
-                    .as_ref()
-                    .map(|v| v.original_bytes())
-                    .unwrap_or_default(),
-            );
-            builder.add_preimage(
-                account.info.rwasm_code_hash,
-                account
-                    .info
-                    .rwasm_code
-                    .as_ref()
-                    .map(|v| v.original_bytes())
-                    .unwrap_or_default(),
-            );
-        }
-
-        // fill contexts
-        builder.add_block_context(BlockContext::from(self.context.evm.env.as_ref()));
-        builder.add_tx_context(TxContext::from(self.context.evm.env.as_ref()));
-        if let Some(contract_context) = contract_context {
-            builder.add_contract_context(contract_context);
-        }
-
-        Ok(JournalState::builder(native_sdk, builder))
-    }
-
     /// Main contract call of the EVM.
     #[cfg(feature = "rwasm")]
     fn call_inner(
@@ -637,37 +527,5 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         let result = BlendedRuntime::new(&mut sdk).call(call_inputs);
         Ok(result)
-    }
-
-    /// Main contract call of the EVM.
-    #[cfg(feature = "rwasm")]
-    fn blend_fuel_inner(
-        &mut self,
-        tx_gas_limit: u64,
-        gas_limit: u64,
-        raw_fuel_tx: Bytes,
-    ) -> Result<CallOutcome, EVMError<DB::Error>> {
-        let runtime_context = RuntimeContext::default()
-            .with_depth(0u32)
-            .with_fuel_limit(gas_limit);
-        let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
-        let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
-
-        let output = _exec_fuel_tx(&mut sdk, gas_limit, raw_fuel_tx);
-
-        let mut gas = Gas::new(tx_gas_limit);
-        if !gas.record_cost(tx_gas_limit - output.gas_remaining) {
-            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
-        };
-        gas.record_refund(output.gas_refund);
-
-        Ok(CallOutcome {
-            result: InterpreterResult {
-                result: evm_error_from_exit_code(output.exit_code.into()),
-                output: output.output,
-                gas,
-            },
-            memory_offset: Default::default(),
-        })
     }
 }

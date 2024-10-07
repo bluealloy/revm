@@ -20,9 +20,7 @@ use crate::{
     },
 };
 use core::mem;
-use fluentbase_sdk::B256;
-#[cfg(feature = "rwasm")]
-use fluentbase_types::{Bytes, POSEIDON_EMPTY};
+use fluentbase_sdk::{Bytes, B256};
 use revm_interpreter::{primitives::SpecId, LoadAccountResult, SStoreResult};
 use std::vec::Vec;
 
@@ -176,27 +174,8 @@ impl JournaledState {
             .last_mut()
             .unwrap()
             .push(JournalEntry::CodeChange { address });
-        #[cfg(feature = "rwasm")]
-        {
-            if let Some(code_hash) = code_hash {
-                if code_hash == account.info.rwasm_code_hash {
-                    self.code_state
-                        .insert(account.info.rwasm_code_hash, code.clone());
-                    account.info.rwasm_code = Some(code);
-                } else if code_hash == account.info.code_hash {
-                    self.code_state.insert(account.info.code_hash, code.clone());
-                    account.info.code = Some(code);
-                }
-            } else {
-                self.code_state.insert(account.info.code_hash, code.clone());
-                account.info.code = Some(code);
-            }
-        }
-        #[cfg(not(feature = "rwasm"))]
-        {
-            account.info.code_hash = code.hash_slow();
-            account.info.code = Some(code);
-        }
+        account.info.code_hash = code_hash.unwrap_or_else(|| code.hash_slow());
+        account.info.code = Some(code);
     }
 
     #[inline]
@@ -447,11 +426,6 @@ impl JournaledState {
                     let acc = state.get_mut(&address).unwrap();
                     acc.info.code_hash = KECCAK_EMPTY;
                     acc.info.code = None;
-                    #[cfg(feature = "rwasm")]
-                    {
-                        acc.info.rwasm_code_hash = POSEIDON_EMPTY;
-                        acc.info.rwasm_code = None;
-                    }
                 }
             }
         }
@@ -681,18 +655,6 @@ impl JournaledState {
                     .code_by_hash(acc.info.code_hash)
                     .map_err(EVMError::Database)?;
                 acc.info.code = Some(code);
-            }
-        }
-        #[cfg(feature = "rwasm")]
-        if acc.info.rwasm_code.is_none() {
-            if acc.info.rwasm_code_hash == POSEIDON_EMPTY {
-                let empty = Bytecode::new();
-                acc.info.rwasm_code = Some(empty);
-            } else {
-                let code = db
-                    .code_by_hash(acc.info.rwasm_code_hash)
-                    .map_err(EVMError::Database)?;
-                acc.info.rwasm_code = Some(code);
             }
         }
         Ok((acc, is_cold))

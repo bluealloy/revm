@@ -26,13 +26,11 @@ use fluentbase_genesis::{
 use fluentbase_poseidon::poseidon_hash;
 use fluentbase_runtime::RuntimeContext;
 use fluentbase_sdk::{
-    byteorder::{ByteOrder, LittleEndian},
-    runtime::TestingContext,
-};
-use fluentbase_types::{
     address,
+    byteorder::{ByteOrder, LittleEndian},
     bytes,
     calc_create_address,
+    runtime::TestingContext,
     Account,
     Address,
     Bytes,
@@ -76,7 +74,7 @@ impl EvmTestingContext {
                         .map(|v| poseidon_hash(&v).into())
                         .unwrap_or(POSEIDON_EMPTY)
                 });
-            let keccak_hash = v
+            let _keccak_hash = v
                 .storage
                 .as_ref()
                 .and_then(|v| v.get(&GENESIS_KECCAK_HASH_SLOT).cloned())
@@ -92,14 +90,11 @@ impl EvmTestingContext {
                 nonce: v.nonce.unwrap_or_default(),
                 // it makes not much sense to fill these fields, but it reduces hash calculation
                 // time a bit
-                source_code_size: v.code.as_ref().map(|v| v.len() as u64).unwrap_or_default(),
-                source_code_hash: keccak_hash,
-                rwasm_code_size: v.code.as_ref().map(|v| v.len() as u64).unwrap_or_default(),
-                rwasm_code_hash: poseidon_hash,
+                code_size: v.code.as_ref().map(|v| v.len() as u64).unwrap_or_default(),
+                code_hash: poseidon_hash,
             };
             let mut info: AccountInfo = account.into();
             info.code = v.code.clone().map(Bytecode::new_raw);
-            info.rwasm_code = v.code.clone().map(Bytecode::new_raw);
             db.insert_account_info(*k, info);
         }
         Self {
@@ -125,15 +120,12 @@ impl EvmTestingContext {
             balance: U256::ZERO,
             nonce: 0,
             // it makes not much sense to fill these fields, but it optimizes hash calculation a bit
-            source_code_size: 0,
-            source_code_hash: KECCAK_EMPTY,
-            rwasm_code_size: rwasm_binary.len() as u64,
-            rwasm_code_hash: poseidon_hash(&rwasm_binary).into(),
+            code_size: rwasm_binary.len() as u64,
+            code_hash: poseidon_hash(&rwasm_binary).into(),
         };
         let mut info: AccountInfo = account.into();
-        info.code = None;
         if !rwasm_binary.is_empty() {
-            info.rwasm_code = Some(Bytecode::new_raw(rwasm_binary.into()));
+            info.code = Some(Bytecode::new_raw(rwasm_binary.into()));
         }
         self.db.insert_account_info(address, info.clone());
         info
@@ -379,7 +371,6 @@ fn test_evm_greeting() {
     const DEPLOYER_ADDRESS: Address = Address::ZERO;
     let contract_address = deploy_evm_tx(&mut ctx, DEPLOYER_ADDRESS, hex!("60806040526105ae806100115f395ff3fe608060405234801561000f575f80fd5b506004361061003f575f3560e01c80633b2e97481461004357806345773e4e1461007357806348b8bcc314610091575b5f80fd5b61005d600480360381019061005891906102e5565b6100af565b60405161006a919061039a565b60405180910390f35b61007b6100dd565b604051610088919061039a565b60405180910390f35b61009961011a565b6040516100a6919061039a565b60405180910390f35b60605f8273ffffffffffffffffffffffffffffffffffffffff163190506100d58161012f565b915050919050565b60606040518060400160405280600b81526020017f48656c6c6f20576f726c64000000000000000000000000000000000000000000815250905090565b60605f4790506101298161012f565b91505090565b60605f8203610175576040518060400160405280600181526020017f30000000000000000000000000000000000000000000000000000000000000008152509050610282565b5f8290505f5b5f82146101a457808061018d906103f0565b915050600a8261019d9190610464565b915061017b565b5f8167ffffffffffffffff8111156101bf576101be610494565b5b6040519080825280601f01601f1916602001820160405280156101f15781602001600182028036833780820191505090505b5090505b5f851461027b578180610207906104c1565b925050600a8561021791906104e8565b60306102239190610518565b60f81b8183815181106102395761023861054b565b5b60200101907effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff191690815f1a905350600a856102749190610464565b94506101f5565b8093505050505b919050565b5f80fd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f6102b48261028b565b9050919050565b6102c4816102aa565b81146102ce575f80fd5b50565b5f813590506102df816102bb565b92915050565b5f602082840312156102fa576102f9610287565b5b5f610307848285016102d1565b91505092915050565b5f81519050919050565b5f82825260208201905092915050565b5f5b8381101561034757808201518184015260208101905061032c565b5f8484015250505050565b5f601f19601f8301169050919050565b5f61036c82610310565b610376818561031a565b935061038681856020860161032a565b61038f81610352565b840191505092915050565b5f6020820190508181035f8301526103b28184610362565b905092915050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52601160045260245ffd5b5f819050919050565b5f6103fa826103e7565b91507fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff820361042c5761042b6103ba565b5b600182019050919050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52601260045260245ffd5b5f61046e826103e7565b9150610479836103e7565b92508261048957610488610437565b5b828204905092915050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52604160045260245ffd5b5f6104cb826103e7565b91505f82036104dd576104dc6103ba565b5b600182039050919050565b5f6104f2826103e7565b91506104fd836103e7565b92508261050d5761050c610437565b5b828206905092915050565b5f610522826103e7565b915061052d836103e7565b9250828201905080821115610545576105446103ba565b5b92915050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52603260045260245ffdfea2646970667358221220feebf5ace29c3c3146cb63bf7ca9009c2005f349075639d267cfbd817adde3e564736f6c63430008180033").into());
     // call greeting EVM contract
-    println!("\n\n\n");
     let result = call_evm_tx(
         &mut ctx,
         DEPLOYER_ADDRESS,
@@ -576,10 +567,11 @@ fn test_evm_self_destruct() {
     assert!(result.is_success());
     assert_eq!(ctx.get_balance(SENDER_ADDRESS), U256::from(1e18));
     assert_eq!(ctx.get_balance(contract_address), U256::from(1e18));
-    // call self destructed contract
+    // call self-destructed contract
     let result = TxBuilder::call(&mut ctx, SENDER_ADDRESS, contract_address)
         .gas_price(gas_price)
         .exec();
+    #[cfg(feature = "std")]
     if !result.is_success() {
         println!(
             "{}",
@@ -600,6 +592,7 @@ fn test_evm_self_destruct() {
         hex!("6000600060006000600073f91c20c0cafbfdc150adff51bbfc5808edde7cb561FFFFF1").into(),
     )
     .exec();
+    #[cfg(feature = "std")]
     if !result.is_success() {
         println!("status: {:?}", result);
         println!(
@@ -634,11 +627,9 @@ fn test_bridge_contract() {
     let exec_result = tx_builder.exec();
     assert!(tx_builder.ctx.db.accounts.contains_key(&contract_address));
     let contract_account = tx_builder.ctx.db.accounts.get(&contract_address).unwrap();
-    assert!(contract_account.info.rwasm_code.is_some());
-    assert!(!contract_account.info.rwasm_code_hash.is_zero());
-    assert_eq!(contract_account.info.nonce, 1);
     assert!(contract_account.info.code.is_some());
     assert!(!contract_account.info.code_hash.is_zero());
+    assert_eq!(contract_account.info.nonce, 1);
     assert!(exec_result.is_success());
 }
 
@@ -799,11 +790,6 @@ fn test_bridge_contract_with_call() {
     let erc20gateway_contract_db_account_info = erc20gateway_contract_db_account.info.clone();
     assert!(erc20gateway_contract_db_account_info.code.is_some());
     assert!(!erc20gateway_contract_db_account_info.code_hash.is_zero());
-    // assert!(erc20gateway_contract_db_account_info.code.unwrap().len() > 0);
-    assert!(erc20gateway_contract_db_account_info.rwasm_code.is_some());
-    assert!(!erc20gateway_contract_db_account_info
-        .rwasm_code_hash
-        .is_zero());
     let mut erc20gateway_factory_tx_builder = TxBuilder::call(
         &mut ctx,
         signer_l1_wallet_owner,

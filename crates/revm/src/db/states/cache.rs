@@ -4,6 +4,7 @@ use super::{
     CacheAccount,
     PlainAccount,
 };
+use fluentbase_sdk::KECCAK_EMPTY;
 use revm_interpreter::primitives::{
     Account,
     AccountInfo,
@@ -95,26 +96,8 @@ impl CacheState {
                     .or_insert_with(|| code.clone());
             }
         }
-        if let Some(rwasm_code) = &info.rwasm_code {
-            if !rwasm_code.is_empty() {
-                if info.rwasm_code_hash == POSEIDON_EMPTY {
-                    unreachable!("poseidon hash can't be empty");
-                    // LowLevelSDK::poseidon(
-                    //     rwasm_code.bytes().as_ptr(),
-                    //     rwasm_code.len() as u32,
-                    //     info.rwasm_code_hash.as_mut_ptr(),
-                    // );
-                }
-                self.contracts
-                    .entry(info.rwasm_code_hash)
-                    .or_insert_with(|| rwasm_code.clone());
-            }
-        }
         if info.code_hash == B256::ZERO {
             info.code_hash = KECCAK_EMPTY;
-        }
-        if info.rwasm_code_hash == B256::ZERO {
-            info.rwasm_code_hash = POSEIDON_EMPTY;
         }
     }
 
@@ -122,11 +105,11 @@ impl CacheState {
     pub fn insert_account_with_storage(
         &mut self,
         address: Address,
-        info: AccountInfo,
+        mut info: AccountInfo,
         storage: PlainStorage,
     ) {
         #[cfg(feature = "rwasm")]
-        self.insert_contract(&mut info.clone().into());
+        self.insert_contract(&mut info);
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, storage)
         } else {

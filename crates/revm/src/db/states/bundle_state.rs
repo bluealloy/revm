@@ -1,13 +1,25 @@
 use super::{
     changes::{PlainStorageChangeset, StateChangeset},
     reverts::{AccountInfoRevert, Reverts},
-    AccountRevert, AccountStatus, BundleAccount, PlainStateReverts, RevertToSlot, StorageSlot,
+    AccountRevert,
+    AccountStatus,
+    BundleAccount,
+    PlainStateReverts,
+    RevertToSlot,
+    StorageSlot,
     TransitionState,
 };
 use core::{mem, ops::RangeInclusive};
 use revm_interpreter::primitives::{
     hash_map::{self, Entry},
-    AccountInfo, Address, Bytecode, HashMap, HashSet, B256, KECCAK_EMPTY, U256,
+    AccountInfo,
+    Address,
+    Bytecode,
+    HashMap,
+    HashSet,
+    B256,
+    KECCAK_EMPTY,
+    U256,
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -545,10 +557,7 @@ impl BundleState {
 
         for (address, transition) in transitions.transitions.into_iter() {
             // add a new contract if it was created/changed.
-            if let Some((hash, new_bytecode)) = transition.has_new_source_contract() {
-                self.contracts.insert(hash, new_bytecode.clone());
-            }
-            if let Some((hash, new_bytecode)) = transition.has_new_rwasm_contract() {
+            if let Some((hash, new_bytecode)) = transition.has_new_contract() {
                 self.contracts.insert(hash, new_bytecode.clone());
             }
             // update state and create revert.

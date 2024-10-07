@@ -11,7 +11,6 @@ use crate::{
     SpecId,
     B256,
     GAS_PER_BLOB,
-    KECCAK_EMPTY,
     MAX_BLOB_NUMBER_PER_BLOCK,
     U256,
     VERSIONED_HASH_VERSION_KZG,
@@ -206,16 +205,16 @@ impl Env {
         Ok(())
     }
 
-    /// Validate transaction against state.
+    /// Validate transaction against the state.
     #[inline]
     pub fn validate_tx_against_state<SPEC: Spec>(
         &self,
         account: &mut Account,
     ) -> Result<(), InvalidTransaction> {
         // EIP-3607: Reject transactions from senders with deployed code
-        // This EIP is introduced after london but there was no collision in past
+        // This EIP is introduced after london, but there was no collision in the past
         // so we can leave it enabled always
-        if !self.cfg.is_eip3607_disabled() && account.info.code_hash != KECCAK_EMPTY {
+        if !self.cfg.is_eip3607_disabled() && !account.info.is_empty_code_hash() {
             return Err(InvalidTransaction::RejectCallerWithCode);
         }
 
@@ -677,40 +676,6 @@ pub struct OptimismFields {
     pub enveloped_tx: Option<Bytes>,
 }
 
-// #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-// #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-// pub struct FluentFields {
-//     pub execution_environment: ExecutionEnvironment,
-//     pub raw_data: Bytes,
-// }
-
-// impl Default for FluentFields {
-//     fn default() -> Self {
-//         Self {
-//             execution_environment: ExecutionEnvironment::Fuel,
-//             raw_data: Bytes::new(),
-//         }
-//     }
-// }
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ExecutionEnvironment {
-    Fuel,
-    Solana,
-}
-
-impl TryFrom<u8> for ExecutionEnvironment {
-    type Error = ();
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(ExecutionEnvironment::Fuel),
-            1 => Ok(ExecutionEnvironment::Solana),
-            _ => Err(()),
-        }
-    }
-}
 /// Transaction destination.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -719,8 +684,6 @@ pub enum TransactTo {
     Call(Address),
     /// Contract creation.
     Create,
-    /// Fluent transaction type.
-    Blended(ExecutionEnvironment, Bytes),
 }
 
 impl TransactTo {
@@ -745,12 +708,6 @@ impl TransactTo {
     #[inline]
     pub fn is_create(&self) -> bool {
         matches!(self, Self::Create)
-    }
-
-    /// Returns `true` if the transaction is `Blended`.
-    #[inline]
-    pub fn is_blended(&self) -> bool {
-        matches!(self, Self::Blended(..))
     }
 }
 

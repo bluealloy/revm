@@ -3,7 +3,7 @@ use hash_db::Hasher;
 use plain_hasher::PlainHasher;
 use revm::{
     db::{states::plain_account::PlainStorage, PlainAccount},
-    primitives::{address, keccak256, AccountInfo, Address, Bytecode, Bytes, Log, B256, U256},
+    primitives::{address, keccak256, AccountInfo, Address, Log, B256, U256},
 };
 use triehash::sec_trie_root;
 
@@ -110,9 +110,6 @@ fn compute_state_merkle_trie_root_test() {
             nonce: 0,
             code_hash: B256::left_padding_from(&[1, 2]),
             code: None,
-
-            rwasm_code_hash: B256::left_padding_from(&[1, 2, 3]),
-            rwasm_code: None,
         },
         // storage: PlainStorage::new(),
         storage: PlainStorage::from([(
@@ -126,9 +123,6 @@ fn compute_state_merkle_trie_root_test() {
             nonce: 0,
             code_hash: B256::left_padding_from(&[1, 2]),
             code: None,
-
-            rwasm_code_hash: B256::left_padding_from(&[1, 2]),
-            rwasm_code: Some(Bytecode::LegacyRaw(Bytes::new())),
         },
         // storage: revm_fluent::db::states::plain_account::PlainStorage::new(),
         storage: revm_fluent::db::states::plain_account::PlainStorage::from([(

@@ -5,11 +5,6 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
-#[cfg(feature = "std")]
-extern crate alloc;
-
-// Define modules.
-
 mod builder;
 mod context;
 
@@ -25,7 +20,7 @@ mod journaled_state;
 #[cfg(feature = "optimism")]
 pub mod optimism;
 #[cfg(feature = "rwasm")]
-mod rwasm;
+pub mod rwasm;
 #[cfg(test)]
 mod test;
 // Export items.

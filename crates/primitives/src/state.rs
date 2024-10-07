@@ -221,10 +221,6 @@ pub struct AccountInfo {
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
     /// inside of `revm`.
     pub code: Option<Bytecode>,
-    #[cfg(feature = "rwasm")]
-    pub rwasm_code_hash: B256,
-    #[cfg(feature = "rwasm")]
-    pub rwasm_code: Option<Bytecode>,
 }
 
 impl Default for AccountInfo {
@@ -234,26 +230,17 @@ impl Default for AccountInfo {
             code_hash: KECCAK_EMPTY,
             code: Some(Bytecode::default()),
             nonce: 0,
-            #[cfg(feature = "rwasm")]
-            rwasm_code_hash: crate::POSEIDON_EMPTY,
-            #[cfg(feature = "rwasm")]
-            rwasm_code: Some(Bytecode::new()),
         }
     }
 }
 
 impl PartialEq for AccountInfo {
     fn eq(&self, other: &Self) -> bool {
-        let mut res = {
+        let res = {
             self.balance == other.balance
                 && self.nonce == other.nonce
                 && self.code_hash == other.code_hash
         };
-        #[cfg(feature = "rwasm")]
-        {
-            res &= self.rwasm_code_hash == other.rwasm_code_hash;
-        }
-
         res
     }
 }
@@ -263,8 +250,6 @@ impl Hash for AccountInfo {
         self.balance.hash(state);
         self.nonce.hash(state);
         self.code_hash.hash(state);
-        #[cfg(feature = "rwasm")]
-        self.rwasm_code_hash.hash(state);
     }
 }
 
@@ -275,10 +260,6 @@ impl AccountInfo {
             nonce,
             code: Some(code),
             code_hash,
-            #[cfg(feature = "rwasm")]
-            rwasm_code: None,
-            #[cfg(feature = "rwasm")]
-            rwasm_code_hash: crate::POSEIDON_EMPTY,
         }
     }
 
@@ -319,19 +300,13 @@ impl AccountInfo {
     #[inline]
     pub fn is_empty_code_hash(&self) -> bool {
         if cfg!(feature = "rwasm") {
-            self.code_hash == KECCAK_EMPTY && self.rwasm_code_hash == POSEIDON_EMPTY
+            self.code_hash == KECCAK_EMPTY || self.code_hash == POSEIDON_EMPTY
         } else {
             self.code_hash == KECCAK_EMPTY
         }
     }
 
-    /// Take bytecode from account. Code will be set to None.
-    #[cfg(feature = "rwasm")]
-    pub fn take_bytecode(&mut self) -> (Option<Bytecode>, Option<Bytecode>) {
-        (self.code.take(), self.rwasm_code.take())
-    }
-
-    #[cfg(not(feature = "rwasm"))]
+    /// Take bytecode from an account. Code will be set to None.
     pub fn take_bytecode(&mut self) -> Option<Bytecode> {
         self.code.take()
     }
