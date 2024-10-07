@@ -23,7 +23,7 @@ pub trait Eip7702Tx: Eip1559Tx {
     fn authorization_list_iter(&self) -> impl Iterator<Item = impl Authorization>;
 }
 
-/// Autorization trait.
+/// Authorization trait.
 #[auto_impl(&, Arc)]
 pub trait Authorization {
     /// Authority address.
