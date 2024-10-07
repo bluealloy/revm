@@ -37,7 +37,11 @@ impl TransactionParts {
     /// Returns the transaction type.   
     ///
     /// As this information is derived from the fields it is not stored in the struct.
-    pub fn tx_type(&self, access_list_index: usize) -> TransactionType {
+    ///
+    /// Returns `None` if the transaction is invalid:
+    ///   * It has both blob gas and no destination.
+    ///   * It has authorization list and no destination.
+    pub fn tx_type(&self, access_list_index: usize) -> Option<TransactionType> {
         let mut tx_type = TransactionType::Legacy;
 
         // if it has access list it is EIP-2930 tx
@@ -54,15 +58,21 @@ impl TransactionParts {
 
         // if it has max_fee_per_blob_gas it is EIP-4844 tx
         if self.max_fee_per_blob_gas.is_some() && self.to.is_some() {
+            if self.to.is_none() {
+                return None;
+            }
             tx_type = TransactionType::Eip4844;
         }
 
         // and if it has authorization list it is EIP-7702 tx
-        if self.authorization_list.is_some() && self.to.is_some() {
+        if self.authorization_list.is_some() {
+            if self.to.is_none() {
+                return None;
+            }
             tx_type = TransactionType::Eip7702;
         }
 
-        tx_type
+        Some(tx_type)
     }
 }
 

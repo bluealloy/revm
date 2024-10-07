@@ -214,10 +214,6 @@ pub fn validate_tx_env<EvmWiringT: EvmWiring, SPEC: Spec>(
             if auth_list_len == 0 {
                 return Err(InvalidTransaction::EmptyAuthorizationList);
             }
-
-            // Check validity of authorization_list
-            // TODO
-            //.is_valid(cfg.chain_id)?;
         }
         TransactionType::Custom => {
             // custom transaction type check is not done here.

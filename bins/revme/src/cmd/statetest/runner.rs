@@ -361,7 +361,15 @@ pub fn execute_test_suite(
 
             for (index, test) in tests.into_iter().enumerate() {
                 // TODO TX TYPE needs to be set
-                env.tx.tx_type = unit.transaction.tx_type(test.indexes.data);
+                let Some(tx_type) = unit.transaction.tx_type(test.indexes.data) else {
+                    if test.expect_exception.is_some() {
+                        continue;
+                    } else {
+                        panic!("Invalid transaction type without expected exception");
+                    }
+                };
+
+                env.tx.tx_type = tx_type;
 
                 env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
 
