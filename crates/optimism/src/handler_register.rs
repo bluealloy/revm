@@ -86,7 +86,7 @@ pub fn validate_env<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 
     // validate transaction.
     validate_tx_env::<EvmWiringT, SPEC>(&env.tx, &env.block, &env.cfg)
-        .map_err(|e| OpTransactionError::Base(e))?;
+        .map_err(OpTransactionError::Base)?;
 
     Ok(())
 }
@@ -453,7 +453,7 @@ mod tests {
         interpreter::{CallOutcome, InstructionResult, InterpreterResult},
         primitives::{bytes, Address, Bytes, B256},
         state::AccountInfo,
-        wiring::default::TxEnv,
+        wiring::default::{block::BlockEnv, Env, TxEnv},
     };
     use std::boxed::Box;
 
@@ -732,11 +732,16 @@ mod tests {
     #[test]
     fn test_validate_sys_tx() {
         // mark the tx as a system transaction.
-        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx = OpTransaction::Deposit(TxDeposit {
+        // Set source hash.
+        let tx = TxDeposit {
             is_system_transaction: true,
             ..Default::default()
-        });
+        };
+        let env = Env::<BlockEnv, OpTransaction<TxEnv>> {
+            tx: OpTransaction::Deposit(tx),
+            ..Default::default()
+        };
+
         assert_eq!(
             validate_env::<TestEmptyOpWiring, RegolithSpec>(&env),
             Err(EVMError::Transaction(
@@ -751,22 +756,28 @@ mod tests {
     #[test]
     fn test_validate_deposit_tx() {
         // Set source hash.
-        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx = OpTransaction::Deposit(TxDeposit {
+        let tx = TxDeposit {
             source_hash: B256::ZERO,
             ..Default::default()
-        });
+        };
+        let env = Env::<BlockEnv, OpTransaction<TxEnv>> {
+            tx: OpTransaction::Deposit(tx),
+            ..Default::default()
+        };
         assert!(validate_env::<TestEmptyOpWiring, RegolithSpec>(&env).is_ok());
     }
 
     #[test]
     fn test_validate_tx_against_state_deposit_tx() {
         // Set source hash.
-        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx = OpTransaction::Deposit(TxDeposit {
+        let tx = TxDeposit {
             source_hash: B256::ZERO,
             ..Default::default()
-        });
+        };
+        let env = Env::<BlockEnv, OpTransaction<TxEnv>> {
+            tx: OpTransaction::Deposit(tx),
+            ..Default::default()
+        };
 
         // Nonce and balance checks should be skipped for deposit transactions.
         assert!(validate_env::<TestEmptyOpWiring, LatestSpec>(&env).is_ok());

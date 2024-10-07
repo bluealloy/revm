@@ -23,11 +23,11 @@ pub enum OpTransactionType {
     Deposit,
 }
 
-impl Into<TransactionType> for OpTransactionType {
-    fn into(self) -> TransactionType {
-        match self {
-            Self::Base(tx_type) => tx_type,
-            Self::Deposit => TransactionType::Custom,
+impl From<OpTransactionType> for TransactionType {
+    fn from(tx_type: OpTransactionType) -> Self {
+        match tx_type {
+            OpTransactionType::Base(tx_type) => tx_type,
+            OpTransactionType::Deposit => TransactionType::Custom,
         }
     }
 }
