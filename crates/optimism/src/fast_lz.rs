@@ -115,7 +115,6 @@ mod tests {
     use revm::{
         bytecode::Bytecode,
         primitives::{address, bytes, Bytes, TxKind, U256},
-        wiring::EthereumWiring,
         Evm,
     };
     use std::vec::Vec;

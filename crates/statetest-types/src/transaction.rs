@@ -58,17 +58,15 @@ impl TransactionParts {
 
         // if it has max_fee_per_blob_gas it is EIP-4844 tx
         if self.max_fee_per_blob_gas.is_some() {
-            if self.to.is_none() {
-                return None;
-            }
+            // target need to be present for EIP-4844 tx
+            self.to?;
             tx_type = TransactionType::Eip4844;
         }
 
         // and if it has authorization list it is EIP-7702 tx
         if self.authorization_list.is_some() {
-            if self.to.is_none() {
-                return None;
-            }
+            // target need to be present for EIP-7702 tx
+            self.to?;
             tx_type = TransactionType::Eip7702;
         }
 
