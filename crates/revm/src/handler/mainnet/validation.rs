@@ -135,6 +135,11 @@ pub fn validate_tx_env<EvmWiringT: EvmWiring, SPEC: Spec>(
                 }
             }
             // gas price must be at least the basefee.
+            if let Some(base_fee) = base_fee {
+                if U256::from(tx.gas_price()) < base_fee {
+                    return Err(InvalidTransaction::GasPriceLessThanBasefee);
+                }
+            }
         }
         TransactionType::Eip2930 => {
             // enabled in BERLIN hardfork
@@ -147,7 +152,7 @@ pub fn validate_tx_env<EvmWiringT: EvmWiring, SPEC: Spec>(
                 return Err(InvalidTransaction::InvalidChainId);
             }
 
-            // gas price must be at least basefee.
+            // gas price must be at least the basefee.
             if let Some(base_fee) = base_fee {
                 if U256::from(tx.gas_price()) < base_fee {
                     return Err(InvalidTransaction::GasPriceLessThanBasefee);
