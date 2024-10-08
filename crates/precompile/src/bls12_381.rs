@@ -42,8 +42,9 @@ mod test {
     use super::map_fp_to_g1;
     use super::msm::msm_required_gas;
     use super::pairing;
+    use crate::PrecompileResult;
     use eyre::Result;
-    use revm_primitives::{hex::FromHex, Bytes, PrecompileResult};
+    use primitives::{hex::FromHex, Bytes};
     use rstest::rstest;
     use serde_derive::{Deserialize, Serialize};
     use std::{fs, path::Path};
@@ -109,9 +110,8 @@ mod test {
                 let Some(gas) = vector.gas else {
                     panic!("gas is missing in {test_name}");
                 };
-                let outcome = res.unwrap_or_else(|e: revm_primitives::PrecompileErrors| {
-                    panic!("precompile call failed for {test_name}: {e}")
-                });
+                let outcome =
+                    res.unwrap_or_else(|e| panic!("precompile call failed for {test_name}: {e}"));
                 assert_eq!(
                     gas, outcome.gas_used,
                     "expected gas: {}, actual gas: {} in {test_name}",

@@ -1,11 +1,7 @@
-use revm_primitives::eip7702;
-
 use super::constants::*;
-use crate::{
-    num_words,
-    primitives::{AccessListItem, SpecId, U256},
-    AccountLoad, Eip7702CodeLoad, SStoreResult, SelfDestructResult, StateLoad,
-};
+use crate::{num_words, AccountLoad, Eip7702CodeLoad, SStoreResult, SelfDestructResult, StateLoad};
+use primitives::U256;
+use specification::{eip2930::AccessListItem, eip7702, hardfork::SpecId};
 
 /// `const` Option `?`.
 macro_rules! tri {
@@ -119,8 +115,8 @@ pub fn exp_cost(spec_id: SpecId, power: U256) -> Option<u64> {
 
 /// `*COPY` opcodes cost calculation.
 #[inline]
-pub const fn verylowcopy_cost(len: u64) -> Option<u64> {
-    VERYLOW.checked_add(tri!(cost_per_word(len, COPY)))
+pub const fn copy_cost_verylow(len: u64) -> Option<u64> {
+    copy_cost(VERYLOW, len)
 }
 
 /// `EXTCODECOPY` opcode cost calculation.
@@ -133,7 +129,12 @@ pub const fn extcodecopy_cost(spec_id: SpecId, len: u64, load: Eip7702CodeLoad<(
     } else {
         20
     };
-    base_gas.checked_add(tri!(cost_per_word(len, COPY)))
+    copy_cost(base_gas, len)
+}
+
+#[inline]
+pub const fn copy_cost(base_cost: u64, len: u64) -> Option<u64> {
+    base_cost.checked_add(tri!(cost_per_word(len, COPY)))
 }
 
 /// `LOG` opcode cost calculation.
@@ -189,12 +190,7 @@ pub const fn sload_cost(spec_id: SpecId, is_cold: bool) -> u64 {
 
 /// `SSTORE` opcode cost calculation.
 #[inline]
-pub fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, gas: u64, is_cold: bool) -> Option<u64> {
-    // EIP-1706 Disable SSTORE with gasleft lower than call stipend
-    if spec_id.is_enabled_in(SpecId::ISTANBUL) && gas <= CALL_STIPEND {
-        return None;
-    }
-
+pub fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, is_cold: bool) -> u64 {
     if spec_id.is_enabled_in(SpecId::BERLIN) {
         // Berlin specification logic
         let mut gas_cost = istanbul_sstore_cost::<WARM_STORAGE_READ_COST, WARM_SSTORE_RESET>(vals);
@@ -202,15 +198,13 @@ pub fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, gas: u64, is_cold: bool
         if is_cold {
             gas_cost += COLD_SLOAD_COST;
         }
-        Some(gas_cost)
+        gas_cost
     } else if spec_id.is_enabled_in(SpecId::ISTANBUL) {
         // Istanbul logic
-        Some(istanbul_sstore_cost::<INSTANBUL_SLOAD_GAS, SSTORE_RESET>(
-            vals,
-        ))
+        istanbul_sstore_cost::<INSTANBUL_SLOAD_GAS, SSTORE_RESET>(vals)
     } else {
         // Frontier logic
-        Some(frontier_sstore_cost(vals))
+        frontier_sstore_cost(vals)
     }
 }
 
@@ -283,14 +277,14 @@ pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResul
 /// account_load.is_empty will be accounted only if hardfork is SPURIOUS_DRAGON and
 /// there is transfer value.
 ///
-/// This means that [`crate::OpCode::EXTSTATICCALL`],
-/// [`crate::OpCode::EXTDELEGATECALL`] that dont transfer value will not be
+/// This means that [`bytecode::opcode::EXTSTATICCALL`],
+/// [`bytecode::opcode::EXTDELEGATECALL`] that dont transfer value will not be
 /// effected by this field.
 ///
-/// [`crate::OpCode::CALL`], [`crate::OpCode::EXTCALL`] use this field.
+/// [`bytecode::opcode::CALL`], [`bytecode::opcode::EXTCALL`] use this field.
 ///
-/// While [`crate::OpCode::STATICCALL`], [`crate::OpCode::DELEGATECALL`],
-/// [`crate::OpCode::CALLCODE`] need to have this field hardcoded to false
+/// While [`bytecode::opcode::STATICCALL`], [`bytecode::opcode::DELEGATECALL`],
+/// [`bytecode::opcode::CALLCODE`] need to have this field hardcoded to false
 /// as they were present before SPURIOUS_DRAGON hardfork.
 #[inline]
 pub const fn call_cost(spec_id: SpecId, transfers_value: bool, account_load: AccountLoad) -> u64 {

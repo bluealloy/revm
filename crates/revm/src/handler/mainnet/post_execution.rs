@@ -2,26 +2,32 @@ use crate::primitives::{address, alloy_primitives};
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, EVMError, ExecutionResult, ResultAndState, Spec, SpecId, SpecId::LONDON, U256,
+        U256,
     },
-    Context, FrameResult,
 };
+use crate::{Context, EvmWiring, FrameResult};
+use specification::hardfork::{Spec, SpecId};
+use wiring::{
+    result::{EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState},
+    Block, Transaction,
+};
+
 
 const WVM_TREASURY_ADDRESS: alloy_primitives::Address =
     address!("a2A0D977847805fE224B789D8C4d3D711ab251e7");
 
 /// Mainnet end handle does not change the output.
 #[inline]
-pub fn end<EXT, DB: Database>(
-    _context: &mut Context<EXT, DB>,
-    evm_output: Result<ResultAndState, EVMError<DB::Error>>,
-) -> Result<ResultAndState, EVMError<DB::Error>> {
+pub fn end<EvmWiringT: EvmWiring>(
+    _context: &mut Context<EvmWiringT>,
+    evm_output: EVMResult<EvmWiringT>,
+) -> EVMResult<EvmWiringT> {
     evm_output
 }
 
 /// Clear handle clears error and journal state.
 #[inline]
-pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
+pub fn clear<EvmWiringT: EvmWiring>(context: &mut Context<EvmWiringT>) {
     // clear error and journaled state.
     let _ = context.evm.take_error();
     context.evm.inner.journaled_state.clear();
@@ -29,24 +35,24 @@ pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
 
 /// Reward beneficiary with gas fee.
 #[inline]
-pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+pub fn reward_beneficiary<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
     gas: &Gas,
-) -> Result<(), EVMError<DB::Error>> {
-    let beneficiary = context.evm.env.block.coinbase;
+) -> EVMResultGeneric<(), EvmWiringT> {
+    let beneficiary = *context.evm.env.block.coinbase();
     let effective_gas_price = context.evm.env.effective_gas_price();
 
     // transfer fee to coinbase/beneficiary.
     // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
-    let coinbase_gas_price = if SPEC::enabled(LONDON) {
-        effective_gas_price.saturating_sub(context.evm.env.block.basefee)
+    let coinbase_gas_price = if SPEC::enabled(SpecId::LONDON) {
+        effective_gas_price.saturating_sub(*context.evm.env.block.basefee())
     } else {
         effective_gas_price
     };
 
     // WVM: if EIP-1559 enabled we send base fee back to treasury
     // instead of burning it
-    if SPEC::enabled(LONDON) {
+    if SPEC::enabled(SpecId::LONDON) {
         wvm_add_base_fee_to_treasury(context)?;
     }
 
@@ -54,7 +60,8 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         .evm
         .inner
         .journaled_state
-        .load_account(beneficiary, &mut context.evm.inner.db)?;
+        .load_account(beneficiary, &mut context.evm.inner.db)
+        .map_err(EVMError::Database)?;
 
     coinbase_account.data.mark_touch();
     coinbase_account.data.info.balance = coinbase_account
@@ -68,15 +75,16 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
 
 /// WVM: send base fee back to treasury
 #[inline]
-fn wvm_add_base_fee_to_treasury<EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-) -> Result<(), EVMError<DB::Error>> {
-    let base_fee = context.evm.env.block.basefee.clone();
+fn wvm_add_base_fee_to_treasury<EvmWiringT: EvmWiring>(
+    context: &mut Context<EvmWiringT>,
+) ->  EVMResultGeneric<(), EvmWiringT>{
+    let base_fee = *context.evm.env.block.basefee();
     let treasury_account = context
         .evm
         .inner
         .journaled_state
-        .load_account(WVM_TREASURY_ADDRESS, &mut context.evm.inner.db)?;
+        .load_account(WVM_TREASURY_ADDRESS, &mut context.evm.inner.db)
+        .map_err(EVMError::Database)?;
 
     treasury_account.data.mark_touch();
     treasury_account.data.info.balance =
@@ -85,8 +93,8 @@ fn wvm_add_base_fee_to_treasury<EXT, DB: Database>(
     Ok(())
 }
 
-pub fn refund<SPEC: Spec, EXT, DB: Database>(
-    _context: &mut Context<EXT, DB>,
+pub fn refund<EvmWiringT: EvmWiring, SPEC: Spec>(
+    _context: &mut Context<EvmWiringT>,
     gas: &mut Gas,
     eip7702_refund: i64,
 ) {
@@ -99,11 +107,11 @@ pub fn refund<SPEC: Spec, EXT, DB: Database>(
 }
 
 #[inline]
-pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+pub fn reimburse_caller<EvmWiringT: EvmWiring>(
+    context: &mut Context<EvmWiringT>,
     gas: &Gas,
-) -> Result<(), EVMError<DB::Error>> {
-    let caller = context.evm.env.tx.caller;
+) -> EVMResultGeneric<(), EvmWiringT> {
+    let caller = *context.evm.env.tx.caller();
     let effective_gas_price = context.evm.env.effective_gas_price();
 
     // return balance of not spend gas.
@@ -111,7 +119,8 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
         .evm
         .inner
         .journaled_state
-        .load_account(caller, &mut context.evm.inner.db)?;
+        .load_account(caller, &mut context.evm.inner.db)
+        .map_err(EVMError::Database)?;
 
     caller_account.data.info.balance =
         caller_account.data.info.balance.saturating_add(
@@ -123,11 +132,12 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
-pub fn output<EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
+pub fn output<EvmWiringT: EvmWiring>(
+    context: &mut Context<EvmWiringT>,
     result: FrameResult,
-) -> Result<ResultAndState, EVMError<DB::Error>> {
-    context.evm.take_error()?;
+) -> EVMResult<EvmWiringT> {
+    context.evm.take_error().map_err(EVMError::Database)?;
+
     // used gas with refund calculated.
     let gas_refunded = result.gas().refunded() as u64;
     let final_gas_used = result.gas().spent() - gas_refunded;
@@ -137,7 +147,7 @@ pub fn output<EXT, DB: Database>(
     // reset journal and return present state.
     let (state, logs) = context.evm.journaled_state.finalize();
 
-    let result = match instruction_result.result.into() {
+    let result = match SuccessOrHalt::<EvmWiringT::HaltReason>::from(instruction_result.result) {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {
             reason,
             gas_used: final_gas_used,

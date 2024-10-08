@@ -1,0 +1,15 @@
+{
+  "minimal_valid_EOF1_multiple_container_sections": {
+    "vectors": {
+      "no_data_section": {
+        "code": "0xef00010100040200010001030001000103000100010400000000800000000000",
+        "results": {
+          "Prague": {
+            "exception": "EOF_DataSectionMissing",
+            "result": false
+          }
+        }
+      }
+    }
+  }
+}

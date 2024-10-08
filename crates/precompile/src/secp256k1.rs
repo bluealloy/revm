@@ -1,5 +1,8 @@
-use crate::{utilities::right_pad, Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use revm_primitives::{alloy_primitives::B512, Bytes, PrecompileOutput, B256};
+use crate::{
+    utilities::right_pad, Precompile, PrecompileError, PrecompileOutput, PrecompileResult,
+    PrecompileWithAddress,
+};
+use primitives::{alloy_primitives::B512, Bytes, B256};
 
 pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(1),
@@ -12,7 +15,7 @@ pub use self::secp256k1::ecrecover;
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use k256::ecdsa::{Error, RecoveryId, Signature, VerifyingKey};
-    use revm_primitives::{alloy_primitives::B512, keccak256, B256};
+    use primitives::{alloy_primitives::B512, keccak256, B256};
 
     pub fn ecrecover(sig: &B512, mut recid: u8, msg: &B256) -> Result<B256, Error> {
         // parse signature
@@ -43,7 +46,7 @@ mod secp256k1 {
 #[cfg(feature = "secp256k1")]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
-    use revm_primitives::{alloy_primitives::B512, keccak256, B256};
+    use primitives::{alloy_primitives::B512, keccak256, B256};
     use secp256k1::{
         ecdsa::{RecoverableSignature, RecoveryId},
         Message, Secp256k1,
@@ -70,7 +73,7 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     const ECRECOVER_BASE: u64 = 3_000;
 
     if ECRECOVER_BASE > gas_limit {
-        return Err(Error::OutOfGas.into());
+        return Err(PrecompileError::OutOfGas.into());
     }
 
     let input = right_pad::<128>(input);

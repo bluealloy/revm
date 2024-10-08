@@ -1,0 +1,68 @@
+[package]
+name = "revm-database"
+description = "Revm Database implementations"
+version = "1.0.0"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+state.workspace = true
+primitives.workspace = true
+database-interface.workspace = true
+wiring.workspace = true
+bytecode.workspace = true
+
+auto_impl = "1.2"
+
+# Optional
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+], optional = true }
+
+# alloydb
+tokio = { version = "1.40", features = [
+    "rt-multi-thread",
+    "macros",
+], optional = true }
+alloy-provider = { version = "0.4.2", optional = true, default-features = false }
+alloy-eips = { version = "0.4.2", optional = true, default-features = false }
+alloy-transport = { version = "0.4.2", optional = true, default-features = false }
+
+
+[dev-dependencies]
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+anyhow = "1.0.83"
+criterion = "0.5"
+indicatif = "0.17"
+rstest = "0.22.0"
+alloy-sol-types = "0.8"
+
+[features]
+default = ["std"]
+std = ["serde?/std"]
+serde = ["dep:serde"]
+alloydb = [
+    "std",
+    "database-interface/asyncdb",
+    "dep:tokio",
+    "dep:alloy-provider",
+    "dep:alloy-eips",
+    "dep:alloy-transport",
+]

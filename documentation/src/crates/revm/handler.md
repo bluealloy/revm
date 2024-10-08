@@ -8,7 +8,7 @@ Functions can be grouped in five categories and are marked in that way in the co
 * Pre-execution functions: [`PreExecutionHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/pre_execution.rs)
 * Execution functions: [`ExecutionHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/execution.rs)
 * Post-execution functions: [`PostExecutionHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/post_execution.rs)
-* Instruction table: [`InstructionTable`](https://github.com/bluealloy/revm/blob/main/crates/interpreter/src/opcode.rs)
+* Instruction table: [`InstructionTable`](https://github.com/bluealloy/revm/blob/main/crates/interpreter/src/table.rs)
 
 ### Handle Registers
 

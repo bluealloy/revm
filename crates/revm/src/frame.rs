@@ -1,11 +1,11 @@
-use crate::{
-    interpreter::Interpreter,
-    primitives::{Address, Output},
-    JournalCheckpoint,
-};
+use crate::JournalCheckpoint;
 use core::ops::Range;
-use revm_interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
+use interpreter::{
+    CallOutcome, CreateOutcome, Gas, InstructionResult, Interpreter, InterpreterResult,
+};
+use primitives::Address;
 use std::boxed::Box;
+use wiring::result::Output;
 
 /// Call CallStackFrame.
 #[derive(Debug)]

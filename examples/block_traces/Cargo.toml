@@ -1,0 +1,40 @@
+[package]
+name = "example-block-traces"
+version = "0.0.0"
+publish = false
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+revm.workspace = true
+database = { workspace = true, features = ["std", "alloydb"] }
+inspector = { workspace = true, features = ["std", "serde-json"] }
+
+# tokio
+tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
+
+# alloy
+alloy-eips = "0.4.2"
+alloy-provider = "0.4.2"
+
+# progress bar
+indicatif = "0.17"
+
+# mics
+anyhow = "1.0.89"

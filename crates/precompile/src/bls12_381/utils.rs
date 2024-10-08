@@ -1,8 +1,8 @@
+use crate::PrecompileError;
 use blst::{
     blst_bendian_from_fp, blst_fp, blst_fp_from_bendian, blst_scalar, blst_scalar_from_bendian,
 };
 use core::cmp::Ordering;
-use revm_primitives::PrecompileError;
 
 /// Number of bits used in the BLS12-381 curve finite field elements.
 pub(super) const NBITS: usize = 256;
@@ -84,8 +84,8 @@ pub(super) fn extract_scalar_input(input: &[u8]) -> Result<blst_scalar, Precompi
 
 /// Checks if the input is a valid big-endian representation of a field element.
 fn is_valid_be(input: &[u8; 48]) -> bool {
-    for (i, modul) in input.iter().zip(MODULUS_REPR.iter()) {
-        match i.cmp(modul) {
+    for (i, modulo) in input.iter().zip(MODULUS_REPR.iter()) {
+        match i.cmp(modulo) {
             Ordering::Greater => return false,
             Ordering::Less => return true,
             Ordering::Equal => continue,

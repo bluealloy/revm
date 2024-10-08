@@ -1,9 +1,7 @@
-use crate::{
-    gas,
-    primitives::{Spec, B256, KECCAK_EMPTY, U256},
-    Host, InstructionResult, Interpreter,
-};
+use crate::{gas, Host, InstructionResult, Interpreter};
 use core::ptr;
+use primitives::{B256, KECCAK_EMPTY, U256};
+use specification::hardfork::Spec;
 
 pub fn keccak256<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     pop_top!(interpreter, offset, len_ptr);
@@ -14,7 +12,7 @@ pub fn keccak256<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     } else {
         let from = as_usize_or_fail!(interpreter, offset);
         resize_memory!(interpreter, from, len);
-        crate::primitives::keccak256(interpreter.shared_memory.slice(from, len))
+        primitives::keccak256(interpreter.shared_memory.slice(from, len))
     };
     *len_ptr = hash.into();
 }
@@ -39,13 +37,10 @@ pub fn codesize<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) 
 pub fn codecopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     pop!(interpreter, memory_offset, code_offset, len);
     let len = as_usize_or_fail!(interpreter, len);
-    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
-    if len == 0 {
+    let Some(memory_offset) = memory_resize(interpreter, memory_offset, len) else {
         return;
-    }
-    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
+    };
     let code_offset = as_usize_saturated!(code_offset);
-    resize_memory!(interpreter, memory_offset, len);
 
     // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
     assume!(!interpreter.contract.bytecode.is_eof());
@@ -94,14 +89,11 @@ pub fn callvalue<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
 pub fn calldatacopy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     pop!(interpreter, memory_offset, data_offset, len);
     let len = as_usize_or_fail!(interpreter, len);
-    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
-    if len == 0 {
+    let Some(memory_offset) = memory_resize(interpreter, memory_offset, len) else {
         return;
-    }
-    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
-    let data_offset = as_usize_saturated!(data_offset);
-    resize_memory!(interpreter, memory_offset, len);
+    };
 
+    let data_offset = as_usize_saturated!(data_offset);
     // Note: this can't panic because we resized memory to fit.
     interpreter.shared_memory.set_data(
         memory_offset,
@@ -127,33 +119,26 @@ pub fn returndatacopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interprete
     pop!(interpreter, memory_offset, offset, len);
 
     let len = as_usize_or_fail!(interpreter, len);
-    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
-
     let data_offset = as_usize_saturated!(offset);
-    let data_end = data_offset.saturating_add(len);
 
     // Old legacy behavior is to panic if data_end is out of scope of return buffer.
     // This behavior is changed in EOF.
+    let data_end = data_offset.saturating_add(len);
     if data_end > interpreter.return_data_buffer.len() && !interpreter.is_eof {
         interpreter.instruction_result = InstructionResult::OutOfOffset;
         return;
     }
 
-    // if len is zero memory is not resized.
-    if len == 0 {
+    let Some(memory_offset) = memory_resize(interpreter, memory_offset, len) else {
         return;
-    }
-
-    // resize memory
-    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
-    resize_memory!(interpreter, memory_offset, len);
+    };
 
     // Note: this can't panic because we resized memory to fit.
     interpreter.shared_memory.set_data(
         memory_offset,
         data_offset,
         len,
-        &interpreter.return_data_buffer,
+        interpreter.return_data_buffer.as_ref(),
     );
 }
 
@@ -184,18 +169,36 @@ pub fn gas<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     push!(interpreter, U256::from(interpreter.gas.remaining()));
 }
 
+// common logic for copying data from a source buffer to the EVM's memory
+pub fn memory_resize(
+    interpreter: &mut Interpreter,
+    memory_offset: U256,
+    len: usize,
+) -> Option<usize> {
+    // safe to cast usize to u64
+    gas_or_fail!(interpreter, gas::copy_cost_verylow(len as u64), None);
+    if len == 0 {
+        return None;
+    }
+    let memory_offset = as_usize_or_fail_ret!(interpreter, memory_offset, None);
+    resize_memory!(interpreter, memory_offset, len, None);
+
+    Some(memory_offset)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{
-        opcode::{make_instruction_table, RETURNDATACOPY, RETURNDATALOAD},
-        primitives::{bytes, Bytecode, PragueSpec},
-        DummyHost, Gas, InstructionResult,
-    };
+    use crate::{table::make_instruction_table, DummyHost, Gas, InstructionResult};
+    use bytecode::opcode::{RETURNDATACOPY, RETURNDATALOAD};
+    use bytecode::Bytecode;
+    use primitives::bytes;
+    use specification::hardfork::PragueSpec;
+    use wiring::DefaultEthereumWiring;
 
     #[test]
     fn returndataload() {
-        let table = make_instruction_table::<_, PragueSpec>();
+        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
         let mut host = DummyHost::default();
 
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
@@ -254,7 +257,7 @@ mod test {
     #[test]
     fn returndatacopy() {
         let table = make_instruction_table::<_, PragueSpec>();
-        let mut host = DummyHost::default();
+        let mut host = DummyHost::<DefaultEthereumWiring>::default();
 
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
             [

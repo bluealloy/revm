@@ -1,6 +1,6 @@
 use crate::{Gas, InstructionResult, InterpreterResult};
 use core::ops::Range;
-use revm_primitives::Bytes;
+use primitives::Bytes;
 
 /// Represents the outcome of a call operation in a virtual machine.
 ///

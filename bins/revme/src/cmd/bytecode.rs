@@ -1,26 +1,23 @@
+use clap::Parser;
 use revm::{
-    interpreter::{
-        analysis::{validate_eof_inner, CodeType, EofError},
-        opcode::eof_printer::print_eof_code,
-    },
-    primitives::{Bytes, Eof, MAX_INITCODE_SIZE},
+    bytecode::eof::{self, validate_eof_inner, CodeType, Eof, EofError},
+    primitives::{hex, Bytes, MAX_INITCODE_SIZE},
 };
 use std::io;
-use structopt::StructOpt;
 
-/// Statetest command
-#[derive(StructOpt, Debug)]
+/// `bytecode` subcommand.
+#[derive(Parser, Debug)]
 pub struct Cmd {
     /// Is EOF code in INITCODE mode.
-    #[structopt(long)]
+    #[arg(long)]
     eof_initcode: bool,
     /// Is EOF code in RUNTIME mode.
-    #[structopt(long)]
+    #[arg(long)]
     eof_runtime: bool,
     /// Bytecode in hex format. If bytes start with 0xFE it will be interpreted as a EOF.
     /// Otherwise, it will be interpreted as a EOF bytecode.
     /// If not provided, it will operate in interactive EOF validation mode.
-    #[structopt()]
+    #[arg()]
     bytes: Option<String>,
 }
 
@@ -61,7 +58,7 @@ impl Cmd {
                     Err(e) => eprintln!("Decoding Error: {:#?}", e),
                 }
             } else {
-                print_eof_code(&bytes)
+                eof::printer::print(&bytes)
             }
             return;
         }

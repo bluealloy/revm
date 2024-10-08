@@ -1,9 +1,7 @@
 use super::i256::{i256_div, i256_mod};
-use crate::{
-    gas,
-    primitives::{Spec, U256},
-    Host, Interpreter,
-};
+use crate::{gas, Host, Interpreter};
+use primitives::U256;
+use specification::hardfork::Spec;
 
 pub fn add<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
@@ -69,6 +67,8 @@ pub fn exp<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
     *op2 = op1.pow(*op2);
 }
 
+/// Implements the `SIGNEXTEND` opcode as defined in the Ethereum Yellow Paper.
+///
 /// In the yellow paper `SIGNEXTEND` is defined to take two inputs, we will call them
 /// `x` and `y`, and produce one output. The first `t` bits of the output (numbering from the
 /// left, starting from 0) are equal to the `t`-th bit of `y`, where `t` is equal to

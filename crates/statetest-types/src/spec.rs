@@ -1,0 +1,60 @@
+use revm::specification::hardfork::SpecId;
+use serde::Deserialize;
+
+/// Ethereum specification names.
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Hash)]
+pub enum SpecName {
+    Frontier,
+    FrontierToHomesteadAt5,
+    Homestead,
+    HomesteadToDaoAt5,
+    HomesteadToEIP150At5,
+    EIP150,
+    EIP158, // EIP-161: State trie clearing
+    EIP158ToByzantiumAt5,
+    Byzantium,
+    ByzantiumToConstantinopleAt5, // SKIPPED
+    ByzantiumToConstantinopleFixAt5,
+    Constantinople, // SKIPPED
+    ConstantinopleFix,
+    Istanbul,
+    Berlin,
+    BerlinToLondonAt5,
+    London,
+    Paris,
+    Merge,
+    Shanghai,
+    Cancun,
+    Prague,
+    Osaka, // SKIPPED
+    #[serde(other)]
+    Unknown,
+}
+
+impl SpecName {
+    /// Convert to a spec id.
+    pub fn to_spec_id(&self) -> SpecId {
+        match self {
+            Self::Frontier => SpecId::FRONTIER,
+            Self::Homestead | Self::FrontierToHomesteadAt5 => SpecId::HOMESTEAD,
+            Self::EIP150 | Self::HomesteadToDaoAt5 | Self::HomesteadToEIP150At5 => {
+                SpecId::TANGERINE
+            }
+            Self::EIP158 => SpecId::SPURIOUS_DRAGON,
+            Self::Byzantium | Self::EIP158ToByzantiumAt5 => SpecId::BYZANTIUM,
+            Self::ConstantinopleFix | Self::ByzantiumToConstantinopleFixAt5 => SpecId::PETERSBURG,
+            Self::Istanbul => SpecId::ISTANBUL,
+            Self::Berlin => SpecId::BERLIN,
+            Self::London | Self::BerlinToLondonAt5 => SpecId::LONDON,
+            Self::Paris | Self::Merge => SpecId::MERGE,
+            Self::Shanghai => SpecId::SHANGHAI,
+            Self::Cancun => SpecId::CANCUN,
+            Self::Prague => SpecId::PRAGUE,
+            Self::ByzantiumToConstantinopleAt5 | Self::Constantinople => {
+                panic!("Overridden with PETERSBURG")
+            }
+            Self::Osaka => panic!("Osaka is not implemented"),
+            Self::Unknown => panic!("Unknown spec"),
+        }
+    }
+}

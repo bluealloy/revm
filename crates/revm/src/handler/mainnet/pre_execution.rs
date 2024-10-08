@@ -2,35 +2,39 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
-use crate::{
-    precompile::PrecompileSpecId,
-    primitives::{
-        db::Database,
-        eip7702, Account, Bytecode, EVMError, Env, Spec,
-        SpecId::{CANCUN, PRAGUE, SHANGHAI},
-        TxKind, BLOCKHASH_STORAGE_ADDRESS, U256,
-    },
-    Context, ContextPrecompiles,
+use crate::{Context, ContextPrecompiles, EvmWiring, JournalEntry};
+use bytecode::Bytecode;
+use precompile::PrecompileSpecId;
+use primitives::{BLOCKHASH_STORAGE_ADDRESS, U256};
+use specification::{
+    eip7702,
+    hardfork::{Spec, SpecId},
+};
+use state::Account;
+use wiring::{
+    default::EnvWiring,
+    result::{EVMError, EVMResultGeneric},
+    Block, Transaction,
 };
 
 /// Main precompile load
 #[inline]
-pub fn load_precompiles<SPEC: Spec, DB: Database>() -> ContextPrecompiles<DB> {
+pub fn load_precompiles<EvmWiringT: EvmWiring, SPEC: Spec>() -> ContextPrecompiles<EvmWiringT> {
     ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
 }
 
 /// Main load handle
 #[inline]
-pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-) -> Result<(), EVMError<DB::Error>> {
+pub fn load_accounts<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
+) -> EVMResultGeneric<(), EvmWiringT> {
     // set journaling state flag.
     context.evm.journaled_state.set_spec_id(SPEC::SPEC_ID);
 
     // load coinbase
     // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
-    if SPEC::enabled(SHANGHAI) {
-        let coinbase = context.evm.inner.env.block.coinbase;
+    if SPEC::enabled(SpecId::SHANGHAI) {
+        let coinbase = *context.evm.inner.env.block.coinbase();
         context
             .evm
             .journaled_state
@@ -40,7 +44,7 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
 
     // Load blockhash storage address
     // EIP-2935: Serve historical block hashes from state
-    if SPEC::enabled(PRAGUE) {
+    if SPEC::enabled(SpecId::PRAGUE) {
         context
             .evm
             .journaled_state
@@ -49,19 +53,22 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
     }
 
     // Load access list
-    context.evm.load_access_list()?;
+    context.evm.load_access_list().map_err(EVMError::Database)?;
     Ok(())
 }
 
 /// Helper function that deducts the caller balance.
 #[inline]
-pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) {
+pub fn deduct_caller_inner<EvmWiringT: EvmWiring, SPEC: Spec>(
+    caller_account: &mut Account,
+    env: &EnvWiring<EvmWiringT>,
+) {
     // Subtract gas costs from the caller's account.
     // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
-    let mut gas_cost = U256::from(env.tx.gas_limit).saturating_mul(env.effective_gas_price());
+    let mut gas_cost = U256::from(env.tx.gas_limit()).saturating_mul(env.effective_gas_price());
 
     // EIP-4844
-    if SPEC::enabled(CANCUN) {
+    if SPEC::enabled(SpecId::CANCUN) {
         let data_fee = env.calc_data_fee().expect("already checked");
         gas_cost = gas_cost.saturating_add(data_fee);
     }
@@ -70,7 +77,7 @@ pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) 
     caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
 
     // bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-    if matches!(env.tx.transact_to, TxKind::Call(_)) {
+    if env.tx.kind().is_call() {
         // Nonce is already checked
         caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
     }
@@ -81,34 +88,52 @@ pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) 
 
 /// Deducts the caller balance to the transaction limit.
 #[inline]
-pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-) -> Result<(), EVMError<DB::Error>> {
+pub fn deduct_caller<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
+) -> EVMResultGeneric<(), EvmWiringT> {
     // load caller's account.
     let caller_account = context
         .evm
         .inner
         .journaled_state
-        .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)?;
+        .load_account(
+            *context.evm.inner.env.tx.caller(),
+            &mut context.evm.inner.db,
+        )
+        .map_err(EVMError::Database)?;
 
     // deduct gas cost from caller's account.
-    deduct_caller_inner::<SPEC>(caller_account.data, &context.evm.inner.env);
+    deduct_caller_inner::<EvmWiringT, SPEC>(caller_account.data, &context.evm.inner.env);
 
+    // Ensure tx kind is call
+    if context.evm.inner.env.tx.kind().is_call() {
+        // Push NonceChange entry
+        context
+            .evm
+            .inner
+            .journaled_state
+            .journal
+            .last_mut()
+            .unwrap()
+            .push(JournalEntry::NonceChange {
+                address: *context.evm.inner.env.tx.caller(),
+            });
+    }
     Ok(())
 }
 
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
 #[inline]
-pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-) -> Result<u64, EVMError<DB::Error>> {
+pub fn apply_eip7702_auth_list<EvmWiringT: EvmWiring, SPEC: Spec>(
+    context: &mut Context<EvmWiringT>,
+) -> EVMResultGeneric<u64, EvmWiringT> {
     // EIP-7702. Load bytecode to authorized accounts.
-    if !SPEC::enabled(PRAGUE) {
+    if !SPEC::enabled(SpecId::PRAGUE) {
         return Ok(0);
     }
 
     // return if there is no auth list.
-    let Some(authorization_list) = context.evm.inner.env.tx.authorization_list.as_ref() else {
+    let Some(authorization_list) = context.evm.inner.env.tx.authorization_list() else {
         return Ok(0);
     };
 
@@ -133,7 +158,8 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
             .evm
             .inner
             .journaled_state
-            .load_code(authority, &mut context.evm.inner.db)?;
+            .load_code(authority, &mut context.evm.inner.db)
+            .map_err(EVMError::Database)?;
 
         // 4. Verify the code of authority is either empty or already delegated.
         if let Some(bytecode) = &authority_acc.info.code {

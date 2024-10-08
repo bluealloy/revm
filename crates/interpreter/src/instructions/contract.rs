@@ -5,14 +5,15 @@ pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_me
 use crate::{
     gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD, MIN_CALLEE_GAS},
     interpreter::Interpreter,
-    primitives::{
-        eof::EofHeader, keccak256, Address, BerlinSpec, Bytes, Eof, Spec, SpecId::*, B256, U256,
-    },
-    CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, Host,
-    InstructionResult, InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE,
+    CallInputs, CallScheme, CallValue, CreateInputs, EOFCreateInputs, Host, InstructionResult,
+    InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE,
 };
+use bytecode::eof::{Eof, EofHeader};
 use core::cmp::max;
+use primitives::{keccak256, Address, Bytes, B256, U256};
+use specification::hardfork::{BerlinSpec, Spec, SpecId::*};
 use std::boxed::Box;
+use wiring::default::CreateScheme;
 
 /// EOF Create instruction
 pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {

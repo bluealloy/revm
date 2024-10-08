@@ -38,8 +38,8 @@ macro_rules! require_init_eof {
 macro_rules! check {
     ($interp:expr, $min:ident) => {
         if const {
-            !<SPEC as $crate::primitives::Spec>::SPEC_ID
-                .is_enabled_in($crate::primitives::SpecId::$min)
+            !<SPEC as specification::hardfork::Spec>::SPEC_ID
+                .is_enabled_in(specification::hardfork::SpecId::$min)
         } {
             $interp.instruction_result = $crate::InstructionResult::NotActivated;
             return;
@@ -73,11 +73,14 @@ macro_rules! refund {
 #[macro_export]
 macro_rules! gas_or_fail {
     ($interp:expr, $gas:expr) => {
+        $crate::gas_or_fail!($interp, $gas, ())
+    };
+    ($interp:expr, $gas:expr, $ret:expr) => {
         match $gas {
-            Some(gas_used) => $crate::gas!($interp, gas_used),
+            Some(gas_used) => $crate::gas!($interp, gas_used, $ret),
             None => {
                 $interp.instruction_result = $crate::InstructionResult::OutOfGas;
-                return;
+                return $ret;
             }
         }
     };
@@ -132,7 +135,7 @@ macro_rules! pop_address_ret {
             return $ret;
         }
         // SAFETY: Length is checked above.
-        let $x1 = $crate::primitives::Address::from_word($crate::primitives::B256::from(unsafe {
+        let $x1 = ::primitives::Address::from_word(::primitives::B256::from(unsafe {
             $interp.stack.pop_unsafe()
         }));
     };
@@ -142,10 +145,10 @@ macro_rules! pop_address_ret {
             return $ret;
         }
         // SAFETY: Length is checked above.
-        let $x1 = $crate::primitives::Address::from_word($crate::primitives::B256::from(unsafe {
+        let $x1 = ::primitives::Address::from_word(::primitives::B256::from(unsafe {
             $interp.stack.pop_unsafe()
         }));
-        let $x2 = $crate::primitives::Address::from_word($crate::primitives::B256::from(unsafe {
+        let $x2 = ::primitives::Address::from_word(::primitives::B256::from(unsafe {
             $interp.stack.pop_unsafe()
         }));
     };
@@ -250,7 +253,7 @@ macro_rules! pop_top {
 /// Pushes `B256` values onto the stack. Fails the instruction if the stack is full.
 #[macro_export]
 macro_rules! push_b256 {
-	($interp:expr, $($x:expr),* $(,)?) => ($(
+    ($interp:expr, $($x:expr),* $(,)?) => ($(
         match $interp.stack.push_b256($x) {
             Ok(()) => {},
             Err(e) => {

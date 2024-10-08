@@ -1,24 +1,25 @@
+pub mod bench;
 pub mod bytecode;
 pub mod eofvalidation;
 pub mod evmrunner;
 pub mod statetest;
 
-use structopt::{clap::AppSettings, StructOpt};
+use clap::Parser;
 
-#[derive(StructOpt, Debug)]
-#[structopt(setting = AppSettings::InferSubcommands)]
+#[derive(Parser, Debug)]
+#[command(infer_subcommands = true)]
 #[allow(clippy::large_enum_variant)]
 pub enum MainCmd {
-    #[structopt(about = "Execute Ethereum state tests")]
+    /// Execute Ethereum state tests.
     Statetest(statetest::Cmd),
-    #[structopt(about = "Execute eof validation tests")]
+    /// Execute eof validation tests.
     EofValidation(eofvalidation::Cmd),
-    #[structopt(
-        about = "Evm runner command allows running arbitrary evm bytecode.\nBytecode can be provided from cli or from file with --path option."
-    )]
+    /// Run arbitrary EVM bytecode.
     Evm(evmrunner::Cmd),
-    #[structopt(alias = "bc", about = "Prints the opcodes of an hex Bytecodes.")]
+    /// Print the structure of an EVM bytecode.
     Bytecode(bytecode::Cmd),
+    /// Run bench from specified list.
+    Bench(bench::Cmd),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -43,6 +44,10 @@ impl MainCmd {
             Self::EofValidation(cmd) => cmd.run().map_err(Into::into),
             Self::Evm(cmd) => cmd.run().map_err(Into::into),
             Self::Bytecode(cmd) => {
+                cmd.run();
+                Ok(())
+            }
+            Self::Bench(cmd) => {
                 cmd.run();
                 Ok(())
             }

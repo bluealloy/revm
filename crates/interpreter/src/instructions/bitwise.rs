@@ -1,10 +1,8 @@
 use super::i256::i256_cmp;
-use crate::{
-    gas,
-    primitives::{Spec, U256},
-    Host, Interpreter,
-};
+use crate::{gas, Host, Interpreter};
 use core::cmp::Ordering;
+use primitives::U256;
+use specification::hardfork::Spec;
 
 pub fn lt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
@@ -125,7 +123,9 @@ pub fn sar<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
 mod tests {
     use crate::instructions::bitwise::{byte, sar, shl, shr};
     use crate::{Contract, DummyHost, Interpreter};
-    use revm_primitives::{uint, Env, LatestSpec, U256};
+    use primitives::{uint, U256};
+    use specification::hardfork::LatestSpec;
+    use wiring::{default::Env, DefaultEthereumWiring};
 
     #[test]
     fn test_shift_left() {
@@ -202,7 +202,7 @@ mod tests {
             host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shl::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
+            shl::<DummyHost<DefaultEthereumWiring>, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, test.expected);
         }
@@ -283,7 +283,7 @@ mod tests {
             host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            shr::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
+            shr::<DummyHost<DefaultEthereumWiring>, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, test.expected);
         }
@@ -389,7 +389,7 @@ mod tests {
             host.clear();
             push!(interpreter, test.value);
             push!(interpreter, test.shift);
-            sar::<DummyHost, LatestSpec>(&mut interpreter, &mut host);
+            sar::<DummyHost<DefaultEthereumWiring>, LatestSpec>(&mut interpreter, &mut host);
             pop!(interpreter, res);
             assert_eq!(res, test.expected);
         }
@@ -403,7 +403,7 @@ mod tests {
             expected: U256,
         }
 
-        let mut host = DummyHost::new(Env::default());
+        let mut host = DummyHost::<DefaultEthereumWiring>::new(Env::default());
         let mut interpreter = Interpreter::new(Contract::default(), u64::MAX, false);
 
         let input_value = U256::from(0x1234567890abcdef1234567890abcdef_u128);

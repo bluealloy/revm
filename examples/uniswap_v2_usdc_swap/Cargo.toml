@@ -1,0 +1,39 @@
+[package]
+name = "example-uniswap-v2-usdc-swap"
+version = "0.0.0"
+publish = false
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+revm.workspace = true
+database = { workspace = true, features = ["std", "alloydb"] }
+
+# tokio
+tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
+
+# alloy
+alloy-sol-types = { version = "0.8.2", default-features = false, features = [
+    "std",
+] }
+alloy-eips = "0.4.2"
+alloy-transport-http = "0.4.2"
+alloy-provider = "0.4.2"
+reqwest = { version = "0.12" }
+anyhow = "1.0.89"
