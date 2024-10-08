@@ -2,7 +2,7 @@ use super::constants::*;
 use crate::{num_words, AccountLoad, Eip7702CodeLoad, SStoreResult, SelfDestructResult, StateLoad};
 use primitives::U256;
 use specification::{eip7702, hardfork::SpecId};
-use transaction::eip2930::AccessListInterface;
+use transaction::AccessListTrait;
 
 /// `const` Option `?`.
 macro_rules! tri {
@@ -358,7 +358,7 @@ pub const fn memory_gas(num_words: u64) -> u64 {
 
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
-pub fn validate_initial_tx_gas<AccessListT: AccessListInterface>(
+pub fn validate_initial_tx_gas<AccessListT: AccessListTrait>(
     spec_id: SpecId,
     input: &[u8],
     is_create: bool,

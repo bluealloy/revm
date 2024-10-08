@@ -1,9 +1,7 @@
-use derive_where::derive_where;
-use transaction::eip2930::AccessListInterface;
-
 use crate::{journaled_state::JournaledState, JournalCheckpoint};
 use bytecode::{Bytecode, Eof, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 use database_interface::Database;
+use derive_where::derive_where;
 use interpreter::{
     gas, return_ok, AccountLoad, Eip7702CodeLoad, InstructionResult, InterpreterResult,
     SStoreResult, SelfDestructResult, StateLoad,
@@ -15,6 +13,7 @@ use specification::hardfork::{
 };
 use state::Account;
 use std::{boxed::Box, sync::Arc};
+use transaction::AccessListTrait;
 use wiring::{
     default::{AnalysisKind, CfgEnv, EnvWiring},
     EvmWiring, Transaction,

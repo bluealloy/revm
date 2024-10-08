@@ -1,39 +1,19 @@
-use crate::CommonTxFields;
-use primitives::{Address, TxKind, B256};
+use crate::{AccessListTrait, CommonTxFields};
+use primitives::TxKind;
 
-// TODO move to specs impl iterator trait
-pub trait AccessListInterface {
-    fn iter(&self) -> impl Iterator<Item = (Address, impl Iterator<Item = B256>)>;
-
-    /// Not performant way to count number of account and storages.
-    fn num_account_storages(&self) -> (usize, usize) {
-        let storage_num = self.iter().map(|i| i.1.count()).sum();
-        let account_num = self.iter().count();
-
-        (account_num, storage_num)
-    }
-}
-
+/// EIP-2930: Optional access lists
 pub trait Eip2930Tx: CommonTxFields {
-    type AccessList: AccessListInterface;
+    type AccessList: AccessListTrait;
 
+    /// The chain ID of the chain the transaction is intended for.
     fn chain_id(&self) -> u64;
 
+    /// The gas price of the transaction.
     fn gas_price(&self) -> u128;
 
+    /// The kind of transaction.
     fn kind(&self) -> TxKind;
 
+    /// The access list of the transaction.
     fn access_list(&self) -> &Self::AccessList;
-}
-
-// TODO move to default context
-use specification::eip2930::AccessList;
-
-impl AccessListInterface for AccessList {
-    fn iter(&self) -> impl Iterator<Item = (Address, impl Iterator<Item = B256>)> {
-        self.0.iter().map(|item| {
-            let slots = item.storage_keys.iter().copied();
-            (item.address, slots)
-        })
-    }
 }

@@ -2,9 +2,10 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// #[cfg(not(feature = "std"))]
-// extern crate alloc as std;
+#[cfg(not(feature = "std"))]
+extern crate alloc as std;
 
+mod access_list;
 mod common;
 pub mod eip1559;
 pub mod eip2930;
@@ -14,6 +15,7 @@ pub mod legacy;
 pub mod transaction;
 pub mod transaction_type;
 
+pub use access_list::AccessListTrait;
 pub use common::CommonTxFields;
 pub use eip1559::{Eip1559CommonTxFields, Eip1559Tx};
 pub use eip2930::Eip2930Tx;

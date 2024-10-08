@@ -32,6 +32,9 @@ pub trait Authorization {
     ///
     /// Authority signature can be invalid, so this method returns None if the authority
     /// could not be recovered.
+    ///
+    /// Valid signature Parity should be 0 or 1 and
+    /// signature s-value should be less than SECP256K1N_HALF.
     fn authority(&self) -> Option<Address>;
 
     /// Returns authorization the chain id.
@@ -59,22 +62,34 @@ pub trait Authorization {
 use specification::eip7702::RecoveredAuthorization;
 
 impl Authorization for RecoveredAuthorization {
+    /// Authority address. Obtained by recovering of the signature.
     fn authority(&self) -> Option<Address> {
         self.authority()
     }
 
+    /// Returns authorization the chain id.
     fn chain_id(&self) -> U256 {
         self.inner().chain_id()
     }
 
+    /// Returns the nonce.
+    ///
+    /// # Note
+    ///
+    /// If nonce is not same as the nonce of the signer account,
+    /// authorization is skipped and considered invalidated.
     fn nonce(&self) -> u64 {
         self.inner().nonce()
     }
 
+    /// Returns the address that this account should delegate to.
     fn address(&self) -> Address {
         *self.inner().address()
     }
 
+    /// Returns true if the authorization is valid.
+    ///
+    /// Temporary method needed for older EIP spec and will removed in future
     fn is_invalid(&self) -> bool {
         use specification::{eip2::SECP256K1N_HALF, eip7702::Parity};
 

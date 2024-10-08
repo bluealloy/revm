@@ -1,6 +1,6 @@
 use crate::{
-    eip1559::Eip1559CommonTxFields, eip2930::AccessListInterface, CommonTxFields, Eip1559Tx,
-    Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx, TransactionType,
+    eip1559::Eip1559CommonTxFields, AccessListTrait, CommonTxFields, Eip1559Tx, Eip2930Tx,
+    Eip4844Tx, Eip7702Tx, LegacyTx, TransactionType,
 };
 use core::cmp::min;
 use core::fmt::Debug;
@@ -18,9 +18,10 @@ pub trait TransactionError: Debug + core::error::Error {}
 pub trait Transaction {
     /// An error that occurs when validating a transaction.
     type TransactionError: TransactionError;
+    /// Transaction type.
     type TransactionType: Into<TransactionType>;
-
-    type AccessList: AccessListInterface;
+    /// Access list type.
+    type AccessList: AccessListTrait;
 
     type Legacy: LegacyTx;
     type Eip2930: Eip2930Tx<AccessList = Self::AccessList>;
@@ -32,26 +33,32 @@ pub trait Transaction {
     /// If transaction is Legacy, then `legacy()` should be called.
     fn tx_type(&self) -> Self::TransactionType;
 
+    /// Legacy transaction.
     fn legacy(&self) -> &Self::Legacy {
         unimplemented!("legacy tx not supported")
     }
 
+    /// EIP-2930 transaction.
     fn eip2930(&self) -> &Self::Eip2930 {
         unimplemented!("Eip2930 tx not supported")
     }
 
+    /// EIP-1559 transaction.
     fn eip1559(&self) -> &Self::Eip1559 {
         unimplemented!("Eip1559 tx not supported")
     }
 
+    /// EIP-4844 transaction.
     fn eip4844(&self) -> &Self::Eip4844 {
         unimplemented!("Eip4844 tx not supported")
     }
 
+    /// EIP-7702 transaction.
     fn eip7702(&self) -> &Self::Eip7702 {
         unimplemented!("Eip7702 tx not supported")
     }
 
+    /// Common fields for all transactions.
     fn common_fields(&self) -> &dyn CommonTxFields {
         match self.tx_type().into() {
             TransactionType::Legacy => self.legacy(),
@@ -63,6 +70,7 @@ pub trait Transaction {
         }
     }
 
+    /// Maximum fee that can be paid for the transaction.
     fn max_fee(&self) -> u128 {
         match self.tx_type().into() {
             TransactionType::Legacy => self.legacy().gas_price(),
@@ -99,6 +107,7 @@ pub trait Transaction {
         min(U256::from(max_fee), base_fee + U256::from(max_priority_fee))
     }
 
+    /// Transaction kind.
     fn kind(&self) -> TxKind {
         let tx_type = self.tx_type().into();
         match tx_type {
@@ -124,18 +133,3 @@ pub trait Transaction {
         }
     }
 }
-
-pub trait TransactionExt {
-    fn effective_gas_price(&self, base_fee: U256) -> U256;
-}
-
-// impl<Tx : Transaction> TransactionExt for Tx {
-//     fn effective_gas_price(&self, base_fee: U256) -> U256 {
-//         Transaction::effective_gas_price(self, base_fee)
-//     }
-
-//     fn data(&self) -> &[u8] {
-//         self.common_fields().input().as_ref()
-//     }
-
-// }
