@@ -47,6 +47,12 @@ pub trait Authorization {
 
     /// Returns the address that this account is delegated to.
     fn address(&self) -> Address;
+
+    /// Returns true if the authorization is valid.
+    ///
+    /// Temporary method needed for older EIP spec and will removed in future
+    /// when test get updated.
+    fn is_invalid(&self) -> bool;
 }
 
 // TODO move to default context
@@ -67,5 +73,21 @@ impl Authorization for RecoveredAuthorization {
 
     fn address(&self) -> Address {
         *self.inner().address()
+    }
+
+    fn is_invalid(&self) -> bool {
+        use specification::{eip2::SECP256K1N_HALF, eip7702::Parity};
+
+        // Check y_parity, Parity::Parity means that it was 0 or 1.
+        if !matches!(self.inner().signature().v(), Parity::Parity(_)) {
+            return true;
+        }
+
+        // Check s-value
+        if self.inner().signature().s() > SECP256K1N_HALF {
+            return true;
+        }
+
+        false
     }
 }

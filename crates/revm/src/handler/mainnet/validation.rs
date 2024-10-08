@@ -10,7 +10,10 @@ use specification::{
 };
 use state::Account;
 use std::boxed::Box;
-use transaction::{Eip1559CommonTxFields, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx, Transaction};
+use transaction::{
+    eip7702::Authorization, Eip1559CommonTxFields, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx,
+    Transaction,
+};
 use wiring::{
     default::{CfgEnv, EnvWiring},
     result::{EVMError, EVMResultGeneric, InvalidHeader, InvalidTransaction},
@@ -218,6 +221,13 @@ pub fn validate_tx_env<EvmWiringT: EvmWiring, SPEC: Spec>(
             // The transaction is considered invalid if the length of authorization_list is zero.
             if auth_list_len == 0 {
                 return Err(InvalidTransaction::EmptyAuthorizationList);
+            }
+
+            // TODO temporary here as newest EIP have removed this check.
+            for auth in tx.authorization_list_iter() {
+                if auth.is_invalid() {
+                    return Err(InvalidTransaction::Eip7702NotSupported);
+                }
             }
         }
         TransactionType::Custom => {
