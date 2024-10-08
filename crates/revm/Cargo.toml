@@ -32,6 +32,7 @@ state.workspace = true
 specification.workspace = true
 bytecode.workspace = true
 database = { workspace = true, optional = true }
+transaction.workspace = true
 
 # misc
 derive-where = { version = "1.2.7", default-features = false }
@@ -59,13 +60,14 @@ alloy-provider = "0.4.2"
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
-std = [
-    "serde?/std",
-    "interpreter/std",
-    "precompile/std",
-]
+std = ["serde?/std", "interpreter/std", "precompile/std"]
 hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
-serde = ["dep:serde", "interpreter/serde", "database-interface/serde"]
+serde = [
+    "dep:serde",
+    "interpreter/serde",
+    "database-interface/serde",
+    "primitives/serde",
+]
 arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
 portable = ["wiring/portable"]
@@ -93,28 +95,3 @@ c-kzg = ["precompile/c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
 kzg-rs = ["precompile/kzg-rs"]
 blst = ["precompile/blst"]
-
-# [[example]]
-# name = "fork_ref_transact"
-# path = "../../examples/fork_ref_transact.rs"
-# required-features = ["alloydb"]
-
-# [[example]]
-# name = "generate_block_traces"
-# path = "../../examples/generate_block_traces.rs"
-# required-features = ["std", "serde-json", "alloydb"]
-
-# [[example]]
-# name = "db_by_ref"
-# path = "../../examples/db_by_ref.rs"
-# required-features = ["std", "serde-json"]
-
-# [[example]]
-# name = "deploy"
-# path = "../../examples/deploy.rs"
-# required-features = []
-
-# [[bench]]
-# name = "bench"
-# path = "benches/bench.rs"
-# harness = false

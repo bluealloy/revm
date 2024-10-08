@@ -10,11 +10,10 @@ pub mod default;
 pub mod evm_wiring;
 pub mod precompile;
 pub mod result;
-pub mod transaction;
 
 pub use block::Block;
 pub use evm_wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring, HaltReasonTrait};
-pub use transaction::{Transaction, TransactionValidation};
+pub use transaction::{Transaction, TransactionType};
 
 // KZG
 

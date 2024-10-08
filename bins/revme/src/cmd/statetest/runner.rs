@@ -335,7 +335,7 @@ pub fn execute_test_suite(
             .unwrap_or_default();
         env.tx.gas_priority_fee = unit.transaction.max_priority_fee_per_gas;
         // EIP-4844
-        env.tx.blob_hashes = unit.transaction.blob_versioned_hashes;
+        env.tx.blob_hashes = unit.transaction.blob_versioned_hashes.clone();
         env.tx.max_fee_per_blob_gas = unit.transaction.max_fee_per_blob_gas;
 
         // post and execution
@@ -360,6 +360,17 @@ pub fn execute_test_suite(
             }
 
             for (index, test) in tests.into_iter().enumerate() {
+                // TODO TX TYPE needs to be set
+                let Some(tx_type) = unit.transaction.tx_type(test.indexes.data) else {
+                    if test.expect_exception.is_some() {
+                        continue;
+                    } else {
+                        panic!("Invalid transaction type without expected exception");
+                    }
+                };
+
+                env.tx.tx_type = tx_type;
+
                 env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
 
                 env.tx.data = unit
@@ -378,17 +389,19 @@ pub fn execute_test_suite(
                     .get(test.indexes.data)
                     .and_then(Option::as_deref)
                     .cloned()
-                    .unwrap_or_default();
+                    .unwrap_or_default()
+                    .into();
 
-                env.tx.authorization_list =
-                    unit.transaction
-                        .authorization_list
-                        .as_ref()
-                        .map(|auth_list| {
-                            AuthorizationList::Recovered(
-                                auth_list.iter().map(|auth| auth.into_recovered()).collect(),
-                            )
-                        });
+                env.tx.authorization_list = unit
+                    .transaction
+                    .authorization_list
+                    .as_ref()
+                    .map(|auth_list| {
+                        AuthorizationList::Recovered(
+                            auth_list.iter().map(|auth| auth.into_recovered()).collect(),
+                        )
+                    })
+                    .unwrap_or_default();
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),

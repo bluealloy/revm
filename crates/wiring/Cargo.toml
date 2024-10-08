@@ -27,6 +27,7 @@ primitives.workspace = true
 database-interface.workspace = true
 specification.workspace = true
 state.workspace = true
+transaction.workspace = true
 
 # mics
 dyn-clone = "1.0"
@@ -54,7 +55,13 @@ once_cell = { version = "1.19", default-features = false, optional = true, featu
 [features]
 default = ["std", "portable"]
 std = ["serde?/std"]
-serde = ["dep:serde", "primitives/serde", "specification/serde", "state/serde"]
+serde = [
+    "dep:serde",
+    "primitives/serde",
+    "transaction/serde",
+    "specification/serde",
+    "state/serde",
+]
 portable = ["c-kzg?/portable"]
 
 c-kzg = ["dep:c-kzg", "dep:cfg-if"]

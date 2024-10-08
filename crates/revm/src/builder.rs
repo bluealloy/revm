@@ -2,10 +2,10 @@ use crate::{handler::register, Context, Evm, EvmContext, EvmWiring, Handler};
 use core::marker::PhantomData;
 use database_interface::EmptyDB;
 use std::boxed::Box;
+use transaction::Transaction;
 use wiring::{
     default::{CfgEnv, EnvWiring},
     result::InvalidTransaction,
-    transaction::TransactionValidation,
     EthereumWiring,
 };
 
@@ -130,8 +130,7 @@ impl<'a, EvmWiringT: EvmWiring> EvmBuilder<'a, SetGenericStage, EvmWiringT> {
 
 impl<'a, EvmWiringT> EvmBuilder<'a, SetGenericStage, EvmWiringT>
 where
-    EvmWiringT:
-        EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
+    EvmWiringT: EvmWiring<Transaction: Transaction<TransactionError: From<InvalidTransaction>>>,
 {
     /// Creates the default [EvmWiring]::[crate::Database] that will be used by [`Evm`].
     pub fn with_default_db(mut self) -> EvmBuilder<'a, SetGenericStage, EvmWiringT>
@@ -441,8 +440,7 @@ where
 
 impl<'a, BuilderStage, EvmWiringT: EvmWiring> EvmBuilder<'a, BuilderStage, EvmWiringT>
 where
-    EvmWiringT:
-        EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
+    EvmWiringT: EvmWiring<Transaction: Transaction<TransactionError: From<InvalidTransaction>>>,
 {
     /// Sets specification Id , that will mark the version of EVM.
     /// It represent the hard fork of ethereum.
@@ -495,12 +493,14 @@ mod test {
             .with_default_db()
             .with_default_ext_ctx()
             .modify_db(|db| {
-                db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
+                db.insert_account_info(
+                    to_addr,
+                    AccountInfo::new(U256::from(1_000_000), 0, code_hash, code),
+                )
             })
             .modify_tx_env(|tx| {
-                let transact_to = &mut tx.transact_to;
-
-                *transact_to = TxKind::Call(to_addr)
+                tx.transact_to = TxKind::Call(to_addr);
+                tx.gas_limit = 100_000;
             })
             // we need to use handle register box to capture the custom context in the handle
             // register

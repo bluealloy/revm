@@ -1,21 +1,26 @@
 //! Handler related to Optimism chain
 
-use super::{
-    optimism_spec_to_generic, OptimismContext, OptimismHaltReason, OptimismInvalidTransaction,
-    OptimismSpec, OptimismSpecId, OptimismTransaction, OptimismWiring,
+use crate::{
+    optimism_spec_to_generic,
+    transaction::{
+        deposit::DepositTransaction, error::OpTransactionError, OpTransactionType, OpTxTrait,
+    },
+    wiring::{OptimismContextTrait, OptimismWiring},
+    OptimismHaltReason, OptimismSpec, OptimismSpecId,
 };
 use crate::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT};
 use core::ops::Mul;
 use revm::{
     database_interface::Database,
     handler::{
-        mainnet::{self, deduct_caller_inner},
+        mainnet::{self, deduct_caller_inner, validate_block_env, validate_tx_env},
         register::EvmHandler,
     },
     interpreter::{return_ok, return_revert, Gas},
     precompile::{secp256r1, PrecompileSpecId},
     primitives::{HashMap, U256},
     state::Account,
+    transaction::CommonTxFields,
     wiring::{
         default::EnvWiring,
         result::{
@@ -60,22 +65,28 @@ pub fn validate_env<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     env: &EnvWiring<EvmWiringT>,
 ) -> EVMResultGeneric<(), EvmWiringT> {
     // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
-    if env.tx.source_hash().is_some() {
+    let tx_type = env.tx.tx_type();
+    if tx_type == OpTransactionType::Deposit {
+        let tx = env.tx.deposit();
+        // Do not allow for a system transaction to be processed if Regolith is enabled.
+        // TODO check if this is correct.
+        if tx.is_system_transaction() && SPEC::optimism_enabled(OptimismSpecId::REGOLITH) {
+            return Err(OpTransactionError::DepositSystemTxPostRegolith.into());
+        }
         return Ok(());
     }
 
     // Important: validate block before tx.
-    env.validate_block_env::<SPEC>()?;
+    //validate_block_env::<SPEC>()?;
+    // Important: validate block before tx as some field are used in transaction validation.
+    validate_block_env::<EvmWiringT, SPEC>(&env.block).map_err(EVMError::Header)?;
 
-    // Do not allow for a system transaction to be processed if Regolith is enabled.
-    if env.tx.is_system_transaction().unwrap_or(false)
-        && SPEC::optimism_enabled(OptimismSpecId::REGOLITH)
-    {
-        return Err(OptimismInvalidTransaction::DepositSystemTxPostRegolith.into());
-    }
+    // env.validate_tx::<SPEC>()
+    //     .map_err(OptimismInvalidTransaction::Base)?;
 
-    env.validate_tx::<SPEC>()
-        .map_err(OptimismInvalidTransaction::Base)?;
+    // validate transaction.
+    validate_tx_env::<EvmWiringT, SPEC>(&env.tx, &env.block, &env.cfg)
+        .map_err(OpTransactionError::Base)?;
 
     Ok(())
 }
@@ -84,7 +95,7 @@ pub fn validate_env<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 pub fn validate_tx_against_state<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     context: &mut Context<EvmWiringT>,
 ) -> EVMResultGeneric<(), EvmWiringT> {
-    if context.evm.inner.env.tx.source_hash().is_some() {
+    if context.evm.env.tx.tx_type() == OpTransactionType::Deposit {
         return Ok(());
     }
     mainnet::validate_tx_against_state::<EvmWiringT, SPEC>(context)
@@ -97,9 +108,8 @@ pub fn last_frame_return<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     frame_result: &mut FrameResult,
 ) -> EVMResultGeneric<(), EvmWiringT> {
     let env = context.evm.inner.env();
-    let is_deposit = env.tx.source_hash().is_some();
-    let tx_system = env.tx.is_system_transaction();
-    let tx_gas_limit = env.tx.gas_limit();
+    let is_deposit = env.tx.tx_type() == OpTransactionType::Deposit;
+    let tx_gas_limit = env.tx.common_fields().gas_limit();
     let is_regolith = SPEC::optimism_enabled(OptimismSpecId::REGOLITH);
 
     let instruction_result = frame_result.interpreter_result().result;
@@ -129,10 +139,13 @@ pub fn last_frame_return<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
                 // Regolith, gas is reported as normal.
                 gas.erase_cost(remaining);
                 gas.record_refund(refunded);
-            } else if is_deposit && tx_system.unwrap_or(false) {
-                // System transactions were a special type of deposit transaction in
-                // the Bedrock hardfork that did not incur any gas costs.
-                gas.erase_cost(tx_gas_limit);
+            } else if is_deposit {
+                let tx = env.tx.deposit();
+                if tx.is_system_transaction() {
+                    // System transactions were a special type of deposit transaction in
+                    // the Bedrock hardfork that did not incur any gas costs.
+                    gas.erase_cost(tx_gas_limit);
+                }
             }
         }
         return_revert!() => {
@@ -167,7 +180,7 @@ pub fn refund<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     gas.record_refund(eip7702_refund);
 
     let env = context.evm.inner.env();
-    let is_deposit = env.tx.source_hash().is_some();
+    let is_deposit = env.tx.tx_type() == OpTransactionType::Deposit;
     let is_regolith = SPEC::optimism_enabled(OptimismSpecId::REGOLITH);
 
     // Prior to Regolith, deposit transactions did not receive gas refunds.
@@ -207,7 +220,7 @@ pub fn load_accounts<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 ) -> EVMResultGeneric<(), EvmWiringT> {
     // the L1-cost fee is only computed for Optimism non-deposit transactions.
 
-    if context.evm.env.tx.source_hash().is_none() {
+    if context.evm.env.tx.tx_type() != OpTransactionType::Deposit {
         let l1_block_info =
             super::L1BlockInfo::try_fetch(&mut context.evm.inner.db, SPEC::OPTIMISM_SPEC_ID)
                 .map_err(EVMError::Database)?;
@@ -224,22 +237,25 @@ pub fn load_accounts<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     context: &mut Context<EvmWiringT>,
 ) -> EVMResultGeneric<(), EvmWiringT> {
+    let caller = context.evm.inner.env.tx.common_fields().caller();
     // load caller's account.
     let mut caller_account = context
         .evm
         .inner
         .journaled_state
-        .load_account(
-            *context.evm.inner.env.tx.caller(),
-            &mut context.evm.inner.db,
-        )
+        .load_account(caller, &mut context.evm.inner.db)
         .map_err(EVMError::Database)?;
+
+    let is_deposit = context.evm.inner.env.tx.tx_type() == OpTransactionType::Deposit;
 
     // If the transaction is a deposit with a `mint` value, add the mint value
     // in wei to the caller's balance. This should be persisted to the database
     // prior to the rest of execution.
-    if let Some(mint) = context.evm.inner.env.tx.mint() {
-        caller_account.info.balance += U256::from(*mint);
+    if is_deposit {
+        let tx = context.evm.inner.env.tx.deposit();
+        if let Some(mint) = tx.mint() {
+            caller_account.info.balance += U256::from(mint);
+        }
     }
 
     // We deduct caller max balance after minting and before deducing the
@@ -248,13 +264,15 @@ pub fn deduct_caller<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 
     // If the transaction is not a deposit transaction, subtract the L1 data fee from the
     // caller's balance directly after minting the requested amount of ETH.
-    if context.evm.inner.env.tx.source_hash().is_none() {
+    if !is_deposit {
         // get envelope
-        let Some(enveloped_tx) = &context.evm.inner.env.tx.enveloped_tx() else {
-            return Err(EVMError::Custom(
-                "[OPTIMISM] Failed to load enveloped transaction.".into(),
-            ));
-        };
+        let enveloped_tx = context
+            .evm
+            .inner
+            .env
+            .tx
+            .enveloped_tx()
+            .expect("all not deposit tx have enveloped tx");
 
         let tx_l1_cost = context
             .evm
@@ -283,7 +301,7 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     context: &mut Context<EvmWiringT>,
     gas: &Gas,
 ) -> EVMResultGeneric<(), EvmWiringT> {
-    let is_deposit = context.evm.inner.env.tx.source_hash().is_some();
+    let is_deposit = context.evm.inner.env.tx.tx_type() == OpTransactionType::Deposit;
 
     // transfer fee to coinbase/beneficiary.
     if !is_deposit {
@@ -348,10 +366,10 @@ pub fn output<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
         // Post-regolith, if the transaction is a deposit transaction and it halts,
         // we bubble up to the global return handler. The mint value will be persisted
         // and the caller nonce will be incremented there.
-        let is_deposit = context.evm.inner.env.tx.source_hash().is_some();
+        let is_deposit = context.evm.inner.env.tx.tx_type() == OpTransactionType::Deposit;
         if is_deposit && SPEC::optimism_enabled(OptimismSpecId::REGOLITH) {
             return Err(EVMError::Transaction(
-                OptimismInvalidTransaction::HaltedDepositPostRegolith,
+                OpTransactionError::HaltedDepositPostRegolith,
             ));
         }
     }
@@ -364,17 +382,16 @@ pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     context: &mut Context<EvmWiringT>,
     evm_output: EVMResult<EvmWiringT>,
 ) -> EVMResult<EvmWiringT> {
+    let is_deposit = context.evm.inner.env.tx.tx_type() == OpTransactionType::Deposit;
     evm_output.or_else(|err| {
-        if matches!(err, EVMError::Transaction(_))
-            && context.evm.inner.env().tx.source_hash().is_some()
-        {
+        if matches!(err, EVMError::Transaction(_)) && is_deposit {
+            let tx = context.evm.inner.env.tx.deposit();
             // If the transaction is a deposit transaction and it failed
             // for any reason, the caller nonce must be bumped, and the
             // gas reported must be altered depending on the Hardfork. This is
             // also returned as a special Halt variant so that consumers can more
             // easily distinguish between a failed deposit and a failed
             // normal transaction.
-            let caller = *context.evm.inner.env().tx.caller();
 
             // Increment sender nonce and account balance for the mint amount. Deposits
             // always persist the mint amount, even if the transaction fails.
@@ -382,32 +399,30 @@ pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
                 let mut acc = Account::from(
                     context
                         .evm
+                        .inner
                         .db
-                        .basic(caller)
+                        .basic(tx.caller())
                         .unwrap_or_default()
                         .unwrap_or_default(),
                 );
                 acc.info.nonce = acc.info.nonce.saturating_add(1);
-                acc.info.balance = acc.info.balance.saturating_add(U256::from(
-                    context.evm.inner.env().tx.mint().cloned().unwrap_or(0),
-                ));
+                acc.info.balance = acc
+                    .info
+                    .balance
+                    .saturating_add(U256::from(tx.mint().unwrap_or_default()));
                 acc.mark_touch();
                 acc
             };
-            let state = HashMap::from_iter([(caller, account)]);
+            let state = HashMap::from_iter([(tx.caller(), account)]);
 
             // The gas used of a failed deposit post-regolith is the gas
             // limit of the transaction. pre-regolith, it is the gas limit
             // of the transaction for non system transactions and 0 for system
             // transactions.
-            let is_system_tx = context
-                .evm
-                .env()
-                .tx
-                .is_system_transaction()
-                .unwrap_or(false);
-            let gas_used = if SPEC::optimism_enabled(OptimismSpecId::REGOLITH) || !is_system_tx {
-                context.evm.inner.env().tx.gas_limit()
+            let gas_used = if SPEC::optimism_enabled(OptimismSpecId::REGOLITH)
+                || !tx.is_system_transaction()
+            {
+                tx.gas_limit()
             } else {
                 0
             };
@@ -428,13 +443,17 @@ pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{BedrockSpec, L1BlockInfo, LatestSpec, OptimismEvmWiring, RegolithSpec};
+    use crate::{
+        transaction::deposit::TxDeposit, wiring::OptimismEvmWiring, BedrockSpec, L1BlockInfo,
+        LatestSpec, OpTransaction, RegolithSpec,
+    };
     use database::InMemoryDB;
     use revm::{
         database_interface::EmptyDB,
         interpreter::{CallOutcome, InstructionResult, InterpreterResult},
         primitives::{bytes, Address, Bytes, B256},
         state::AccountInfo,
+        wiring::default::{block::BlockEnv, Env, TxEnv},
     };
     use std::boxed::Box;
 
@@ -468,8 +487,14 @@ mod tests {
     #[test]
     fn test_revert_gas() {
         let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.base.gas_limit = 100;
-        env.tx.source_hash = None;
+        let tx = TxEnv {
+            gas_limit: 100,
+            ..Default::default()
+        };
+        env.tx = OpTransaction::Base {
+            tx,
+            enveloped_tx: None,
+        };
 
         let gas =
             call_last_frame_return::<BedrockSpec>(env, InstructionResult::Revert, Gas::new(90));
@@ -481,8 +506,15 @@ mod tests {
     #[test]
     fn test_consume_gas() {
         let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.base.gas_limit = 100;
-        env.tx.source_hash = Some(B256::ZERO);
+        //env.tx.base.gas_limit = 100;
+        //env.tx.source_hash = Some(B256::ZERO);
+
+        let deposit = TxDeposit {
+            gas_limit: 100,
+            source_hash: B256::ZERO,
+            ..Default::default()
+        };
+        env.tx = OpTransaction::Deposit(deposit);
 
         let gas =
             call_last_frame_return::<RegolithSpec>(env, InstructionResult::Stop, Gas::new(90));
@@ -494,8 +526,14 @@ mod tests {
     #[test]
     fn test_consume_gas_with_refund() {
         let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.base.gas_limit = 100;
-        env.tx.source_hash = Some(B256::ZERO);
+        //env.tx.base.gas_limit = 100;
+        //env.tx.source_hash = Some(B256::ZERO);
+        let deposit = TxDeposit {
+            gas_limit: 100,
+            source_hash: B256::ZERO,
+            ..Default::default()
+        };
+        env.tx = OpTransaction::Deposit(deposit);
 
         let mut ret_gas = Gas::new(90);
         ret_gas.record_refund(20);
@@ -515,8 +553,15 @@ mod tests {
     #[test]
     fn test_consume_gas_sys_deposit_tx() {
         let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.base.gas_limit = 100;
-        env.tx.source_hash = Some(B256::ZERO);
+        //env.tx.base.gas_limit = 100;
+        //env.tx.source_hash = Some(B256::ZERO);
+
+        let deposit = TxDeposit {
+            gas_limit: 100,
+            source_hash: B256::ZERO,
+            ..Default::default()
+        };
+        env.tx = OpTransaction::Deposit(deposit);
 
         let gas = call_last_frame_return::<BedrockSpec>(env, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 0);
@@ -543,10 +588,18 @@ mod tests {
             l1_base_fee_scalar: U256::from(1_000),
             ..Default::default()
         });
-        // Enveloped needs to be some but it will deduce zero fee.
-        context.evm.inner.env.tx.enveloped_tx = Some(bytes!(""));
-        // added mint value is 10.
-        context.evm.inner.env.tx.mint = Some(10);
+        // // Enveloped needs to be some but it will deduce zero fee.
+        // context.evm.inner.env.tx.enveloped_tx = Some(bytes!(""));
+        // // added mint value is 10.
+        // context.evm.inner.env.tx.mint = Some(10);
+
+        let deposit = TxDeposit {
+            gas_limit: 100,
+            mint: Some(10),
+            source_hash: B256::ZERO,
+            ..Default::default()
+        };
+        context.evm.inner.env.tx = OpTransaction::Deposit(deposit);
 
         deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context).unwrap();
 
@@ -578,13 +631,20 @@ mod tests {
             l1_base_fee_scalar: U256::from(1_000),
             ..Default::default()
         });
-        // l1block cost is 1048 fee.
-        context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
-        // added mint value is 10.
-        context.evm.inner.env.tx.mint = Some(10);
-        // Putting source_hash to some makes it a deposit transaction.
-        // so enveloped_tx gas cost is ignored.
-        context.evm.inner.env.tx.source_hash = Some(B256::ZERO);
+        // // l1block cost is 1048 fee.
+        // context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
+        // // added mint value is 10.
+        // context.evm.inner.env.tx.mint = Some(10);
+        // // Putting source_hash to some makes it a deposit transaction.
+        // // so enveloped_tx gas cost is ignored.
+        // context.evm.inner.env.tx.source_hash = Some(B256::ZERO);
+
+        let deposit = TxDeposit {
+            mint: Some(10),
+            source_hash: B256::ZERO,
+            ..Default::default()
+        };
+        context.evm.inner.env.tx = OpTransaction::Deposit(deposit);
 
         deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context).unwrap();
 
@@ -617,7 +677,10 @@ mod tests {
             ..Default::default()
         });
         // l1block cost is 1048 fee.
-        context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
+        context.evm.inner.env.tx = OpTransaction::Base {
+            tx: TxEnv::default(),
+            enveloped_tx: Some(bytes!("FACADE")),
+        };
         deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context).unwrap();
 
         // Check the account balance is updated.
@@ -649,7 +712,10 @@ mod tests {
             ..Default::default()
         });
         // l1block cost is 1048 fee.
-        context.evm.inner.env.tx.enveloped_tx = Some(bytes!("FACADE"));
+        context.evm.inner.env.tx = OpTransaction::Base {
+            tx: TxEnv::default(),
+            enveloped_tx: Some(bytes!("FACADE")),
+        };
 
         assert_eq!(
             deduct_caller::<TestMemOpWiring, RegolithSpec>(&mut context),
@@ -666,12 +732,20 @@ mod tests {
     #[test]
     fn test_validate_sys_tx() {
         // mark the tx as a system transaction.
-        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.is_system_transaction = Some(true);
+        // Set source hash.
+        let tx = TxDeposit {
+            is_system_transaction: true,
+            ..Default::default()
+        };
+        let env = Env::<BlockEnv, OpTransaction<TxEnv>> {
+            tx: OpTransaction::Deposit(tx),
+            ..Default::default()
+        };
+
         assert_eq!(
             validate_env::<TestEmptyOpWiring, RegolithSpec>(&env),
             Err(EVMError::Transaction(
-                OptimismInvalidTransaction::DepositSystemTxPostRegolith
+                OpTransactionError::DepositSystemTxPostRegolith
             ))
         );
 
@@ -682,16 +756,28 @@ mod tests {
     #[test]
     fn test_validate_deposit_tx() {
         // Set source hash.
-        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.source_hash = Some(B256::ZERO);
+        let tx = TxDeposit {
+            source_hash: B256::ZERO,
+            ..Default::default()
+        };
+        let env = Env::<BlockEnv, OpTransaction<TxEnv>> {
+            tx: OpTransaction::Deposit(tx),
+            ..Default::default()
+        };
         assert!(validate_env::<TestEmptyOpWiring, RegolithSpec>(&env).is_ok());
     }
 
     #[test]
     fn test_validate_tx_against_state_deposit_tx() {
         // Set source hash.
-        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
-        env.tx.source_hash = Some(B256::ZERO);
+        let tx = TxDeposit {
+            source_hash: B256::ZERO,
+            ..Default::default()
+        };
+        let env = Env::<BlockEnv, OpTransaction<TxEnv>> {
+            tx: OpTransaction::Deposit(tx),
+            ..Default::default()
+        };
 
         // Nonce and balance checks should be skipped for deposit transactions.
         assert!(validate_env::<TestEmptyOpWiring, LatestSpec>(&env).is_ok());

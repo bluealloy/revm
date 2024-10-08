@@ -16,7 +16,7 @@ use specification::spec_to_generic;
 use std::vec::Vec;
 use wiring::{
     result::{EVMResultGeneric, InvalidTransaction},
-    transaction::TransactionValidation,
+    Transaction,
 };
 
 use self::register::{HandleRegister, HandleRegisterBox};
@@ -43,8 +43,7 @@ pub struct Handler<'a, EvmWiringT: EvmWiring, H: Host + 'a> {
 
 impl<'a, EvmWiringT> EvmHandler<'a, EvmWiringT>
 where
-    EvmWiringT:
-        EvmWiring<Transaction: TransactionValidation<ValidationError: From<InvalidTransaction>>>,
+    EvmWiringT: EvmWiring<Transaction: Transaction<TransactionError: From<InvalidTransaction>>>,
 {
     /// Creates a base/vanilla Ethereum handler with the provided spec id.
     pub fn mainnet_with_spec(spec_id: EvmWiringT::Hardfork) -> Self {

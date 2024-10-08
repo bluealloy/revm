@@ -1,6 +1,5 @@
-use primitives::{Address, Bytes, TxKind, U256};
-use std::boxed::Box;
-use wiring::{default::CreateScheme, Transaction};
+use primitives::{Address, Bytes, U256};
+use wiring::default::CreateScheme;
 
 /// Inputs for a create call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -19,26 +18,6 @@ pub struct CreateInputs {
 }
 
 impl CreateInputs {
-    /// Creates new create inputs.
-    pub fn new(tx_env: &impl Transaction, gas_limit: u64) -> Option<Self> {
-        let TxKind::Create = tx_env.kind() else {
-            return None;
-        };
-
-        Some(CreateInputs {
-            caller: *tx_env.caller(),
-            scheme: CreateScheme::Create,
-            value: *tx_env.value(),
-            init_code: tx_env.data().clone(),
-            gas_limit,
-        })
-    }
-
-    /// Returns boxed create inputs.
-    pub fn new_boxed(tx_env: &impl Transaction, gas_limit: u64) -> Option<Box<Self>> {
-        Self::new(tx_env, gas_limit).map(Box::new)
-    }
-
     /// Returns the address that this create call will create.
     pub fn created_address(&self, nonce: u64) -> Address {
         match self.scheme {

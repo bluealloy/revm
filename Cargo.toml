@@ -11,14 +11,17 @@ members = [
     "crates/interpreter",
     "crates/inspector",
     "crates/precompile",
-    "crates/optimism",
     "crates/database",
     "crates/database/interface",
     "crates/bytecode",
     "crates/state",
     "crates/wiring",
+    "crates/wiring/transaction",
     "crates/specification",
     "crates/statetest-types",
+
+    # variants
+    "crates/optimism",
 
     # examples
     "examples/block_traces",
@@ -32,6 +35,7 @@ members = [
 
 [workspace.dependencies]
 # revm
+revm = { path = "crates/revm", version = "14.0.1", default-features = false }
 primitives = { path = "crates/primitives", package = "revm-primitives", version = "9.0.1", default-features = false }
 bytecode = { path = "crates/bytecode", package = "revm-bytecode", version = "1.0.0", default-features = false }
 database = { path = "crates/database", package = "revm-database", version = "1.0.0", default-features = false }
@@ -39,7 +43,7 @@ database-interface = { path = "crates/database/interface", package = "revm-datab
 specification = { path = "crates/specification", package = "revm-specification", version = "1.0.0", default-features = false }
 state = { path = "crates/state", package = "revm-state", version = "1.0.0", default-features = false }
 wiring = { path = "crates/wiring", package = "revm-wiring", version = "1.0.0", default-features = false }
-revm = { path = "crates/revm", version = "14.0.1", default-features = false }
+transaction = { path = "crates/wiring/transaction", package = "revm-transaction", version = "1.0.0", default-features = false }
 interpreter = { path = "crates/interpreter", package = "revm-interpreter", version = "10.0.1", default-features = false }
 inspector = { path = "crates/inspector", package = "revm-inspector", version = "1.0.0", default-features = false }
 precompile = { path = "crates/precompile", package = "revm-precompile", version = "11.0.1", default-features = false }

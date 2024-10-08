@@ -30,8 +30,9 @@ alloy-primitives = { version = "0.8.5", default-features = false, features = [
 [features]
 default = ["std"]
 std = ["alloy-primitives/std"]
-hashbrown = ["alloy-primitives/map-hashbrown"]
 serde = ["alloy-primitives/serde"]
+
+hashbrown = ["alloy-primitives/map-hashbrown"]
 arbitrary = ["std", "alloy-primitives/arbitrary"]
 asm-keccak = ["alloy-primitives/asm-keccak"]
 rand = ["alloy-primitives/rand"]

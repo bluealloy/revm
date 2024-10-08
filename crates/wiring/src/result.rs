@@ -1,10 +1,11 @@
-use crate::{evm_wiring::HaltReasonTrait, transaction::TransactionValidation, EvmWiring};
+use crate::{evm_wiring::HaltReasonTrait, EvmWiring};
 use core::fmt::{self, Debug};
 use database_interface::Database;
 use primitives::{Address, Bytes, Log, U256};
 use specification::eip7702::InvalidAuthorization;
 use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
+use transaction::{Transaction, TransactionError};
 
 /// Result of EVM execution.
 pub type EVMResult<EvmWiringT> =
@@ -16,7 +17,7 @@ pub type EVMResultGeneric<T, EvmWiringT> = core::result::Result<T, EVMErrorForCh
 /// EVM error type for a specific chain.
 pub type EVMErrorForChain<EvmWiringT> = EVMError<
     <<EvmWiringT as EvmWiring>::Database as Database>::Error,
-    <<EvmWiringT as EvmWiring>::Transaction as TransactionValidation>::ValidationError,
+    <<EvmWiringT as EvmWiring>::Transaction as Transaction>::TransactionError,
 >;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -147,15 +148,15 @@ impl Output {
 
 pub type EVMErrorWiring<EvmWiringT> = EVMError<
     <<EvmWiringT as EvmWiring>::Database as Database>::Error,
-    <<EvmWiringT as EvmWiring>::Transaction as TransactionValidation>::ValidationError,
+    <<EvmWiringT as EvmWiring>::Transaction as Transaction>::TransactionError,
 >;
 
 /// Main EVM error.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum EVMError<DBError, TransactionValidationErrorT> {
+pub enum EVMError<DBError, TransactionError> {
     /// Transaction validation error.
-    Transaction(TransactionValidationErrorT),
+    Transaction(TransactionError),
     /// Header validation error.
     Header(InvalidHeader),
     /// Database error.
@@ -287,7 +288,7 @@ pub enum InvalidTransaction {
     /// Blob transaction can't be a create transaction.
     /// `to` must be present
     BlobCreateTransaction,
-    /// Transaction has more then [`primitives::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
+    /// Transaction has more then [`specification::eip4844::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
     TooManyBlobs {
         max: usize,
         have: usize,
@@ -304,7 +305,17 @@ pub enum InvalidTransaction {
     EmptyAuthorizationList,
     /// Invalid EIP-7702 Authorization List
     InvalidAuthorizationList(InvalidAuthorization),
+    /// EIP-2930 is not supported.
+    Eip2930NotSupported,
+    /// EIP-1559 is not supported.
+    Eip1559NotSupported,
+    /// EIP-4844 is not supported.
+    Eip4844NotSupported,
+    /// EIP-7702 is not supported.
+    Eip7702NotSupported,
 }
+
+impl TransactionError for InvalidTransaction {}
 
 impl From<InvalidAuthorization> for InvalidTransaction {
     fn from(value: InvalidAuthorization) -> Self {
@@ -373,6 +384,10 @@ impl fmt::Display for InvalidTransaction {
                 write!(f, "authorization list tx has invalid fields")
             }
             Self::EmptyAuthorizationList => write!(f, "empty authorization list"),
+            Self::Eip2930NotSupported => write!(f, "Eip2930 is not supported"),
+            Self::Eip1559NotSupported => write!(f, "Eip1559 is not supported"),
+            Self::Eip4844NotSupported => write!(f, "Eip4844 is not supported"),
+            Self::Eip7702NotSupported => write!(f, "Eip7702 is not supported"),
             Self::InvalidAuthorizationList(i) => fmt::Display::fmt(i, f),
         }
     }

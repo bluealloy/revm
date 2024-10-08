@@ -387,9 +387,10 @@ where
                 }
 
                 // Use nonce from tx to calculate address.
-                let nonce = self.env.tx.nonce();
+                let tx = self.env.tx.common_fields();
+                let create_address = tx.caller().create(tx.nonce());
 
-                (input, eof, Some(self.env.tx.caller().create(nonce)))
+                (input, eof, Some(create_address))
             }
         };
 

@@ -4,11 +4,15 @@ use crate::{
 };
 use interpreter::{
     table::InstructionTables, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
-    EOFCreateInputs, InterpreterAction, InterpreterResult, SharedMemory,
+    EOFCreateInputs, InterpreterAction, InterpreterResult, NewFrameAction, SharedMemory,
 };
 use specification::hardfork::Spec;
 use std::{boxed::Box, sync::Arc};
 use wiring::result::EVMResultGeneric;
+
+/// Handles creation of first frame
+pub type FirstFrameCreation<'a, EvmWiringT> =
+    Arc<dyn Fn(&mut Context<EvmWiringT>, u64) -> EVMResultGeneric<NewFrameAction, EvmWiringT> + 'a>;
 
 /// Handles first frame return handle.
 pub type LastFrameReturnHandle<'a, EvmWiringT> = Arc<
@@ -105,6 +109,9 @@ pub type InsertEOFCreateOutcomeHandle<'a, EvmWiringT> = Arc<
 
 /// Handles related to stack frames.
 pub struct ExecutionHandler<'a, EvmWiringT: EvmWiring> {
+    /// Handler that created first frame action. It uses transaction
+    /// to determine if it is a call or create or EOF create.
+    pub first_frame_creation: FirstFrameCreation<'a, EvmWiringT>,
     /// Handles last frame return, modified gas for refund and
     /// sets tx gas limit.
     pub last_frame_return: LastFrameReturnHandle<'a, EvmWiringT>,
@@ -134,6 +141,7 @@ impl<'a, EvmWiringT: EvmWiring + 'a> ExecutionHandler<'a, EvmWiringT> {
     /// Creates mainnet ExecutionHandler.
     pub fn new<SPEC: Spec + 'a>() -> Self {
         Self {
+            first_frame_creation: Arc::new(mainnet::first_frame_creation::<EvmWiringT, SPEC>),
             last_frame_return: Arc::new(mainnet::last_frame_return::<EvmWiringT, SPEC>),
             execute_frame: Arc::new(mainnet::execute_frame::<EvmWiringT, SPEC>),
             call: Arc::new(mainnet::call::<EvmWiringT, SPEC>),
@@ -160,6 +168,16 @@ impl<'a, EvmWiringT: EvmWiring> ExecutionHandler<'a, EvmWiringT> {
         context: &mut Context<EvmWiringT>,
     ) -> EVMResultGeneric<InterpreterAction, EvmWiringT> {
         (self.execute_frame)(frame, shared_memory, instruction_tables, context)
+    }
+
+    /// Handle call return, depending on instruction result gas will be reimbursed or not.
+    #[inline]
+    pub fn first_frame_creation(
+        &self,
+        context: &mut Context<EvmWiringT>,
+        gas_limit: u64,
+    ) -> EVMResultGeneric<NewFrameAction, EvmWiringT> {
+        (self.first_frame_creation)(context, gas_limit)
     }
 
     /// Handle call return, depending on instruction result gas will be reimbursed or not.

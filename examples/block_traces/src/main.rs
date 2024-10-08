@@ -8,8 +8,7 @@ use indicatif::ProgressBar;
 use inspector::{inspector_handle_register, inspectors::TracerEip3155};
 use revm::{
     database_interface::WrapDatabaseAsync,
-    primitives::{TxKind, B256, U256},
-    specification::eip2930::AccessListItem,
+    primitives::{TxKind, U256},
     wiring::EthereumWiring,
     Evm,
 };
@@ -123,22 +122,7 @@ async fn main() -> anyhow::Result<()> {
                 etx.chain_id = Some(chain_id);
                 etx.nonce = tx.nonce;
                 if let Some(access_list) = tx.access_list {
-                    etx.access_list = access_list
-                        .0
-                        .into_iter()
-                        .map(|item| {
-                            let storage_keys: Vec<B256> = item
-                                .storage_keys
-                                .into_iter()
-                                .map(|h256| B256::new(h256.0))
-                                .collect();
-
-                            AccessListItem {
-                                address: item.address,
-                                storage_keys,
-                            }
-                        })
-                        .collect();
+                    etx.access_list = access_list;
                 } else {
                     etx.access_list = Default::default();
                 }

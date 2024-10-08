@@ -1,4 +1,6 @@
-use primitives::{BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK};
+use specification::eip4844::{
+    BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK,
+};
 
 /// Structure holding block blob excess gas and it calculates blob fee.
 ///
@@ -80,7 +82,7 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use primitives::GAS_PER_BLOB;
+    use specification::eip4844::GAS_PER_BLOB;
 
     // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L27
     #[test]

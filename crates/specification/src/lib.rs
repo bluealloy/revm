@@ -9,5 +9,6 @@ pub mod constants;
 pub mod eip170;
 pub mod eip2;
 pub mod eip2930;
+pub mod eip4844;
 pub mod eip7702;
 pub mod hardfork;

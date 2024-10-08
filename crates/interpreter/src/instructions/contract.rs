@@ -5,6 +5,7 @@ pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_me
 use crate::{
     gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD, MIN_CALLEE_GAS},
     interpreter::Interpreter,
+    interpreter_action::NewFrameAction,
     CallInputs, CallScheme, CallValue, CreateInputs, EOFCreateInputs, Host, InstructionResult,
     InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE,
 };
@@ -69,16 +70,16 @@ pub fn eofcreate<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     gas!(interpreter, gas_limit);
     // Send container for execution container is preverified.
     interpreter.instruction_result = InstructionResult::CallOrCreate;
-    interpreter.next_action = InterpreterAction::EOFCreate {
-        inputs: Box::new(EOFCreateInputs::new_opcode(
+    interpreter.next_action = InterpreterAction::NewFrame(NewFrameAction::EOFCreate(Box::new(
+        EOFCreateInputs::new_opcode(
             interpreter.contract.target_address,
             created_address,
             value,
             eof,
             gas_limit,
             input,
-        )),
-    };
+        ),
+    )));
 
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
 }
@@ -239,8 +240,8 @@ pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
     };
 
     // Call host to interact with target contract
-    interpreter.next_action = InterpreterAction::Call {
-        inputs: Box::new(CallInputs {
+    interpreter.next_action =
+        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address,
@@ -251,8 +252,7 @@ pub fn extcall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
             is_static: interpreter.is_static,
             is_eof: true,
             return_memory_offset: 0..0,
-        }),
-    };
+        })));
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
@@ -274,8 +274,8 @@ pub fn extdelegatecall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpret
     };
 
     // Call host to interact with target contract
-    interpreter.next_action = InterpreterAction::Call {
-        inputs: Box::new(CallInputs {
+    interpreter.next_action =
+        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address: interpreter.contract.target_address,
@@ -286,8 +286,7 @@ pub fn extdelegatecall<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpret
             is_static: interpreter.is_static,
             is_eof: true,
             return_memory_offset: 0..0,
-        }),
-    };
+        })));
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
@@ -309,8 +308,8 @@ pub fn extstaticcall<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut
     };
 
     // Call host to interact with target contract
-    interpreter.next_action = InterpreterAction::Call {
-        inputs: Box::new(CallInputs {
+    interpreter.next_action =
+        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address,
@@ -321,8 +320,7 @@ pub fn extstaticcall<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut
             is_static: true,
             is_eof: true,
             return_memory_offset: 0..0,
-        }),
-    };
+        })));
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
@@ -384,15 +382,14 @@ pub fn create<const IS_CREATE2: bool, H: Host + ?Sized, SPEC: Spec>(
     gas!(interpreter, gas_limit);
 
     // Call host to interact with target contract
-    interpreter.next_action = InterpreterAction::Create {
-        inputs: Box::new(CreateInputs {
+    interpreter.next_action =
+        InterpreterAction::NewFrame(NewFrameAction::Create(Box::new(CreateInputs {
             caller: interpreter.contract.target_address,
             scheme,
             value,
             init_code: code,
             gas_limit,
-        }),
-    };
+        })));
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
@@ -431,8 +428,8 @@ pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &
     }
 
     // Call host to interact with target contract
-    interpreter.next_action = InterpreterAction::Call {
-        inputs: Box::new(CallInputs {
+    interpreter.next_action =
+        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address: to,
@@ -443,8 +440,7 @@ pub fn call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &
             is_static: interpreter.is_static,
             is_eof: false,
             return_memory_offset,
-        }),
-    };
+        })));
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
@@ -479,8 +475,8 @@ pub fn call_code<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
     }
 
     // Call host to interact with target contract
-    interpreter.next_action = InterpreterAction::Call {
-        inputs: Box::new(CallInputs {
+    interpreter.next_action =
+        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address: interpreter.contract.target_address,
@@ -491,8 +487,7 @@ pub fn call_code<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, ho
             is_static: interpreter.is_static,
             is_eof: false,
             return_memory_offset,
-        }),
-    };
+        })));
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
@@ -520,8 +515,8 @@ pub fn delegate_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter
     gas!(interpreter, gas_limit);
 
     // Call host to interact with target contract
-    interpreter.next_action = InterpreterAction::Call {
-        inputs: Box::new(CallInputs {
+    interpreter.next_action =
+        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address: interpreter.contract.target_address,
@@ -532,8 +527,7 @@ pub fn delegate_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter
             is_static: interpreter.is_static,
             is_eof: false,
             return_memory_offset,
-        }),
-    };
+        })));
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
@@ -560,8 +554,8 @@ pub fn static_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
     gas!(interpreter, gas_limit);
 
     // Call host to interact with target contract
-    interpreter.next_action = InterpreterAction::Call {
-        inputs: Box::new(CallInputs {
+    interpreter.next_action =
+        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address: to,
@@ -572,7 +566,6 @@ pub fn static_call<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
             is_static: true,
             is_eof: false,
             return_memory_offset,
-        }),
-    };
+        })));
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }

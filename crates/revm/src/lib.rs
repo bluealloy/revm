@@ -14,6 +14,7 @@ pub use precompile;
 pub use primitives;
 pub use specification;
 pub use state;
+pub use transaction;
 pub use wiring;
 
 // Define modules.

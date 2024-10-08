@@ -1,7 +1,8 @@
 use super::constants::*;
 use crate::{num_words, AccountLoad, Eip7702CodeLoad, SStoreResult, SelfDestructResult, StateLoad};
 use primitives::U256;
-use specification::{eip2930::AccessListItem, eip7702, hardfork::SpecId};
+use specification::{eip7702, hardfork::SpecId};
+use transaction::AccessListTrait;
 
 /// `const` Option `?`.
 macro_rules! tri {
@@ -357,11 +358,11 @@ pub const fn memory_gas(num_words: u64) -> u64 {
 
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
-pub fn validate_initial_tx_gas(
+pub fn validate_initial_tx_gas<AccessListT: AccessListTrait>(
     spec_id: SpecId,
     input: &[u8],
     is_create: bool,
-    access_list: &[AccessListItem],
+    access_list: Option<&AccessListT>,
     authorization_list_num: u64,
 ) -> u64 {
     let mut initial_gas = 0;
@@ -379,10 +380,10 @@ pub fn validate_initial_tx_gas(
         };
 
     // get number of access list account and storages.
-    if spec_id.is_enabled_in(SpecId::BERLIN) {
-        let accessed_slots: usize = access_list.iter().map(|item| item.storage_keys.len()).sum();
-        initial_gas += access_list.len() as u64 * ACCESS_LIST_ADDRESS;
-        initial_gas += accessed_slots as u64 * ACCESS_LIST_STORAGE_KEY;
+    if let Some(access_list) = access_list {
+        let (account_num, storage_num) = access_list.num_account_storages();
+        initial_gas += account_num as u64 * ACCESS_LIST_ADDRESS;
+        initial_gas += storage_num as u64 * ACCESS_LIST_STORAGE_KEY;
     }
 
     // base stipend
@@ -403,7 +404,7 @@ pub fn validate_initial_tx_gas(
         initial_gas += initcode_cost(input.len() as u64)
     }
 
-    //   EIP-7702
+    // EIP-7702
     if spec_id.is_enabled_in(SpecId::PRAGUE) {
         initial_gas += authorization_list_num * eip7702::PER_EMPTY_ACCOUNT_COST;
     }

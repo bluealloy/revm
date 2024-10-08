@@ -4,15 +4,16 @@
 pub mod macros;
 pub mod arithmetic;
 pub mod bitwise;
+pub mod block_info;
 pub mod contract;
 pub mod control;
 pub mod data;
 pub mod host;
-pub mod host_env;
 pub mod i256;
 pub mod memory;
 pub mod stack;
 pub mod system;
+pub mod tx_info;
 pub mod utility;
 
 use crate::Host;
@@ -64,7 +65,7 @@ pub const fn instruction_table<H: Host + ?Sized, SPEC: Spec>() -> [crate::table:
 
     table[ADDRESS as usize] = system::address;
     table[BALANCE as usize] = host::balance::<H, SPEC>;
-    table[ORIGIN as usize] = host_env::origin;
+    table[ORIGIN as usize] = tx_info::origin;
     table[CALLER as usize] = system::caller;
     table[CALLVALUE as usize] = system::callvalue;
     table[CALLDATALOAD as usize] = system::calldataload;
@@ -73,23 +74,23 @@ pub const fn instruction_table<H: Host + ?Sized, SPEC: Spec>() -> [crate::table:
     table[CODESIZE as usize] = system::codesize;
     table[CODECOPY as usize] = system::codecopy;
 
-    table[GASPRICE as usize] = host_env::gasprice;
+    table[GASPRICE as usize] = tx_info::gasprice;
     table[EXTCODESIZE as usize] = host::extcodesize::<H, SPEC>;
     table[EXTCODECOPY as usize] = host::extcodecopy::<H, SPEC>;
     table[RETURNDATASIZE as usize] = system::returndatasize::<H, SPEC>;
     table[RETURNDATACOPY as usize] = system::returndatacopy::<H, SPEC>;
     table[EXTCODEHASH as usize] = host::extcodehash::<H, SPEC>;
     table[BLOCKHASH as usize] = host::blockhash::<H, SPEC>;
-    table[COINBASE as usize] = host_env::coinbase;
-    table[TIMESTAMP as usize] = host_env::timestamp;
-    table[NUMBER as usize] = host_env::block_number;
-    table[DIFFICULTY as usize] = host_env::difficulty::<H, SPEC>;
-    table[GASLIMIT as usize] = host_env::gaslimit;
-    table[CHAINID as usize] = host_env::chainid::<H, SPEC>;
+    table[COINBASE as usize] = block_info::coinbase;
+    table[TIMESTAMP as usize] = block_info::timestamp;
+    table[NUMBER as usize] = block_info::block_number;
+    table[DIFFICULTY as usize] = block_info::difficulty::<H, SPEC>;
+    table[GASLIMIT as usize] = block_info::gaslimit;
+    table[CHAINID as usize] = block_info::chainid::<H, SPEC>;
     table[SELFBALANCE as usize] = host::selfbalance::<H, SPEC>;
-    table[BASEFEE as usize] = host_env::basefee::<H, SPEC>;
-    table[BLOBHASH as usize] = host_env::blob_hash::<H, SPEC>;
-    table[BLOBBASEFEE as usize] = host_env::blob_basefee::<H, SPEC>;
+    table[BASEFEE as usize] = block_info::basefee::<H, SPEC>;
+    table[BLOBHASH as usize] = tx_info::blob_hash::<H, SPEC>;
+    table[BLOBBASEFEE as usize] = block_info::blob_basefee::<H, SPEC>;
 
     table[POP as usize] = stack::pop;
     table[MLOAD as usize] = memory::mload;

@@ -1,11 +1,8 @@
-use crate::{
-    result::HaltReason,
-    transaction::{Transaction, TransactionValidation},
-    Block,
-};
+use crate::{result::HaltReason, Block};
 use core::{fmt::Debug, hash::Hash};
 use database_interface::{Database, EmptyDB};
 use specification::hardfork::SpecId;
+use transaction::Transaction;
 
 /// The type that enumerates the chain's hardforks.
 pub trait HardforkTrait: Clone + Copy + Default + PartialEq + Eq + Into<SpecId> {}
@@ -36,7 +33,7 @@ pub trait EvmWiring: Sized {
     type Block: Block;
 
     /// The type that contains all transaction information.
-    type Transaction: Transaction + TransactionValidation;
+    type Transaction: Transaction;
 
     /// The type that enumerates the chain's hardforks.
     type Hardfork: HardforkTrait;
