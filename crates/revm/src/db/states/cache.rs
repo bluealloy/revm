@@ -4,7 +4,6 @@ use super::{
     CacheAccount,
     PlainAccount,
 };
-use fluentbase_sdk::KECCAK_EMPTY;
 use revm_interpreter::primitives::{
     Account,
     AccountInfo,
@@ -105,7 +104,7 @@ impl CacheState {
     pub fn insert_account_with_storage(
         &mut self,
         address: Address,
-        mut info: AccountInfo,
+        #[allow(unused_mut)] mut info: AccountInfo,
         storage: PlainStorage,
     ) {
         #[cfg(feature = "rwasm")]

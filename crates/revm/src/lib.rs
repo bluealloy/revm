@@ -8,9 +8,6 @@ extern crate alloc as std;
 mod builder;
 mod context;
 
-#[cfg(any(test, feature = "test-utils"))]
-pub mod test_utils;
-
 pub mod db;
 mod evm;
 mod frame;
@@ -21,10 +18,8 @@ mod journaled_state;
 pub mod optimism;
 #[cfg(feature = "rwasm")]
 pub mod rwasm;
-#[cfg(test)]
-mod test;
-// Export items.
 
+// Export items.
 pub use builder::EvmBuilder;
 pub use context::{
     Context,

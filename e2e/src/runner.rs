@@ -716,14 +716,6 @@ pub fn execute_test_suite(
                         )
                         .append_handler_register(inspector_handle_register)
                         .build();
-                    // let mut evm2 = evm2
-                    //     .modify()
-                    // .reset_handler_with_external_context(TracerEip3155::new(
-                    //     Box::new(stderr()),
-                    //     false,
-                    // ))
-                    // .append_handler_register(revm::inspector_handle_register)
-                    // .build();
 
                     let timer = Instant::now();
                     let res = evm.transact_commit();
@@ -775,14 +767,13 @@ pub fn execute_test_suite(
                     (e, res)
                 };
 
-                // print only once or
-                // if we are already in trace mode, just return error
+                // if we are already in trace mode, return error
                 static FAILED: AtomicBool = AtomicBool::new(false);
                 if trace || FAILED.swap(true, Ordering::SeqCst) {
                     return Err(e);
                 }
 
-                // re build to run with tracing
+                // re-build to run with tracing
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
                 let mut cache2 = cache_state2.clone();

@@ -20,7 +20,7 @@ use crate::{
     },
 };
 use core::mem;
-use fluentbase_sdk::{Bytes, B256};
+use fluentbase_sdk::B256;
 use revm_interpreter::{primitives::SpecId, LoadAccountResult, SStoreResult};
 use std::vec::Vec;
 
