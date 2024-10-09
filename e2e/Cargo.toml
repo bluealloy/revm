@@ -16,35 +16,12 @@ fluentbase-sdk = { path = "../../crates/sdk", default-features = false }
 fluentbase-poseidon = { path = "../../crates/poseidon", default-features = false }
 fluentbase-genesis = { path = "../../crates/genesis", default-features = false }
 
-#revm = { package = "revm", git = "https://github.com/fluentlabs-xyz/revm-rwasm.git", default-features = false, branch = "devel", features = [
-#    "ethersdb",
-#    "std",
-#    "serde-json",
-#    "c-kzg",
-#    "blst",
-#] }
-#revm-fluent = { package = "revm-fluent", git = "https://github.com/fluentlabs-xyz/revm-rwasm.git", default-features = false, branch = "devel", features = [
-#    "ethersdb",
-#    "std",
-#    "serde-json",
-#    "c-kzg",
-#    "blst",
-#    "rwasm",
-#] }
 revm = { package = "revm", path = "../crates/revm", default-features = false, features = [
     "ethersdb",
     "std",
     "serde-json",
     "c-kzg",
     "blst",
-] }
-revm-fluent = { package = "revm-fluent", path = "../crates/revm_fluent", default-features = false, features = [
-    "ethersdb",
-    "std",
-    "serde-json",
-    "c-kzg",
-    "blst",
-    "rwasm",
     "e2e",
 ] }
 
@@ -73,10 +50,9 @@ default = [
     #    "debug-print",
 ]
 e2e = [
-    "revm-fluent/e2e",
+    "revm/e2e",
 ]
 debug_use_fluent_storage = []
 debug-print = [
     "revm/debug-print",
-    "revm-fluent/debug-print",
 ]

@@ -14,13 +14,14 @@ use crate::{
     Context,
     ContextWithHandlerCfg,
     Evm,
+    EvmRwasm,
     Handler,
 };
 use core::marker::PhantomData;
 use std::boxed::Box;
 
 /// Evm Builder allows building or modifying EVM.
-/// Note that some of the methods that changes underlying structures
+/// Note that some of the methods that change underlying structures
 /// will reset the registered handler to default mainnet.
 pub struct EvmBuilder<'a, BuilderStage, EXT, DB: Database> {
     context: Context<EXT, DB>,
@@ -30,11 +31,11 @@ pub struct EvmBuilder<'a, BuilderStage, EXT, DB: Database> {
     phantom: PhantomData<BuilderStage>,
 }
 
-/// First stage of the builder allows setting generic variables.
+/// The first stage of the builder allows setting generic variables.
 /// Generic variables are database and external context.
 pub struct SetGenericStage;
 
-/// Second stage of the builder allows appending handler registers.
+/// The second stage of the builder allows appending handler registers.
 /// Requires the database and external context to be set.
 pub struct HandlerStage;
 
@@ -192,12 +193,12 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     }
 }
 
-impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
-    /// Creates new builder from Evm, Evm is consumed and all field are moved to Builder.
+impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> {
+    /// Creates new builder from Evm, Evm is consumed, and all fields are moved to Builder.
     /// It will preserve set handler and context.
     ///
     /// Builder is in HandlerStage and both database and external are set.
-    pub fn new(evm: Evm<'a, EXT, DB>) -> Self {
+    pub fn from_revm(evm: Evm<'a, EXT, DB>) -> Self {
         Self {
             context: evm.context,
             handler: evm.handler,
@@ -205,6 +206,24 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         }
     }
 
+    pub fn from_rwasm(evm: EvmRwasm<'a, EXT, DB>) -> Self {
+        Self {
+            context: evm.context,
+            handler: evm.handler,
+            phantom: PhantomData,
+        }
+    }
+
+    pub fn build_revm(self) -> Evm<'a, EXT, DB> {
+        Evm::new(self.context, self.handler)
+    }
+
+    pub fn build_rwasm(self) -> EvmRwasm<'a, EXT, DB> {
+        EvmRwasm::new(self.context, self.handler)
+    }
+}
+
+impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
     /// Sets the [`EmptyDB`] and resets the [`Handler`] to default mainnet.
     pub fn reset_handler_with_empty_db(self) -> EvmBuilder<'a, HandlerStage, EXT, EmptyDB> {
         EvmBuilder {
@@ -297,7 +316,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     /// let builder = builder.with_handler(mainnet);
     ///
     /// // build the EVM
-    /// let evm = builder.build();
+    /// let evm = builder.build_revm();
     /// ```
     pub fn with_handler(
         self,
@@ -308,11 +327,6 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
             handler,
             phantom: PhantomData,
         }
-    }
-
-    /// Builds the [`Evm`].
-    pub fn build(self) -> Evm<'a, EXT, DB> {
-        Evm::new(self.context, self.handler)
     }
 
     /// Register Handler that modifies the behavior of EVM.
@@ -328,7 +342,6 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
         EvmBuilder {
             context: self.context,
             handler: self.handler,
-
             phantom: PhantomData,
         }
     }
@@ -346,7 +359,6 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
         EvmBuilder {
             context: self.context,
             handler: self.handler,
-
             phantom: PhantomData,
         }
     }
@@ -363,7 +375,6 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
         EvmBuilder {
             context: self.context,
             handler: self.handler,
-
             phantom: PhantomData,
         }
     }
@@ -517,7 +528,7 @@ mod test {
                     .instruction_table
                     .insert_boxed(0xEF, custom_instruction);
             }))
-            .build();
+            .build_revm();
 
         let _result_and_state = evm.transact().unwrap();
 
@@ -549,7 +560,7 @@ mod test {
             .append_handler_register(|handler| {
                 handler.instruction_table.insert(0xEF, custom_instruction)
             })
-            .build();
+            .build_revm();
 
         let result_and_state = evm.transact().unwrap();
         assert_eq!(result_and_state.result.gas_used(), EXPECTED_RESULT_GAS);
@@ -558,45 +569,47 @@ mod test {
     #[test]
     fn simple_build() {
         // build without external with latest spec
-        Evm::builder().build();
+        Evm::builder().build_revm();
         // build with empty db
-        Evm::builder().with_empty_db().build();
+        Evm::builder().with_empty_db().build_revm();
         // build with_db
-        Evm::builder().with_db(EmptyDB::default()).build();
+        Evm::builder().with_db(EmptyDB::default()).build_revm();
         // build with empty external
-        Evm::builder().with_empty_db().build();
+        Evm::builder().with_empty_db().build_revm();
         // build with some external
         Evm::builder()
             .with_empty_db()
             .with_external_context(())
-            .build();
+            .build_revm();
         // build with spec
         Evm::builder()
             .with_empty_db()
             .with_spec_id(SpecId::HOMESTEAD)
-            .build();
+            .build_revm();
 
         // with with Env change in multiple places
         Evm::builder()
             .with_empty_db()
             .modify_tx_env(|tx| tx.gas_limit = 10)
-            .build();
-        Evm::builder().modify_tx_env(|tx| tx.gas_limit = 10).build();
+            .build_revm();
+        Evm::builder()
+            .modify_tx_env(|tx| tx.gas_limit = 10)
+            .build_revm();
         Evm::builder()
             .with_empty_db()
             .modify_tx_env(|tx| tx.gas_limit = 10)
-            .build();
+            .build_revm();
         Evm::builder()
             .with_empty_db()
             .modify_tx_env(|tx| tx.gas_limit = 10)
-            .build();
+            .build_revm();
 
         // with inspector handle
         Evm::builder()
             .with_empty_db()
             .with_external_context(NoOpInspector)
             .append_handler_register(inspector_handle_register)
-            .build();
+            .build_revm();
 
         // create the builder
         let evm = Evm::builder()
@@ -605,7 +618,7 @@ mod test {
             .append_handler_register(inspector_handle_register)
             // this would not compile
             // .with_db(..)
-            .build();
+            .build_revm();
 
         let Context { external: _, .. } = evm.into_context();
     }
@@ -616,14 +629,14 @@ mod test {
         let evm = Evm::builder()
             .with_empty_db()
             .with_spec_id(SpecId::HOMESTEAD)
-            .build();
+            .build_revm();
 
         // modify evm
-        let evm = evm.modify().with_spec_id(SpecId::FRONTIER).build();
+        let evm = evm.modify().with_spec_id(SpecId::FRONTIER).build_revm();
         let _ = evm
             .modify()
             .modify_tx_env(|tx| tx.chain_id = Some(2))
-            .build();
+            .build_revm();
     }
 
     #[test]
@@ -655,7 +668,7 @@ mod test {
                     precompiles
                 });
             })
-            .build();
+            .build_revm();
 
         evm.transact().unwrap();
     }

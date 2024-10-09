@@ -51,8 +51,7 @@ pub struct JournaledState {
     /// is considered warm if it is found in the `State`.
     pub warm_preloaded_addresses: HashSet<Address>,
     /// Recently updated bytecode state
-    #[cfg(feature = "rwasm")]
-    code_state: HashMap<B256, Bytecode>,
+    pub code_state: HashMap<B256, Bytecode>,
 }
 
 impl JournaledState {
@@ -74,7 +73,6 @@ impl JournaledState {
             depth: 0,
             spec,
             warm_preloaded_addresses,
-            #[cfg(feature = "rwasm")]
             code_state: HashMap::new(),
         }
     }
@@ -130,8 +128,7 @@ impl JournaledState {
             // kept, see [Self::new]
             spec: _,
             warm_preloaded_addresses: _,
-            #[cfg(feature = "rwasm")]
-                code_state: _,
+            code_state: _,
         } = self;
 
         *transient_storage = TransientStorage::default();
@@ -658,35 +655,6 @@ impl JournaledState {
             }
         }
         Ok((acc, is_cold))
-    }
-
-    /// Loads code.
-    #[inline]
-    #[cfg(feature = "rwasm")]
-    pub fn load_code_by_hash<DB: Database>(
-        &mut self,
-        hash: B256,
-        db: &mut DB,
-    ) -> Result<Bytes, EVMError<DB::Error>> {
-        match self.code_state.entry(hash) {
-            Entry::Occupied(v) => Ok(v.get().original_bytes()),
-            Entry::Vacant(v) => Ok(v
-                .insert(db.code_by_hash(hash).map_err(EVMError::Database)?)
-                .original_bytes()),
-        }
-    }
-
-    /// Loads code.
-    #[inline]
-    #[cfg(feature = "rwasm")]
-    pub fn load_code_by_hash_slice<DB: Database>(
-        &mut self,
-        hash: B256,
-        db: &mut DB,
-    ) -> Result<Option<&[u8]>, EVMError<DB::Error>> {
-        self.load_code_by_hash(hash, db)?;
-        let result = self.code_state.get(&hash).map(|v| v.original_byte_slice());
-        Ok(result)
     }
 
     /// Load storage slot

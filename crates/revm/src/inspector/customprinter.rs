@@ -27,24 +27,21 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
-        if cfg!(not(feature = "rwasm")) {
-            #[cfg(feature = "debug-print")]
-            println!(
-                "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
-                context.journaled_state.depth(),
-                interp.program_counter(),
-                self.gas_inspector.gas_remaining(),
-                self.gas_inspector.gas_remaining(),
-                revm_interpreter::OpCode::name_by_op(interp.current_opcode()),
-                interp.current_opcode(),
-                interp.gas.refunded(),
-                interp.gas.refunded(),
-                interp.stack.data(),
-                interp.shared_memory.len(),
-            );
-
-            self.gas_inspector.step(interp, context);
-        }
+        #[cfg(feature = "debug-print")]
+        println!(
+            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
+            context.journaled_state.depth(),
+            interp.program_counter(),
+            self.gas_inspector.gas_remaining(),
+            self.gas_inspector.gas_remaining(),
+            revm_interpreter::OpCode::name_by_op(interp.current_opcode()),
+            interp.current_opcode(),
+            interp.gas.refunded(),
+            interp.gas.refunded(),
+            interp.stack.data(),
+            interp.shared_memory.len(),
+        );
+        self.gas_inspector.step(interp, context);
     }
 
     fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
@@ -144,7 +141,7 @@ mod test {
             .with_external_context(CustomPrintTracer::default())
             .with_spec_id(SpecId::BERLIN)
             .append_handler_register(inspector_handle_register)
-            .build();
+            .build_revm();
 
         evm.transact().expect("Transaction to work");
     }

@@ -299,11 +299,7 @@ impl AccountInfo {
     /// Returns true if the code hash is the Keccak256 hash of the empty string `""`.
     #[inline]
     pub fn is_empty_code_hash(&self) -> bool {
-        if cfg!(feature = "rwasm") {
-            self.code_hash == KECCAK_EMPTY || self.code_hash == POSEIDON_EMPTY
-        } else {
-            self.code_hash == KECCAK_EMPTY
-        }
+        self.code_hash == KECCAK_EMPTY || self.code_hash == POSEIDON_EMPTY
     }
 
     /// Take bytecode from an account. Code will be set to None.

@@ -198,9 +198,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         self.gas_inspector.step(interp, context);
-        if cfg!(not(feature = "rwasm")) {
-            self.stack.clone_from(interp.stack.data());
-        }
+        self.stack.clone_from(interp.stack.data());
         self.memory = if self.include_memory {
             Some(hex::encode_prefixed(interp.shared_memory.context_memory()))
         } else {
@@ -208,9 +206,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         };
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
-        if cfg!(not(feature = "rwasm")) {
-            self.mem_size = interp.shared_memory.len();
-        }
+        self.mem_size = interp.shared_memory.len();
         self.gas = interp.gas.remaining();
         self.refunded = interp.gas.refunded();
     }

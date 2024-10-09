@@ -2654,24 +2654,6 @@ dependencies = [
  "ethers-core",
  "ethers-providers",
  "fluentbase-core",
- "fluentbase-sdk",
- "revm-interpreter",
- "revm-precompile",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "revm-fluent"
-version = "9.0.0"
-dependencies = [
- "auto_impl",
- "cfg-if",
- "dyn-clone",
- "ethers-core",
- "ethers-providers",
- "fluentbase-core",
  "fluentbase-runtime",
  "fluentbase-sdk",
  "revm-interpreter",
@@ -2744,7 +2726,6 @@ dependencies = [
  "paste",
  "plain_hasher",
  "revm",
- "revm-fluent",
  "serde",
  "serde_json",
  "structopt",

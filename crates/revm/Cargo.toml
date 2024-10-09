@@ -32,11 +32,13 @@ revm-precompile = { package = "revm-precompile", path = "../precompile", default
 #fluentbase-core = { workspace = true, default-features = false }
 fluentbase-core = { path = "../../../crates/core", default-features = false }
 fluentbase-sdk = { path = "../../../crates/sdk", default-features = false }
+fluentbase-runtime = { path = "../../../crates/runtime", default-features = false, optional = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
 cfg-if = "1.0"
 dyn-clone = "1.0"
+#lazy_static = { version = "1.4.0", default-features = false }
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -74,17 +76,14 @@ fluentbase-poseidon = { workspace = true, default-features = false }
 
 rwasm = { workspace = true, default-features = false }
 
-#fluentbase-genesis = { workspace = true, default-features = false }
-fluentbase-genesis = { path = "../../../crates/genesis", default-features = false }
-
 alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "61140ec", default-features = false, features = [
     "reqwest",
 ] }
 # needed for enabling TLS to use HTTPS connections when testing alloy DB
 alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "61140ec", default-features = false }
 
-#fluentbase-runtime = { workspace = true, default-features = false }
-fluentbase-runtime = { path = "../../../crates/runtime", default-features = false }
+#fluentbase-genesis = { workspace = true, default-features = false }
+fluentbase-genesis = { path = "../../../crates/genesis", default-features = false }
 
 [features]
 default = [
@@ -102,8 +101,13 @@ std = [
     "revm-precompile/std",
     "fluentbase-sdk/std",
     "fluentbase-core/std",
+    "dep:fluentbase-runtime",
     "fluentbase-genesis/std",
     "rwasm/std",
+]
+e2e = [
+    "revm-precompile/e2e",
+    "revm-interpreter/e2e",
 ]
 hashbrown = ["revm-interpreter/hashbrown", "revm-precompile/hashbrown"]
 serde = ["dep:serde", "revm-interpreter/serde"]
@@ -170,10 +174,6 @@ blst = ["revm-precompile/blst"]
 
 debug-print = [
     "revm-interpreter/debug-print"
-]
-rwasm = [
-    "revm-interpreter/rwasm",
-    "revm-precompile/rwasm",
 ]
 
 [[example]]

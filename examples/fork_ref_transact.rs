@@ -1,10 +1,10 @@
-use alloy_sol_types::sol;
-use alloy_sol_types::SolCall;
+use alloy_sol_types::{sol, SolCall};
 use ethers_providers::{Http, Provider};
 use revm::{
     db::{CacheDB, EmptyDB, EthersDB},
     primitives::{address, ExecutionResult, Output, TransactTo, U256},
-    Database, Evm,
+    Database,
+    Evm,
 };
 use std::sync::Arc;
 
@@ -76,7 +76,7 @@ async fn main() -> anyhow::Result<()> {
             // transaction value in wei
             tx.value = U256::from(0);
         })
-        .build();
+        .build_revm();
 
     // execute transaction without writing to the DB
     let ref_tx = evm.transact().unwrap();

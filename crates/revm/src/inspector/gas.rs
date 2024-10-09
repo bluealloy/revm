@@ -1,12 +1,12 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
 
-use revm_interpreter::CallOutcome;
-
 use crate::{
     interpreter::{CallInputs, CreateInputs, CreateOutcome},
     primitives::db::Database,
-    EvmContext, Inspector,
+    EvmContext,
+    Inspector,
 };
+use revm_interpreter::CallOutcome;
 
 /// Helper [Inspector] that keeps track of gas.
 #[allow(dead_code)]
@@ -83,15 +83,15 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 #[cfg(test)]
 mod tests {
 
-    use revm_interpreter::CallOutcome;
-    use revm_interpreter::CreateOutcome;
-
     use crate::{
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter},
         primitives::Log,
-        Database, EvmContext, Inspector,
+        Database,
+        EvmContext,
+        Inspector,
     };
+    use revm_interpreter::{CallOutcome, CreateOutcome};
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -194,7 +194,7 @@ mod tests {
                 tx.gas_limit = 21100;
             })
             .append_handler_register(inspector_handle_register)
-            .build();
+            .build_revm();
 
         // run evm.
         evm.transact().unwrap();

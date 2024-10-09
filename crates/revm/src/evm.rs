@@ -2,7 +2,17 @@ use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
-    interpreter::Host,
+    interpreter::{
+        analysis::validate_eof,
+        CallInputs,
+        CreateInputs,
+        EOFCreateInputs,
+        EOFCreateOutcome,
+        Gas,
+        Host,
+        InstructionResult,
+        InterpreterResult,
+    },
     primitives::{
         specification::SpecId,
         BlockEnv,
@@ -18,15 +28,10 @@ use crate::{
     },
     Context,
     ContextWithHandlerCfg,
+    FrameOrResult,
     FrameResult,
 };
 use core::fmt;
-#[cfg(feature = "rwasm")]
-use fluentbase_core::blended::BlendedRuntime;
-#[cfg(feature = "rwasm")]
-use fluentbase_runtime::RuntimeContext;
-#[cfg(feature = "rwasm")]
-use revm_interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -64,7 +69,7 @@ impl<EXT, DB: Database + DatabaseCommit> Evm<'_, EXT, DB> {
 }
 
 impl<'a> Evm<'a, (), EmptyDB> {
-    /// Returns evm builder with empty database and empty external context.
+    /// Returns evm builder with an empty database and empty external context.
     pub fn builder() -> EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
         EvmBuilder::default()
     }
@@ -83,12 +88,11 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     /// Allow for evm setting to be modified by feeding current evm
     /// into the builder for modifications.
     pub fn modify(self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
-        EvmBuilder::new(self)
+        EvmBuilder::<'a, HandlerStage, EXT, DB>::from_revm(self)
     }
 
     /// Runs main call loop.
     #[inline]
-    #[cfg(not(feature = "rwasm"))]
     pub fn run_the_loop(
         &mut self,
         first_frame: crate::Frame,
@@ -345,7 +349,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
     /// Transact pre-verified transaction.
     fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
-        #[cfg(not(feature = "rwasm"))]
         let spec_id = self.spec_id();
         let ctx = &mut self.context;
         let pre_exec = self.handler.pre_execution();
@@ -362,113 +365,74 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
 
-        let mut result = {
-            #[cfg(feature = "rwasm")]
-            {
-                // load an EVM loader account to access storage slots
-                // let (evm_storage, _) = ctx.evm.load_account(PRECOMPILE_EVM)?;
-                // evm_storage.info.nonce = 1;
-                // ctx.evm.touch(&PRECOMPILE_EVM);
+        let exec = self.handler.execution();
+        // call inner handling of call/create
+        let first_frame_or_result = match ctx.evm.env.tx.transact_to.clone() {
+            TransactTo::Call(_) => exec.call(
+                ctx,
+                CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
+            )?,
+            TransactTo::Create => {
+                // if first byte of data is magic 0xEF00, then it is EOFCreate.
+                if spec_id.is_enabled_in(SpecId::PRAGUE)
+                    && ctx
+                        .env()
+                        .tx
+                        .data
+                        .get(0..=1)
+                        .filter(|&t| t == [0xEF, 00])
+                        .is_some()
+                {
+                    // TODO Should we just check 0xEF it seems excessive to switch to legacy
+                    // only if it 0xEF00?
 
-                match ctx.evm.env.tx.transact_to.clone() {
-                    TransactTo::Call(_) => {
-                        let inputs = CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap();
-                        let result = self.call_inner(inputs)?;
-                        FrameResult::Call(result)
+                    // get nonce from tx (if set) or from account (if not).
+                    // Nonce for call is bumped in deduct_caller while
+                    // for CREATE it is not (it is done inside exec handlers).
+                    let nonce = ctx.evm.env.tx.nonce.unwrap_or_else(|| {
+                        let caller = ctx.evm.env.tx.caller;
+                        ctx.evm
+                            .load_account(caller)
+                            .map(|(a, _)| a.info.nonce)
+                            .unwrap_or_default()
+                    });
+
+                    // Create EOFCreateInput from transaction initdata.
+                    let eofcreate = EOFCreateInputs::new_tx_boxed(&ctx.evm.env.tx, nonce)
+                        .ok()
+                        .and_then(|eofcreate| {
+                            // validate EOF initcode
+                            validate_eof(&eofcreate.eof_init_code).ok()?;
+                            Some(eofcreate)
+                        });
+
+                    if let Some(eofcreate) = eofcreate {
+                        exec.eofcreate(ctx, eofcreate)?
+                    } else {
+                        // Return result, as code is invalid.
+                        FrameOrResult::Result(FrameResult::EOFCreate(EOFCreateOutcome::new(
+                            InterpreterResult::new(
+                                InstructionResult::Stop,
+                                Default::default(),
+                                Gas::new(gas_limit),
+                            ),
+                            ctx.env().tx.caller.create(nonce),
+                        )))
                     }
-                    TransactTo::Create => {
-                        let inputs = CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap();
-                        let result = self.create_inner(inputs)?;
-                        FrameResult::Create(result)
-                    }
+                } else {
+                    // Safe to unwrap because we are sure that it is create tx.
+                    exec.create(
+                        ctx,
+                        CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
+                    )?
                 }
             }
-            #[cfg(not(feature = "rwasm"))]
-            {
-                use crate::FrameOrResult;
-                use revm_interpreter::{
-                    analysis::validate_eof,
-                    CallInputs,
-                    CreateInputs,
-                    EOFCreateInputs,
-                    EOFCreateOutcome,
-                    Gas,
-                    InstructionResult,
-                    InterpreterResult,
-                };
-                let exec = self.handler.execution();
-                // call inner handling of call/create
-                let first_frame_or_result = match ctx.evm.env.tx.transact_to.clone() {
-                    TransactTo::Call(_) => exec.call(
-                        ctx,
-                        CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-                    )?,
-                    TransactTo::Create => {
-                        // if first byte of data is magic 0xEF00, then it is EOFCreate.
-                        if spec_id.is_enabled_in(SpecId::PRAGUE)
-                            && ctx
-                                .env()
-                                .tx
-                                .data
-                                .get(0..=1)
-                                .filter(|&t| t == [0xEF, 00])
-                                .is_some()
-                        {
-                            // TODO Should we just check 0xEF it seems excessive to switch to legacy
-                            // only if it 0xEF00?
+        };
 
-                            // get nonce from tx (if set) or from account (if not).
-                            // Nonce for call is bumped in deduct_caller while
-                            // for CREATE it is not (it is done inside exec handlers).
-                            let nonce = ctx.evm.env.tx.nonce.unwrap_or_else(|| {
-                                let caller = ctx.evm.env.tx.caller;
-                                ctx.evm
-                                    .load_account(caller)
-                                    .map(|(a, _)| a.info.nonce)
-                                    .unwrap_or_default()
-                            });
-
-                            // Create EOFCreateInput from transaction initdata.
-                            let eofcreate = EOFCreateInputs::new_tx_boxed(&ctx.evm.env.tx, nonce)
-                                .ok()
-                                .and_then(|eofcreate| {
-                                    // validate EOF initcode
-                                    validate_eof(&eofcreate.eof_init_code).ok()?;
-                                    Some(eofcreate)
-                                });
-
-                            if let Some(eofcreate) = eofcreate {
-                                exec.eofcreate(ctx, eofcreate)?
-                            } else {
-                                // Return result, as code is invalid.
-                                FrameOrResult::Result(FrameResult::EOFCreate(
-                                    EOFCreateOutcome::new(
-                                        InterpreterResult::new(
-                                            InstructionResult::Stop,
-                                            Default::default(),
-                                            Gas::new(gas_limit),
-                                        ),
-                                        ctx.env().tx.caller.create(nonce),
-                                    ),
-                                ))
-                            }
-                        } else {
-                            // Safe to unwrap because we are sure that it is create tx.
-                            exec.create(
-                                ctx,
-                                CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-                            )?
-                        }
-                    }
-                };
-
-                // Starts the main running loop.
-                let result = match first_frame_or_result {
-                    FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
-                    FrameOrResult::Result(result) => result,
-                };
-                result
-            }
+        // Starts the main running loop.
+        let mut result = match first_frame_or_result {
+            FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
+            FrameOrResult::Result(result) => result,
         };
 
         let ctx = &mut self.context;
@@ -485,47 +449,5 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         post_exec.reward_beneficiary(ctx, result.gas())?;
         // Returns output of transaction.
         post_exec.output(ctx, result)
-    }
-
-    /// EVM create opcode for both initial CREATE and CREATE2 opcodes.
-    #[cfg(feature = "rwasm")]
-    fn create_inner(
-        &mut self,
-        create_inputs: Box<CreateInputs>,
-    ) -> Result<CreateOutcome, EVMError<DB::Error>> {
-        let runtime_context = RuntimeContext::default()
-            .with_depth(0u32)
-            .with_fuel_limit(create_inputs.gas_limit);
-        let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
-        let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
-
-        let result = BlendedRuntime::new(&mut sdk).create(create_inputs);
-        Ok(result)
-    }
-
-    /// Main contract call of the EVM.
-    #[cfg(feature = "rwasm")]
-    fn call_inner(
-        &mut self,
-        call_inputs: Box<CallInputs>,
-    ) -> Result<CallOutcome, EVMError<DB::Error>> {
-        use fluentbase_sdk::U256;
-        // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
-        if call_inputs.call_value() == U256::ZERO {
-            self.context.evm.load_account(call_inputs.target_address)?;
-            self.context
-                .evm
-                .journaled_state
-                .touch(&call_inputs.target_address);
-        }
-
-        let runtime_context = RuntimeContext::default()
-            .with_depth(0u32)
-            .with_fuel_limit(call_inputs.gas_limit);
-        let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
-        let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
-
-        let result = BlendedRuntime::new(&mut sdk).call(call_inputs);
-        Ok(result)
     }
 }

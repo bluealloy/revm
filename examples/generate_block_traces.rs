@@ -1,19 +1,21 @@
 // Example Adapted From: https://github.com/bluealloy/revm/issues/672
 
 use ethers_core::types::BlockId;
-use ethers_providers::Middleware;
-use ethers_providers::{Http, Provider};
+use ethers_providers::{Http, Middleware, Provider};
 use indicatif::ProgressBar;
-use revm::db::{CacheDB, EthersDB, StateBuilder};
-use revm::inspectors::TracerEip3155;
-use revm::primitives::{Address, TransactTo, U256};
-use revm::{inspector_handle_register, Evm};
-use std::fs::OpenOptions;
-use std::io::BufWriter;
-use std::io::Write;
-use std::sync::Arc;
-use std::sync::Mutex;
-use std::time::Instant;
+use revm::{
+    db::{CacheDB, EthersDB, StateBuilder},
+    inspector_handle_register,
+    inspectors::TracerEip3155,
+    primitives::{Address, TransactTo, U256},
+    Evm,
+};
+use std::{
+    fs::OpenOptions,
+    io::{BufWriter, Write},
+    sync::{Arc, Mutex},
+    time::Instant,
+};
 
 macro_rules! local_fill {
     ($left:expr, $right:expr, $fun:expr) => {
@@ -95,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
             c.chain_id = chain_id;
         })
         .append_handler_register(inspector_handle_register)
-        .build();
+        .build_revm();
 
     let txs = block.transactions.len();
     println!("Found {txs} transactions.");
@@ -149,7 +151,7 @@ async fn main() -> anyhow::Result<()> {
                     None => TransactTo::create(),
                 };
             })
-            .build();
+            .build_revm();
 
         // Construct the file writer to write the trace to
         let tx_number = tx.transaction_index.unwrap().0[0];

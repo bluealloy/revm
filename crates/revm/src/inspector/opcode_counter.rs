@@ -1,10 +1,12 @@
+#![allow(dead_code)]
+
 use crate::{inspectors::GasInspector, Database, EvmContext, Inspector};
-use core::ops::{Add, AddAssign};
+use core::ops::AddAssign;
 use revm_interpreter::Interpreter;
 use std::collections::BTreeMap;
 
 #[derive(Default)]
-pub struct OpcodeCounterInspector {
+pub(crate) struct OpcodeCounterInspector {
     gas_inspector: GasInspector,
     opcode_count: BTreeMap<u8, usize>,
     total_opcode_count: usize,

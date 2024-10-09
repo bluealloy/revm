@@ -64,13 +64,6 @@ revm-primitives = { path = "crates/primitives", default-features = false }
 ##    "c-kzg",
 #    "blst",
 #] }
-#revm-fluent = { path = "crates/revm_fluent", default-features = false, features = [
-#    "ethersdb",
-#    "std",
-#    "serde-json",
-##    "c-kzg",
-#    "blst",
-#] }
 
 [workspace.metadata.docs.rs]
 all-features = true

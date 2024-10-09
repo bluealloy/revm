@@ -26,7 +26,7 @@ pub fn state_merkle_trie_root<'a>(
 }
 
 pub fn state_merkle_trie_root2<'a>(
-    accounts: impl IntoIterator<Item = (Address, &'a revm_fluent::db::states::PlainAccount)>,
+    accounts: impl IntoIterator<Item = (Address, &'a PlainAccount)>,
 ) -> B256 {
     trie_root(accounts.into_iter().map(|(address, acc)| {
         // println!(
@@ -62,7 +62,7 @@ impl TrieAccount {
             code_hash: acc.info.code_hash,
         }
     }
-    fn new2(acc: &revm_fluent::db::states::PlainAccount) -> Self {
+    fn new2(acc: &PlainAccount) -> Self {
         Self {
             nonce: acc.info.nonce,
             balance: acc.info.balance,
@@ -117,7 +117,7 @@ fn compute_state_merkle_trie_root_test() {
             U256::from_be_slice(&[3, 2, 1]),
         )]),
     };
-    let plain_acc2 = revm_fluent::db::states::PlainAccount {
+    let plain_acc2 = PlainAccount {
         info: AccountInfo {
             balance: Default::default(),
             nonce: 0,
@@ -125,7 +125,7 @@ fn compute_state_merkle_trie_root_test() {
             code: None,
         },
         // storage: revm_fluent::db::states::plain_account::PlainStorage::new(),
-        storage: revm_fluent::db::states::plain_account::PlainStorage::from([(
+        storage: PlainStorage::from([(
             U256::from_be_slice(&[1, 2, 3]),
             U256::from_be_slice(&[3, 2, 1]),
         )]),

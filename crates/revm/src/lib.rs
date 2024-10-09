@@ -16,7 +16,6 @@ mod inspector;
 mod journaled_state;
 #[cfg(feature = "optimism")]
 pub mod optimism;
-#[cfg(feature = "rwasm")]
 pub mod rwasm;
 
 // Export items.
@@ -61,3 +60,4 @@ pub use revm_interpreter as interpreter;
 pub use revm_interpreter::primitives;
 #[doc(inline)]
 pub use revm_precompile as precompile;
+pub use rwasm::EvmRwasm;
