@@ -23,11 +23,9 @@ use crate::{
 };
 use alloc::vec::Vec;
 use core::{fmt, mem::take};
-use fluentbase_core::{blended::BlendedRuntime, debug_log};
-use fluentbase_runtime::{DefaultEmptyRuntimeDatabase, RuntimeContext};
+use fluentbase_core::debug_log;
 use fluentbase_sdk::journal::{JournalState, JournalStateBuilder};
 use fluentbase_types::{BlockContext, ContractContext, NativeAPI, TxContext};
-use revm_interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -485,7 +483,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 };
 
                 // Starts the main running loop.
-                let mut result = match first_frame_or_result {
+                let result = match first_frame_or_result {
                     FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
                     FrameOrResult::Result(result) => result,
                 };
