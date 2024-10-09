@@ -36,6 +36,5 @@ k256 = { version = "0.13.3", features = ["ecdsa"] }
 
 [features]
 rwasm = [
-    "revm-fluent/rwasm",
-    "revm-fluent/serde-json",
+    "revm/serde-json",
 ]

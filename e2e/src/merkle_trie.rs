@@ -124,7 +124,6 @@ fn compute_state_merkle_trie_root_test() {
             code_hash: B256::left_padding_from(&[1, 2]),
             code: None,
         },
-        // storage: revm_fluent::db::states::plain_account::PlainStorage::new(),
         storage: PlainStorage::from([(
             U256::from_be_slice(&[1, 2, 3]),
             U256::from_be_slice(&[3, 2, 1]),
