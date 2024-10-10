@@ -87,7 +87,6 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
-#[cfg(not(feature = "rwasm"))]
 pub fn output<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     result: FrameResult,
@@ -128,43 +127,6 @@ pub fn output<EXT, DB: Database>(
                 flag, instruction_result
             )
         }
-    };
-
-    Ok(ResultAndState { result, state })
-}
-
-/// Main return handle, returns the output of the transaction.
-#[inline]
-#[cfg(feature = "rwasm")]
-pub fn output<EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-    result: FrameResult,
-) -> Result<ResultAndState, EVMError<DB::Error>> {
-    use crate::primitives::SuccessReason;
-    use fluentbase_core::helpers::exit_code_from_evm_error;
-    use fluentbase_sdk::ExitCode;
-    core::mem::replace(&mut context.evm.error, Ok(()))?;
-    // used gas with refund calculated.
-    let gas_refunded = result.gas().refunded() as u64;
-    let final_gas_used = result.gas().spent() - gas_refunded;
-    let output = result.output();
-    let instruction_result = result.into_interpreter_result();
-
-    // reset journal and return present state.
-    let (state, logs) = context.evm.journaled_state.finalize();
-
-    let result = match exit_code_from_evm_error(instruction_result.result) {
-        ExitCode::Ok => ExecutionResult::Success {
-            reason: SuccessReason::Return,
-            gas_used: final_gas_used,
-            gas_refunded,
-            logs,
-            output,
-        },
-        _ => ExecutionResult::Revert {
-            gas_used: final_gas_used,
-            output: output.into_data(),
-        },
     };
 
     Ok(ResultAndState { result, state })

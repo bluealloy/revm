@@ -53,8 +53,6 @@ impl Contract {
         let contract_address = match env.tx.transact_to {
             TransactTo::Call(caller) => caller,
             TransactTo::Create => Address::ZERO,
-            // TODO: fluent_tx_d1r1 how we can get the address here?
-            TransactTo::Blended(_, _) => Address::ZERO,
         };
         Self::new(
             env.tx.data.clone(),

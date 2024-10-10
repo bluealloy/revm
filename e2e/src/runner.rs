@@ -16,7 +16,7 @@ use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use lazy_static::lazy_static;
 use revm::{
-    db::{states::plain_account::PlainStorage, EmptyDB},
+    db::{states::plain_account::PlainStorage, EmptyDB, EmptyDBTyped},
     inspector_handle_register,
     inspectors::TracerEip3155,
     primitives::{
@@ -35,8 +35,11 @@ use revm::{
         POSEIDON_EMPTY,
         U256,
     },
+    CacheState,
     Evm,
+    EvmRwasm,
     State,
+    StateBuilder,
 };
 use serde_json::json;
 use std::{
@@ -143,19 +146,15 @@ fn skip_test(path: &Path) -> bool {
 
 fn check_evm_execution<EXT1, EXT2>(
     test: &Test,
-    spec_name: &SpecName,
+    _spec_name: &SpecName,
     expected_output: Option<&Bytes>,
     test_name: &str,
     exec_result1: &EVMResultGeneric<ExecutionResult, Infallible>,
     exec_result2: &EVMResultGeneric<ExecutionResult, ExitCode>,
     evm: &Evm<'_, EXT1, &mut State<EmptyDB>>,
-    evm2: &revm_fluent::Evm<
-        '_,
-        EXT2,
-        &mut revm_fluent::State<revm_fluent::db::EmptyDBTyped<ExitCode>>,
-    >,
+    evm2: &EvmRwasm<'_, EXT2, &mut State<EmptyDBTyped<ExitCode>>>,
     print_json_outcome: bool,
-    genesis_addresses: &HashSet<Address>,
+    _genesis_addresses: &HashSet<Address>,
 ) -> Result<(), TestError> {
     let logs_root1 = log_rlp_hash(exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default());
     let logs_root2 = log_rlp_hash(exec_result2.as_ref().map(|r| r.logs()).unwrap_or_default());
@@ -409,8 +408,8 @@ fn check_evm_execution<EXT1, EXT2>(
         }
     }
 
-    let exec_result1_res = exec_result1.as_ref().unwrap();
-    let exec_result2_res = exec_result2.as_ref().unwrap();
+    let _exec_result1_res = exec_result1.as_ref().unwrap();
+    let _exec_result2_res = exec_result2.as_ref().unwrap();
     // assert_eq!(
     //     exec_result1_res.gas_used(),
     //     exec_result2_res.gas_used(),
@@ -497,12 +496,12 @@ pub fn execute_test_suite(
         }
         println!("test case: {}", &name);
         // Create database and insert cache
-        let mut cache_state = revm::CacheState::new(false);
-        let mut cache_state2 = revm_fluent::CacheState::new(false);
+        let mut cache_state = CacheState::new(false);
+        let mut cache_state2 = CacheState::new(false);
 
         let mut genesis_addresses: HashSet<Address> = Default::default();
         for (address, info) in &devnet_genesis.alloc {
-            let source_code_hash = info
+            let _source_code_hash = info
                 .storage
                 .as_ref()
                 .and_then(|storage| storage.get(&GENESIS_KECCAK_HASH_SLOT))
@@ -517,10 +516,8 @@ pub fn execute_test_suite(
             let acc_info = AccountInfo {
                 balance: info.balance,
                 nonce: info.nonce.unwrap_or_default(),
-                code_hash: source_code_hash,
-                rwasm_code_hash,
-                code: Some(Bytecode::new()),
-                rwasm_code: Some(Bytecode::new_raw(info.code.clone().unwrap_or_default())),
+                code_hash: rwasm_code_hash,
+                code: Some(Bytecode::new_raw(info.code.clone().unwrap_or_default())),
             };
             let mut account_storage = PlainStorage::default();
             if let Some(storage) = info.storage.as_ref() {
@@ -557,8 +554,8 @@ pub fn execute_test_suite(
                 info.storage
                     .insert(EVM_CODE_HASH_SLOT, U256::from_le_bytes(evm_code_hash.0));
                 // set account info bytecode to the proxy loader
-                acc_info.rwasm_code_hash = proxy_bytecode_hash;
-                acc_info.rwasm_code = Some(Bytecode::new_raw(proxy_bytecode.clone()));
+                acc_info.code_hash = proxy_bytecode_hash;
+                acc_info.code = Some(Bytecode::new_raw(proxy_bytecode.clone()));
                 // put EVM preimage inside
                 let preimage_address = Address::from_slice(&evm_code_hash.0[12..]);
                 cache_state2.insert_account(
@@ -697,17 +694,17 @@ pub fn execute_test_suite(
                     .with_db(&mut state)
                     .modify_env(|e| *e = env.clone())
                     .with_spec_id(spec_id)
-                    .build();
+                    .build_revm();
 
-                let mut state2 = revm_fluent::db::StateBuilder::default()
+                let mut state2 = StateBuilder::default()
                     .with_cached_prestate(cache2)
                     .with_bundle_update()
                     .build();
-                let mut evm2 = revm_fluent::Evm::builder()
+                let mut evm2 = Evm::builder()
                     .with_db(&mut state2)
                     .modify_env(|e| *e = env.clone())
                     .with_spec_id(spec_id)
-                    .build();
+                    .build_rwasm();
 
                 // do the deed
                 let (e, exec_result) = if trace {
@@ -717,15 +714,14 @@ pub fn execute_test_suite(
                             TracerEip3155::new(Box::new(stderr())).without_summary(),
                         )
                         .append_handler_register(inspector_handle_register)
-                        .build();
-                    // let mut evm2 = evm2
-                    //     .modify()
-                    // .reset_handler_with_external_context(TracerEip3155::new(
-                    //     Box::new(stderr()),
-                    //     false,
-                    // ))
-                    // .append_handler_register(revm::inspector_handle_register)
-                    // .build();
+                        .build_revm();
+                    let mut evm2 = evm2
+                        .modify()
+                        .reset_handler_with_external_context(
+                            TracerEip3155::new(Box::new(stderr())).without_summary(),
+                        )
+                        .append_handler_register(inspector_handle_register)
+                        .build_rwasm();
 
                     let timer = Instant::now();
                     let res = evm.transact_commit();
@@ -777,23 +773,22 @@ pub fn execute_test_suite(
                     (e, res)
                 };
 
-                // print only once or
-                // if we are already in trace mode, just return error
+                // if we are already in trace mode, return error
                 static FAILED: AtomicBool = AtomicBool::new(false);
                 if trace || FAILED.swap(true, Ordering::SeqCst) {
                     return Err(e);
                 }
 
-                // re build to run with tracing
+                // re-build to run with tracing
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
                 let mut cache2 = cache_state2.clone();
                 cache2.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
-                let state = revm::db::State::builder()
+                let state = State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let state2 = revm_fluent::db::State::builder()
+                let state2 = State::builder()
                     .with_cached_prestate(cache2)
                     .with_bundle_update()
                     .build();
@@ -806,13 +801,13 @@ pub fn execute_test_suite(
                     .with_env(env.clone())
                     .with_external_context(TracerEip3155::new(Box::new(stdout())).without_summary())
                     .append_handler_register(inspector_handle_register)
-                    .build();
-                let mut evm2 = revm_fluent::Evm::builder()
+                    .build_revm();
+                let mut evm2 = EvmRwasm::builder()
                     .with_spec_id(spec_id)
                     .with_db(state2)
                     .with_external_context(TracerEip3155::new(Box::new(stdout())))
-                    // .append_handler_register(revm_fluent::inspector_handle_register)
-                    .build();
+                    .append_handler_register(inspector_handle_register)
+                    .build_revm();
                 let _ = evm.transact_commit();
                 let _ = evm2.transact_commit();
 

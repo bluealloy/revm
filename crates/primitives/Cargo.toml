@@ -50,7 +50,7 @@ serde = { version = "1.0", default-features = false, features = [
 hex = { version = "0.4", default-features = false }
 
 [features]
-default = ["std", "c-kzg", "portable", "rwasm"]
+default = ["std", "c-kzg", "portable"]
 std = [
     "serde?/std",
     "alloy-primitives/std",
@@ -98,5 +98,4 @@ rand = ["alloy-primitives/rand"]
 # See comments in `revm-precompile`
 c-kzg = ["dep:c-kzg", "dep:once_cell", "dep:derive_more"]
 
-rwasm = []
 e2e = []

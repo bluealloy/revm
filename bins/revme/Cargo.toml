@@ -22,27 +22,6 @@ revm = { package = "revm", path = "../../crates/revm", default-features = false,
     "c-kzg",
     "blst",
 ] }
-revm-fluent = { package = "revm-fluent", path = "../../crates/revm_fluent", default-features = false, features = [
-    "ethersdb",
-    "std",
-    "serde-json",
-    "c-kzg",
-    "blst",
-] }
-#revm = { package = "revm", path = "../../crates/revm", default-features = false, features = [
-#    "ethersdb",
-#    "std",
-#    "serde-json",
-#    "c-kzg",
-#    "blst",
-#] }
-#revm-fluent = { package = "revm-fluent", path = "../../crates/revm_fluent", default-features = false, features = [
-#    "ethersdb",
-#    "std",
-#    "serde-json",
-#    "c-kzg",
-#    "blst",
-#] }
 alloy-rlp = { version = "0.3", default-features = false, features = [
     "arrayvec",
     "derive",
@@ -57,6 +36,5 @@ k256 = { version = "0.13.3", features = ["ecdsa"] }
 
 [features]
 rwasm = [
-    "revm-fluent/rwasm",
-    "revm-fluent/serde-json",
+    "revm/serde-json",
 ]

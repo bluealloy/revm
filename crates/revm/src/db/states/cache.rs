@@ -4,6 +4,7 @@ use super::{
     CacheAccount,
     PlainAccount,
 };
+use crate::primitives::KECCAK_EMPTY;
 use revm_interpreter::primitives::{
     Account,
     AccountInfo,
@@ -71,20 +72,18 @@ impl CacheState {
             .insert(address, CacheAccount::new_loaded_not_existing());
     }
 
-    /// Insert Loaded (Or LoadedEmptyEip161 if account is empty) account.
+    /// Insert Loaded (Or LoadedEmptyEip161 if an account is empty) account.
     pub fn insert_account(&mut self, address: Address, info: AccountInfo) {
-        #[cfg(feature = "rwasm")]
-        self.insert_contract(&mut info.clone().into());
-        let account = if !info.is_empty() {
-            CacheAccount::new_loaded(info, HashMap::default())
-        } else {
-            CacheAccount::new_loaded_empty_eip161(HashMap::default())
-        };
-        self.accounts.insert(address, account);
+        self.insert_account_with_storage(address, info, PlainStorage::default())
     }
 
-    #[cfg(feature = "rwasm")]
-    pub fn insert_contract(&mut self, info: &mut AccountInfo) {
+    /// Similar to `insert_account` but with storage.
+    pub fn insert_account_with_storage(
+        &mut self,
+        address: Address,
+        mut info: AccountInfo,
+        storage: PlainStorage,
+    ) {
         if let Some(code) = &info.code {
             if !code.is_empty() {
                 if info.code_hash == KECCAK_EMPTY {
@@ -95,38 +94,9 @@ impl CacheState {
                     .or_insert_with(|| code.clone());
             }
         }
-        if let Some(rwasm_code) = &info.rwasm_code {
-            if !rwasm_code.is_empty() {
-                if info.rwasm_code_hash == POSEIDON_EMPTY {
-                    unreachable!("poseidon hash can't be empty");
-                    // LowLevelSDK::poseidon(
-                    //     rwasm_code.bytes().as_ptr(),
-                    //     rwasm_code.len() as u32,
-                    //     info.rwasm_code_hash.as_mut_ptr(),
-                    // );
-                }
-                self.contracts
-                    .entry(info.rwasm_code_hash)
-                    .or_insert_with(|| rwasm_code.clone());
-            }
-        }
         if info.code_hash == B256::ZERO {
             info.code_hash = KECCAK_EMPTY;
         }
-        if info.rwasm_code_hash == B256::ZERO {
-            info.rwasm_code_hash = POSEIDON_EMPTY;
-        }
-    }
-
-    /// Similar to `insert_account` but with storage.
-    pub fn insert_account_with_storage(
-        &mut self,
-        address: Address,
-        info: AccountInfo,
-        storage: PlainStorage,
-    ) {
-        #[cfg(feature = "rwasm")]
-        self.insert_contract(&mut info.clone().into());
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, storage)
         } else {

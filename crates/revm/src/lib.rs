@@ -5,16 +5,8 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
-#[cfg(feature = "std")]
-extern crate alloc;
-
-// Define modules.
-
 mod builder;
 mod context;
-
-#[cfg(any(test, feature = "test-utils"))]
-pub mod test_utils;
 
 pub mod db;
 mod evm;
@@ -24,12 +16,9 @@ mod inspector;
 mod journaled_state;
 #[cfg(feature = "optimism")]
 pub mod optimism;
-#[cfg(feature = "rwasm")]
-mod rwasm;
-#[cfg(test)]
-mod test;
-// Export items.
+pub mod rwasm;
 
+// Export items.
 pub use builder::EvmBuilder;
 pub use context::{
     Context,
@@ -71,3 +60,4 @@ pub use revm_interpreter as interpreter;
 pub use revm_interpreter::primitives;
 #[doc(inline)]
 pub use revm_precompile as precompile;
+pub use rwasm::EvmRwasm;

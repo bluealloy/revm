@@ -64,7 +64,7 @@ serde_json = "1.0"
 serde_derive = "1.0"
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst", "rwasm"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
     "revm-primitives/std",
     "k256/std",
@@ -106,9 +106,6 @@ secp256k1 = [
 # Enables the BLS12-381 precompiles.
 blst = ["dep:blst"]
 
-rwasm = [
-    "revm-primitives/rwasm",
-]
 e2e = [
     "revm-primitives/e2e"
 ]

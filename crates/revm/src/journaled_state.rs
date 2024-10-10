@@ -21,8 +21,6 @@ use crate::{
 };
 use core::mem;
 use fluentbase_sdk::B256;
-#[cfg(feature = "rwasm")]
-use fluentbase_types::{Bytes, POSEIDON_EMPTY};
 use revm_interpreter::{primitives::SpecId, LoadAccountResult, SStoreResult};
 use std::vec::Vec;
 
@@ -53,8 +51,7 @@ pub struct JournaledState {
     /// is considered warm if it is found in the `State`.
     pub warm_preloaded_addresses: HashSet<Address>,
     /// Recently updated bytecode state
-    #[cfg(feature = "rwasm")]
-    code_state: HashMap<B256, Bytecode>,
+    pub code_state: HashMap<B256, Bytecode>,
 }
 
 impl JournaledState {
@@ -76,7 +73,6 @@ impl JournaledState {
             depth: 0,
             spec,
             warm_preloaded_addresses,
-            #[cfg(feature = "rwasm")]
             code_state: HashMap::new(),
         }
     }
@@ -132,8 +128,7 @@ impl JournaledState {
             // kept, see [Self::new]
             spec: _,
             warm_preloaded_addresses: _,
-            #[cfg(feature = "rwasm")]
-                code_state: _,
+            code_state: _,
         } = self;
 
         *transient_storage = TransientStorage::default();
@@ -176,27 +171,8 @@ impl JournaledState {
             .last_mut()
             .unwrap()
             .push(JournalEntry::CodeChange { address });
-        #[cfg(feature = "rwasm")]
-        {
-            if let Some(code_hash) = code_hash {
-                if code_hash == account.info.rwasm_code_hash {
-                    self.code_state
-                        .insert(account.info.rwasm_code_hash, code.clone());
-                    account.info.rwasm_code = Some(code);
-                } else if code_hash == account.info.code_hash {
-                    self.code_state.insert(account.info.code_hash, code.clone());
-                    account.info.code = Some(code);
-                }
-            } else {
-                self.code_state.insert(account.info.code_hash, code.clone());
-                account.info.code = Some(code);
-            }
-        }
-        #[cfg(not(feature = "rwasm"))]
-        {
-            account.info.code_hash = code.hash_slow();
-            account.info.code = Some(code);
-        }
+        account.info.code_hash = code_hash.unwrap_or_else(|| code.hash_slow());
+        account.info.code = Some(code);
     }
 
     #[inline]
@@ -447,11 +423,6 @@ impl JournaledState {
                     let acc = state.get_mut(&address).unwrap();
                     acc.info.code_hash = KECCAK_EMPTY;
                     acc.info.code = None;
-                    #[cfg(feature = "rwasm")]
-                    {
-                        acc.info.rwasm_code_hash = POSEIDON_EMPTY;
-                        acc.info.rwasm_code = None;
-                    }
                 }
             }
         }
@@ -683,48 +654,7 @@ impl JournaledState {
                 acc.info.code = Some(code);
             }
         }
-        #[cfg(feature = "rwasm")]
-        if acc.info.rwasm_code.is_none() {
-            if acc.info.rwasm_code_hash == POSEIDON_EMPTY {
-                let empty = Bytecode::new();
-                acc.info.rwasm_code = Some(empty);
-            } else {
-                let code = db
-                    .code_by_hash(acc.info.rwasm_code_hash)
-                    .map_err(EVMError::Database)?;
-                acc.info.rwasm_code = Some(code);
-            }
-        }
         Ok((acc, is_cold))
-    }
-
-    /// Loads code.
-    #[inline]
-    #[cfg(feature = "rwasm")]
-    pub fn load_code_by_hash<DB: Database>(
-        &mut self,
-        hash: B256,
-        db: &mut DB,
-    ) -> Result<Bytes, EVMError<DB::Error>> {
-        match self.code_state.entry(hash) {
-            Entry::Occupied(v) => Ok(v.get().original_bytes()),
-            Entry::Vacant(v) => Ok(v
-                .insert(db.code_by_hash(hash).map_err(EVMError::Database)?)
-                .original_bytes()),
-        }
-    }
-
-    /// Loads code.
-    #[inline]
-    #[cfg(feature = "rwasm")]
-    pub fn load_code_by_hash_slice<DB: Database>(
-        &mut self,
-        hash: B256,
-        db: &mut DB,
-    ) -> Result<Option<&[u8]>, EVMError<DB::Error>> {
-        self.load_code_by_hash(hash, db)?;
-        let result = self.code_state.get(&hash).map(|v| v.original_byte_slice());
-        Ok(result)
     }
 
     /// Load storage slot

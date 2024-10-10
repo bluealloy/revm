@@ -17,7 +17,7 @@ pub use handle_types::*;
 use register::{EvmHandler, HandleRegisters};
 use std::vec::Vec;
 
-/// Handler acts as a proxy and allow to define different behavior for different
+/// Handler acts as a proxy and allows defining different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
 pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {

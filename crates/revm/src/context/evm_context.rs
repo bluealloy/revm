@@ -252,10 +252,10 @@ pub(crate) mod test_utils {
     };
 
     /// Mock caller address.
-    pub const MOCK_CALLER: Address = address!("0000000000000000000000000000000000000000");
+    pub(crate) const MOCK_CALLER: Address = address!("0000000000000000000000000000000000000000");
 
     /// Creates `CallInputs` that calls a provided contract address from the mock caller.
-    pub fn create_mock_call_inputs(to: Address) -> CallInputs {
+    pub(crate) fn create_mock_call_inputs(to: Address) -> CallInputs {
         CallInputs {
             input: Bytes::new(),
             gas_limit: 0,
@@ -273,7 +273,7 @@ pub(crate) mod test_utils {
     /// Creates an evm context with a cache db backend.
     /// Additionally loads the mock caller account into the db,
     /// and sets the balance to the provided U256 value.
-    pub fn create_cache_db_evm_context_with_balance(
+    pub(crate) fn create_cache_db_evm_context_with_balance(
         env: Box<Env>,
         mut db: CacheDB<EmptyDB>,
         balance: U256,
@@ -292,7 +292,7 @@ pub(crate) mod test_utils {
     }
 
     /// Creates a cached db evm context.
-    pub fn create_cache_db_evm_context(
+    pub(crate) fn create_cache_db_evm_context(
         env: Box<Env>,
         db: CacheDB<EmptyDB>,
     ) -> EvmContext<CacheDB<EmptyDB>> {
@@ -310,7 +310,7 @@ pub(crate) mod test_utils {
     }
 
     /// Returns a new `EvmContext` with an empty journaled state.
-    pub fn create_empty_evm_context(env: Box<Env>, db: EmptyDB) -> EvmContext<EmptyDB> {
+    pub(crate) fn create_empty_evm_context(env: Box<Env>, db: EmptyDB) -> EvmContext<EmptyDB> {
         EvmContext {
             inner: InnerEvmContext {
                 env,

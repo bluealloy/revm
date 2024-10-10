@@ -1,9 +1,8 @@
-use revm_interpreter::gas;
-
 use crate::{
     primitives::{db::Database, EVMError, Env, InvalidTransaction, Spec},
     Context,
 };
+use revm_interpreter::gas;
 
 /// Validate environment for the mainnet.
 pub fn validate_env<SPEC: Spec, DB: Database>(env: &Env) -> Result<(), EVMError<DB::Error>> {
@@ -47,7 +46,8 @@ pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
         gas::validate_initial_tx_gas(SPEC::SPEC_ID, input, is_create, access_list);
 
     // Additional check to see if limit is big enough to cover initial gas.
-    if initial_gas_spend > env.tx.gas_limit {
+    let gas_limit = env.tx.gas_limit;
+    if initial_gas_spend > gas_limit {
         return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
     }
     Ok(initial_gas_spend)

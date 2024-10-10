@@ -22,7 +22,7 @@ fn analysis(c: &mut Criterion) {
             // evm.env.tx.data = bytes!("30627b7c");
             tx.data = bytes!("8035F0CE");
         })
-        .build();
+        .build_revm();
 
     let contract_data: Bytes = hex::decode(ANALYSIS).unwrap().into();
 
@@ -36,14 +36,14 @@ fn analysis(c: &mut Criterion) {
     let mut evm = evm
         .modify()
         .reset_handler_with_db(BenchmarkDB::new_bytecode(raw))
-        .build();
+        .build_revm();
     bench_transact(&mut g, &mut evm);
 
     let analysed = to_analysed(Bytecode::new_raw(contract_data));
     let mut evm = evm
         .modify()
         .reset_handler_with_db(BenchmarkDB::new_bytecode(analysed))
-        .build();
+        .build_revm();
     bench_transact(&mut g, &mut evm);
 
     g.finish();
@@ -57,7 +57,7 @@ fn snailtracer(c: &mut Criterion) {
             tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
             tx.data = bytes!("30627b7c");
         })
-        .build();
+        .build_revm();
 
     let mut g = c.benchmark_group("snailtracer");
     g.noise_threshold(0.03)
@@ -77,7 +77,7 @@ fn transfer(c: &mut Criterion) {
             tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
             tx.value = U256::from(10);
         })
-        .build();
+        .build_revm();
 
     let mut g = c.benchmark_group("transfer");
     g.noise_threshold(0.03).warm_up_time(Duration::from_secs(1));
