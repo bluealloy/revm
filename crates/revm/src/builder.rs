@@ -1,5 +1,6 @@
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
+    evm::Evm,
     handler::register,
     primitives::{
         BlockEnv,
@@ -11,11 +12,10 @@ use crate::{
         SpecId,
         TxEnv,
     },
+    rwasm::Rwasm,
     Context,
     ContextWithHandlerCfg,
-    Evm,
     Handler,
-    Rwasm,
 };
 use core::marker::PhantomData;
 use std::boxed::Box;
@@ -37,6 +37,7 @@ pub struct UniversalBuilder<'a, BuilderStage, EXT, DB: Database, EVM> {
 
 pub type EvmBuilder<'a, BuilderStage, EXT, DB> =
     UniversalBuilder<'a, BuilderStage, EXT, DB, EvmFactoryEvm>;
+
 pub type RwasmBuilder<'a, BuilderStage, EXT, DB> =
     UniversalBuilder<'a, BuilderStage, EXT, DB, EvmFactoryRwasm>;
 

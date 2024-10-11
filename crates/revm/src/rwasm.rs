@@ -1,5 +1,5 @@
 use crate::{
-    builder::{HandlerStage, SetGenericStage},
+    builder::{HandlerStage, RwasmBuilder, SetGenericStage},
     db::EmptyDB,
     interpreter::{
         CallInputs,
@@ -38,7 +38,6 @@ use crate::{
     FrameResult,
     Handler,
     JournalEntry,
-    RwasmBuilder,
 };
 use core::{cell::RefCell, fmt, ops::Deref};
 use fluentbase_core::{blended::BlendedRuntime, helpers::exit_code_from_evm_error};

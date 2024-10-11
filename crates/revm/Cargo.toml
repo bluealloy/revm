@@ -175,6 +175,7 @@ blst = ["revm-precompile/blst"]
 debug-print = [
     "revm-interpreter/debug-print"
 ]
+rwasm = []
 
 [[example]]
 name = "fork_ref_transact"
