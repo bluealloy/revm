@@ -7,7 +7,7 @@ use std::vec::Vec;
 pub const STACK_LIMIT: usize = 1024;
 
 /// EVM stack with [STACK_LIMIT] capacity of words.
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Stack {
     /// The underlying data of the stack.
