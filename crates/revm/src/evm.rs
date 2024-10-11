@@ -88,7 +88,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     /// Allow for evm setting to be modified by feeding current evm
     /// into the builder for modifications.
     pub fn modify(self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
-        EvmBuilder::<'a, HandlerStage, EXT, DB>::from_revm(self)
+        EvmBuilder::<'a, HandlerStage, EXT, DB>::new(self)
     }
 
     /// Runs main call loop.

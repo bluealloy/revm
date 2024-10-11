@@ -34,16 +34,17 @@ use crate::{
     ContextWithHandlerCfg,
     Database,
     DatabaseCommit,
-    EvmBuilder,
     EvmContext,
     FrameResult,
     Handler,
     JournalEntry,
+    RwasmBuilder,
 };
 use core::{cell::RefCell, fmt, ops::Deref};
 use fluentbase_core::{blended::BlendedRuntime, helpers::exit_code_from_evm_error};
 use fluentbase_runtime::RuntimeContext;
 use fluentbase_sdk::{
+    runtime::RuntimeContextWrapper,
     Account,
     AccountStatus,
     BlockContext,
@@ -63,7 +64,7 @@ use fluentbase_sdk::{
 
 /// EVM instance containing both internal EVM context and external context
 /// and the handler that dictates the logic of EVM (or hardfork specification).
-pub struct EvmRwasm<'a, EXT, DB: Database> {
+pub struct Rwasm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
     /// Handler is a component of the of EVM that contains all the logic. Handler contains
@@ -71,7 +72,7 @@ pub struct EvmRwasm<'a, EXT, DB: Database> {
     pub handler: Handler<'a, Context<EXT, DB>, EXT, DB>,
 }
 
-impl<EXT, DB> fmt::Debug for EvmRwasm<'_, EXT, DB>
+impl<EXT, DB> fmt::Debug for Rwasm<'_, EXT, DB>
 where
     EXT: fmt::Debug,
     DB: Database + fmt::Debug,
@@ -84,7 +85,7 @@ where
     }
 }
 
-impl<EXT, DB: Database + DatabaseCommit> EvmRwasm<'_, EXT, DB> {
+impl<EXT, DB: Database + DatabaseCommit> Rwasm<'_, EXT, DB> {
     /// Commit the changes to the database.
     pub fn transact_commit(&mut self) -> Result<ExecutionResult, EVMError<DB::Error>> {
         let ResultAndState { result, state } = self.transact()?;
@@ -93,31 +94,31 @@ impl<EXT, DB: Database + DatabaseCommit> EvmRwasm<'_, EXT, DB> {
     }
 }
 
-impl<'a> EvmRwasm<'a, (), EmptyDB> {
+impl<'a> Rwasm<'a, (), EmptyDB> {
     /// Returns evm builder with an empty database and empty external context.
-    pub fn builder() -> EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
-        EvmBuilder::default()
+    pub fn builder() -> RwasmBuilder<'a, SetGenericStage, (), EmptyDB> {
+        RwasmBuilder::default()
     }
 }
 
-impl<'a, EXT, DB: Database> EvmRwasm<'a, EXT, DB> {
+impl<'a, EXT, DB: Database> Rwasm<'a, EXT, DB> {
     /// Create new EVM.
     pub fn new(
         mut context: Context<EXT, DB>,
         handler: Handler<'a, Context<EXT, DB>, EXT, DB>,
-    ) -> EvmRwasm<'a, EXT, DB> {
+    ) -> Rwasm<'a, EXT, DB> {
         context.evm.journaled_state.set_spec_id(handler.cfg.spec_id);
-        EvmRwasm { context, handler }
+        Rwasm { context, handler }
     }
 
     /// Allow for evm setting to be modified by feeding current evm
     /// into the builder for modifications.
-    pub fn modify(self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
-        EvmBuilder::<'a, HandlerStage, EXT, DB>::from_rwasm(self)
+    pub fn modify(self) -> RwasmBuilder<'a, HandlerStage, EXT, DB> {
+        RwasmBuilder::<'a, HandlerStage, EXT, DB>::new(self)
     }
 }
 
-impl<EXT, DB: Database> EvmRwasm<'_, EXT, DB> {
+impl<EXT, DB: Database> Rwasm<'_, EXT, DB> {
     /// Returns specification (hardfork) that the EVM is instanced with.
     ///
     /// SpecId depends on the handler.
@@ -330,8 +331,8 @@ impl<EXT, DB: Database> EvmRwasm<'_, EXT, DB> {
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
             .with_fuel_limit(create_inputs.gas_limit);
-        let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
-        let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
+        let native_sdk = RuntimeContextWrapper::new(runtime_context);
+        let mut sdk = RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
 
         let result = BlendedRuntime::new(&mut sdk).create(create_inputs);
         Ok(result)
@@ -342,7 +343,6 @@ impl<EXT, DB: Database> EvmRwasm<'_, EXT, DB> {
         &mut self,
         call_inputs: Box<CallInputs>,
     ) -> Result<CallOutcome, EVMError<DB::Error>> {
-        use fluentbase_sdk::U256;
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         if call_inputs.call_value() == U256::ZERO {
             self.context.evm.load_account(call_inputs.target_address)?;
@@ -355,8 +355,8 @@ impl<EXT, DB: Database> EvmRwasm<'_, EXT, DB> {
         let runtime_context = RuntimeContext::default()
             .with_depth(0u32)
             .with_fuel_limit(call_inputs.gas_limit);
-        let native_sdk = fluentbase_sdk::runtime::RuntimeContextWrapper::new(runtime_context);
-        let mut sdk = crate::rwasm::RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
+        let native_sdk = RuntimeContextWrapper::new(runtime_context);
+        let mut sdk = RwasmDbWrapper::new(&mut self.context.evm, native_sdk);
 
         let result = BlendedRuntime::new(&mut sdk).call(call_inputs);
         Ok(result)

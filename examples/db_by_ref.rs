@@ -31,7 +31,7 @@ fn run_transaction<EXT, DB: DatabaseRefDebugError>(
         .with_ref_db(db)
         .with_external_context(ext)
         .append_handler_register(register_handles_fn)
-        .build_revm();
+        .build();
 
     let result = evm.transact()?;
     Ok((result, evm.into_context().evm.inner.db.0))
@@ -60,7 +60,7 @@ fn run_transaction_and_commit(db: &mut CacheDB<EmptyDB>) -> anyhow::Result<()> {
             .with_ref_db(rdb)
             .with_external_context(NoOpInspector)
             .append_handler_register(inspector_handle_register)
-            .build_revm();
+            .build();
 
         evm.transact()?
     };

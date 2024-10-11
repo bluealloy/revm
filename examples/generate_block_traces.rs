@@ -97,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
             c.chain_id = chain_id;
         })
         .append_handler_register(inspector_handle_register)
-        .build_revm();
+        .build();
 
     let txs = block.transactions.len();
     println!("Found {txs} transactions.");
@@ -151,7 +151,7 @@ async fn main() -> anyhow::Result<()> {
                     None => TransactTo::create(),
                 };
             })
-            .build_revm();
+            .build();
 
         // Construct the file writer to write the trace to
         let tx_number = tx.transaction_index.unwrap().0[0];

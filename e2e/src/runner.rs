@@ -37,7 +37,7 @@ use revm::{
     },
     CacheState,
     Evm,
-    EvmRwasm,
+    Rwasm,
     State,
     StateBuilder,
 };
@@ -152,10 +152,14 @@ fn check_evm_execution<EXT1, EXT2>(
     exec_result1: &EVMResultGeneric<ExecutionResult, Infallible>,
     exec_result2: &EVMResultGeneric<ExecutionResult, ExitCode>,
     evm: &Evm<'_, EXT1, &mut State<EmptyDB>>,
-    evm2: &EvmRwasm<'_, EXT2, &mut State<EmptyDBTyped<ExitCode>>>,
+    evm2: &Rwasm<'_, EXT2, &mut State<EmptyDBTyped<ExitCode>>>,
     print_json_outcome: bool,
     _genesis_addresses: &HashSet<Address>,
 ) -> Result<(), TestError> {
+    if !exec_result1.is_err() && exec_result2.is_err() {
+        exec_result2.as_ref().unwrap();
+    }
+
     let logs_root1 = log_rlp_hash(exec_result1.as_ref().map(|r| r.logs()).unwrap_or_default());
     let logs_root2 = log_rlp_hash(exec_result2.as_ref().map(|r| r.logs()).unwrap_or_default());
 
@@ -686,25 +690,25 @@ pub fn execute_test_suite(
                 let mut cache2 = cache_state2.clone();
                 cache2.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
 
-                let mut state = revm::db::State::builder()
+                let mut state = State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let mut evm = revm::Evm::builder()
+                let mut evm = Evm::builder()
                     .with_db(&mut state)
                     .modify_env(|e| *e = env.clone())
                     .with_spec_id(spec_id)
-                    .build_revm();
+                    .build();
 
                 let mut state2 = StateBuilder::default()
                     .with_cached_prestate(cache2)
                     .with_bundle_update()
                     .build();
-                let mut evm2 = Evm::builder()
+                let mut evm2 = Rwasm::builder()
                     .with_db(&mut state2)
                     .modify_env(|e| *e = env.clone())
                     .with_spec_id(spec_id)
-                    .build_rwasm();
+                    .build();
 
                 // do the deed
                 let (e, exec_result) = if trace {
@@ -714,14 +718,14 @@ pub fn execute_test_suite(
                             TracerEip3155::new(Box::new(stderr())).without_summary(),
                         )
                         .append_handler_register(inspector_handle_register)
-                        .build_revm();
+                        .build();
                     let mut evm2 = evm2
                         .modify()
                         .reset_handler_with_external_context(
                             TracerEip3155::new(Box::new(stderr())).without_summary(),
                         )
                         .append_handler_register(inspector_handle_register)
-                        .build_rwasm();
+                        .build();
 
                     let timer = Instant::now();
                     let res = evm.transact_commit();
@@ -801,13 +805,13 @@ pub fn execute_test_suite(
                     .with_env(env.clone())
                     .with_external_context(TracerEip3155::new(Box::new(stdout())).without_summary())
                     .append_handler_register(inspector_handle_register)
-                    .build_revm();
-                let mut evm2 = EvmRwasm::builder()
+                    .build();
+                let mut evm2 = Rwasm::builder()
                     .with_spec_id(spec_id)
                     .with_db(state2)
                     .with_external_context(TracerEip3155::new(Box::new(stdout())))
                     .append_handler_register(inspector_handle_register)
-                    .build_revm();
+                    .build();
                 let _ = evm.transact_commit();
                 let _ = evm2.transact_commit();
 

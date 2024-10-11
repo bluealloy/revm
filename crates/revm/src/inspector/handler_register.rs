@@ -370,7 +370,7 @@ mod tests {
                 tx.gas_limit = 21100;
             })
             .append_handler_register(inspector_handle_register)
-            .build_revm();
+            .build();
 
         // run evm.
         evm.transact().unwrap();
@@ -390,6 +390,6 @@ mod tests {
         let _evm = Evm::builder()
             .with_external_context(&mut noop)
             .append_handler_register(inspector_handle_register)
-            .build_revm();
+            .build();
     }
 }

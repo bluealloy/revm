@@ -19,7 +19,7 @@ pub mod optimism;
 pub mod rwasm;
 
 // Export items.
-pub use builder::EvmBuilder;
+pub use builder::{EvmBuilder, RwasmBuilder};
 pub use context::{
     Context,
     ContextPrecompile,
@@ -60,4 +60,4 @@ pub use revm_interpreter as interpreter;
 pub use revm_interpreter::primitives;
 #[doc(inline)]
 pub use revm_precompile as precompile;
-pub use rwasm::EvmRwasm;
+pub use rwasm::Rwasm;
