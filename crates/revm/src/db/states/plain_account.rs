@@ -86,7 +86,7 @@ impl From<AccountInfo> for PlainAccount {
     fn from(info: AccountInfo) -> Self {
         Self {
             info,
-            storage: HashMap::new(),
+            storage: HashMap::default(),
         }
     }
 }

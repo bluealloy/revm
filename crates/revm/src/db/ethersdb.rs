@@ -2,64 +2,104 @@ use std::sync::Arc;
 
 use ethers_core::types::{Block, BlockId, TxHash, H160 as eH160, H256, U64 as eU64};
 use ethers_providers::Middleware;
-use tokio::runtime::{Builder, Handle, RuntimeFlavor};
+use tokio::runtime::{Handle, Runtime};
 
-use crate::primitives::{AccountInfo, Address, Bytecode, B256, KECCAK_EMPTY, U256};
+use crate::primitives::{AccountInfo, Address, Bytecode, B256, U256};
 use crate::{Database, DatabaseRef};
 
-#[derive(Debug, Clone)]
+use super::utils::HandleOrRuntime;
+
+#[derive(Debug)]
 pub struct EthersDB<M: Middleware> {
     client: Arc<M>,
     block_number: Option<BlockId>,
+    rt: HandleOrRuntime,
 }
 
 impl<M: Middleware> EthersDB<M> {
-    /// create ethers db connector inputs are url and block on what we are basing our database (None for latest)
+    /// Create ethers db connector inputs are url and block on what we are basing our database (None for latest).
+    ///
+    /// Returns `None` if no tokio runtime is available or if the current runtime is a current-thread runtime.
     pub fn new(client: Arc<M>, block_number: Option<BlockId>) -> Option<Self> {
-        let block_number: Option<BlockId> = if block_number.is_some() {
-            block_number
-        } else {
-            Some(BlockId::from(
-                Self::block_on(client.get_block_number()).ok()?,
-            ))
+        let rt = match Handle::try_current() {
+            Ok(handle) => match handle.runtime_flavor() {
+                tokio::runtime::RuntimeFlavor::CurrentThread => return None,
+                _ => HandleOrRuntime::Handle(handle),
+            },
+            Err(_) => return None,
         };
 
-        Some(Self {
-            client,
-            block_number,
-        })
+        if block_number.is_some() {
+            Some(Self {
+                client,
+                block_number,
+                rt,
+            })
+        } else {
+            let mut instance = Self {
+                client,
+                block_number: None,
+                rt,
+            };
+            instance.block_number = Some(BlockId::from(
+                instance.block_on(instance.client.get_block_number()).ok()?,
+            ));
+            Some(instance)
+        }
     }
 
-    /// internal utility function to call tokio feature and wait for output
+    /// Create a new EthersDB instance, with a provider and a block (None for latest) and a runtime.
+    ///
+    /// Refer to [tokio::runtime::Builder] how to create a runtime if you are in synchronous world.
+    /// If you are already using something like [tokio::main], call EthersDB::new instead.
+    pub fn with_runtime(
+        client: Arc<M>,
+        block_number: Option<BlockId>,
+        runtime: Runtime,
+    ) -> Option<Self> {
+        let rt = HandleOrRuntime::Runtime(runtime);
+        let mut instance = Self {
+            client,
+            block_number,
+            rt,
+        };
+
+        instance.block_number = Some(BlockId::from(
+            instance.block_on(instance.client.get_block_number()).ok()?,
+        ));
+        Some(instance)
+    }
+
+    /// Create a new EthersDB instance, with a provider and a block (None for latest) and a handle.
+    ///
+    /// This generally allows you to pass any valid runtime handle, refer to [tokio::runtime::Handle] on how
+    /// to obtain a handle. If you are already in asynchronous world, like [tokio::main], use EthersDB::new instead.
+    pub fn with_handle(
+        client: Arc<M>,
+        block_number: Option<BlockId>,
+        handle: Handle,
+    ) -> Option<Self> {
+        let rt = HandleOrRuntime::Handle(handle);
+        let mut instance = Self {
+            client,
+            block_number,
+            rt,
+        };
+
+        instance.block_number = Some(BlockId::from(
+            instance.block_on(instance.client.get_block_number()).ok()?,
+        ));
+        Some(instance)
+    }
+
+    /// Internal utility function to call tokio feature and wait for output
     #[inline]
-    fn block_on<F>(f: F) -> F::Output
+    fn block_on<F>(&self, f: F) -> F::Output
     where
         F: core::future::Future + Send,
         F::Output: Send,
     {
-        match Handle::try_current() {
-            Ok(handle) => match handle.runtime_flavor() {
-                // This essentially equals to tokio::task::spawn_blocking because tokio doesn't
-                // allow current_thread runtime to block_in_place
-                RuntimeFlavor::CurrentThread => std::thread::scope(move |s| {
-                    s.spawn(move || {
-                        Builder::new_current_thread()
-                            .enable_all()
-                            .build()
-                            .unwrap()
-                            .block_on(f)
-                    })
-                    .join()
-                    .unwrap()
-                }),
-                _ => tokio::task::block_in_place(move || handle.block_on(f)),
-            },
-            Err(_) => Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .unwrap()
-                .block_on(f),
-        }
+        self.rt.block_on(f)
     }
 
     /// set block number on which upcoming queries will be based
@@ -81,7 +121,7 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
             let code = self.client.get_code(add, self.block_number);
             tokio::join!(nonce, balance, code)
         };
-        let (nonce, balance, code) = Self::block_on(f);
+        let (nonce, balance, code) = self.block_on(f);
 
         let balance = U256::from_limbs(balance?.0);
         let nonce = nonce?.as_u64();
@@ -99,19 +139,14 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
         let add = eH160::from(address.0 .0);
         let index = H256::from(index.to_be_bytes());
         let slot_value: H256 =
-            Self::block_on(self.client.get_storage_at(add, index, self.block_number))?;
+            self.block_on(self.client.get_storage_at(add, index, self.block_number))?;
         Ok(U256::from_be_bytes(slot_value.to_fixed_bytes()))
     }
 
-    fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error> {
-        // saturate usize
-        if number > U256::from(u64::MAX) {
-            return Ok(KECCAK_EMPTY);
-        }
-        // We know number <= u64::MAX so unwrap is safe
-        let number = eU64::from(u64::try_from(number).unwrap());
+    fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
+        let number = eU64::from(number);
         let block: Option<Block<TxHash>> =
-            Self::block_on(self.client.get_block(BlockId::from(number)))?;
+            self.block_on(self.client.get_block(BlockId::from(number)))?;
         // If number is given, the block is supposed to be finalized so unwrap is safe too.
         Ok(B256::new(block.unwrap().hash.unwrap().0))
     }
@@ -136,7 +171,7 @@ impl<M: Middleware> Database for EthersDB<M> {
     }
 
     #[inline]
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
         <Self as DatabaseRef>::block_hash_ref(self, number)
     }
 }

@@ -18,17 +18,17 @@ pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
 ) -> Result<(), EVMError<DB::Error>> {
     // load acc
     let tx_caller = context.evm.env.tx.caller;
-    let (caller_account, _) = context
+    let caller_account = context
         .evm
         .inner
         .journaled_state
-        .load_account(tx_caller, &mut context.evm.inner.db)?;
+        .load_code(tx_caller, &mut context.evm.inner.db)?;
 
     context
         .evm
         .inner
         .env
-        .validate_tx_against_state::<SPEC>(caller_account)
+        .validate_tx_against_state::<SPEC>(caller_account.data)
         .map_err(EVMError::Transaction)?;
 
     Ok(())
@@ -41,9 +41,20 @@ pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
     let input = &env.tx.data;
     let is_create = env.tx.transact_to.is_create();
     let access_list = &env.tx.access_list;
+    let authorization_list_num = env
+        .tx
+        .authorization_list
+        .as_ref()
+        .map(|l| l.len() as u64)
+        .unwrap_or_default();
 
-    let initial_gas_spend =
-        gas::validate_initial_tx_gas(SPEC::SPEC_ID, input, is_create, access_list);
+    let initial_gas_spend = gas::validate_initial_tx_gas(
+        SPEC::SPEC_ID,
+        input,
+        is_create,
+        access_list,
+        authorization_list_num,
+    );
 
     // Additional check to see if limit is big enough to cover initial gas.
     let gas_limit = env.tx.gas_limit;

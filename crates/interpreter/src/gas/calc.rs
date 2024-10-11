@@ -1,10 +1,11 @@
+use revm_primitives::eip7702;
+
 use super::constants::*;
 use crate::{
     num_words,
-    primitives::{Address, SpecId, U256},
-    SelfDestructResult,
+    primitives::{AccessListItem, SpecId, U256},
+    AccountLoad, Eip7702CodeLoad, SStoreResult, SelfDestructResult, StateLoad,
 };
-use std::vec::Vec;
 
 /// `const` Option `?`.
 macro_rules! tri {
@@ -19,7 +20,7 @@ macro_rules! tri {
 /// `SSTORE` opcode refund calculation.
 #[allow(clippy::collapsible_else_if)]
 #[inline]
-pub fn sstore_refund(spec_id: SpecId, original: U256, current: U256, new: U256) -> i64 {
+pub fn sstore_refund(spec_id: SpecId, vals: &SStoreResult) -> i64 {
     if spec_id.is_enabled_in(SpecId::ISTANBUL) {
         // EIP-3529: Reduction in refunds
         let sstore_clears_schedule = if spec_id.is_enabled_in(SpecId::LONDON) {
@@ -27,29 +28,29 @@ pub fn sstore_refund(spec_id: SpecId, original: U256, current: U256, new: U256) 
         } else {
             REFUND_SSTORE_CLEARS
         };
-        if current == new {
+        if vals.is_new_eq_present() {
             0
         } else {
-            if original == current && new == U256::ZERO {
+            if vals.is_original_eq_present() && vals.is_new_zero() {
                 sstore_clears_schedule
             } else {
                 let mut refund = 0;
 
-                if original != U256::ZERO {
-                    if current == U256::ZERO {
+                if !vals.is_original_zero() {
+                    if vals.is_present_zero() {
                         refund -= sstore_clears_schedule;
-                    } else if new == U256::ZERO {
+                    } else if vals.is_new_zero() {
                         refund += sstore_clears_schedule;
                     }
                 }
 
-                if original == new {
+                if vals.is_original_eq_new() {
                     let (gas_sstore_reset, gas_sload) = if spec_id.is_enabled_in(SpecId::BERLIN) {
                         (SSTORE_RESET - COLD_SLOAD_COST, WARM_STORAGE_READ_COST)
                     } else {
                         (SSTORE_RESET, sload_cost(spec_id, false))
                     };
-                    if original == U256::ZERO {
+                    if vals.is_original_zero() {
                         refund += (SSTORE_SET - gas_sload) as i64;
                     } else {
                         refund += (gas_sstore_reset - gas_sload) as i64;
@@ -60,7 +61,7 @@ pub fn sstore_refund(spec_id: SpecId, original: U256, current: U256, new: U256) 
             }
         }
     } else {
-        if current != U256::ZERO && new == U256::ZERO {
+        if !vals.is_present_zero() && vals.is_new_zero() {
             REFUND_SSTORE_CLEARS
         } else {
             0
@@ -100,7 +101,7 @@ const fn log2floor(value: U256) -> u64 {
 /// `EXP` opcode cost calculation.
 #[inline]
 pub fn exp_cost(spec_id: SpecId, power: U256) -> Option<u64> {
-    if power == U256::ZERO {
+    if power.is_zero() {
         Some(EXP)
     } else {
         // EIP-160: EXP cost increase
@@ -124,9 +125,9 @@ pub const fn verylowcopy_cost(len: u64) -> Option<u64> {
 
 /// `EXTCODECOPY` opcode cost calculation.
 #[inline]
-pub const fn extcodecopy_cost(spec_id: SpecId, len: u64, is_cold: bool) -> Option<u64> {
+pub const fn extcodecopy_cost(spec_id: SpecId, len: u64, load: Eip7702CodeLoad<()>) -> Option<u64> {
     let base_gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
-        warm_cold_cost(is_cold)
+        warm_cold_cost_with_delegation(load)
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
         700
     } else {
@@ -188,14 +189,7 @@ pub const fn sload_cost(spec_id: SpecId, is_cold: bool) -> u64 {
 
 /// `SSTORE` opcode cost calculation.
 #[inline]
-pub fn sstore_cost(
-    spec_id: SpecId,
-    original: U256,
-    current: U256,
-    new: U256,
-    gas: u64,
-    is_cold: bool,
-) -> Option<u64> {
+pub fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, gas: u64, is_cold: bool) -> Option<u64> {
     // EIP-1706 Disable SSTORE with gasleft lower than call stipend
     if spec_id.is_enabled_in(SpecId::ISTANBUL) && gas <= CALL_STIPEND {
         return None;
@@ -203,9 +197,7 @@ pub fn sstore_cost(
 
     if spec_id.is_enabled_in(SpecId::BERLIN) {
         // Berlin specification logic
-        let mut gas_cost = istanbul_sstore_cost::<WARM_STORAGE_READ_COST, WARM_SSTORE_RESET>(
-            original, current, new,
-        );
+        let mut gas_cost = istanbul_sstore_cost::<WARM_STORAGE_READ_COST, WARM_SSTORE_RESET>(vals);
 
         if is_cold {
             gas_cost += COLD_SLOAD_COST;
@@ -214,26 +206,24 @@ pub fn sstore_cost(
     } else if spec_id.is_enabled_in(SpecId::ISTANBUL) {
         // Istanbul logic
         Some(istanbul_sstore_cost::<INSTANBUL_SLOAD_GAS, SSTORE_RESET>(
-            original, current, new,
+            vals,
         ))
     } else {
         // Frontier logic
-        Some(frontier_sstore_cost(current, new))
+        Some(frontier_sstore_cost(vals))
     }
 }
 
 /// EIP-2200: Structured Definitions for Net Gas Metering
 #[inline]
 fn istanbul_sstore_cost<const SLOAD_GAS: u64, const SSTORE_RESET_GAS: u64>(
-    original: U256,
-    current: U256,
-    new: U256,
+    vals: &SStoreResult,
 ) -> u64 {
-    if new == current {
+    if vals.is_new_eq_present() {
         SLOAD_GAS
-    } else if original == current && original == U256::ZERO {
+    } else if vals.is_original_eq_present() && vals.is_original_zero() {
         SSTORE_SET
-    } else if original == current {
+    } else if vals.is_original_eq_present() {
         SSTORE_RESET_GAS
     } else {
         SLOAD_GAS
@@ -242,8 +232,8 @@ fn istanbul_sstore_cost<const SLOAD_GAS: u64, const SSTORE_RESET_GAS: u64>(
 
 /// Frontier sstore cost just had two cases set and reset values.
 #[inline]
-fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
-    if current == U256::ZERO && new != U256::ZERO {
+fn frontier_sstore_cost(vals: &SStoreResult) -> u64 {
+    if vals.is_present_zero() && !vals.is_new_zero() {
         SSTORE_SET
     } else {
         SSTORE_RESET
@@ -252,12 +242,12 @@ fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
 
 /// `SELFDESTRUCT` opcode cost calculation.
 #[inline]
-pub const fn selfdestruct_cost(spec_id: SpecId, res: SelfDestructResult) -> u64 {
+pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResult>) -> u64 {
     // EIP-161: State trie clearing (invariant-preserving alternative)
     let should_charge_topup = if spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
-        res.had_value && !res.target_exists
+        res.data.had_value && !res.data.target_exists
     } else {
-        !res.target_exists
+        !res.data.target_exists
     };
 
     // EIP-150: Gas cost changes for IO-heavy operations
@@ -288,17 +278,25 @@ pub const fn selfdestruct_cost(spec_id: SpecId, res: SelfDestructResult) -> u64 
 /// * Account access gas. after berlin it can be cold or warm.
 /// * Transfer value gas. If value is transferred and balance of target account is updated.
 /// * If account is not existing and needs to be created. After Spurious dragon
-/// this is only accounted if value is transferred.
+///   this is only accounted if value is transferred.
+///
+/// account_load.is_empty will be accounted only if hardfork is SPURIOUS_DRAGON and
+/// there is transfer value.
+///
+/// This means that [`crate::OpCode::EXTSTATICCALL`],
+/// [`crate::OpCode::EXTDELEGATECALL`] that dont transfer value will not be
+/// effected by this field.
+///
+/// [`crate::OpCode::CALL`], [`crate::OpCode::EXTCALL`] use this field.
+///
+/// While [`crate::OpCode::STATICCALL`], [`crate::OpCode::DELEGATECALL`],
+/// [`crate::OpCode::CALLCODE`] need to have this field hardcoded to false
+/// as they were present before SPURIOUS_DRAGON hardfork.
 #[inline]
-pub const fn call_cost(
-    spec_id: SpecId,
-    transfers_value: bool,
-    is_cold: bool,
-    new_account_accounting: bool,
-) -> u64 {
+pub const fn call_cost(spec_id: SpecId, transfers_value: bool, account_load: AccountLoad) -> u64 {
     // Account access.
     let mut gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
-        warm_cold_cost(is_cold)
+        warm_cold_cost_with_delegation(account_load.load)
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         700
@@ -312,7 +310,7 @@ pub const fn call_cost(
     }
 
     // new account cost
-    if new_account_accounting {
+    if account_load.is_empty {
         // EIP-161: State trie clearing (invariant-preserving alternative)
         if spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
             // account only if there is value transferred.
@@ -337,6 +335,18 @@ pub const fn warm_cold_cost(is_cold: bool) -> u64 {
     }
 }
 
+/// Berlin warm and cold storage access cost for account access.
+///
+/// If delegation is Some, add additional cost for delegation account load.
+#[inline]
+pub const fn warm_cold_cost_with_delegation(load: Eip7702CodeLoad<()>) -> u64 {
+    let mut gas = warm_cold_cost(load.state_load.is_cold);
+    if let Some(is_cold) = load.is_delegate_account_cold {
+        gas += warm_cold_cost(is_cold);
+    }
+    gas
+}
+
 /// Memory expansion cost calculation for a given memory length.
 #[inline]
 pub const fn memory_gas_for_len(len: usize) -> u64 {
@@ -357,7 +367,8 @@ pub fn validate_initial_tx_gas(
     spec_id: SpecId,
     input: &[u8],
     is_create: bool,
-    access_list: &[(Address, Vec<U256>)],
+    access_list: &[AccessListItem],
+    authorization_list_num: u64,
 ) -> u64 {
     let mut initial_gas = 0;
     let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
@@ -375,11 +386,9 @@ pub fn validate_initial_tx_gas(
 
     // get number of access list account and storages.
     if spec_id.is_enabled_in(SpecId::BERLIN) {
-        let accessed_slots = access_list
-            .iter()
-            .fold(0, |slot_count, (_, slots)| slot_count + slots.len() as u64);
+        let accessed_slots: usize = access_list.iter().map(|item| item.storage_keys.len()).sum();
         initial_gas += access_list.len() as u64 * ACCESS_LIST_ADDRESS;
-        initial_gas += accessed_slots * ACCESS_LIST_STORAGE_KEY;
+        initial_gas += accessed_slots as u64 * ACCESS_LIST_STORAGE_KEY;
     }
 
     // base stipend
@@ -398,6 +407,11 @@ pub fn validate_initial_tx_gas(
     // Init code stipend for bytecode analysis
     if spec_id.is_enabled_in(SpecId::SHANGHAI) && is_create {
         initial_gas += initcode_cost(input.len() as u64)
+    }
+
+    //   EIP-7702
+    if spec_id.is_enabled_in(SpecId::PRAGUE) {
+        initial_gas += authorization_list_num * eip7702::PER_EMPTY_ACCOUNT_COST;
     }
 
     initial_gas

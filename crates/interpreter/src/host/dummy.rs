@@ -4,7 +4,7 @@ use crate::{
 };
 use std::vec::Vec;
 
-use super::LoadAccountResult;
+use super::{AccountLoad, Eip7702CodeLoad, StateLoad};
 
 /// A dummy [Host] implementation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -45,56 +45,56 @@ impl Host for DummyHost {
     }
 
     #[inline]
-    fn load_account(&mut self, _address: Address) -> Option<LoadAccountResult> {
-        Some(LoadAccountResult::default())
+    fn load_account_delegated(&mut self, _address: Address) -> Option<AccountLoad> {
+        Some(AccountLoad::default())
     }
 
     #[inline]
-    fn block_hash(&mut self, _number: U256) -> Option<B256> {
+    fn block_hash(&mut self, _number: u64) -> Option<B256> {
         Some(B256::ZERO)
     }
 
     #[inline]
-    fn balance(&mut self, _address: Address) -> Option<(U256, bool)> {
-        Some((U256::ZERO, false))
+    fn balance(&mut self, _address: Address) -> Option<StateLoad<U256>> {
+        Some(Default::default())
     }
 
     #[inline]
-    fn code(&mut self, _address: Address) -> Option<(Bytes, bool)> {
-        Some((Bytes::default(), false))
+    fn code(&mut self, _address: Address) -> Option<Eip7702CodeLoad<Bytes>> {
+        Some(Default::default())
     }
 
     #[inline]
-    fn code_hash(&mut self, __address: Address) -> Option<(B256, bool)> {
-        Some((KECCAK_EMPTY, false))
+    fn code_hash(&mut self, _address: Address) -> Option<Eip7702CodeLoad<B256>> {
+        Some(Eip7702CodeLoad::new_not_delegated(KECCAK_EMPTY, false))
     }
 
     #[inline]
-    fn sload(&mut self, __address: Address, index: U256) -> Option<(U256, bool)> {
+    fn sload(&mut self, _address: Address, index: U256) -> Option<StateLoad<U256>> {
         match self.storage.entry(index) {
-            Entry::Occupied(entry) => Some((*entry.get(), false)),
+            Entry::Occupied(entry) => Some(StateLoad::new(*entry.get(), false)),
             Entry::Vacant(entry) => {
                 entry.insert(U256::ZERO);
-                Some((U256::ZERO, true))
+                Some(StateLoad::new(U256::ZERO, true))
             }
         }
     }
 
     #[inline]
-    fn sstore(&mut self, _address: Address, index: U256, value: U256) -> Option<SStoreResult> {
-        let (present, is_cold) = match self.storage.entry(index) {
-            Entry::Occupied(mut entry) => (entry.insert(value), false),
-            Entry::Vacant(entry) => {
-                entry.insert(value);
-                (U256::ZERO, true)
-            }
-        };
-
-        Some(SStoreResult {
-            original_value: U256::ZERO,
-            present_value: present,
-            new_value: value,
-            is_cold,
+    fn sstore(
+        &mut self,
+        _address: Address,
+        index: U256,
+        value: U256,
+    ) -> Option<StateLoad<SStoreResult>> {
+        let present = self.storage.insert(index, value);
+        Some(StateLoad {
+            data: SStoreResult {
+                original_value: U256::ZERO,
+                present_value: present.unwrap_or(U256::ZERO),
+                new_value: value,
+            },
+            is_cold: present.is_none(),
         })
     }
 
@@ -117,7 +117,11 @@ impl Host for DummyHost {
     }
 
     #[inline]
-    fn selfdestruct(&mut self, _address: Address, _target: Address) -> Option<SelfDestructResult> {
-        panic!("Selfdestruct is not supported for this host")
+    fn selfdestruct(
+        &mut self,
+        _address: Address,
+        _target: Address,
+    ) -> Option<StateLoad<SelfDestructResult>> {
+        Some(StateLoad::default())
     }
 }

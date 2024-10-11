@@ -60,6 +60,7 @@ use fluentbase_sdk::{
     TxContext,
     F254,
 };
+use revm_interpreter::StateLoad;
 
 /// EVM instance containing both internal EVM context and external context
 /// and the handler that dictates the logic of EVM (or hardfork specification).
@@ -449,7 +450,9 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
     fn write_account(&mut self, account: Account, status: AccountStatus) {
         let mut ctx = self.evm_context.borrow_mut();
         // load account with this address from journaled state
-        let (db_account, _) = ctx
+        let StateLoad {
+            data: db_account, ..
+        } = ctx
             .load_account_with_code(account.address)
             .map_err(|_| panic!("database error"))
             .unwrap();
@@ -493,7 +496,10 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
 
     fn account(&self, address: &Address) -> (Account, bool) {
         let mut ctx = self.evm_context.borrow_mut();
-        let (account, is_cold) = ctx
+        let StateLoad {
+            data: account,
+            is_cold,
+        } = ctx
             .load_account(*address)
             .map_err(|_| panic!("database error"))
             .unwrap();
@@ -508,18 +514,21 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
 
     fn write_preimage(&mut self, address: Address, hash: B256, preimage: Bytes) {
         let mut ctx = self.evm_context.borrow_mut();
-        let (account, _) = ctx
+        let StateLoad { data: account, .. } = ctx
             .load_account(address)
             .map_err(|_| panic!("database error"))
             .unwrap();
         if account.info.code_hash == hash {
             ctx.journaled_state
-                .set_code(address, Bytecode::new_raw(preimage), Some(hash));
+                .set_code_with_hash(address, Bytecode::new_raw(preimage), hash);
             return;
         }
         // calculate preimage address
         let preimage_address = Address::from_slice(&hash.0[12..]);
-        let (preimage_account, _) = ctx
+        let StateLoad {
+            data: preimage_account,
+            ..
+        } = ctx
             .load_account(preimage_address)
             .map_err(|_| panic!("database error"))
             .unwrap();
@@ -535,7 +544,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
         preimage_account.info.code_hash = hash;
         // write preimage as a bytecode for the account
         ctx.journaled_state
-            .set_code(preimage_address, Bytecode::new_raw(preimage), Some(hash));
+            .set_code_with_hash(preimage_address, Bytecode::new_raw(preimage), hash);
         // // remember code hash
         // ctx.sstore(
         //     PRECOMPILE_EVM,
@@ -548,7 +557,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
 
     fn preimage(&self, address: &Address, hash: &B256) -> Option<Bytes> {
         let mut ctx = self.evm_context.borrow_mut();
-        let (account, _) = ctx
+        let StateLoad { data: account, .. } = ctx
             .load_account_with_code(*address)
             .map_err(|_| panic!("database error"))
             .unwrap();
@@ -556,7 +565,10 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
             return account.info.code.as_ref().map(|v| v.original_bytes());
         }
         let preimage_address = Address::from_slice(&hash.0[12..]);
-        let (preimage_account, _) = ctx
+        let StateLoad {
+            data: preimage_account,
+            ..
+        } = ctx
             .load_account(preimage_address)
             .map_err(|_| panic!("database error"))
             .unwrap();
@@ -569,7 +581,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
 
     fn preimage_size(&self, address: &Address, hash: &B256) -> u32 {
         let mut ctx = self.evm_context.borrow_mut();
-        let (account, _) = ctx
+        let StateLoad { data: account, .. } = ctx
             .load_account_with_code(*address)
             .map_err(|_| panic!("database error"))
             .unwrap();
@@ -582,7 +594,10 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
                 .unwrap_or_default();
         }
         let preimage_address = Address::from_slice(&hash.0[12..]);
-        let (preimage_account, _) = ctx
+        let StateLoad {
+            data: preimage_account,
+            ..
+        } = ctx
             .load_account(preimage_address)
             .map_err(|_| panic!("database error"))
             .unwrap();
@@ -606,19 +621,21 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmDbWrapper<'a, API, 
     fn storage(&self, address: &Address, slot: &U256) -> (U256, IsColdAccess) {
         let mut ctx = self.evm_context.borrow_mut();
         let load_result = ctx
-            .load_account_exist(*address)
+            .load_account_delegated(*address)
             .unwrap_or_else(|_| panic!("internal storage error"));
         if load_result.is_empty {
             return (U256::ZERO, load_result.is_cold);
         }
-        ctx.sload(*address, *slot)
+        let state_load = ctx
+            .sload(*address, *slot)
             .ok()
-            .expect("failed to read storage slot")
+            .expect("failed to read storage slot");
+        (state_load.data, state_load.is_cold)
     }
 
     fn committed_storage(&self, address: &Address, slot: &U256) -> (U256, IsColdAccess) {
         let mut ctx = self.evm_context.borrow_mut();
-        let (account, _) = ctx
+        let StateLoad { data: account, .. } = ctx
             .load_account(*address)
             .map_err(|_| panic!("failed to load account"))
             .unwrap();

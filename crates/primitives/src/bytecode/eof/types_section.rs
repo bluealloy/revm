@@ -4,6 +4,9 @@ use super::{
 };
 use std::vec::Vec;
 
+/// Non returning function has a output 0x80.
+const EOF_NON_RETURNING_FUNCTION: u8 = 0x80;
+
 /// Types section that contains stack information for matching code section.
 #[derive(Debug, Clone, Default, Hash, PartialEq, Eq, Copy)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -28,6 +31,12 @@ impl TypesSection {
             max_stack_size,
         }
     }
+
+    /// True if section is non-returning.
+    pub fn is_non_returning(&self) -> bool {
+        self.outputs == EOF_NON_RETURNING_FUNCTION
+    }
+
     /// Calculates the difference between the number of input and output stack elements.
     #[inline]
     pub const fn io_diff(&self) -> i32 {

@@ -29,7 +29,9 @@ pub mod opcode;
 // Reexport primary types.
 pub use function_stack::{FunctionReturnFrame, FunctionStack};
 pub use gas::Gas;
-pub use host::{DummyHost, Host, LoadAccountResult, SStoreResult, SelfDestructResult};
+pub use host::{
+    AccountLoad, DummyHost, Eip7702CodeLoad, Host, SStoreResult, SelfDestructResult, StateLoad,
+};
 pub use instruction_result::*;
 pub use interpreter::{
     analysis, num_words, Contract, Interpreter, InterpreterResult, SharedMemory, Stack,
@@ -37,7 +39,7 @@ pub use interpreter::{
 };
 pub use interpreter_action::{
     CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome, CreateScheme,
-    EOFCreateInputs, EOFCreateOutcome, InterpreterAction,
+    EOFCreateInputs, EOFCreateKind, InterpreterAction,
 };
 pub use opcode::{Instruction, OpCode, OPCODE_INFO_JUMPTABLE};
 pub use primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};

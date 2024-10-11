@@ -4,55 +4,94 @@ use crate::primitives::{HaltReason, OutOfGasError, SuccessReason};
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InstructionResult {
-    // success codes
+    // Success Codes
     #[default]
+    /// Execution should continue to the next one.
     Continue = 0x00,
+    /// Encountered a `STOP` opcode
     Stop,
+    /// Return from the current call.
     Return,
+    /// Self-destruct the current contract.
     SelfDestruct,
+    /// Return a contract (used in contract creation).
     ReturnContract,
 
-    // revert codes
-    Revert = 0x10, // revert opcode
+    // Revert Codes
+    /// Revert the transaction.
+    Revert = 0x10,
+    /// Exceeded maximum call depth.
     CallTooDeep,
+    /// Insufficient funds for transfer.
     OutOfFunds,
+    /// Revert if `CREATE`/`CREATE2` starts with `0xEF00`.
+    CreateInitCodeStartingEF00,
+    /// Invalid EVM Object Format (EOF) init code.
+    InvalidEOFInitCode,
+    /// `ExtDelegateCall` calling a non EOF contract.
+    InvalidExtDelegateCallTarget,
 
-    // Actions
+    // Action Codes
+    /// Indicates a call or contract creation.
     CallOrCreate = 0x20,
 
-    // error codes
+    // Error Codes
+    /// Out of gas error.
     OutOfGas = 0x50,
+    /// Out of gas error encountered during memory expansion.
     MemoryOOG,
+    /// The memory limit of the EVM has been exceeded.
     MemoryLimitOOG,
+    /// Out of gas error encountered during the execution of a precompiled contract.
     PrecompileOOG,
+    /// Out of gas error encountered while calling an invalid operand.
     InvalidOperandOOG,
+    /// Unknown or invalid opcode.
     OpcodeNotFound,
+    /// Invalid `CALL` with value transfer in static context.
     CallNotAllowedInsideStatic,
+    /// Invalid state modification in static call.
     StateChangeDuringStaticCall,
+    /// An undefined bytecode value encountered during execution.
     InvalidFEOpcode,
+    /// Invalid jump destination. Dynamic jumps points to invalid not jumpdest opcode.
     InvalidJump,
+    /// The feature or opcode is not activated in this version of the EVM.
     NotActivated,
+    /// Attempting to pop a value from an empty stack.
     StackUnderflow,
+    /// Attempting to push a value onto a full stack.
     StackOverflow,
+    /// Invalid memory or storage offset.
     OutOfOffset,
+    /// Address collision during contract creation.
     CreateCollision,
+    /// Payment amount overflow.
     OverflowPayment,
+    /// Error in precompiled contract execution.
     PrecompileError,
+    /// Nonce overflow.
     NonceOverflow,
-    /// Create init code size exceeds limit (runtime).
+    /// Exceeded contract size limit during creation.
     CreateContractSizeLimit,
-    /// Error on created contract that begins with EF
+    /// Created contract starts with invalid bytes (`0xEF`).
     CreateContractStartingWithEF,
-    /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
+    /// Exceeded init code size limit (EIP-3860:  Limit and meter initcode).
     CreateInitCodeSizeLimit,
     /// Fatal external error. Returned by database.
     FatalExternalError,
-    /// RETURNCONTRACT called in not init eof code.
+    /// `RETURNCONTRACT` called outside init EOF code.
     ReturnContractInNotInitEOF,
     /// Legacy contract is calling opcode that is enabled only in EOF.
     EOFOpcodeDisabledInLegacy,
-    /// EOF function stack overflow
+    /// Stack overflow in EOF subroutine function calls.
     EOFFunctionStackOverflow,
+    /// Aux data overflow, new aux data is larger than `u16` max size.
+    EofAuxDataOverflow,
+    /// Aux data is smaller then already present data size.
+    EofAuxDataTooSmall,
+    /// `EXT*CALL` target address needs to be padded with 0s.
+    InvalidEXTCALLTarget,
 }
 
 impl From<SuccessReason> for InstructionResult {
@@ -94,6 +133,10 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::CallNotAllowedInsideStatic => Self::CallNotAllowedInsideStatic,
             HaltReason::OutOfFunds => Self::OutOfFunds,
             HaltReason::CallTooDeep => Self::CallTooDeep,
+            HaltReason::EofAuxDataOverflow => Self::EofAuxDataOverflow,
+            HaltReason::EofAuxDataTooSmall => Self::EofAuxDataTooSmall,
+            HaltReason::EOFFunctionStackOverflow => Self::EOFFunctionStackOverflow,
+            HaltReason::InvalidEXTCALLTarget => Self::InvalidEXTCALLTarget,
             #[cfg(feature = "optimism")]
             HaltReason::FailedDeposit => Self::FatalExternalError,
         }
@@ -114,7 +157,12 @@ macro_rules! return_ok {
 #[macro_export]
 macro_rules! return_revert {
     () => {
-        InstructionResult::Revert | InstructionResult::CallTooDeep | InstructionResult::OutOfFunds
+        InstructionResult::Revert
+            | InstructionResult::CallTooDeep
+            | InstructionResult::OutOfFunds
+            | InstructionResult::InvalidEOFInitCode
+            | InstructionResult::CreateInitCodeStartingEF00
+            | InstructionResult::InvalidExtDelegateCallTarget
     };
 }
 
@@ -146,6 +194,9 @@ macro_rules! return_error {
             | InstructionResult::ReturnContractInNotInitEOF
             | InstructionResult::EOFOpcodeDisabledInLegacy
             | InstructionResult::EOFFunctionStackOverflow
+            | InstructionResult::EofAuxDataTooSmall
+            | InstructionResult::EofAuxDataOverflow
+            | InstructionResult::InvalidEXTCALLTarget
     };
 }
 
@@ -169,16 +220,26 @@ impl InstructionResult {
     }
 }
 
+/// Internal result that are not ex
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum InternalResult {
+    /// Internal instruction that signals Interpreter should continue running.
+    InternalContinue,
+    /// Internal instruction that signals call or create.
+    InternalCallOrCreate,
+    /// Internal CREATE/CREATE starts with 0xEF00
+    CreateInitCodeStartingEF00,
+    /// Internal to ExtDelegateCall
+    InvalidExtDelegateCallTarget,
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum SuccessOrHalt {
     Success(SuccessReason),
     Revert,
     Halt(HaltReason),
     FatalExternalError,
-    /// Internal instruction that signals Interpreter should continue running.
-    InternalContinue,
-    /// Internal instruction that signals call or create.
-    InternalCallOrCreate,
+    Internal(InternalResult),
 }
 
 impl SuccessOrHalt {
@@ -222,12 +283,13 @@ impl SuccessOrHalt {
 impl From<InstructionResult> for SuccessOrHalt {
     fn from(result: InstructionResult) -> Self {
         match result {
-            InstructionResult::Continue => Self::InternalContinue, // used only in interpreter loop
+            InstructionResult::Continue => Self::Internal(InternalResult::InternalContinue), // used only in interpreter loop
             InstructionResult::Stop => Self::Success(SuccessReason::Stop),
             InstructionResult::Return => Self::Success(SuccessReason::Return),
             InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
-            InstructionResult::CallOrCreate => Self::InternalCallOrCreate, // used only in interpreter loop
+            InstructionResult::CreateInitCodeStartingEF00 => Self::Revert,
+            InstructionResult::CallOrCreate => Self::Internal(InternalResult::InternalCallOrCreate), // used only in interpreter loop
             InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), // not gonna happen for first call
             InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), // Check for first call is done separately.
             InstructionResult::OutOfGas => Self::Halt(HaltReason::OutOfGas(OutOfGasError::Basic)),
@@ -267,10 +329,20 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::CreateInitCodeSizeLimit => {
                 Self::Halt(HaltReason::CreateInitCodeSizeLimit)
             }
+            // TODO (EOF) add proper Revert subtype.
+            InstructionResult::InvalidEOFInitCode => Self::Revert,
             InstructionResult::FatalExternalError => Self::FatalExternalError,
             InstructionResult::EOFOpcodeDisabledInLegacy => Self::Halt(HaltReason::OpcodeNotFound),
-            InstructionResult::EOFFunctionStackOverflow => Self::FatalExternalError,
+            InstructionResult::EOFFunctionStackOverflow => {
+                Self::Halt(HaltReason::EOFFunctionStackOverflow)
+            }
             InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
+            InstructionResult::EofAuxDataOverflow => Self::Halt(HaltReason::EofAuxDataOverflow),
+            InstructionResult::EofAuxDataTooSmall => Self::Halt(HaltReason::EofAuxDataTooSmall),
+            InstructionResult::InvalidEXTCALLTarget => Self::Halt(HaltReason::InvalidEXTCALLTarget),
+            InstructionResult::InvalidExtDelegateCallTarget => {
+                Self::Internal(InternalResult::InvalidExtDelegateCallTarget)
+            }
         }
     }
 }

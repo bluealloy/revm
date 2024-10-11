@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm", "types"]
 license = "MIT"
 name = "revm-primitives"
 repository = "https://github.com/bluealloy/revm"
-version = "4.0.0"
+version = "10.0.0"
 readme = "../../README.md"
 
 [package.metadata.docs.rs]
@@ -22,21 +22,31 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-alloy-primitives = { version = "0.7.2", default-features = false, features = [
-    "rlp",
+# alloy
+alloy-eip2930 = { version = "0.1", default-features = false }
+alloy-eip7702 = { version = "0.1", default-features = false, features = [
+    "k256",
 ] }
-hashbrown = "0.14"
+alloy-primitives = { version = "0.8.5", default-features = false, features = [
+    "rlp",
+    "map",
+] }
+
+# mics
 auto_impl = "1.2"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
-bitflags = { version = "2.5.0", default-features = false }
+bitflags = { version = "2.6.0", default-features = false }
 
 # For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
-c-kzg = { version = "1.0.2", default-features = false, optional = true }
-once_cell = { version = "1.19", default-features = false, optional = true }
+c-kzg = { version = "1.0.3", default-features = false, optional = true, features = [
+    "ethereum_kzg_settings",
+] }
+
+# Optionally use `kzg-rs` for a pure Rust implementation of KZG.
+kzg-rs = { version = "0.2.3", default-features = false, optional = true }
 
 # utility
 enumn = "0.1"
-derive_more = { version = "0.99", optional = true }
 cfg-if = "1"
 dyn-clone = "1.0"
 
@@ -57,18 +67,27 @@ std = [
     "hex/std",
     "bitvec/std",
     "bitflags/std",
+    "alloy-eip7702/std",
+    "alloy-eip2930/std",
 ]
-hashbrown = []
+hashbrown = ["alloy-primitives/map-hashbrown"]
 serde = [
     "dep:serde",
     "alloy-primitives/serde",
     "hex/serde",
-    "hashbrown/serde",
     "bitvec/serde",
     "bitflags/serde",
     "c-kzg?/serde",
+    "alloy-eip7702/serde",
+    "alloy-eip2930/serde",
 ]
-arbitrary = ["std", "alloy-primitives/arbitrary", "bitflags/arbitrary"]
+arbitrary = [
+    "std",
+    "alloy-primitives/arbitrary",
+    "bitflags/arbitrary",
+    "alloy-eip7702/arbitrary",
+    "alloy-eip2930/arbitrary",
+]
 asm-keccak = ["alloy-primitives/asm-keccak"]
 portable = ["c-kzg?/portable"]
 
@@ -96,6 +115,9 @@ optional_beneficiary_reward = []
 rand = ["alloy-primitives/rand"]
 
 # See comments in `revm-precompile`
-c-kzg = ["dep:c-kzg", "dep:once_cell", "dep:derive_more"]
+c-kzg = ["dep:c-kzg"]
+# `kzg-rs` is not audited but useful for `no_std` environment.
+#   use it with causing and default to `c-kzg` if possible!
+kzg-rs = ["dep:kzg-rs"]
 
 e2e = []

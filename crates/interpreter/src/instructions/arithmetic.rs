@@ -26,7 +26,7 @@ pub fn sub<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 pub fn div<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
-    if *op2 != U256::ZERO {
+    if !op2.is_zero() {
         *op2 = op1.wrapping_div(*op2);
     }
 }
@@ -40,7 +40,7 @@ pub fn sdiv<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
 pub fn rem<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
-    if *op2 != U256::ZERO {
+    if !op2.is_zero() {
         *op2 = op1.wrapping_rem(*op2);
     }
 }
@@ -69,6 +69,8 @@ pub fn exp<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
     *op2 = op1.pow(*op2);
 }
 
+/// Implements the `SIGNEXTEND` opcode as defined in the Ethereum Yellow Paper.
+///
 /// In the yellow paper `SIGNEXTEND` is defined to take two inputs, we will call them
 /// `x` and `y`, and produce one output. The first `t` bits of the output (numbering from the
 /// left, starting from 0) are equal to the `t`-th bit of `y`, where `t` is equal to

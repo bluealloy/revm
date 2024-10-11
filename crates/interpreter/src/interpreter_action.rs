@@ -3,14 +3,12 @@ mod call_outcome;
 mod create_inputs;
 mod create_outcome;
 mod eof_create_inputs;
-mod eof_create_outcome;
 
 pub use call_inputs::{CallInputs, CallScheme, CallValue};
 pub use call_outcome::CallOutcome;
 pub use create_inputs::{CreateInputs, CreateScheme};
 pub use create_outcome::CreateOutcome;
-pub use eof_create_inputs::EOFCreateInputs;
-pub use eof_create_outcome::EOFCreateOutcome;
+pub use eof_create_inputs::{EOFCreateInputs, EOFCreateKind};
 
 use crate::InterpreterResult;
 use std::boxed::Box;
@@ -19,7 +17,7 @@ use std::boxed::Box;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InterpreterAction {
     /// CALL, CALLCODE, DELEGATECALL, STATICCALL
-    /// or EOF EXT instuction called.
+    /// or EOF EXT instruction called.
     Call { inputs: Box<CallInputs> },
     /// CREATE or CREATE2 instruction called.
     Create { inputs: Box<CreateInputs> },

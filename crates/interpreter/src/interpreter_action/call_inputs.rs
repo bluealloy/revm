@@ -1,4 +1,4 @@
-use crate::primitives::{Address, Bytes, TransactTo, TxEnv, U256};
+use crate::primitives::{Address, Bytes, TxEnv, TxKind, U256};
 use core::ops::Range;
 use std::boxed::Box;
 
@@ -47,7 +47,7 @@ impl CallInputs {
     ///
     /// Returns `None` if the transaction is not a call.
     pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
-        let TransactTo::Call(target_address) = tx_env.transact_to else {
+        let TxKind::Call(target_address) = tx_env.transact_to else {
             return None;
         };
         Some(CallInputs {
@@ -130,6 +130,27 @@ pub enum CallScheme {
     DelegateCall,
     /// `STATICCALL`
     StaticCall,
+    /// `EXTCALL`
+    ExtCall,
+    /// `EXTSTATICCALL`
+    ExtStaticCall,
+    /// `EXTDELEGATECALL`
+    ExtDelegateCall,
+}
+
+impl CallScheme {
+    /// Returns true if it is EOF EXT*CALL.
+    pub fn is_ext(&self) -> bool {
+        matches!(
+            self,
+            Self::ExtCall | Self::ExtStaticCall | Self::ExtDelegateCall
+        )
+    }
+
+    /// Returns true if it is ExtDelegateCall.
+    pub fn is_ext_delegate_call(&self) -> bool {
+        matches!(self, Self::ExtDelegateCall)
+    }
 }
 
 /// Call value.

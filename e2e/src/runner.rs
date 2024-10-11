@@ -22,6 +22,7 @@ use revm::{
     primitives::{
         calc_excess_blob_gas,
         keccak256,
+        AccessListItem,
         AccountInfo,
         Bytecode,
         Bytes,
@@ -668,14 +669,9 @@ pub fn execute_test_suite(
                     .and_then(Option::as_deref)
                     .unwrap_or_default()
                     .iter()
-                    .map(|item| {
-                        (
-                            item.address,
-                            item.storage_keys
-                                .iter()
-                                .map(|key| U256::from_be_bytes(key.0))
-                                .collect::<Vec<_>>(),
-                        )
+                    .map(|item| AccessListItem {
+                        address: item.address,
+                        storage_keys: item.storage_keys.clone(),
                     })
                     .collect();
 

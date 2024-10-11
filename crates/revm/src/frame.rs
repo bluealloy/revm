@@ -4,9 +4,7 @@ use crate::{
     JournalCheckpoint,
 };
 use core::ops::Range;
-use revm_interpreter::{
-    CallOutcome, CreateOutcome, EOFCreateOutcome, Gas, InstructionResult, InterpreterResult,
-};
+use revm_interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
 use std::boxed::Box;
 
 /// Call CallStackFrame.
@@ -59,7 +57,7 @@ pub enum Frame {
 pub enum FrameResult {
     Call(CallOutcome),
     Create(CreateOutcome),
-    EOFCreate(EOFCreateOutcome),
+    EOFCreate(CreateOutcome),
 }
 
 impl FrameResult {
@@ -82,7 +80,7 @@ impl FrameResult {
                 Output::Create(outcome.result.output.clone(), outcome.address)
             }
             FrameResult::EOFCreate(outcome) => {
-                Output::Create(outcome.result.output.clone(), Some(outcome.address))
+                Output::Create(outcome.result.output.clone(), outcome.address)
             }
         }
     }
@@ -277,8 +275,11 @@ impl FrameOrResult {
         }))
     }
 
-    pub fn new_eofcreate_result(interpreter_result: InterpreterResult, address: Address) -> Self {
-        FrameOrResult::Result(FrameResult::EOFCreate(EOFCreateOutcome {
+    pub fn new_eofcreate_result(
+        interpreter_result: InterpreterResult,
+        address: Option<Address>,
+    ) -> Self {
+        FrameOrResult::Result(FrameResult::EOFCreate(CreateOutcome {
             result: interpreter_result,
             address,
         }))
