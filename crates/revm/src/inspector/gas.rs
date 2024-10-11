@@ -194,7 +194,7 @@ mod tests {
                 tx.gas_limit = 21100;
             })
             .append_handler_register(inspector_handle_register)
-            .build_revm();
+            .build();
 
         // run evm.
         evm.transact().unwrap();

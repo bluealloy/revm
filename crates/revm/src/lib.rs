@@ -19,7 +19,10 @@ pub mod optimism;
 pub mod rwasm;
 
 // Export items.
-pub use builder::EvmBuilder;
+#[cfg(feature = "rwasm")]
+pub use builder::RwasmBuilder as EvmBuilder;
+#[cfg(not(feature = "rwasm"))]
+pub use builder::{EvmBuilder, RwasmBuilder};
 pub use context::{
     Context,
     ContextPrecompile,
@@ -45,7 +48,9 @@ pub use db::{
     TransitionAccount,
     TransitionState,
 };
-pub use evm::{Evm, CALL_STACK_LIMIT};
+#[cfg(not(feature = "rwasm"))]
+pub use evm::Evm;
+pub use evm::CALL_STACK_LIMIT;
 pub use frame::{CallFrame, CreateFrame, Frame, FrameData, FrameOrResult, FrameResult};
 pub use handler::Handler;
 pub use inspector::{inspector_handle_register, inspectors, GetInspector, Inspector};
@@ -60,4 +65,6 @@ pub use revm_interpreter as interpreter;
 pub use revm_interpreter::primitives;
 #[doc(inline)]
 pub use revm_precompile as precompile;
-pub use rwasm::EvmRwasm;
+#[cfg(feature = "rwasm")]
+pub use rwasm::Rwasm as Evm;
+pub use rwasm::Rwasm;

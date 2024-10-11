@@ -167,7 +167,7 @@ mod tests {
                     TransactTo::Call(address!("0000000000000000000000000000000000000000"));
                 tx.data = FastLz::fastLzCall::new((input,)).abi_encode().into();
             })
-            .build_revm();
+            .build();
 
         let result_and_state = evm.transact().unwrap();
         let output = result_and_state.result.output().unwrap();

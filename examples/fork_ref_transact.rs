@@ -76,7 +76,7 @@ async fn main() -> anyhow::Result<()> {
             // transaction value in wei
             tx.value = U256::from(0);
         })
-        .build_revm();
+        .build();
 
     // execute transaction without writing to the DB
     let ref_tx = evm.transact().unwrap();
