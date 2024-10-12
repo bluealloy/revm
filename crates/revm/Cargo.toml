@@ -25,14 +25,17 @@ all = "warn"
 # revm
 #revm-interpreter = { path = "../interpreter", default-features = false }
 #revm-precompile = { path = "../precompile", default-features = false }
-revm-interpreter = { package = "revm-interpreter", path = "../interpreter", default-features = false }
-revm-precompile = { package = "revm-precompile", path = "../precompile", default-features = false, optional = true }
+#revm-interpreter = { package = "revm-interpreter", path = "../interpreter", default-features = false }
+#revm-precompile = { package = "revm-precompile", path = "../precompile", default-features = false, optional = true }
+revm-interpreter = { workspace = true, default-features = false }
+revm-precompile = { workspace = true, default-features = false, optional = true }
 
-#fluentbase-sdk = { workspace = true, default-features = false }
-#fluentbase-core = { workspace = true, default-features = false }
-fluentbase-core = { path = "../../../crates/core", default-features = false }
-fluentbase-sdk = { path = "../../../crates/sdk", default-features = false }
-fluentbase-runtime = { path = "../../../crates/runtime", default-features = false, optional = true }
+fluentbase-core = { workspace = true, default-features = false }
+fluentbase-sdk = { workspace = true, default-features = false }
+fluentbase-runtime = { workspace = true, default-features = false, optional = true }
+#fluentbase-core = { path = "../../../crates/core", default-features = false }
+#fluentbase-sdk = { path = "../../../crates/sdk", default-features = false }
+#fluentbase-runtime = { path = "../../../crates/runtime", default-features = false, optional = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
@@ -82,8 +85,8 @@ alloy-provider = { git = "https://github.com/alloy-rs/alloy.git", rev = "61140ec
 # needed for enabling TLS to use HTTPS connections when testing alloy DB
 alloy-transport-http = { git = "https://github.com/alloy-rs/alloy.git", rev = "61140ec", default-features = false }
 
-#fluentbase-genesis = { workspace = true, default-features = false }
-fluentbase-genesis = { path = "../../../crates/genesis", default-features = false }
+fluentbase-genesis = { workspace = true, default-features = false }
+#fluentbase-genesis = { path = "../../../crates/genesis", default-features = false }
 
 [features]
 default = [
