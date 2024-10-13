@@ -34,6 +34,17 @@ impl Default for Stack {
     }
 }
 
+impl Clone for Stack {
+    fn clone(&self) -> Self {
+        // Use `Self::new()` to ensure the cloned Stack maintains the STACK_LIMIT capacity,
+        // and then copy the data. This preserves the invariant that Stack always has
+        // STACK_LIMIT capacity, which is crucial for the safety and correctness of other methods.
+        let mut new_stack = Self::new();
+        new_stack.data.extend_from_slice(&self.data);
+        new_stack
+    }
+}
+
 impl Stack {
     /// Instantiate a new stack with the [default stack limit][STACK_LIMIT].
     #[inline]
@@ -441,5 +452,51 @@ mod tests {
             stack.push_slice(&b).unwrap();
             assert_eq!(stack.data, [U256::ZERO, U256::ZERO, U256::from(n)]);
         });
+    }
+
+    #[test]
+    fn stack_clone() {
+        // Test cloning an empty stack
+        let empty_stack = Stack::new();
+        let cloned_empty = empty_stack.clone();
+        assert_eq!(empty_stack, cloned_empty);
+        assert_eq!(cloned_empty.len(), 0);
+        assert_eq!(cloned_empty.data().capacity(), STACK_LIMIT);
+
+        // Test cloning a partially filled stack
+        let mut partial_stack = Stack::new();
+        for i in 0..10 {
+            partial_stack.push(U256::from(i)).unwrap();
+        }
+        let mut cloned_partial = partial_stack.clone();
+        assert_eq!(partial_stack, cloned_partial);
+        assert_eq!(cloned_partial.len(), 10);
+        assert_eq!(cloned_partial.data().capacity(), STACK_LIMIT);
+
+        // Test that modifying the clone doesn't affect the original
+        cloned_partial.push(U256::from(100)).unwrap();
+        assert_ne!(partial_stack, cloned_partial);
+        assert_eq!(partial_stack.len(), 10);
+        assert_eq!(cloned_partial.len(), 11);
+
+        // Test cloning a full stack
+        let mut full_stack = Stack::new();
+        for i in 0..STACK_LIMIT {
+            full_stack.push(U256::from(i)).unwrap();
+        }
+        let mut cloned_full = full_stack.clone();
+        assert_eq!(full_stack, cloned_full);
+        assert_eq!(cloned_full.len(), STACK_LIMIT);
+        assert_eq!(cloned_full.data().capacity(), STACK_LIMIT);
+
+        // Test push to the full original or cloned stack should return StackOverflow
+        assert_eq!(
+            full_stack.push(U256::from(100)),
+            Err(InstructionResult::StackOverflow)
+        );
+        assert_eq!(
+            cloned_full.push(U256::from(100)),
+            Err(InstructionResult::StackOverflow)
+        );
     }
 }
