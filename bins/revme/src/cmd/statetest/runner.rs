@@ -336,7 +336,7 @@ pub fn execute_test_suite(
 
             // Enable EOF in Prague tests.
             let spec_id = if spec_name == SpecName::Prague {
-                SpecId::PRAGUE_EOF
+                SpecId::OSAKA
             } else {
                 spec_name.to_spec_id()
             };
