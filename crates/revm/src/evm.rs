@@ -402,15 +402,15 @@ mod tests {
 
     #[test]
     fn sanity_eip7702_tx() {
-        let delegate = address!("0000000000000000000000000000000000000000");
         let caller = address!("0000000000000000000000000000000000000001");
+        let delegate = address!("0000000000000000000000000000000000000002");
         let auth = address!("0000000000000000000000000000000000000100");
 
         let bytecode = Bytecode::new_legacy([PUSH1, 0x01, PUSH1, 0x01, SSTORE].into());
 
         let mut evm = Evm::builder()
             .with_spec_id(SpecId::PRAGUE)
-            .with_db(BenchmarkDB::new_bytecode(bytecode))
+            .with_db(BenchmarkDB::new_bytecode(bytecode).with_target(delegate))
             .modify_tx_env(|tx| {
                 tx.authorization_list = Some(
                     vec![RecoveredAuthorization::new_unchecked(

@@ -122,7 +122,7 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
         }
 
         // 2. Verify the `nonce` is less than `2**64 - 1`.
-        if authorization.nonce() < u64::MAX {
+        if authorization.nonce() == u64::MAX {
             continue;
         }
 
