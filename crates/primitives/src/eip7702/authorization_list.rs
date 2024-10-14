@@ -5,6 +5,8 @@ use crate::Address;
 use core::{fmt, ops::Deref};
 use std::{boxed::Box, vec::Vec};
 
+use super::SECP256K1N_HALF;
+
 /// Authorization list for EIP-7702 transaction type.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -79,7 +81,18 @@ impl RecoveredAuthorization {
     /// Get the `authority` for the authorization.
     ///
     /// If this is `None`, then the authority could not be recovered.
-    pub const fn authority(&self) -> Option<Address> {
+    pub fn authority(&self) -> Option<Address> {
+        let signature = self.inner.signature();
+
+        // Check s-value
+        if signature.s() > SECP256K1N_HALF {
+            return None;
+        }
+
+        // Check y_parity, Parity::Parity means that it was 0 or 1.
+        if !matches!(signature.v(), Parity::Parity(_)) {
+            return None;
+        }
         self.authority
     }
 
