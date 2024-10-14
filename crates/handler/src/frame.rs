@@ -153,6 +153,7 @@ where
 
         // ExtDelegateCall is not allowed to call non-EOF contracts.
         if is_ext_delegate_call && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES) {
+            context.journal().checkpoint_revert(checkpoint);
             return return_result(InstructionResult::InvalidExtDelegateCallTarget);
         }
 

@@ -92,6 +92,18 @@ impl Jumps for ExtBytecode {
                 .offset_from(self.base.bytecode().as_ptr()) as usize
         }
     }
+    #[inline]
+    fn trace_pc(&self) -> usize {
+        match &self.base {
+            Bytecode::Eof(_) => unsafe {
+                // SAFETY: `instruction_pointer` should be at an offset from the start of the bytecode.
+                // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
+                self.instruction_pointer
+                    .offset_from(self.base.eof().unwrap().raw.as_ptr()) as usize
+            },
+            _ => self.pc(),
+        }
+    }
 }
 
 impl Immediates for ExtBytecode {
