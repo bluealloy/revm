@@ -202,9 +202,6 @@ impl Env {
                 return Err(InvalidTransaction::EmptyAuthorizationList);
             }
 
-            // Check validity of authorization_list
-            auth_list.is_valid(self.cfg.chain_id)?;
-
             // Check if other fields are unset.
             if self.tx.max_fee_per_blob_gas.is_some() || !self.tx.blob_hashes.is_empty() {
                 return Err(InvalidTransaction::AuthorizationListInvalidFields);
