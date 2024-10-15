@@ -1,13 +1,21 @@
 use crate::{
-    handler::{ExecutionHandler, PostExecutionHandler, PreExecutionHandler, ValidationHandler},
+    handler::{
+        mainnet::EthValidation, ExecutionHandler, PostExecutionHandler, PreExecutionHandler,
+        ValidationWire,
+    },
     EvmHandler,
 };
+use context::{Context, JournaledState};
 use database_interface::Database;
 use interpreter::table::InstructionTables;
 use specification::spec_to_generic;
 use std::fmt::Debug;
 use std::vec::Vec;
-use wiring::{EthereumWiring, EvmWiring as PrimitiveEvmWiring};
+use wiring::{
+    journaled_state::JournaledState as JournaledStateTrait,
+    result::{EVMError, EVMErrorWiring},
+    EthereumWiring, EvmWiring as PrimitiveEvmWiring, Transaction,
+};
 
 pub trait EvmWiring: PrimitiveEvmWiring {
     /// Creates a new handler with the given hardfork.
@@ -25,7 +33,14 @@ impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
                 spec_id: hardfork,
                 instruction_table: InstructionTables::new_plain::<SPEC>(),
                 registers: Vec::new(),
-                validation: ValidationHandler::new::<SPEC>(),
+                validation: EthValidation::<
+                    Context<Self>,
+                    EVMError<
+                        <<JournaledState<DB> as JournaledStateTrait>::Database as Database>::Error,
+                        <<Self as PrimitiveEvmWiring>::Transaction as Transaction>::TransactionError,
+                    >,
+                    SPEC,
+                >::new_boxed(),
                 pre_execution: PreExecutionHandler::new::<SPEC>(),
                 post_execution: PostExecutionHandler::mainnet::<SPEC>(),
                 execution: ExecutionHandler::new::<SPEC>(),

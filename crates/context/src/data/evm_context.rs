@@ -1,5 +1,5 @@
 use super::inner_evm_context::InnerEvmContext;
-use crate::{ContextPrecompiles, EvmWiring, FrameOrResult, CALL_STACK_LIMIT};
+use crate::{data::ContextPrecompiles, FrameOrResult};
 use bytecode::{Bytecode, Eof, EOF_MAGIC_BYTES};
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
@@ -11,12 +11,13 @@ use interpreter::{
 };
 use precompile::PrecompileErrors;
 use primitives::{keccak256, Address, Bytes, B256};
+use specification::constants::CALL_STACK_LIMIT;
 use specification::hardfork::SpecId::{self, *};
 use std::{boxed::Box, sync::Arc};
 use wiring::{
     default::{CreateScheme, EnvWiring},
     result::{EVMError, EVMResultGeneric},
-    Transaction,
+    EvmWiring, Transaction,
 };
 
 /// EVM context that contains the inner EVM context and precompiles.
@@ -68,21 +69,22 @@ where
         }
     }
 
-    /// Sets the database.
-    ///
-    /// Note that this will ignore the previous `error` if set.
-    #[inline]
-    pub fn with_db<
-        OEvmWiring: EvmWiring<Block = EvmWiringT::Block, Transaction = EvmWiringT::Transaction>,
-    >(
-        self,
-        db: OEvmWiring::Database,
-    ) -> EvmContext<OEvmWiring> {
-        EvmContext {
-            inner: self.inner.with_db(db),
-            precompiles: ContextPrecompiles::default(),
-        }
-    }
+    // TODO WIRING see if this is even needed.
+    // /// Sets the database.
+    // ///
+    // /// Note that this will ignore the previous `error` if set.
+    // #[inline]
+    // pub fn with_db<
+    //     OEvmWiring: EvmWiring<Block = EvmWiringT::Block, Transaction = EvmWiringT::Transaction>,
+    // >(
+    //     self,
+    //     db: OEvmWiring::Database,
+    // ) -> EvmContext<OEvmWiring> {
+    //     EvmContext {
+    //         inner: self.inner.with_db(db),
+    //         precompiles: ContextPrecompiles::default(),
+    //     }
+    // }
 
     /// Sets precompiles
     #[inline]
@@ -164,7 +166,7 @@ where
         let _ = self
             .inner
             .journaled_state
-            .load_account_delegated(inputs.bytecode_address, &mut self.inner.db)
+            .load_account_delegated(inputs.bytecode_address)
             .map_err(EVMError::Database)?;
 
         // Create subroutine checkpoint
@@ -184,12 +186,7 @@ where
                 if let Some(result) = self
                     .inner
                     .journaled_state
-                    .transfer(
-                        &inputs.caller,
-                        &inputs.target_address,
-                        value,
-                        &mut self.inner.db,
-                    )
+                    .transfer(&inputs.caller, &inputs.target_address, value)
                     .map_err(EVMError::Database)?
                 {
                     self.journaled_state.checkpoint_revert(checkpoint);
@@ -213,7 +210,7 @@ where
             let account = self
                 .inner
                 .journaled_state
-                .load_code(inputs.bytecode_address, &mut self.inner.db)
+                .load_code(inputs.bytecode_address)
                 .map_err(EVMError::Database)?;
 
             let code_hash = account.info.code_hash();
@@ -235,7 +232,7 @@ where
                 bytecode = self
                     .inner
                     .journaled_state
-                    .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)
+                    .load_code(eip7702_bytecode.delegated_address)
                     .map_err(EVMError::Database)?
                     .info
                     .code
@@ -521,8 +518,7 @@ pub(crate) mod test_utils {
         EvmContext {
             inner: InnerEvmContext {
                 env,
-                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::default()),
-                db,
+                journaled_state: JournaledState::new(SpecId::CANCUN, db, HashSet::default()),
                 chain: Default::default(),
                 error: Ok(()),
             },
@@ -538,8 +534,7 @@ pub(crate) mod test_utils {
         EvmContext {
             inner: InnerEvmContext {
                 env,
-                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::default()),
-                db,
+                journaled_state: JournaledState::new(SpecId::CANCUN, db, HashSet::default()),
                 chain: Default::default(),
                 error: Ok(()),
             },
@@ -551,7 +546,7 @@ pub(crate) mod test_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Frame, JournalEntry};
+    use crate::{frame::Frame, journaled_state::JournalEntry};
     use bytecode::Bytecode;
     use database::CacheDB;
     use database_interface::EmptyDB;

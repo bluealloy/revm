@@ -1,6 +1,6 @@
 use crate::{evm_wiring::HaltReasonTrait, EvmWiring};
 use core::fmt::{self, Debug};
-use database_interface::Database;
+use database_interface::{DBErrorMarker, Database};
 use primitives::{Address, Bytes, Log, U256};
 use specification::eip7702::InvalidAuthorization;
 use state::EvmState;
@@ -169,6 +169,18 @@ pub enum EVMError<DBError, TransactionError> {
     Precompile(String),
 }
 
+impl<DBError: DBErrorMarker, TX> From<DBError> for EVMError<DBError, TX> {
+    fn from(value: DBError) -> Self {
+        Self::Database(value)
+    }
+}
+
+impl<DB, TXERROR: From<InvalidTransaction>> From<InvalidTransaction> for EVMError<DB, TXERROR> {
+    fn from(value: InvalidTransaction) -> Self {
+        Self::Transaction(value.into())
+    }
+}
+
 impl<DBError, TransactionValidationErrorT> EVMError<DBError, TransactionValidationErrorT> {
     /// Maps a `DBError` to a new error type using the provided closure, leaving other variants unchanged.
     pub fn map_db_err<F, E>(self, op: F) -> EVMError<E, TransactionValidationErrorT>
@@ -215,12 +227,6 @@ where
             Self::Database(e) => write!(f, "database error: {e}"),
             Self::Precompile(e) | Self::Custom(e) => f.write_str(e),
         }
-    }
-}
-
-impl<DBError> From<InvalidTransaction> for EVMError<DBError, InvalidTransaction> {
-    fn from(value: InvalidTransaction) -> Self {
-        Self::Transaction(value)
     }
 }
 

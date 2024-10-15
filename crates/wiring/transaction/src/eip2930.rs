@@ -1,7 +1,9 @@
 use crate::{AccessListTrait, CommonTxFields};
+use auto_impl::auto_impl;
 use primitives::TxKind;
 
 /// EIP-2930: Optional access lists
+#[auto_impl(&, Box, Arc, Rc)]
 pub trait Eip2930Tx: CommonTxFields {
     type AccessList: AccessListTrait;
 

@@ -1,6 +1,10 @@
 use revm::{
+    context::{BlockGetter, CfgGetter, DatabaseGetter, EvmError, TransactionGetter},
+    database_interface::Database,
+    handler::{EthValidation, ValidationWire},
     precompile::PrecompileSpecId,
     specification::hardfork::{Spec, SpecId},
+    wiring::result::{EVMError, InvalidTransaction},
 };
 
 /// Specification IDs for the optimism blockchain.
@@ -37,6 +41,39 @@ pub enum OptimismSpecId {
     PRAGUE_EOF = 25,
     #[default]
     LATEST = u8::MAX,
+}
+
+pub struct VV<CTX, ERROR, FORK: OptimismSpec> {
+    pub ethereum_fork: EthValidation<CTX, ERROR, FORK>,
+}
+
+impl<CTX, ERROR, FORK: OptimismSpec> VV<CTX, ERROR, FORK> {
+    pub fn new() -> Self {
+        Self {
+            ethereum_fork: EthValidation::<CTX, ERROR, FORK>::new(),
+        }
+    }
+}
+
+impl<CTX, ERROR, FORK: OptimismSpec> ValidationWire for VV<CTX, ERROR, FORK>
+where
+    CTX: TransactionGetter + BlockGetter + DatabaseGetter + CfgGetter,
+    ERROR: From<InvalidTransaction>,
+{
+    type Context = CTX;
+    type Error = ERROR;
+
+    fn validate_env(&self, env: &Self::Context) -> Result<(), Self::Error> {
+        self.ethereum_fork.validate_env(env)
+    }
+
+    fn validate_tx_against_state(&self, context: &Self::Context) -> Result<(), Self::Error> {
+        self.ethereum_fork.validate_tx_against_state(context)
+    }
+
+    fn validate_initial_tx_gas(&self, context: &Self::Context) -> Result<u64, Self::Error> {
+        self.ethereum_fork.validate_initial_tx_gas(context)
+    }
 }
 
 impl OptimismSpecId {

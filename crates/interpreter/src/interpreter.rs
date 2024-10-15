@@ -18,6 +18,39 @@ use primitives::{Bytes, U256};
 use std::borrow::ToOwned;
 use std::sync::Arc;
 
+pub struct Temp<T> {
+    t: T,
+}
+
+fn temp(t: Temp<impl AsRef<u32>>) -> u32 {
+    *t.t.as_ref()
+}
+
+pub trait T {
+    fn t(&self) -> u32;
+}
+
+pub enum FrameOrResult<Frame, Result> {
+    Frame(Frame),
+    Result(Result),
+}
+
+/// Makes sense
+pub trait Frame: Sized {
+    type FrameAction: Sized;
+    type FrameResult: Sized;
+
+    fn init(frame_action: Self::FrameAction, cnt: ()) -> FrameOrResult<Self, Self::FrameResult>;
+
+    fn run(
+        &mut self,
+        instructions: (),
+        context: (),
+    ) -> FrameOrResult<Self::FrameAction, Self::FrameResult>;
+
+    fn return_result(&mut self, result: Self::FrameResult);
+}
+
 /// EVM bytecode interpreter.
 #[derive(Debug)]
 pub struct Interpreter {
@@ -67,6 +100,42 @@ impl Default for Interpreter {
         Self::new(Contract::default(), u64::MAX, false)
     }
 }
+/*
+Frame with generic bytecode
+
+Frame needs to have generic dispatch.
+
+Interpreter {
+    Operational {
+        stack
+        memory
+        instruction_pointer.
+    }
+
+    EOF operations {
+        function stack
+    }
+
+    control: {
+        NextAction.
+        Instruction result,
+    }
+
+    Info {
+        contract target/invoker.
+        bytecode hash.
+        etc.
+    }
+
+    Runtime Flags {
+        is_static: bool,
+        is_eof: bool,
+        is_eof_init: bool,
+    }
+}
+
+
+*/
 
 impl Interpreter {
     /// Create new interpreter

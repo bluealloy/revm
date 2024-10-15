@@ -5,6 +5,8 @@ mod dummy;
 pub use dummy::DummyHost;
 use wiring::{default::EnvWiring, EvmWiring};
 
+pub use wiring::journaled_state::StateLoad;
+
 /// EVM context host.
 pub trait Host {
     /// Chain specification.
@@ -132,47 +134,6 @@ impl Deref for AccountLoad {
 impl DerefMut for AccountLoad {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.load
-    }
-}
-
-/// State load information that contains the data and if the account or storage is cold loaded.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct StateLoad<T> {
-    /// returned data
-    pub data: T,
-    /// True if account is cold loaded.
-    pub is_cold: bool,
-}
-
-impl<T> Deref for StateLoad<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.data
-    }
-}
-
-impl<T> DerefMut for StateLoad<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.data
-    }
-}
-
-impl<T> StateLoad<T> {
-    /// Returns a new [`StateLoad`] with the given data and cold load status.
-    pub fn new(data: T, is_cold: bool) -> Self {
-        Self { data, is_cold }
-    }
-
-    /// Maps the data of the [`StateLoad`] to a new value.
-    ///
-    /// Useful for transforming the data of the [`StateLoad`] without changing the cold load status.
-    pub fn map<B, F>(self, f: F) -> StateLoad<B>
-    where
-        F: FnOnce(T) -> B,
-    {
-        StateLoad::new(f(self.data), self.is_cold)
     }
 }
 

@@ -4,6 +4,7 @@ use crate::{
     Context, ContextWithEvmWiring, EvmContext, EvmWiring, Frame, FrameOrResult, FrameResult,
     InnerEvmContext,
 };
+use context::JournaledState;
 use core::fmt::{self, Debug};
 use database_interface::{Database, DatabaseCommit};
 use interpreter::{Host, InterpreterAction, NewFrameAction, SharedMemory};
@@ -13,9 +14,6 @@ use wiring::{
     result::{EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState},
     Transaction,
 };
-
-/// EVM call stack limit.
-pub const CALL_STACK_LIMIT: u64 = 1024;
 
 /// EVM instance containing both internal EVM context and external context
 /// and the handler that dictates the logic of EVM (or hardfork specification).
@@ -46,7 +44,7 @@ impl<EvmWiringT: EvmWiring<Database: DatabaseCommit>> Evm<'_, EvmWiringT> {
         &mut self,
     ) -> EVMResultGeneric<ExecutionResult<EvmWiringT::HaltReason>, EvmWiringT> {
         let ResultAndState { result, state } = self.transact()?;
-        self.context.evm.db.commit(state);
+        self.context.evm.journaled_state.database.commit(state);
         Ok(result)
     }
 }
@@ -83,14 +81,19 @@ impl<'a, EvmWiringT: EvmWiring> Evm<'a, EvmWiringT> {
                 Context {
                     evm:
                         EvmContext {
-                            inner: InnerEvmContext { db, env, .. },
+                            inner:
+                                InnerEvmContext {
+                                    journaled_state: JournaledState { database, .. },
+                                    env,
+                                    ..
+                                },
                             ..
                         },
                     external,
                 },
             handler,
         } = self;
-        EvmBuilder::<'a>::new_with(db, external, env, handler)
+        EvmBuilder::<'a>::new_with(database, external, env, handler)
     }
 
     /// Runs main call loop.
@@ -226,7 +229,7 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
         let initial_gas_spend = self
             .handler
             .validation()
-            .initial_tx_gas(&self.context.evm.env)
+            .validate_initial_tx_gas(&self.context)
             .inspect_err(|_| {
                 self.clear();
             })?;
@@ -239,14 +242,14 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
     /// Pre verify transaction inner.
     #[inline]
     fn preverify_transaction_inner(&mut self) -> EVMResultGeneric<u64, EvmWiringT> {
-        self.handler.validation().env(&self.context.evm.env)?;
+        self.handler.validation().validate_env(&self.context)?;
         let initial_gas_spend = self
             .handler
             .validation()
-            .initial_tx_gas(&self.context.evm.env)?;
+            .validate_initial_tx_gas(&self.context)?;
         self.handler
             .validation()
-            .tx_against_state(&mut self.context)?;
+            .validate_tx_against_state(&mut self.context)?;
         Ok(initial_gas_spend)
     }
 
@@ -292,13 +295,13 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
     /// Returns the reference of database
     #[inline]
     pub fn db(&self) -> &EvmWiringT::Database {
-        &self.context.evm.db
+        &self.context.evm.journaled_state.database
     }
 
     /// Returns the mutable reference of database
     #[inline]
     pub fn db_mut(&mut self) -> &mut EvmWiringT::Database {
-        &mut self.context.evm.db
+        &mut self.context.evm.journaled_state.database
     }
 
     /// Returns the reference of block
@@ -335,7 +338,7 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
         EvmWiringT::Hardfork,
     ) {
         (
-            self.context.evm.inner.db,
+            self.context.evm.inner.journaled_state.database,
             self.context.evm.inner.env,
             self.handler.spec_id,
         )
@@ -408,19 +411,119 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
 #[cfg(test)]
 mod tests {
 
+    use crate::{
+        handler::{
+            mainnet::EthValidation, ExecutionHandler, PostExecutionHandler, PreExecutionHandler,
+        },
+        EvmHandler,
+    };
+
     use super::*;
     use bytecode::{
         opcode::{PUSH1, SSTORE},
         Bytecode,
     };
+    use core::{fmt::Debug, hash::Hash};
     use database::BenchmarkDB;
+    use database_interface::Database;
+    use interpreter::table::InstructionTables;
     use primitives::{address, TxKind, U256};
     use specification::{
         eip7702::{Authorization, RecoveredAuthorization, Signature},
         hardfork::SpecId,
+        spec_to_generic,
     };
     use transaction::TransactionType;
-    use wiring::EthereumWiring;
+    use wiring::{
+        default::{self, block::BlockEnv, Env, TxEnv},
+        result::{EVMErrorWiring, HaltReason},
+        EthereumWiring, EvmWiring as InnerEvmWiring,
+    };
+
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
+    struct CEthereumWiring<'a, DB: Database, EXT> {
+        phantom: core::marker::PhantomData<&'a (DB, EXT)>,
+    }
+
+    impl<'a, DB: Database, EXT: Debug> InnerEvmWiring for CEthereumWiring<'a, DB, EXT> {
+        type Database = DB;
+        type ExternalContext = EXT;
+        type ChainContext = ();
+        type Block = default::block::BlockEnv;
+        type Transaction = &'a default::TxEnv;
+        type Hardfork = SpecId;
+        type HaltReason = HaltReason;
+    }
+
+    impl<'a, DB: Database, EXT: Debug> EvmWiring for CEthereumWiring<'a, DB, EXT> {
+        fn handler<'evm>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self>
+        where
+            DB: Database,
+        {
+            spec_to_generic!(
+                hardfork,
+                EvmHandler {
+                    spec_id: hardfork,
+                    instruction_table: InstructionTables::new_plain::<SPEC>(),
+                    registers: Vec::new(),
+                    pre_execution: PreExecutionHandler::new::<SPEC>(),
+                    validation:
+                        EthValidation::<Context<Self>, EVMErrorWiring<Self>, SPEC>::new_boxed(),
+                    post_execution: PostExecutionHandler::mainnet::<SPEC>(),
+                    execution: ExecutionHandler::new::<SPEC>(),
+                }
+            )
+        }
+    }
+
+    //pub type DefaultEthereumWiring = EthereumWiring<EmptyDB, ()>;
+
+    #[test]
+    fn sanity_tx_ref() {
+        let delegate = address!("0000000000000000000000000000000000000000");
+        let caller = address!("0000000000000000000000000000000000000001");
+        let auth = address!("0000000000000000000000000000000000000100");
+
+        let mut tx = TxEnv::default();
+        tx.tx_type = TransactionType::Eip7702;
+        tx.gas_limit = 100_000;
+        tx.authorization_list = vec![RecoveredAuthorization::new_unchecked(
+            Authorization {
+                chain_id: U256::from(1),
+                address: delegate,
+                nonce: 0,
+            }
+            .into_signed(Signature::test_signature()),
+            Some(auth),
+        )]
+        .into();
+        tx.caller = caller;
+        tx.transact_to = TxKind::Call(auth);
+
+        let mut tx2 = TxEnv::default();
+        tx2.tx_type = TransactionType::Legacy;
+        // nonce was bumped from 0 to 1
+        tx2.nonce = 1;
+
+        let mut evm = EvmBuilder::new_with(
+            BenchmarkDB::default(),
+            (),
+            Env::boxed(CfgEnv::default(), BlockEnv::default(), &tx),
+            CEthereumWiring::handler(SpecId::LATEST),
+        )
+        .build();
+
+        let _ = evm.transact().unwrap();
+
+        let mut evm = evm
+            .modify()
+            .modify_tx_env(|t| {
+                *t = &tx2;
+            })
+            .build();
+
+        let _ = evm.transact().unwrap();
+    }
 
     #[test]
     fn sanity_eip7702_tx() {

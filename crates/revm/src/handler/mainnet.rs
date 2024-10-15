@@ -17,7 +17,6 @@ pub use pre_execution::{
     apply_eip7702_auth_list, deduct_caller, deduct_caller_inner, load_accounts, load_precompiles,
 };
 pub use validation::{
-    validate_block_env, validate_eip4844_tx, validate_env, validate_initial_tx_gas,
-    validate_priority_fee_tx, validate_tx_against_account, validate_tx_against_state,
-    validate_tx_env,
+    validate_eip4844_tx, validate_initial_tx_gas, validate_priority_fee_tx,
+    validate_tx_against_account, validate_tx_against_state, validate_tx_env, EthValidation,
 };

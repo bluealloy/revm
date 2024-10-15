@@ -1,7 +1,7 @@
 use crate::{
-    frame::EOFCreateFrame, handler::mainnet, CallFrame, Context, CreateFrame, EvmWiring, Frame,
-    FrameOrResult, FrameResult,
+    handler::mainnet, CallFrame, Context, CreateFrame, EvmWiring, Frame, FrameOrResult, FrameResult,
 };
+use context::frame::EOFCreateFrame;
 use interpreter::{
     table::InstructionTables, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
     EOFCreateInputs, InterpreterAction, InterpreterResult, NewFrameAction, SharedMemory,

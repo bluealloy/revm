@@ -9,7 +9,7 @@ pub use block_hash::{BlockHash, BlockHashRef};
 pub use state::{State, StateRef};
 
 use revm::{
-    database_interface::{Database, DatabaseCommit, DatabaseRef},
+    database_interface::{DBErrorMarker, Database, DatabaseCommit, DatabaseRef},
     primitives::{Address, HashMap, B256, U256},
     state::{Account, AccountInfo, Bytecode},
 };
@@ -25,6 +25,8 @@ pub enum DatabaseComponentError<SE, BHE> {
     State(SE),
     BlockHash(BHE),
 }
+
+impl<SE, BHE> DBErrorMarker for DatabaseComponentError<SE, BHE> {}
 
 impl<S: State, BH: BlockHash> Database for DatabaseComponents<S, BH> {
     type Error = DatabaseComponentError<S::Error, BH::Error>;

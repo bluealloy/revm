@@ -47,7 +47,7 @@ pub struct EthereumWiring<DB: Database, EXT> {
     phantom: core::marker::PhantomData<(DB, EXT)>,
 }
 
-impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
+impl<'a, DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
     type Database = DB;
     type ExternalContext = EXT;
     type ChainContext = ();

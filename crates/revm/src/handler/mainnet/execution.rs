@@ -1,8 +1,6 @@
-use crate::{
-    frame::EOFCreateFrame, CallFrame, Context, CreateFrame, EvmWiring, Frame, FrameOrResult,
-    FrameResult,
-};
+use crate::{CallFrame, Context, CreateFrame, EvmWiring, Frame, FrameOrResult, FrameResult};
 use bytecode::EOF_MAGIC_BYTES;
+use context::frame::EOFCreateFrame;
 use core::mem;
 use interpreter::{
     return_ok, return_revert, table::InstructionTables, CallInputs, CallOutcome, CallScheme,

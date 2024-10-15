@@ -4,7 +4,7 @@ use primitives::{Address, B256, U256};
 use state::{AccountInfo, Bytecode};
 use tokio::runtime::{Handle, Runtime};
 
-use crate::{Database, DatabaseRef};
+use crate::{DBErrorMarker, Database, DatabaseRef};
 
 /// The async EVM database interface.
 ///
@@ -13,7 +13,7 @@ use crate::{Database, DatabaseRef};
 /// Use [WrapDatabaseAsync] to provide [Database] implementation for a type that only implements this trait.
 pub trait DatabaseAsync {
     /// The database error type.
-    type Error: Send;
+    type Error: Send + DBErrorMarker;
 
     /// Get basic account information.
     fn basic_async(
@@ -48,7 +48,7 @@ pub trait DatabaseAsync {
 /// Use [WrapDatabaseAsync] to provide [DatabaseRef] implementation for a type that only implements this trait.
 pub trait DatabaseAsyncRef {
     /// The database error type.
-    type Error: Send;
+    type Error: Send + DBErrorMarker;
 
     /// Get basic account information.
     fn basic_async_ref(

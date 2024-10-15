@@ -5,6 +5,8 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
+use core::convert::Infallible;
+
 use auto_impl::auto_impl;
 use primitives::{Address, HashMap, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
@@ -17,11 +19,22 @@ pub mod empty_db;
 pub use async_db::{DatabaseAsync, WrapDatabaseAsync};
 pub use empty_db::{EmptyDB, EmptyDBTyped};
 
+pub trait BytecodeTrait {
+    fn code(&self) -> &[u8];
+}
+/// Database error marker is needed to implement From conversion for Error type.
+pub trait DBErrorMarker {}
+
+/// Implement marker for `()``
+impl DBErrorMarker for () {}
+impl DBErrorMarker for Infallible {}
+
 /// EVM database interface.
 #[auto_impl(&mut, Box)]
 pub trait Database {
     /// The database error type.
-    type Error;
+    type Error: DBErrorMarker;
+    //type Bytecode: BytecodeTrait;
 
     /// Get basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -52,7 +65,7 @@ pub trait DatabaseCommit {
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait DatabaseRef {
     /// The database error type.
-    type Error;
+    type Error: DBErrorMarker;
 
     /// Get basic account information.
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;

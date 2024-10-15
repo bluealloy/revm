@@ -2,6 +2,7 @@ use crate::{
     eip1559::Eip1559CommonTxFields, AccessListTrait, CommonTxFields, Eip1559Tx, Eip2930Tx,
     Eip4844Tx, Eip7702Tx, LegacyTx, TransactionType,
 };
+use auto_impl::auto_impl;
 use core::cmp::min;
 use core::fmt::Debug;
 use primitives::{TxKind, U256};
@@ -15,6 +16,7 @@ pub trait TransactionError: Debug + core::error::Error {}
 ///
 /// It can be extended to support new transaction types and only transaction types can be
 /// deprecated by not returning tx_type.
+#[auto_impl(&, Box, Arc, Rc)]
 pub trait Transaction {
     /// An error that occurs when validating a transaction.
     type TransactionError: TransactionError;

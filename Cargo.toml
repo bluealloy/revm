@@ -1,6 +1,4 @@
 [workspace]
-resolver = "2"
-default-members = ["crates/revm"]
 members = [
     # binary 
     "bins/revme",
@@ -19,9 +17,10 @@ members = [
     "crates/wiring/transaction",
     "crates/specification",
     "crates/statetest-types",
+    "crates/context",
 
     # variants
-    "crates/optimism",
+    # "crates/optimism",
 
     # examples
     "examples/block_traces",
@@ -32,6 +31,8 @@ members = [
     "examples/uniswap_v2_usdc_swap",
     #"examples/custom_opcodes",
 ]
+resolver = "2"
+default-members = ["crates/revm"]
 
 [workspace.dependencies]
 # revm
@@ -48,6 +49,8 @@ interpreter = { path = "crates/interpreter", package = "revm-interpreter", versi
 inspector = { path = "crates/inspector", package = "revm-inspector", version = "1.0.0", default-features = false }
 precompile = { path = "crates/precompile", package = "revm-precompile", version = "11.0.1", default-features = false }
 statetest-types = { path = "crates/statetest-types", package = "revm-statetest-types", version = "1.0.0", default-features = false }
+context = { path = "crates/context", package = "revm-context", version = "1.0.0", default-features = false }
+
 
 [workspace.package]
 license = "MIT"

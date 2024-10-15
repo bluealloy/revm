@@ -11,6 +11,7 @@ use crate::{
 use crate::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT};
 use core::ops::Mul;
 use revm::{
+    context::CfgGetter,
     database_interface::Database,
     handler::{
         mainnet::{self, deduct_caller_inner, validate_block_env, validate_tx_env},
@@ -27,7 +28,7 @@ use revm::{
             EVMError, EVMResult, EVMResultGeneric, ExecutionResult, InvalidTransaction,
             ResultAndState,
         },
-        Block, Transaction,
+        Block, Cfg, Transaction,
     },
     Context, ContextPrecompiles, FrameResult,
 };
@@ -85,8 +86,7 @@ pub fn validate_env<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     //     .map_err(OptimismInvalidTransaction::Base)?;
 
     // validate transaction.
-    validate_tx_env::<EvmWiringT, SPEC>(&env.tx, &env.block, &env.cfg)
-        .map_err(OpTransactionError::Base)?;
+    validate_tx_env::<&EnvWiring<EvmWiringT>, SPEC>(&env).map_err(OpTransactionError::Base)?;
 
     Ok(())
 }
@@ -184,7 +184,7 @@ pub fn refund<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
     let is_regolith = SPEC::optimism_enabled(OptimismSpecId::REGOLITH);
 
     // Prior to Regolith, deposit transactions did not receive gas refunds.
-    let is_gas_refund_disabled = env.cfg.is_gas_refund_disabled() || (is_deposit && !is_regolith);
+    let is_gas_refund_disabled = env.cfg().is_gas_refund_disabled() || (is_deposit && !is_regolith);
     if !is_gas_refund_disabled {
         gas.set_final_refund(SPEC::OPTIMISM_SPEC_ID.is_enabled_in(OptimismSpecId::LONDON));
     }

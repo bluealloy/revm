@@ -157,7 +157,14 @@ fn check_evm_execution<EXT: Debug>(
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
-    let state_root = state_merkle_trie_root(evm.context.evm.db.cache.trie_account());
+    let state_root = state_merkle_trie_root(
+        evm.context
+            .evm
+            .journaled_state
+            .database
+            .cache
+            .trie_account(),
+    );
 
     let print_json_output = |error: Option<String>| {
         if print_json_outcome {
@@ -501,7 +508,10 @@ pub fn execute_test_suite(
                 println!("\nExecution result: {exec_result:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);
                 println!("\nState before: {cache_state:#?}");
-                println!("\nState after: {:#?}", evm.context.evm.db.cache);
+                println!(
+                    "\nState after: {:#?}",
+                    evm.context.evm.journaled_state.database.cache
+                );
                 println!("\nSpecification: {spec_id:?}");
                 println!("\nEnvironment: {env:#?}");
                 println!("\nTest name: {name:?} (index: {index}, path: {path}) failed:\n{e}");

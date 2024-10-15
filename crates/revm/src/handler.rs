@@ -5,6 +5,7 @@ pub mod register;
 
 // Exports.
 pub use handle_types::*;
+use mainnet::EthValidation;
 
 // Includes.
 
@@ -15,8 +16,8 @@ use register::{EvmHandler, HandleRegisters};
 use specification::spec_to_generic;
 use std::vec::Vec;
 use wiring::{
-    result::{EVMResultGeneric, InvalidTransaction},
-    Transaction,
+    result::{EVMError, EVMErrorWiring, EVMResultGeneric, InvalidTransaction},
+    EvmWiring as PrimitiveEvmWiring, Transaction,
 };
 
 use self::register::{HandleRegister, HandleRegisterBox};
@@ -31,8 +32,10 @@ pub struct Handler<'a, EvmWiringT: EvmWiring, H: Host + 'a> {
     pub instruction_table: InstructionTables<'a, H>,
     /// Registers that will be called on initialization.
     pub registers: Vec<HandleRegisters<'a, EvmWiringT>>,
-    /// Validity handles.
-    pub validation: ValidationHandler<'a, EvmWiringT>,
+    /// New Validation
+    pub validation: Box<
+        dyn ValidationWire<Context = Context<EvmWiringT>, Error = EVMErrorWiring<EvmWiringT>> + 'a,
+    >,
     /// Pre execution handle.
     pub pre_execution: PreExecutionHandler<'a, EvmWiringT>,
     /// Post Execution handle.
@@ -40,6 +43,11 @@ pub struct Handler<'a, EvmWiringT: EvmWiring, H: Host + 'a> {
     /// Execution loop that handles frames.
     pub execution: ExecutionHandler<'a, EvmWiringT>,
 }
+
+type EVMErrorT<EvmWiringT> = EVMError<
+    <<EvmWiringT as wiring::EvmWiring>::Database as database_interface::Database>::Error,
+    <<EvmWiringT as wiring::EvmWiring>::Transaction as transaction::Transaction>::TransactionError,
+>;
 
 impl<'a, EvmWiringT> EvmHandler<'a, EvmWiringT>
 where
@@ -53,9 +61,10 @@ where
                 spec_id,
                 instruction_table: InstructionTables::new_plain::<SPEC>(),
                 registers: Vec::new(),
-                validation: ValidationHandler::new::<SPEC>(),
                 pre_execution: PreExecutionHandler::new::<SPEC>(),
                 post_execution: PostExecutionHandler::mainnet::<SPEC>(),
+                validation: EthValidation::<Context<EvmWiringT>, EVMErrorWiring<EvmWiringT>, SPEC>::new_boxed(
+                ),
                 execution: ExecutionHandler::new::<SPEC>(),
             }
         )
@@ -109,8 +118,11 @@ impl<'a, EvmWiringT: EvmWiring> EvmHandler<'a, EvmWiringT> {
     }
 
     /// Returns reference to validation handler.
-    pub fn validation(&self) -> &ValidationHandler<'a, EvmWiringT> {
-        &self.validation
+    pub fn validation(
+        &self,
+    ) -> &dyn ValidationWire<Context = Context<EvmWiringT>, Error = EVMErrorWiring<EvmWiringT>>
+    {
+        self.validation.as_ref()
     }
 
     /// Append handle register.

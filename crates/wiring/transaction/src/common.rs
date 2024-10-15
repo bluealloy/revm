@@ -1,7 +1,9 @@
+use auto_impl::auto_impl;
 use primitives::{Address, Bytes, U256};
 
 /// Trait that contains all common field that are shared by all transactions.
 /// This trait is base for Legacy, EIp2930 and Eip1559 transactions.
+#[auto_impl(&, Box, Arc, Rc)]
 pub trait CommonTxFields {
     /// Caller aka Author aka transaction signer.
     fn caller(&self) -> Address;

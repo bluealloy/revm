@@ -42,7 +42,10 @@ fn run_transaction<EXT: Debug, DB: DatabaseRefDebugError>(
         .build();
 
     let result = evm.transact()?;
-    Ok((result, evm.into_context().evm.inner.db.0))
+    Ok((
+        result,
+        evm.into_context().evm.inner.journaled_state.database.0,
+    ))
 }
 
 fn run_transaction_and_commit_with_ext<EXT: Debug, DB: DatabaseRefDebugError + DatabaseCommit>(

@@ -5,6 +5,20 @@ use specification::hardfork::Spec;
 use std::sync::Arc;
 use wiring::result::EVMResultGeneric;
 
+pub trait PreExecutionWire {
+    type Context;
+    type Precompiles;
+    type Error;
+
+    fn load_precompiles(&self) -> Self::Precompiles;
+
+    fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error>;
+
+    fn apply_eip7702_auth_list(&self, context: &mut Self::Context) -> Result<u64, Self::Error>;
+
+    fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error>;
+}
+
 /// Loads precompiles into Evm
 pub type LoadPrecompilesHandle<'a, EvmWiringT> =
     Arc<dyn Fn() -> ContextPrecompiles<EvmWiringT> + 'a>;

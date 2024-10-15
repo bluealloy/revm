@@ -1,3 +1,4 @@
+use auto_impl::auto_impl;
 use primitives::{Address, B256};
 
 /// Access list type is introduced in EIP-2930, and every
@@ -9,7 +10,8 @@ use primitives::{Address, B256};
 /// are warm loaded before transaction execution.
 ///
 /// Number of account and storage slots is used to calculate initial tx gas cost.
-pub trait AccessListTrait {
+#[auto_impl(&, Box, Arc, Rc)]
+pub trait AccessListTrait: Clone {
     /// Iterate over access list.
     fn iter(&self) -> impl Iterator<Item = (Address, impl Iterator<Item = B256>)>;
 

@@ -6,12 +6,15 @@
 extern crate alloc as std;
 
 pub mod block;
+pub mod cfg;
 pub mod default;
 pub mod evm_wiring;
+pub mod journaled_state;
 pub mod precompile;
 pub mod result;
 
 pub use block::Block;
+pub use cfg::Cfg;
 pub use evm_wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring, HaltReasonTrait};
 pub use transaction::{Transaction, TransactionType};
 

@@ -3,6 +3,7 @@ use auto_impl::auto_impl;
 use primitives::{Address, U256};
 
 /// EIP-7702 transaction, TODO set Trait for AuthorizationList.
+#[auto_impl(&, Box, Arc, Rc)]
 pub trait Eip7702Tx: Eip1559Tx {
     /// Destination address of the call.
     fn destination(&self) -> Address;

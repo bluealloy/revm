@@ -1,5 +1,5 @@
 mod context_precompiles;
-pub(crate) mod evm_context;
+pub mod evm_context;
 mod inner_evm_context;
 
 pub use context_precompiles::{
@@ -10,7 +10,6 @@ use derive_where::derive_where;
 pub use evm_context::EvmContext;
 pub use inner_evm_context::InnerEvmContext;
 
-use crate::EvmWiring;
 use database_interface::{Database, EmptyDB};
 use interpreter::{
     as_u64_saturated, AccountLoad, Eip7702CodeLoad, Host, SStoreResult, SelfDestructResult,
@@ -18,7 +17,7 @@ use interpreter::{
 };
 use primitives::{Address, Bytes, Log, B256, BLOCK_HASH_HISTORY, U256};
 use std::boxed::Box;
-use wiring::{default::EnvWiring, Block, EthereumWiring};
+use wiring::{default::EnvWiring, Block, EthereumWiring, EvmWiring};
 
 /// Main Context structure that contains both EvmContext and External context.
 #[derive_where(Clone; EvmWiringT::Block, EvmWiringT::ChainContext, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error, EvmWiringT::ExternalContext)]
@@ -181,7 +180,7 @@ impl<EvmWiringT: EvmWiring> Host for Context<EvmWiringT> {
         self.evm
             .inner
             .journaled_state
-            .selfdestruct(address, target, &mut self.evm.inner.db)
+            .selfdestruct(address, target)
             .map_err(|e| self.evm.error = Err(e))
             .ok()
     }

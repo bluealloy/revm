@@ -85,7 +85,7 @@ fn bench_transact(
     g: &mut BenchmarkGroup<'_, WallTime>,
     evm: &mut Evm<'_, EthereumWiring<BenchmarkDB, ()>>,
 ) {
-    let state = match evm.context.evm.db.0 {
+    let state = match evm.context.evm.journaled_state.database.0 {
         Bytecode::LegacyRaw(_) => "raw",
         Bytecode::LegacyAnalyzed(_) => "analysed",
         Bytecode::Eof(_) => "eof",
@@ -102,7 +102,14 @@ fn bench_eval(
     g.bench_function("eval", |b| {
         let contract = Contract {
             input: evm.context.evm.env.tx.data.clone(),
-            bytecode: evm.context.evm.db.0.clone().into_analyzed(),
+            bytecode: evm
+                .context
+                .evm
+                .journaled_state
+                .database
+                .0
+                .clone()
+                .into_analyzed(),
             ..Default::default()
         };
         let mut shared_memory = SharedMemory::new();

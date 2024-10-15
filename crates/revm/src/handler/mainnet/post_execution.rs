@@ -45,7 +45,7 @@ pub fn reward_beneficiary<EvmWiringT: EvmWiring, SPEC: Spec>(
         .evm
         .inner
         .journaled_state
-        .load_account(beneficiary, &mut context.evm.inner.db)
+        .load_account(beneficiary)
         .map_err(EVMError::Database)?;
 
     coinbase_account.data.mark_touch();
@@ -84,7 +84,7 @@ pub fn reimburse_caller<EvmWiringT: EvmWiring>(
         .evm
         .inner
         .journaled_state
-        .load_account(caller, &mut context.evm.inner.db)
+        .load_account(caller)
         .map_err(EVMError::Database)?;
 
     caller_account.data.info.balance =

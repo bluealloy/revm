@@ -1,7 +1,9 @@
 use crate::CommonTxFields;
+use auto_impl::auto_impl;
 use primitives::TxKind;
 
 /// Legacy transaction trait before introduction of EIP-2929
+#[auto_impl(&, Box, Arc, Rc)]
 pub trait LegacyTx: CommonTxFields {
     /// Transaction kind.
     fn kind(&self) -> TxKind;

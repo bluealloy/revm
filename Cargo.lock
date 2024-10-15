@@ -2904,6 +2904,7 @@ dependencies = [
  "alloy-provider",
  "alloy-sol-types",
  "anyhow",
+ "auto_impl",
  "criterion",
  "derive-where",
  "dyn-clone",
@@ -2911,6 +2912,7 @@ dependencies = [
  "indicatif",
  "reqwest",
  "revm-bytecode",
+ "revm-context",
  "revm-database",
  "revm-database-interface",
  "revm-interpreter",
@@ -2933,6 +2935,26 @@ dependencies = [
  "phf",
  "revm-primitives",
  "revm-specification",
+ "serde",
+]
+
+[[package]]
+name = "revm-context"
+version = "1.0.0"
+dependencies = [
+ "auto_impl",
+ "derive-where",
+ "dyn-clone",
+ "revm-bytecode",
+ "revm-database",
+ "revm-database-interface",
+ "revm-interpreter",
+ "revm-precompile",
+ "revm-primitives",
+ "revm-specification",
+ "revm-state",
+ "revm-transaction",
+ "revm-wiring",
  "serde",
 ]
 
@@ -3002,22 +3024,6 @@ dependencies = [
  "serde",
  "serde_json",
  "walkdir",
-]
-
-[[package]]
-name = "revm-optimism"
-version = "1.0.0"
-dependencies = [
- "alloy-sol-types",
- "anyhow",
- "criterion",
- "enumn",
- "indicatif",
- "revm",
- "revm-database",
- "revm-precompile",
- "rstest",
- "serde",
 ]
 
 [[package]]

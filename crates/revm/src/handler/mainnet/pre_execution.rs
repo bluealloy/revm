@@ -2,8 +2,14 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
-use crate::{Context, ContextPrecompiles, EvmWiring, JournalEntry};
+use crate::{
+    handler::pre_execution::PreExecutionWire, Context, ContextPrecompiles, EvmWiring, JournalEntry,
+};
 use bytecode::Bytecode;
+use context::{
+    BlockGetter, CfgGetter, DatabaseGetter, JournalStateGetter, JournalStateGetterDBError,
+    TransactionGetter,
+};
 use precompile::PrecompileSpecId;
 use primitives::{BLOCKHASH_STORAGE_ADDRESS, U256};
 use specification::{
@@ -11,12 +17,81 @@ use specification::{
     hardfork::{Spec, SpecId},
 };
 use state::Account;
-use transaction::{eip7702::Authorization, Eip7702Tx};
+use transaction::{eip7702::Authorization, AccessListTrait, Eip7702Tx};
 use wiring::{
     default::EnvWiring,
-    result::{EVMError, EVMResultGeneric},
+    journaled_state::JournaledState,
+    result::{EVMError, EVMResultGeneric, InvalidTransaction},
     Block, Transaction, TransactionType,
 };
+
+pub struct EthPreExecution<CTX, ERROR, Fork: Spec> {
+    pub _phantom: std::marker::PhantomData<(CTX, ERROR, Fork)>,
+}
+
+impl<CTX, ERROR, Fork: Spec> EthPreExecution<CTX, ERROR, Fork> {
+    pub fn new() -> Self {
+        Self {
+            _phantom: std::marker::PhantomData,
+        }
+    }
+
+    pub fn new_boxed() -> Box<Self> {
+        Box::new(Self::new())
+    }
+}
+
+impl<CTX, ERROR, FORK: Spec> PreExecutionWire for EthPreExecution<CTX, ERROR, FORK>
+where
+    CTX: TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter,
+    ERROR: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
+{
+    type Context = CTX;
+    type Error = ERROR;
+    type Precompiles = ();
+
+    fn load_precompiles(&self) -> Self::Precompiles {
+        todo!()
+    }
+
+    fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
+        // set journaling state flag.
+        context.journal().set_spec_id(FORK::SPEC_ID);
+
+        // load coinbase
+        // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
+        if FORK::enabled(SpecId::SHANGHAI) {
+            let coinbase = *context.block().coinbase();
+            context.journal().warm_account(coinbase);
+        }
+
+        // Load blockhash storage address
+        // EIP-2935: Serve historical block hashes from state
+        if FORK::enabled(SpecId::PRAGUE) {
+            context.journal().warm_account(BLOCKHASH_STORAGE_ADDRESS);
+        }
+
+        // Load access list
+        if let Some(access_list) = context.tx().access_list().cloned() {
+            for access_list in access_list.iter() {
+                context.journal().warm_account_and_storage(
+                    access_list.0,
+                    access_list.1.map(|i| U256::from_be_bytes(i.0)),
+                )?;
+            }
+        };
+
+        Ok(())
+    }
+
+    fn apply_eip7702_auth_list(&self, context: &mut Self::Context) -> Result<u64, Self::Error> {
+        todo!()
+    }
+
+    fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
+        todo!()
+    }
+}
 
 /// Main precompile load
 #[inline]
@@ -54,7 +129,7 @@ pub fn load_accounts<EvmWiringT: EvmWiring, SPEC: Spec>(
     }
 
     // Load access list
-    context.evm.load_access_list().map_err(EVMError::Database)?;
+    //context.evm.load_access_list().map_err(EVMError::Database)?;
     Ok(())
 }
 
@@ -98,7 +173,7 @@ pub fn deduct_caller<EvmWiringT: EvmWiring, SPEC: Spec>(
         .evm
         .inner
         .journaled_state
-        .load_account(caller, &mut context.evm.inner.db)
+        .load_account(caller)
         .map_err(EVMError::Database)?;
 
     // deduct gas cost from caller's account.
@@ -158,7 +233,7 @@ pub fn apply_eip7702_auth_list<EvmWiringT: EvmWiring, SPEC: Spec>(
             .evm
             .inner
             .journaled_state
-            .load_code(authority, &mut context.evm.inner.db)
+            .load_code(authority)
             .map_err(EVMError::Database)?;
 
         // 4. Verify the code of authority is either empty or already delegated.
