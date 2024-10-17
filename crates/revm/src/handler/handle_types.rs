@@ -16,7 +16,5 @@ pub use generic::{GenericContextHandle, GenericContextHandleRet};
 pub use post_execution::{
     EndHandle, OutputHandle, PostExecutionHandler, ReimburseCallerHandle, RewardBeneficiaryHandle,
 };
-pub use pre_execution::{
-    DeductCallerHandle, LoadAccountsHandle, LoadPrecompilesHandle, PreExecutionHandler,
-};
+pub use pre_execution::PreExecutionWire;
 pub use validation::*;

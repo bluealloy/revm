@@ -360,7 +360,8 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
 
         // load precompiles
         let precompiles = pre_exec.load_precompiles();
-        ctx.evm.set_precompiles(precompiles);
+        // TODO SET PRECOMPILE
+        //ctx.evm.set_precompiles(precompiles);
 
         // deduce caller balance with its limit.
         pre_exec.deduct_caller(ctx)?;
@@ -413,7 +414,8 @@ mod tests {
 
     use crate::{
         handler::{
-            mainnet::EthValidation, ExecutionHandler, PostExecutionHandler, PreExecutionHandler,
+            mainnet::{EthPreExecution, EthValidation},
+            ExecutionHandler, PostExecutionHandler,
         },
         EvmHandler,
     };
@@ -466,7 +468,8 @@ mod tests {
                     spec_id: hardfork,
                     instruction_table: InstructionTables::new_plain::<SPEC>(),
                     registers: Vec::new(),
-                    pre_execution: PreExecutionHandler::new::<SPEC>(),
+                    pre_execution:
+                        EthPreExecution::<Context<Self>, EVMErrorWiring<Self>, SPEC>::new_boxed(),
                     validation:
                         EthValidation::<Context<Self>, EVMErrorWiring<Self>, SPEC>::new_boxed(),
                     post_execution: PostExecutionHandler::mainnet::<SPEC>(),

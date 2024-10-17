@@ -5,7 +5,7 @@ pub mod register;
 
 // Exports.
 pub use handle_types::*;
-use mainnet::EthValidation;
+use mainnet::{EthPreExecution, EthValidation};
 
 // Includes.
 
@@ -17,7 +17,7 @@ use specification::spec_to_generic;
 use std::vec::Vec;
 use wiring::{
     result::{EVMError, EVMErrorWiring, EVMResultGeneric, InvalidTransaction},
-    EvmWiring as PrimitiveEvmWiring, Transaction,
+    Transaction,
 };
 
 use self::register::{HandleRegister, HandleRegisterBox};
@@ -37,7 +37,13 @@ pub struct Handler<'a, EvmWiringT: EvmWiring, H: Host + 'a> {
         dyn ValidationWire<Context = Context<EvmWiringT>, Error = EVMErrorWiring<EvmWiringT>> + 'a,
     >,
     /// Pre execution handle.
-    pub pre_execution: PreExecutionHandler<'a, EvmWiringT>,
+    pub pre_execution: Box<
+        dyn PreExecutionWire<
+                Context = Context<EvmWiringT>,
+                Precompiles = (),
+                Error = EVMErrorWiring<EvmWiringT>,
+            > + 'a,
+    >,
     /// Post Execution handle.
     pub post_execution: PostExecutionHandler<'a, EvmWiringT>,
     /// Execution loop that handles frames.
@@ -61,7 +67,7 @@ where
                 spec_id,
                 instruction_table: InstructionTables::new_plain::<SPEC>(),
                 registers: Vec::new(),
-                pre_execution: PreExecutionHandler::new::<SPEC>(),
+                pre_execution: EthPreExecution::<Context<EvmWiringT>,EVMErrorWiring<EvmWiringT>, SPEC>::new_boxed(),
                 post_execution: PostExecutionHandler::mainnet::<SPEC>(),
                 validation: EthValidation::<Context<EvmWiringT>, EVMErrorWiring<EvmWiringT>, SPEC>::new_boxed(
                 ),
@@ -103,8 +109,14 @@ impl<'a, EvmWiringT: EvmWiring> EvmHandler<'a, EvmWiringT> {
     }
 
     /// Returns reference to pre execution handler.
-    pub fn pre_execution(&self) -> &PreExecutionHandler<'a, EvmWiringT> {
-        &self.pre_execution
+    pub fn pre_execution(
+        &self,
+    ) -> &dyn PreExecutionWire<
+        Context = Context<EvmWiringT>,
+        Precompiles = (),
+        Error = EVMErrorWiring<EvmWiringT>,
+    > {
+        self.pre_execution.as_ref()
     }
 
     /// Returns reference to pre execution handler.

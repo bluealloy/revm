@@ -1,3 +1,5 @@
+use core::iter::Cloned;
+
 use crate::Eip1559Tx;
 use auto_impl::auto_impl;
 use primitives::{Address, U256};
@@ -26,7 +28,7 @@ pub trait Eip7702Tx: Eip1559Tx {
 
 /// Authorization trait.
 #[auto_impl(&, Arc)]
-pub trait Authorization {
+pub trait Authorization: Clone {
     /// Authority address.
     ///
     /// # Note
@@ -39,7 +41,7 @@ pub trait Authorization {
     fn authority(&self) -> Option<Address>;
 
     /// Returns authorization the chain id.
-    fn chain_id(&self) -> U256;
+    fn chain_id(&self) -> u64;
 
     /// Returns the nonce.
     ///
@@ -69,8 +71,9 @@ impl Authorization for RecoveredAuthorization {
     }
 
     /// Returns authorization the chain id.
-    fn chain_id(&self) -> U256 {
-        self.inner().chain_id()
+    fn chain_id(&self) -> u64 {
+        // TODO chain_id is set as u64 in newest EIP-7702 spec
+        self.inner().chain_id().try_into().unwrap()
     }
 
     /// Returns the nonce.

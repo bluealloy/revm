@@ -1,7 +1,7 @@
 use crate::{
     handler::{
-        mainnet::EthValidation, ExecutionHandler, PostExecutionHandler, PreExecutionHandler,
-        ValidationWire,
+        mainnet::{EthPreExecution, EthValidation},
+        ExecutionHandler, PostExecutionHandler,
     },
     EvmHandler,
 };
@@ -12,9 +12,8 @@ use specification::spec_to_generic;
 use std::fmt::Debug;
 use std::vec::Vec;
 use wiring::{
-    journaled_state::JournaledState as JournaledStateTrait,
-    result::{EVMError, EVMErrorWiring},
-    EthereumWiring, EvmWiring as PrimitiveEvmWiring, Transaction,
+    journaled_state::JournaledState as JournaledStateTrait, result::EVMError, EthereumWiring,
+    EvmWiring as PrimitiveEvmWiring, Transaction,
 };
 
 pub trait EvmWiring: PrimitiveEvmWiring {
@@ -41,7 +40,14 @@ impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
                     >,
                     SPEC,
                 >::new_boxed(),
-                pre_execution: PreExecutionHandler::new::<SPEC>(),
+                pre_execution: EthPreExecution::<
+                Context<Self>,
+                EVMError<
+                    <<JournaledState<DB> as JournaledStateTrait>::Database as Database>::Error,
+                    <<Self as PrimitiveEvmWiring>::Transaction as Transaction>::TransactionError,
+                >,
+                SPEC,
+            >::new_boxed(),
                 post_execution: PostExecutionHandler::mainnet::<SPEC>(),
                 execution: ExecutionHandler::new::<SPEC>(),
             }

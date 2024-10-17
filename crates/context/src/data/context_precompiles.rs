@@ -9,6 +9,20 @@ use primitives::{Address, Bytes, HashMap, HashSet};
 use std::{boxed::Box, sync::Arc};
 use wiring::EvmWiring;
 
+pub trait PrecompileProvider {
+    type CTX;
+
+    fn run(
+        &mut self,
+        ctx: &mut Self::CTX,
+        address: &Address,
+        bytes: &Bytes,
+        gas_limit: u64,
+    ) -> Option<PrecompileResult>;
+
+    fn warm_addresses(&self) -> impl Iterator<Item = Address>;
+}
+
 /// A single precompile handler.
 #[derive_where(Clone)]
 pub enum ContextPrecompile<EvmWiringT: EvmWiring> {

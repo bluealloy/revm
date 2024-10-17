@@ -7,22 +7,21 @@ use crate::{
 };
 use bytecode::Bytecode;
 use context::{
-    BlockGetter, CfgGetter, DatabaseGetter, JournalStateGetter, JournalStateGetterDBError,
-    TransactionGetter,
+    BlockGetter, CfgGetter, JournalStateGetter, JournalStateGetterDBError, TransactionGetter,
 };
 use precompile::PrecompileSpecId;
-use primitives::{BLOCKHASH_STORAGE_ADDRESS, U256};
+use primitives::{Address, BLOCKHASH_STORAGE_ADDRESS, U256};
 use specification::{
     eip7702,
     hardfork::{Spec, SpecId},
 };
 use state::Account;
-use transaction::{eip7702::Authorization, AccessListTrait, Eip7702Tx};
+use transaction::{eip7702::Authorization, AccessListTrait, Eip4844Tx, Eip7702Tx};
 use wiring::{
     default::EnvWiring,
     journaled_state::JournaledState,
-    result::{EVMError, EVMResultGeneric, InvalidTransaction},
-    Block, Transaction, TransactionType,
+    result::{EVMResultGeneric, InvalidTransaction},
+    Block, Cfg, Transaction, TransactionType,
 };
 
 pub struct EthPreExecution<CTX, ERROR, Fork: Spec> {
@@ -85,11 +84,44 @@ where
     }
 
     fn apply_eip7702_auth_list(&self, context: &mut Self::Context) -> Result<u64, Self::Error> {
-        todo!()
+        apply_eip7702_auth_list::<CTX, FORK, ERROR>(context)
     }
 
-    fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        todo!()
+    fn deduct_caller(&self, ctx: &mut Self::Context) -> Result<(), Self::Error> {
+        let basefee = *ctx.block().basefee();
+        let effective_gas_price = ctx.tx().effective_gas_price(basefee);
+        // Subtract gas costs from the caller's account.
+        // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
+        let mut gas_cost =
+            U256::from(ctx.tx().common_fields().gas_limit()).saturating_mul(effective_gas_price);
+
+        // EIP-4844
+        if ctx.tx().tx_type().into() == TransactionType::Eip4844 {
+            let tx = ctx.tx().eip4844();
+            let blob_gas = U256::from(tx.total_blob_gas());
+            let max_blob_fee = U256::from(tx.max_fee_per_blob_gas());
+            let blob_gas_cost = max_blob_fee.saturating_mul(blob_gas);
+            gas_cost = gas_cost.saturating_add(blob_gas_cost);
+        }
+
+        let is_call = ctx.tx().kind().is_call();
+        let caller = ctx.tx().common_fields().caller();
+
+        // load caller's account.
+        let caller_account = ctx.journal().load_account(caller)?.data;
+
+        // set new caller account balance.
+        caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
+
+        // bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
+        if is_call {
+            // Nonce is already checked
+            caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+        }
+
+        // touch account so we know it is changed.
+        caller_account.mark_touch();
+        Ok(())
     }
 }
 
@@ -162,79 +194,61 @@ pub fn deduct_caller_inner<EvmWiringT: EvmWiring, SPEC: Spec>(
     caller_account.mark_touch();
 }
 
-/// Deducts the caller balance to the transaction limit.
-#[inline]
-pub fn deduct_caller<EvmWiringT: EvmWiring, SPEC: Spec>(
-    context: &mut Context<EvmWiringT>,
-) -> EVMResultGeneric<(), EvmWiringT> {
-    let caller = context.evm.inner.env.tx.common_fields().caller();
-    // load caller's account.
-    let caller_account = context
-        .evm
-        .inner
-        .journaled_state
-        .load_account(caller)
-        .map_err(EVMError::Database)?;
-
-    // deduct gas cost from caller's account.
-    deduct_caller_inner::<EvmWiringT, SPEC>(caller_account.data, &context.evm.inner.env);
-
-    // Ensure tx kind is call
-    if context.evm.inner.env.tx.kind().is_call() {
-        // Push NonceChange entry
-        context
-            .evm
-            .inner
-            .journaled_state
-            .journal
-            .last_mut()
-            .unwrap()
-            .push(JournalEntry::NonceChange { address: caller });
-    }
-    Ok(())
-}
-
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
 #[inline]
-pub fn apply_eip7702_auth_list<EvmWiringT: EvmWiring, SPEC: Spec>(
-    context: &mut Context<EvmWiringT>,
-) -> EVMResultGeneric<u64, EvmWiringT> {
+pub fn apply_eip7702_auth_list<
+    CTX: TransactionGetter + JournalStateGetter + CfgGetter,
+    SPEC: Spec,
+    ERROR: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
+>(
+    ctx: &mut CTX,
+) -> Result<u64, ERROR> {
     // EIP-7702. Load bytecode to authorized accounts.
     if !SPEC::enabled(SpecId::PRAGUE) {
         return Ok(0);
     }
 
     // return if there is no auth list.
-    let tx = &context.evm.inner.env.tx;
+    let tx = ctx.tx();
     if tx.tx_type().into() != TransactionType::Eip7702 {
         return Ok(0);
     }
 
-    //let authorization_list = tx.eip7702().authorization_list();
+    pub struct Authorization {
+        authority: Option<Address>,
+        address: Address,
+        nonce: u64,
+        chain_id: u64,
+    }
+
+    let authorization_list = tx
+        .eip7702()
+        .authorization_list_iter()
+        .map(|a| Authorization {
+            authority: a.authority(),
+            address: a.address(),
+            nonce: a.nonce(),
+            chain_id: a.chain_id(),
+        })
+        .collect::<Vec<_>>();
+    let chain_id = ctx.cfg().chain_id();
 
     let mut refunded_accounts = 0;
-    for authorization in tx.eip7702().authorization_list_iter() {
+    for authorization in authorization_list {
         // 1. recover authority and authorized addresses.
         // authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]
-        let Some(authority) = authorization.authority() else {
+        let Some(authority) = authorization.authority else {
             continue;
         };
 
         // 2. Verify the chain id is either 0 or the chain's current ID.
-        if !authorization.chain_id().is_zero()
-            && authorization.chain_id() != U256::from(context.evm.inner.env.cfg.chain_id)
-        {
+        if !(authorization.chain_id == 0) && authorization.chain_id != chain_id {
             continue;
         }
 
         // warm authority account and check nonce.
         // 3. Add authority to accessed_addresses (as defined in EIP-2929.)
-        let mut authority_acc = context
-            .evm
-            .inner
-            .journaled_state
-            .load_code(authority)
-            .map_err(EVMError::Database)?;
+        let mut authority_acc = ctx.journal().load_account_code(authority)?;
 
         // 4. Verify the code of authority is either empty or already delegated.
         if let Some(bytecode) = &authority_acc.info.code {
@@ -245,7 +259,7 @@ pub fn apply_eip7702_auth_list<EvmWiringT: EvmWiring, SPEC: Spec>(
         }
 
         // 5. Verify the nonce of authority is equal to nonce.
-        if authorization.nonce() != authority_acc.info.nonce {
+        if authorization.nonce != authority_acc.info.nonce {
             continue;
         }
 
@@ -255,7 +269,7 @@ pub fn apply_eip7702_auth_list<EvmWiringT: EvmWiring, SPEC: Spec>(
         }
 
         // 7. Set the code of authority to be 0xef0100 || address. This is a delegation designation.
-        let bytecode = Bytecode::new_eip7702(authorization.address());
+        let bytecode = Bytecode::new_eip7702(authorization.address);
         authority_acc.info.code_hash = bytecode.hash_slow();
         authority_acc.info.code = Some(bytecode);
 
