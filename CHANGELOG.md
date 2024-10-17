@@ -1,13 +1,23 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v46 tag
+date: 17.10.2024
+Maintenance release. EIP-7702 newest changes, alloy-primitives bump.
+
+* `revme`: 0.10.3 -> 0.11.0
+* `revm`: 14.0.3 -> 15.0.0 
+* `revm-primitives`: 10.0.0 -> 11.0.0
+* `revm-precompile`: 11.0.3 -> 12.0.0
+* `revm-interpreter`: 10.0.3 -> 11.0.0
+
 # v45 tag
 date: 26.09.2024
 
-Maintainance release.
+Maintenance release.
 
-* `revme`: 0.10.2 -> 0.10.3 (✓ API compatible changes)
-* `revm`: 14.0.2 -> 14.0.3 (✓ API compatible changes)
-* `revm-primitives`: 9.0.2 -> 10.0.0 (✓ API compatible changes)
+* `revme`: 0.10.2 -> 0.10.3 
+* `revm`: 14.0.2 -> 14.0.3 
+* `revm-primitives`: 9.0.2 -> 10.0.0
 * `revm-interpreter`: 10.0.2 -> 10.0.3
 * `revm-precompile`: 11.0.2 -> 11.0.3
 
