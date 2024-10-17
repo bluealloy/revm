@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v10.0.0...revm-primitives-v11.0.0) - 2024-10-17
+
+### Added
+
+- EIP-7702 Add u8 validity ([#1824](https://github.com/bluealloy/revm/pull/1824))
+- Rename PRAGUE_EOF to OSAKA ([#1822](https://github.com/bluealloy/revm/pull/1822))
+- *(EIP-7702)* devnet-4 changes ([#1821](https://github.com/bluealloy/revm/pull/1821))
+
+### Other
+
+- bump newest primitives ([#1823](https://github.com/bluealloy/revm/pull/1823))
+
 ## [10.0.1](https://github.com/bluealloy/revm/compare/revm-primitives-v10.0.0...revm-primitives-v10.0.1) - 2024-09-26
 
 ### Other

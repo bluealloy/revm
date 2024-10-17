@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v10.0.3...revm-interpreter-v11.0.0) - 2024-10-17
+
+### Other
+
+- updated the following local packages: revm-primitives
+
 ## [10.0.3](https://github.com/bluealloy/revm/compare/revm-interpreter-v10.0.2...revm-interpreter-v10.0.3) - 2024-09-26
 
 ### Other
