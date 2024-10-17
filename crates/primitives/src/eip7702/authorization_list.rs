@@ -36,6 +36,29 @@ impl AuthorizationList {
         }
     }
 
+    /// Validate the authorization list.
+    pub fn is_valid(&self) -> Result<(), InvalidAuthorization> {
+        let validate = |auth: &SignedAuthorization| -> Result<(), InvalidAuthorization> {
+            // Check y_parity
+            if let Parity::Eip155(parity) = auth.signature().v() {
+                if parity > u8::MAX as u64 {
+                    return Err(InvalidAuthorization::InvalidYParity);
+                }
+            }
+            Ok(())
+        };
+
+        match self {
+            Self::Signed(signed) => signed.iter().try_for_each(validate)?,
+            Self::Recovered(recovered) => recovered
+                .iter()
+                .map(|recovered| &recovered.inner)
+                .try_for_each(validate)?,
+        };
+
+        Ok(())
+    }
+
     /// Return empty authorization list.
     pub fn empty() -> Self {
         Self::Recovered(Vec::new())
