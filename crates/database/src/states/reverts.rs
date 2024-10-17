@@ -3,12 +3,13 @@ use super::{
     StorageWithOriginalValues,
 };
 use core::ops::{Deref, DerefMut};
-use primitives::{Address, HashMap, U256};
+use primitives::{Address, U256, HashMap};
+
 use state::AccountInfo;
 use std::vec::Vec;
 
 /// Contains reverts of multiple account in multiple transitions (Transitions as a block).
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Reverts(Vec<Vec<(Address, AccountRevert)>>);
 
@@ -81,12 +82,51 @@ impl Reverts {
         state_reverts
     }
 
+    /// Compare two Reverts instances, ignoring the order of elements
+    pub fn content_eq(&self, other: &Self) -> bool {
+        if self.0.len() != other.0.len() {
+            return false;
+        }
+
+        for (self_transition, other_transition) in self.0.iter().zip(other.0.iter()) {
+            if self_transition.len() != other_transition.len() {
+                return false;
+            }
+
+            let mut self_map: HashMap<Address, &AccountRevert> = HashMap::new();
+            for (addr, account_revert) in self_transition {
+                self_map.insert(*addr, account_revert);
+            }
+
+            for (addr, account_revert) in other_transition {
+                match self_map.get(addr) {
+                    Some(self_account_revert) if *self_account_revert == account_revert => {
+                        self_map.remove(addr);
+                    }
+                    _ => return false,
+                }
+            }
+
+            if !self_map.is_empty() {
+                return false;
+            }
+        }
+
+        true
+    }
+
     /// Consume reverts and create [`PlainStateReverts`].
     ///
     /// Note that account are sorted by address.
     #[deprecated = "Use `to_plain_state_reverts` instead"]
     pub fn into_plain_state_reverts(self) -> PlainStateReverts {
         self.to_plain_state_reverts()
+    }
+}
+
+impl PartialEq for Reverts {
+    fn eq(&self, other: &Self) -> bool {
+        self.content_eq(other)
     }
 }
 
