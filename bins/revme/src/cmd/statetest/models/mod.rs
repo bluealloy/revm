@@ -6,9 +6,7 @@ use deserializer::*;
 pub use eip7702::TxEip7702;
 pub use spec::SpecName;
 
-use revm::primitives::{
-    alloy_primitives::Parity, AccessList, Address, AuthorizationList, Bytes, HashMap, B256, U256,
-};
+use revm::primitives::{AccessList, Address, AuthorizationList, Bytes, HashMap, B256, U256};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -62,11 +60,6 @@ impl Test {
         if txbytes.first() == Some(&0x04) {
             let mut txbytes = &txbytes[1..];
             let tx = TxEip7702::decode(&mut txbytes)?;
-            if let Parity::Eip155(parity) = tx.signature.v() {
-                if parity < u8::MAX as u64 {
-                    return Err(alloy_rlp::Error::Custom("Invalid parity value"));
-                }
-            }
             return Ok(Some(
                 AuthorizationList::Signed(tx.authorization_list).into_recovered(),
             ));
