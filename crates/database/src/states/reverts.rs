@@ -3,7 +3,7 @@ use super::{
     StorageWithOriginalValues,
 };
 use core::ops::{Deref, DerefMut};
-use primitives::{Address, U256, HashMap};
+use primitives::{Address, HashMap, U256};
 
 use state::AccountInfo;
 use std::vec::Vec;
