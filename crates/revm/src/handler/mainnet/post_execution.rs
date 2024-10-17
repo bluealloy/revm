@@ -1,10 +1,10 @@
-use crate::{
-    interpreter::{Gas, SuccessOrHalt},
-    primitives::{
-        Block, EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState, Spec,
-        SpecId, SpecId::LONDON, Transaction, U256,
-    },
-    Context, EvmWiring, FrameResult,
+use crate::{Context, EvmWiring, FrameResult};
+use interpreter::{Gas, SuccessOrHalt};
+use primitives::U256;
+use specification::hardfork::{Spec, SpecId};
+use wiring::{
+    result::{EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState},
+    Block, Transaction,
 };
 
 /// Mainnet end handle does not change the output.
@@ -35,7 +35,7 @@ pub fn reward_beneficiary<EvmWiringT: EvmWiring, SPEC: Spec>(
 
     // transfer fee to coinbase/beneficiary.
     // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
-    let coinbase_gas_price = if SPEC::enabled(LONDON) {
+    let coinbase_gas_price = if SPEC::enabled(SpecId::LONDON) {
         effective_gas_price.saturating_sub(*context.evm.env.block.basefee())
     } else {
         effective_gas_price
@@ -76,7 +76,7 @@ pub fn reimburse_caller<EvmWiringT: EvmWiring>(
     context: &mut Context<EvmWiringT>,
     gas: &Gas,
 ) -> EVMResultGeneric<(), EvmWiringT> {
-    let caller = *context.evm.env.tx.caller();
+    let caller = context.evm.env.tx.common_fields().caller();
     let effective_gas_price = context.evm.env.effective_gas_price();
 
     // return balance of not spend gas.
@@ -112,7 +112,7 @@ pub fn output<EvmWiringT: EvmWiring>(
     // reset journal and return present state.
     let (state, logs) = context.evm.journaled_state.finalize();
 
-    let result = match SuccessOrHalt::<EvmWiringT>::from(instruction_result.result) {
+    let result = match SuccessOrHalt::<EvmWiringT::HaltReason>::from(instruction_result.result) {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {
             reason,
             gas_used: final_gas_used,

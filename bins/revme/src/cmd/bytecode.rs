@@ -1,10 +1,8 @@
 use clap::Parser;
 use revm::{
-    interpreter::{
-        analysis::{validate_eof_inner, CodeType, EofError},
-        opcode::eof_printer::print_eof_code,
-    },
-    primitives::{Bytes, Eof, MAX_INITCODE_SIZE},
+    bytecode::eof::{self, validate_eof_inner, CodeType, Eof, EofError},
+    primitives::{hex, Bytes},
+    specification::constants::MAX_INITCODE_SIZE,
 };
 use std::io;
 
@@ -61,7 +59,7 @@ impl Cmd {
                     Err(e) => eprintln!("Decoding Error: {:#?}", e),
                 }
             } else {
-                print_eof_code(&bytes)
+                eof::printer::print(&bytes)
             }
             return;
         }

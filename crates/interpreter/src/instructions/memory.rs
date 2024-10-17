@@ -1,9 +1,7 @@
-use crate::{
-    gas,
-    primitives::{Spec, U256},
-    Host, Interpreter,
-};
+use crate::{gas, Host, Interpreter};
 use core::cmp::max;
+use primitives::U256;
+use specification::hardfork::Spec;
 
 pub fn mload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
@@ -42,7 +40,7 @@ pub fn mcopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host:
     // into usize or fail
     let len = as_usize_or_fail!(interpreter, len);
     // deduce gas
-    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
+    gas_or_fail!(interpreter, gas::copy_cost_verylow(len as u64));
     if len == 0 {
         return;
     }

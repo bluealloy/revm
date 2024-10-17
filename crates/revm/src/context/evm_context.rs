@@ -1,24 +1,23 @@
-use derive_where::derive_where;
-use revm_interpreter::CallValue;
-use revm_precompile::PrecompileErrors;
-
 use super::inner_evm_context::InnerEvmContext;
-use crate::{
-    db::Database,
-    interpreter::{
-        analysis::validate_eof, return_ok, CallInputs, Contract, CreateInputs, EOFCreateInputs,
-        EOFCreateKind, Gas, InstructionResult, Interpreter, InterpreterResult,
-    },
-    primitives::{
-        keccak256, Address, Bytecode, Bytes, CreateScheme, EVMError, EVMResultGeneric, EnvWiring,
-        Eof,
-        SpecId::{self, *},
-        Transaction, B256, EOF_MAGIC_BYTES,
-    },
-    ContextPrecompiles, EvmWiring, FrameOrResult, CALL_STACK_LIMIT,
-};
+use crate::{ContextPrecompiles, EvmWiring, FrameOrResult, CALL_STACK_LIMIT};
+use bytecode::{Bytecode, Eof, EOF_MAGIC_BYTES};
 use core::ops::{Deref, DerefMut};
+use database_interface::Database;
+use derive_where::derive_where;
+use interpreter::CallValue;
+use interpreter::{
+    return_ok, CallInputs, Contract, CreateInputs, EOFCreateInputs, EOFCreateKind, Gas,
+    InstructionResult, Interpreter, InterpreterResult,
+};
+use precompile::PrecompileErrors;
+use primitives::{keccak256, Address, Bytes, B256};
+use specification::hardfork::SpecId::{self, *};
 use std::{boxed::Box, sync::Arc};
+use wiring::{
+    default::{CreateScheme, EnvWiring},
+    result::{EVMError, EVMResultGeneric},
+    Transaction,
+};
 
 /// EVM context that contains the inner EVM context and precompiles.
 #[derive_where(Clone, Debug; EvmWiringT::Block, EvmWiringT::ChainContext, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error)]
@@ -381,16 +380,17 @@ where
                     return return_error(InstructionResult::InvalidEOFInitCode);
                 };
 
-                if validate_eof(&eof).is_err() {
+                if eof.validate().is_err() {
                     // TODO (EOF) new error type.
                     self.journaled_state.inc_nonce(inputs.caller);
                     return return_error(InstructionResult::InvalidEOFInitCode);
                 }
 
                 // Use nonce from tx to calculate address.
-                let nonce = self.env.tx.nonce();
+                let tx = self.env.tx.common_fields();
+                let create_address = tx.caller().create(tx.nonce());
 
-                (input, eof, Some(self.env.tx.caller().create(nonce)))
+                (input, eof, Some(create_address))
             }
         };
 
@@ -464,12 +464,13 @@ where
 #[cfg(any(test, feature = "test-utils"))]
 pub(crate) mod test_utils {
     use super::*;
-    use crate::primitives::U256;
-    use crate::{
-        db::{CacheDB, EmptyDB},
-        journaled_state::JournaledState,
-        primitives::{address, HashSet, SpecId, B256},
-    };
+    use crate::journaled_state::JournaledState;
+    use database::CacheDB;
+    use database_interface::EmptyDB;
+    use interpreter::CallScheme;
+    use primitives::{address, HashSet, B256, U256};
+    use specification::hardfork::SpecId;
+    use state::AccountInfo;
 
     /// Mock caller address.
     pub const MOCK_CALLER: Address = address!("0000000000000000000000000000000000000000");
@@ -483,7 +484,7 @@ pub(crate) mod test_utils {
             target_address: to,
             caller: MOCK_CALLER,
             value: CallValue::Transfer(U256::ZERO),
-            scheme: revm_interpreter::CallScheme::Call,
+            scheme: CallScheme::Call,
             is_eof: false,
             is_static: false,
             return_memory_offset: 0..0,
@@ -502,7 +503,7 @@ pub(crate) mod test_utils {
     ) -> EvmContext<EvmWiringT> {
         db.insert_account_info(
             test_utils::MOCK_CALLER,
-            crate::primitives::AccountInfo {
+            AccountInfo {
                 nonce: 0,
                 balance,
                 code_hash: B256::default(),
@@ -520,7 +521,7 @@ pub(crate) mod test_utils {
         EvmContext {
             inner: InnerEvmContext {
                 env,
-                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
+                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::default()),
                 db,
                 chain: Default::default(),
                 error: Ok(()),
@@ -537,7 +538,7 @@ pub(crate) mod test_utils {
         EvmContext {
             inner: InnerEvmContext {
                 env,
-                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
+                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::default()),
                 db,
                 chain: Default::default(),
                 error: Ok(()),
@@ -550,14 +551,15 @@ pub(crate) mod test_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::U256;
-    use crate::{
-        db::{CacheDB, EmptyDB},
-        primitives::{address, Bytecode, DefaultEthereumWiring, EthereumWiring},
-        Frame, JournalEntry,
-    };
+    use crate::{Frame, JournalEntry};
+    use bytecode::Bytecode;
+    use database::CacheDB;
+    use database_interface::EmptyDB;
+    use primitives::{address, U256};
+    use state::AccountInfo;
     use std::boxed::Box;
     use test_utils::*;
+    use wiring::{DefaultEthereumWiring, EthereumWiring};
 
     // Tests that the `EVMContext::make_call_frame` function returns an error if the
     // call stack is too deep.
@@ -632,7 +634,7 @@ mod tests {
         let contract = address!("dead10000000000000000000000000000001dead");
         cdb.insert_account_info(
             contract,
-            crate::primitives::AccountInfo {
+            AccountInfo {
                 nonce: 0,
                 balance: bal,
                 code_hash: by.clone().hash_slow(),

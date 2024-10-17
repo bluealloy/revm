@@ -9,17 +9,16 @@ pub use context_precompiles::{
 use derive_where::derive_where;
 pub use evm_context::EvmContext;
 pub use inner_evm_context::InnerEvmContext;
-use revm_interpreter::{as_u64_saturated, Eip7702CodeLoad, StateLoad};
 
-use crate::{
-    db::{Database, EmptyDB},
-    interpreter::{AccountLoad, Host, SStoreResult, SelfDestructResult},
-    primitives::{
-        Address, Block, Bytes, EnvWiring, EthereumWiring, Log, B256, BLOCK_HASH_HISTORY, U256,
-    },
-    EvmWiring,
+use crate::EvmWiring;
+use database_interface::{Database, EmptyDB};
+use interpreter::{
+    as_u64_saturated, AccountLoad, Eip7702CodeLoad, Host, SStoreResult, SelfDestructResult,
+    StateLoad,
 };
+use primitives::{Address, Bytes, Log, B256, BLOCK_HASH_HISTORY, U256};
 use std::boxed::Box;
+use wiring::{default::EnvWiring, Block, EthereumWiring};
 
 /// Main Context structure that contains both EvmContext and External context.
 #[derive_where(Clone; EvmWiringT::Block, EvmWiringT::ChainContext, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error, EvmWiringT::ExternalContext)]

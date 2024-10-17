@@ -1,9 +1,11 @@
-use crate::{
-    handler::mainnet,
-    primitives::{EVMResultGeneric, EnvWiring, InvalidTransaction, Spec, TransactionValidation},
-    Context, EvmWiring,
-};
+use crate::{handler::mainnet, Context, EvmWiring};
+use specification::hardfork::Spec;
 use std::sync::Arc;
+use transaction::Transaction;
+use wiring::{
+    default::EnvWiring,
+    result::{EVMResultGeneric, InvalidTransaction},
+};
 
 /// Handle that validates env.
 pub type ValidateEnvHandle<'a, EvmWiringT> =
@@ -30,7 +32,7 @@ pub struct ValidationHandler<'a, EvmWiringT: EvmWiring> {
 
 impl<'a, EvmWiringT: EvmWiring + 'a> ValidationHandler<'a, EvmWiringT>
 where
-    <EvmWiringT::Transaction as TransactionValidation>::ValidationError: From<InvalidTransaction>,
+    <EvmWiringT::Transaction as Transaction>::TransactionError: From<InvalidTransaction>,
 {
     /// Create new ValidationHandles
     pub fn new<SPEC: Spec + 'a>() -> Self {

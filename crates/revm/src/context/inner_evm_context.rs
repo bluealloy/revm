@@ -1,21 +1,23 @@
+use crate::{journaled_state::JournaledState, JournalCheckpoint};
+use bytecode::{Bytecode, Eof, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
+use database_interface::Database;
 use derive_where::derive_where;
-
-use crate::{
-    db::Database,
-    interpreter::{
-        analysis::to_analysed, gas, return_ok, AccountLoad, Eip7702CodeLoad, InstructionResult,
-        InterpreterResult, SStoreResult, SelfDestructResult, StateLoad,
-    },
-    journaled_state::JournaledState,
-    primitives::{
-        AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, EnvWiring, Eof,
-        EvmWiring, HashSet, Spec,
-        SpecId::{self, *},
-        Transaction, B256, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
-    },
-    JournalCheckpoint,
+use interpreter::{
+    gas, return_ok, AccountLoad, Eip7702CodeLoad, InstructionResult, InterpreterResult,
+    SStoreResult, SelfDestructResult, StateLoad,
 };
+use primitives::{Address, Bytes, HashSet, B256, U256};
+use specification::hardfork::{
+    Spec,
+    SpecId::{self, *},
+};
+use state::Account;
 use std::{boxed::Box, sync::Arc};
+use transaction::AccessListTrait;
+use wiring::{
+    default::{AnalysisKind, CfgEnv, EnvWiring},
+    EvmWiring, Transaction,
+};
 
 /// EVM contexts contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; EvmWiringT::Block, EvmWiringT::ChainContext, EvmWiringT::Transaction, EvmWiringT::Database, <EvmWiringT::Database as Database>::Error)]
@@ -40,7 +42,7 @@ where
     pub fn new(db: EvmWiringT::Database) -> Self {
         Self {
             env: Box::default(),
-            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
+            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::default()),
             db,
             chain: Default::default(),
             error: Ok(()),
@@ -54,7 +56,7 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
     pub fn new_with_env(db: EvmWiringT::Database, env: Box<EnvWiring<EvmWiringT>>) -> Self {
         Self {
             env,
-            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
+            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::default()),
             db,
             chain: Default::default(),
             error: Ok(()),
@@ -91,14 +93,14 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
     /// Loading of accounts/storages is needed to make them warm.
     #[inline]
     pub fn load_access_list(&mut self) -> Result<(), <EvmWiringT::Database as Database>::Error> {
-        for AccessListItem {
-            address,
-            storage_keys,
-        } in self.env.tx.access_list()
-        {
+        let Some(access_list) = self.env.tx.access_list() else {
+            return Ok(());
+        };
+
+        for access_list in access_list.iter() {
             self.journaled_state.initial_account_load(
-                *address,
-                storage_keys.iter().map(|i| U256::from_be_bytes(i.0)),
+                access_list.0,
+                access_list.1.map(|i| U256::from_be_bytes(i.0)),
                 &mut self.db,
             )?;
         }
@@ -419,7 +421,7 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
         let bytecode = match self.env.cfg.perf_analyse_created_bytecodes {
             AnalysisKind::Raw => Bytecode::new_legacy(interpreter_result.output.clone()),
             AnalysisKind::Analyse => {
-                to_analysed(Bytecode::new_legacy(interpreter_result.output.clone()))
+                Bytecode::new_legacy(interpreter_result.output.clone()).into_analyzed()
             }
         };
 

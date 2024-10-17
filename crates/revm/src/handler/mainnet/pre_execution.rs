@@ -2,13 +2,20 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
-use crate::{
-    precompile::PrecompileSpecId,
-    primitives::{
-        eip7702, Account, Block, Bytecode, EVMError, EVMResultGeneric, EnvWiring, Spec, SpecId,
-        Transaction, BLOCKHASH_STORAGE_ADDRESS, PRAGUE, U256,
-    },
-    Context, ContextPrecompiles, EvmWiring,
+use crate::{Context, ContextPrecompiles, EvmWiring, JournalEntry};
+use bytecode::Bytecode;
+use precompile::PrecompileSpecId;
+use primitives::{BLOCKHASH_STORAGE_ADDRESS, U256};
+use specification::{
+    eip7702,
+    hardfork::{Spec, SpecId},
+};
+use state::Account;
+use transaction::{eip7702::Authorization, Eip7702Tx};
+use wiring::{
+    default::EnvWiring,
+    result::{EVMError, EVMResultGeneric},
+    Block, Transaction, TransactionType,
 };
 
 /// Main precompile load
@@ -59,11 +66,11 @@ pub fn deduct_caller_inner<EvmWiringT: EvmWiring, SPEC: Spec>(
 ) {
     // Subtract gas costs from the caller's account.
     // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
-    let mut gas_cost = U256::from(env.tx.gas_limit()).saturating_mul(env.effective_gas_price());
+    let mut gas_cost =
+        U256::from(env.tx.common_fields().gas_limit()).saturating_mul(env.effective_gas_price());
 
     // EIP-4844
-    if SPEC::enabled(SpecId::CANCUN) {
-        let data_fee = env.calc_data_fee().expect("already checked");
+    if let Some(data_fee) = env.calc_data_fee() {
         gas_cost = gas_cost.saturating_add(data_fee);
     }
 
@@ -85,20 +92,30 @@ pub fn deduct_caller_inner<EvmWiringT: EvmWiring, SPEC: Spec>(
 pub fn deduct_caller<EvmWiringT: EvmWiring, SPEC: Spec>(
     context: &mut Context<EvmWiringT>,
 ) -> EVMResultGeneric<(), EvmWiringT> {
+    let caller = context.evm.inner.env.tx.common_fields().caller();
     // load caller's account.
     let caller_account = context
         .evm
         .inner
         .journaled_state
-        .load_account(
-            *context.evm.inner.env.tx.caller(),
-            &mut context.evm.inner.db,
-        )
+        .load_account(caller, &mut context.evm.inner.db)
         .map_err(EVMError::Database)?;
 
     // deduct gas cost from caller's account.
     deduct_caller_inner::<EvmWiringT, SPEC>(caller_account.data, &context.evm.inner.env);
 
+    // Ensure tx kind is call
+    if context.evm.inner.env.tx.kind().is_call() {
+        // Push NonceChange entry
+        context
+            .evm
+            .inner
+            .journaled_state
+            .journal
+            .last_mut()
+            .unwrap()
+            .push(JournalEntry::NonceChange { address: caller });
+    }
     Ok(())
 }
 
@@ -108,17 +125,20 @@ pub fn apply_eip7702_auth_list<EvmWiringT: EvmWiring, SPEC: Spec>(
     context: &mut Context<EvmWiringT>,
 ) -> EVMResultGeneric<u64, EvmWiringT> {
     // EIP-7702. Load bytecode to authorized accounts.
-    if !SPEC::enabled(PRAGUE) {
+    if !SPEC::enabled(SpecId::PRAGUE) {
         return Ok(0);
     }
 
     // return if there is no auth list.
-    let Some(authorization_list) = context.evm.inner.env.tx.authorization_list() else {
+    let tx = &context.evm.inner.env.tx;
+    if tx.tx_type().into() != TransactionType::Eip7702 {
         return Ok(0);
-    };
+    }
+
+    //let authorization_list = tx.eip7702().authorization_list();
 
     let mut refunded_accounts = 0;
-    for authorization in authorization_list.recovered_iter() {
+    for authorization in tx.eip7702().authorization_list_iter() {
         // 1. recover authority and authorized addresses.
         // authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]
         let Some(authority) = authorization.authority() else {
@@ -160,7 +180,7 @@ pub fn apply_eip7702_auth_list<EvmWiringT: EvmWiring, SPEC: Spec>(
         }
 
         // 7. Set the code of authority to be 0xef0100 || address. This is a delegation designation.
-        let bytecode = Bytecode::new_eip7702(authorization.address);
+        let bytecode = Bytecode::new_eip7702(authorization.address());
         authority_acc.info.code_hash = bytecode.hash_slow();
         authority_acc.info.code = Some(bytecode);
 

@@ -1,11 +1,9 @@
 // Includes.
 use super::{GenericContextHandle, GenericContextHandleRet};
-use crate::{
-    handler::mainnet,
-    primitives::{EVMResultGeneric, Spec},
-    Context, ContextPrecompiles, EvmWiring,
-};
+use crate::{handler::mainnet, Context, ContextPrecompiles, EvmWiring};
+use specification::hardfork::Spec;
 use std::sync::Arc;
+use wiring::result::EVMResultGeneric;
 
 /// Loads precompiles into Evm
 pub type LoadPrecompilesHandle<'a, EvmWiringT> =

@@ -1,8 +1,9 @@
-use crate::primitives::{
-    Address, Bytes, CfgEnv, Precompile, PrecompileErrors, PrecompileResult, StatefulPrecompile,
+use crate::primitives::{Address, Bytes};
+use crate::{
+    Precompile, PrecompileErrors, PrecompileResult, PrecompileWithAddress, StatefulPrecompile,
 };
-use crate::PrecompileWithAddress;
 use std::{string::String, sync::Arc};
+use wiring::default::CfgEnv;
 
 /// Disable kzg precompile. This will return Fatal error on precompile call
 pub fn fatal_precompile(address: Address, msg: String) -> PrecompileWithAddress {

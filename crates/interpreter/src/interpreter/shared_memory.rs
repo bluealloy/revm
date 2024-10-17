@@ -1,5 +1,5 @@
 use core::{cmp::min, fmt, ops::Range};
-use revm_primitives::{B256, U256};
+use primitives::{hex, B256, U256};
 use std::vec::Vec;
 
 /// A sequential memory shared between calls, which uses
@@ -16,7 +16,7 @@ pub struct SharedMemory {
     checkpoints: Vec<usize>,
     /// Invariant: equals `self.checkpoints.last()`
     last_checkpoint: usize,
-    /// Memory limit. See [`CfgEnv`](revm_primitives::CfgEnv).
+    /// Memory limit. See [`CfgEnv`](wiring::default::CfgEnv).
     #[cfg(feature = "memory_limit")]
     memory_limit: u64,
 }
@@ -36,10 +36,7 @@ impl fmt::Debug for SharedMemory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SharedMemory")
             .field("current_len", &self.len())
-            .field(
-                "context_memory",
-                &crate::primitives::hex::encode(self.context_memory()),
-            )
+            .field("context_memory", &hex::encode(self.context_memory()))
             .finish_non_exhaustive()
     }
 }

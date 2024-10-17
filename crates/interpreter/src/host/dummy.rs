@@ -1,13 +1,11 @@
+use crate::{Host, SStoreResult, SelfDestructResult};
 use derive_where::derive_where;
-use revm_primitives::EnvWiring;
-
-use crate::{
-    primitives::{
-        hash_map::Entry, Address, Bytes, Env, EvmWiring, HashMap, Log, B256, KECCAK_EMPTY, U256,
-    },
-    Host, SStoreResult, SelfDestructResult,
-};
+use primitives::{hash_map::Entry, Address, Bytes, HashMap, Log, B256, KECCAK_EMPTY, U256};
 use std::vec::Vec;
+use wiring::{
+    default::{Env, EnvWiring},
+    EvmWiring,
+};
 
 use super::{AccountLoad, Eip7702CodeLoad, StateLoad};
 
@@ -32,8 +30,8 @@ where
     pub fn new(env: EnvWiring<EvmWiringT>) -> Self {
         Self {
             env,
-            storage: HashMap::new(),
-            transient_storage: HashMap::new(),
+            storage: HashMap::default(),
+            transient_storage: HashMap::default(),
             log: Vec::new(),
         }
     }

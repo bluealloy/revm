@@ -1,21 +1,26 @@
 use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
-    models::{SpecName, Test, TestSuite},
     utils::recover_address,
 };
+use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
+use inspector::{inspector_handle_register, inspectors::TracerEip3155};
 use revm::{
-    db::{EmptyDB, State},
-    inspector_handle_register,
-    inspectors::TracerEip3155,
-    interpreter::analysis::to_analysed,
-    primitives::{
-        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, EnvWiring,
-        EthereumWiring, ExecutionResult, HaltReason, SpecId, TxKind, B256,
+    bytecode::Bytecode,
+    database_interface::EmptyDB,
+    primitives::{keccak256, Bytes, TxKind, B256},
+    specification::{eip7702::AuthorizationList, hardfork::SpecId},
+    wiring::{
+        block::calc_excess_blob_gas,
+        default::EnvWiring,
+        result::{EVMResultGeneric, ExecutionResult, HaltReason},
+        EthereumWiring,
     },
     Evm,
 };
 use serde_json::json;
+use statetest_types::{SpecName, Test, TestSuite};
+
 use std::{
     fmt::Debug,
     io::{stderr, stdout},
@@ -135,6 +140,8 @@ fn skip_test(path: &Path) -> bool {
         | "block_apply_ommers_reward.json"
         | "known_block_hash.json"
         | "eip7516_blob_base_fee.json"
+        | "create_tx_collision_storage.json"
+        | "create_collision_storage.json"
     )
 }
 
@@ -270,11 +277,11 @@ pub fn execute_test_suite(
 
     for (name, unit) in suite.0 {
         // Create database and insert cache
-        let mut cache_state = revm::CacheState::new(false);
+        let mut cache_state = database::CacheState::new(false);
         for (address, info) in unit.pre {
             let code_hash = keccak256(&info.code);
-            let bytecode = to_analysed(Bytecode::new_raw(info.code));
-            let acc_info = revm::primitives::AccountInfo {
+            let bytecode = Bytecode::new_raw(info.code).into_analyzed();
+            let acc_info = revm::state::AccountInfo {
                 balance: info.balance,
                 code_hash,
                 code: Some(bytecode),
@@ -328,7 +335,7 @@ pub fn execute_test_suite(
             .unwrap_or_default();
         env.tx.gas_priority_fee = unit.transaction.max_priority_fee_per_gas;
         // EIP-4844
-        env.tx.blob_hashes = unit.transaction.blob_versioned_hashes;
+        env.tx.blob_hashes = unit.transaction.blob_versioned_hashes.clone();
         env.tx.max_fee_per_blob_gas = unit.transaction.max_fee_per_blob_gas;
 
         // post and execution
@@ -353,6 +360,17 @@ pub fn execute_test_suite(
             }
 
             for (index, test) in tests.into_iter().enumerate() {
+                // TODO TX TYPE needs to be set
+                let Some(tx_type) = unit.transaction.tx_type(test.indexes.data) else {
+                    if test.expect_exception.is_some() {
+                        continue;
+                    } else {
+                        panic!("Invalid transaction type without expected exception");
+                    }
+                };
+
+                env.tx.tx_type = tx_type;
+
                 env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
 
                 env.tx.data = unit
@@ -371,11 +389,19 @@ pub fn execute_test_suite(
                     .get(test.indexes.data)
                     .and_then(Option::as_deref)
                     .cloned()
+                    .unwrap_or_default()
+                    .into();
+
+                env.tx.authorization_list = unit
+                    .transaction
+                    .authorization_list
+                    .as_ref()
+                    .map(|auth_list| {
+                        AuthorizationList::Recovered(
+                            auth_list.iter().map(|auth| auth.into_recovered()).collect(),
+                        )
+                    })
                     .unwrap_or_default();
-                let Ok(auth_list) = test.eip7702_authorization_list() else {
-                    continue;
-                };
-                env.tx.authorization_list = auth_list;
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),
@@ -385,7 +411,7 @@ pub fn execute_test_suite(
 
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
-                let mut state = revm::db::State::builder()
+                let mut state = database::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
@@ -454,7 +480,7 @@ pub fn execute_test_suite(
                 // re build to run with tracing
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
-                let mut state = revm::db::State::builder()
+                let mut state = database::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();

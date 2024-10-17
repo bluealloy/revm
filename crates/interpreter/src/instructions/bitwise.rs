@@ -1,10 +1,8 @@
 use super::i256::i256_cmp;
-use crate::{
-    gas,
-    primitives::{Spec, U256},
-    Host, Interpreter,
-};
+use crate::{gas, Host, Interpreter};
 use core::cmp::Ordering;
+use primitives::U256;
+use specification::hardfork::Spec;
 
 pub fn lt<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
@@ -125,7 +123,9 @@ pub fn sar<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &
 mod tests {
     use crate::instructions::bitwise::{byte, sar, shl, shr};
     use crate::{Contract, DummyHost, Interpreter};
-    use revm_primitives::{uint, DefaultEthereumWiring, Env, LatestSpec, U256};
+    use primitives::{uint, U256};
+    use specification::hardfork::LatestSpec;
+    use wiring::{default::Env, DefaultEthereumWiring};
 
     #[test]
     fn test_shift_left() {

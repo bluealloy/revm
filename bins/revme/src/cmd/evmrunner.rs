@@ -1,9 +1,10 @@
 use clap::Parser;
+use database::BenchmarkDB;
+use inspector::{inspector_handle_register, inspectors::TracerEip3155};
 use revm::{
-    db::BenchmarkDB,
-    inspector_handle_register,
-    inspectors::TracerEip3155,
-    primitives::{address, Address, Bytecode, BytecodeDecodeError, EthereumWiring, TxKind},
+    bytecode::{Bytecode, BytecodeDecodeError},
+    primitives::{address, hex, Address, TxKind},
+    wiring::EthereumWiring,
     Database, Evm,
 };
 use std::io::Error as IoError;

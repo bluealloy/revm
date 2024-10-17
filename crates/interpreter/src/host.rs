@@ -1,9 +1,9 @@
-use crate::primitives::{Address, Bytes, Log, B256, U256};
 use core::ops::{Deref, DerefMut};
+use primitives::{Address, Bytes, Log, B256, U256};
 
 mod dummy;
 pub use dummy::DummyHost;
-use revm_primitives::{EnvWiring, EvmWiring};
+use wiring::{default::EnvWiring, EvmWiring};
 
 /// EVM context host.
 pub trait Host {
@@ -259,7 +259,8 @@ pub struct SelfDestructResult {
 
 #[cfg(test)]
 mod tests {
-    use revm_primitives::{db::EmptyDB, EthereumWiring};
+    use database_interface::EmptyDB;
+    use wiring::EthereumWiring;
 
     use super::*;
 

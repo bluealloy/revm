@@ -1,13 +1,14 @@
-use revm_interpreter::Eip7702CodeLoad;
-
-use crate::{
-    interpreter::{AccountLoad, InstructionResult, SStoreResult, SelfDestructResult, StateLoad},
-    primitives::{
-        db::Database, hash_map::Entry, Account, Address, Bytecode, EvmState, EvmStorageSlot,
-        HashMap, HashSet, Log, SpecId, SpecId::*, TransientStorage, B256, KECCAK_EMPTY,
-        PRECOMPILE3, U256,
-    },
+use bytecode::Bytecode;
+use database_interface::Database;
+use interpreter::{
+    AccountLoad, Eip7702CodeLoad, InstructionResult, SStoreResult, SelfDestructResult, StateLoad,
 };
+use primitives::{
+    hash_map::Entry, Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, PRECOMPILE3, U256,
+};
+use specification::hardfork::{SpecId, SpecId::*};
+use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
+
 use core::mem;
 use std::vec::Vec;
 
@@ -60,7 +61,7 @@ impl JournaledState {
     /// And will not take into account if account is not existing or empty.
     pub fn new(spec: SpecId, warm_preloaded_addresses: HashSet<Address>) -> JournaledState {
         Self {
-            state: HashMap::new(),
+            state: HashMap::default(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: vec![vec![]],
@@ -104,7 +105,7 @@ impl JournaledState {
     /// Clears the JournaledState. Preserving only the spec.
     pub fn clear(&mut self) {
         let spec = self.spec;
-        *self = Self::new(spec, HashSet::new());
+        *self = Self::new(spec, HashSet::default());
     }
 
     /// Does cleanup and returns modified state.

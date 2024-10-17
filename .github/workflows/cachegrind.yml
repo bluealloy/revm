@@ -23,8 +23,8 @@ jobs:
 
       - name: Run Valgrind
         run: |
-          cargo b -r -p revm-test --bin snailtracer
-          valgrind --tool=cachegrind target/release/snailtracer 2>&1 | tee cachegrind_results.txt
+          cargo b -r -p revme
+          valgrind --tool=cachegrind target/release/revme bench snailtracer 2>&1 | tee cachegrind_results.txt
 
       - name: Valgrind results
         id: valgrind_results

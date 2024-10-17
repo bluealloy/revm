@@ -105,12 +105,16 @@ fn u24(input: &[u8], idx: u32) -> u32 {
 
 #[cfg(test)]
 mod tests {
+    use crate::wiring::OptimismEvmWiring;
+    use crate::OpTransaction;
+
     use super::*;
     use alloy_sol_types::sol;
     use alloy_sol_types::SolCall;
+    use database::BenchmarkDB;
     use revm::{
-        db::BenchmarkDB,
-        primitives::{address, bytes, Bytecode, Bytes, EthereumWiring, TxKind, U256},
+        bytecode::Bytecode,
+        primitives::{address, bytes, Bytes, TxKind, U256},
         Evm,
     };
     use std::vec::Vec;
@@ -162,13 +166,18 @@ mod tests {
 
         let native_val = flz_compress_len(&input);
 
-        let mut evm = Evm::<EthereumWiring<BenchmarkDB, ()>>::builder()
+        let mut evm = Evm::<OptimismEvmWiring<BenchmarkDB, ()>>::builder()
             .with_db(BenchmarkDB::new_bytecode(contract_bytecode.clone()))
             .with_default_ext_ctx()
             .modify_tx_env(|tx| {
+                let OpTransaction::Base { tx, enveloped_tx } = tx else {
+                    panic!("Default is base tx");
+                };
                 tx.caller = address!("1000000000000000000000000000000000000000");
                 tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
                 tx.data = FastLz::fastLzCall::new((input,)).abi_encode().into();
+                tx.gas_limit = 300_000;
+                *enveloped_tx = Some(Bytes::default());
             })
             .build();
 

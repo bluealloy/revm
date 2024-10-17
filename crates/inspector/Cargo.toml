@@ -1,0 +1,50 @@
+[package]
+name = "revm-inspector"
+description = "Revm inspector interface"
+version = "1.0.0"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+# revm
+revm.workspace = true
+
+# mics
+auto_impl = { version = "1.2", default-features = false }
+derive-where = { version = "1.2.7", default-features = false }
+
+# Optional
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+], optional = true }
+serde_json = { version = "1.0", default-features = false, features = [
+    "alloc",
+], optional = true }
+
+[dev-dependencies]
+revm = { workspace = true, features = ["serde"] }
+database = { workspace = true, features = ["serde"] }
+
+[features]
+default = ["std"]
+# Preserve ordeder of json
+std = ["serde?/std", "serde_json?/std", "serde_json?/preserve_order"]
+serde = ["dep:serde", "revm/serde", "database/serde"]
+serde-json = ["serde", "dep:serde_json"]
