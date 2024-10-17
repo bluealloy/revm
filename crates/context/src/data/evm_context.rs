@@ -257,7 +257,7 @@ where
         &mut self,
         spec_id: SpecId,
         inputs: &CreateInputs,
-    ) -> Result<FrameOrResult, <EvmWiringT::Database as Database>::Error> {
+    ) -> EVMResultGeneric<FrameOrResult, EvmWiringT> {
         let return_error = |e| {
             Ok(FrameOrResult::new_create_result(
                 InterpreterResult {
@@ -351,7 +351,7 @@ where
         &mut self,
         spec_id: SpecId,
         inputs: &EOFCreateInputs,
-    ) -> Result<FrameOrResult, <EvmWiringT::Database as Database>::Error> {
+    ) -> EVMResultGeneric<FrameOrResult, EvmWiringT>  {
         let return_error = |e| {
             Ok(FrameOrResult::new_eofcreate_result(
                 InterpreterResult {

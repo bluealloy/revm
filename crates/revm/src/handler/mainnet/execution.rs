@@ -17,7 +17,6 @@ use wiring::{
 
 pub struct EthExecution {}
 
-
 /// Execute frame
 #[inline]
 pub fn execute_frame<EvmWiringT: EvmWiring, SPEC: Spec>(
@@ -158,10 +157,7 @@ pub fn create<EvmWiringT: EvmWiring, SPEC: Spec>(
     context: &mut Context<EvmWiringT>,
     inputs: Box<CreateInputs>,
 ) -> EVMResultGeneric<FrameOrResult, EvmWiringT> {
-    context
-        .evm
-        .make_create_frame(SPEC::SPEC_ID, &inputs)
-        .map_err(EVMError::Database)
+    context.evm.make_create_frame(SPEC::SPEC_ID, &inputs)
 }
 
 #[inline]
@@ -202,10 +198,7 @@ pub fn eofcreate<EvmWiringT: EvmWiring, SPEC: Spec>(
     context: &mut Context<EvmWiringT>,
     inputs: Box<EOFCreateInputs>,
 ) -> EVMResultGeneric<FrameOrResult, EvmWiringT> {
-    context
-        .evm
-        .make_eofcreate_frame(SPEC::SPEC_ID, &inputs)
-        .map_err(EVMError::Database)
+    context.evm.make_eofcreate_frame(SPEC::SPEC_ID, &inputs)
 }
 
 #[inline]

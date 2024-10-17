@@ -67,7 +67,6 @@ where
         let account = account.data.clone();
 
         validate_tx_against_account::<CTX, FORK, ERROR>(&account, ctx)
-        //validate_tx_against_state::<Self::Context, FORK, Self::Error>(ctx)
     }
 
     fn validate_initial_tx_gas(&self, ctx: &Self::Context) -> Result<u64, Self::Error> {
