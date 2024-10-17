@@ -202,6 +202,9 @@ impl Env {
                 return Err(InvalidTransaction::EmptyAuthorizationList);
             }
 
+            // Validate the authorization item signature `v` to be less than u8::MAX.
+            auth_list.is_valid()?;
+
             // Check if other fields are unset.
             if self.tx.max_fee_per_blob_gas.is_some() || !self.tx.blob_hashes.is_empty() {
                 return Err(InvalidTransaction::AuthorizationListInvalidFields);
