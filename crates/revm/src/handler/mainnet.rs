@@ -4,8 +4,13 @@ mod execution;
 mod post_execution;
 mod pre_execution;
 mod validation;
+mod frame;
 
 // Public exports
+
+
+
+pub use frame::EthFrame;
 
 pub use execution::{
     call, call_return, create, create_return, eofcreate, eofcreate_return, execute_frame,

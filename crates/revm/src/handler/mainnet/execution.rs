@@ -15,6 +15,9 @@ use wiring::{
     Transaction,
 };
 
+pub struct EthExecution {}
+
+
 /// Execute frame
 #[inline]
 pub fn execute_frame<EvmWiringT: EvmWiring, SPEC: Spec>(

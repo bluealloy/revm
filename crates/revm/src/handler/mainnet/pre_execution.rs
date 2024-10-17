@@ -2,9 +2,7 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
-use crate::{
-    handler::pre_execution::PreExecutionWire, Context, ContextPrecompiles, EvmWiring, JournalEntry,
-};
+use crate::{handler::PreExecutionWire, Context, ContextPrecompiles, EvmWiring, JournalEntry};
 use bytecode::Bytecode;
 use context::{
     BlockGetter, CfgGetter, JournalStateGetter, JournalStateGetterDBError, TransactionGetter,

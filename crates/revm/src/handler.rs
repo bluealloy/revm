@@ -1,10 +1,10 @@
 // Modules.
-mod handle_types;
+mod wires;
 pub mod mainnet;
 pub mod register;
 
 // Exports.
-pub use handle_types::*;
+pub use wires::*;
 use mainnet::{EthPreExecution, EthValidation};
 
 // Includes.
