@@ -239,25 +239,7 @@ impl AccountRevert {
 /// Implements partial ordering for AccountInfoRevert
 impl PartialOrd for AccountInfoRevert {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        match (self, other) {
-            (AccountInfoRevert::DoNothing, AccountInfoRevert::DoNothing) => Some(Ordering::Equal),
-            (AccountInfoRevert::DoNothing, _) => Some(Ordering::Less),
-            (AccountInfoRevert::DeleteIt, AccountInfoRevert::DoNothing) => Some(Ordering::Greater),
-            (AccountInfoRevert::DeleteIt, AccountInfoRevert::DeleteIt) => Some(Ordering::Equal),
-            (AccountInfoRevert::DeleteIt, AccountInfoRevert::RevertTo(_)) => Some(Ordering::Less),
-            (AccountInfoRevert::RevertTo(_), AccountInfoRevert::DoNothing) => {
-                Some(Ordering::Greater)
-            }
-            (AccountInfoRevert::RevertTo(_), AccountInfoRevert::DeleteIt) => {
-                Some(Ordering::Greater)
-            }
-            (AccountInfoRevert::RevertTo(a), AccountInfoRevert::RevertTo(b)) => Some(
-                a.balance
-                    .cmp(&b.balance)
-                    .then(a.nonce.cmp(&b.nonce))
-                    .then(a.code_hash.cmp(&b.code_hash)),
-            ),
-        }
+        Some(self.cmp(other))
     }
 }
 
