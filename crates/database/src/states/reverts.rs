@@ -92,9 +92,6 @@ impl Reverts {
             if self_transition.len() != other_transition.len() {
                 return false;
             }
-            if self_transition.len() != other_transition.len() {
-                return false;
-            }
 
             let mut self_transition = self_transition.clone();
             let mut other_transition = other_transition.clone();
