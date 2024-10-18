@@ -92,22 +92,18 @@ impl Reverts {
             if self_transition.len() != other_transition.len() {
                 return false;
             }
-
-            let mut self_map: HashMap<Address, &AccountRevert> = HashMap::new();
-            for (addr, account_revert) in self_transition {
-                self_map.insert(*addr, account_revert);
+            if self_transition.len() != other_transition.len() {
+                return false;
             }
 
-            for (addr, account_revert) in other_transition {
-                match self_map.get(addr) {
-                    Some(self_account_revert) if *self_account_revert == account_revert => {
-                        self_map.remove(addr);
-                    }
-                    _ => return false,
-                }
-            }
+            let mut self_transition = self_transition.clone();
+            let mut other_transition = other_transition.clone();
+            // Sort both transitions
+            self_transition.sort_by(|(addr1, _), (addr2, _)| addr1.cmp(addr2));
+            other_transition.sort_by(|(addr1, _), (addr2, _)| addr1.cmp(addr2));
 
-            if !self_map.is_empty() {
+            // Compare sorted transitions
+            if self_transition != other_transition {
                 return false;
             }
         }
