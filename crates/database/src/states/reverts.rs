@@ -4,11 +4,13 @@ use super::{
 };
 use core::ops::{Deref, DerefMut};
 use primitives::{Address, HashMap, U256};
+use std::cmp::Ordering;
+
 use state::AccountInfo;
 use std::vec::Vec;
 
 /// Contains reverts of multiple account in multiple transitions (Transitions as a block).
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Reverts(Vec<Vec<(Address, AccountRevert)>>);
 
@@ -81,12 +83,48 @@ impl Reverts {
         state_reverts
     }
 
+    /// Compare two Reverts instances, ignoring the order of elements
+    pub fn content_eq(&self, other: &Self) -> bool {
+        if self.0.len() != other.0.len() {
+            return false;
+        }
+
+        for (self_transition, other_transition) in self.0.iter().zip(other.0.iter()) {
+            if self_transition.len() != other_transition.len() {
+                return false;
+            }
+
+            let mut self_transition = self_transition.clone();
+            let mut other_transition = other_transition.clone();
+            // Sort both transitions
+            self_transition.sort_by(|(addr1, revert1), (addr2, revert2)| {
+                addr1.cmp(addr2).then_with(|| revert1.cmp(revert2))
+            });
+            other_transition.sort_by(|(addr1, revert1), (addr2, revert2)| {
+                addr1.cmp(addr2).then_with(|| revert1.cmp(revert2))
+            });
+
+            // Compare sorted transitions
+            if self_transition != other_transition {
+                return false;
+            }
+        }
+
+        true
+    }
+
     /// Consume reverts and create [`PlainStateReverts`].
     ///
     /// Note that account are sorted by address.
     #[deprecated = "Use `to_plain_state_reverts` instead"]
     pub fn into_plain_state_reverts(self) -> PlainStateReverts {
         self.to_plain_state_reverts()
+    }
+}
+
+impl PartialEq for Reverts {
+    fn eq(&self, other: &Self) -> bool {
+        self.content_eq(other)
     }
 }
 
@@ -195,6 +233,115 @@ impl AccountRevert {
         self.account == AccountInfoRevert::DoNothing
             && self.storage.is_empty()
             && !self.wipe_storage
+    }
+}
+
+/// Implements partial ordering for AccountInfoRevert
+impl PartialOrd for AccountInfoRevert {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/// Implements total ordering for AccountInfoRevert
+impl Ord for AccountInfoRevert {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+/// Implements partial ordering for AccountRevert
+impl PartialOrd for AccountRevert {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/// Implements partial ordering for AccountStatus
+impl PartialOrd for AccountStatus {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/// Implements total ordering for AccountStatus
+impl Ord for AccountStatus {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // Convert enum variants to numbers for ordering
+        let self_val = match self {
+            AccountStatus::InMemoryChange => 0,
+            AccountStatus::Changed => 1,
+            AccountStatus::LoadedEmptyEIP161 => 2,
+            AccountStatus::Loaded => 3,
+            _ => 4, // for any other variants
+        };
+
+        let other_val = match other {
+            AccountStatus::InMemoryChange => 0,
+            AccountStatus::Changed => 1,
+            AccountStatus::LoadedEmptyEIP161 => 2,
+            AccountStatus::Loaded => 3,
+            _ => 4,
+        };
+
+        self_val.cmp(&other_val)
+    }
+}
+
+/// Implements partial ordering for RevertToSlot
+impl PartialOrd for RevertToSlot {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/// Implements total ordering for RevertToSlot
+impl Ord for RevertToSlot {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self, other) {
+            (RevertToSlot::Some(a), RevertToSlot::Some(b)) => a.cmp(b),
+            (RevertToSlot::Some(_), RevertToSlot::Destroyed) => Ordering::Less,
+            (RevertToSlot::Destroyed, RevertToSlot::Some(_)) => Ordering::Greater,
+            (RevertToSlot::Destroyed, RevertToSlot::Destroyed) => Ordering::Equal,
+        }
+    }
+}
+
+/// Implements total ordering for AccountRevert
+impl Ord for AccountRevert {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // First compare accounts
+        let account_ord = self.account.partial_cmp(&other.account);
+        if account_ord != Some(Ordering::Equal) {
+            return account_ord.unwrap();
+        }
+
+        // Convert HashMaps to sorted vectors for comparison
+        let mut self_storage: Vec<_> = self.storage.iter().collect();
+        let mut other_storage: Vec<_> = other.storage.iter().collect();
+
+        // Sort by key and then by value
+        self_storage.sort_by(|(k1, v1), (k2, v2)| k1.cmp(k2).then_with(|| v1.cmp(v2)));
+        other_storage.sort_by(|(k1, v1), (k2, v2)| k1.cmp(k2).then_with(|| v1.cmp(v2)));
+
+        // Compare each element
+        for (self_entry, other_entry) in self_storage.iter().zip(other_storage.iter()) {
+            let key_ord = self_entry.0.cmp(other_entry.0);
+            if key_ord != Ordering::Equal {
+                return key_ord;
+            }
+            let value_ord = self_entry.1.cmp(other_entry.1);
+            if value_ord != Ordering::Equal {
+                return value_ord;
+            }
+        }
+
+        // If one vector is longer than the other, or if all elements are equal
+        self_storage
+            .len()
+            .cmp(&other_storage.len())
+            .then_with(|| self.previous_status.cmp(&other.previous_status))
+            .then_with(|| self.wipe_storage.cmp(&other.wipe_storage))
     }
 }
 
