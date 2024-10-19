@@ -5,7 +5,7 @@ use super::{
 use std::vec::Vec;
 
 /// EOF Header containing
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EofHeader {
     /// Size of EOF types section.

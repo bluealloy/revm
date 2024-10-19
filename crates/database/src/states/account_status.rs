@@ -14,7 +14,7 @@
 /// - `Destroyed`: the account has been destroyed.
 /// - `DestroyedChanged`: the account has been destroyed and then modified.
 /// - `DestroyedAgain`: the account has been destroyed again.
-#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AccountStatus {
     #[default]

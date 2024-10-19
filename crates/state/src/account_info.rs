@@ -3,7 +3,7 @@ use core::hash::{Hash, Hasher};
 use primitives::{B256, KECCAK_EMPTY, U256};
 
 /// AccountInfo account information.
-#[derive(Clone, Debug, Eq)]
+#[derive(Clone, Debug, Eq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountInfo {
     /// Account balance.

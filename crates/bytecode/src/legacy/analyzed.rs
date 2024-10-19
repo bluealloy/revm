@@ -4,7 +4,7 @@ use primitives::Bytes;
 use std::sync::Arc;
 
 // Legacy analyzed
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LegacyAnalyzedBytecode {
     /// Bytecode with 32 zero bytes padding.

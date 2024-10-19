@@ -236,20 +236,6 @@ impl AccountRevert {
     }
 }
 
-/// Implements partial ordering for AccountInfoRevert
-impl PartialOrd for AccountInfoRevert {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-/// Implements total ordering for AccountInfoRevert
-impl Ord for AccountInfoRevert {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).unwrap()
-    }
-}
-
 /// Implements partial ordering for AccountRevert
 impl PartialOrd for AccountRevert {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -257,63 +243,14 @@ impl PartialOrd for AccountRevert {
     }
 }
 
-/// Implements partial ordering for AccountStatus
-impl PartialOrd for AccountStatus {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-/// Implements total ordering for AccountStatus
-impl Ord for AccountStatus {
-    fn cmp(&self, other: &Self) -> Ordering {
-        // Convert enum variants to numbers for ordering
-        let self_val = match self {
-            AccountStatus::InMemoryChange => 0,
-            AccountStatus::Changed => 1,
-            AccountStatus::LoadedEmptyEIP161 => 2,
-            AccountStatus::Loaded => 3,
-            _ => 4, // for any other variants
-        };
-
-        let other_val = match other {
-            AccountStatus::InMemoryChange => 0,
-            AccountStatus::Changed => 1,
-            AccountStatus::LoadedEmptyEIP161 => 2,
-            AccountStatus::Loaded => 3,
-            _ => 4,
-        };
-
-        self_val.cmp(&other_val)
-    }
-}
-
-/// Implements partial ordering for RevertToSlot
-impl PartialOrd for RevertToSlot {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-/// Implements total ordering for RevertToSlot
-impl Ord for RevertToSlot {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match (self, other) {
-            (RevertToSlot::Some(a), RevertToSlot::Some(b)) => a.cmp(b),
-            (RevertToSlot::Some(_), RevertToSlot::Destroyed) => Ordering::Less,
-            (RevertToSlot::Destroyed, RevertToSlot::Some(_)) => Ordering::Greater,
-            (RevertToSlot::Destroyed, RevertToSlot::Destroyed) => Ordering::Equal,
-        }
-    }
-}
-
 /// Implements total ordering for AccountRevert
 impl Ord for AccountRevert {
     fn cmp(&self, other: &Self) -> Ordering {
         // First compare accounts
-        let account_ord = self.account.partial_cmp(&other.account);
-        if account_ord != Some(Ordering::Equal) {
-            return account_ord.unwrap();
+        if let Some(ord) = self.account.partial_cmp(&other.account) {
+            if ord != Ordering::Equal {
+                return ord;
+            }
         }
 
         // Convert HashMaps to sorted vectors for comparison
@@ -347,7 +284,7 @@ impl Ord for AccountRevert {
 
 /// Depending on previous state of account info this
 /// will tell us what to do on revert.
-#[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AccountInfoRevert {
     #[default]
@@ -366,7 +303,7 @@ pub enum AccountInfoRevert {
 ///
 /// Note: It is completely different state if Storage is Zero or Some or if Storage was
 /// Destroyed. Because if it is destroyed, previous values can be found in database or it can be zero.
-#[derive(Clone, Debug, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum RevertToSlot {
     Some(U256),
