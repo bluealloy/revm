@@ -4,7 +4,7 @@ use super::{
     utils::recover_address,
 };
 use fluentbase_core::blended::{create_rwasm_proxy_bytecode, ENABLE_EVM_PROXY_CONTRACT};
-use fluentbase_genesis::devnet::{
+use fluentbase_genesis::{
     devnet_genesis_from_file,
     GENESIS_KECCAK_HASH_SLOT,
     GENESIS_POSEIDON_HASH_SLOT,
