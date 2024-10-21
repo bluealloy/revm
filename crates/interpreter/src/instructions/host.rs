@@ -2,7 +2,8 @@ use crate::{
     gas::{self, warm_cold_cost, warm_cold_cost_with_delegation},
     interpreter::Interpreter,
     primitives::{Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
-    Host, InstructionResult,
+    Host,
+    InstructionResult,
 };
 use core::cmp::min;
 use std::vec::Vec;
@@ -13,6 +14,7 @@ pub fn balance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
+    #[cfg(not(feature = "no-gas"))]
     gas!(
         interpreter,
         if SPEC::enabled(BERLIN) {
@@ -32,6 +34,7 @@ pub fn balance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host
 /// EIP-1884: Repricing for trie-size-dependent opcodes
 pub fn selfbalance<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, ISTANBUL);
+    #[cfg(not(feature = "no-gas"))]
     gas!(interpreter, gas::LOW);
     let Some(balance) = host.balance(interpreter.contract.target_address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
@@ -47,6 +50,7 @@ pub fn extcodesize<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
         return;
     };
     let (code, load) = code.into_components();
+    #[cfg(not(feature = "no-gas"))]
     if SPEC::enabled(BERLIN) {
         gas!(interpreter, warm_cold_cost_with_delegation(load));
     } else if SPEC::enabled(TANGERINE) {
@@ -67,6 +71,7 @@ pub fn extcodehash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
         return;
     };
     let (code_hash, load) = code_hash.into_components();
+    #[cfg(not(feature = "no-gas"))]
     if SPEC::enabled(BERLIN) {
         gas!(interpreter, warm_cold_cost_with_delegation(load))
     } else if SPEC::enabled(ISTANBUL) {
@@ -88,6 +93,7 @@ pub fn extcodecopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
 
     let len = as_usize_or_fail!(interpreter, len_u256);
     let (code, load) = code.into_components();
+    #[cfg(not(feature = "no-gas"))]
     gas_or_fail!(
         interpreter,
         gas::extcodecopy_cost(SPEC::SPEC_ID, len as u64, load)
@@ -106,6 +112,7 @@ pub fn extcodecopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
 }
 
 pub fn blockhash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    #[cfg(not(feature = "no-gas"))]
     gas!(interpreter, gas::BLOCKHASH);
     pop_top!(interpreter, number);
 
@@ -123,6 +130,7 @@ pub fn sload<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: 
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
+    #[cfg(not(feature = "no-gas"))]
     gas!(interpreter, gas::sload_cost(SPEC::SPEC_ID, value.is_cold));
     *index = value.data;
 }
@@ -135,6 +143,7 @@ pub fn sstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host:
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
+    #[cfg(not(feature = "no-gas"))]
     gas_or_fail!(interpreter, {
         let remaining_gas = interpreter.gas.remaining();
         gas::sstore_cost(
@@ -155,6 +164,7 @@ pub fn sstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host:
 pub fn tstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, CANCUN);
     require_non_staticcall!(interpreter);
+    #[cfg(not(feature = "no-gas"))]
     gas!(interpreter, gas::WARM_STORAGE_READ_COST);
 
     pop!(interpreter, index, value);
@@ -166,6 +176,7 @@ pub fn tstore<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host:
 /// Load value from transient storage
 pub fn tload<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, CANCUN);
+    #[cfg(not(feature = "no-gas"))]
     gas!(interpreter, gas::WARM_STORAGE_READ_COST);
 
     pop_top!(interpreter, index);
@@ -178,6 +189,7 @@ pub fn log<const N: usize, H: Host + ?Sized>(interpreter: &mut Interpreter, host
 
     pop!(interpreter, offset, len);
     let len = as_usize_or_fail!(interpreter, len);
+    #[cfg(not(feature = "no-gas"))]
     gas_or_fail!(interpreter, gas::log_cost(N as u8, len as u64));
     let data = if len == 0 {
         Bytes::new()
@@ -219,6 +231,7 @@ pub fn selfdestruct<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter,
     if !SPEC::enabled(LONDON) && !res.previously_destroyed {
         refund!(interpreter, gas::SELFDESTRUCT)
     }
+    #[cfg(not(feature = "no-gas"))]
     gas!(interpreter, gas::selfdestruct_cost(SPEC::SPEC_ID, res));
 
     interpreter.instruction_result = InstructionResult::SelfDestruct;
