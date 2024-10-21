@@ -142,7 +142,8 @@ pub enum FrameOrResult {
     Result(FrameResult),
 }
 
-impl Frame {
+impl Frame { 
+
     pub fn new_create(
         created_address: Address,
         checkpoint: JournalCheckpoint,

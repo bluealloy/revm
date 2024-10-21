@@ -1,19 +1,20 @@
 // Modules.
-mod wires;
 pub mod mainnet;
 pub mod register;
+mod wires;
 
+use context::FrameResult;
 // Exports.
+use mainnet::{EthExecution, EthFrame, EthPreExecution, EthValidation};
 pub use wires::*;
-use mainnet::{EthPreExecution, EthValidation};
 
 // Includes.
 
-use crate::{Context, EvmWiring, Frame};
+use crate::{Context, EvmWiring};
 use core::mem;
 use interpreter::{table::InstructionTables, Host, InterpreterAction, SharedMemory};
 use register::{EvmHandler, HandleRegisters};
-use specification::spec_to_generic;
+use specification::{hardfork::Spec, spec_to_generic};
 use std::vec::Vec;
 use wiring::{
     result::{EVMError, EVMErrorWiring, EVMResultGeneric, InvalidTransaction},
@@ -44,10 +45,18 @@ pub struct Handler<'a, EvmWiringT: EvmWiring, H: Host + 'a> {
                 Error = EVMErrorWiring<EvmWiringT>,
             > + 'a,
     >,
+    /// Execution loop that handles frames.
+    pub execution: Box<
+        dyn ExecutionWire<
+                Context = Context<EvmWiringT>,
+                Error = EVMErrorWiring<EvmWiringT>,
+                Frame = EthFrame<EvmWiringT, Context<EvmWiringT>>,
+                ExecResult = FrameResult,
+            > + 'a,
+    >,
     /// Post Execution handle.
     pub post_execution: PostExecutionHandler<'a, EvmWiringT>,
-    /// Execution loop that handles frames.
-    pub execution: ExecutionHandler<'a, EvmWiringT>,
+    //pub execution: ExecutionHandler<'a, EvmWiringT>,
 }
 
 type EVMErrorT<EvmWiringT> = EVMError<
@@ -71,7 +80,8 @@ where
                 post_execution: PostExecutionHandler::mainnet::<SPEC>(),
                 validation: EthValidation::<Context<EvmWiringT>, EVMErrorWiring<EvmWiringT>, SPEC>::new_boxed(
                 ),
-                execution: ExecutionHandler::new::<SPEC>(),
+                execution: EthExecution::<Context<EvmWiringT>, EvmWiringT, EVMErrorWiring<EvmWiringT>, SPEC>::new_boxed(
+                ),
             }
         )
     }
@@ -84,15 +94,15 @@ impl<'a, EvmWiringT: EvmWiring> EvmHandler<'a, EvmWiringT> {
     }
 
     /// Executes call frame.
-    pub fn execute_frame(
-        &self,
-        frame: &mut Frame,
-        shared_memory: &mut SharedMemory,
-        context: &mut Context<EvmWiringT>,
-    ) -> EVMResultGeneric<InterpreterAction, EvmWiringT> {
-        self.execution
-            .execute_frame(frame, shared_memory, &self.instruction_table, context)
-    }
+    // pub fn execute_frame(
+    //     &self,
+    //     frame: &mut Frame,
+    //     shared_memory: &mut SharedMemory,
+    //     context: &mut Context<EvmWiringT>,
+    // ) -> EVMResultGeneric<InterpreterAction, EvmWiringT> {
+    //     self.execution
+    //         .execute_frame(frame, shared_memory, &self.instruction_table, context)
+    // }
 
     /// Take instruction table.
     pub fn take_instruction_table(&mut self) -> InstructionTables<'a, Context<EvmWiringT>> {
@@ -125,8 +135,15 @@ impl<'a, EvmWiringT: EvmWiring> EvmHandler<'a, EvmWiringT> {
     }
 
     /// Returns reference to frame handler.
-    pub fn execution(&self) -> &ExecutionHandler<'a, EvmWiringT> {
-        &self.execution
+    pub fn execution(
+        &self,
+    ) -> &dyn ExecutionWire<
+        Context = Context<EvmWiringT>,
+        Error = EVMErrorWiring<EvmWiringT>,
+        Frame = EthFrame<EvmWiringT, Context<EvmWiringT>>,
+        ExecResult = FrameResult,
+    > {
+        self.execution.as_ref()
     }
 
     /// Returns reference to validation handler.

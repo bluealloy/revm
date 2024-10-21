@@ -1,6 +1,6 @@
 use crate::{
     builder::{EvmBuilder, SetGenericStage},
-    handler::Handler,
+    handler::{FrameOrResultGen, Handler},
     Context, ContextWithEvmWiring, EvmContext, EvmWiring, Frame, FrameOrResult, FrameResult,
     InnerEvmContext,
 };
@@ -96,107 +96,107 @@ impl<'a, EvmWiringT: EvmWiring> Evm<'a, EvmWiringT> {
         EvmBuilder::<'a>::new_with(database, external, env, handler)
     }
 
-    /// Runs main call loop.
-    #[inline]
-    pub fn run_the_loop(
-        &mut self,
-        first_frame: Frame,
-    ) -> EVMResultGeneric<FrameResult, EvmWiringT> {
-        let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
-        call_stack.push(first_frame);
+    // /// Runs main call loop.
+    // #[inline]
+    // pub fn run_the_loop(
+    //     &mut self,
+    //     first_frame: Frame,
+    // ) -> EVMResultGeneric<FrameResult, EvmWiringT> {
+    //     let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
+    //     call_stack.push(first_frame);
 
-        #[cfg(feature = "memory_limit")]
-        let mut shared_memory =
-            SharedMemory::new_with_memory_limit(self.context.evm.env.cfg.memory_limit);
-        #[cfg(not(feature = "memory_limit"))]
-        let mut shared_memory = SharedMemory::new();
+    //     #[cfg(feature = "memory_limit")]
+    //     let mut shared_memory =
+    //         SharedMemory::new_with_memory_limit(self.context.evm.env.cfg.memory_limit);
+    //     #[cfg(not(feature = "memory_limit"))]
+    //     let mut shared_memory = SharedMemory::new();
 
-        shared_memory.new_context();
+    //     shared_memory.new_context();
 
-        // Peek the last stack frame.
-        let mut stack_frame = call_stack.last_mut().unwrap();
+    //     // Peek the last stack frame.
+    //     let mut stack_frame = call_stack.last_mut().unwrap();
 
-        loop {
-            // Execute the frame.
-            let next_action =
-                self.handler
-                    .execute_frame(stack_frame, &mut shared_memory, &mut self.context)?;
+    //     loop {
+    //         // Execute the frame.
+    //         let next_action =
+    //             self.handler
+    //                 .execute_frame(stack_frame, &mut shared_memory, &mut self.context)?;
 
-            // Take error and break the loop, if any.
-            // This error can be set in the Interpreter when it interacts with the context.
-            self.context.evm.take_error().map_err(EVMError::Database)?;
+    //         // Take error and break the loop, if any.
+    //         // This error can be set in the Interpreter when it interacts with the context.
+    //         self.context.evm.take_error().map_err(EVMError::Database)?;
 
-            let exec = &mut self.handler.execution;
-            let frame_or_result = match next_action {
-                InterpreterAction::NewFrame(NewFrameAction::Call(inputs)) => {
-                    exec.call(&mut self.context, inputs)?
-                }
-                InterpreterAction::NewFrame(NewFrameAction::Create(inputs)) => {
-                    exec.create(&mut self.context, inputs)?
-                }
-                InterpreterAction::NewFrame(NewFrameAction::EOFCreate(inputs)) => {
-                    exec.eofcreate(&mut self.context, inputs)?
-                }
-                InterpreterAction::Return { result } => {
-                    // free memory context.
-                    shared_memory.free_context();
+    //         let exec = &mut self.handler.execution;
+    //         let frame_or_result = match next_action {
+    //             InterpreterAction::NewFrame(NewFrameAction::Call(inputs)) => {
+    //                 exec.call(&mut self.context, inputs)?
+    //             }
+    //             InterpreterAction::NewFrame(NewFrameAction::Create(inputs)) => {
+    //                 exec.create(&mut self.context, inputs)?
+    //             }
+    //             InterpreterAction::NewFrame(NewFrameAction::EOFCreate(inputs)) => {
+    //                 exec.eofcreate(&mut self.context, inputs)?
+    //             }
+    //             InterpreterAction::Return { result } => {
+    //                 // free memory context.
+    //                 shared_memory.free_context();
 
-                    // pop last frame from the stack and consume it to create FrameResult.
-                    let returned_frame = call_stack
-                        .pop()
-                        .expect("We just returned from Interpreter frame");
+    //                 // pop last frame from the stack and consume it to create FrameResult.
+    //                 let returned_frame = call_stack
+    //                     .pop()
+    //                     .expect("We just returned from Interpreter frame");
 
-                    let ctx = &mut self.context;
-                    FrameOrResult::Result(match returned_frame {
-                        Frame::Call(frame) => {
-                            // return_call
-                            FrameResult::Call(exec.call_return(ctx, frame, result)?)
-                        }
-                        Frame::Create(frame) => {
-                            // return_create
-                            FrameResult::Create(exec.create_return(ctx, frame, result)?)
-                        }
-                        Frame::EOFCreate(frame) => {
-                            // return_eofcreate
-                            FrameResult::EOFCreate(exec.eofcreate_return(ctx, frame, result)?)
-                        }
-                    })
-                }
-                InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
-            };
-            // handle result
-            match frame_or_result {
-                FrameOrResult::Frame(frame) => {
-                    shared_memory.new_context();
-                    call_stack.push(frame);
-                    stack_frame = call_stack.last_mut().unwrap();
-                }
-                FrameOrResult::Result(result) => {
-                    let Some(top_frame) = call_stack.last_mut() else {
-                        // Break the loop if there are no more frames.
-                        return Ok(result);
-                    };
-                    stack_frame = top_frame;
-                    let ctx = &mut self.context;
-                    // Insert result to the top frame.
-                    match result {
-                        FrameResult::Call(outcome) => {
-                            // return_call
-                            exec.insert_call_outcome(ctx, stack_frame, &mut shared_memory, outcome)?
-                        }
-                        FrameResult::Create(outcome) => {
-                            // return_create
-                            exec.insert_create_outcome(ctx, stack_frame, outcome)?
-                        }
-                        FrameResult::EOFCreate(outcome) => {
-                            // return_eofcreate
-                            exec.insert_eofcreate_outcome(ctx, stack_frame, outcome)?
-                        }
-                    }
-                }
-            }
-        }
-    }
+    //                 let ctx = &mut self.context;
+    //                 FrameOrResult::Result(match returned_frame {
+    //                     Frame::Call(frame) => {
+    //                         // return_call
+    //                         FrameResult::Call(exec.call_return(ctx, frame, result)?)
+    //                     }
+    //                     Frame::Create(frame) => {
+    //                         // return_create
+    //                         FrameResult::Create(exec.create_return(ctx, frame, result)?)
+    //                     }
+    //                     Frame::EOFCreate(frame) => {
+    //                         // return_eofcreate
+    //                         FrameResult::EOFCreate(exec.eofcreate_return(ctx, frame, result)?)
+    //                     }
+    //                 })
+    //             }
+    //             InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
+    //         };
+    //         // handle result
+    //         match frame_or_result {
+    //             FrameOrResult::Frame(frame) => {
+    //                 shared_memory.new_context();
+    //                 call_stack.push(frame);
+    //                 stack_frame = call_stack.last_mut().unwrap();
+    //             }
+    //             FrameOrResult::Result(result) => {
+    //                 let Some(top_frame) = call_stack.last_mut() else {
+    //                     // Break the loop if there are no more frames.
+    //                     return Ok(result);
+    //                 };
+    //                 stack_frame = top_frame;
+    //                 let ctx = &mut self.context;
+    //                 // Insert result to the top frame.
+    //                 match result {
+    //                     FrameResult::Call(outcome) => {
+    //                         // return_call
+    //                         exec.insert_call_outcome(ctx, stack_frame, &mut shared_memory, outcome)?
+    //                     }
+    //                     FrameResult::Create(outcome) => {
+    //                         // return_create
+    //                         exec.insert_create_outcome(ctx, stack_frame, outcome)?
+    //                     }
+    //                     FrameResult::EOFCreate(outcome) => {
+    //                         // return_eofcreate
+    //                         exec.insert_eofcreate_outcome(ctx, stack_frame, outcome)?
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
@@ -372,40 +372,30 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
         let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(ctx)? as i64;
 
         // start execution
+
+        let instructions = self.handler.take_instruction_table();
         let exec = self.handler.execution();
 
         // create first frame action
-        let first_frame_action = exec.first_frame_creation(ctx, gas_limit)?;
-
-        // call handler to create first frame.
-        let first_frame_or_result = match first_frame_action {
-            NewFrameAction::Call(inputs) => exec.call(ctx, inputs)?,
-            NewFrameAction::Create(inputs) => exec.create(ctx, inputs)?,
-            NewFrameAction::EOFCreate(inputs) => exec.eofcreate(ctx, inputs)?,
+        let first_frame = exec.init_first_frame(ctx, gas_limit)?;
+        let frame_result = match first_frame {
+            FrameOrResultGen::Frame(frame) => exec.run(ctx, &instructions, frame)?,
+            FrameOrResultGen::Result(result) => result,
         };
 
-        // Starts the main running loop or return the result.
-        let mut result = match first_frame_or_result {
-            FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
-            FrameOrResult::Result(result) => result,
-        };
+        let mut exec_result = exec.last_frame_result(ctx, frame_result)?;
 
-        let ctx = &mut self.context;
-
-        // handle output of call/create calls.
-        self.handler
-            .execution()
-            .last_frame_return(ctx, &mut result)?;
+        self.handler.set_instruction_table(instructions);
 
         let post_exec = self.handler.post_execution();
         // calculate final refund and add EIP-7702 refund to gas.
-        post_exec.refund(ctx, result.gas_mut(), eip7702_gas_refund);
+        post_exec.refund(ctx, exec_result.gas_mut(), eip7702_gas_refund);
         // Reimburse the caller
-        post_exec.reimburse_caller(ctx, result.gas())?;
+        post_exec.reimburse_caller(ctx, exec_result.gas())?;
         // Reward beneficiary
-        post_exec.reward_beneficiary(ctx, result.gas())?;
+        post_exec.reward_beneficiary(ctx, exec_result.gas())?;
         // Returns output of transaction.
-        post_exec.output(ctx, result)
+        post_exec.output(ctx, exec_result)
     }
 }
 

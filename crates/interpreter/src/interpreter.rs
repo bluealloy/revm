@@ -18,37 +18,20 @@ use primitives::{Bytes, U256};
 use std::borrow::ToOwned;
 use std::sync::Arc;
 
-pub struct Temp<T> {
-    t: T,
+pub struct RuntimeFlags {
+    pub is_static: bool,
+    pub is_eof: bool,
+    pub is_eof_init: bool,
 }
 
-fn temp(t: Temp<impl AsRef<u32>>) -> u32 {
-    *t.t.as_ref()
-}
-
-pub trait T {
-    fn t(&self) -> u32;
-}
-
-pub enum FrameOrResult<Frame, Result> {
-    Frame(Frame),
-    Result(Result),
-}
-
-/// Makes sense
-pub trait Frame: Sized {
-    type FrameAction: Sized;
-    type FrameResult: Sized;
-
-    fn init(frame_action: Self::FrameAction, cnt: ()) -> FrameOrResult<Self, Self::FrameResult>;
-
-    fn run(
-        &mut self,
-        instructions: (),
-        context: (),
-    ) -> FrameOrResult<Self::FrameAction, Self::FrameResult>;
-
-    fn return_result(&mut self, result: Self::FrameResult);
+/// TODO wip probably left for follow up PR.
+/// Ides is to have trait inside instruction so that Interpreter can
+/// be extended even more.
+pub trait InterpreterTrait {
+    fn gas(&mut self) -> &mut Gas;
+    fn set_instruction_result(&mut self, result: InstructionResult);
+    fn bytecode(&self) -> &Bytecode;
+    fn runtime_flags(&self) -> &RuntimeFlags;
 }
 
 /// EVM bytecode interpreter.

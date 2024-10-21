@@ -7,15 +7,16 @@ pub mod post_execution;
 // Exports
 
 use context::FrameOrResult;
-pub use execution::{
-    ExecutionHandler, FrameCallHandle, FrameCallReturnHandle, FrameCreateHandle,
-    FrameCreateReturnHandle, InsertCallOutcomeHandle, InsertCreateOutcomeHandle,
-};
+// pub use execution::{
+//     ExecutionHandler, FrameCallHandle, FrameCallReturnHandle, FrameCreateHandle,
+//     FrameCreateReturnHandle, InsertCallOutcomeHandle, InsertCreateOutcomeHandle,
+// };
 pub use generic::{GenericContextHandle, GenericContextHandleRet};
-use interpreter::Gas;
+use interpreter::{table::InstructionTables, Gas};
 pub use post_execution::{
     EndHandle, OutputHandle, PostExecutionHandler, ReimburseCallerHandle, RewardBeneficiaryHandle,
 };
+use specification::hardfork::Spec;
 use wiring::EvmWiring;
 
 use super::mainnet::EthFrame;
@@ -91,13 +92,14 @@ pub trait ExecutionWire {
     type ExecResult;
 
     /// Execute call.
-    fn first_frame(
+    fn init_first_frame(
         &self,
         context: &mut Self::Context,
-    ) -> Result<<Self::Frame as Frame>::FrameInit, Self::Error>;
+        gas_limit: u64,
+    ) -> Result<FrameOrResultGen<Self::Frame, <Self::Frame as Frame>::FrameResult>, Self::Error>;
 
     /// Execute create.
-    fn last_frame(
+    fn last_frame_result(
         &self,
         context: &mut Self::Context,
         frame: <Self::Frame as Frame>::FrameResult,
@@ -106,12 +108,13 @@ pub trait ExecutionWire {
     fn run(
         &self,
         context: &mut Self::Context,
+        instructions: &InstructionTables<'_, Self::Context>,
         frame: Self::Frame,
     ) -> Result<Self::ExecResult, Self::Error> {
         let mut frame_stack: Vec<<Self as ExecutionWire>::Frame> = vec![frame];
         loop {
             let frame = frame_stack.last_mut().unwrap();
-            let call_or_result = frame.run((), context)?;
+            let call_or_result = frame.run(instructions, context)?;
 
             let result = match call_or_result {
                 FrameOrResultGen::Frame(init) => match frame.init(init, context)? {
@@ -127,7 +130,7 @@ pub trait ExecutionWire {
             frame_stack.pop();
 
             let Some(frame) = frame_stack.last_mut() else {
-                return self.last_frame(context, result);
+                return self.last_frame_result(context, result);
             };
 
             frame.return_result(context, result)?;
@@ -138,17 +141,6 @@ pub trait ExecutionWire {
 pub enum FrameOrResultGen<Frame, Result> {
     Frame(Frame),
     Result(Result),
-}
-
-impl<EvmWiringT: EvmWiring, CTX, FORK> From<FrameOrResult>
-    for FrameOrResultGen<EthFrame<EvmWiringT, CTX, FORK>, context::FrameResult>
-{
-    fn from(frame_or_result: FrameOrResult) -> Self {
-        match frame_or_result {
-            FrameOrResult::Frame(frame) => Self::Frame(EthFrame::new(frame)),
-            FrameOrResult::Result(result) => Self::Result(result),
-        }
-    }
 }
 
 /// Makes sense
@@ -166,7 +158,7 @@ pub trait Frame: Sized {
 
     fn run(
         &mut self,
-        instructions: (),
+        instructions: &InstructionTables<'_, Self::Context>,
         context: &mut Self::Context,
     ) -> Result<FrameOrResultGen<Self::FrameInit, Self::FrameResult>, Self::Error>;
 

@@ -1,11 +1,12 @@
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
-use primitives::{Address, U256};
+use primitives::{Address, B256, U256};
 use specification::hardfork::SpecId;
-use state::Account;
+use state::{Account, Bytecode};
 
 pub trait JournaledState {
     type Database: Database;
+    type Checkpoint;
 
     fn warm_account_and_storage(
         &mut self,
@@ -26,6 +27,22 @@ pub trait JournaledState {
         &mut self,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error>;
+    
+    /// Set bytecode with hash. Assume that account is warm.
+    fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256);
+
+    /// Assume account is warm
+    #[inline]
+    fn set_code(&mut self, address: Address, code: Bytecode) {
+        let hash = code.hash_slow();
+        self.set_code_with_hash(address, code, hash);
+    }
+    
+    fn checkpoint(&mut self) -> Self::Checkpoint;
+
+    fn checkpoint_commit(&mut self);
+
+    fn checkpoint_revert(&mut self, checkpoint: Self::Checkpoint);
 }
 
 /// State load information that contains the data and if the account or storage is cold loaded.

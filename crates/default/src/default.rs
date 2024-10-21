@@ -92,11 +92,6 @@ pub struct CfgEnv {
     #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
     #[cfg_attr(feature = "serde", serde(skip))]
     pub kzg_settings: crate::kzg::EnvKzgSettings,
-    /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
-    /// This is very beneficial for testing and speeds up execution of that bytecode if called multiple times.
-    ///
-    /// Default: Analyse
-    pub perf_analyse_created_bytecodes: AnalysisKind,
     /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
     /// By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,

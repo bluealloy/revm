@@ -54,6 +54,7 @@ pub struct JournaledState<DB> {
 
 impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
     type Database = DB;
+    type Checkpoint = JournalCheckpoint;
 
     fn warm_account(&mut self, address: Address) {
         self.warm_preloaded_addresses.insert(address);
@@ -81,6 +82,22 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
         address: Address,
     ) -> Result<StateLoad<&mut Account>, DB::Error> {
         self.load_code(address)
+    }
+
+    fn checkpoint(&mut self) -> JournalCheckpoint {
+        self.checkpoint()
+    }
+
+    fn checkpoint_commit(&mut self) {
+        self.checkpoint_commit()
+    }
+
+    fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
+        self.checkpoint_revert(checkpoint)
+    }
+
+    fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256){
+        self.set_code_with_hash(address, code, hash);
     }
 }
 

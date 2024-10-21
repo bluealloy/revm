@@ -370,7 +370,7 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
         journal_checkpoint: JournalCheckpoint,
     ) {
         // if return is not ok revert and return.
-        if !matches!(interpreter_result.result, return_ok!()) {
+        if !interpreter_result.result.is_ok() {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
             return;
         }
@@ -411,12 +411,7 @@ impl<EvmWiringT: EvmWiring> InnerEvmContext<EvmWiringT> {
         self.journaled_state.checkpoint_commit();
 
         // Do analysis of bytecode straight away.
-        let bytecode = match self.env.cfg.perf_analyse_created_bytecodes {
-            AnalysisKind::Raw => Bytecode::new_legacy(interpreter_result.output.clone()),
-            AnalysisKind::Analyse => {
-                Bytecode::new_legacy(interpreter_result.output.clone()).into_analyzed()
-            }
-        };
+        let bytecode = Bytecode::new_legacy(interpreter_result.output.clone()).into_analyzed();
 
         // set code
         self.journaled_state.set_code(address, bytecode);
