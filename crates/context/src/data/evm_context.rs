@@ -351,7 +351,7 @@ where
         &mut self,
         spec_id: SpecId,
         inputs: &EOFCreateInputs,
-    ) -> EVMResultGeneric<FrameOrResult, EvmWiringT>  {
+    ) -> EVMResultGeneric<FrameOrResult, EvmWiringT> {
         let return_error = |e| {
             Ok(FrameOrResult::new_eofcreate_result(
                 InterpreterResult {

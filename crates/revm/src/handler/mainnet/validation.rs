@@ -24,7 +24,6 @@ use wiring::{
     Block, Cfg, TransactionType,
 };
 
-
 pub struct EthValidation<CTX, ERROR, Fork: Spec> {
     pub _phantom: std::marker::PhantomData<(CTX, ERROR, Fork)>,
 }
