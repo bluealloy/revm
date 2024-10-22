@@ -1,11 +1,7 @@
-pub use alloy_eip7702::{Authorization, SignedAuthorization};
+pub use alloy_eip7702::{Authorization, RecoveredAuthorization, SignedAuthorization};
 pub use alloy_primitives::{Parity, Signature};
 
-use crate::Address;
-use core::{fmt, ops::Deref};
 use std::{boxed::Box, vec::Vec};
-
-use super::SECP256K1N_HALF;
 
 /// Authorization list for EIP-7702 transaction type.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -36,29 +32,6 @@ impl AuthorizationList {
         }
     }
 
-    /// Validate the authorization list.
-    pub fn is_valid(&self) -> Result<(), InvalidAuthorization> {
-        let validate = |auth: &SignedAuthorization| -> Result<(), InvalidAuthorization> {
-            // Check y_parity
-            if let Parity::Eip155(parity) = auth.signature().v() {
-                if parity > u8::MAX as u64 {
-                    return Err(InvalidAuthorization::InvalidYParity);
-                }
-            }
-            Ok(())
-        };
-
-        match self {
-            Self::Signed(signed) => signed.iter().try_for_each(validate)?,
-            Self::Recovered(recovered) => recovered
-                .iter()
-                .map(|recovered| &recovered.inner)
-                .try_for_each(validate)?,
-        };
-
-        Ok(())
-    }
-
     /// Return empty authorization list.
     pub fn empty() -> Self {
         Self::Recovered(Vec::new())
@@ -83,78 +56,5 @@ impl AuthorizationList {
             return self;
         };
         Self::Recovered(signed.into_iter().map(|signed| signed.into()).collect())
-    }
-}
-
-/// A recovered authorization.
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct RecoveredAuthorization {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    inner: SignedAuthorization,
-    authority: Option<Address>,
-}
-
-impl RecoveredAuthorization {
-    /// Instantiate without performing recovery. This should be used carefully.
-    pub const fn new_unchecked(inner: SignedAuthorization, authority: Option<Address>) -> Self {
-        Self { inner, authority }
-    }
-
-    /// Get the `authority` for the authorization.
-    ///
-    /// If this is `None`, then the authority could not be recovered.
-    pub fn authority(&self) -> Option<Address> {
-        let signature = self.inner.signature();
-
-        // Check s-value
-        if signature.s() > SECP256K1N_HALF {
-            return None;
-        }
-
-        // Check y_parity, Parity::Parity means that it was 0 or 1.
-        if !matches!(signature.v(), Parity::Parity(_)) {
-            return None;
-        }
-        self.authority
-    }
-
-    /// Splits the authorization into parts.
-    pub const fn into_parts(self) -> (SignedAuthorization, Option<Address>) {
-        (self.inner, self.authority)
-    }
-}
-
-impl From<SignedAuthorization> for RecoveredAuthorization {
-    fn from(signed_auth: SignedAuthorization) -> Self {
-        let authority = signed_auth.recover_authority().ok();
-        Self::new_unchecked(signed_auth, authority)
-    }
-}
-
-impl Deref for RecoveredAuthorization {
-    type Target = Authorization;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum InvalidAuthorization {
-    InvalidChainId,
-    InvalidYParity,
-    Eip2InvalidSValue,
-}
-
-impl fmt::Display for InvalidAuthorization {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::InvalidChainId => "Invalid chain_id, Expect chain's ID or zero",
-            Self::InvalidYParity => "Invalid y_parity, Expect 0 or 1.",
-            Self::Eip2InvalidSValue => "Invalid signature s-value.",
-        };
-        f.write_str(s)
     }
 }
