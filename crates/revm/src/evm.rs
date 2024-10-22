@@ -397,7 +397,9 @@ mod tests {
     use crate::{
         db::BenchmarkDB,
         interpreter::opcode::{PUSH1, SSTORE},
-        primitives::{address, Authorization, Bytecode, RecoveredAuthorization, Signature, U256},
+        primitives::{
+            address, Authorization, Bytecode, RecoveredAuthority, RecoveredAuthorization, U256,
+        },
     };
 
     #[test]
@@ -418,9 +420,8 @@ mod tests {
                             chain_id: 1,
                             address: delegate,
                             nonce: 0,
-                        }
-                        .into_signed(Signature::test_signature()),
-                        Some(auth),
+                        },
+                        RecoveredAuthority::Valid(auth),
                     )]
                     .into(),
                 );

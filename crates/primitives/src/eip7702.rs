@@ -2,7 +2,8 @@ pub mod authorization_list;
 pub mod bytecode;
 
 pub use authorization_list::{
-    Authorization, AuthorizationList, RecoveredAuthorization, Signature, SignedAuthorization,
+    Authorization, AuthorizationList, RecoveredAuthority, RecoveredAuthorization, Signature,
+    SignedAuthorization,
 };
 pub use bytecode::{
     Eip7702Bytecode, Eip7702DecodeError, EIP7702_MAGIC, EIP7702_MAGIC_BYTES, EIP7702_VERSION,
