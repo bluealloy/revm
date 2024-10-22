@@ -5,7 +5,7 @@ mod wires;
 
 use context::FrameResult;
 // Exports.
-use mainnet::{EthExecution, EthFrame, EthPreExecution, EthValidation};
+use mainnet::{EthExecution, EthFrame, EthPostExecution, EthPreExecution, EthValidation};
 pub use wires::*;
 
 // Includes.
@@ -17,7 +17,9 @@ use register::{EvmHandler, HandleRegisters};
 use specification::{hardfork::Spec, spec_to_generic};
 use std::vec::Vec;
 use wiring::{
-    result::{EVMError, EVMErrorWiring, EVMResultGeneric, InvalidTransaction},
+    result::{
+        EVMError, EVMErrorWiring, EVMResultGeneric, HaltReason, InvalidTransaction, ResultAndState,
+    },
     Transaction,
 };
 
@@ -55,7 +57,14 @@ pub struct Handler<'a, EvmWiringT: EvmWiring, H: Host + 'a> {
             > + 'a,
     >,
     /// Post Execution handle.
-    pub post_execution: PostExecutionHandler<'a, EvmWiringT>,
+    pub post_execution: Box<
+        dyn PostExecutionWire<
+                Context = Context<EvmWiringT>,
+                Error = EVMErrorWiring<EvmWiringT>,
+                ExecResult = FrameResult,
+                Output = ResultAndState<EvmWiringT::HaltReason>,
+            > + 'a,
+    >,
     //pub execution: ExecutionHandler<'a, EvmWiringT>,
 }
 
@@ -77,7 +86,7 @@ where
                 instruction_table: InstructionTables::new_plain::<SPEC>(),
                 registers: Vec::new(),
                 pre_execution: EthPreExecution::<Context<EvmWiringT>,EVMErrorWiring<EvmWiringT>, SPEC>::new_boxed(),
-                post_execution: PostExecutionHandler::mainnet::<SPEC>(),
+                post_execution: EthPostExecution::<Context<EvmWiringT>,EVMErrorWiring<EvmWiringT>, EvmWiringT::HaltReason>::new_boxed(SPEC::SPEC_ID),
                 validation: EthValidation::<Context<EvmWiringT>, EVMErrorWiring<EvmWiringT>, SPEC>::new_boxed(
                 ),
                 execution: EthExecution::<Context<EvmWiringT>, EvmWiringT, EVMErrorWiring<EvmWiringT>, SPEC>::new_boxed(
@@ -130,8 +139,15 @@ impl<'a, EvmWiringT: EvmWiring> EvmHandler<'a, EvmWiringT> {
     }
 
     /// Returns reference to pre execution handler.
-    pub fn post_execution(&self) -> &PostExecutionHandler<'a, EvmWiringT> {
-        &self.post_execution
+    pub fn post_execution(
+        &self,
+    ) -> &dyn PostExecutionWire<
+        Context = Context<EvmWiringT>,
+        Error = EVMErrorWiring<EvmWiringT>,
+        ExecResult = FrameResult,
+        Output = ResultAndState<EvmWiringT::HaltReason>,
+    > {
+        self.post_execution.as_ref()
     }
 
     /// Returns reference to frame handler.
@@ -224,7 +240,7 @@ mod test {
             let inner = inner.clone();
             Box::new(move |h| {
                 *inner.borrow_mut() += 1;
-                h.post_execution.output = Arc::new(|_, _| Err(EVMError::Custom("test".into())))
+                //h.post_execution.output = Arc::new(|_, _| Err(EVMError::Custom("test".into())))
             })
         };
 

@@ -9,10 +9,10 @@ pub trait Block {
     /// The number of ancestor blocks of this block (block height).
     fn number(&self) -> &U256;
 
-    /// Coinbase or miner or address that created and signed the block.
+    /// Beneficiary (Coinbase, miner) is a address that have signed the block.
     ///
-    /// This is the receiver address of all the gas spent in the block.
-    fn coinbase(&self) -> &Address;
+    /// This is the receiver address of priority gas rewards.
+    fn beneficiary(&self) -> &Address;
 
     /// The timestamp of the block in seconds since the UNIX epoch.
     fn timestamp(&self) -> &U256;

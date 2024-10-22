@@ -1,8 +1,7 @@
 use crate::handler::{wires::Frame, FrameOrResultGen};
 use bytecode::Eof;
 use context::{
-    BlockGetter, CfgGetter, Context, Frame as FrameData, FrameOrResult, FrameResult,
-    JournalStateGetter, TransactionGetter,
+    CfgGetter, Context, Frame as FrameData, FrameOrResult, FrameResult, JournalStateGetter,
 };
 use core::{cell::RefCell, mem, ops::DerefMut};
 use interpreter::{
@@ -10,10 +9,7 @@ use interpreter::{
     InterpreterAction, InterpreterResult, NewFrameAction, SharedMemory, EMPTY_SHARED_MEMORY,
 };
 use primitives::{Address, Bytes};
-use specification::hardfork::{
-    LatestSpec, Spec,
-    SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON},
-};
+use specification::hardfork::SpecId::{self, HOMESTEAD, LONDON, SPURIOUS_DRAGON};
 use state::Bytecode;
 use std::{rc::Rc, sync::Arc};
 use wiring::{
@@ -26,7 +22,7 @@ pub struct EthFrame<EvmWiring, CTX> {
     _phantom: std::marker::PhantomData<(CTX, EvmWiring)>,
     data: FrameData,
     spec_id: SpecId,
-    // This is worth making as a generic type.
+    // This is worth making as a generic type FrameSharedContext.
     shared_memory: Rc<RefCell<SharedMemory>>,
 }
 
@@ -61,7 +57,7 @@ impl<EvmWiringT: EvmWiring, CTX> EthFrame<EvmWiringT, CTX> {
     }
 }
 
-pub trait HostTemp: TransactionGetter + BlockGetter + JournalStateGetter {}
+//spub trait HostTemp: TransactionGetter + BlockGetter + JournalStateGetter {}
 
 impl<CTX, EvmWiringT: EvmWiring> Frame for EthFrame<EvmWiringT, CTX> {
     type Context = Context<EvmWiringT>;
@@ -147,7 +143,6 @@ impl<CTX, EvmWiringT: EvmWiring> Frame for EthFrame<EvmWiringT, CTX> {
                     &mut interpreter_result,
                     frame.created_address,
                     max_code_size,
-                    self.spec_id,
                 );
 
                 FrameOrResultGen::Result(FrameResult::EOFCreate(CreateOutcome::new(
@@ -259,7 +254,6 @@ pub fn return_eofcreate<Journal: JournaledState>(
     interpreter_result: &mut InterpreterResult,
     address: Address,
     max_code_size: usize,
-    spec_id: SpecId,
 ) {
     // Note we still execute RETURN opcode and return the bytes.
     // In EOF those opcodes should abort execution.

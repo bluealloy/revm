@@ -2,7 +2,7 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
-use crate::{handler::PreExecutionWire, Context, ContextPrecompiles, EvmWiring, JournalEntry};
+use crate::{handler::PreExecutionWire, ContextPrecompiles, EvmWiring};
 use bytecode::Bytecode;
 use context::{
     BlockGetter, CfgGetter, JournalStateGetter, JournalStateGetterDBError, TransactionGetter,
@@ -13,13 +13,10 @@ use specification::{
     eip7702,
     hardfork::{Spec, SpecId},
 };
-use state::Account;
 use transaction::{eip7702::Authorization, AccessListTrait, Eip4844Tx, Eip7702Tx};
 use wiring::{
-    default::EnvWiring,
-    journaled_state::JournaledState,
-    result::{EVMResultGeneric, InvalidTransaction},
-    Block, Cfg, Transaction, TransactionType,
+    journaled_state::JournaledState, result::InvalidTransaction, Block, Cfg, Transaction,
+    TransactionType,
 };
 
 pub struct EthPreExecution<CTX, ERROR, Fork: Spec> {
@@ -58,7 +55,7 @@ where
         // load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
         if FORK::enabled(SpecId::SHANGHAI) {
-            let coinbase = *context.block().coinbase();
+            let coinbase = *context.block().beneficiary();
             context.journal().warm_account(coinbase);
         }
 
@@ -124,72 +121,10 @@ where
 }
 
 /// Main precompile load
+/// TODO Include this inside Wire.
 #[inline]
 pub fn load_precompiles<EvmWiringT: EvmWiring, SPEC: Spec>() -> ContextPrecompiles<EvmWiringT> {
     ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
-}
-
-/// Main load handle
-#[inline]
-pub fn load_accounts<EvmWiringT: EvmWiring, SPEC: Spec>(
-    context: &mut Context<EvmWiringT>,
-) -> EVMResultGeneric<(), EvmWiringT> {
-    // set journaling state flag.
-    context.evm.journaled_state.set_spec_id(SPEC::SPEC_ID);
-
-    // load coinbase
-    // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
-    if SPEC::enabled(SpecId::SHANGHAI) {
-        let coinbase = *context.evm.inner.env.block.coinbase();
-        context
-            .evm
-            .journaled_state
-            .warm_preloaded_addresses
-            .insert(coinbase);
-    }
-
-    // Load blockhash storage address
-    // EIP-2935: Serve historical block hashes from state
-    if SPEC::enabled(SpecId::PRAGUE) {
-        context
-            .evm
-            .journaled_state
-            .warm_preloaded_addresses
-            .insert(BLOCKHASH_STORAGE_ADDRESS);
-    }
-
-    // Load access list
-    //context.evm.load_access_list().map_err(EVMError::Database)?;
-    Ok(())
-}
-
-/// Helper function that deducts the caller balance.
-#[inline]
-pub fn deduct_caller_inner<EvmWiringT: EvmWiring, SPEC: Spec>(
-    caller_account: &mut Account,
-    env: &EnvWiring<EvmWiringT>,
-) {
-    // Subtract gas costs from the caller's account.
-    // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
-    let mut gas_cost =
-        U256::from(env.tx.common_fields().gas_limit()).saturating_mul(env.effective_gas_price());
-
-    // EIP-4844
-    if let Some(data_fee) = env.calc_data_fee() {
-        gas_cost = gas_cost.saturating_add(data_fee);
-    }
-
-    // set new caller account balance.
-    caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
-
-    // bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-    if env.tx.kind().is_call() {
-        // Nonce is already checked
-        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-    }
-
-    // touch account so we know it is changed.
-    caller_account.mark_touch();
 }
 
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
@@ -212,7 +147,7 @@ pub fn apply_eip7702_auth_list<
         return Ok(0);
     }
 
-    pub struct Authorization {
+    struct Authorization {
         authority: Option<Address>,
         address: Address,
         nonce: u64,

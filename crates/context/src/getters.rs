@@ -8,7 +8,7 @@ use wiring::{
     default::{CfgEnv, Env, EnvWiring},
     evm_wiring::HardforkTrait,
     journaled_state::JournaledState,
-    result::{EVMError, EVMResultGeneric, InvalidTransaction},
+    result::{EVMError, EVMErrorWiring, EVMResultGeneric, InvalidTransaction},
     Block, Cfg, EthereumWiring, EvmWiring,
 };
 
@@ -66,6 +66,21 @@ impl<EvmWiringT: EvmWiring> DatabaseGetter for Context<EvmWiringT> {
 
     fn db(&mut self) -> &mut Self::Database {
         &mut self.evm.journaled_state.database
+    }
+}
+
+/// TODO change name of the trait
+pub trait ErrorGetter {
+    type Error;
+
+    fn take_error(&mut self) -> Result<(), Self::Error>;
+}
+
+impl<EvmWiringT: EvmWiring> ErrorGetter for Context<EvmWiringT> {
+    type Error = EVMErrorWiring<EvmWiringT>;
+
+    fn take_error(&mut self) -> Result<(), Self::Error> {
+        self.evm.inner.take_error().map_err(EVMError::Database)
     }
 }
 

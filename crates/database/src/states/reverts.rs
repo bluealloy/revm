@@ -200,7 +200,7 @@ impl AccountRevert {
 
 /// Depending on previous state of account info this
 /// will tell us what to do on revert.
-#[derive(Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AccountInfoRevert {
     #[default]

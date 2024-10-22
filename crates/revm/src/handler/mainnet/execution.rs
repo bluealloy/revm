@@ -1,24 +1,18 @@
+use super::EthFrame;
 use crate::{
     handler::{wires::Frame as FrameTrait, ExecutionWire, FrameOrResultGen},
-    CallFrame, Context, CreateFrame, EvmWiring, Frame as ContextFrame, FrameOrResult, FrameResult,
+    Context, EvmWiring,
 };
 use bytecode::EOF_MAGIC_BYTES;
-use context::frame::EOFCreateFrame;
-use core::{cell::RefCell, mem};
+use core::cell::RefCell;
 use interpreter::{
-    return_ok, return_revert, table::InstructionTables, CallInputs, CallOutcome, CallScheme,
-    CallValue, CreateInputs, CreateOutcome, CreateScheme, EOFCreateInputs, EOFCreateKind, Gas,
-    InterpreterAction, InterpreterResult, NewFrameAction, SharedMemory, EMPTY_SHARED_MEMORY,
+    return_ok, return_revert, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme,
+    EOFCreateInputs, EOFCreateKind, Gas, NewFrameAction, SharedMemory,
 };
 use primitives::TxKind;
 use specification::hardfork::{Spec, SpecId};
 use std::{boxed::Box, rc::Rc};
-use wiring::{
-    result::{EVMError, EVMErrorWiring, EVMResultGeneric},
-    Transaction,
-};
-
-use super::{frame::HostTemp, EthFrame};
+use wiring::{result::EVMErrorWiring, Transaction};
 
 /// TODO EvmWiringT is temporary, replace it with getter traits.
 pub struct EthExecution<CTX, EvmWiringT, ERROR, FORK> {

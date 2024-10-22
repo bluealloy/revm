@@ -4,6 +4,7 @@ use crate::handler::ValidationWire;
 use context::{
     BlockGetter, CfgGetter, JournalStateGetter, JournalStateGetterDBError, TransactionGetter,
 };
+
 use database_interface::Database;
 use interpreter::gas;
 use primitives::{B256, U256};
@@ -22,6 +23,7 @@ use wiring::{
     result::{InvalidHeader, InvalidTransaction},
     Block, Cfg, TransactionType,
 };
+
 
 pub struct EthValidation<CTX, ERROR, Fork: Spec> {
     pub _phantom: std::marker::PhantomData<(CTX, ERROR, Fork)>,

@@ -55,6 +55,8 @@ pub struct JournaledState<DB> {
 impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
     type Database = DB;
     type Checkpoint = JournalCheckpoint;
+    // TODO make a struck here.
+    type FinalOutput = (EvmState, Vec<Log>);
 
     fn warm_account(&mut self, address: Address) {
         self.warm_preloaded_addresses.insert(address);
@@ -96,8 +98,38 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
         self.checkpoint_revert(checkpoint)
     }
 
-    fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256){
+    fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256) {
         self.set_code_with_hash(address, code, hash);
+    }
+
+    fn clear(&mut self) {
+        // Clears the JournaledState. Preserving only the spec.
+        //let spec = self.spec;
+        // TODO WIRING Clear it up
+        //let db = self.database;
+        //*self = Self::new(spec, db, HashSet::default());
+    }
+
+    fn finalize(&mut self) -> Result<Self::FinalOutput, <Self::Database as Database>::Error> {
+        let Self {
+            state,
+            transient_storage,
+            logs,
+            depth,
+            journal,
+            // kept, see [Self::new]
+            spec: _,
+            database: _,
+            warm_preloaded_addresses: _,
+        } = self;
+
+        *transient_storage = TransientStorage::default();
+        *journal = vec![vec![]];
+        *depth = 0;
+        let state = mem::take(state);
+        let logs = mem::take(logs);
+
+        Ok((state, logs))
     }
 }
 
@@ -157,40 +189,6 @@ impl<DB: Database> JournaledState<DB> {
             journal.push(JournalEntry::AccountTouched { address: *address });
             account.mark_touch();
         }
-    }
-
-    /// Clears the JournaledState. Preserving only the spec.
-    pub fn clear(&mut self) {
-        //let spec = self.spec;
-        // TODO WIRING Clear it up
-        //let db = self.database;
-        //*self = Self::new(spec, db, HashSet::default());
-    }
-
-    /// Does cleanup and returns modified state.
-    ///
-    /// This resets the [JournaledState] to its initial state in [Self::new]
-    #[inline]
-    pub fn finalize(&mut self) -> (EvmState, Vec<Log>) {
-        let Self {
-            state,
-            transient_storage,
-            logs,
-            depth,
-            journal,
-            // kept, see [Self::new]
-            spec: _,
-            database: _,
-            warm_preloaded_addresses: _,
-        } = self;
-
-        *transient_storage = TransientStorage::default();
-        *journal = vec![vec![]];
-        *depth = 0;
-        let state = mem::take(state);
-        let logs = mem::take(logs);
-
-        (state, logs)
     }
 
     /// Returns the _loaded_ [Account] for the given address.

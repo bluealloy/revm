@@ -7,6 +7,7 @@ use state::{Account, Bytecode};
 pub trait JournaledState {
     type Database: Database;
     type Checkpoint;
+    type FinalOutput;
 
     fn warm_account_and_storage(
         &mut self,
@@ -27,7 +28,7 @@ pub trait JournaledState {
         &mut self,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, <Self::Database as Database>::Error>;
-    
+
     /// Set bytecode with hash. Assume that account is warm.
     fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256);
 
@@ -37,12 +38,20 @@ pub trait JournaledState {
         let hash = code.hash_slow();
         self.set_code_with_hash(address, code, hash);
     }
-    
+
+    /// Called at the end of the transaction to clean all residue data from journal.
+    fn clear(&mut self);
+
     fn checkpoint(&mut self) -> Self::Checkpoint;
 
     fn checkpoint_commit(&mut self);
 
     fn checkpoint_revert(&mut self, checkpoint: Self::Checkpoint);
+
+    /// Does cleanup and returns modified state.
+    ///
+    /// This resets the [JournaledState] to its initial state.
+    fn finalize(&mut self) -> Result<Self::FinalOutput, <Self::Database as Database>::Error>;
 }
 
 /// State load information that contains the data and if the account or storage is cold loaded.

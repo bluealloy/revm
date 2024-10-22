@@ -2,7 +2,6 @@
 
 pub mod execution;
 pub mod generic;
-pub mod post_execution;
 
 // Exports
 
@@ -13,9 +12,6 @@ use context::FrameOrResult;
 // };
 pub use generic::{GenericContextHandle, GenericContextHandleRet};
 use interpreter::{table::InstructionTables, Gas};
-pub use post_execution::{
-    EndHandle, OutputHandle, PostExecutionHandler, ReimburseCallerHandle, RewardBeneficiaryHandle,
-};
 use specification::hardfork::Spec;
 use wiring::EvmWiring;
 
@@ -56,29 +52,45 @@ pub trait PostExecutionWire {
     type Output;
 
     /// Calculate final refund
-    fn refund(&self, ctx: &mut Self::Context, gas: &mut Gas, eip7702_refund: i64);
+    fn refund(
+        &self,
+        ctx: &mut Self::Context,
+        exec_result: &mut Self::ExecResult,
+        eip7702_refund: i64,
+    );
 
-    /// Reimburse the caller with gas that were not spend.  
-    fn reimburse_caller(&self, ctx: &mut Self::Context, gas: &Gas) -> Result<(), Self::Error>;
+    /// Reimburse the caller with balance it didn't spent.
+    fn reimburse_caller(
+        &self,
+        ctx: &mut Self::Context,
+        exec_result: &mut Self::ExecResult,
+    ) -> Result<(), Self::Error>;
 
-    /// Reward beneficiary
-    fn reward_beneficiary(&self, ctx: &mut Self::Context, gas: &Gas) -> Result<(), Self::Error>;
+    /// Reward beneficiary with transaction rewards.
+    fn reward_beneficiary(
+        &self,
+        ctx: &mut Self::Context,
+        exec_result: &mut Self::ExecResult,
+    ) -> Result<(), Self::Error>;
 
-    /// Returns the output of transaction.
+    /// Main return handle, takes state from journal and transforms internal result to [`PostExecutionWire::Output`].
     fn output(
         &self,
         context: &mut Self::Context,
         result: Self::ExecResult,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<Self::Output, Self::Error>;
 
     /// Called when execution ends.
+    ///
     /// End handle in comparison to output handle will be called every time after execution.
     /// While [`PostExecutionWire::output`] will be omitted in case of the error.
     fn end(
         &self,
-        context: &mut Self::Context,
-        end_output: Self::Output,
-    ) -> Result<Self::Output, Self::Error>;
+        _context: &mut Self::Context,
+        end_output: Result<Self::Output, Self::Error>,
+    ) -> Result<Self::Output, Self::Error> {
+        end_output
+    }
 
     /// Clean handler. This handle is called every time regardless
     /// of the result of the transaction.

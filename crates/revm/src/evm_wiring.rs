@@ -1,19 +1,16 @@
 use crate::{
-    handler::{
-        mainnet::{EthExecution, EthPreExecution, EthValidation},
-        PostExecutionHandler,
-    },
+    handler::mainnet::{EthExecution, EthPostExecution, EthPreExecution, EthValidation},
     EvmHandler,
 };
 use context::{Context, JournaledState};
 use database_interface::Database;
 use interpreter::table::InstructionTables;
-use specification::spec_to_generic;
+use specification::{hardfork::Spec, spec_to_generic};
 use std::fmt::Debug;
 use std::vec::Vec;
 use wiring::{
     journaled_state::JournaledState as JournaledStateTrait,
-    result::{EVMError, EVMErrorWiring},
+    result::{EVMError, EVMErrorWiring, HaltReason},
     EthereumWiring, EvmWiring as PrimitiveEvmWiring, Transaction,
 };
 
@@ -49,7 +46,8 @@ impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
                 >,
                 SPEC,
             >::new_boxed(),
-                post_execution: PostExecutionHandler::mainnet::<SPEC>(),
+                post_execution: EthPostExecution::<Context<Self>,EVMErrorWiring<Self>, HaltReason>::new_boxed(SPEC::SPEC_ID
+                ),
                 execution: EthExecution::<Context<Self>, Self, EVMErrorWiring<Self>, SPEC>::new_boxed(
                 ),
             }

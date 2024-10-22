@@ -389,11 +389,11 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
 
         let post_exec = self.handler.post_execution();
         // calculate final refund and add EIP-7702 refund to gas.
-        post_exec.refund(ctx, exec_result.gas_mut(), eip7702_gas_refund);
+        post_exec.refund(ctx, &mut exec_result, eip7702_gas_refund);
         // Reimburse the caller
-        post_exec.reimburse_caller(ctx, exec_result.gas())?;
+        post_exec.reimburse_caller(ctx, &mut exec_result)?;
         // Reward beneficiary
-        post_exec.reward_beneficiary(ctx, exec_result.gas())?;
+        post_exec.reward_beneficiary(ctx, &mut exec_result)?;
         // Returns output of transaction.
         post_exec.output(ctx, exec_result)
     }
@@ -403,10 +403,7 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
 mod tests {
 
     use crate::{
-        handler::{
-            mainnet::{EthPreExecution, EthValidation},
-            ExecutionHandler, PostExecutionHandler,
-        },
+        handler::mainnet::{EthExecution, EthPostExecution, EthPreExecution, EthValidation},
         EvmHandler,
     };
 
@@ -415,6 +412,7 @@ mod tests {
         opcode::{PUSH1, SSTORE},
         Bytecode,
     };
+    use context::EvmError;
     use core::{fmt::Debug, hash::Hash};
     use database::BenchmarkDB;
     use database_interface::Database;
@@ -422,7 +420,7 @@ mod tests {
     use primitives::{address, TxKind, U256};
     use specification::{
         eip7702::{Authorization, RecoveredAuthorization, Signature},
-        hardfork::SpecId,
+        hardfork::{Spec, SpecId},
         spec_to_generic,
     };
     use transaction::TransactionType;
@@ -462,8 +460,13 @@ mod tests {
                         EthPreExecution::<Context<Self>, EVMErrorWiring<Self>, SPEC>::new_boxed(),
                     validation:
                         EthValidation::<Context<Self>, EVMErrorWiring<Self>, SPEC>::new_boxed(),
-                    post_execution: PostExecutionHandler::mainnet::<SPEC>(),
-                    execution: ExecutionHandler::new::<SPEC>(),
+                    post_execution: EthPostExecution::<
+                        Context<Self>,
+                        EVMErrorWiring<Self>,
+                        HaltReason,
+                    >::new_boxed(SPEC::SPEC_ID),
+                    execution:
+                        EthExecution::<Context<Self>, Self, EVMErrorWiring<Self>, SPEC>::new_boxed(),
                 }
             )
         }
