@@ -75,6 +75,24 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
         self.spec = spec_id;
     }
 
+    fn transfer(
+        &mut self,
+        from: &Address,
+        to: &Address,
+        balance: U256,
+    ) -> Result<Option<()>, DB::Error> {
+        // TODO handle instruction result
+        self.transfer(from, to, balance).map(|i| i.map(|_| ()))
+    }
+
+    fn touch_account(&mut self, address: Address) {
+        self.touch(&address);
+    }
+
+    fn inc_account_nonce(&mut self, address: Address) -> Result<Option<u64>, DB::Error> {
+        Ok(self.inc_nonce(address))
+    }
+
     fn load_account(&mut self, address: Address) -> Result<StateLoad<&mut Account>, DB::Error> {
         self.load_account(address)
     }

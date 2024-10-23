@@ -286,6 +286,12 @@ impl<HaltReasonT: HaltReasonTrait> SuccessOrHalt<HaltReasonT> {
     }
 }
 
+impl<HALT: HaltReasonTrait> From<HaltReason> for SuccessOrHalt<HALT> {
+    fn from(reason: HaltReason) -> Self {
+        SuccessOrHalt::Halt(reason.into())
+    }
+}
+
 impl<HaltReasonT: HaltReasonTrait> From<InstructionResult> for SuccessOrHalt<HaltReasonT> {
     fn from(result: InstructionResult) -> Self {
         match result {

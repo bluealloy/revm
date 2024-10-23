@@ -19,23 +19,25 @@ use wiring::{
     TransactionType,
 };
 
-pub struct EthPreExecution<CTX, ERROR, Fork: Spec> {
-    pub _phantom: std::marker::PhantomData<(CTX, ERROR, Fork)>,
+pub struct EthPreExecution<CTX, ERROR> {
+    pub spec_id: SpecId,
+    pub _phantom: std::marker::PhantomData<(CTX, ERROR)>,
 }
 
-impl<CTX, ERROR, Fork: Spec> EthPreExecution<CTX, ERROR, Fork> {
-    pub fn new() -> Self {
+impl<CTX, ERROR> EthPreExecution<CTX, ERROR> {
+    pub fn new(spec_id: SpecId) -> Self {
         Self {
+            spec_id,
             _phantom: std::marker::PhantomData,
         }
     }
 
-    pub fn new_boxed() -> Box<Self> {
-        Box::new(Self::new())
+    pub fn new_boxed(spec_id: SpecId) -> Box<Self> {
+        Box::new(Self::new(spec_id))
     }
 }
 
-impl<CTX, ERROR, FORK: Spec> PreExecutionWire for EthPreExecution<CTX, ERROR, FORK>
+impl<CTX, ERROR> PreExecutionWire for EthPreExecution<CTX, ERROR>
 where
     CTX: TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter,
     ERROR: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
@@ -50,18 +52,18 @@ where
 
     fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
         // set journaling state flag.
-        context.journal().set_spec_id(FORK::SPEC_ID);
+        context.journal().set_spec_id(self.spec_id);
 
         // load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
-        if FORK::enabled(SpecId::SHANGHAI) {
+        if self.spec_id.is_enabled_in(SpecId::SHANGHAI) {
             let coinbase = *context.block().beneficiary();
             context.journal().warm_account(coinbase);
         }
 
         // Load blockhash storage address
         // EIP-2935: Serve historical block hashes from state
-        if FORK::enabled(SpecId::PRAGUE) {
+        if self.spec_id.is_enabled_in(SpecId::PRAGUE) {
             context.journal().warm_account(BLOCKHASH_STORAGE_ADDRESS);
         }
 
@@ -79,7 +81,11 @@ where
     }
 
     fn apply_eip7702_auth_list(&self, context: &mut Self::Context) -> Result<u64, Self::Error> {
-        apply_eip7702_auth_list::<CTX, FORK, ERROR>(context)
+        if self.spec_id.is_enabled_in(SpecId::PRAGUE) {
+            apply_eip7702_auth_list::<CTX, ERROR>(context)
+        } else {
+            Ok(0)
+        }
     }
 
     fn deduct_caller(&self, ctx: &mut Self::Context) -> Result<(), Self::Error> {
@@ -131,16 +137,10 @@ pub fn load_precompiles<EvmWiringT: EvmWiring, SPEC: Spec>() -> ContextPrecompil
 #[inline]
 pub fn apply_eip7702_auth_list<
     CTX: TransactionGetter + JournalStateGetter + CfgGetter,
-    SPEC: Spec,
     ERROR: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
 >(
     ctx: &mut CTX,
 ) -> Result<u64, ERROR> {
-    // EIP-7702. Load bytecode to authorized accounts.
-    if !SPEC::enabled(SpecId::PRAGUE) {
-        return Ok(0);
-    }
-
     // return if there is no auth list.
     let tx = ctx.tx();
     if tx.tx_type().into() != TransactionType::Eip7702 {

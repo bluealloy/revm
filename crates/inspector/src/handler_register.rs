@@ -2,7 +2,7 @@ use crate::Inspector;
 use core::cell::RefCell;
 use revm::{
     bytecode::opcode,
-    handler::register::EvmHandler,
+    handler::{register::EvmHandler, ExecutionWire},
     interpreter::{table::DynInstruction, InstructionResult, Interpreter},
     wiring::result::EVMResultGeneric,
     Context, EvmWiring, FrameOrResult, FrameResult, JournalEntry,
@@ -204,6 +204,10 @@ pub fn inspector_handle_register<
             .create_end(&mut ctx.evm, &create_inputs, outcome);
         prev_handle(ctx, frame, outcome)
     });
+
+    pub struct InspectorExecWire {
+        prev_handle: Box<dyn ExecutionWire + 'a>,
+    }
 
     // last frame outcome
     let prev_handle = handler.execution.last_frame_return.clone();

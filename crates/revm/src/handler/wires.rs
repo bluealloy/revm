@@ -1,8 +1,5 @@
 // Modules
 
-pub mod execution;
-pub mod generic;
-
 // Exports
 
 use context::FrameOrResult;
@@ -10,7 +7,6 @@ use context::FrameOrResult;
 //     ExecutionHandler, FrameCallHandle, FrameCallReturnHandle, FrameCreateHandle,
 //     FrameCreateReturnHandle, InsertCallOutcomeHandle, InsertCreateOutcomeHandle,
 // };
-pub use generic::{GenericContextHandle, GenericContextHandleRet};
 use interpreter::{table::InstructionTables, Gas};
 use specification::hardfork::Spec;
 use wiring::EvmWiring;
@@ -126,7 +122,7 @@ pub trait ExecutionWire {
         let mut frame_stack: Vec<<Self as ExecutionWire>::Frame> = vec![frame];
         loop {
             let frame = frame_stack.last_mut().unwrap();
-            let call_or_result = frame.run(instructions, context)?;
+            let call_or_result = frame.run(/*instructions,*/ context)?;
 
             let result = match call_or_result {
                 FrameOrResultGen::Frame(init) => match frame.init(init, context)? {
@@ -170,7 +166,7 @@ pub trait Frame: Sized {
 
     fn run(
         &mut self,
-        instructions: &InstructionTables<'_, Self::Context>,
+        //instructions: &InstructionTables<'_, Self::Context>,
         context: &mut Self::Context,
     ) -> Result<FrameOrResultGen<Self::FrameInit, Self::FrameResult>, Self::Error>;
 

@@ -19,6 +19,21 @@ pub trait JournaledState {
 
     fn set_spec_id(&mut self, spec_id: SpecId);
 
+    fn touch_account(&mut self, address: Address);
+
+    /// TODO instruction result is not known
+    fn transfer(
+        &mut self,
+        from: &Address,
+        to: &Address,
+        balance: U256,
+    ) -> Result<Option<()>, <Self::Database as Database>::Error>;
+
+    fn inc_account_nonce(
+        &mut self,
+        address: Address,
+    ) -> Result<Option<u64>, <Self::Database as Database>::Error>;
+
     fn load_account(
         &mut self,
         address: Address,

@@ -24,23 +24,25 @@ use wiring::{
     Block, Cfg, TransactionType,
 };
 
-pub struct EthValidation<CTX, ERROR, Fork: Spec> {
-    pub _phantom: std::marker::PhantomData<(CTX, ERROR, Fork)>,
+pub struct EthValidation<CTX, ERROR> {
+    pub spec_id: SpecId,
+    pub _phantom: std::marker::PhantomData<(CTX, ERROR)>,
 }
 
-impl<CTX, ERROR, Fork: Spec> EthValidation<CTX, ERROR, Fork> {
-    pub fn new() -> Self {
+impl<CTX, ERROR> EthValidation<CTX, ERROR> {
+    pub fn new(spec_id: SpecId) -> Self {
         Self {
+            spec_id,
             _phantom: std::marker::PhantomData,
         }
     }
 
-    pub fn new_boxed() -> Box<Self> {
-        Box::new(Self::new())
+    pub fn new_boxed(spec_id: SpecId) -> Box<Self> {
+        Box::new(Self::new(spec_id))
     }
 }
 
-impl<CTX, ERROR, FORK: Spec> ValidationWire for EthValidation<CTX, ERROR, FORK>
+impl<CTX, ERROR> ValidationWire for EthValidation<CTX, ERROR>
 where
     CTX: TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter,
     ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>,
@@ -50,14 +52,16 @@ where
 
     fn validate_env(&self, ctx: &Self::Context) -> Result<(), Self::Error> {
         // `prevrandao` is required for the merge
-        if FORK::enabled(SpecId::MERGE) && ctx.block().prevrandao().is_none() {
+        if self.spec_id.is_enabled_in(SpecId::MERGE) && ctx.block().prevrandao().is_none() {
             return Err(InvalidHeader::PrevrandaoNotSet.into());
         }
         // `excess_blob_gas` is required for Cancun
-        if FORK::enabled(SpecId::CANCUN) && ctx.block().blob_excess_gas_and_price().is_none() {
+        if self.spec_id.is_enabled_in(SpecId::CANCUN)
+            && ctx.block().blob_excess_gas_and_price().is_none()
+        {
             return Err(InvalidHeader::ExcessBlobGasNotSet.into());
         }
-        validate_tx_env::<&Self::Context, FORK, InvalidTransaction>(ctx).map_err(Into::into)
+        validate_tx_env::<&Self::Context, InvalidTransaction>(ctx, self.spec_id).map_err(Into::into)
     }
 
     fn validate_tx_against_state(&self, ctx: &mut Self::Context) -> Result<(), Self::Error> {
@@ -67,11 +71,11 @@ where
         let account = &mut ctx.journal().load_account_code(tx_caller)?;
         let account = account.data.clone();
 
-        validate_tx_against_account::<CTX, FORK, ERROR>(&account, ctx)
+        validate_tx_against_account::<CTX, ERROR>(&account, ctx)
     }
 
     fn validate_initial_tx_gas(&self, ctx: &Self::Context) -> Result<u64, Self::Error> {
-        validate_initial_tx_gas::<&Self::Context, FORK, InvalidTransaction>(&ctx)
+        validate_initial_tx_gas::<&Self::Context, InvalidTransaction>(&ctx, self.spec_id)
             .map_err(Into::into)
     }
 }
@@ -136,8 +140,9 @@ pub fn validate_eip4844_tx(
 }
 
 /// Validate transaction against block and configuration for mainnet.
-pub fn validate_tx_env<CTX: TransactionGetter + BlockGetter + CfgGetter, SPEC: Spec, Error>(
+pub fn validate_tx_env<CTX: TransactionGetter + BlockGetter + CfgGetter, Error>(
     ctx: CTX,
+    spec_id: SpecId,
 ) -> Result<(), Error>
 where
     Error: From<InvalidTransaction>,
@@ -171,7 +176,7 @@ where
         }
         TransactionType::Eip2930 => {
             // enabled in BERLIN hardfork
-            if !SPEC::enabled(SpecId::BERLIN) {
+            if !spec_id.is_enabled_in(SpecId::BERLIN) {
                 return Err(InvalidTransaction::Eip2930NotSupported.into());
             }
             let tx = ctx.tx().eip2930();
@@ -188,7 +193,7 @@ where
             }
         }
         TransactionType::Eip1559 => {
-            if !SPEC::enabled(SpecId::LONDON) {
+            if !spec_id.is_enabled_in(SpecId::LONDON) {
                 return Err(InvalidTransaction::Eip1559NotSupported.into());
             }
             let tx = ctx.tx().eip1559();
@@ -204,7 +209,7 @@ where
             )?;
         }
         TransactionType::Eip4844 => {
-            if !SPEC::enabled(SpecId::CANCUN) {
+            if !spec_id.is_enabled_in(SpecId::CANCUN) {
                 return Err(InvalidTransaction::Eip4844NotSupported.into());
             }
             let tx = ctx.tx().eip4844();
@@ -227,7 +232,7 @@ where
         }
         TransactionType::Eip7702 => {
             // check if EIP-7702 transaction is enabled.
-            if !SPEC::enabled(SpecId::PRAGUE) {
+            if !spec_id.is_enabled_in(SpecId::PRAGUE) {
                 return Err(InvalidTransaction::Eip7702NotSupported.into());
             }
             let tx = ctx.tx().eip7702();
@@ -268,7 +273,7 @@ where
     }
 
     // EIP-3860: Limit and meter initcode
-    if SPEC::enabled(SpecId::SHANGHAI) && ctx.tx().kind().is_create() {
+    if spec_id.is_enabled_in(SpecId::SHANGHAI) && ctx.tx().kind().is_create() {
         let max_initcode_size = ctx.cfg().max_code_size().saturating_mul(2);
         if ctx.tx().common_fields().input().len() > max_initcode_size {
             return Err(InvalidTransaction::CreateInitCodeSizeLimit.into());
@@ -280,7 +285,7 @@ where
 
 /// Validate account against the transaction.
 #[inline]
-pub fn validate_tx_against_account<CTX: TransactionGetter + CfgGetter, SPEC: Spec, ERROR>(
+pub fn validate_tx_against_account<CTX: TransactionGetter + CfgGetter, ERROR>(
     account: &Account,
     ctx: &CTX,
 ) -> Result<(), ERROR>
@@ -367,12 +372,13 @@ where
     let account = &mut ctx.journal().load_account_code(tx_caller)?;
     let account = account.data.clone();
 
-    validate_tx_against_account::<CTX, SPEC, ERROR>(&account, ctx)
+    validate_tx_against_account::<CTX, ERROR>(&account, ctx)
 }
 
 /// Validate initial transaction gas.
-pub fn validate_initial_tx_gas<TxGetter: TransactionGetter, SPEC: Spec, Error>(
+pub fn validate_initial_tx_gas<TxGetter: TransactionGetter, Error>(
     env: TxGetter,
+    spec_id: SpecId,
 ) -> Result<u64, Error>
 where
     Error: From<InvalidTransaction>,
@@ -391,7 +397,7 @@ where
     let access_list = env.tx().access_list();
 
     let initial_gas_spend = gas::validate_initial_tx_gas(
-        SPEC::SPEC_ID,
+        spec_id,
         input,
         is_create,
         access_list,

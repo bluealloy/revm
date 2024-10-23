@@ -1,17 +1,16 @@
 use crate::{
     builder::{EvmBuilder, SetGenericStage},
     handler::{FrameOrResultGen, Handler},
-    Context, ContextWithEvmWiring, EvmContext, EvmWiring, Frame, FrameOrResult, FrameResult,
-    InnerEvmContext,
+    Context, ContextWithEvmWiring, EvmContext, EvmWiring, InnerEvmContext,
 };
 use context::JournaledState;
 use core::fmt::{self, Debug};
 use database_interface::{Database, DatabaseCommit};
-use interpreter::{Host, InterpreterAction, NewFrameAction, SharedMemory};
-use std::{boxed::Box, vec::Vec};
+use interpreter::Host;
+use std::boxed::Box;
 use wiring::{
     default::{CfgEnv, EnvWiring},
-    result::{EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState},
+    result::{EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState},
     Transaction,
 };
 
@@ -402,17 +401,15 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
 #[cfg(test)]
 mod tests {
 
+    use super::*;
     use crate::{
         handler::mainnet::{EthExecution, EthPostExecution, EthPreExecution, EthValidation},
         EvmHandler,
     };
-
-    use super::*;
     use bytecode::{
         opcode::{PUSH1, SSTORE},
         Bytecode,
     };
-    use context::EvmError;
     use core::{fmt::Debug, hash::Hash};
     use database::BenchmarkDB;
     use database_interface::Database;
@@ -457,16 +454,20 @@ mod tests {
                     instruction_table: InstructionTables::new_plain::<SPEC>(),
                     registers: Vec::new(),
                     pre_execution:
-                        EthPreExecution::<Context<Self>, EVMErrorWiring<Self>, SPEC>::new_boxed(),
-                    validation:
-                        EthValidation::<Context<Self>, EVMErrorWiring<Self>, SPEC>::new_boxed(),
+                        EthPreExecution::<Context<Self>, EVMErrorWiring<Self>>::new_boxed(
+                            SPEC::SPEC_ID
+                        ),
+                    validation: EthValidation::<Context<Self>, EVMErrorWiring<Self>>::new_boxed(
+                        SPEC::SPEC_ID
+                    ),
                     post_execution: EthPostExecution::<
                         Context<Self>,
                         EVMErrorWiring<Self>,
                         HaltReason,
                     >::new_boxed(SPEC::SPEC_ID),
-                    execution:
-                        EthExecution::<Context<Self>, Self, EVMErrorWiring<Self>, SPEC>::new_boxed(),
+                    execution: EthExecution::<Context<Self>, EVMErrorWiring<Self>>::new_boxed(
+                        SPEC::SPEC_ID
+                    ),
                 }
             )
         }

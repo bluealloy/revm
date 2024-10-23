@@ -1,36 +1,38 @@
 use super::EthFrame;
-use crate::{
-    handler::{wires::Frame as FrameTrait, ExecutionWire, FrameOrResultGen},
-    Context, EvmWiring,
-};
+use crate::handler::{wires::Frame as FrameTrait, ExecutionWire, FrameOrResultGen};
 use bytecode::EOF_MAGIC_BYTES;
+use context::{
+    BlockGetter, CfgGetter, ErrorGetter, JournalCheckpoint, JournalStateGetter,
+    JournalStateGetterDBError, TransactionGetter,
+};
 use core::cell::RefCell;
 use interpreter::{
     return_ok, return_revert, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme,
     EOFCreateInputs, EOFCreateKind, Gas, NewFrameAction, SharedMemory,
 };
 use primitives::TxKind;
-use specification::hardfork::{Spec, SpecId};
+use specification::hardfork::SpecId;
 use std::{boxed::Box, rc::Rc};
-use wiring::{result::EVMErrorWiring, Transaction};
+use wiring::{journaled_state::JournaledState, result::InvalidTransaction, Transaction};
 
 /// TODO EvmWiringT is temporary, replace it with getter traits.
-pub struct EthExecution<CTX, EvmWiringT, ERROR, FORK> {
-    _phantom: std::marker::PhantomData<(CTX, EvmWiringT, ERROR, FORK)>,
+pub struct EthExecution<CTX, ERROR> {
+    spec_id: SpecId,
+    _phantom: std::marker::PhantomData<(CTX, ERROR)>,
 }
 
-impl<CTX, EvmWiringT: EvmWiring, ERROR, FORK> ExecutionWire
-    for EthExecution<CTX, EvmWiringT, ERROR, FORK>
+impl<CTX, ERROR> ExecutionWire for EthExecution<CTX, ERROR>
 where
-    // FUTURE WORK
-    // CTX: HostTemp,
-    FORK: Spec,
+    CTX: TransactionGetter
+        + ErrorGetter<Error = ERROR>
+        + BlockGetter
+        + JournalStateGetter<Journal: JournaledState<Checkpoint = JournalCheckpoint>>
+        + CfgGetter,
+    ERROR: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
 {
-    type Context = Context<EvmWiringT>;
-
-    type Error = EVMErrorWiring<EvmWiringT>;
-
-    type Frame = EthFrame<EvmWiringT, CTX>;
+    type Context = CTX;
+    type Error = ERROR;
+    type Frame = EthFrame<CTX, ERROR>;
     type ExecResult = <Self::Frame as FrameTrait>::FrameResult;
 
     fn init_first_frame(
@@ -40,8 +42,8 @@ where
     ) -> Result<FrameOrResultGen<Self::Frame, <Self::Frame as FrameTrait>::FrameResult>, Self::Error>
     {
         // Make new frame action.
-        let spec_id = context.evm.spec_id();
-        let tx = &context.evm.env.tx;
+        let spec_id = self.spec_id;
+        let tx = context.tx();
         let input = tx.common_fields().input().clone();
 
         let init_frame = match tx.kind() {
@@ -59,7 +61,9 @@ where
             })),
             TxKind::Create => {
                 // if first byte of data is magic 0xEF00, then it is EOFCreate.
-                if FORK::enabled(SpecId::PRAGUE_EOF) && input.starts_with(&EOF_MAGIC_BYTES) {
+                if self.spec_id.is_enabled_in(SpecId::PRAGUE_EOF)
+                    && input.starts_with(&EOF_MAGIC_BYTES)
+                {
                     NewFrameAction::EOFCreate(Box::new(EOFCreateInputs::new(
                         tx.common_fields().caller(),
                         tx.common_fields().value(),
@@ -94,7 +98,7 @@ where
         let refunded = gas.refunded();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-        *gas = Gas::new_spent(context.evm.env.tx.common_fields().gas_limit());
+        *gas = Gas::new_spent(context.tx().common_fields().gas_limit());
 
         match instruction_result {
             return_ok!() => {
@@ -110,15 +114,16 @@ where
     }
 }
 
-impl<CTX, EvmWiringT, ERROR, FORK: Spec> EthExecution<CTX, EvmWiringT, ERROR, FORK> {
-    pub fn new() -> Self {
+impl<CTX, ERROR> EthExecution<CTX, ERROR> {
+    pub fn new(spec_id: SpecId) -> Self {
         Self {
+            spec_id,
             _phantom: std::marker::PhantomData,
         }
     }
 
-    pub fn new_boxed() -> Box<Self> {
-        Box::new(Self::new())
+    pub fn new_boxed(spec_id: SpecId) -> Box<Self> {
+        Box::new(Self::new(spec_id))
     }
 }
 

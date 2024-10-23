@@ -5,7 +5,7 @@ use crate::{
 use context::{Context, JournaledState};
 use database_interface::Database;
 use interpreter::table::InstructionTables;
-use specification::{hardfork::Spec, spec_to_generic};
+use specification::spec_to_generic;
 use std::fmt::Debug;
 use std::vec::Vec;
 use wiring::{
@@ -24,6 +24,7 @@ impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
     where
         DB: Database,
     {
+        let spec_id = hardfork;
         spec_to_generic!(
             hardfork,
             EvmHandler {
@@ -35,21 +36,16 @@ impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
                     EVMError<
                         <<JournaledState<DB> as JournaledStateTrait>::Database as Database>::Error,
                         <<Self as PrimitiveEvmWiring>::Transaction as Transaction>::TransactionError,
-                    >,
-                    SPEC,
-                >::new_boxed(),
+                    >, 
+                >::new_boxed(spec_id),
                 pre_execution: EthPreExecution::<
                 Context<Self>,
                 EVMError<
                     <<JournaledState<DB> as JournaledStateTrait>::Database as Database>::Error,
                     <<Self as PrimitiveEvmWiring>::Transaction as Transaction>::TransactionError,
-                >,
-                SPEC,
-            >::new_boxed(),
-                post_execution: EthPostExecution::<Context<Self>,EVMErrorWiring<Self>, HaltReason>::new_boxed(SPEC::SPEC_ID
-                ),
-                execution: EthExecution::<Context<Self>, Self, EVMErrorWiring<Self>, SPEC>::new_boxed(
-                ),
+                >>::new_boxed(spec_id),
+                post_execution: EthPostExecution::<Context<Self>,EVMErrorWiring<Self>, HaltReason>::new_boxed(spec_id),
+                execution: EthExecution::<Context<Self>, EVMErrorWiring<Self>>::new_boxed(spec_id),
             }
         )
     }

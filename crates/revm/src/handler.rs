@@ -3,27 +3,143 @@ pub mod mainnet;
 pub mod register;
 mod wires;
 
-use context::FrameResult;
+use context::{
+    BlockGetter, CfgGetter, ErrorGetter, FrameResult, JournalCheckpoint, JournalStateGetter,
+    JournalStateGetterDBError, TransactionGetter,
+};
 // Exports.
 use mainnet::{EthExecution, EthFrame, EthPostExecution, EthPreExecution, EthValidation};
+use primitives::Log;
+use state::EvmState;
 pub use wires::*;
 
 // Includes.
 
 use crate::{Context, EvmWiring};
 use core::mem;
-use interpreter::{table::InstructionTables, Host, InterpreterAction, SharedMemory};
+use interpreter::{table::InstructionTables, Host};
 use register::{EvmHandler, HandleRegisters};
 use specification::{hardfork::Spec, spec_to_generic};
 use std::vec::Vec;
 use wiring::{
+    journaled_state::JournaledState,
     result::{
-        EVMError, EVMErrorWiring, EVMResultGeneric, HaltReason, InvalidTransaction, ResultAndState,
+        EVMError, EVMErrorWiring, HaltReason, InvalidHeader, InvalidTransaction, ResultAndState,
     },
     Transaction,
 };
 
+pub mod temp {
+    pub use super::*;
+
+    pub trait Handler {
+        type Val: ValidationWire;
+
+        fn validation(&self) -> &Self::Val;
+    }
+
+    pub struct InspectorHandle<HAL: Handler, INSP> {
+        pub handler: HAL,
+        pub inspector: INSP,
+    }
+
+    // Can be done with custom trait.
+    //evm.handler.inspector =
+
+    impl<HAL: Handler, INSP> ValidationWire for InspectorHandle<HAL, INSP> {
+        type Context = <<HAL as Handler>::Val as ValidationWire>::Context;
+        type Error = <<HAL as Handler>::Val as ValidationWire>::Error;
+
+        fn validate_env(&self, context: &Self::Context) -> Result<(), Self::Error> {
+            self.handler.validation().validate_env(context)
+        }
+
+        fn validate_tx_against_state(
+            &self,
+            context: &mut Self::Context,
+        ) -> Result<(), Self::Error> {
+            self.handler.validation().validate_tx_against_state(context)
+        }
+
+        fn validate_initial_tx_gas(&self, context: &Self::Context) -> Result<u64, Self::Error> {
+            self.handler.validation().validate_initial_tx_gas(context)
+        }
+    }
+
+    impl<HAL: Handler, INSP> Handler for InspectorHandle<HAL, INSP> {
+        type Val = Self;
+
+        fn validation(&self) -> &Self::Val {
+            &self
+        }
+    }
+}
+
 use self::register::{HandleRegister, HandleRegisterBox};
+
+pub trait Hand {
+    type Validation: ValidationWire;
+    type PreExecution: PreExecutionWire;
+    type Execution: ExecutionWire;
+    type PostExecution: PostExecutionWire;
+
+    // TODO
+    type Precompiles;
+    type InstructionTable;
+
+    fn validation(&self) -> &Self::Validation;
+    fn pre_execution(&self) -> &Self::PreExecution;
+    fn execution(&self) -> &Self::Execution;
+    fn post_execution(&self) -> &Self::PostExecution;
+}
+
+/// TODO Halt needs to be generalized.
+pub struct EthHand<CTX, ERROR> {
+    pub validation: EthValidation<CTX, ERROR>,
+    pub pre_execution: EthPreExecution<CTX, ERROR>,
+    pub execution: EthExecution<CTX, ERROR>,
+    pub post_execution: EthPostExecution<CTX, ERROR, HaltReason>,
+}
+
+impl<CTX, ERROR> Hand for EthHand<CTX, ERROR>
+where
+    CTX: TransactionGetter
+        + BlockGetter
+        + JournalStateGetter
+        + CfgGetter
+        + ErrorGetter<Error = ERROR>
+        + JournalStateGetter<
+            Journal: JournaledState<
+                FinalOutput = (EvmState, Vec<Log>),
+                Checkpoint = JournalCheckpoint,
+            >,
+        >,
+    ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>,
+{
+    type Validation = EthValidation<CTX, ERROR>;
+    type PreExecution = EthPreExecution<CTX, ERROR>;
+    type Execution = EthExecution<CTX, ERROR>;
+    type PostExecution = EthPostExecution<CTX, ERROR, HaltReason>;
+
+    type Precompiles = ();
+    type InstructionTable = InstructionTables<'static, CTX>;
+
+    fn validation(&self) -> &Self::Validation {
+        &self.validation
+    }
+
+    fn pre_execution(&self) -> &Self::PreExecution {
+        &self.pre_execution
+    }
+
+    fn execution(&self) -> &Self::Execution {
+        &self.execution
+    }
+
+    fn post_execution(&self) -> &Self::PostExecution {
+        &self.post_execution
+    }
+}
 
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
@@ -52,7 +168,7 @@ pub struct Handler<'a, EvmWiringT: EvmWiring, H: Host + 'a> {
         dyn ExecutionWire<
                 Context = Context<EvmWiringT>,
                 Error = EVMErrorWiring<EvmWiringT>,
-                Frame = EthFrame<EvmWiringT, Context<EvmWiringT>>,
+                Frame = EthFrame<Context<EvmWiringT>, EVMErrorWiring<EvmWiringT>>,
                 ExecResult = FrameResult,
             > + 'a,
     >,
@@ -85,12 +201,23 @@ where
                 spec_id,
                 instruction_table: InstructionTables::new_plain::<SPEC>(),
                 registers: Vec::new(),
-                pre_execution: EthPreExecution::<Context<EvmWiringT>,EVMErrorWiring<EvmWiringT>, SPEC>::new_boxed(),
-                post_execution: EthPostExecution::<Context<EvmWiringT>,EVMErrorWiring<EvmWiringT>, EvmWiringT::HaltReason>::new_boxed(SPEC::SPEC_ID),
-                validation: EthValidation::<Context<EvmWiringT>, EVMErrorWiring<EvmWiringT>, SPEC>::new_boxed(
-                ),
-                execution: EthExecution::<Context<EvmWiringT>, EvmWiringT, EVMErrorWiring<EvmWiringT>, SPEC>::new_boxed(
-                ),
+                pre_execution:
+                    EthPreExecution::<Context<EvmWiringT>, EVMErrorWiring<EvmWiringT>>::new_boxed(
+                        SPEC::SPEC_ID
+                    ),
+                post_execution: EthPostExecution::<
+                    Context<EvmWiringT>,
+                    EVMErrorWiring<EvmWiringT>,
+                    EvmWiringT::HaltReason,
+                >::new_boxed(SPEC::SPEC_ID),
+                validation:
+                    EthValidation::<Context<EvmWiringT>, EVMErrorWiring<EvmWiringT>>::new_boxed(
+                        SPEC::SPEC_ID
+                    ),
+                execution:
+                    EthExecution::<Context<EvmWiringT>, EVMErrorWiring<EvmWiringT>>::new_boxed(
+                        SPEC::SPEC_ID
+                    ),
             }
         )
     }
@@ -156,7 +283,7 @@ impl<'a, EvmWiringT: EvmWiring> EvmHandler<'a, EvmWiringT> {
     ) -> &dyn ExecutionWire<
         Context = Context<EvmWiringT>,
         Error = EVMErrorWiring<EvmWiringT>,
-        Frame = EthFrame<EvmWiringT, Context<EvmWiringT>>,
+        Frame = EthFrame<Context<EvmWiringT>, EVMErrorWiring<EvmWiringT>>,
         ExecResult = FrameResult,
     > {
         self.execution.as_ref()

@@ -10,17 +10,18 @@ use state::EvmState;
 use wiring::{
     journaled_state::JournaledState,
     result::{
-        EVMError, EVMResult, EVMResultGeneric, ExecutionResult, InvalidTransaction, ResultAndState,
+        EVMError, EVMResult, EVMResultGeneric, ExecutionResult, HaltReason, InvalidTransaction,
+        ResultAndState,
     },
     Block, HaltReasonTrait, Transaction,
 };
 
-pub struct EthPostExecution<CTX, ERROR, HALT> {
+pub struct EthPostExecution<CTX, ERROR, HALTREASON> {
     pub spec_id: SpecId,
-    pub _phantom: std::marker::PhantomData<(CTX, ERROR, HALT)>,
+    pub _phantom: std::marker::PhantomData<(CTX, ERROR, HALTREASON)>,
 }
 
-impl<CTX, ERROR, HALT> EthPostExecution<CTX, ERROR, HALT> {
+impl<CTX, ERROR, HALTREASON> EthPostExecution<CTX, ERROR, HALTREASON> {
     /// Create new instance of post execution handler.
     pub fn new(spec_id: SpecId) -> Self {
         Self {
@@ -37,19 +38,20 @@ impl<CTX, ERROR, HALT> EthPostExecution<CTX, ERROR, HALT> {
     }
 }
 
-impl<CTX, ERROR, HALT: HaltReasonTrait> PostExecutionWire for EthPostExecution<CTX, ERROR, HALT>
+impl<CTX, ERROR, HALTREASON> PostExecutionWire for EthPostExecution<CTX, ERROR, HALTREASON>
 where
     CTX: TransactionGetter
         + ErrorGetter<Error = ERROR>
         + BlockGetter
         + JournalStateGetter<Journal: JournaledState<FinalOutput = (EvmState, Vec<Log>)>>
         + CfgGetter,
-    ERROR: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
+    ERROR: From<JournalStateGetterDBError<CTX>>,
+    HALTREASON: HaltReasonTrait,
 {
     type Context = CTX;
     type Error = ERROR;
     type ExecResult = FrameResult;
-    type Output = ResultAndState<HALT>;
+    type Output = ResultAndState<HALTREASON>;
 
     fn refund(
         &self,
@@ -133,7 +135,7 @@ where
         // reset journal and return present state.
         let (state, logs) = context.journal().finalize()?;
 
-        let result = match SuccessOrHalt::<HALT>::from(instruction_result.result) {
+        let result = match SuccessOrHalt::<HALTREASON>::from(instruction_result.result) {
             SuccessOrHalt::Success(reason) => ExecutionResult::Success {
                 reason,
                 gas_used: final_gas_used,
