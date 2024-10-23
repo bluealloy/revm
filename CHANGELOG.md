@@ -1,12 +1,18 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v49 tag
+date 23.10.2024
+Maintenance release. Bump alloydb deps.
+
+* `revm`: 17.0.0 -> 17.1.0 (✓ API compatible changes)
+
 # v48 tag
 date 23.10.2024
 Maintenance release. Bug fix for EIP-7702.
 
 * `revm`: 16.0.0 -> 17.0.0 (✓ API compatible changes)
 * `revm-primitives`: 12.0.0 -> 13.0.0 (✓ API compatible changes)
-* `revm-test`: 1.0.0
+* `revme`: 1.0.0 -> 2.0.0
 * `revm-interpreter`: 12.0.0 -> 13.0.0
 * `revm-precompile`: 13.0.0 -> 14.0.0
 

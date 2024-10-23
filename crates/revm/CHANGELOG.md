@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [17.1.0](https://github.com/bluealloy/revm/compare/revm-v17.0.0...revm-v17.1.0) - 2024-10-23
+
+### Other
+
+- chore: bump alloydb deps ([#1832](https://github.com/bluealloy/revm/pull/1832))
+
 ## [17.0.0](https://github.com/bluealloy/revm/compare/revm-v16.0.0...revm-v17.0.0) - 2024-10-23
 
 ### Other
