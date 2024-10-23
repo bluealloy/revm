@@ -115,11 +115,15 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
     let mut refunded_accounts = 0;
     for authorization in authorization_list.recovered_iter() {
         // 1. Verify the chain id is either 0 or the chain's current ID.
-        if !authorization.chain_id() == 0
+        //println!("Chain ID: {}", authorization.chain_id());
+        //println!("CFG Chain ID: {}", context.evm.inner.env.cfg.chain_id);
+        if authorization.chain_id() != 0
             && authorization.chain_id() != context.evm.inner.env.cfg.chain_id
         {
+            //println!("Skipped");
             continue;
         }
+        //println!("PASSED");
 
         // 2. Verify the `nonce` is less than `2**64 - 1`.
         if authorization.nonce() == u64::MAX {
