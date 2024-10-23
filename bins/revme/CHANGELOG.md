@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1](https://github.com/bluealloy/revm/compare/revme-v1.0.0...revme-v1.0.1) - 2024-10-23
+
+### Other
+
+- update Cargo.lock dependencies
+
 ## [1.0.0](https://github.com/bluealloy/revm/compare/revme-v0.11.0...revme-v1.0.0) - 2024-09-26
 
 ### Other
