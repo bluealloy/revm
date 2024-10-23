@@ -330,16 +330,12 @@ pub fn execute_test_suite(
             // Constantinople was immediately extended by Petersburg.
             // There isn't any production Constantinople transaction
             // so we don't support it and skip right to Petersburg.
-            if spec_name == SpecName::Constantinople || spec_name == SpecName::Osaka {
+            if spec_name == SpecName::Constantinople {
                 continue;
             }
 
             // Enable EOF in Prague tests.
-            let spec_id = if spec_name == SpecName::Prague {
-                SpecId::OSAKA
-            } else {
-                spec_name.to_spec_id()
-            };
+            let spec_id = spec_name.to_spec_id();
 
             if spec_id.is_enabled_in(SpecId::MERGE) && env.block.prevrandao.is_none() {
                 // if spec is merge and prevrandao is not set, set it to default

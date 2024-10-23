@@ -1,6 +1,6 @@
 mod test_suite;
 
-pub use test_suite::{PragueTestResult, TestResult, TestSuite, TestUnit, TestVector};
+pub use test_suite::{TestResult, TestResults, TestSuite, TestUnit, TestVector};
 
 use crate::{cmd::Error, dir_utils::find_all_json_tests};
 use revm::interpreter::analysis::{validate_raw_eof_inner, CodeType, EofError};
@@ -82,12 +82,12 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
                     Some(CodeType::ReturnOrStop)
                 };
                 let res = validate_raw_eof_inner(test_vector.code.clone(), kind);
-                if res.is_ok() != test_vector.results.prague.result {
+                if res.is_ok() != test_vector.results.osaka.result {
                     println!(
                         "\nTest failed: {} - {}\nresult:{:?}\nrevm err_result:{:#?}\nbytes:{:?}\n",
                         name,
                         vector_name,
-                        test_vector.results.prague,
+                        test_vector.results.osaka,
                         res.as_ref().err(),
                         test_vector.code
                     );
