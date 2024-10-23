@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v12.0.0...revm-primitives-v13.0.0) - 2024-10-23
+
+### Other
+
+- bump alloy-eip7702 ([#1829](https://github.com/bluealloy/revm/pull/1829))
+
 ## [12.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v11.0.0...revm-primitives-v12.0.0) - 2024-10-17
 
 ### Other
