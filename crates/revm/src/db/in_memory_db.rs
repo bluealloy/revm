@@ -54,14 +54,14 @@ impl<ExtDB: Default> Default for CacheDB<ExtDB> {
 
 impl<ExtDB> CacheDB<ExtDB> {
     pub fn new(db: ExtDB) -> Self {
-        let mut contracts = HashMap::new();
+        let mut contracts = HashMap::default();
         contracts.insert(KECCAK_EMPTY, Bytecode::default());
         contracts.insert(B256::ZERO, Bytecode::default());
         Self {
-            accounts: HashMap::new(),
+            accounts: HashMap::default(),
             contracts,
             logs: Vec::default(),
-            block_hashes: HashMap::new(),
+            block_hashes: HashMap::default(),
             db,
         }
     }
@@ -83,7 +83,7 @@ impl<ExtDB> CacheDB<ExtDB> {
                     .or_insert_with(|| code.clone());
             }
         }
-        if account.code_hash == B256::ZERO {
+        if account.code_hash.is_zero() {
             account.code_hash = KECCAK_EMPTY;
         }
     }
@@ -246,8 +246,8 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
         }
     }
 
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        match self.block_hashes.entry(number) {
+    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
+        match self.block_hashes.entry(U256::from(number)) {
             Entry::Occupied(entry) => Ok(*entry.get()),
             Entry::Vacant(entry) => {
                 let hash = self.db.block_hash_ref(number)?;
@@ -294,8 +294,8 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
         }
     }
 
-    fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error> {
-        match self.block_hashes.get(&number) {
+    fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error> {
+        match self.block_hashes.get(&U256::from(number)) {
             Some(entry) => Ok(*entry),
             None => self.db.block_hash_ref(number),
         }
@@ -418,7 +418,7 @@ impl Database for BenchmarkDB {
     }
 
     // History related
-    fn block_hash(&mut self, _number: U256) -> Result<B256, Self::Error> {
+    fn block_hash(&mut self, _number: u64) -> Result<B256, Self::Error> {
         Ok(B256::default())
     }
 }
@@ -426,7 +426,7 @@ impl Database for BenchmarkDB {
 #[cfg(test)]
 mod tests {
     use super::{CacheDB, EmptyDB};
-    use crate::primitives::{db::Database, AccountInfo, Address, U256};
+    use crate::primitives::{db::Database, AccountInfo, Address, HashMap, U256};
 
     #[test]
     fn test_insert_account_storage() {
@@ -472,7 +472,7 @@ mod tests {
 
         let mut new_state = CacheDB::new(init_state);
         new_state
-            .replace_account_storage(account, [(key1, value1)].into())
+            .replace_account_storage(account, HashMap::from_iter([(key1, value1)]))
             .unwrap();
 
         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);

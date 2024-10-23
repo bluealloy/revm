@@ -14,7 +14,7 @@
 
 **Rust Ethereum Virtual Machine**
 
-![](./assets/revm-banner.png)
+![](./assets/logo/revm-banner.png)
 
 Revm is an EVM written in Rust that is focused on **speed** and **simplicity**.
 It has a fast and flexible implementation with a simple interface and embedded Host.
@@ -134,6 +134,8 @@ cargo run -p revm --features std,serde-json,ethersdb --example generate_block_tr
   client written in Rust. Portal Network client's provide complete, provable, and distributed execution archival access.
 * [Simular](https://github.com/simular-fi/simular/) is a Python smart-contract API with a fast, embedded, Ethereum
   Virtual Machine.
+* [rbuilder](https://github.com/flashbots/rbuilder) is a state of the art Ethereum MEV-Boost block builder written in
+  Rust and designed to work with Reth.
 * ...
 
 (If you want to add project to the list, ping me or open the PR)

@@ -32,7 +32,7 @@ pub fn berlin_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 pub fn calculate_iteration_count(exp_length: u64, exp_highp: &U256) -> u64 {
     let mut iteration_count: u64 = 0;
 
-    if exp_length <= 32 && *exp_highp == U256::ZERO {
+    if exp_length <= 32 && exp_highp.is_zero() {
         iteration_count = 0;
     } else if exp_length <= 32 {
         iteration_count = exp_highp.bit_len() as u64 - 1;

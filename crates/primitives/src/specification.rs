@@ -28,7 +28,8 @@ pub enum SpecId {
     MERGE = 15,           // Paris/Merge            15537394 (TTD: 58750000000000000000000)
     SHANGHAI = 16,        // Shanghai               17034870 (Timestamp: 1681338455)
     CANCUN = 17,          // Cancun                 19426587 (Timestamp: 1710338135)
-    PRAGUE = 18,          // Praque                 TBD
+    PRAGUE = 18,          // Prague                 TBD
+    PRAGUE_EOF = 19,      // Prague+EOF             TBD
     #[default]
     LATEST = u8::MAX,
 }
@@ -64,7 +65,10 @@ pub enum SpecId {
     CANCUN = 20,
     ECOTONE = 21,
     FJORD = 22,
-    PRAGUE = 23,
+    GRANITE = 23,
+    HOLOCENE = 24,
+    PRAGUE = 25,
+    PRAGUE_EOF = 26,
     #[default]
     LATEST = u8::MAX,
 }
@@ -107,6 +111,7 @@ impl From<&str> for SpecId {
             "Shanghai" => Self::SHANGHAI,
             "Cancun" => Self::CANCUN,
             "Prague" => Self::PRAGUE,
+            "PragueEOF" => Self::PRAGUE_EOF,
             #[cfg(feature = "optimism")]
             "Bedrock" => SpecId::BEDROCK,
             #[cfg(feature = "optimism")]
@@ -117,6 +122,10 @@ impl From<&str> for SpecId {
             "Ecotone" => SpecId::ECOTONE,
             #[cfg(feature = "optimism")]
             "Fjord" => SpecId::FJORD,
+            #[cfg(feature = "optimism")]
+            "Granite" => SpecId::GRANITE,
+            #[cfg(feature = "optimism")]
+            "Holocene" => SpecId::HOLOCENE,
             _ => Self::LATEST,
         }
     }
@@ -144,6 +153,7 @@ impl From<SpecId> for &'static str {
             SpecId::SHANGHAI => "Shanghai",
             SpecId::CANCUN => "Cancun",
             SpecId::PRAGUE => "Prague",
+            SpecId::PRAGUE_EOF => "PragueEOF",
             #[cfg(feature = "optimism")]
             SpecId::BEDROCK => "Bedrock",
             #[cfg(feature = "optimism")]
@@ -154,6 +164,10 @@ impl From<SpecId> for &'static str {
             SpecId::ECOTONE => "Ecotone",
             #[cfg(feature = "optimism")]
             SpecId::FJORD => "Fjord",
+            #[cfg(feature = "optimism")]
+            SpecId::GRANITE => "Granite",
+            #[cfg(feature = "optimism")]
+            SpecId::HOLOCENE => "Holocene",
             SpecId::LATEST => "Latest",
         }
     }
@@ -200,6 +214,7 @@ spec!(MERGE, MergeSpec);
 spec!(SHANGHAI, ShanghaiSpec);
 spec!(CANCUN, CancunSpec);
 spec!(PRAGUE, PragueSpec);
+spec!(PRAGUE_EOF, PragueEofSpec);
 
 spec!(LATEST, LatestSpec);
 
@@ -214,6 +229,10 @@ spec!(CANYON, CanyonSpec);
 spec!(ECOTONE, EcotoneSpec);
 #[cfg(feature = "optimism")]
 spec!(FJORD, FjordSpec);
+#[cfg(feature = "optimism")]
+spec!(GRANITE, GraniteSpec);
+#[cfg(feature = "optimism")]
+spec!(HOLOCENE, HoloceneSpec);
 
 #[cfg(not(feature = "optimism"))]
 #[macro_export]
@@ -278,6 +297,10 @@ macro_rules! spec_to_generic {
                 use $crate::PragueSpec as SPEC;
                 $e
             }
+            $crate::SpecId::PRAGUE_EOF => {
+                use $crate::PragueEofSpec as SPEC;
+                $e
+            }
         }
     }};
 }
@@ -345,6 +368,10 @@ macro_rules! spec_to_generic {
                 use $crate::PragueSpec as SPEC;
                 $e
             }
+            $crate::SpecId::PRAGUE_EOF => {
+                use $crate::PragueEofSpec as SPEC;
+                $e
+            }
             $crate::SpecId::BEDROCK => {
                 use $crate::BedrockSpec as SPEC;
                 $e
@@ -363,6 +390,14 @@ macro_rules! spec_to_generic {
             }
             $crate::SpecId::FJORD => {
                 use $crate::FjordSpec as SPEC;
+                $e
+            }
+            $crate::SpecId::GRANITE => {
+                use $crate::GraniteSpec as SPEC;
+                $e
+            }
+            $crate::SpecId::HOLOCENE => {
+                use $crate::HoloceneSpec as SPEC;
                 $e
             }
         }
@@ -405,7 +440,12 @@ mod tests {
         spec_to_generic!(ECOTONE, assert_eq!(SPEC::SPEC_ID, ECOTONE));
         #[cfg(feature = "optimism")]
         spec_to_generic!(FJORD, assert_eq!(SPEC::SPEC_ID, FJORD));
+        #[cfg(feature = "optimism")]
+        spec_to_generic!(GRANITE, assert_eq!(SPEC::SPEC_ID, GRANITE));
+        #[cfg(feature = "optimism")]
+        spec_to_generic!(HOLOCENE, assert_eq!(SPEC::SPEC_ID, HOLOCENE));
         spec_to_generic!(PRAGUE, assert_eq!(SPEC::SPEC_ID, PRAGUE));
+        spec_to_generic!(PRAGUE_EOF, assert_eq!(SPEC::SPEC_ID, PRAGUE_EOF));
         spec_to_generic!(LATEST, assert_eq!(SPEC::SPEC_ID, LATEST));
     }
 }
@@ -525,5 +565,55 @@ mod optimism_tests {
         assert!(SpecId::enabled(SpecId::FJORD, SpecId::CANYON));
         assert!(SpecId::enabled(SpecId::FJORD, SpecId::ECOTONE));
         assert!(SpecId::enabled(SpecId::FJORD, SpecId::FJORD));
+    }
+
+    #[test]
+    fn test_granite_post_merge_hardforks() {
+        assert!(GraniteSpec::enabled(SpecId::MERGE));
+        assert!(GraniteSpec::enabled(SpecId::SHANGHAI));
+        assert!(GraniteSpec::enabled(SpecId::CANCUN));
+        assert!(!GraniteSpec::enabled(SpecId::LATEST));
+        assert!(GraniteSpec::enabled(SpecId::BEDROCK));
+        assert!(GraniteSpec::enabled(SpecId::REGOLITH));
+        assert!(GraniteSpec::enabled(SpecId::CANYON));
+        assert!(GraniteSpec::enabled(SpecId::ECOTONE));
+        assert!(GraniteSpec::enabled(SpecId::FJORD));
+        assert!(GraniteSpec::enabled(SpecId::GRANITE));
+    }
+
+    #[test]
+    fn test_granite_post_merge_hardforks_spec_id() {
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::MERGE));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::SHANGHAI));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::CANCUN));
+        assert!(!SpecId::enabled(SpecId::GRANITE, SpecId::LATEST));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::BEDROCK));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::REGOLITH));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::CANYON));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::ECOTONE));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::FJORD));
+        assert!(SpecId::enabled(SpecId::GRANITE, SpecId::GRANITE));
+    }
+
+    #[test]
+    fn test_holocene_post_merge_hardforks() {
+        // from MERGE to HOLOCENE
+        for i in 15..=24 {
+            if let Some(spec) = SpecId::try_from_u8(i) {
+                assert!(HoloceneSpec::enabled(spec));
+            }
+        }
+        assert!(!HoloceneSpec::enabled(SpecId::LATEST));
+    }
+
+    #[test]
+    fn test_holocene_post_merge_hardforks_spec_id() {
+        // from MERGE to HOLOCENE
+        for i in 15..=24 {
+            if let Some(spec) = SpecId::try_from_u8(i) {
+                assert!(SpecId::enabled(SpecId::HOLOCENE, spec));
+            }
+        }
+        assert!(!SpecId::enabled(SpecId::HOLOCENE, SpecId::LATEST));
     }
 }

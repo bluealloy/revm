@@ -133,24 +133,15 @@ impl<'a, H: Host + ?Sized + 'a> InstructionTables<'a, H> {
 /// Make instruction table.
 #[inline]
 pub const fn make_instruction_table<H: Host + ?Sized, SPEC: Spec>() -> InstructionTable<H> {
-    // Force const-eval of the table creation, making this function trivial.
-    // TODO: Replace this with a `const {}` block once it is stable.
-    struct ConstTable<H: Host + ?Sized, SPEC: Spec> {
-        _host: core::marker::PhantomData<H>,
-        _spec: core::marker::PhantomData<SPEC>,
+    const {
+        let mut tables: InstructionTable<H> = [control::unknown; 256];
+        let mut i = 0;
+        while i < 256 {
+            tables[i] = instruction::<H, SPEC>(i as u8);
+            i += 1;
+        }
+        tables
     }
-    impl<H: Host + ?Sized, SPEC: Spec> ConstTable<H, SPEC> {
-        const NEW: InstructionTable<H> = {
-            let mut tables: InstructionTable<H> = [control::unknown; 256];
-            let mut i = 0;
-            while i < 256 {
-                tables[i] = instruction::<H, SPEC>(i as u8);
-                i += 1;
-            }
-            tables
-        };
-    }
-    ConstTable::<H, SPEC>::NEW
 }
 
 /// Make boxed instruction table that calls `f` closure for every instruction.

@@ -3,35 +3,16 @@ use crate::{
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
-        analysis::validate_eof,
-        CallInputs,
-        CreateInputs,
-        EOFCreateInputs,
-        EOFCreateOutcome,
-        Gas,
-        Host,
-        InstructionResult,
-        InterpreterResult,
+        CallInputs, CreateInputs, EOFCreateInputs, Host, InterpreterAction, SharedMemory,
     },
     primitives::{
-        specification::SpecId,
-        BlockEnv,
-        CfgEnv,
-        EVMError,
-        EVMResult,
-        EnvWithHandlerCfg,
-        ExecutionResult,
-        HandlerCfg,
-        ResultAndState,
-        TransactTo,
-        TxEnv,
+        specification::SpecId, BlockEnv, CfgEnv, EVMError, EVMResult, EnvWithHandlerCfg,
+        ExecutionResult, HandlerCfg, ResultAndState, TxEnv, TxKind, EOF_MAGIC_BYTES,
     },
-    Context,
-    ContextWithHandlerCfg,
-    FrameOrResult,
-    FrameResult,
+    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
 use core::fmt;
+use std::{boxed::Box, vec::Vec};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -41,8 +22,8 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
-    /// Handler is a component of the of EVM that contains all the logic. Handler contains
-    /// specification id and it different depending on the specified fork.
+    /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
+    /// and it different depending on the specified fork.
     pub handler: Handler<'a, Context<EXT, DB>, EXT, DB>,
 }
 
@@ -69,7 +50,7 @@ impl<EXT, DB: Database + DatabaseCommit> Evm<'_, EXT, DB> {
 }
 
 impl<'a> Evm<'a, (), EmptyDB> {
-    /// Returns evm builder with an empty database and empty external context.
+    /// Returns evm builder with empty database and empty external context.
     pub fn builder() -> EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
         EvmBuilder::default()
     }
@@ -88,18 +69,12 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     /// Allow for evm setting to be modified by feeding current evm
     /// into the builder for modifications.
     pub fn modify(self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
-        EvmBuilder::<'a, HandlerStage, EXT, DB>::new(self)
+        EvmBuilder::new(self)
     }
 
     /// Runs main call loop.
     #[inline]
-    pub fn run_the_loop(
-        &mut self,
-        first_frame: crate::Frame,
-    ) -> Result<FrameResult, EVMError<DB::Error>> {
-        use crate::{Frame, FrameOrResult};
-        use revm_interpreter::{InterpreterAction, SharedMemory};
-
+    pub fn run_the_loop(&mut self, first_frame: Frame) -> Result<FrameResult, EVMError<DB::Error>> {
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
 
@@ -224,10 +199,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             .handler
             .validation()
             .initial_tx_gas(&self.context.evm.env)
-            .map_err(|e| {
-                self.clear();
-                e
-            })?;
+            .inspect_err(|_e| self.clear())?;
         let output = self.transact_preverified_inner(initial_gas_spend);
         let output = self.handler.post_execution().end(&mut self.context, output);
         self.clear();
@@ -253,10 +225,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// This function will validate the transaction.
     #[inline]
     pub fn transact(&mut self) -> EVMResult<DB::Error> {
-        let initial_gas_spend = self.preverify_transaction_inner().map_err(|e| {
-            self.clear();
-            e
-        })?;
+        let initial_gas_spend = self
+            .preverify_transaction_inner()
+            .inspect_err(|_e| self.clear())?;
 
         let output = self.transact_preverified_inner(initial_gas_spend);
         let output = self.handler.post_execution().end(&mut self.context, output);
@@ -365,60 +336,25 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
 
+        // apply EIP-7702 auth list.
+        let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(ctx)? as i64;
+
         let exec = self.handler.execution();
         // call inner handling of call/create
-        let first_frame_or_result = match ctx.evm.env.tx.transact_to.clone() {
-            TransactTo::Call(_) => exec.call(
+        let first_frame_or_result = match ctx.evm.env.tx.transact_to {
+            TxKind::Call(_) => exec.call(
                 ctx,
                 CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
             )?,
-            TransactTo::Create => {
+            TxKind::Create => {
                 // if first byte of data is magic 0xEF00, then it is EOFCreate.
-                if spec_id.is_enabled_in(SpecId::PRAGUE)
-                    && ctx
-                        .env()
-                        .tx
-                        .data
-                        .get(0..=1)
-                        .filter(|&t| t == [0xEF, 00])
-                        .is_some()
+                if spec_id.is_enabled_in(SpecId::PRAGUE_EOF)
+                    && ctx.env().tx.data.starts_with(&EOF_MAGIC_BYTES)
                 {
-                    // TODO Should we just check 0xEF it seems excessive to switch to legacy
-                    // only if it 0xEF00?
-
-                    // get nonce from tx (if set) or from account (if not).
-                    // Nonce for call is bumped in deduct_caller while
-                    // for CREATE it is not (it is done inside exec handlers).
-                    let nonce = ctx.evm.env.tx.nonce.unwrap_or_else(|| {
-                        let caller = ctx.evm.env.tx.caller;
-                        ctx.evm
-                            .load_account(caller)
-                            .map(|(a, _)| a.info.nonce)
-                            .unwrap_or_default()
-                    });
-
-                    // Create EOFCreateInput from transaction initdata.
-                    let eofcreate = EOFCreateInputs::new_tx_boxed(&ctx.evm.env.tx, nonce)
-                        .ok()
-                        .and_then(|eofcreate| {
-                            // validate EOF initcode
-                            validate_eof(&eofcreate.eof_init_code).ok()?;
-                            Some(eofcreate)
-                        });
-
-                    if let Some(eofcreate) = eofcreate {
-                        exec.eofcreate(ctx, eofcreate)?
-                    } else {
-                        // Return result, as code is invalid.
-                        FrameOrResult::Result(FrameResult::EOFCreate(EOFCreateOutcome::new(
-                            InterpreterResult::new(
-                                InstructionResult::Stop,
-                                Default::default(),
-                                Gas::new(gas_limit),
-                            ),
-                            ctx.env().tx.caller.create(nonce),
-                        )))
-                    }
+                    exec.eofcreate(
+                        ctx,
+                        Box::new(EOFCreateInputs::new_tx(&ctx.evm.env.tx, gas_limit)),
+                    )?
                 } else {
                     // Safe to unwrap because we are sure that it is create tx.
                     exec.create(
@@ -443,11 +379,64 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             .last_frame_return(ctx, &mut result)?;
 
         let post_exec = self.handler.post_execution();
+        // calculate final refund and add EIP-7702 refund to gas.
+        post_exec.refund(ctx, result.gas_mut(), eip7702_gas_refund);
         // Reimburse the caller
         post_exec.reimburse_caller(ctx, result.gas())?;
         // Reward beneficiary
         post_exec.reward_beneficiary(ctx, result.gas())?;
         // Returns output of transaction.
         post_exec.output(ctx, result)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use crate::{
+        db::BenchmarkDB,
+        interpreter::opcode::{PUSH1, SSTORE},
+        primitives::{address, Authorization, Bytecode, RecoveredAuthorization, Signature, U256},
+    };
+
+    #[test]
+    fn sanity_eip7702_tx() {
+        let delegate = address!("0000000000000000000000000000000000000000");
+        let caller = address!("0000000000000000000000000000000000000001");
+        let auth = address!("0000000000000000000000000000000000000100");
+
+        let bytecode = Bytecode::new_legacy([PUSH1, 0x01, PUSH1, 0x01, SSTORE].into());
+
+        let mut evm = Evm::builder()
+            .with_spec_id(SpecId::PRAGUE)
+            .with_db(BenchmarkDB::new_bytecode(bytecode))
+            .modify_tx_env(|tx| {
+                tx.authorization_list = Some(
+                    vec![RecoveredAuthorization::new_unchecked(
+                        Authorization {
+                            chain_id: U256::from(1),
+                            address: delegate,
+                            nonce: 0,
+                        }
+                        .into_signed(Signature::test_signature()),
+                        Some(auth),
+                    )]
+                    .into(),
+                );
+                tx.caller = caller;
+                tx.transact_to = TxKind::Call(auth);
+            })
+            .build();
+
+        let ok = evm.transact().unwrap();
+
+        let auth_acc = ok.state.get(&auth).unwrap();
+        assert_eq!(auth_acc.info.code, Some(Bytecode::new_eip7702(delegate)));
+        assert_eq!(auth_acc.info.nonce, 1);
+        assert_eq!(
+            auth_acc.storage.get(&U256::from(1)).unwrap().present_value,
+            U256::from(1)
+        );
     }
 }

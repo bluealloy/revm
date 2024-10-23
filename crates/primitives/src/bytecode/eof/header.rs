@@ -39,13 +39,14 @@ fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize),
     if num_sections == 0 {
         return Err(EofDecodeError::NonSizes);
     }
-    let byte_size = (num_sections * 2) as usize;
+    let num_sections = num_sections as usize;
+    let byte_size = num_sections * 2;
     if input.len() < byte_size {
         return Err(EofDecodeError::ShortInputForSizes);
     }
-    let mut sizes = Vec::with_capacity(num_sections as usize);
+    let mut sizes = Vec::with_capacity(num_sections);
     let mut sum = 0;
-    for i in 0..num_sections as usize {
+    for i in 0..num_sections {
         // size	2 bytes	0x0001-0xFFFF
         // 16-bit unsigned big-endian integer denoting the length of the section content
         let code_size = u16::from_be_bytes([input[i * 2], input[i * 2 + 1]]);
@@ -62,25 +63,23 @@ fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize),
 impl EofHeader {
     /// Length of the header in bytes.
     ///
-    /// Length is calculated as:
-    /// magic 2 byte +
-    /// version 1 byte +
-    /// types section 3 bytes +
-    /// code section 3 bytes +
-    /// num_code_sections * 2 +
-    /// if num_container_sections != 0 { container section 3 bytes} +
-    /// num_container_sections * 2 +
-    /// data section 3 bytes +
-    /// terminator 1 byte
-    ///
     /// It is minimum 15 bytes (there is at least one code section).
     pub fn size(&self) -> usize {
-        let optional_container_sizes = if self.container_sizes.is_empty() {
-            0
-        } else {
-            3 + self.container_sizes.len() * 2
-        };
-        13 + self.code_sizes.len() * 2 + optional_container_sizes
+        2 + // magic
+        1 + // version
+        3 + // types section
+        3 + // code section
+        2 * self.code_sizes.len() + // num_code_sections
+        if self.container_sizes.is_empty() { 0 } else { 3 + 2 * self.container_sizes.len() } + // container
+        3 + // data section.
+        1 // terminator
+    }
+
+    /// Return index where data size starts.
+    /// Data size is two bytes long.
+    pub fn data_size_raw_i(&self) -> usize {
+        // termination(1byte) + code size(2) bytes.
+        self.size() - 3
     }
 
     /// Returns number of types.
@@ -177,7 +176,8 @@ impl EofHeader {
         // code_sections_sizes
         let (input, sizes, sum) = consume_header_section_size(input)?;
 
-        if sizes.len() > 1024 {
+        // more than 1024 code sections are not allowed
+        if sizes.len() > 0x0400 {
             return Err(EofDecodeError::TooManyCodeSections);
         }
 
@@ -198,8 +198,8 @@ impl EofHeader {
             KIND_CONTAINER => {
                 // container_sections_sizes
                 let (input, sizes, sum) = consume_header_section_size(input)?;
-                // the number of container sections must not exceed 256
-                if sizes.len() > 256 {
+                // the number of container sections may not exceed 256
+                if sizes.len() > 0x0100 {
                     return Err(EofDecodeError::TooManyContainerSections);
                 }
                 header.container_sizes = sizes;
@@ -242,7 +242,7 @@ mod tests {
         let (header, _) = EofHeader::decode(&input).unwrap();
         assert_eq!(header.types_size, 4);
         assert_eq!(header.code_sizes, vec![1]);
-        assert_eq!(header.container_sizes, vec![]);
+        assert_eq!(header.container_sizes, Vec::<u16>::new());
         assert_eq!(header.data_size, 0);
     }
 
@@ -256,5 +256,23 @@ mod tests {
     fn failing_test() {
         let input = hex!("ef00010100040200010006030001001404000200008000016000e0000000ef000101000402000100010400000000800000fe");
         let _ = EofHeader::decode(&input).unwrap();
+    }
+
+    #[test]
+    fn cut_header() {
+        let input = hex!("ef0001010000028000");
+        assert_eq!(
+            EofHeader::decode(&input),
+            Err(EofDecodeError::ShortInputForSizes)
+        );
+    }
+
+    #[test]
+    fn short_input() {
+        let input = hex!("ef0001010000028000");
+        assert_eq!(
+            EofHeader::decode(&input),
+            Err(EofDecodeError::ShortInputForSizes)
+        );
     }
 }

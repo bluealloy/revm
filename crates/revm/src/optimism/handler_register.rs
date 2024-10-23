@@ -9,7 +9,8 @@ use crate::{
     optimism,
     primitives::{
         db::Database, spec_to_generic, Account, EVMError, Env, ExecutionResult, HaltReason,
-        HashMap, InvalidTransaction, ResultAndState, Spec, SpecId, SpecId::REGOLITH, U256,
+        HashMap, InvalidTransaction, OptimismInvalidTransaction, ResultAndState, Spec, SpecId,
+        SpecId::REGOLITH, U256,
     },
     Context, ContextPrecompiles, FrameResult,
 };
@@ -32,6 +33,7 @@ pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, 
         handler.pre_execution.deduct_caller = Arc::new(deduct_caller::<SPEC, EXT, DB>);
         // Refund is calculated differently then mainnet.
         handler.execution.last_frame_return = Arc::new(last_frame_return::<SPEC, EXT, DB>);
+        handler.post_execution.refund = Arc::new(refund::<SPEC, EXT, DB>);
         handler.post_execution.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, EXT, DB>);
         // In case of halt of deposit transaction return Error.
         handler.post_execution.output = Arc::new(output::<SPEC, EXT, DB>);
@@ -51,7 +53,10 @@ pub fn validate_env<SPEC: Spec, DB: Database>(env: &Env) -> Result<(), EVMError<
     // Do not allow for a system transaction to be processed if Regolith is enabled.
     let tx = &env.tx.optimism;
     if tx.is_system_transaction.unwrap_or(false) && SPEC::enabled(SpecId::REGOLITH) {
-        return Err(InvalidTransaction::DepositSystemTxPostRegolith.into());
+        return Err(InvalidTransaction::OptimismError(
+            OptimismInvalidTransaction::DepositSystemTxPostRegolith,
+        )
+        .into());
     }
 
     env.validate_tx::<SPEC>()?;
@@ -132,12 +137,27 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
         }
         _ => {}
     }
+    Ok(())
+}
+
+/// Record Eip-7702 refund and calculate final refund.
+#[inline]
+pub fn refund<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+    gas: &mut Gas,
+    eip7702_refund: i64,
+) {
+    gas.record_refund(eip7702_refund);
+
+    let env = context.evm.inner.env();
+    let is_deposit = env.tx.optimism.source_hash.is_some();
+    let is_regolith = SPEC::enabled(REGOLITH);
+
     // Prior to Regolith, deposit transactions did not receive gas refunds.
     let is_gas_refund_disabled = env.cfg.is_gas_refund_disabled() || (is_deposit && !is_regolith);
     if !is_gas_refund_disabled {
         gas.set_final_refund(SPEC::SPEC_ID.is_enabled_in(SpecId::LONDON));
     }
-    Ok(())
 }
 
 /// Load precompiles for Optimism chain.
@@ -149,6 +169,13 @@ pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> ContextPrecompiles<D
         precompiles.extend([
             // EIP-7212: secp256r1 P256verify
             secp256r1::P256VERIFY,
+        ])
+    }
+
+    if SPEC::enabled(SpecId::GRANITE) {
+        precompiles.extend([
+            // Restrict bn256Pairing input size
+            optimism::bn128::pair::GRANITE,
         ])
     }
 
@@ -180,7 +207,7 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<(), EVMError<DB::Error>> {
     // load caller's account.
-    let (caller_account, _) = context
+    let mut caller_account = context
         .evm
         .inner
         .journaled_state
@@ -195,7 +222,7 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
 
     // We deduct caller max balance after minting and before deducing the
     // l1 cost, max values is already checked in pre_validate but l1 cost wasn't.
-    deduct_caller_inner::<SPEC>(caller_account, &context.evm.inner.env);
+    deduct_caller_inner::<SPEC>(caller_account.data, &context.evm.inner.env);
 
     // If the transaction is not a deposit transaction, subtract the L1 data fee from the
     // caller's balance directly after minting the requested amount of ETH.
@@ -258,7 +285,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
 
         // Send the L1 cost of the transaction to the L1 Fee Vault.
-        let (l1_fee_vault_account, _) = context
+        let mut l1_fee_vault_account = context
             .evm
             .inner
             .journaled_state
@@ -267,7 +294,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         l1_fee_vault_account.info.balance += l1_cost;
 
         // Send the base fee of the transaction to the Base Fee Vault.
-        let (base_fee_vault_account, _) = context
+        let mut base_fee_vault_account = context
             .evm
             .inner
             .journaled_state
@@ -298,9 +325,9 @@ pub fn output<SPEC: Spec, EXT, DB: Database>(
         // and the caller nonce will be incremented there.
         let is_deposit = context.evm.inner.env.tx.optimism.source_hash.is_some();
         if is_deposit && SPEC::enabled(REGOLITH) {
-            return Err(EVMError::Transaction(
-                InvalidTransaction::HaltedDepositPostRegolith,
-            ));
+            return Err(EVMError::Transaction(InvalidTransaction::OptimismError(
+                OptimismInvalidTransaction::HaltedDepositPostRegolith,
+            )));
         }
     }
     Ok(result)
@@ -342,7 +369,7 @@ pub fn end<SPEC: Spec, EXT, DB: Database>(
                 acc.mark_touch();
                 acc
             };
-            let state = HashMap::from([(caller, account)]);
+            let state = HashMap::from_iter([(caller, account)]);
 
             // The gas used of a failed deposit post-regolith is the gas
             // limit of the transaction. pre-regolith, it is the gas limit
@@ -405,6 +432,7 @@ mod tests {
             0..0,
         ));
         last_frame_return::<SPEC, _, _>(&mut ctx, &mut first_frame).unwrap();
+        refund::<SPEC, _, _>(&mut ctx, first_frame.gas_mut(), 0);
         *first_frame.gas()
     }
 
@@ -493,7 +521,7 @@ mod tests {
         deduct_caller::<RegolithSpec, (), _>(&mut context).unwrap();
 
         // Check the account balance is updated.
-        let (account, _) = context
+        let account = context
             .evm
             .inner
             .journaled_state
@@ -531,7 +559,7 @@ mod tests {
         deduct_caller::<RegolithSpec, (), _>(&mut context).unwrap();
 
         // Check the account balance is updated.
-        let (account, _) = context
+        let account = context
             .evm
             .inner
             .journaled_state
@@ -563,7 +591,7 @@ mod tests {
         deduct_caller::<RegolithSpec, (), _>(&mut context).unwrap();
 
         // Check the account balance is updated.
-        let (account, _) = context
+        let account = context
             .evm
             .inner
             .journaled_state
@@ -611,9 +639,9 @@ mod tests {
         env.tx.optimism.is_system_transaction = Some(true);
         assert_eq!(
             validate_env::<RegolithSpec, EmptyDB>(&env),
-            Err(EVMError::Transaction(
-                InvalidTransaction::DepositSystemTxPostRegolith
-            ))
+            Err(EVMError::Transaction(InvalidTransaction::OptimismError(
+                OptimismInvalidTransaction::DepositSystemTxPostRegolith
+            )))
         );
 
         // Pre-regolith system transactions should be allowed.

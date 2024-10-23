@@ -59,7 +59,9 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
                 // that log can be found as journaled_state.
                 let last_log = host.evm.journaled_state.logs.last().unwrap().clone();
                 // call Inspector
-                host.external.get_inspector().log(&mut host.evm, &last_log);
+                host.external
+                    .get_inspector()
+                    .log(interpreter, &mut host.evm, &last_log);
             }
         });
     }
@@ -69,16 +71,25 @@ pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
         // execute selfdestruct
         prev(interpreter, host);
         // check if selfdestruct was successful and if journal entry is made.
-        if let Some(JournalEntry::AccountDestroyed {
-            address,
-            target,
-            had_balance,
-            ..
-        }) = host.evm.journaled_state.journal.last().unwrap().last()
-        {
-            host.external
-                .get_inspector()
-                .selfdestruct(*address, *target, *had_balance);
+        match host.evm.journaled_state.journal.last().unwrap().last() {
+            Some(JournalEntry::AccountDestroyed {
+                address,
+                target,
+                had_balance,
+                ..
+            }) => {
+                host.external
+                    .get_inspector()
+                    .selfdestruct(*address, *target, *had_balance);
+            }
+            Some(JournalEntry::BalanceTransfer {
+                from, to, balance, ..
+            }) => {
+                host.external
+                    .get_inspector()
+                    .selfdestruct(*from, *to, *balance);
+            }
+            _ => {}
         }
     });
 
@@ -339,7 +350,7 @@ mod tests {
             db::BenchmarkDB,
             inspector::inspector_handle_register,
             interpreter::opcode,
-            primitives::{address, Bytecode, Bytes, TransactTo},
+            primitives::{address, Bytecode, Bytes, TxKind},
             Evm,
         };
 
@@ -365,8 +376,7 @@ mod tests {
             .modify_tx_env(|tx| {
                 tx.clear();
                 tx.caller = address!("1000000000000000000000000000000000000000");
-                tx.transact_to =
-                    TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+                tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
                 tx.gas_limit = 21100;
             })
             .append_handler_register(inspector_handle_register)

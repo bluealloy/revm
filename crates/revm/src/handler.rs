@@ -26,7 +26,7 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     /// Instruction table type.
     pub instruction_table: InstructionTables<'a, H>,
     /// Registers that will be called on initialization.
-    pub registers: Vec<HandleRegisters<EXT, DB>>,
+    pub registers: Vec<HandleRegisters<'a, EXT, DB>>,
     /// Validity handles.
     pub validation: ValidationHandler<'a, EXT, DB>,
     /// Pre execution handle.
@@ -153,7 +153,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Append handle register.
-    pub fn append_handler_register(&mut self, register: HandleRegisters<EXT, DB>) {
+    pub fn append_handler_register(&mut self, register: HandleRegisters<'a, EXT, DB>) {
         register.register(self);
         self.registers.push(register);
     }
@@ -165,18 +165,18 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Append boxed handle register.
-    pub fn append_handler_register_box(&mut self, register: HandleRegisterBox<EXT, DB>) {
+    pub fn append_handler_register_box(&mut self, register: HandleRegisterBox<'a, EXT, DB>) {
         register(self);
         self.registers.push(HandleRegisters::Box(register));
     }
 
     /// Pop last handle register and reapply all registers that are left.
-    pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<EXT, DB>> {
+    pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<'a, EXT, DB>> {
         let out = self.registers.pop();
         if out.is_some() {
             let registers = core::mem::take(&mut self.registers);
             let mut base_handler = Handler::mainnet_with_spec(self.cfg.spec_id);
-            // apply all registers to default handeler and raw mainnet instruction table.
+            // apply all registers to default handler and raw mainnet instruction table.
             for register in registers {
                 base_handler.append_handler_register(register)
             }
@@ -189,7 +189,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     pub fn create_handle_generic<SPEC: Spec>(&mut self) -> EvmHandler<'a, EXT, DB> {
         let registers = core::mem::take(&mut self.registers);
         let mut base_handler = Handler::mainnet::<SPEC>();
-        // apply all registers to default handeler and raw mainnet instruction table.
+        // apply all registers to default handler and raw mainnet instruction table.
         for register in registers {
             base_handler.append_handler_register(register)
         }
@@ -224,7 +224,7 @@ mod test {
 
     #[test]
     fn test_handler_register_pop() {
-        let register = |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<(), EmptyDB> {
+        let register = |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<'_, (), EmptyDB> {
             let inner = inner.clone();
             Box::new(move |h| {
                 *inner.borrow_mut() += 1;

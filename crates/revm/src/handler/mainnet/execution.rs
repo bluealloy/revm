@@ -5,13 +5,13 @@ use crate::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
     },
-    primitives::{EVMError, Env, Spec, SpecId},
+    primitives::{EVMError, Spec},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use core::mem;
 use revm_interpreter::{
-    opcode::InstructionTables, CallOutcome, EOFCreateInputs, EOFCreateOutcome, InterpreterAction,
-    InterpreterResult, EMPTY_SHARED_MEMORY,
+    opcode::InstructionTables, CallOutcome, EOFCreateInputs, InterpreterAction, InterpreterResult,
+    EMPTY_SHARED_MEMORY,
 };
 use std::boxed::Box;
 
@@ -35,20 +35,19 @@ pub fn execute_frame<SPEC: Spec, EXT, DB: Database>(
     Ok(next_action)
 }
 
-/// Helper function called inside [`last_frame_return`]
+/// Handle output of the transaction
 #[inline]
-pub fn frame_return_with_refund_flag<SPEC: Spec>(
-    env: &Env,
+pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
     frame_result: &mut FrameResult,
-    refund_enabled: bool,
-) {
+) -> Result<(), EVMError<DB::Error>> {
     let instruction_result = frame_result.interpreter_result().result;
     let gas = frame_result.gas_mut();
     let remaining = gas.remaining();
     let refunded = gas.refunded();
 
     // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-    *gas = Gas::new_spent(env.tx.gas_limit);
+    *gas = Gas::new_spent(context.evm.env.tx.gas_limit);
 
     match instruction_result {
         return_ok!() => {
@@ -60,24 +59,6 @@ pub fn frame_return_with_refund_flag<SPEC: Spec>(
         }
         _ => {}
     }
-
-    // Calculate gas refund for transaction.
-    // If config is set to disable gas refund, it will return 0.
-    // If spec is set to london, it will decrease the maximum refund amount to 5th part of
-    // gas spend. (Before london it was 2th part of gas spend)
-    if refund_enabled {
-        // EIP-3529: Reduction in refunds
-        gas.set_final_refund(SPEC::SPEC_ID.is_enabled_in(SpecId::LONDON));
-    }
-}
-
-/// Handle output of the transaction
-#[inline]
-pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-    frame_result: &mut FrameResult,
-) -> Result<(), EVMError<DB::Error>> {
-    frame_return_with_refund_flag::<SPEC>(&context.evm.env, frame_result, true);
     Ok(())
 }
 
@@ -174,15 +155,15 @@ pub fn eofcreate_return<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame: Box<EOFCreateFrame>,
     mut interpreter_result: InterpreterResult,
-) -> Result<EOFCreateOutcome, EVMError<DB::Error>> {
+) -> Result<CreateOutcome, EVMError<DB::Error>> {
     context.evm.eofcreate_return::<SPEC>(
         &mut interpreter_result,
         frame.created_address,
         frame.frame_data.checkpoint,
     );
-    Ok(EOFCreateOutcome::new(
+    Ok(CreateOutcome::new(
         interpreter_result,
-        frame.created_address,
+        Some(frame.created_address),
     ))
 }
 
@@ -190,7 +171,7 @@ pub fn eofcreate_return<SPEC: Spec, EXT, DB: Database>(
 pub fn insert_eofcreate_outcome<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame: &mut Frame,
-    outcome: EOFCreateOutcome,
+    outcome: CreateOutcome,
 ) -> Result<(), EVMError<DB::Error>> {
     core::mem::replace(&mut context.evm.error, Ok(()))?;
     frame
@@ -203,7 +184,8 @@ pub fn insert_eofcreate_outcome<EXT, DB: Database>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use revm_interpreter::primitives::CancunSpec;
+    use crate::handler::mainnet::refund;
+    use crate::primitives::{CancunSpec, Env};
     use revm_precompile::Bytes;
 
     /// Creates frame result.
@@ -211,6 +193,8 @@ mod tests {
         let mut env = Env::default();
         env.tx.gas_limit = 100;
 
+        let mut ctx = Context::new_empty();
+        ctx.evm.inner.env = Box::new(env);
         let mut first_frame = FrameResult::Call(CallOutcome::new(
             InterpreterResult {
                 result: instruction_result,
@@ -219,7 +203,8 @@ mod tests {
             },
             0..0,
         ));
-        frame_return_with_refund_flag::<CancunSpec>(&env, &mut first_frame, true);
+        last_frame_return::<CancunSpec, _, _>(&mut ctx, &mut first_frame).unwrap();
+        refund::<CancunSpec, _, _>(&mut ctx, first_frame.gas_mut(), 0);
         *first_frame.gas()
     }
 
@@ -231,7 +216,6 @@ mod tests {
         assert_eq!(gas.refunded(), 0);
     }
 
-    // TODO
     #[test]
     fn test_consume_gas_with_refund() {
         let mut return_gas = Gas::new(90);

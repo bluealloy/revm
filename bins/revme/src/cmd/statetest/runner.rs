@@ -8,23 +8,12 @@ use revm::{
     db::EmptyDB,
     inspector_handle_register,
     inspectors::TracerEip3155,
+    interpreter::analysis::to_analysed,
     primitives::{
-        calc_excess_blob_gas,
-        keccak256,
-        Bytecode,
-        Bytes,
-        EVMResultGeneric,
-        Env,
-        Eof,
-        ExecutionResult,
-        SpecId,
-        TransactTo,
-        B256,
-        EOF_MAGIC_BYTES,
-        U256,
+        calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, ExecutionResult,
+        SpecId, TxKind, B256,
     },
-    Evm,
-    State,
+    Evm, State,
 };
 use serde_json::json;
 use std::{
@@ -33,8 +22,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
-        Arc,
-        Mutex,
+        Arc, Mutex,
     },
     time::{Duration, Instant},
 };
@@ -86,13 +74,12 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
 }
 
 fn skip_test(path: &Path) -> bool {
-    let path_str = path.to_str().expect("Path is not valid UTF-8");
     let name = path.file_name().unwrap().to_str().unwrap();
 
     matches!(
         name,
-        // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and
-        // require custom json parser. https://github.com/ethereum/tests/issues/971
+        // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require
+        // custom json parser. https://github.com/ethereum/tests/issues/971
         |"ValueOverflow.json"| "ValueOverflowParis.json"
 
         // precompiles having storage is not possible
@@ -136,7 +123,16 @@ fn skip_test(path: &Path) -> bool {
         | "static_Call50000_sha256.json"
         | "loopMul.json"
         | "CALLBlake2f_MaxRounds.json"
-    ) || path_str.contains("stEOF")
+
+        // evmone statetest
+        | "initcode_transaction_before_prague.json"
+        | "invalid_tx_non_existing_sender.json"
+        | "tx_non_existing_sender.json"
+        | "block_apply_withdrawal.json"
+        | "block_apply_ommers_reward.json"
+        | "known_block_hash.json"
+        | "eip7516_blob_base_fee.json"
+    )
 }
 
 fn check_evm_execution<EXT>(
@@ -233,7 +229,6 @@ fn check_evm_execution<EXT>(
         });
     }
 
-    #[cfg(not(feature = "rwasm"))]
     if state_root != test.hash {
         let kind = TestErrorKind::StateRootMismatch {
             got: state_root,
@@ -272,18 +267,12 @@ pub fn execute_test_suite(
         let mut cache_state = revm::CacheState::new(false);
         for (address, info) in unit.pre {
             let code_hash = keccak256(&info.code);
-            let bytecode = match info.code.get(..2) {
-                Some(magic) if magic == &EOF_MAGIC_BYTES => {
-                    Bytecode::Eof(Eof::decode(info.code.clone()).unwrap().into())
-                }
-                _ => Bytecode::new_raw(info.code),
-            };
+            let bytecode = to_analysed(Bytecode::new_raw(info.code));
             let acc_info = revm::primitives::AccountInfo {
                 balance: info.balance,
                 code_hash,
                 code: Some(bytecode),
                 nonce: info.nonce,
-                ..Default::default()
             };
             cache_state.insert_account_with_storage(address, acc_info, info.storage);
         }
@@ -300,8 +289,7 @@ pub fn execute_test_suite(
         env.block.gas_limit = unit.env.current_gas_limit;
         env.block.basefee = unit.env.current_base_fee.unwrap_or_default();
         env.block.difficulty = unit.env.current_difficulty;
-        // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty
-        // opcode in EVM.
+        // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
         env.block.prevrandao = unit.env.current_random;
         // EIP-4844
         if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
@@ -339,16 +327,24 @@ pub fn execute_test_suite(
 
         // post and execution
         for (spec_name, tests) in unit.post {
-            if matches!(
-                spec_name,
-                SpecName::ByzantiumToConstantinopleAt5
-                    | SpecName::Constantinople
-                    | SpecName::Unknown
-            ) {
+            // Constantinople was immediately extended by Petersburg.
+            // There isn't any production Constantinople transaction
+            // so we don't support it and skip right to Petersburg.
+            if spec_name == SpecName::Constantinople || spec_name == SpecName::Osaka {
                 continue;
             }
 
-            let spec_id = spec_name.to_spec_id();
+            // Enable EOF in Prague tests.
+            let spec_id = if spec_name == SpecName::Prague {
+                SpecId::PRAGUE_EOF
+            } else {
+                spec_name.to_spec_id()
+            };
+
+            if spec_id.is_enabled_in(SpecId::MERGE) && env.block.prevrandao.is_none() {
+                // if spec is merge and prevrandao is not set, set it to default
+                env.block.prevrandao = Some(B256::default());
+            }
 
             for (index, test) in tests.into_iter().enumerate() {
                 env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
@@ -366,22 +362,16 @@ pub fn execute_test_suite(
                     .access_lists
                     .get(test.indexes.data)
                     .and_then(Option::as_deref)
-                    .unwrap_or_default()
-                    .iter()
-                    .map(|item| {
-                        (
-                            item.address,
-                            item.storage_keys
-                                .iter()
-                                .map(|key| U256::from_be_bytes(key.0))
-                                .collect::<Vec<_>>(),
-                        )
-                    })
-                    .collect();
+                    .cloned()
+                    .unwrap_or_default();
+                let Ok(auth_list) = test.eip7702_authorization_list() else {
+                    continue;
+                };
+                env.tx.authorization_list = auth_list;
 
                 let to = match unit.transaction.to {
-                    Some(add) => TransactTo::Call(add),
-                    None => TransactTo::Create,
+                    Some(add) => TxKind::Call(add),
+                    None => TxKind::Create,
                 };
                 env.tx.transact_to = to;
 

@@ -1,21 +1,19 @@
 // Example Adapted From: https://github.com/bluealloy/revm/issues/672
 
 use ethers_core::types::BlockId;
-use ethers_providers::{Http, Middleware, Provider};
+use ethers_providers::Middleware;
+use ethers_providers::{Http, Provider};
 use indicatif::ProgressBar;
-use revm::{
-    db::{CacheDB, EthersDB, StateBuilder},
-    inspector_handle_register,
-    inspectors::TracerEip3155,
-    primitives::{Address, TransactTo, U256},
-    Evm,
-};
-use std::{
-    fs::OpenOptions,
-    io::{BufWriter, Write},
-    sync::{Arc, Mutex},
-    time::Instant,
-};
+use revm::db::{CacheDB, EthersDB, StateBuilder};
+use revm::inspectors::TracerEip3155;
+use revm::primitives::{AccessListItem, Address, TxKind, B256, U256};
+use revm::{inspector_handle_register, Evm};
+use std::fs::OpenOptions;
+use std::io::BufWriter;
+use std::io::Write;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::Instant;
 
 macro_rules! local_fill {
     ($left:expr, $right:expr, $fun:expr) => {
@@ -74,7 +72,7 @@ async fn main() -> anyhow::Result<()> {
     // Use the previous block state as the db with caching
     let prev_id: BlockId = previous_block_number.into();
     // SAFETY: This cannot fail since this is in the top-level tokio runtime
-    let state_db = EthersDB::new(Arc::clone(&client), Some(prev_id)).expect("panic");
+    let state_db = EthersDB::new(client, Some(prev_id)).expect("panic");
     let cache_db: CacheDB<EthersDB<Provider<Http>>> = CacheDB::new(state_db);
     let mut state = StateBuilder::new_with_database(cache_db).build();
     let mut evm = Evm::builder()
@@ -132,12 +130,16 @@ async fn main() -> anyhow::Result<()> {
                         .0
                         .into_iter()
                         .map(|item| {
-                            let new_keys: Vec<U256> = item
+                            let storage_keys: Vec<B256> = item
                                 .storage_keys
                                 .into_iter()
-                                .map(|h256| U256::from_le_bytes(h256.0))
+                                .map(|h256| B256::new(h256.0))
                                 .collect();
-                            (Address::from(item.address.as_fixed_bytes()), new_keys)
+
+                            AccessListItem {
+                                address: Address::new(item.address.0),
+                                storage_keys,
+                            }
                         })
                         .collect();
                 } else {
@@ -145,10 +147,8 @@ async fn main() -> anyhow::Result<()> {
                 }
 
                 etx.transact_to = match tx.to {
-                    Some(to_address) => {
-                        TransactTo::Call(Address::from(to_address.as_fixed_bytes()))
-                    }
-                    None => TransactTo::create(),
+                    Some(to_address) => TxKind::Call(Address::from(to_address.as_fixed_bytes())),
+                    None => TxKind::Create,
                 };
             })
             .build();

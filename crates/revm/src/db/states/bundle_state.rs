@@ -67,15 +67,15 @@ impl OriginalValuesKnown {
 impl Default for BundleBuilder {
     fn default() -> Self {
         BundleBuilder {
-            states: HashSet::new(),
-            state_original: HashMap::new(),
-            state_present: HashMap::new(),
-            state_storage: HashMap::new(),
+            states: HashSet::default(),
+            state_original: HashMap::default(),
+            state_present: HashMap::default(),
+            state_storage: HashMap::default(),
             reverts: BTreeSet::new(),
             revert_range: 0..=0,
-            revert_account: HashMap::new(),
-            revert_storage: HashMap::new(),
-            contracts: HashMap::new(),
+            revert_account: HashMap::default(),
+            revert_storage: HashMap::default(),
+            contracts: HashMap::default(),
         }
     }
 }
@@ -538,9 +538,11 @@ impl BundleState {
         self.contracts.get(hash).cloned()
     }
 
-    /// Consume `TransitionState` by applying the changes and creating the reverts
+    /// Consume [`TransitionState`] by applying the changes and creating the
+    /// reverts.
     ///
-    /// If [BundleRetention::includes_reverts] is `true`, then the reverts will be retained.
+    /// If [BundleRetention::includes_reverts] is `true`, then the reverts will
+    /// be retained.
     pub fn apply_transitions_and_create_reverts(
         &mut self,
         transitions: TransitionState,
@@ -617,7 +619,7 @@ impl BundleState {
             for (key, slot) in account.storage {
                 // If storage was destroyed that means that storage was wiped.
                 // In that case we need to check if present storage value is different then ZERO.
-                let destroyed_and_not_zero = was_destroyed && slot.present_value != U256::ZERO;
+                let destroyed_and_not_zero = was_destroyed && !slot.present_value.is_zero();
 
                 // If account is not destroyed check if original values was changed,
                 // so we can update it.
@@ -792,7 +794,7 @@ impl BundleState {
                         let mut account = BundleAccount::new(
                             None,
                             None,
-                            HashMap::new(),
+                            HashMap::default(),
                             AccountStatus::LoadedNotExisting,
                         );
                         if !account.revert(revert_account) {
@@ -909,7 +911,7 @@ mod tests {
                         code: None,
                         ..Default::default()
                     }),
-                    HashMap::from([
+                    HashMap::from_iter([
                         (slot1(), (U256::from(0), U256::from(10))),
                         (slot2(), (U256::from(0), U256::from(15))),
                     ]),
@@ -924,7 +926,7 @@ mod tests {
                         code: None,
                         ..Default::default()
                     }),
-                    HashMap::from([]),
+                    HashMap::default(),
                 ),
             ],
             vec![vec![
@@ -953,7 +955,7 @@ mod tests {
                     code: None,
                     ..Default::default()
                 }),
-                HashMap::from([(slot1(), (U256::from(0), U256::from(15)))]),
+                HashMap::from_iter([(slot1(), (U256::from(0), U256::from(15)))]),
             )],
             vec![vec![(
                 account1(),
@@ -985,7 +987,7 @@ mod tests {
             )
             .state_storage(
                 account1(),
-                HashMap::from([(slot1(), (U256::from(0), U256::from(10)))]),
+                HashMap::from_iter([(slot1(), (U256::from(0), U256::from(10)))]),
             )
             .state_address(account2())
             .state_present_account_info(
@@ -1020,7 +1022,7 @@ mod tests {
             )
             .state_storage(
                 account1(),
-                HashMap::from([(slot1(), (U256::from(0), U256::from(15)))]),
+                HashMap::from_iter([(slot1(), (U256::from(0), U256::from(15)))]),
             )
             .revert_address(0, account1())
             .revert_account_info(
@@ -1151,7 +1153,7 @@ mod tests {
             Some(&BundleAccount::new(
                 None,
                 Some(AccountInfo::default()),
-                HashMap::new(),
+                HashMap::default(),
                 AccountStatus::Changed
             ))
         );
@@ -1286,7 +1288,7 @@ mod tests {
         assert!(builder.get_state_storage_mut().is_empty());
         builder
             .get_state_storage_mut()
-            .insert(account1(), HashMap::new());
+            .insert(account1(), HashMap::default());
         assert!(builder.get_state_storage_mut().contains_key(&account1()));
 
         // Test get_reverts_mut

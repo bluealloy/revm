@@ -412,7 +412,7 @@ impl<'a, BuilderStage, EXT, DB: Database, EVM> UniversalBuilder<'a, BuilderStage
     /// When called, EvmBuilder will transition from SetGenericStage to HandlerStage.
     pub fn append_handler_register_box(
         mut self,
-        handle_register: register::HandleRegisterBox<EXT, DB>,
+        handle_register: register::HandleRegisterBox<'a, EXT, DB>,
     ) -> UniversalBuilder<'a, HandlerStage, EXT, DB, EVM> {
         self.handler
             .append_handler_register(register::HandleRegisters::Box(handle_register));
@@ -533,7 +533,7 @@ mod test {
             Bytecode,
             Bytes,
             PrecompileResult,
-            TransactTo,
+            TxKind,
             U256,
         },
         Context,
@@ -555,7 +555,7 @@ mod test {
 
     #[test]
     fn simple_add_stateful_instruction() {
-        let code = Bytecode::new_raw([0xEF, 0x00].into());
+        let code = Bytecode::new_raw([0xED, 0x00].into());
         let code_hash = code.hash_slow();
         let to_addr = address!("ffffffffffffffffffffffffffffffffffffffff");
 
@@ -569,7 +569,7 @@ mod test {
             .modify_db(|db| {
                 db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
             })
-            .modify_tx_env(|tx| tx.transact_to = TransactTo::Call(to_addr))
+            .modify_tx_env(|tx| tx.transact_to = TxKind::Call(to_addr))
             // we need to use handle register box to capture the custom context in the handle
             // register
             .append_handler_register_box(Box::new(move |handler| {
@@ -588,7 +588,7 @@ mod test {
                 // can insert the custom instruction as a boxed instruction
                 handler
                     .instruction_table
-                    .insert_boxed(0xEF, custom_instruction);
+                    .insert_boxed(0xED, custom_instruction);
             }))
             .build();
 
@@ -609,7 +609,7 @@ mod test {
             gas!(interp, CUSTOM_INSTRUCTION_COST);
         }
 
-        let code = Bytecode::new_raw([0xEF, 0x00].into());
+        let code = Bytecode::new_raw([0xED, 0x00].into());
         let code_hash = code.hash_slow();
         let to_addr = address!("ffffffffffffffffffffffffffffffffffffffff");
 
@@ -618,9 +618,9 @@ mod test {
             .modify_db(|db| {
                 db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
             })
-            .modify_tx_env(|tx| tx.transact_to = TransactTo::Call(to_addr))
+            .modify_tx_env(|tx| tx.transact_to = TxKind::Call(to_addr))
             .append_handler_register(|handler| {
-                handler.instruction_table.insert(0xEF, custom_instruction)
+                handler.instruction_table.insert(0xED, custom_instruction)
             })
             .build();
 
@@ -707,7 +707,7 @@ mod test {
             fn call(
                 &self,
                 _input: &Bytes,
-                _gas_price: u64,
+                _gas_limit: u64,
                 _context: &mut InnerEvmContext<EmptyDB>,
             ) -> PrecompileResult {
                 Ok(PrecompileOutput::new(10, Bytes::new()))

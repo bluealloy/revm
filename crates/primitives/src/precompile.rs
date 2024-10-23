@@ -30,13 +30,13 @@ pub type EnvPrecompileFn = fn(&Bytes, u64, env: &Env) -> PrecompileResult;
 /// Stateful precompile trait. It is used to create
 /// a arc precompile Precompile::Stateful.
 pub trait StatefulPrecompile: Sync + Send {
-    fn call(&self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult;
+    fn call(&self, bytes: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult;
 }
 
 /// Mutable stateful precompile trait. It is used to create
 /// a boxed precompile in Precompile::StatefulMut.
 pub trait StatefulPrecompileMut: DynClone + Send + Sync {
-    fn call_mut(&mut self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult;
+    fn call_mut(&mut self, bytes: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult;
 }
 
 dyn_clone::clone_trait_object!(StatefulPrecompileMut);
@@ -109,23 +109,23 @@ impl Precompile {
     }
 
     /// Call the precompile with the given input and gas limit and return the result.
-    pub fn call(&mut self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult {
+    pub fn call(&mut self, bytes: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
         match *self {
-            Precompile::Standard(p) => p(bytes, gas_price),
-            Precompile::Env(p) => p(bytes, gas_price, env),
-            Precompile::Stateful(ref p) => p.call(bytes, gas_price, env),
-            Precompile::StatefulMut(ref mut p) => p.call_mut(bytes, gas_price, env),
+            Precompile::Standard(p) => p(bytes, gas_limit),
+            Precompile::Env(p) => p(bytes, gas_limit, env),
+            Precompile::Stateful(ref p) => p.call(bytes, gas_limit, env),
+            Precompile::StatefulMut(ref mut p) => p.call_mut(bytes, gas_limit, env),
         }
     }
 
     /// Call the precompile with the given input and gas limit and return the result.
     ///
     /// Returns an error if the precompile is mutable.
-    pub fn call_ref(&self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult {
+    pub fn call_ref(&self, bytes: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
         match *self {
-            Precompile::Standard(p) => p(bytes, gas_price),
-            Precompile::Env(p) => p(bytes, gas_price, env),
-            Precompile::Stateful(ref p) => p.call(bytes, gas_price, env),
+            Precompile::Standard(p) => p(bytes, gas_limit),
+            Precompile::Env(p) => p(bytes, gas_limit, env),
+            Precompile::Stateful(ref p) => p.call(bytes, gas_limit, env),
             Precompile::StatefulMut(_) => Err(PrecompileErrors::Fatal {
                 msg: "call_ref on mutable stateful precompile".into(),
             }),
@@ -233,7 +233,7 @@ mod test {
             fn call_mut(
                 &mut self,
                 _bytes: &Bytes,
-                _gas_price: u64,
+                _gas_limit: u64,
                 _env: &Env,
             ) -> PrecompileResult {
                 Err(PrecompileError::OutOfGas.into())
