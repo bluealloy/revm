@@ -80,7 +80,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test TLOADing from slot 2 and then SSTORE this in slot 1, then TSTORE 3 in slot 2.\n    This is done both from the EOA which is delegated to account A, and then A is called.\n    The storage should stay empty on both the EOA and the delegated account.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L349",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L349",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
@@ -166,7 +166,7 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test TLOADing from slot 2 and then SSTORE this in slot 1, then TSTORE 3 in slot 2.\n    This is done both from the EOA which is delegated to account A, and then A is called.\n    The storage should stay empty on both the EOA and the delegated account.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L349",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L349",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }

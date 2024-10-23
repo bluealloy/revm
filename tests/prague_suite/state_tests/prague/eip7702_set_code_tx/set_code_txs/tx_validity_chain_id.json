@@ -1,0 +1,175 @@
+{
+    "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_tx_validity_chain_id[fork_Prague-state_test-chain_id=2**64]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x60016000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x60016001556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af13d600255",
+                "storage": {}
+            },
+            "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x00",
+            "maxFeePerGas": "0x07",
+            "gasLimit": [
+                "0x0186a0"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "authorizationList": [
+                {
+                    "chainId": "0x010000000000000000",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "nonce": "0x00",
+                    "v": "0x01",
+                    "r": "0x68065f6159532004e949ad234b481c7c736096056ee343e47f84a83e5d1c7847",
+                    "s": "0x75d2d773650cc86cb727ed911380bc2b8a82b7f81fe8faeaa9df6ef4bde081d5",
+                    "signer": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                }
+            ],
+            "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
+            "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x7a77cca81f216be5a0b0919ab8f4edd2b3f8664529f0977f57fcab653495ef6f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x04f8ca01808007830186a09400000000000000000000000000000000000011008080c0f865f863890100000000000000009400000000000000000000000000000000000010008001a068065f6159532004e949ad234b481c7c736096056ee343e47f84a83e5d1c7847a075d2d773650cc86cb727ed911380bc2b8a82b7f81fe8faeaa9df6ef4bde081d580a056555d49085a70ba377787471840455e7c667b6de53d75b6afe381a4ef85c17ca0357763a6fce8dd61fee93e3662f0ccd0518425f06dee215ebf30b196e7519fc3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    },
+                    "expectException": "TransactionException.TYPE_4_INVALID_AUTHORIZATION_FORMAT"
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x386fbdadd59d0bfacc3c99fb6a585af7829265b9b9860667924efe96aabc72ea",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereumjs t8n v1",
+            "description": "Test function documentation:\n\n    Test sending a transaction where the chain id field of an authorization overflows the\n    maximum value, or almost overflows the maximum value.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2306",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
+        }
+    },
+    "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_tx_validity_chain_id[fork_Prague-state_test-chain_id=2**64-1]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x60016000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x60016001556000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af13d600255",
+                "storage": {}
+            },
+            "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "maxPriorityFeePerGas": "0x00",
+            "maxFeePerGas": "0x07",
+            "gasLimit": [
+                "0x0186a0"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "accessLists": [
+                []
+            ],
+            "authorizationList": [
+                {
+                    "chainId": "0xffffffffffffffff",
+                    "address": "0x0000000000000000000000000000000000001000",
+                    "nonce": "0x00",
+                    "v": "0x01",
+                    "r": "0x4a1a1f6c18699883a46fd010e56b17d195b5ce1106a1604260c757313bb39f1a",
+                    "s": "0x0438e889ad9ce0f4b95fdd107ccba3589e6d66c08dfc4f3c2453be2f45d49dad",
+                    "signer": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                }
+            ],
+            "sender": "0x8a0a19589531694250d570040a0c4b74576919b8",
+            "secretKey": "0x9e7645d0cfd9c3a04eb7a9db59a4eb7d359f2e75c9164a9d6b9a7d54e1b6a36f"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xb24289dfd33553a64333ea43ff725935704ba0679356d550c3327dfad3df37fa",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0x04f8c901808007830186a09400000000000000000000000000000000000011008080c0f864f86288ffffffffffffffff9400000000000000000000000000000000000010008001a04a1a1f6c18699883a46fd010e56b17d195b5ce1106a1604260c757313bb39f1aa00438e889ad9ce0f4b95fdd107ccba3589e6d66c08dfc4f3c2453be2f45d49dad80a0b3c8e1bb4c27143776abe778f1d18215241344ec43cb809064c819f4a15aee75a06dc767f2d6801b8c2d7353201a5c0dcbcbe201b820f6a8eba69bdb26cce9baab",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x28c82c1271aad49ab74ee32b4e8f2a0eddc168f9036097139b27f791b58f1f83",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereumjs t8n v1",
+            "description": "Test function documentation:\n\n    Test sending a transaction where the chain id field of an authorization overflows the\n    maximum value, or almost overflows the maximum value.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L2306",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
+        }
+    }
+}
