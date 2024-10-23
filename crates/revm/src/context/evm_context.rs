@@ -101,7 +101,11 @@ where
         address: &Address,
         input_data: &Bytes,
         gas: Gas,
+        is_ext_delegate: bool,
     ) -> EVMResultGeneric<Option<InterpreterResult>, EvmWiringT> {
+        if is_ext_delegate {
+            return Ok(None);
+        }
         let Some(outcome) =
             self.precompiles
                 .call(address, input_data, gas.limit(), &mut self.inner)
