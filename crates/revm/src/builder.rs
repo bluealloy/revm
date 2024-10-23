@@ -463,13 +463,16 @@ where
 
 #[cfg(test)]
 mod test {
+    extern crate alloc;
+
     use crate::{Context, Evm};
+    use alloc::{boxed::Box, rc::Rc};
     use bytecode::Bytecode;
+    use core::cell::RefCell;
     use database::InMemoryDB;
     use interpreter::Interpreter;
     use primitives::{address, TxKind, U256};
     use state::AccountInfo;
-    use std::{cell::RefCell, rc::Rc};
     use wiring::EthereumWiring;
 
     /// Custom evm context
