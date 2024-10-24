@@ -117,7 +117,7 @@ impl<DB: Database> EvmContext<DB> {
         is_ext_delegate: bool,
     ) -> Result<Option<InterpreterResult>, EVMError<DB::Error>> {
         if is_ext_delegate {
-            return Ok(None)
+            return Ok(None);
         }
         let Some(outcome) =
             self.precompiles
