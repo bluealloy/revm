@@ -100,7 +100,7 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
                         )
                         .or_default() += 1;
                 } else {
-                    passed_tests += 1;
+                    passed_tests += test_result.map(|_| 1).unwrap_or(0);
                 }
             }
         }
