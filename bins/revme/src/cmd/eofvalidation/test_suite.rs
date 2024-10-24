@@ -19,14 +19,7 @@ pub struct TestUnit {
 pub struct TestVector {
     pub code: Bytes,
     pub container_kind: Option<String>,
-    pub results: TestResults,
-}
-
-#[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct TestResults {
-    #[serde(rename = "Osaka")]
-    pub osaka: TestResult,
+    pub results: BTreeMap<String, TestResult>,
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
