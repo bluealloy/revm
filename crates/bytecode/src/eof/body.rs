@@ -7,7 +7,7 @@ use std::vec::Vec;
 /// Contains types, code, container and data sections.
 ///
 /// Can be used to create a new EOF container using the [`into_eof`](EofBody::into_eof) method.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EofBody {
     pub types_section: Vec<TypesSection>,

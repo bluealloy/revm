@@ -8,7 +8,7 @@ use primitives::{keccak256, Address, Bytes, B256, KECCAK_EMPTY};
 use std::sync::Arc;
 
 /// State of the [`Bytecode`] analysis.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Bytecode {
     /// No analysis has been performed.

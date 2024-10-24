@@ -3,7 +3,7 @@ use primitives::hex;
 use std::{fmt::Debug, sync::Arc};
 
 /// A map of valid `jump` destinations.
-#[derive(Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Clone, Default, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JumpTable(pub Arc<BitVec<u8>>);
 
