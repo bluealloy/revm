@@ -36,7 +36,7 @@ impl<DB: Database, EXT: Debug> EvmWiring for EthereumWiring<DB, EXT> {
                     EVMError<
                         <<JournaledState<DB> as JournaledStateTrait>::Database as Database>::Error,
                         <<Self as PrimitiveEvmWiring>::Transaction as Transaction>::TransactionError,
-                    >, 
+                    >,
                 >::new_boxed(spec_id),
                 pre_execution: EthPreExecution::<
                 Context<Self>,

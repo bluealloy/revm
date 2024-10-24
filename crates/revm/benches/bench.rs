@@ -7,7 +7,6 @@ use revm::{
     bytecode::Bytecode,
     interpreter::{Contract, DummyHost, Interpreter},
     primitives::{address, bytes, hex, Bytes, TxKind, U256},
-    specification::hardfork::BerlinSpec,
     wiring::EthereumWiring,
     Evm,
 };
@@ -115,7 +114,7 @@ fn bench_eval(
         let mut shared_memory = SharedMemory::new();
         let mut host = DummyHost::new(*evm.context.evm.env.clone());
         let instruction_table =
-            make_instruction_table::<DummyHost<EthereumWiring<BenchmarkDB, ()>>, BerlinSpec>();
+            make_instruction_table::<DummyHost<EthereumWiring<BenchmarkDB, ()>>>();
         b.iter(move || {
             // replace memory with empty memory to use it inside interpreter.
             // Later return memory back.

@@ -4,19 +4,29 @@
 #[macro_export]
 macro_rules! require_non_staticcall {
     ($interp:expr) => {
-        if $interp.is_static {
-            $interp.instruction_result = $crate::InstructionResult::StateChangeDuringStaticCall;
+        if $interp.is_static() {
+            $interp.set_instruction_result($crate::InstructionResult::StateChangeDuringStaticCall);
             return;
         }
     };
+}
+
+#[macro_export]
+macro_rules! otry {
+    ($expresion: expr) => {{
+        let Some(value) = $expresion else {
+            return;
+        };
+        value
+    }};
 }
 
 /// Error if the current call is executing EOF.
 #[macro_export]
 macro_rules! require_eof {
     ($interp:expr) => {
-        if !$interp.is_eof {
-            $interp.instruction_result = $crate::InstructionResult::EOFOpcodeDisabledInLegacy;
+        if !$interp.is_eof() {
+            $interp.set_instruction_result($crate::InstructionResult::EOFOpcodeDisabledInLegacy);
             return;
         }
     };
@@ -26,8 +36,8 @@ macro_rules! require_eof {
 #[macro_export]
 macro_rules! require_init_eof {
     ($interp:expr) => {
-        if !$interp.is_eof_init {
-            $interp.instruction_result = $crate::InstructionResult::ReturnContractInNotInitEOF;
+        if !$interp.is_eof_init() {
+            $interp.set_instruction_result($crate::InstructionResult::ReturnContractInNotInitEOF);
             return;
         }
     };
@@ -37,11 +47,11 @@ macro_rules! require_init_eof {
 #[macro_export]
 macro_rules! check {
     ($interp:expr, $min:ident) => {
-        if const {
-            !<SPEC as specification::hardfork::Spec>::SPEC_ID
-                .is_enabled_in(specification::hardfork::SpecId::$min)
-        } {
-            $interp.instruction_result = $crate::InstructionResult::NotActivated;
+        if !$interp
+            .spec_id()
+            .is_enabled_in(specification::hardfork::SpecId::$min)
+        {
+            $interp.set_instruction_result($crate::InstructionResult::NotActivated);
             return;
         }
     };
@@ -54,8 +64,8 @@ macro_rules! gas {
         $crate::gas!($interp, $gas, ())
     };
     ($interp:expr, $gas:expr, $ret:expr) => {
-        if !$interp.gas.record_cost($gas) {
-            $interp.instruction_result = $crate::InstructionResult::OutOfGas;
+        if !$interp.gas().record_cost($gas) {
+            $interp.set_instruction_result($crate::InstructionResult::OutOfGas);
             return $ret;
         }
     };
@@ -65,7 +75,7 @@ macro_rules! gas {
 #[macro_export]
 macro_rules! refund {
     ($interp:expr, $gas:expr) => {
-        $interp.gas.record_refund($gas)
+        $interp.gas().record_refund($gas)
     };
 }
 
@@ -79,7 +89,7 @@ macro_rules! gas_or_fail {
         match $gas {
             Some(gas_used) => $crate::gas!($interp, gas_used, $ret),
             None => {
-                $interp.instruction_result = $crate::InstructionResult::OutOfGas;
+                $interp.set_instruction_result($crate::InstructionResult::OutOfGas);
                 return $ret;
             }
         }
@@ -108,7 +118,7 @@ macro_rules! resize_memory {
                 &mut $interp.gas,
                 new_size,
             ) {
-                $interp.instruction_result = $crate::InstructionResult::MemoryOOG;
+                $interp.set_instruction_result($crate::InstructionResult::MemoryOOG);
                 return $ret;
             }
         }
@@ -180,7 +190,7 @@ macro_rules! pop {
 macro_rules! pop_ret {
     ($interp:expr, $x1:ident, $ret:expr) => {
         if $interp.stack.len() < 1 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
+            $interp.set_instruction_result($crate::InstructionResult::StackUnderflow);
             return $ret;
         }
         // SAFETY: Length is checked above.
@@ -188,7 +198,7 @@ macro_rules! pop_ret {
     };
     ($interp:expr, $x1:ident, $x2:ident, $ret:expr) => {
         if $interp.stack.len() < 2 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
+            $interp.set_instruction_result($crate::InstructionResult::StackUnderflow);
             return $ret;
         }
         // SAFETY: Length is checked above.
@@ -340,7 +350,7 @@ macro_rules! as_usize_or_fail_ret {
         match $v.as_limbs() {
             x => {
                 if (x[0] > usize::MAX as u64) | (x[1] != 0) | (x[2] != 0) | (x[3] != 0) {
-                    $interp.instruction_result = $reason;
+                    $interp.set_instruction_result($reason);
                     return $ret;
                 }
                 x[0] as usize

@@ -184,11 +184,6 @@ pub struct Handler<'a, EvmWiringT: EvmWiring, H: Host + 'a> {
     //pub execution: ExecutionHandler<'a, EvmWiringT>,
 }
 
-type EVMErrorT<EvmWiringT> = EVMError<
-    <<EvmWiringT as wiring::EvmWiring>::Database as database_interface::Database>::Error,
-    <<EvmWiringT as wiring::EvmWiring>::Transaction as transaction::Transaction>::TransactionError,
->;
-
 impl<'a, EvmWiringT> EvmHandler<'a, EvmWiringT>
 where
     EvmWiringT: EvmWiring<Transaction: Transaction<TransactionError: From<InvalidTransaction>>>,

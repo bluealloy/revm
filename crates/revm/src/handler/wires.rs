@@ -1,17 +1,6 @@
 // Modules
 
-// Exports
-
-use context::FrameOrResult;
-// pub use execution::{
-//     ExecutionHandler, FrameCallHandle, FrameCallReturnHandle, FrameCreateHandle,
-//     FrameCreateReturnHandle, InsertCallOutcomeHandle, InsertCreateOutcomeHandle,
-// };
-use interpreter::{table::InstructionTables, Gas};
-use specification::hardfork::Spec;
-use wiring::EvmWiring;
-
-use super::mainnet::EthFrame;
+use interpreter::table::InstructionTables;
 
 pub trait ValidationWire {
     type Context;

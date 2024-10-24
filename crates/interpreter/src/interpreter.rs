@@ -4,17 +4,20 @@ pub mod serde;
 mod shared_memory;
 mod stack;
 
+use bytecode::eof::TypesSection;
 pub use contract::Contract;
 pub use shared_memory::{num_words, SharedMemory, EMPTY_SHARED_MEMORY};
+use specification::hardfork::SpecId;
 pub use stack::{Stack, STACK_LIMIT};
 
+use crate::instructions::utility::{read_i16, read_u16};
 use crate::{
-    gas, push, push_b256, return_ok, return_revert, CallOutcome, CreateOutcome, FunctionStack, Gas,
-    Host, InstructionResult, InterpreterAction,
+    gas, push, push_b256, return_ok, return_revert, CallOutcome, CreateOutcome,
+    FunctionReturnFrame, FunctionStack, Gas, Host, InstructionResult, InterpreterAction,
 };
 use bytecode::{Bytecode, Eof};
-use core::cmp::min;
-use primitives::{Bytes, U256};
+use core::{cmp::min, ops::Range};
+use primitives::{Address, Bytes, B256, U256};
 use std::borrow::ToOwned;
 use std::sync::Arc;
 
@@ -24,14 +27,151 @@ pub struct RuntimeFlags {
     pub is_eof_init: bool,
 }
 
+/// Helper function to read immediates data from the bytecode.
+pub trait Immediates {
+    fn read_i16(&self) -> i16;
+    fn read_u16(&self) -> u16;
+
+    fn read_i8(&self) -> i8;
+    fn read_u8(&self) -> u8;
+
+    fn read_offset_i16(&self, offset: isize) -> i16;
+    fn read_offset_u16(&self, offset: isize) -> u16;
+
+    fn read_slice(&self, len: usize) -> &[u8];
+}
+
+pub trait InputsTrait {
+    fn target_address(&self) -> Address;
+    fn caller_address(&self) -> Address;
+    fn input(&self) -> &[u8];
+    fn call_value(&self) -> U256;
+}
+
+pub trait LegacyBytecode {
+    fn bytecode_len(&self) -> usize;
+
+    fn bytecode_slice(&self) -> &[u8];
+}
+
+/// Trait for interpreter to be able to jump.
+pub trait Jumps {
+    /// Relative jumps does not require checking for overflow
+    fn relative_jump(&mut self, offset: isize);
+    /// Absolute jumps require checking for overflow and if target is a jump destination
+    /// from jump table.
+    fn absolute_jump(&mut self, offset: usize);
+    /// Check legacy jump destionation from jump table.
+    fn is_valid_legacy_jump(&mut self, offset: usize) -> bool;
+    /// Return current program counter.
+    fn pc(&self) -> usize;
+}
+
+pub trait MemoryTrait {
+    fn mem_set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]);
+    fn mem_set(&mut self, memory_offset: usize, data: &[u8]);
+    //fn mem_slice(&self, offset: usize, len: usize) -> &[u8];
+    fn mem_size(&self) -> usize;
+    fn mem_copy(&mut self, destination: usize, source: usize, len: usize);
+
+    fn mem_slice(&self, range: Range<usize>) -> &[u8];
+
+    fn mem_slice_len(&self, offset: usize, len: usize) -> &[u8] {
+        self.mem_slice(offset..offset + len)
+    }
+}
+
+pub trait EofContainer {
+    fn eof_container(&self, index: usize) -> Option<&Bytes>;
+}
+
+pub trait EofSubRoutine {
+    fn subroutine_stack_len(&self) -> usize;
+
+    /// Pushes a new frame to the stack and new code index.
+    fn subroutine_push(&mut self, program_counter: usize, new_idx: usize) -> Option<usize>;
+
+    /// Pops subroutine frame, sets previous code index and returns program counter.
+    fn subroutine_pop(&mut self) -> Option<usize>;
+
+    /// Sets new code section without touching subroutine stack.
+    /// Returns start of this new code section.
+    fn set_current_code_section_idx(&mut self, idx: usize) -> Option<usize>;
+
+    /// Return code info from EOF body.
+    fn eof_code_info(&self, idx: usize) -> Option<&TypesSection>;
+}
+
+pub trait StackTrait {
+    fn push(&mut self, value: U256) -> bool;
+    fn stack_len(&self) -> usize;
+
+    fn pop(&mut self) -> Option<U256>;
+    fn pop2(&mut self) -> Option<[U256; 2]>;
+    fn pop3(&mut self) -> Option<[U256; 3]>;
+    fn pop4(&mut self) -> Option<[U256; 4]>;
+    fn pop_b256(&mut self) -> Option<B256>;
+    fn top(&mut self) -> Option<&mut U256>;
+    fn pop_top(&mut self) -> Option<(U256, &mut U256)>;
+    fn pop2_top(&mut self) -> Option<(U256, U256, &mut U256)>;
+
+    fn push_slice(&mut self, data: &[u8]) -> bool;
+
+    /// Exchange two values on the stack.
+    ///
+    /// Indexes are based from the top of the stack.
+    ///
+    /// Return `true` if swap was successful, `false` if stack underflow.
+    fn exchange(&mut self, n: usize, m: usize) -> bool;
+
+    /// Duplicates the `N`th value from the top of the stack.
+    ///
+    /// Index is based from the top of the stack.
+    ///
+    /// Return `true` if duplicate was successful, `false` if stack underflow.
+    fn dup(&mut self, n: usize) -> bool;
+}
+
+pub trait SubRoutine {}
+
+pub trait EofData {
+    fn eof_data(&self) -> &[u8];
+    fn eof_data_slice(&self, offset: usize, len: usize) -> &[u8];
+    fn eof_data_size(&self) -> usize;
+}
+
+pub trait ReturnDataBuffer {
+    fn return_data_buffer(&self) -> &[u8];
+    fn return_data_buffer_mut(&mut self) -> &mut Bytes;
+}
+
 /// TODO wip probably left for follow up PR.
 /// Ides is to have trait inside instruction so that Interpreter can
 /// be extended even more.
-pub trait InterpreterTrait {
+pub trait InterpreterTrait:
+    Immediates
+    + Jumps
+    + StackTrait
+    + LegacyBytecode
+    + ReturnDataBuffer
+    + EofData
+    + MemoryTrait
+    + InputsTrait
+    + EofContainer
+    + EofSubRoutine
+{
     fn gas(&mut self) -> &mut Gas;
     fn set_instruction_result(&mut self, result: InstructionResult);
+    fn set_next_action(&mut self, action: InterpreterAction, result: InstructionResult);
+
     fn bytecode(&self) -> &Bytecode;
-    fn runtime_flags(&self) -> &RuntimeFlags;
+    fn spec_id(&self) -> SpecId;
+
+    fn is_eof(&self) -> bool;
+    fn is_static(&self) -> bool;
+    fn is_eof_init(&self) -> bool;
+
+    fn jump(&mut self, offset: i32);
 }
 
 /// EVM bytecode interpreter.
@@ -54,6 +194,7 @@ pub struct Interpreter {
     pub is_eof: bool,
     /// Is init flag for eof create
     pub is_eof_init: bool,
+    /// Runtime flags
     /// Shared memory.
     ///
     /// Note: This field is only set while running the interpreter loop.
@@ -76,11 +217,329 @@ pub struct Interpreter {
     /// Set inside CALL or CREATE instructions and RETURN or REVERT instructions. Additionally those instructions will set
     /// InstructionResult to CallOrCreate/Return/Revert so we know the reason.
     pub next_action: InterpreterAction,
+    /// SPEC ID
+    pub spec_id: SpecId,
 }
 
 impl Default for Interpreter {
     fn default() -> Self {
         Self::new(Contract::default(), u64::MAX, false)
+    }
+}
+
+impl EofContainer for Interpreter {
+    fn eof_container(&self, index: usize) -> Option<&Bytes> {
+        self.contract
+            .bytecode
+            .eof()
+            .map(|eof| eof.body.container_section.get(index))
+            .flatten()
+    }
+}
+
+impl EofSubRoutine for Interpreter {
+    fn subroutine_stack_len(&self) -> usize {
+        self.function_stack.return_stack_len()
+    }
+
+    fn subroutine_push(&mut self, program_counter: usize, new_idx: usize) -> Option<usize> {
+        if self.function_stack.len() >= 1024 {
+            self.set_instruction_result(InstructionResult::EOFFunctionStackOverflow);
+            return None;
+        }
+        self.function_stack.push(program_counter, new_idx);
+        self.eof()
+            .expect("It is EOF")
+            .body
+            .eof_code_section_start(new_idx)
+    }
+
+    fn subroutine_pop(&mut self) -> Option<usize> {
+        self.function_stack.pop()
+    }
+
+    fn eof_code_info(&self, idx: usize) -> Option<&TypesSection> {
+        self.eof()
+            .map(|eof| eof.body.types_section.get(idx))
+            .flatten()
+    }
+
+    fn set_current_code_section_idx(&mut self, idx: usize) -> Option<usize> {
+        self.function_stack.current_code_idx = idx;
+        self.eof()
+            .expect("It is EOF")
+            .body
+            .eof_code_section_start(idx)
+    }
+}
+
+impl ReturnDataBuffer for Interpreter {
+    fn return_data_buffer(&self) -> &[u8] {
+        &self.return_data_buffer
+    }
+
+    fn return_data_buffer_mut(&mut self) -> &mut Bytes {
+        &mut self.return_data_buffer
+    }
+}
+
+impl LegacyBytecode for Interpreter {
+    fn bytecode_len(&self) -> usize {
+        // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
+        assume!(!self.is_eof());
+        self.bytecode.len()
+    }
+
+    fn bytecode_slice(&self) -> &[u8] {
+        // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
+        assume!(!self.is_eof());
+        self.contract.bytecode.original_byte_slice()
+    }
+}
+
+impl InputsTrait for Interpreter {
+    fn target_address(&self) -> Address {
+        self.contract.target_address
+    }
+
+    fn caller_address(&self) -> Address {
+        self.contract.caller
+    }
+
+    fn input(&self) -> &[u8] {
+        self.contract.input.as_ref()
+    }
+
+    fn call_value(&self) -> U256 {
+        self.contract.call_value
+    }
+}
+
+impl MemoryTrait for Interpreter {
+    fn mem_set(&mut self, memory_offset: usize, data: &[u8]) {
+        self.shared_memory.set(memory_offset, data);
+    }
+
+    fn mem_size(&self) -> usize {
+        self.shared_memory.len()
+    }
+
+    fn mem_set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
+        self.shared_memory
+            .set_data(memory_offset, data_offset, len, data);
+    }
+
+    fn mem_slice(&self, range: Range<usize>) -> &[u8] {
+        self.shared_memory.slice_range(range)
+    }
+
+    fn mem_copy(&mut self, destination: usize, source: usize, len: usize) {
+        self.shared_memory.copy(destination, source, len);
+    }
+}
+
+impl EofData for Interpreter {
+    fn eof_data(&self) -> &[u8] {
+        self.contract.bytecode.eof().expect("eof").data()
+    }
+
+    fn eof_data_slice(&self, offset: usize, len: usize) -> &[u8] {
+        self.contract
+            .bytecode
+            .eof()
+            .expect("eof")
+            .data_slice(offset, len)
+    }
+
+    fn eof_data_size(&self) -> usize {
+        self.eof().expect("eof").header.data_size as usize
+    }
+}
+
+impl Immediates for Interpreter {
+    fn read_i16(&self) -> i16 {
+        unsafe { read_i16(self.instruction_pointer) }
+    }
+
+    fn read_u16(&self) -> u16 {
+        unsafe { read_u16(self.instruction_pointer) }
+    }
+
+    fn read_i8(&self) -> i8 {
+        unsafe { core::mem::transmute(*self.instruction_pointer) }
+    }
+
+    fn read_u8(&self) -> u8 {
+        unsafe { *self.instruction_pointer }
+    }
+
+    fn read_slice(&self, len: usize) -> &[u8] {
+        unsafe { core::slice::from_raw_parts(self.instruction_pointer, len) }
+    }
+
+    fn read_offset_i16(&self, offset: isize) -> i16 {
+        unsafe {
+            read_i16(
+                self.instruction_pointer
+                    // offset for max_index that is one byte
+                    .offset(offset),
+            )
+        }
+    }
+    fn read_offset_u16(&self, offset: isize) -> u16 {
+        unsafe {
+            read_u16(
+                self.instruction_pointer
+                    // offset for max_index that is one byte
+                    .offset(offset),
+            )
+        }
+    }
+}
+
+impl Jumps for Interpreter {
+    fn relative_jump(&mut self, offset: isize) {
+        self.instruction_pointer = unsafe { self.instruction_pointer.offset(offset) };
+    }
+
+    fn absolute_jump(&mut self, offset: usize) {
+        self.instruction_pointer = unsafe { self.bytecode.as_ptr().add(offset) };
+    }
+
+    fn is_valid_legacy_jump(&mut self, offset: usize) -> bool {
+        self.contract.is_valid_jump(offset)
+    }
+
+    fn pc(&self) -> usize {
+        self.program_counter()
+    }
+}
+
+impl StackTrait for Interpreter {
+    fn stack_len(&self) -> usize {
+        self.stack.len()
+    }
+
+    fn push_slice(&mut self, data: &[u8]) -> bool {
+        if let Err(instruction_result) = self.stack.push_slice(data) {
+            self.set_instruction_result(instruction_result);
+            return false;
+        }
+        true
+    }
+
+    fn exchange(&mut self, n: usize, m: usize) -> bool {
+        if let Err(instruction_result) = self.stack.exchange(n, m) {
+            self.set_instruction_result(instruction_result);
+            return false;
+        }
+        return true;
+    }
+
+    fn dup(&mut self, n: usize) -> bool {
+        if let Err(instruction_result) = self.stack.dup(n) {
+            self.set_instruction_result(instruction_result);
+            return false;
+        }
+        true
+    }
+
+    #[inline]
+    fn pop(&mut self) -> Option<U256> {
+        match self.stack.pop() {
+            Ok(value) => Some(value),
+            Err(err) => {
+                self.instruction_result = InstructionResult::StackUnderflow;
+                None
+            }
+        }
+    }
+
+    fn pop2(&mut self) -> Option<[U256; 2]> {
+        // if self.stack.len()
+        // match self.stack.pop2_unsafe() {
+        //     Ok(value) => Some(value),
+        //     Err(err) => {
+        //         self.instruction_result = InstructionResult::StackUnderflow;
+        //         None
+        //     }
+        // }
+        todo!()
+    }
+
+    fn pop3(&mut self) -> Option<[U256; 3]> {
+        //self.stack.pop3()
+        todo!()
+    }
+
+    fn pop4(&mut self) -> Option<[U256; 4]> {
+        //self.stack.pop4()
+        todo!()
+    }
+
+    fn push(&mut self, value: U256) -> bool {
+        //self.stack.push(value).is_ok()
+        todo!()
+    }
+
+    fn pop_b256(&mut self) -> Option<B256> {
+        //self.stack.pop_b256()
+        todo!()
+    }
+
+    fn top(&mut self) -> Option<&mut U256> {
+        //self.stack.top()
+        todo!()
+    }
+
+    fn pop_top(&mut self) -> Option<(U256, &mut U256)> {
+        //self.stack.pop_top()
+        todo!()
+    }
+
+    fn pop2_top(&mut self) -> Option<(U256, U256, &mut U256)> {
+        //self.stack.pop2_top()
+        todo!()
+    }
+}
+
+impl InterpreterTrait for Interpreter {
+    fn gas(&mut self) -> &mut Gas {
+        &mut self.gas
+    }
+
+    fn set_next_action(&mut self, action: InterpreterAction, result: InstructionResult) {
+        self.set_instruction_result(result);
+        self.next_action = action;
+    }
+
+    fn set_instruction_result(&mut self, result: InstructionResult) {
+        self.instruction_result = result;
+    }
+
+    fn bytecode(&self) -> &Bytecode {
+        &self.contract.bytecode
+    }
+
+    fn spec_id(&self) -> SpecId {
+        self.spec_id
+    }
+
+    fn jump(&mut self, offset: i32) {
+        let offset = offset as isize;
+        self.instruction_pointer = unsafe { self.instruction_pointer.offset(offset) };
+    }
+
+    fn is_eof(&self) -> bool {
+        self.is_eof
+    }
+
+    fn is_static(&self) -> bool {
+        self.is_static
+    }
+
+    fn is_eof_init(&self) -> bool {
+        self.is_eof_init
     }
 }
 /*
@@ -142,6 +601,8 @@ impl Interpreter {
             shared_memory: EMPTY_SHARED_MEMORY,
             stack: Stack::new(),
             next_action: InterpreterAction::None,
+            // TODO set this in constructor
+            spec_id: SpecId::LATEST,
         }
     }
 
@@ -521,25 +982,21 @@ pub fn resize_memory(memory: &mut SharedMemory, gas: &mut Gas, new_size: usize) 
 mod tests {
     use super::*;
     use crate::{table::InstructionTable, DummyHost};
-    use specification::hardfork::CancunSpec;
     use wiring::DefaultEthereumWiring;
 
     #[test]
     fn object_safety() {
         let mut interp = Interpreter::new(Contract::default(), u64::MAX, false);
-
+        interp.spec_id = SpecId::CANCUN;
         let mut host = crate::DummyHost::<DefaultEthereumWiring>::default();
         let table: &InstructionTable<DummyHost<DefaultEthereumWiring>> =
-            &crate::table::make_instruction_table::<DummyHost<DefaultEthereumWiring>, CancunSpec>();
+            &crate::table::make_instruction_table::<DummyHost<DefaultEthereumWiring>>();
         let _ = interp.run(EMPTY_SHARED_MEMORY, table, &mut host);
 
         let host: &mut dyn Host<EvmWiringT = DefaultEthereumWiring> =
             &mut host as &mut dyn Host<EvmWiringT = DefaultEthereumWiring>;
         let table: &InstructionTable<dyn Host<EvmWiringT = DefaultEthereumWiring>> =
-            &crate::table::make_instruction_table::<
-                dyn Host<EvmWiringT = DefaultEthereumWiring>,
-                CancunSpec,
-            >();
+            &crate::table::make_instruction_table::<dyn Host<EvmWiringT = DefaultEthereumWiring>>();
         let _ = interp.run(EMPTY_SHARED_MEMORY, table, host);
     }
 }

@@ -4,6 +4,7 @@ use crate::{
 };
 use primitives::Bytes;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use specification::hardfork::SpecId;
 
 #[derive(Serialize)]
 struct InterpreterSerde<'a> {
@@ -21,6 +22,7 @@ struct InterpreterSerde<'a> {
     return_data_buffer: &'a Bytes,
     is_static: bool,
     next_action: &'a InterpreterAction,
+    spec_id: SpecId,
 }
 
 #[derive(Deserialize)]
@@ -39,6 +41,7 @@ struct InterpreterDe {
     return_data_buffer: Bytes,
     is_static: bool,
     next_action: InterpreterAction,
+    spec_id: SpecId,
 }
 
 impl Serialize for Interpreter {
@@ -60,6 +63,7 @@ impl Serialize for Interpreter {
             return_data_buffer: &self.return_data_buffer,
             is_static: self.is_static,
             next_action: &self.next_action,
+            spec_id: self.spec_id,
         }
         .serialize(serializer)
     }
@@ -84,6 +88,7 @@ impl<'de> Deserialize<'de> for Interpreter {
             return_data_buffer,
             is_static,
             next_action,
+            spec_id,
         } = InterpreterDe::deserialize(deserializer)?;
 
         // Reconstruct the instruction pointer from usize
@@ -108,6 +113,7 @@ impl<'de> Deserialize<'de> for Interpreter {
             return_data_buffer,
             is_static,
             next_action,
+            spec_id,
         })
     }
 }

@@ -102,9 +102,9 @@ pub fn validate_eof_codes(
 
     while let Some(index) = tracker.processing_stack.pop() {
         // assume index is correct.
-        let code = &eof.body.code_section[index];
+        let code = eof.body.code(index).unwrap();
         validate_eof_code(
-            code,
+            &code,
             eof.header.data_size as usize,
             index,
             eof.body.container_section.len(),

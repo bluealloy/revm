@@ -1,24 +1,18 @@
 use crate::{
     gas::{cost_per_word, BASE, DATA_LOAD_GAS, VERYLOW},
-    instructions::utility::read_u16,
-    interpreter::Interpreter,
+    interpreter::InterpreterTrait,
     Host,
 };
 use primitives::U256;
 
-pub fn data_load<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn data_load<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     require_eof!(interpreter);
     gas!(interpreter, DATA_LOAD_GAS);
     pop_top!(interpreter, offset);
 
     let offset_usize = as_usize_saturated!(offset);
 
-    let slice = interpreter
-        .contract
-        .bytecode
-        .eof()
-        .expect("eof")
-        .data_slice(offset_usize, 32);
+    let slice = interpreter.eof_data_slice(offset_usize, 32);
 
     let mut word = [0u8; 32];
     word[..slice.len()].copy_from_slice(slice);
@@ -26,17 +20,12 @@ pub fn data_load<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     *offset = U256::from_be_bytes(word);
 }
 
-pub fn data_loadn<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn data_loadn<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     require_eof!(interpreter);
     gas!(interpreter, VERYLOW);
-    let offset = unsafe { read_u16(interpreter.instruction_pointer) } as usize;
+    let offset = interpreter.read_u16() as usize;
 
-    let slice = interpreter
-        .contract
-        .bytecode
-        .eof()
-        .expect("eof")
-        .data_slice(offset, 32);
+    let slice = interpreter.eof_data_slice(offset, 32);
 
     let mut word = [0u8; 32];
     word[..slice.len()].copy_from_slice(slice);
@@ -44,18 +33,17 @@ pub fn data_loadn<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H
     push_b256!(interpreter, word.into());
 
     // add +2 to the instruction pointer to skip the offset
-    interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(2) };
+    interpreter.relative_jump(2);
 }
 
-pub fn data_size<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn data_size<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     require_eof!(interpreter);
     gas!(interpreter, BASE);
-    let data_size = interpreter.eof().expect("eof").header.data_size;
 
-    push!(interpreter, U256::from(data_size));
+    push!(interpreter, U256::from(interpreter.eof_data_size()));
 }
 
-pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn data_copy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     require_eof!(interpreter);
     gas!(interpreter, VERYLOW);
     pop!(interpreter, mem_offset, offset, size);
@@ -73,19 +61,17 @@ pub fn data_copy<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H)
     gas_or_fail!(interpreter, cost_per_word(size as u64, VERYLOW));
 
     let offset = as_usize_saturated!(offset);
-    let data = interpreter.contract.bytecode.eof().expect("eof").data();
+    let data = interpreter.eof_data();
 
     // set data from the eof to the shared memory. Padded it with zeros.
-    interpreter
-        .shared_memory
-        .set_data(mem_offset, offset, size, data);
+    interpreter.mem_set_data(mem_offset, offset, size, data);
 }
 
 #[cfg(test)]
 mod test {
     use bytecode::{Bytecode, Eof};
     use primitives::{b256, bytes, Bytes};
-    use specification::hardfork::PragueSpec;
+    use specification::hardfork::SpecId;
     use std::sync::Arc;
     use wiring::DefaultEthereumWiring;
 
@@ -102,13 +88,14 @@ mod test {
         eof.header.data_size = eof.body.data_section.len() as u16;
 
         eof.header.code_sizes[0] = code_bytes.len() as u16;
-        eof.body.code_section[0] = code_bytes;
+        eof.body.code_section[0] = code_bytes.len();
+        eof.body.code = code_bytes;
         Bytecode::Eof(Arc::new(eof))
     }
 
     #[test]
     fn dataload_dataloadn() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
+        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
         let eof = dummy_eof(Bytes::from([
             DATALOAD, DATALOADN, 0x00, 0x00, DATALOAD, DATALOADN, 0x00, 35, DATALOAD, DATALOADN,
@@ -116,6 +103,7 @@ mod test {
         ]));
 
         let mut interp = Interpreter::new_bytecode(eof);
+        interp.spec_id = SpecId::PRAGUE;
         interp.gas = Gas::new(10000);
 
         // DATALOAD
@@ -164,12 +152,13 @@ mod test {
 
     #[test]
     fn data_copy() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
+        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
         let eof = dummy_eof(Bytes::from([DATACOPY, DATACOPY, DATACOPY, DATACOPY]));
 
         let mut interp = Interpreter::new_bytecode(eof);
         interp.gas = Gas::new(10000);
+        interp.spec_id = SpecId::PRAGUE;
 
         // Data copy
         // size, offset mem_offset,

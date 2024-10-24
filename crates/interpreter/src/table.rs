@@ -31,7 +31,7 @@ impl<'a, H: Host + ?Sized> InstructionTables<'a, H> {
     /// Creates a plain instruction table for the given spec. See [`make_instruction_table`].
     #[inline]
     pub const fn new_plain<SPEC: Spec>() -> Self {
-        Self::Plain(make_instruction_table::<H, SPEC>())
+        Self::Plain(make_instruction_table::<H>())
     }
 }
 
@@ -132,12 +132,12 @@ impl<'a, H: Host + ?Sized + 'a> InstructionTables<'a, H> {
 
 /// Make instruction table.
 #[inline]
-pub const fn make_instruction_table<H: Host + ?Sized, SPEC: Spec>() -> InstructionTable<H> {
+pub const fn make_instruction_table<H: Host + ?Sized>() -> InstructionTable<H> {
     const {
         let mut tables: InstructionTable<H> = [control::unknown; 256];
         let mut i = 0;
         while i < 256 {
-            tables[i] = instruction::<H, SPEC>(i as u8);
+            tables[i] = instruction::<H>(i as u8);
             i += 1;
         }
         tables

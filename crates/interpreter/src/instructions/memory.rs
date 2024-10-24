@@ -1,39 +1,42 @@
-use crate::{gas, Host, Interpreter};
+use crate::{gas, interpreter::InterpreterTrait, Host};
 use core::cmp::max;
 use primitives::U256;
-use specification::hardfork::Spec;
 
-pub fn mload<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn mload<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, top);
     let offset = as_usize_or_fail!(interpreter, top);
     resize_memory!(interpreter, offset, 32);
-    *top = interpreter.shared_memory.get_u256(offset);
+    *top = interpreter
+        .mem_slice_len(offset, 32)
+        .try_into()
+        .unwrap()
+        .into();
 }
 
-pub fn mstore<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn mstore<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, offset, value);
     let offset = as_usize_or_fail!(interpreter, offset);
     resize_memory!(interpreter, offset, 32);
-    interpreter.shared_memory.set_u256(offset, value);
+    interpreter.mem_set(offset, &value.to_be_bytes::<32>());
 }
 
-pub fn mstore8<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn mstore8<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, offset, value);
     let offset = as_usize_or_fail!(interpreter, offset);
     resize_memory!(interpreter, offset, 1);
-    interpreter.shared_memory.set_byte(offset, value.byte(0))
+    interpreter.mem_set(offset, value.byte(0))
 }
 
-pub fn msize<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn msize<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(interpreter.shared_memory.len()));
+    push!(interpreter, U256::from(interpreter.mem_size()));
 }
 
 // EIP-5656: MCOPY - Memory copying instruction
-pub fn mcopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn mcopy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     check!(interpreter, CANCUN);
     pop!(interpreter, dst, src, len);
 
@@ -50,5 +53,5 @@ pub fn mcopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host:
     // resize memory
     resize_memory!(interpreter, max(dst, src), len);
     // copy memory in place
-    interpreter.shared_memory.copy(dst, src, len);
+    interpreter.mem_copy(dst, src, len);
 }

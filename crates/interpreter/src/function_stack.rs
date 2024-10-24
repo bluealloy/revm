@@ -35,6 +35,14 @@ impl FunctionStack {
         }
     }
 
+    pub fn len(&self) -> usize {
+        self.return_stack.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.return_stack.is_empty()
+    }
+
     /// Pushes a new frame to the stack. and sets current_code_idx to new value.
     pub fn push(&mut self, program_counter: usize, new_idx: usize) {
         self.return_stack.push(FunctionReturnFrame {
@@ -50,10 +58,10 @@ impl FunctionStack {
     }
 
     /// Pops a frame from the stack and sets current_code_idx to the popped frame's idx.
-    pub fn pop(&mut self) -> Option<FunctionReturnFrame> {
-        self.return_stack
-            .pop()
-            .inspect(|frame| self.current_code_idx = frame.idx)
+    pub fn pop(&mut self) -> Option<usize> {
+        let v = self.return_stack.pop()?;
+        self.current_code_idx = v.idx;
+        Some(v.pc)
     }
 
     /// Sets current_code_idx, this is needed for JUMPF opcode.

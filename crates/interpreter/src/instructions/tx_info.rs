@@ -1,17 +1,17 @@
-use crate::{gas, Host, Interpreter};
+use crate::{gas, interpreter::InterpreterTrait, Host, Interpreter};
 use primitives::U256;
 use specification::hardfork::Spec;
 use transaction::Eip4844Tx;
 use wiring::{Block, Transaction, TransactionType};
 
-pub fn gasprice<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn gasprice<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &mut H) {
     gas!(interpreter, gas::BASE);
     let env = host.env();
     let basefee = *env.block.basefee();
     push!(interpreter, env.tx.effective_gas_price(basefee));
 }
 
-pub fn origin<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn origin<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &mut H) {
     gas!(interpreter, gas::BASE);
     push_b256!(
         interpreter,
@@ -20,7 +20,7 @@ pub fn origin<H: Host + ?Sized>(interpreter: &mut Interpreter, host: &mut H) {
 }
 
 // EIP-4844: Shard Blob Transactions
-pub fn blob_hash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn blob_hash<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &mut H) {
     check!(interpreter, CANCUN);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, index);
