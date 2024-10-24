@@ -168,6 +168,9 @@ impl<'a, EvmWiringT: EvmWiring> EvmHandler<'a, EvmWiringT> {
 
 #[cfg(test)]
 mod test {
+    extern crate alloc;
+
+    use alloc::boxed::Box;
     use core::cell::RefCell;
     use database_interface::EmptyDB;
     use std::{rc::Rc, sync::Arc};
