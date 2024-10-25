@@ -21,7 +21,7 @@ pub use empty_db::{EmptyDB, EmptyDBTyped};
 #[auto_impl(&mut, Box)]
 pub trait Database {
     /// The database error type.
-    type Error;
+    type Error: core::error::Error;
 
     /// Get basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -38,7 +38,7 @@ pub trait Database {
 
 /// EVM database commit interface.
 #[auto_impl(&mut, Box)]
-pub trait DatabaseCommit {
+pub trait DatabaseCommit: Database {
     /// Commit changes to the database.
     fn commit(&mut self, changes: HashMap<Address, Account>);
 }
@@ -52,7 +52,7 @@ pub trait DatabaseCommit {
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait DatabaseRef {
     /// The database error type.
-    type Error;
+    type Error: core::error::Error;
 
     /// Get basic account information.
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
