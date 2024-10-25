@@ -1,10 +1,10 @@
-//! Optimism-specific constants, types, and helpers.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 //! Database that is split on State and BlockHash traits.
 pub mod block_hash;
 pub mod state;
 
+use block_hash::WrapBlockHashRef;
 pub use block_hash::{BlockHash, BlockHashRef};
 pub use state::{State, StateRef};
 
@@ -26,7 +26,33 @@ pub enum DatabaseComponentError<SE, BHE> {
     BlockHash(BHE),
 }
 
-impl<S: State, BH: BlockHash> Database for DatabaseComponents<S, BH> {
+impl<SE, BHE> core::fmt::Display for DatabaseComponentError<SE, BHE>
+where
+    SE: core::fmt::Display,
+    BHE: core::fmt::Display,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            DatabaseComponentError::State(e) => write!(f, "State error: {}", e),
+            DatabaseComponentError::BlockHash(e) => write!(f, "BlockHash error: {}", e),
+        }
+    }
+}
+
+impl<SE, BHE> core::error::Error for DatabaseComponentError<SE, BHE>
+where
+    SE: core::error::Error + 'static,
+    BHE: core::error::Error + 'static,
+{
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            DatabaseComponentError::State(e) => Some(e),
+            DatabaseComponentError::BlockHash(e) => Some(e),
+        }
+    }
+}
+
+impl<S: State, BH: BlockHashRef> Database for DatabaseComponents<S, BH> {
     type Error = DatabaseComponentError<S::Error, BH::Error>;
 
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
@@ -46,7 +72,7 @@ impl<S: State, BH: BlockHash> Database for DatabaseComponents<S, BH> {
     }
 
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
-        self.block_hash
+        WrapBlockHashRef(&self.block_hash)
             .block_hash(number)
             .map_err(Self::Error::BlockHash)
     }
@@ -78,7 +104,7 @@ impl<S: StateRef, BH: BlockHashRef> DatabaseRef for DatabaseComponents<S, BH> {
     }
 }
 
-impl<S: DatabaseCommit, BH: BlockHashRef> DatabaseCommit for DatabaseComponents<S, BH> {
+impl<S: State + DatabaseCommit, BH: BlockHashRef> DatabaseCommit for DatabaseComponents<S, BH> {
     fn commit(&mut self, changes: HashMap<Address, Account>) {
         self.state.commit(changes);
     }
