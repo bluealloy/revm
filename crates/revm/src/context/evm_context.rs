@@ -5,7 +5,7 @@ use super::inner_evm_context::InnerEvmContext;
 use crate::{
     db::Database,
     interpreter::{
-        analysis::validate_eof, return_ok, CallInputs, Contract, CreateInputs, EOFCreateInputs,
+        analysis::validate_eof, CallInputs, Contract, CreateInputs, EOFCreateInputs,
         EOFCreateKind, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
     primitives::{
