@@ -5,8 +5,8 @@ use super::inner_evm_context::InnerEvmContext;
 use crate::{
     db::Database,
     interpreter::{
-        analysis::validate_eof, CallInputs, Contract, CreateInputs, EOFCreateInputs,
-        EOFCreateKind, Gas, InstructionResult, Interpreter, InterpreterResult,
+        analysis::validate_eof, CallInputs, Contract, CreateInputs, EOFCreateInputs, EOFCreateKind,
+        Gas, InstructionResult, Interpreter, InterpreterResult,
     },
     primitives::{
         keccak256, Address, Bytecode, Bytes, CreateScheme, EVMError, Env, Eof,
