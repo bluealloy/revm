@@ -4,7 +4,6 @@
 pub mod block_hash;
 pub mod state;
 
-use block_hash::WrapBlockHashRef;
 pub use block_hash::{BlockHash, BlockHashRef};
 pub use state::{State, StateRef};
 
@@ -72,7 +71,7 @@ impl<S: State, BH: BlockHashRef> Database for DatabaseComponents<S, BH> {
     }
 
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
-        WrapBlockHashRef(&self.block_hash)
+        self.block_hash
             .block_hash(number)
             .map_err(Self::Error::BlockHash)
     }

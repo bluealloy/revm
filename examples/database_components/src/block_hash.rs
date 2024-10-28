@@ -42,23 +42,3 @@ where
         self.deref().block_hash(number)
     }
 }
-
-/// Wraps a [`BlockHashRef`] to provide a [`BlockHash`] implementation.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct WrapBlockHashRef<T: BlockHashRef>(pub T);
-
-impl<F: BlockHashRef> From<F> for WrapBlockHashRef<F> {
-    #[inline]
-    fn from(f: F) -> Self {
-        WrapBlockHashRef(f)
-    }
-}
-
-impl<T: BlockHashRef> BlockHash for WrapBlockHashRef<T> {
-    type Error = T::Error;
-
-    #[inline]
-    fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error> {
-        self.0.block_hash(number)
-    }
-}
