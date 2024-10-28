@@ -114,11 +114,7 @@ impl<DB: Database> EvmContext<DB> {
         address: &Address,
         input_data: &Bytes,
         gas: Gas,
-        is_ext_delegate: bool,
     ) -> Result<Option<InterpreterResult>, EVMError<DB::Error>> {
-        if is_ext_delegate {
-            return Ok(None);
-        }
         let Some(outcome) =
             self.precompiles
                 .call(address, input_data, gas.limit(), &mut self.inner)
@@ -211,60 +207,59 @@ impl<DB: Database> EvmContext<DB> {
 
         let is_ext_delegate = inputs.scheme.is_ext_delegate_call();
 
-        if let Some(result) = self.call_precompile(
-            &inputs.bytecode_address,
-            &inputs.input,
-            gas,
-            is_ext_delegate,
-        )? {
-            if matches!(result.result, return_ok!()) {
-                self.journaled_state.checkpoint_commit();
-            } else {
-                self.journaled_state.checkpoint_revert(checkpoint);
+        if !is_ext_delegate {
+            if let Some(result) =
+                self.call_precompile(&inputs.bytecode_address, &inputs.input, gas)?
+            {
+                if result.result.is_ok() {
+                    self.journaled_state.checkpoint_commit();
+                } else {
+                    self.journaled_state.checkpoint_revert(checkpoint);
+                }
+                return Ok(FrameOrResult::new_call_result(
+                    result,
+                    inputs.return_memory_offset.clone(),
+                ));
             }
-            Ok(FrameOrResult::new_call_result(
-                result,
-                inputs.return_memory_offset.clone(),
-            ))
-        } else {
-            let account = self
+        }
+        // load account and bytecode
+        let account = self
+            .inner
+            .journaled_state
+            .load_code(inputs.bytecode_address, &mut self.inner.db)?;
+
+        let code_hash = account.info.code_hash();
+        let mut bytecode = account.info.code.clone().unwrap_or_default();
+
+        // ExtDelegateCall is not allowed to call non-EOF contracts.
+        if is_ext_delegate && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES) {
+            return return_result(InstructionResult::InvalidExtDelegateCallTarget);
+        }
+
+        if bytecode.is_empty() {
+            self.journaled_state.checkpoint_commit();
+            return return_result(InstructionResult::Stop);
+        }
+
+        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
+            bytecode = self
                 .inner
                 .journaled_state
-                .load_code(inputs.bytecode_address, &mut self.inner.db)?;
-
-            let code_hash = account.info.code_hash();
-            let mut bytecode = account.info.code.clone().unwrap_or_default();
-
-            // ExtDelegateCall is not allowed to call non-EOF contracts.
-            if is_ext_delegate && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES) {
-                return return_result(InstructionResult::InvalidExtDelegateCallTarget);
-            }
-
-            if bytecode.is_empty() {
-                self.journaled_state.checkpoint_commit();
-                return return_result(InstructionResult::Stop);
-            }
-
-            if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-                bytecode = self
-                    .inner
-                    .journaled_state
-                    .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?
-                    .info
-                    .code
-                    .clone()
-                    .unwrap_or_default();
-            }
-
-            let contract =
-                Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
-            // Create interpreter and executes call and push new CallStackFrame.
-            Ok(FrameOrResult::new_call_frame(
-                inputs.return_memory_offset.clone(),
-                checkpoint,
-                Interpreter::new(contract, gas.limit(), inputs.is_static),
-            ))
+                .load_code(eip7702_bytecode.delegated_address, &mut self.inner.db)?
+                .info
+                .code
+                .clone()
+                .unwrap_or_default();
         }
+
+        let contract =
+            Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
+        // Create interpreter and executes call and push new CallStackFrame.
+        Ok(FrameOrResult::new_call_frame(
+            inputs.return_memory_offset.clone(),
+            checkpoint,
+            Interpreter::new(contract, gas.limit(), inputs.is_static),
+        ))
     }
 
     /// Make create frame.
