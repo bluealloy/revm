@@ -152,9 +152,8 @@ pub struct Handler<'a, EvmWiringT: EvmWiring, H: Host + 'a> {
     /// Registers that will be called on initialization.
     pub registers: Vec<HandleRegisters<'a, EvmWiringT>>,
     /// New Validation
-    pub validation: Box<
-        dyn ValidationWire<Context = Context<EvmWiringT>, Error = EVMErrorWiring<EvmWiringT>> + 'a,
-    >,
+    pub validation:
+        Box<dyn ValidationWire<Context = Context<EvmWiringT>, Error = EVMErrorWiring<EvmWiringT>>>,
     /// Pre execution handle.
     pub pre_execution: Box<
         dyn PreExecutionWire<
@@ -166,20 +165,20 @@ pub struct Handler<'a, EvmWiringT: EvmWiring, H: Host + 'a> {
     /// Execution loop that handles frames.
     pub execution: Box<
         dyn ExecutionWire<
-                Context = Context<EvmWiringT>,
-                Error = EVMErrorWiring<EvmWiringT>,
-                Frame = EthFrame<Context<EvmWiringT>, EVMErrorWiring<EvmWiringT>>,
-                ExecResult = FrameResult,
-            > + 'a,
+            Context = Context<EvmWiringT>,
+            Error = EVMErrorWiring<EvmWiringT>,
+            Frame = EthFrame<Context<EvmWiringT>, EVMErrorWiring<EvmWiringT>>,
+            ExecResult = FrameResult,
+        >,
     >,
     /// Post Execution handle.
     pub post_execution: Box<
         dyn PostExecutionWire<
-                Context = Context<EvmWiringT>,
-                Error = EVMErrorWiring<EvmWiringT>,
-                ExecResult = FrameResult,
-                Output = ResultAndState<EvmWiringT::HaltReason>,
-            > + 'a,
+            Context = Context<EvmWiringT>,
+            Error = EVMErrorWiring<EvmWiringT>,
+            ExecResult = FrameResult,
+            Output = ResultAndState<EvmWiringT::HaltReason>,
+        >,
     >,
     //pub execution: ExecutionHandler<'a, EvmWiringT>,
 }

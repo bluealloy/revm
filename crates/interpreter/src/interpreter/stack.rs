@@ -113,6 +113,20 @@ impl Stack {
         self.data.get_unchecked_mut(len - 1)
     }
 
+    pub unsafe fn popn<const N: usize>(&mut self) -> [U256; N] {
+        let mut result = [U256::ZERO; N];
+        for v in result.iter_mut() {
+            *v = self.data.pop().unwrap_unchecked();
+        }
+        result
+    }
+
+    pub unsafe fn popn_top<const POPN: usize>(&mut self) -> ([U256; POPN], &mut U256) {
+        let result = self.popn::<POPN>();
+        let top = self.top_unsafe();
+        (result, top)
+    }
+
     /// Pop the topmost value, returning the value and the new topmost value.
     ///
     /// # Safety

@@ -1,18 +1,10 @@
 use super::constants::*;
-use crate::{num_words, AccountLoad, Eip7702CodeLoad, SStoreResult, SelfDestructResult, StateLoad};
+use crate::{
+    num_words, tri, AccountLoad, Eip7702CodeLoad, SStoreResult, SelfDestructResult, StateLoad,
+};
 use primitives::U256;
 use specification::{eip7702, hardfork::SpecId};
 use transaction::AccessListTrait;
-
-/// `const` Option `?`.
-macro_rules! tri {
-    ($e:expr) => {
-        match $e {
-            Some(v) => v,
-            None => return None,
-        }
-    };
-}
 
 /// `SSTORE` opcode refund calculation.
 #[allow(clippy::collapsible_else_if)]

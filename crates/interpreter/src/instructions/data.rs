@@ -8,7 +8,9 @@ use primitives::U256;
 pub fn data_load<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     require_eof!(interpreter);
     gas!(interpreter, DATA_LOAD_GAS);
-    pop_top!(interpreter, offset);
+    let Some(offset) = interpreter.top() else {
+        return
+    }
 
     let offset_usize = as_usize_saturated!(offset);
 
@@ -46,7 +48,9 @@ pub fn data_size<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _ho
 pub fn data_copy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     require_eof!(interpreter);
     gas!(interpreter, VERYLOW);
-    pop!(interpreter, mem_offset, offset, size);
+    let Some([mem_offset, offset, size]) = interpreter.popn() else {
+        return;
+    };
 
     // sizes more than u64::MAX will spend all the gas in memory resize.
     let size = as_usize_or_fail!(interpreter, size);
@@ -95,7 +99,7 @@ mod test {
 
     #[test]
     fn dataload_dataloadn() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>>();
+        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
         let eof = dummy_eof(Bytes::from([
             DATALOAD, DATALOADN, 0x00, 0x00, DATALOAD, DATALOADN, 0x00, 35, DATALOAD, DATALOADN,
@@ -152,7 +156,7 @@ mod test {
 
     #[test]
     fn data_copy() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>>();
+        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
         let eof = dummy_eof(Bytes::from([DATACOPY, DATACOPY, DATACOPY, DATACOPY]));
 

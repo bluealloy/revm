@@ -1,10 +1,10 @@
-use crate::{gas, interpreter::InterpreterTrait, Host, Interpreter};
+use crate::{gas, interpreter::InterpreterTrait, Host, InstructionResult};
 use primitives::U256;
-use specification::hardfork::Spec;
 
 pub fn pop<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::BASE);
-    let _ = interpreter.pop();
+    // can ignore return. as relative N jump is safe operation.
+    let _ = interpreter.popn::<1>();
 }
 
 /// EIP-3855: PUSH0 instruction
@@ -21,10 +21,9 @@ pub fn push<const N: usize, I: InterpreterTrait, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    // SAFETY: In analysis we append trailing bytes to the bytecode so that this is safe to do
-    // without bounds checking.
-    let slice = interpreter.read_slice(N);
-    interpreter.push_slice(slice);
+
+    // can ignore return. as relative N jump is safe opeation.
+    interpreter.pushn(N);
     interpreter.relative_jump(N as isize);
 }
 
@@ -75,6 +74,7 @@ pub fn exchange<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _hos
 mod test {
 
     use super::*;
+    use crate::Interpreter;
     use crate::{table::make_instruction_table, DummyHost, Gas, InstructionResult};
     use bytecode::opcode::{DUPN, EXCHANGE, SWAPN};
     use bytecode::Bytecode;
@@ -83,7 +83,7 @@ mod test {
 
     #[test]
     fn dupn() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>>();
+        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
             [DUPN, 0x00, DUPN, 0x01, DUPN, 0x02].into(),
@@ -104,7 +104,7 @@ mod test {
 
     #[test]
     fn swapn() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>>();
+        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
         let mut interp =
             Interpreter::new_bytecode(Bytecode::LegacyRaw([SWAPN, 0x00, SWAPN, 0x01].into()));
@@ -125,7 +125,7 @@ mod test {
 
     #[test]
     fn exchange() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>>();
+        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
         let mut interp =
             Interpreter::new_bytecode(Bytecode::LegacyRaw([EXCHANGE, 0x00, EXCHANGE, 0x11].into()));

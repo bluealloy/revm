@@ -50,7 +50,6 @@ pub trait InputsTrait {
 
 pub trait LegacyBytecode {
     fn bytecode_len(&self) -> usize;
-
     fn bytecode_slice(&self) -> &[u8];
 }
 
@@ -74,11 +73,26 @@ pub trait MemoryTrait {
     fn mem_size(&self) -> usize;
     fn mem_copy(&mut self, destination: usize, source: usize, len: usize);
 
+    /// Memory slice with range.
+    ///
+    /// # Panics
+    ///
+    /// Panics if range is out of scope of allocated memory.
     fn mem_slice(&self, range: Range<usize>) -> &[u8];
 
+    /// Memory slice len
+    ///
+    /// Uses [`MemoryTrait::mem_slice`] internally.
     fn mem_slice_len(&self, offset: usize, len: usize) -> &[u8] {
         self.mem_slice(offset..offset + len)
     }
+
+    /// Resize memory to new size.
+    ///
+    /// # Note
+    ///
+    /// It checks memory limits.
+    fn mem_resize(&mut self, new_size: usize) -> bool;
 }
 
 pub trait EofContainer {
@@ -103,19 +117,37 @@ pub trait EofSubRoutine {
 }
 
 pub trait StackTrait {
+    /// Pushes values to the stack
+    /// Return `true` if push was successful, `false` if stack overflow.
+    ///
+    /// # Note
+    ///
+    /// Error is internally set in interpreter.
     fn push(&mut self, value: U256) -> bool;
+
+    /// Returns stack length.
     fn stack_len(&self) -> usize;
 
-    fn pop(&mut self) -> Option<U256>;
-    fn pop2(&mut self) -> Option<[U256; 2]>;
-    fn pop3(&mut self) -> Option<[U256; 3]>;
-    fn pop4(&mut self) -> Option<[U256; 4]>;
-    fn pop_b256(&mut self) -> Option<B256>;
-    fn top(&mut self) -> Option<&mut U256>;
-    fn pop_top(&mut self) -> Option<(U256, &mut U256)>;
-    fn pop2_top(&mut self) -> Option<(U256, U256, &mut U256)>;
+    /// Pop value from the stack.
+    fn popn<const N: usize>(&mut self) -> Option<[U256; N]>;
 
-    fn push_slice(&mut self, data: &[u8]) -> bool;
+    /// Pop N values from the stack and return top value.
+    fn popn_top<const POPN: usize>(&mut self) -> Option<([U256; POPN], &mut U256)>;
+
+    /// Return top value from the stack.
+    fn top(&mut self) -> Option<&mut U256> {
+        self.popn_top::<0>().map(|(_, top)| top)
+    }
+
+    /// Pop one value from the stack.
+    fn pop(&mut self) -> Option<U256> {
+        self.popn::<1>().map(|[value]| value)
+    }
+
+    /// Reads N bytes from bytecode and pushes it into stack.
+    ///
+    /// As pushn is very frequently used, we have this specialized implementation.
+    fn pushn(&mut self, size: usize) -> bool;
 
     /// Exchange two values on the stack.
     ///
@@ -172,6 +204,13 @@ pub trait InterpreterTrait:
     fn is_eof_init(&self) -> bool;
 
     fn jump(&mut self, offset: i32);
+}
+
+pub trait Interp {
+    type Instruction;
+    type Action;
+
+    fn run(&mut self, instructions: &[Self::Instruction; 256]) -> Self::Action;
 }
 
 /// EVM bytecode interpreter.
@@ -336,6 +375,16 @@ impl MemoryTrait for Interpreter {
     fn mem_copy(&mut self, destination: usize, source: usize, len: usize) {
         self.shared_memory.copy(destination, source, len);
     }
+
+    fn mem_resize(&mut self, new_size: usize) -> bool {
+        // Increment and check gas consumption before incrementing memory.
+        // This opeations are safe because gas is a limiter.
+        let new_size = num_words(new_size as u64) * 32;
+        // TODO add memory limit here.
+        // TODO set interpreter result in case of error
+        self.shared_memory.resize(new_size as usize);
+        true
+    }
 }
 
 impl EofData for Interpreter {
@@ -420,12 +469,28 @@ impl StackTrait for Interpreter {
         self.stack.len()
     }
 
-    fn push_slice(&mut self, data: &[u8]) -> bool {
-        if let Err(instruction_result) = self.stack.push_slice(data) {
-            self.set_instruction_result(instruction_result);
-            return false;
-        }
+    fn pushn(&mut self, num: usize) -> bool {
         true
+    }
+
+    #[inline]
+    fn popn<const N: usize>(&mut self) -> Option<[U256; N]> {
+        if self.stack.len() < N {
+            self.set_instruction_result(InstructionResult::StackUnderflow);
+            return None;
+        }
+        // SAFETY: stack length is checked above.
+        Some(unsafe { self.stack.popn::<N>() })
+    }
+
+    #[inline]
+    fn popn_top<const POPN: usize>(&mut self) -> Option<([U256; POPN], &mut U256)> {
+        if self.stack.len() < POPN + 1 {
+            self.set_instruction_result(InstructionResult::StackUnderflow);
+            return None;
+        }
+        // SAFETY: stack length is checked above.
+        Some(unsafe { self.stack.popn_top::<POPN>() })
     }
 
     fn exchange(&mut self, n: usize, m: usize) -> bool {
@@ -444,62 +509,12 @@ impl StackTrait for Interpreter {
         true
     }
 
-    #[inline]
-    fn pop(&mut self) -> Option<U256> {
-        match self.stack.pop() {
-            Ok(value) => Some(value),
-            Err(err) => {
-                self.instruction_result = InstructionResult::StackUnderflow;
-                None
-            }
-        }
-    }
-
-    fn pop2(&mut self) -> Option<[U256; 2]> {
-        // if self.stack.len()
-        // match self.stack.pop2_unsafe() {
-        //     Ok(value) => Some(value),
-        //     Err(err) => {
-        //         self.instruction_result = InstructionResult::StackUnderflow;
-        //         None
-        //     }
-        // }
-        todo!()
-    }
-
-    fn pop3(&mut self) -> Option<[U256; 3]> {
-        //self.stack.pop3()
-        todo!()
-    }
-
-    fn pop4(&mut self) -> Option<[U256; 4]> {
-        //self.stack.pop4()
-        todo!()
-    }
-
     fn push(&mut self, value: U256) -> bool {
-        //self.stack.push(value).is_ok()
-        todo!()
-    }
-
-    fn pop_b256(&mut self) -> Option<B256> {
-        //self.stack.pop_b256()
-        todo!()
-    }
-
-    fn top(&mut self) -> Option<&mut U256> {
-        //self.stack.top()
-        todo!()
-    }
-
-    fn pop_top(&mut self) -> Option<(U256, &mut U256)> {
-        //self.stack.pop_top()
-        todo!()
-    }
-
-    fn pop2_top(&mut self) -> Option<(U256, U256, &mut U256)> {
-        //self.stack.pop2_top()
-        todo!()
+        if let Err(e) = self.stack.push(value) {
+            self.set_instruction_result(e);
+            return false;
+        }
+        true
     }
 }
 
@@ -990,13 +1005,17 @@ mod tests {
         interp.spec_id = SpecId::CANCUN;
         let mut host = crate::DummyHost::<DefaultEthereumWiring>::default();
         let table: &InstructionTable<DummyHost<DefaultEthereumWiring>> =
-            &crate::table::make_instruction_table::<DummyHost<DefaultEthereumWiring>>();
+            &crate::table::make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>(
+            );
         let _ = interp.run(EMPTY_SHARED_MEMORY, table, &mut host);
 
         let host: &mut dyn Host<EvmWiringT = DefaultEthereumWiring> =
             &mut host as &mut dyn Host<EvmWiringT = DefaultEthereumWiring>;
         let table: &InstructionTable<dyn Host<EvmWiringT = DefaultEthereumWiring>> =
-            &crate::table::make_instruction_table::<dyn Host<EvmWiringT = DefaultEthereumWiring>>();
+            &crate::table::make_instruction_table::<
+                Interpreter,
+                dyn Host<EvmWiringT = DefaultEthereumWiring>,
+            >();
         let _ = interp.run(EMPTY_SHARED_MEMORY, table, host);
     }
 }

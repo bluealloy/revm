@@ -16,6 +16,8 @@ pub struct Gas {
     remaining: u64,
     /// Refunded gas. This is used only at the end of execution.
     refunded: i64,
+    /// Memoisation of values for memory expansion cost.
+    memory: MemoryGas,
 }
 
 impl Gas {
@@ -26,6 +28,7 @@ impl Gas {
             limit,
             remaining: limit,
             refunded: 0,
+            memory: MemoryGas::new(),
         }
     }
 
@@ -36,6 +39,7 @@ impl Gas {
             limit,
             remaining: 0,
             refunded: 0,
+            memory: MemoryGas::new(),
         }
     }
 
@@ -127,5 +131,50 @@ impl Gas {
             self.remaining = remaining;
         }
         success
+    }
+
+    /// Record memory expansion
+    #[inline]
+    #[must_use = "internally uses record_cost that flags out of gas error"]
+    pub fn record_memory_expansion(&mut self, new_len: usize) -> bool {
+        let Some(additional_cost) = self.memory.record_new_len(new_len) else {
+            return true;
+        };
+        self.record_cost(additional_cost)
+    }
+}
+
+/// Utility struct that speeds up calculation of memory expansion
+/// It contains the current memory length and its memory expansion cost.
+///
+/// It allows us to split gas accounting from memory structure.
+
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct MemoryGas {
+    /// Current memory length
+    pub length: usize,
+    /// Current memory expansion cost
+    pub expansion_cost: u64,
+}
+
+impl MemoryGas {
+    pub const fn new() -> Self {
+        Self {
+            length: 0,
+            expansion_cost: 0,
+        }
+    }
+
+    #[inline]
+    pub fn record_new_len(&mut self, new_len: usize) -> Option<u64> {
+        if new_len <= self.length {
+            return None;
+        }
+        self.length = new_len;
+        let mut cost = crate::gas::calc::memory_gas_for_len(new_len);
+        core::mem::swap(&mut self.expansion_cost, &mut cost);
+        // safe to subtract because we know that new_len > length
+        Some(cost - self.expansion_cost)
     }
 }

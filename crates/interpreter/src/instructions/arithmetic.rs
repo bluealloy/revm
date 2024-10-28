@@ -5,25 +5,34 @@ use specification::hardfork::Spec;
 
 pub fn add<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    let Some(([op1], op2)) = interpreter.popn_top() else {
+        return;
+    };
     *op2 = op1.wrapping_add(*op2);
 }
 
 pub fn mul<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::LOW);
-    pop_top!(interpreter, op1, op2);
+    let Some(([op1], op2)) = interpreter.popn_top() else {
+        return;
+    };
     *op2 = op1.wrapping_mul(*op2);
 }
 
 pub fn sub<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, op1, op2);
+    let Some(([op1], op2)) = interpreter.popn_top() else {
+        return;
+    };
     *op2 = op1.wrapping_sub(*op2);
 }
 
 pub fn div<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::LOW);
-    pop_top!(interpreter, op1, op2);
+    let Some(([op1], op2)) = interpreter.popn_top() else {
+        return;
+    };
+
     if !op2.is_zero() {
         *op2 = op1.wrapping_div(*op2);
     }
@@ -31,13 +40,17 @@ pub fn div<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &m
 
 pub fn sdiv<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::LOW);
-    pop_top!(interpreter, op1, op2);
+    let Some(([op1], op2)) = interpreter.popn_top() else {
+        return;
+    };
     *op2 = i256_div(op1, *op2);
 }
 
 pub fn rem<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::LOW);
-    pop_top!(interpreter, op1, op2);
+    let Some(([op1], op2)) = interpreter.popn_top() else {
+        return;
+    };
     if !op2.is_zero() {
         *op2 = op1.wrapping_rem(*op2);
     }
@@ -45,26 +58,37 @@ pub fn rem<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &m
 
 pub fn smod<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::LOW);
-    pop_top!(interpreter, op1, op2);
+    let Some(([op1], op2)) = interpreter.popn_top() else {
+        return;
+    };
     *op2 = i256_mod(op1, *op2)
 }
 
 pub fn addmod<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::MID);
-    pop_top!(interpreter, op1, op2, op3);
+    let Some(([op1, op2], op3)) = interpreter.popn_top() else {
+        return;
+    };
     *op3 = op1.add_mod(op2, *op3)
 }
 
 pub fn mulmod<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::MID);
-    pop_top!(interpreter, op1, op2, op3);
+    let Some(([op1, op2], op3)) = interpreter.popn_top() else {
+        return;
+    };
     *op3 = op1.mul_mod(op2, *op3)
 }
 
 pub fn exp<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
-    pop_top!(interpreter, op1, op2);
-    gas_or_fail!(interpreter, gas::exp_cost(interpreter.spec_id(), *op2));
-    *op2 = op1.pow(*op2);
+    let spec_id = interpreter.spec_id();
+    let Some([op1, op2]) = interpreter.popn() else {
+        return;
+    };
+    gas_or_fail!(interpreter, gas::exp_cost(spec_id, op2));
+
+    let top = unsafe { interpreter.top().unwrap_unchecked() };
+    *top = op1.pow(op2);
 }
 
 /// Implements the `SIGNEXTEND` opcode as defined in the Ethereum Yellow Paper.
@@ -86,7 +110,9 @@ pub fn exp<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &m
 /// bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
 pub fn signextend<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::LOW);
-    pop_top!(interpreter, ext, x);
+    let Some(([ext], x)) = interpreter.popn_top() else {
+        return;
+    };
     // For 31 we also don't need to do anything.
     if ext < U256::from(31) {
         let ext = ext.as_limbs()[0];

@@ -238,7 +238,7 @@ pub fn make_custom_instruction_table<
     SPEC: CustomOpcodeSpec,
 >() -> InstructionTable<H> {
     // custom opcode chain can reuse mainnet instructions
-    let mut table = make_instruction_table::<H, SPEC>();
+    let mut table = make_instruction_table::<Interpreter,H, SPEC>();
 
     table[0x0c] = custom_opcode_handler::<H, SPEC>;
 

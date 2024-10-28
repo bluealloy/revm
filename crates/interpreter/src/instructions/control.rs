@@ -16,7 +16,9 @@ pub fn rjump<I: InterpreterTrait, H: ?Sized>(interpreter: &mut I, _host: &mut H)
 pub fn rjumpi<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     require_eof!(interpreter);
     gas!(interpreter, gas::CONDITION_JUMP_GAS);
-    pop!(interpreter, condition);
+    let Some(condition) = interpreter.pop() else {
+        return;
+    };
     // In spec it is +3 but pointer is already incremented in
     // `Interpreter::step` so for revm is +2.
     let mut offset = 2;
@@ -30,7 +32,9 @@ pub fn rjumpi<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host:
 pub fn rjumpv<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     require_eof!(interpreter);
     gas!(interpreter, gas::CONDITION_JUMP_GAS);
-    pop!(interpreter, case);
+    let Some(case) = interpreter.pop() else {
+        return;
+    };
     let case = as_isize_saturated!(case);
 
     let max_index = interpreter.read_u8() as isize;
@@ -47,12 +51,17 @@ pub fn rjumpv<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host:
 pub fn jump<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::MID);
     pop!(interpreter, target);
+    let Some(target) = interpreter.pop() else {
+        return;
+    };
     jump_inner(interpreter, target);
 }
 
 pub fn jumpi<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::HIGH);
-    pop!(interpreter, target, cond);
+    let Some([target, cond]) = interpreter.popn() else {
+        return;
+    };
     if !cond.is_zero() {
         jump_inner(interpreter, target);
     }
@@ -142,23 +151,31 @@ pub fn pc<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mu
 #[inline]
 fn return_inner(interpreter: &mut impl InterpreterTrait, instruction_result: InstructionResult) {
     // zero gas cost
-    // gas!(interpreter, gas::ZERO);
-    pop!(interpreter, offset, len);
+    // gas!(interpreter, gas::ZERO)
+    let Some([offset, len]) = interpreter.popn() else {
+        return;
+    };
     let len = as_usize_or_fail!(interpreter, len);
     // important: offset must be ignored if len is zeros
     let mut output = Bytes::default();
     if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
+        let new_mem_len = offset.saturating_add(len);
+        if !interpreter.gas().record_memory_expansion(new_mem_len) {
+            return;
+        }
+        interpreter.mem_resize(new_mem_len);
         resize_memory!(interpreter, offset, len);
 
         output = interpreter.mem_slice_len(offset, len).to_vec().into()
     }
 
+    let gas = interpreter.gas().clone();
     interpreter.set_next_action(
         InterpreterAction::Return {
             result: InterpreterResult {
                 output,
-                gas: interpreter.gas().clone(),
+                gas,
                 result: instruction_result,
             },
         },
@@ -207,7 +224,7 @@ mod test {
 
     #[test]
     fn rjump() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>>();
+        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
         let mut interp =
             Interpreter::new_bytecode(Bytecode::LegacyRaw([RJUMP, 0x00, 0x02, STOP, STOP].into()));
@@ -221,7 +238,7 @@ mod test {
 
     #[test]
     fn rjumpi() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>>();
+        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
             [RJUMPI, 0x00, 0x03, RJUMPI, 0x00, 0x01, STOP, STOP].into(),
@@ -242,7 +259,7 @@ mod test {
 
     #[test]
     fn rjumpv() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>>();
+        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
             [
@@ -330,7 +347,7 @@ mod test {
 
     #[test]
     fn callf_retf_stop() {
-        let table = make_instruction_table::<_>();
+        let table = make_instruction_table::<Interpreter, _>();
         let mut host = DummyHost::<DefaultEthereumWiring>::default();
 
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01, STOP]);
@@ -361,7 +378,7 @@ mod test {
 
     #[test]
     fn callf_stop() {
-        let table = make_instruction_table::<_>();
+        let table = make_instruction_table::<Interpreter, _>();
         let mut host = DummyHost::<DefaultEthereumWiring>::default();
 
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01]);
@@ -385,7 +402,7 @@ mod test {
 
     #[test]
     fn callf_stack_overflow() {
-        let table = make_instruction_table::<_>();
+        let table = make_instruction_table::<Interpreter, _>();
         let mut host = DummyHost::<DefaultEthereumWiring>::default();
 
         let bytes1 = Bytes::from([CALLF, 0x00, 0x01]);
@@ -402,7 +419,7 @@ mod test {
 
     #[test]
     fn jumpf_stop() {
-        let table = make_instruction_table::<_>();
+        let table = make_instruction_table::<Interpreter, _>();
         let mut host = DummyHost::<DefaultEthereumWiring>::default();
 
         let bytes1 = Bytes::from([JUMPF, 0x00, 0x01]);
@@ -423,7 +440,7 @@ mod test {
 
     #[test]
     fn jumpf_stack_overflow() {
-        let table = make_instruction_table::<_>();
+        let table = make_instruction_table::<Interpreter, _>();
         let mut host = DummyHost::<DefaultEthereumWiring>::default();
 
         let bytes1 = Bytes::from([JUMPF, 0x00, 0x01]);

@@ -1,5 +1,27 @@
 //! Utility macros to help implementing opcode instruction functions.
 
+/// `const` Option `?`.
+#[macro_export]
+macro_rules! tri {
+    ($e:expr) => {
+        match $e {
+            Some(v) => v,
+            None => return None,
+        }
+    };
+}
+
+/// Modified Option tri `?` operator with unit type (ut) `()` returning.
+#[macro_export]
+macro_rules! triut {
+    ($e:expr) => {
+        match $e {
+            Some(v) => v,
+            None => return,
+        }
+    };
+}
+
 /// Fails the instruction if the current call is static.
 #[macro_export]
 macro_rules! require_non_staticcall {
@@ -105,22 +127,13 @@ macro_rules! resize_memory {
     };
     ($interp:expr, $offset:expr, $len:expr, $ret:expr) => {
         let new_size = $offset.saturating_add($len);
-        if new_size > $interp.shared_memory.len() {
-            #[cfg(feature = "memory_limit")]
-            if $interp.shared_memory.limit_reached(new_size) {
-                $interp.instruction_result = $crate::InstructionResult::MemoryLimitOOG;
-                return $ret;
-            }
-
-            // Note: we can't use `Interpreter` directly here because of potential double-borrows.
-            if !$crate::interpreter::resize_memory(
-                &mut $interp.shared_memory,
-                &mut $interp.gas,
-                new_size,
-            ) {
-                $interp.set_instruction_result($crate::InstructionResult::MemoryOOG);
-                return $ret;
-            }
+        if !$interp.gas().record_memory_expansion(new_size) {
+            // TODO move this inside gas. Make a Gas trait.
+            $interp.set_instruction_result($crate::InstructionResult::OutOfGas);
+            return $ret;
+        }
+        if !$interp.mem_resize(new_size) {
+            return $ret;
         }
     };
 }
@@ -184,81 +197,81 @@ macro_rules! pop {
     };
 }
 
-/// Pops `U256` values from the stack, and returns `ret`.
-/// Fails the instruction if the stack is too small.
-#[macro_export]
-macro_rules! pop_ret {
-    ($interp:expr, $x1:ident, $ret:expr) => {
-        if $interp.stack.len() < 1 {
-            $interp.set_instruction_result($crate::InstructionResult::StackUnderflow);
-            return $ret;
-        }
-        // SAFETY: Length is checked above.
-        let $x1 = unsafe { $interp.stack.pop_unsafe() };
-    };
-    ($interp:expr, $x1:ident, $x2:ident, $ret:expr) => {
-        if $interp.stack.len() < 2 {
-            $interp.set_instruction_result($crate::InstructionResult::StackUnderflow);
-            return $ret;
-        }
-        // SAFETY: Length is checked above.
-        let ($x1, $x2) = unsafe { $interp.stack.pop2_unsafe() };
-    };
-    ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $ret:expr) => {
-        if $interp.stack.len() < 3 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return $ret;
-        }
-        // SAFETY: Length is checked above.
-        let ($x1, $x2, $x3) = unsafe { $interp.stack.pop3_unsafe() };
-    };
-    ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $ret:expr) => {
-        if $interp.stack.len() < 4 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return $ret;
-        }
-        // SAFETY: Length is checked above.
-        let ($x1, $x2, $x3, $x4) = unsafe { $interp.stack.pop4_unsafe() };
-    };
-    ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $x5:ident, $ret:expr) => {
-        if $interp.stack.len() < 5 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return $ret;
-        }
-        // SAFETY: Length is checked above.
-        let ($x1, $x2, $x3, $x4, $x5) = unsafe { $interp.stack.pop5_unsafe() };
-    };
-}
+// /// Pops `U256` values from the stack, and returns `ret`.
+// /// Fails the instruction if the stack is too small.
+// #[macro_export]
+// macro_rules! pop_ret {
+//     ($interp:expr, $x1:ident, $ret:expr) => {
+//         if $interp.stack.len() < 1 {
+//             $interp.set_instruction_result($crate::InstructionResult::StackUnderflow);
+//             return $ret;
+//         }
+//         // SAFETY: Length is checked above.
+//         let $x1 = unsafe { $interp.stack.pop_unsafe() };
+//     };
+//     ($interp:expr, $x1:ident, $x2:ident, $ret:expr) => {
+//         if $interp.stack.len() < 2 {
+//             $interp.set_instruction_result($crate::InstructionResult::StackUnderflow);
+//             return $ret;
+//         }
+//         // SAFETY: Length is checked above.
+//         let ($x1, $x2) = unsafe { $interp.stack.pop2_unsafe() };
+//     };
+//     ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $ret:expr) => {
+//         if $interp.stack.len() < 3 {
+//             $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
+//             return $ret;
+//         }
+//         // SAFETY: Length is checked above.
+//         let ($x1, $x2, $x3) = unsafe { $interp.stack.pop3_unsafe() };
+//     };
+//     ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $ret:expr) => {
+//         if $interp.stack.len() < 4 {
+//             $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
+//             return $ret;
+//         }
+//         // SAFETY: Length is checked above.
+//         let ($x1, $x2, $x3, $x4) = unsafe { $interp.stack.pop4_unsafe() };
+//     };
+//     ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $x5:ident, $ret:expr) => {
+//         if $interp.stack.len() < 5 {
+//             $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
+//             return $ret;
+//         }
+//         // SAFETY: Length is checked above.
+//         let ($x1, $x2, $x3, $x4, $x5) = unsafe { $interp.stack.pop5_unsafe() };
+//     };
+// }
 
-/// Pops `U256` values from the stack, and returns a reference to the top of the stack.
-/// Fails the instruction if the stack is too small.
-#[macro_export]
-macro_rules! pop_top {
-    ($interp:expr, $x1:ident) => {
-        if $interp.stack.len() < 1 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return;
-        }
-        // SAFETY: Length is checked above.
-        let $x1 = unsafe { $interp.stack.top_unsafe() };
-    };
-    ($interp:expr, $x1:ident, $x2:ident) => {
-        if $interp.stack.len() < 2 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return;
-        }
-        // SAFETY: Length is checked above.
-        let ($x1, $x2) = unsafe { $interp.stack.pop_top_unsafe() };
-    };
-    ($interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
-        if $interp.stack.len() < 3 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return;
-        }
-        // SAFETY: Length is checked above.
-        let ($x1, $x2, $x3) = unsafe { $interp.stack.pop2_top_unsafe() };
-    };
-}
+// /// Pops `U256` values from the stack, and returns a reference to the top of the stack.
+// /// Fails the instruction if the stack is too small.
+// #[macro_export]
+// macro_rules! pop_top {
+//     ($interp:expr, $x1:ident) => {
+//         if $interp.stack.len() < 1 {
+//             $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
+//             return;
+//         }
+//         // SAFETY: Length is checked above.
+//         let $x1 = unsafe { $interp.stack.top_unsafe() };
+//     };
+//     ($interp:expr, $x1:ident, $x2:ident) => {
+//         if $interp.stack.len() < 2 {
+//             $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
+//             return;
+//         }
+//         // SAFETY: Length is checked above.
+//         let ($x1, $x2) = unsafe { $interp.stack.pop_top_unsafe() };
+//     };
+//     ($interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
+//         if $interp.stack.len() < 3 {
+//             $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
+//             return;
+//         }
+//         // SAFETY: Length is checked above.
+//         let ($x1, $x2, $x3) = unsafe { $interp.stack.pop2_top_unsafe() };
+//     };
+// }
 
 /// Pushes `B256` values onto the stack. Fails the instruction if the stack is full.
 #[macro_export]

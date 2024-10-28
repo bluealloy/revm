@@ -8,7 +8,9 @@ use primitives::{B256, KECCAK_EMPTY, U256};
 use specification::hardfork::Spec;
 
 pub fn keccak256<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
-    pop_top!(interpreter, offset, len_ptr);
+    let Some([offset, len_ptr]) = interpreter.popn() else {
+        return;
+    };
     let len = as_usize_or_fail!(interpreter, len_ptr);
     gas_or_fail!(interpreter, gas::keccak256_cost(len as u64));
     let hash = if len == 0 {
@@ -18,7 +20,7 @@ pub fn keccak256<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _ho
         resize_memory!(interpreter, from, len);
         primitives::keccak256(interpreter.mem_slice_len(from, len))
     };
-    *len_ptr = hash.into();
+    interpreter.push(hash.into());
 }
 
 pub fn address<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
@@ -39,7 +41,9 @@ pub fn codesize<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _hos
 }
 
 pub fn codecopy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
-    pop!(interpreter, memory_offset, code_offset, len);
+    let Some([memory_offset, code_offset, len]) = interpreter.popn() else {
+        return;
+    };
     let len = as_usize_or_fail!(interpreter, len);
     let Some(memory_offset) = memory_resize(interpreter, memory_offset, len) else {
         return;
@@ -57,7 +61,10 @@ pub fn codecopy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _hos
 
 pub fn calldataload<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, offset_ptr);
+    //pop_top!(interpreter, offset_ptr);
+    let Some(offset_ptr) = interpreter.pop() else {
+        return;
+    };
     let mut word = B256::ZERO;
     let offset = as_usize_saturated!(offset_ptr);
     let input_len = interpreter.input().len();
@@ -76,7 +83,7 @@ pub fn calldataload<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, 
             )
         };
     }
-    *offset_ptr = word.into();
+    interpreter.push(offset_ptr);
 }
 
 pub fn calldatasize<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
@@ -196,7 +203,7 @@ mod test {
 
     #[test]
     fn returndataload() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>>();
+        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
 
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
@@ -255,7 +262,7 @@ mod test {
 
     #[test]
     fn returndatacopy() {
-        let table = make_instruction_table::<_>();
+        let table = make_instruction_table::<Interpreter, _>();
         let mut host = DummyHost::<DefaultEthereumWiring>::default();
 
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(

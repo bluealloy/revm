@@ -4,19 +4,21 @@ use primitives::U256;
 
 pub fn mload<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, top);
+    let Some(top) = interpreter.top() else { return };
     let offset = as_usize_or_fail!(interpreter, top);
     resize_memory!(interpreter, offset, 32);
     *top = interpreter
         .mem_slice_len(offset, 32)
-        .try_into()
+        .try_into::<[u8; 32]>()
         .unwrap()
         .into();
 }
 
 pub fn mstore<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    pop!(interpreter, offset, value);
+    let Some([offset, value]) = interpreter.popn() else {
+        return;
+    };
     let offset = as_usize_or_fail!(interpreter, offset);
     resize_memory!(interpreter, offset, 32);
     interpreter.mem_set(offset, &value.to_be_bytes::<32>());
@@ -24,7 +26,9 @@ pub fn mstore<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host:
 
 pub fn mstore8<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    pop!(interpreter, offset, value);
+    let Some([offset, value]) = interpreter.popn() else {
+        return;
+    };
     let offset = as_usize_or_fail!(interpreter, offset);
     resize_memory!(interpreter, offset, 1);
     interpreter.mem_set(offset, value.byte(0))
@@ -38,7 +42,9 @@ pub fn msize<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: 
 // EIP-5656: MCOPY - Memory copying instruction
 pub fn mcopy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
     check!(interpreter, CANCUN);
-    pop!(interpreter, dst, src, len);
+    let Some([dst, src, len]) = interpreter.popn() else {
+        return;
+    };
 
     // into usize or fail
     let len = as_usize_or_fail!(interpreter, len);

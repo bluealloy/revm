@@ -114,7 +114,7 @@ fn bench_eval(
         let mut shared_memory = SharedMemory::new();
         let mut host = DummyHost::new(*evm.context.evm.env.clone());
         let instruction_table =
-            make_instruction_table::<DummyHost<EthereumWiring<BenchmarkDB, ()>>>();
+            make_instruction_table::<Interpreter,DummyHost<EthereumWiring<BenchmarkDB, ()>>>();
         b.iter(move || {
             // replace memory with empty memory to use it inside interpreter.
             // Later return memory back.

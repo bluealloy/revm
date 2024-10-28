@@ -21,15 +21,15 @@ use crate::{interpreter::InterpreterTrait, Host};
 /// Returns the instruction function for the given opcode and spec.
 pub const fn instruction<I: InterpreterTrait, H: Host + ?Sized>(
     opcode: u8,
-) -> crate::table::Instruction<H> {
+) -> crate::table::Instruction<I, H> {
     let table = instruction_table::<I, H>();
     table[opcode as usize]
 }
 
 pub const fn instruction_table<I: InterpreterTrait, H: Host + ?Sized>(
-) -> [crate::table::Instruction<H>; 256] {
+) -> [crate::table::Instruction<I, H>; 256] {
     use bytecode::opcode::*;
-    let mut table = [control::unknown as crate::table::Instruction<H>; 256];
+    let mut table = [control::unknown as crate::table::Instruction<I, H>; 256];
 
     table[STOP as usize] = control::stop;
     table[ADD as usize] = arithmetic::add;
