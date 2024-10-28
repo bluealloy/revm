@@ -19,17 +19,6 @@ checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 
 [[package]]
 name = "ahash"
-version = "0.7.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "891477e0c6a8957309ee5c45a6368af3ae14bb510732d2684ffa19af310920f9"
-dependencies = [
- "getrandom",
- "once_cell",
- "version_check",
-]
-
-[[package]]
-name = "ahash"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e89da841a80418a9b391ebaea17f5c112ffaaa96f621d2c285b5174da76b9011"
@@ -148,64 +137,6 @@ dependencies = [
  "alloy-primitives",
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "alloy-sol-macro"
-version = "0.8.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0900b83f4ee1f45c640ceee596afbc118051921b9438fdb5a3175c1a7e05f8b"
-dependencies = [
- "alloy-sol-macro-expander",
- "alloy-sol-macro-input",
- "proc-macro-error2",
- "proc-macro2",
- "quote",
- "syn 2.0.82",
-]
-
-[[package]]
-name = "alloy-sol-macro-expander"
-version = "0.8.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a41b1e78dde06b5e12e6702fa8c1d30621bf07728ba75b801fb801c9c6a0ba10"
-dependencies = [
- "alloy-sol-macro-input",
- "const-hex",
- "heck 0.5.0",
- "indexmap",
- "proc-macro-error2",
- "proc-macro2",
- "quote",
- "syn 2.0.82",
- "syn-solidity 0.8.9",
- "tiny-keccak",
-]
-
-[[package]]
-name = "alloy-sol-macro-input"
-version = "0.8.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91dc311a561a306664393407b88d3e53ae58581624128afd8a15faa5de3627dc"
-dependencies = [
- "const-hex",
- "dunce",
- "heck 0.5.0",
- "proc-macro2",
- "quote",
- "syn 2.0.82",
- "syn-solidity 0.8.9",
-]
-
-[[package]]
-name = "alloy-sol-types"
-version = "0.8.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e448d879903624863f608c552d10efb0e0905ddbee98b0049412799911eb062"
-dependencies = [
- "alloy-primitives",
- "alloy-sol-macro",
- "const-hex",
 ]
 
 [[package]]
@@ -634,6 +565,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "casey"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "614586263949597dcc18675da12ef9b429135e13628d92eb8b8c6fa50ca5656b"
+dependencies = [
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "cc"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -714,31 +654,6 @@ name = "cobs"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67ba02a97a2bd10f4b59b25c7973101c79642302776489e030cd13cdab09ed15"
-
-[[package]]
-name = "codec-derive"
-version = "0.1.0"
-dependencies = [
- "convert_case",
- "crypto-hashes",
- "lazy_static",
- "proc-macro2",
- "quote",
- "serde",
- "syn 2.0.82",
-]
-
-[[package]]
-name = "codec2"
-version = "0.1.0"
-dependencies = [
- "alloy-primitives",
- "alloy-sol-types",
- "byteorder",
- "bytes",
- "codec-derive",
- "hashbrown 0.12.3",
-]
 
 [[package]]
 name = "colorchoice"
@@ -893,41 +808,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darling"
-version = "0.20.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f63b86c8a8826a49b8c21f08a2d07338eec8d900540f8630dc76284be802989"
-dependencies = [
- "darling_core",
- "darling_macro",
-]
-
-[[package]]
-name = "darling_core"
-version = "0.20.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95133861a8032aaea082871032f5815eb9e98cef03fa916ab4500513994df9e5"
-dependencies = [
- "fnv",
- "ident_case",
- "proc-macro2",
- "quote",
- "strsim 0.11.1",
- "syn 2.0.82",
-]
-
-[[package]]
-name = "darling_macro"
-version = "0.20.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d336a2a514f6ccccaa3e09b02d41d35330c07ddf03a62165fcec10bb561c7806"
-dependencies = [
- "darling_core",
- "quote",
- "syn 2.0.82",
-]
-
-[[package]]
 name = "data-encoding"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1030,12 +910,6 @@ name = "downcast-rs"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
-
-[[package]]
-name = "dunce"
-version = "1.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
 
 [[package]]
 name = "dyn-clone"
@@ -1354,6 +1228,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "fluentbase-codec"
+version = "0.1.0"
+dependencies = [
+ "alloy-primitives",
+ "byteorder",
+ "casey",
+ "fluentbase-codec-derive",
+ "hashbrown 0.15.0",
+ "paste",
+ "serde",
+]
+
+[[package]]
+name = "fluentbase-codec-derive"
+version = "0.1.0"
+dependencies = [
+ "convert_case",
+ "crypto-hashes",
+ "quote",
+ "serde",
+ "syn 2.0.82",
+]
+
+[[package]]
 name = "fluentbase-core"
 version = "0.1.0"
 dependencies = [
@@ -1420,16 +1318,12 @@ dependencies = [
 name = "fluentbase-sdk"
 version = "0.1.0"
 dependencies = [
- "codec2",
- "crypto-hashes",
+ "fluentbase-codec",
  "fluentbase-genesis",
  "fluentbase-runtime",
  "fluentbase-sdk-derive",
- "fluentbase-sdk-derive-router-core",
  "fluentbase-types",
  "hashbrown 0.15.0",
- "k256",
- "signature",
 ]
 
 [[package]]
@@ -1438,38 +1332,14 @@ version = "0.1.0"
 dependencies = [
  "convert_case",
  "crypto-hashes",
- "darling",
- "fluentbase-sdk-derive-router-core",
  "hex",
- "paste",
  "proc-macro-error",
  "proc-macro2",
  "quote",
  "regex",
  "serde",
  "syn 2.0.82",
- "syn-solidity 0.7.7",
-]
-
-[[package]]
-name = "fluentbase-sdk-derive-router-core"
-version = "0.0.0"
-dependencies = [
- "bytes",
- "convert_case",
- "crypto-hashes",
- "darling",
- "hex",
- "paste",
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "regex",
- "serde",
- "syn 2.0.82",
- "syn-solidity 0.7.7",
- "thiserror",
- "tracing",
+ "syn-solidity",
 ]
 
 [[package]]
@@ -1479,7 +1349,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-rlp",
  "byteorder",
- "codec2",
+ "fluentbase-codec",
  "hashbrown 0.15.0",
  "revm-primitives",
  "rwasm",
@@ -1766,20 +1636,11 @@ checksum = "d23bd4e7b5eda0d0f3a307e8b381fdc8ba9000f26fbe912250c0a4cc3956364a"
 
 [[package]]
 name = "hashbrown"
-version = "0.12.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
-dependencies = [
- "ahash 0.7.8",
-]
-
-[[package]]
-name = "hashbrown"
 version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 dependencies = [
- "ahash 0.8.11",
+ "ahash",
  "allocator-api2",
 ]
 
@@ -1929,12 +1790,6 @@ dependencies = [
  "tokio",
  "tokio-rustls",
 ]
-
-[[package]]
-name = "ident_case"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
 
 [[package]]
 name = "idna"
@@ -2669,28 +2524,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "version_check",
-]
-
-[[package]]
-name = "proc-macro-error-attr2"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96de42df36bb9bba5542fe9f1a054b8cc87e172759a1868aa05c1f3acc89dfc5"
-dependencies = [
- "proc-macro2",
- "quote",
-]
-
-[[package]]
-name = "proc-macro-error2"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11ec05c52be0a07b08061f7dd003e7d7092e0472bc731b4af7bb1ef876109802"
-dependencies = [
- "proc-macro-error-attr2",
- "proc-macro2",
- "quote",
- "syn 2.0.82",
 ]
 
 [[package]]
@@ -3599,18 +3432,6 @@ name = "syn-solidity"
 version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c837dc8852cb7074e46b444afb81783140dab12c58867b49fb3898fbafedf7ea"
-dependencies = [
- "paste",
- "proc-macro2",
- "quote",
- "syn 2.0.82",
-]
-
-[[package]]
-name = "syn-solidity"
-version = "0.8.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d5e0c2ea8db64b2898b62ea2fbd60204ca95e0b2c6bdf53ff768bbe916fbe4d"
 dependencies = [
  "paste",
  "proc-macro2",
