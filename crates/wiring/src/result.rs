@@ -465,7 +465,7 @@ pub enum HaltReason {
     /// Aud data is smaller then already present data size.
     EofAuxDataTooSmall,
     /// EOF Subroutine stack overflow
-    EOFFunctionStackOverflow,
+    SubRoutineStackImplOverflow,
     /// Check for target address validity is only done inside subcall.
     InvalidEXTCALLTarget,
 }

@@ -8,8 +8,8 @@ use core::{cell::RefCell, mem, ops::DerefMut};
 use interpreter::{
     gas, table::InstructionTables, CallInputs, CallOutcome, CallValue, Contract, CreateInputs,
     CreateOutcome, CreateScheme, EOFCreateInputs, EOFCreateKind, Gas, InstructionResult,
-    Interpreter, InterpreterAction, InterpreterResult, NewFrameAction, SharedMemory,
-    EMPTY_SHARED_MEMORY,
+    Interpreter, InterpreterAction, InterpreterResult, InterpreterWire, NewFrameAction,
+    SharedMemory, EMPTY_SHARED_MEMORY,
 };
 use primitives::{keccak256, Address, Bytes, B256};
 use specification::{
@@ -24,9 +24,9 @@ use wiring::{
     Cfg, EvmWiring, Transaction,
 };
 
-pub struct EthFrame<CTX, ERROR> {
+pub struct EthFrame<CTX, IW: InterpreterWire, ERROR> {
     _phantom: std::marker::PhantomData<(CTX, ERROR)>,
-    data: FrameData,
+    data: FrameData<IW>,
     // TODO include this
     depth: usize,
     spec_id: SpecId,

@@ -1,94 +1,105 @@
 use super::i256::{i256_div, i256_mod};
-use crate::{gas, interpreter::InterpreterTrait, Host, Interpreter};
+use crate::{
+    gas,
+    interpreter::NewInterpreter,
+    interpreter_wiring::{InterpreterWire, LoopControl, RuntimeFlag, StackTrait},
+    Host,
+};
 use primitives::U256;
-use specification::hardfork::Spec;
 
-pub fn add<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn add<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    let Some(([op1], op2)) = interpreter.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
     *op2 = op1.wrapping_add(*op2);
 }
 
-pub fn mul<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn mul<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::LOW);
-    let Some(([op1], op2)) = interpreter.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
     *op2 = op1.wrapping_mul(*op2);
 }
 
-pub fn sub<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn sub<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    let Some(([op1], op2)) = interpreter.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
     *op2 = op1.wrapping_sub(*op2);
 }
 
-pub fn div<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn div<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::LOW);
-    let Some(([op1], op2)) = interpreter.popn_top() else {
-        return;
-    };
-
+    popn_top!([op1], op2, interpreter);
     if !op2.is_zero() {
         *op2 = op1.wrapping_div(*op2);
     }
 }
 
-pub fn sdiv<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn sdiv<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::LOW);
-    let Some(([op1], op2)) = interpreter.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
     *op2 = i256_div(op1, *op2);
 }
 
-pub fn rem<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn rem<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::LOW);
-    let Some(([op1], op2)) = interpreter.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
     if !op2.is_zero() {
         *op2 = op1.wrapping_rem(*op2);
     }
 }
 
-pub fn smod<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn smod<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::LOW);
-    let Some(([op1], op2)) = interpreter.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
     *op2 = i256_mod(op1, *op2)
 }
 
-pub fn addmod<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn addmod<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::MID);
-    let Some(([op1, op2], op3)) = interpreter.popn_top() else {
-        return;
-    };
+    popn_top!([op1, op2], op3, interpreter);
     *op3 = op1.add_mod(op2, *op3)
 }
 
-pub fn mulmod<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn mulmod<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::MID);
-    let Some(([op1, op2], op3)) = interpreter.popn_top() else {
-        return;
-    };
+    popn_top!([op1, op2], op3, interpreter);
     *op3 = op1.mul_mod(op2, *op3)
 }
 
-pub fn exp<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
-    let spec_id = interpreter.spec_id();
-    let Some([op1, op2]) = interpreter.popn() else {
-        return;
-    };
-    gas_or_fail!(interpreter, gas::exp_cost(spec_id, op2));
-
-    let top = unsafe { interpreter.top().unwrap_unchecked() };
-    *top = op1.pow(op2);
+pub fn exp<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
+    let spec_id = interpreter.runtime_flag.spec_id();
+    popn_top!([op1], op2, interpreter);
+    gas_or_fail!(interpreter, gas::exp_cost(spec_id, *op2));
+    *op2 = op1.pow(*op2);
 }
 
 /// Implements the `SIGNEXTEND` opcode as defined in the Ethereum Yellow Paper.
@@ -108,11 +119,12 @@ pub fn exp<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &m
 /// `y | !mask` where `|` is the bitwise `OR` and `!` is bitwise negation. Similarly, if
 /// `b == 0` then the yellow paper says the output should start with all zeros, then end with
 /// bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
-pub fn signextend<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn signextend<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::LOW);
-    let Some(([ext], x)) = interpreter.popn_top() else {
-        return;
-    };
+    popn_top!([ext], x, interpreter);
     // For 31 we also don't need to do anything.
     if ext < U256::from(31) {
         let ext = ext.as_limbs()[0];

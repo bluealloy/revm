@@ -232,9 +232,9 @@ pub fn inspector_handle_register<
     });
 }
 
-fn inspector_instruction<EvmWiringT>(
+fn inspector_instruction<WIRE: InterpreterWire, EvmWiringT>(
     prev: &DynInstruction<'_, Context<EvmWiringT>>,
-    interpreter: &mut Interpreter,
+    interpreter: &mut NewInterpreter<WIRE>,
     host: &mut Context<EvmWiringT>,
 ) where
     EvmWiringT: EvmWiring,

@@ -2,6 +2,8 @@ use core::{cmp::min, fmt, ops::Range};
 use primitives::{hex, B256, U256};
 use std::vec::Vec;
 
+use super::MemoryTrait;
+
 /// A sequential memory shared between calls, which uses
 /// a `Vec` for internal representation.
 /// A [SharedMemory] instance should always be obtained using
@@ -45,6 +47,32 @@ impl Default for SharedMemory {
     #[inline]
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl MemoryTrait for SharedMemory {
+    fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
+        todo!()
+    }
+
+    fn set(&mut self, memory_offset: usize, data: &[u8]) {
+        todo!()
+    }
+
+    fn size(&self) -> usize {
+        todo!()
+    }
+
+    fn copy(&mut self, destination: usize, source: usize, len: usize) {
+        todo!()
+    }
+
+    fn slice(&self, range: Range<usize>) -> &[u8] {
+        todo!()
+    }
+
+    fn resize(&mut self, new_size: usize) -> bool {
+        todo!()
     }
 }
 

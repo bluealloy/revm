@@ -1,5 +1,6 @@
 pub use crate::InstructionResult;
 pub use primitives::U256;
+use primitives::{Address, B256};
 
 pub(crate) unsafe fn read_i16(ptr: *const u8) -> i16 {
     i16::from_be_bytes(core::slice::from_raw_parts(ptr, 2).try_into().unwrap())
@@ -70,4 +71,45 @@ pub fn cast_slice_to_u256(slice: &[u8], dest: &mut U256) -> Result<(), Instructi
     }
 
     Ok(())
+}
+
+pub trait IntoU256 {
+    fn into_u256(self) -> U256;
+}
+
+impl IntoU256 for Address {
+    fn into_u256(self) -> U256 {
+        self.into_word().into_u256()
+    }
+}
+
+impl IntoU256 for B256 {
+    fn into_u256(self) -> U256 {
+        U256::from_be_bytes(self.0)
+    }
+}
+
+pub trait IntoAddress {
+    fn into_address(self) -> Address;
+}
+
+impl IntoAddress for U256 {
+    fn into_address(self) -> Address {
+        Address::from_word(B256::from(self.to_be_bytes()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use primitives::address;
+
+    use super::*;
+
+    #[test]
+    pub fn test_into_u256() {
+        let addr = address!("0000000000000000000000000000000000000001");
+        let u256 = addr.into_u256();
+        assert_eq!(u256, U256::from(0x01));
+        assert_eq!(u256.into_address(), addr);
+    }
 }

@@ -1,23 +1,22 @@
 use super::inner_evm_context::InnerEvmContext;
-use crate::{data::ContextPrecompiles, FrameOrResult};
-use bytecode::{Bytecode, Eof, EOF_MAGIC_BYTES};
+use crate::data::ContextPrecompiles;
+use bytecode::{Bytecode, EOF_MAGIC_BYTES};
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use derive_where::derive_where;
 use interpreter::CallValue;
 use interpreter::{
-    return_ok, CallInputs, Contract, CreateInputs, EOFCreateInputs, EOFCreateKind, Gas,
-    InstructionResult, Interpreter, InterpreterResult,
+    return_ok, CallInputs, Contract, CreateInputs, Gas, InstructionResult, InterpreterResult,
 };
 use precompile::PrecompileErrors;
 use primitives::{keccak256, Address, Bytes, B256};
 use specification::constants::CALL_STACK_LIMIT;
 use specification::hardfork::SpecId::{self, *};
-use std::{boxed::Box, sync::Arc};
+use std::boxed::Box;
 use wiring::{
     default::{CreateScheme, EnvWiring},
     result::{EVMError, EVMResultGeneric},
-    EvmWiring, Transaction,
+    EvmWiring,
 };
 
 /// EVM context that contains the inner EVM context and precompiles.

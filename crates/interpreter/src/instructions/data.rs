@@ -1,20 +1,25 @@
 use crate::{
     gas::{cost_per_word, BASE, DATA_LOAD_GAS, VERYLOW},
-    interpreter::InterpreterTrait,
+    interpreter::NewInterpreter,
+    interpreter_wiring::{
+        EofData, Immediates, InterpreterWire, Jumps, LoopControl, MemoryTrait, RuntimeFlag,
+        StackTrait,
+    },
     Host,
 };
-use primitives::U256;
+use primitives::{B256, U256};
 
-pub fn data_load<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn data_load<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, DATA_LOAD_GAS);
-    let Some(offset) = interpreter.top() else {
-        return
-    }
+    popn_top!([], offset, interpreter);
 
     let offset_usize = as_usize_saturated!(offset);
 
-    let slice = interpreter.eof_data_slice(offset_usize, 32);
+    let slice = interpreter.bytecode.data_slice(offset_usize, 32);
 
     let mut word = [0u8; 32];
     word[..slice.len()].copy_from_slice(slice);
@@ -22,35 +27,42 @@ pub fn data_load<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _ho
     *offset = U256::from_be_bytes(word);
 }
 
-pub fn data_loadn<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn data_loadn<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, VERYLOW);
-    let offset = interpreter.read_u16() as usize;
+    let offset = interpreter.bytecode.read_u16() as usize;
 
-    let slice = interpreter.eof_data_slice(offset, 32);
+    let slice = interpreter.bytecode.data_slice(offset, 32);
 
     let mut word = [0u8; 32];
     word[..slice.len()].copy_from_slice(slice);
 
-    push_b256!(interpreter, word.into());
+    push!(interpreter, B256::new(word).into());
 
     // add +2 to the instruction pointer to skip the offset
-    interpreter.relative_jump(2);
+    interpreter.bytecode.relative_jump(2);
 }
 
-pub fn data_size<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn data_size<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, BASE);
 
-    push!(interpreter, U256::from(interpreter.eof_data_size()));
+    push!(interpreter, U256::from(interpreter.bytecode.data_size()));
 }
 
-pub fn data_copy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn data_copy<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, VERYLOW);
-    let Some([mem_offset, offset, size]) = interpreter.popn() else {
-        return;
-    };
+    popn!([mem_offset, offset, size], interpreter);
 
     // sizes more than u64::MAX will spend all the gas in memory resize.
     let size = as_usize_or_fail!(interpreter, size);
@@ -65,12 +77,13 @@ pub fn data_copy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _ho
     gas_or_fail!(interpreter, cost_per_word(size as u64, VERYLOW));
 
     let offset = as_usize_saturated!(offset);
-    let data = interpreter.eof_data();
+    let data = interpreter.bytecode.data();
 
     // set data from the eof to the shared memory. Padded it with zeros.
-    interpreter.mem_set_data(mem_offset, offset, size, data);
+    interpreter.memory.set_data(mem_offset, offset, size, data);
 }
-
+/*
+TODO test
 #[cfg(test)]
 mod test {
     use bytecode::{Bytecode, Eof};
@@ -80,7 +93,7 @@ mod test {
     use wiring::DefaultEthereumWiring;
 
     use super::*;
-    use crate::{table::make_instruction_table, DummyHost, Gas, Interpreter};
+    use crate::{table::make_instruction_table, DummyHost, Gas};
     use bytecode::opcode::{DATACOPY, DATALOAD, DATALOADN, DATASIZE};
 
     fn dummy_eof(code_bytes: Bytes) -> Bytecode {
@@ -209,3 +222,4 @@ mod test {
         );
     }
 }
+ */

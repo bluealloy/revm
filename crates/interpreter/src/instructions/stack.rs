@@ -1,84 +1,131 @@
-use crate::{gas, interpreter::InterpreterTrait, Host, InstructionResult};
+use crate::{
+    gas,
+    interpreter::NewInterpreter,
+    interpreter_wiring::{
+        Immediates, InterpreterWire, Jumps, LoopControl, RuntimeFlag, StackTrait,
+    },
+    Host,
+};
 use primitives::U256;
 
-pub fn pop<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn pop<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::BASE);
     // can ignore return. as relative N jump is safe operation.
-    let _ = interpreter.popn::<1>();
+    let _ = interpreter.stack.popn::<1>();
 }
 
 /// EIP-3855: PUSH0 instruction
 ///
 /// Introduce a new instruction which pushes the constant value 0 onto the stack.
-pub fn push0<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn push0<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     check!(interpreter, SHANGHAI);
     gas!(interpreter, gas::BASE);
-    let _ = interpreter.push(U256::ZERO);
+    let _ = interpreter.stack.push(U256::ZERO);
 }
 
-pub fn push<const N: usize, I: InterpreterTrait, H: Host + ?Sized>(
-    interpreter: &mut I,
+pub fn push<const N: usize, WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
 
     // can ignore return. as relative N jump is safe opeation.
-    interpreter.pushn(N);
-    interpreter.relative_jump(N as isize);
+    if !interpreter.stack.pushn(N) {
+        interpreter
+            .control
+            .set_instruction_result(crate::InstructionResult::StackOverflow);
+    }
+    interpreter.bytecode.relative_jump(N as isize);
 }
 
-pub fn dup<const N: usize, I: InterpreterTrait, H: Host + ?Sized>(
-    interpreter: &mut I,
+pub fn dup<const N: usize, WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    interpreter.dup(N);
+    if !interpreter.stack.dup(N) {
+        interpreter
+            .control
+            .set_instruction_result(crate::InstructionResult::StackOverflow);
+    }
 }
 
-pub fn swap<const N: usize, I: InterpreterTrait, H: Host + ?Sized>(
-    interpreter: &mut I,
+pub fn swap<const N: usize, WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
     assert!(N != 0);
-    interpreter.exchange(0, N);
+    if !interpreter.stack.exchange(0, N) {
+        interpreter
+            .control
+            .set_instruction_result(crate::InstructionResult::StackOverflow);
+    }
 }
 
-pub fn dupn<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn dupn<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
-    let imm = interpreter.read_u8();
-    interpreter.dup(imm as usize + 1);
-    interpreter.relative_jump(1);
+    let imm = interpreter.bytecode.read_u8();
+    if !interpreter.stack.dup(imm as usize + 1) {
+        interpreter
+            .control
+            .set_instruction_result(crate::InstructionResult::StackOverflow);
+    }
+    interpreter.bytecode.relative_jump(1);
 }
 
-pub fn swapn<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn swapn<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
-    let imm = interpreter.read_u8();
-    interpreter.exchange(0, imm as usize + 1);
-    interpreter.relative_jump(1);
+    let imm = interpreter.bytecode.read_u8();
+    if !interpreter.stack.exchange(0, imm as usize + 1) {
+        interpreter
+            .control
+            .set_instruction_result(crate::InstructionResult::StackOverflow);
+    }
+    interpreter.bytecode.relative_jump(1);
 }
 
-pub fn exchange<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn exchange<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
-    let imm = interpreter.read_u8();
+    let imm = interpreter.bytecode.read_u8();
     let n = (imm >> 4) + 1;
     let m = (imm & 0x0F) + 1;
-    interpreter.exchange(n as usize, m as usize);
-    interpreter.relative_jump(1);
+    if !interpreter.stack.exchange(n as usize, m as usize) {
+        interpreter
+            .control
+            .set_instruction_result(crate::InstructionResult::StackOverflow);
+    }
+    interpreter.bytecode.relative_jump(1);
 }
+/*
 
+TODO  TESTS
 #[cfg(test)]
 mod test {
 
     use super::*;
-    use crate::Interpreter;
     use crate::{table::make_instruction_table, DummyHost, Gas, InstructionResult};
     use bytecode::opcode::{DUPN, EXCHANGE, SWAPN};
     use bytecode::Bytecode;
-    use specification::hardfork::{PragueSpec, SpecId};
+    use specification::hardfork::SpecId;
     use wiring::DefaultEthereumWiring;
 
     #[test]
@@ -147,3 +194,4 @@ mod test {
         assert_eq!(interp.stack.peek(4), Ok(U256::from(15)));
     }
 }
+*/

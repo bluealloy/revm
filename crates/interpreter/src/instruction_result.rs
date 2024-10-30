@@ -91,7 +91,7 @@ pub enum InstructionResult {
     /// Legacy contract is calling opcode that is enabled only in EOF.
     EOFOpcodeDisabledInLegacy,
     /// Stack overflow in EOF subroutine function calls.
-    EOFFunctionStackOverflow,
+    SubRoutineStackImplOverflow,
     /// Aux data overflow, new aux data is larger than `u16` max size.
     EofAuxDataOverflow,
     /// Aux data is smaller then already present data size.
@@ -99,6 +99,8 @@ pub enum InstructionResult {
     /// `EXT*CALL` target address needs to be padded with 0s.
     InvalidEXTCALLTarget,
 }
+
+impl InstructionResult {}
 
 impl From<SuccessReason> for InstructionResult {
     fn from(value: SuccessReason) -> Self {
@@ -142,7 +144,7 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::CallTooDeep => Self::CallTooDeep,
             HaltReason::EofAuxDataOverflow => Self::EofAuxDataOverflow,
             HaltReason::EofAuxDataTooSmall => Self::EofAuxDataTooSmall,
-            HaltReason::EOFFunctionStackOverflow => Self::EOFFunctionStackOverflow,
+            HaltReason::SubRoutineStackImplOverflow => Self::SubRoutineStackImplOverflow,
             HaltReason::InvalidEXTCALLTarget => Self::InvalidEXTCALLTarget,
         }
     }
@@ -199,7 +201,7 @@ macro_rules! return_error {
             | $crate::InstructionResult::FatalExternalError
             | $crate::InstructionResult::ReturnContractInNotInitEOF
             | $crate::InstructionResult::EOFOpcodeDisabledInLegacy
-            | $crate::InstructionResult::EOFFunctionStackOverflow
+            | $crate::InstructionResult::SubRoutineStackImplOverflow
             | $crate::InstructionResult::EofAuxDataTooSmall
             | $crate::InstructionResult::EofAuxDataOverflow
             | $crate::InstructionResult::InvalidEXTCALLTarget
@@ -211,6 +213,11 @@ impl InstructionResult {
     #[inline]
     pub const fn is_ok(self) -> bool {
         matches!(self, crate::return_ok!())
+    }
+
+    #[inline]
+    pub const fn is_continue(self) -> bool {
+        matches!(self, InstructionResult::Continue)
     }
 
     /// Returns whether the result is a revert.
@@ -354,8 +361,8 @@ impl<HaltReasonT: HaltReasonTrait> From<InstructionResult> for SuccessOrHalt<Hal
             InstructionResult::EOFOpcodeDisabledInLegacy => {
                 Self::Halt(HaltReason::OpcodeNotFound.into())
             }
-            InstructionResult::EOFFunctionStackOverflow => {
-                Self::Halt(HaltReason::EOFFunctionStackOverflow.into())
+            InstructionResult::SubRoutineStackImplOverflow => {
+                Self::Halt(HaltReason::SubRoutineStackImplOverflow.into())
             }
             InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
             InstructionResult::EofAuxDataOverflow => {

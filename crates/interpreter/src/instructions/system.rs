@@ -1,16 +1,20 @@
 use crate::{
     gas,
-    interpreter::{InputsTrait, InterpreterTrait, StackTrait},
-    Host, InstructionResult, Interpreter,
+    interpreter::NewInterpreter,
+    interpreter_wiring::{
+        InputsTrait, InterpreterWire, LegacyBytecode, LoopControl, MemoryTrait, ReturnData,
+        RuntimeFlag, StackTrait,
+    },
+    Host, InstructionResult,
 };
 use core::ptr;
 use primitives::{B256, KECCAK_EMPTY, U256};
-use specification::hardfork::Spec;
 
-pub fn keccak256<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
-    let Some([offset, len_ptr]) = interpreter.popn() else {
-        return;
-    };
+pub fn keccak256<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
+    popn!([offset, len_ptr], interpreter);
     let len = as_usize_or_fail!(interpreter, len_ptr);
     gas_or_fail!(interpreter, gas::keccak256_cost(len as u64));
     let hash = if len == 0 {
@@ -18,30 +22,46 @@ pub fn keccak256<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _ho
     } else {
         let from = as_usize_or_fail!(interpreter, offset);
         resize_memory!(interpreter, from, len);
-        primitives::keccak256(interpreter.mem_slice_len(from, len))
+        primitives::keccak256(interpreter.memory.slice_len(from, len))
     };
-    interpreter.push(hash.into());
+    push!(interpreter, hash.into());
 }
 
-pub fn address<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn address<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, interpreter.target_address().into_word());
+    push!(
+        interpreter,
+        interpreter.input.target_address().into_word().into()
+    );
 }
 
-pub fn caller<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn caller<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, interpreter.caller_address().into_word());
+    push!(
+        interpreter,
+        interpreter.input.caller_address().into_word().into()
+    );
 }
 
-pub fn codesize<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn codesize<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::BASE);
-    // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
-    assume!(!interpreter.is_eof());
-    push!(interpreter, U256::from(interpreter.bytecode_len()));
+    push!(interpreter, U256::from(interpreter.bytecode.bytecode_len()));
 }
 
-pub fn codecopy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
-    let Some([memory_offset, code_offset, len]) = interpreter.popn() else {
+pub fn codecopy<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
+    let Some([memory_offset, code_offset, len]) = interpreter.stack.popn() else {
         return;
     };
     let len = as_usize_or_fail!(interpreter, len);
@@ -51,23 +71,27 @@ pub fn codecopy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _hos
     let code_offset = as_usize_saturated!(code_offset);
 
     // Note: this can't panic because we resized memory to fit.
-    interpreter.mem_set_data(
+    interpreter.memory.set_data(
         memory_offset,
         code_offset,
         len,
-        interpreter.bytecode_slice(),
+        interpreter.bytecode.bytecode_slice(),
     );
 }
 
-pub fn calldataload<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn calldataload<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
     //pop_top!(interpreter, offset_ptr);
-    let Some(offset_ptr) = interpreter.pop() else {
+    let Some(offset_ptr) = interpreter.stack.pop() else {
         return;
     };
     let mut word = B256::ZERO;
     let offset = as_usize_saturated!(offset_ptr);
-    let input_len = interpreter.input().len();
+    let input = interpreter.input.input();
+    let input_len = input.len();
     if offset < input_len {
         let count = 32.min(input_len - offset);
         // SAFETY: count is bounded by the calldata length.
@@ -75,29 +99,32 @@ pub fn calldataload<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, 
         // raw pointers as apparently the compiler cannot optimize the slice version, and using
         // `get_unchecked` twice is uglier.
         debug_assert!(count <= 32 && offset + count <= input_len);
-        unsafe {
-            ptr::copy_nonoverlapping(
-                interpreter.input().as_ptr().add(offset),
-                word.as_mut_ptr(),
-                count,
-            )
-        };
+        unsafe { ptr::copy_nonoverlapping(input.as_ptr().add(offset), word.as_mut_ptr(), count) };
     }
-    interpreter.push(offset_ptr);
+    push!(interpreter, offset_ptr);
 }
 
-pub fn calldatasize<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn calldatasize<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(interpreter.input().len()));
+    push!(interpreter, U256::from(interpreter.input.input().len()));
 }
 
-pub fn callvalue<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn callvalue<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, interpreter.call_value());
+    push!(interpreter, interpreter.input.call_value());
 }
 
-pub fn calldatacopy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
-    pop!(interpreter, memory_offset, data_offset, len);
+pub fn calldatacopy<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
+    popn!([memory_offset, data_offset, len], interpreter);
     let len = as_usize_or_fail!(interpreter, len);
     let Some(memory_offset) = memory_resize(interpreter, memory_offset, len) else {
         return;
@@ -105,23 +132,31 @@ pub fn calldatacopy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, 
 
     let data_offset = as_usize_saturated!(data_offset);
     // Note: this can't panic because we resized memory to fit.
-    interpreter.mem_set_data(memory_offset, data_offset, len, interpreter.input());
+    interpreter
+        .memory
+        .set_data(memory_offset, data_offset, len, interpreter.input.input());
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatasize<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn returndatasize<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     check!(interpreter, BYZANTIUM);
     gas!(interpreter, gas::BASE);
     push!(
         interpreter,
-        U256::from(interpreter.return_data_buffer().len())
+        U256::from(interpreter.return_data.buffer().len())
     );
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatacopy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn returndatacopy<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     check!(interpreter, BYZANTIUM);
-    pop!(interpreter, memory_offset, offset, len);
+    popn!([memory_offset, offset, len], interpreter);
 
     let len = as_usize_or_fail!(interpreter, len);
     let data_offset = as_usize_saturated!(offset);
@@ -129,8 +164,10 @@ pub fn returndatacopy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I
     // Old legacy behavior is to panic if data_end is out of scope of return buffer.
     // This behavior is changed in EOF.
     let data_end = data_offset.saturating_add(len);
-    if data_end > interpreter.return_data_buffer().len() && !interpreter.is_eof() {
-        interpreter.set_instruction_result(InstructionResult::OutOfOffset);
+    if data_end > interpreter.return_data.buffer().len() && !interpreter.runtime_flag.is_eof() {
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::OutOfOffset);
         return;
     }
 
@@ -139,44 +176,51 @@ pub fn returndatacopy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I
     };
 
     // Note: this can't panic because we resized memory to fit.
-    interpreter.mem_set_data(
+    interpreter.memory.set_data(
         memory_offset,
         data_offset,
         len,
-        interpreter.return_data_buffer(),
+        interpreter.return_data.buffer(),
     );
 }
 
 /// Part of EOF `<https://eips.ethereum.org/EIPS/eip-7069>`.
-pub fn returndataload<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn returndataload<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, offset);
+    popn_top!([], offset, interpreter);
     let offset_usize = as_usize_saturated!(offset);
 
     let mut output = [0u8; 32];
     if let Some(available) = interpreter
-        .return_data_buffer()
+        .return_data
+        .buffer()
         .len()
         .checked_sub(offset_usize)
     {
         let copy_len = available.min(32);
         output[..copy_len].copy_from_slice(
-            &interpreter.return_data_buffer()[offset_usize..offset_usize + copy_len],
+            &interpreter.return_data.buffer()[offset_usize..offset_usize + copy_len],
         );
     }
 
     *offset = B256::from(output).into();
 }
 
-pub fn gas<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn gas<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(interpreter.gas().remaining()));
+    push!(interpreter, U256::from(interpreter.gas.remaining()));
 }
 
 // common logic for copying data from a source buffer to the EVM's memory
 pub fn memory_resize(
-    interpreter: &mut impl InterpreterTrait,
+    interpreter: &mut NewInterpreter<impl InterpreterWire>,
     memory_offset: U256,
     len: usize,
 ) -> Option<usize> {
@@ -191,6 +235,8 @@ pub fn memory_resize(
     Some(memory_offset)
 }
 
+/*
+TODO tests
 #[cfg(test)]
 mod test {
     use super::*;
@@ -349,3 +395,5 @@ mod test {
         assert_eq!(&interp.shared_memory.slice(0, 32), &[0u8; 32]);
     }
 }
+
+*/

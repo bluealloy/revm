@@ -1,48 +1,67 @@
-use crate::{gas, interpreter::InterpreterTrait, Host};
+use crate::{
+    gas,
+    interpreter::NewInterpreter,
+    interpreter_wiring::{InterpreterWire, LoopControl, MemoryTrait, RuntimeFlag, StackTrait},
+    Host,
+};
 use core::cmp::max;
 use primitives::U256;
 
-pub fn mload<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn mload<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    let Some(top) = interpreter.top() else { return };
+    let Some(top) = interpreter.stack.top() else {
+        return;
+    };
     let offset = as_usize_or_fail!(interpreter, top);
     resize_memory!(interpreter, offset, 32);
-    *top = interpreter
-        .mem_slice_len(offset, 32)
-        .try_into::<[u8; 32]>()
+    *top = U256::try_from_be_slice(interpreter.memory.slice_len(offset, 32))
         .unwrap()
         .into();
 }
 
-pub fn mstore<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn mstore<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    let Some([offset, value]) = interpreter.popn() else {
+    let Some([offset, value]) = interpreter.stack.popn() else {
         return;
     };
     let offset = as_usize_or_fail!(interpreter, offset);
     resize_memory!(interpreter, offset, 32);
-    interpreter.mem_set(offset, &value.to_be_bytes::<32>());
+    interpreter.memory.set(offset, &value.to_be_bytes::<32>());
 }
 
-pub fn mstore8<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn mstore8<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    let Some([offset, value]) = interpreter.popn() else {
-        return;
-    };
+    popn!([offset, value], interpreter);
     let offset = as_usize_or_fail!(interpreter, offset);
     resize_memory!(interpreter, offset, 1);
-    interpreter.mem_set(offset, value.byte(0))
+    interpreter.memory.set(offset, &[value.byte(0)]);
 }
 
-pub fn msize<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn msize<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(interpreter.mem_size()));
+    // result can be ignored.
+    push!(interpreter, U256::from(interpreter.memory.size()));
 }
 
 // EIP-5656: MCOPY - Memory copying instruction
-pub fn mcopy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn mcopy<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     check!(interpreter, CANCUN);
-    let Some([dst, src, len]) = interpreter.popn() else {
+    let Some([dst, src, len]) = interpreter.stack.popn() else {
         return;
     };
 
@@ -59,5 +78,5 @@ pub fn mcopy<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: 
     // resize memory
     resize_memory!(interpreter, max(dst, src), len);
     // copy memory in place
-    interpreter.mem_copy(dst, src, len);
+    interpreter.memory.copy(dst, src, len);
 }

@@ -1,29 +1,43 @@
-use crate::{gas, interpreter::InterpreterTrait, Host, Interpreter};
+use crate::{
+    gas,
+    interpreter::NewInterpreter,
+    interpreter_wiring::{InterpreterWire, LoopControl, RuntimeFlag, StackTrait},
+    Host,
+};
 use primitives::U256;
-use specification::hardfork::Spec;
 use transaction::Eip4844Tx;
 use wiring::{Block, Transaction, TransactionType};
 
-pub fn gasprice<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &mut H) {
+pub fn gasprice<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    host: &mut H,
+) {
     gas!(interpreter, gas::BASE);
     let env = host.env();
     let basefee = *env.block.basefee();
     push!(interpreter, env.tx.effective_gas_price(basefee));
+    push!(interpreter, U256::ZERO)
 }
 
-pub fn origin<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &mut H) {
+pub fn origin<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    host: &mut H,
+) {
     gas!(interpreter, gas::BASE);
-    push_b256!(
+    push!(
         interpreter,
-        host.env().tx.common_fields().caller().into_word()
+        host.env().tx.common_fields().caller().into_word().into()
     );
 }
 
 // EIP-4844: Shard Blob Transactions
-pub fn blob_hash<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &mut H) {
+pub fn blob_hash<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    host: &mut H,
+) {
     check!(interpreter, CANCUN);
     gas!(interpreter, gas::VERYLOW);
-    pop_top!(interpreter, index);
+    popn_top!([], index, interpreter);
     let i = as_usize_saturated!(index);
     let tx = &host.env().tx;
     *index = if tx.tx_type().into() == TransactionType::Eip4844 {

@@ -4,8 +4,13 @@ pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_me
 
 use crate::{
     gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD, MIN_CALLEE_GAS},
-    interpreter::{Interpreter, InterpreterTrait},
+    instructions::utility::IntoAddress,
+    interpreter::NewInterpreter,
     interpreter_action::NewFrameAction,
+    interpreter_wiring::{
+        EofContainer, Immediates, InputsTrait, InterpreterWire, Jumps, LoopControl, MemoryTrait,
+        ReturnData, RuntimeFlag, StackTrait,
+    },
     CallInputs, CallScheme, CallValue, CreateInputs, EOFCreateInputs, Host, InstructionResult,
     InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE,
 };
@@ -17,17 +22,21 @@ use std::boxed::Box;
 use wiring::default::CreateScheme;
 
 /// EOF Create instruction
-pub fn eofcreate<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn eofcreate<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     require_non_staticcall!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
-    let initcontainer_index = interpreter.read_u8();
+    let initcontainer_index = interpreter.bytecode.read_u8();
 
-    let Some([value, salt, data_offset, data_size]) = interpreter.popn() else {
+    let Some([value, salt, data_offset, data_size]) = interpreter.stack.popn() else {
         return;
     };
 
     let container = interpreter
+        .bytecode
         .eof_container(initcontainer_index as usize)
         .expect("valid container")
         .clone();
@@ -38,7 +47,7 @@ pub fn eofcreate<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _ho
     };
 
     let input = if !input_range.is_empty() {
-        interpreter.mem_slice(input_range).to_vec().into()
+        interpreter.memory.slice(input_range).to_vec().into()
     } else {
         Bytes::new()
     };
@@ -57,16 +66,17 @@ pub fn eofcreate<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _ho
     );
 
     let created_address = interpreter
+        .input
         .target_address()
         .create2(salt.to_be_bytes(), keccak256(container));
 
-    let gas_limit = interpreter.gas().remaining_63_of_64_parts();
+    let gas_limit = interpreter.gas.remaining_63_of_64_parts();
     gas!(interpreter, gas_limit);
     // Send container for execution container is preverified.
-    interpreter.set_next_action(
+    interpreter.control.set_next_action(
         InterpreterAction::NewFrame(NewFrameAction::EOFCreate(Box::new(
             EOFCreateInputs::new_opcode(
-                interpreter.target_address(),
+                interpreter.input.target_address(),
                 created_address,
                 value,
                 eof,
@@ -77,17 +87,21 @@ pub fn eofcreate<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _ho
         InstructionResult::CallOrCreate,
     );
 
-    interpreter.relative_jump(1);
+    interpreter.bytecode.relative_jump(1);
 }
 
-pub fn return_contract<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, _host: &mut H) {
+pub fn return_contract<H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<impl InterpreterWire>,
+    _host: &mut H,
+) {
     require_init_eof!(interpreter);
-    let deploy_container_index = interpreter.read_u8();
-    let Some([aux_data_offset, aux_data_size]) = interpreter.popn() else {
+    let deploy_container_index = interpreter.bytecode.read_u8();
+    let Some([aux_data_offset, aux_data_size]) = interpreter.stack.popn() else {
         return;
     };
     let aux_data_size = as_usize_or_fail!(interpreter, aux_data_size);
     let container = interpreter
+        .bytecode
         .eof_container(deploy_container_index as usize)
         .expect("valid container")
         .clone();
@@ -100,7 +114,7 @@ pub fn return_contract<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut 
         let aux_data_offset = as_usize_or_fail!(interpreter, aux_data_offset);
         resize_memory!(interpreter, aux_data_offset, aux_data_size);
 
-        interpreter.mem_slice_len(aux_data_offset, aux_data_size)
+        interpreter.memory.slice_len(aux_data_offset, aux_data_size)
     } else {
         &[]
     };
@@ -112,12 +126,16 @@ pub fn return_contract<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut 
     let new_data_size = eof_header.data_size as usize - static_aux_size + aux_slice.len();
     if new_data_size > 0xFFFF {
         // aux data is too big
-        interpreter.set_instruction_result(InstructionResult::EofAuxDataOverflow);
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::EofAuxDataOverflow);
         return;
     }
     if new_data_size < eof_header.data_size as usize {
         // aux data is too small
-        interpreter.set_instruction_result(InstructionResult::EofAuxDataTooSmall);
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::EofAuxDataTooSmall);
         return;
     }
     let new_data_size = (new_data_size as u16).to_be_bytes();
@@ -128,8 +146,8 @@ pub fn return_contract<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut 
     let output: Bytes = output.into();
 
     let result = InstructionResult::ReturnContract;
-    let gas = interpreter.gas().clone();
-    interpreter.set_next_action(
+    let gas = interpreter.gas.clone();
+    interpreter.control.set_next_action(
         crate::InterpreterAction::Return {
             result: InterpreterResult {
                 output,
@@ -141,8 +159,8 @@ pub fn return_contract<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut 
     );
 }
 
-pub fn extcall_input(interpreter: &mut impl InterpreterTrait) -> Option<Bytes> {
-    let [input_offset, input_size] = interpreter.popn()?;
+pub fn extcall_input(interpreter: &mut NewInterpreter<impl InterpreterWire>) -> Option<Bytes> {
+    let [input_offset, input_size] = interpreter.stack.popn()?;
 
     let return_memory_offset = resize_memory(interpreter, input_offset, input_size)?;
 
@@ -151,18 +169,20 @@ pub fn extcall_input(interpreter: &mut impl InterpreterTrait) -> Option<Bytes> {
     }
 
     Some(Bytes::copy_from_slice(
-        interpreter.mem_slice(return_memory_offset.clone()),
+        interpreter.memory.slice(return_memory_offset.clone()),
     ))
 }
 
-pub fn extcall_gas_calc<H: Host + ?Sized>(
-    interpreter: &mut impl InterpreterTrait,
+pub fn extcall_gas_calc<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
     host: &mut H,
     target: Address,
     transfers_value: bool,
 ) -> Option<u64> {
     let Some(account_load) = host.load_account_delegated(target) else {
-        interpreter.set_instruction_result(InstructionResult::FatalExternalError);
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::FatalExternalError);
         return None;
     };
     // account_load.is_empty will be accounted if there is transfer value.
@@ -171,8 +191,8 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
 
     // 7. Calculate the gas available to callee as caller’s
     // remaining gas reduced by max(ceil(gas/64), MIN_RETAINED_GAS) (MIN_RETAINED_GAS is 5000).
-    let gas_reduce = max(interpreter.gas().remaining() / 64, 5000);
-    let gas_limit = interpreter.gas().remaining().saturating_sub(gas_reduce);
+    let gas_reduce = max(interpreter.gas.remaining() / 64, 5000);
+    let gas_limit = interpreter.gas.remaining().saturating_sub(gas_reduce);
 
     // The MIN_CALLEE_GAS rule is a replacement for stipend:
     // it simplifies the reasoning about the gas costs and is
@@ -182,8 +202,8 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
     if gas_limit < MIN_CALLEE_GAS {
         // Push 1 to stack to indicate that call light failed.
         // It is safe to ignore stack overflow error as we already popped multiple values from stack.
-        let _ = interpreter.push(U256::from(1));
-        interpreter.return_data_buffer_mut().clear();
+        let _ = interpreter.stack.push(U256::from(1));
+        interpreter.return_data.buffer_mut().clear();
         // Return none to continue execution.
         return None;
     }
@@ -196,18 +216,25 @@ pub fn extcall_gas_calc<H: Host + ?Sized>(
 ///
 /// Valid address has first 12 bytes as zeroes.
 #[inline]
-pub fn pop_extcall_target_address(interpreter: &mut impl InterpreterTrait) -> Option<Address> {
-    let target_address = B256::from(interpreter.pop()?);
+pub fn pop_extcall_target_address(
+    interpreter: &mut NewInterpreter<impl InterpreterWire>,
+) -> Option<Address> {
+    let target_address = B256::from(interpreter.stack.pop()?);
     // Check if target is left padded with zeroes.
     if target_address[..12].iter().any(|i| *i != 0) {
-        interpreter.set_instruction_result(InstructionResult::InvalidEXTCALLTarget);
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::InvalidEXTCALLTarget);
         return None;
     }
     // discard first 12 bytes.
     Some(Address::from_word(target_address))
 }
 
-pub fn extcall<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &mut H) {
+pub fn extcall<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    host: &mut H,
+) {
     require_eof!(interpreter);
 
     // pop target address
@@ -220,12 +247,14 @@ pub fn extcall<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host:
         return;
     };
 
-    let Some(value) = interpreter.pop() else {
+    let Some(value) = interpreter.stack.pop() else {
         return;
     };
     let has_transfer = !value.is_zero();
-    if interpreter.is_static() && has_transfer {
-        interpreter.set_instruction_result(InstructionResult::CallNotAllowedInsideStatic);
+    if interpreter.runtime_flag.is_static() && has_transfer {
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::CallNotAllowedInsideStatic);
         return;
     }
 
@@ -234,16 +263,16 @@ pub fn extcall<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host:
     };
 
     // Call host to interact with target contract
-    interpreter.set_next_action(
+    interpreter.control.set_next_action(
         InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address,
-            caller: interpreter.target_address(),
+            caller: interpreter.input.target_address(),
             bytecode_address: target_address,
             value: CallValue::Transfer(value),
             scheme: CallScheme::ExtCall,
-            is_static: interpreter.is_static(),
+            is_static: interpreter.runtime_flag.is_static(),
             is_eof: true,
             return_memory_offset: 0..0,
         }))),
@@ -251,7 +280,10 @@ pub fn extcall<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host:
     );
 }
 
-pub fn extdelegatecall<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &mut H) {
+pub fn extdelegatecall<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    host: &mut H,
+) {
     require_eof!(interpreter);
 
     // pop target address
@@ -269,16 +301,16 @@ pub fn extdelegatecall<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut 
     };
 
     // Call host to interact with target contract
-    interpreter.set_next_action(
+    interpreter.control.set_next_action(
         InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
-            target_address: interpreter.target_address(),
-            caller: interpreter.caller_address(),
+            target_address: interpreter.input.target_address(),
+            caller: interpreter.input.caller_address(),
             bytecode_address: target_address,
-            value: CallValue::Apparent(interpreter.call_value()),
+            value: CallValue::Apparent(interpreter.input.call_value()),
             scheme: CallScheme::ExtDelegateCall,
-            is_static: interpreter.is_static(),
+            is_static: interpreter.runtime_flag.is_static(),
             is_eof: true,
             return_memory_offset: 0..0,
         }))),
@@ -286,7 +318,10 @@ pub fn extdelegatecall<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut 
     );
 }
 
-pub fn extstaticcall<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &mut H) {
+pub fn extstaticcall<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    host: &mut H,
+) {
     require_eof!(interpreter);
 
     // pop target address
@@ -304,12 +339,12 @@ pub fn extstaticcall<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I,
     };
 
     // Call host to interact with target contract
-    interpreter.set_next_action(
+    interpreter.control.set_next_action(
         InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address,
-            caller: interpreter.target_address(),
+            caller: interpreter.input.target_address(),
             bytecode_address: target_address,
             value: CallValue::Transfer(U256::ZERO),
             scheme: CallScheme::ExtStaticCall,
@@ -321,8 +356,8 @@ pub fn extstaticcall<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I,
     );
 }
 
-pub fn create<I: InterpreterTrait, const IS_CREATE2: bool, H: Host + ?Sized>(
-    interpreter: &mut I,
+pub fn create<WIRE: InterpreterWire, const IS_CREATE2: bool, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
     host: &mut H,
 ) {
     require_non_staticcall!(interpreter);
@@ -332,7 +367,7 @@ pub fn create<I: InterpreterTrait, const IS_CREATE2: bool, H: Host + ?Sized>(
         check!(interpreter, PETERSBURG);
     }
 
-    let Some([value, code_offset, len]) = interpreter.popn() else {
+    let Some([value, code_offset, len]) = interpreter.stack.popn() else {
         return;
     };
     let len = as_usize_or_fail!(interpreter, len);
@@ -340,7 +375,7 @@ pub fn create<I: InterpreterTrait, const IS_CREATE2: bool, H: Host + ?Sized>(
     let mut code = Bytes::new();
     if len != 0 {
         // EIP-3860: Limit and meter initcode
-        if interpreter.spec_id().is_enabled_in(SHANGHAI) {
+        if interpreter.runtime_flag.spec_id().is_enabled_in(SHANGHAI) {
             // Limit is set as double of max contract bytecode size
             let max_initcode_size = host
                 .env()
@@ -349,7 +384,9 @@ pub fn create<I: InterpreterTrait, const IS_CREATE2: bool, H: Host + ?Sized>(
                 .map(|limit| limit.saturating_mul(2))
                 .unwrap_or(MAX_INITCODE_SIZE);
             if len > max_initcode_size {
-                interpreter.set_instruction_result(InstructionResult::CreateInitCodeSizeLimit);
+                interpreter
+                    .control
+                    .set_instruction_result(InstructionResult::CreateInitCodeSizeLimit);
                 return;
             }
             gas!(interpreter, gas::initcode_cost(len as u64));
@@ -357,12 +394,12 @@ pub fn create<I: InterpreterTrait, const IS_CREATE2: bool, H: Host + ?Sized>(
 
         let code_offset = as_usize_or_fail!(interpreter, code_offset);
         resize_memory!(interpreter, code_offset, len);
-        code = Bytes::copy_from_slice(interpreter.mem_slice_len(code_offset, len));
+        code = Bytes::copy_from_slice(interpreter.memory.slice_len(code_offset, len));
     }
 
     // EIP-1014: Skinny CREATE2
     let scheme = if IS_CREATE2 {
-        let Some(salt) = interpreter.pop() else {
+        let Some(salt) = interpreter.stack.pop() else {
             return;
         };
         // SAFETY: len is reasonable in size as gas for it is already deducted.
@@ -373,19 +410,19 @@ pub fn create<I: InterpreterTrait, const IS_CREATE2: bool, H: Host + ?Sized>(
         CreateScheme::Create
     };
 
-    let mut gas_limit = interpreter.gas().remaining();
+    let mut gas_limit = interpreter.gas.remaining();
 
     // EIP-150: Gas cost changes for IO-heavy operations
-    if interpreter.spec_id().is_enabled_in(TANGERINE) {
+    if interpreter.runtime_flag.spec_id().is_enabled_in(TANGERINE) {
         // take remaining gas and deduce l64 part of it.
         gas_limit -= gas_limit / 64
     }
     gas!(interpreter, gas_limit);
 
     // Call host to interact with target contract
-    interpreter.set_next_action(
+    interpreter.control.set_next_action(
         InterpreterAction::NewFrame(NewFrameAction::Create(Box::new(CreateInputs {
-            caller: interpreter.target_address(),
+            caller: interpreter.input.target_address(),
             scheme,
             value,
             init_code: code,
@@ -395,21 +432,20 @@ pub fn create<I: InterpreterTrait, const IS_CREATE2: bool, H: Host + ?Sized>(
     );
 }
 
-pub fn call<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &mut H) {
-    pop!(interpreter, local_gas_limit);
-    let Some(local_gas_limit) = interpreter.pop() else {
-        return;
-    };
-    pop_address!(interpreter, to);
+pub fn call<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    host: &mut H,
+) {
+    popn!([local_gas_limit, to, value], interpreter);
+    let to = to.into_address();
     // max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
-    let Some(value) = interpreter.pop() else {
-        return;
-    };
     let has_transfer = !value.is_zero();
-    if interpreter.is_static() && has_transfer {
-        interpreter.set_instruction_result(InstructionResult::CallNotAllowedInsideStatic);
+    if interpreter.runtime_flag.is_static() && has_transfer {
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::CallNotAllowedInsideStatic);
         return;
     }
 
@@ -418,7 +454,9 @@ pub fn call<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &m
     };
 
     let Some(account_load) = host.load_account_delegated(to) else {
-        interpreter.set_instruction_result(InstructionResult::FatalExternalError);
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
     let Some(mut gas_limit) =
@@ -435,16 +473,16 @@ pub fn call<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &m
     }
 
     // Call host to interact with target contract
-    interpreter.set_next_action(
+    interpreter.control.set_next_action(
         InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address: to,
-            caller: interpreter.target_address(),
+            caller: interpreter.input.target_address(),
             bytecode_address: to,
             value: CallValue::Transfer(value),
             scheme: CallScheme::Call,
-            is_static: interpreter.is_static(),
+            is_static: interpreter.runtime_flag.is_static(),
             is_eof: false,
             return_memory_offset,
         }))),
@@ -452,8 +490,11 @@ pub fn call<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &m
     );
 }
 
-pub fn call_code<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &mut H) {
-    let Some([local_gas_limit, to, value]) = interpreter.popn() else {
+pub fn call_code<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    host: &mut H,
+) {
+    let Some([local_gas_limit, to, value]) = interpreter.stack.popn() else {
         return;
     };
     let to = Address::from_word(B256::from(to));
@@ -466,7 +507,9 @@ pub fn call_code<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, hos
     };
 
     let Some(mut load) = host.load_account_delegated(to) else {
-        interpreter.set_instruction_result(InstructionResult::FatalExternalError);
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
     // set is_empty to false as we are not creating this account.
@@ -484,16 +527,16 @@ pub fn call_code<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, hos
     }
 
     // Call host to interact with target contract
-    interpreter.set_next_action(
+    interpreter.control.set_next_action(
         InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
-            target_address: interpreter.target_address(),
-            caller: interpreter.target_address(),
+            target_address: interpreter.input.target_address(),
+            caller: interpreter.input.target_address(),
             bytecode_address: to,
             value: CallValue::Transfer(value),
             scheme: CallScheme::CallCode,
-            is_static: interpreter.is_static(),
+            is_static: interpreter.runtime_flag.is_static(),
             is_eof: false,
             return_memory_offset,
         }))),
@@ -501,9 +544,12 @@ pub fn call_code<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, hos
     );
 }
 
-pub fn delegate_call<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &mut H) {
+pub fn delegate_call<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    host: &mut H,
+) {
     check!(interpreter, HOMESTEAD);
-    let Some([local_gas_limit, to]) = interpreter.popn() else {
+    let Some([local_gas_limit, to]) = interpreter.stack.popn() else {
         return;
     };
     let to = Address::from_word(B256::from(to));
@@ -515,7 +561,9 @@ pub fn delegate_call<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I,
     };
 
     let Some(mut load) = host.load_account_delegated(to) else {
-        interpreter.set_instruction_result(InstructionResult::FatalExternalError);
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
     // set is_empty to false as we are not creating this account.
@@ -527,16 +575,16 @@ pub fn delegate_call<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I,
     gas!(interpreter, gas_limit);
 
     // Call host to interact with target contract
-    interpreter.set_next_action(
+    interpreter.control.set_next_action(
         InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
-            target_address: interpreter.target_address(),
-            caller: interpreter.caller_address(),
+            target_address: interpreter.input.target_address(),
+            caller: interpreter.input.caller_address(),
             bytecode_address: to,
-            value: CallValue::Apparent(interpreter.call_value()),
+            value: CallValue::Apparent(interpreter.input.call_value()),
             scheme: CallScheme::DelegateCall,
-            is_static: interpreter.is_static(),
+            is_static: interpreter.runtime_flag.is_static(),
             is_eof: false,
             return_memory_offset,
         }))),
@@ -544,9 +592,12 @@ pub fn delegate_call<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I,
     );
 }
 
-pub fn static_call<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, host: &mut H) {
+pub fn static_call<WIRE: InterpreterWire, H: Host + ?Sized>(
+    interpreter: &mut NewInterpreter<WIRE>,
+    host: &mut H,
+) {
     check!(interpreter, BYZANTIUM);
-    let Some([local_gas_limit, to]) = interpreter.popn() else {
+    let Some([local_gas_limit, to]) = interpreter.stack.popn() else {
         return;
     };
     let to = Address::from_word(B256::from(to));
@@ -558,7 +609,9 @@ pub fn static_call<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, h
     };
 
     let Some(mut load) = host.load_account_delegated(to) else {
-        interpreter.set_instruction_result(InstructionResult::FatalExternalError);
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
     // set is_empty to false as we are not creating this account.
@@ -569,12 +622,12 @@ pub fn static_call<I: InterpreterTrait, H: Host + ?Sized>(interpreter: &mut I, h
     gas!(interpreter, gas_limit);
 
     // Call host to interact with target contract
-    interpreter.set_next_action(
+    interpreter.control.set_next_action(
         InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address: to,
-            caller: interpreter.target_address(),
+            caller: interpreter.input.target_address(),
             bytecode_address: to,
             value: CallValue::Transfer(U256::ZERO),
             scheme: CallScheme::StaticCall,

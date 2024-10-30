@@ -3,6 +3,8 @@ use core::{fmt, ptr};
 use primitives::{B256, U256};
 use std::vec::Vec;
 
+use super::StackTrait;
+
 /// EVM interpreter stack limit.
 pub const STACK_LIMIT: usize = 1024;
 
@@ -42,6 +44,46 @@ impl Clone for Stack {
         let mut new_stack = Self::new();
         new_stack.data.extend_from_slice(&self.data);
         new_stack
+    }
+}
+
+impl StackTrait for Stack {
+    fn len(&self) -> usize {
+        self.len()
+    }
+
+    fn pushn(&mut self, num: usize) -> bool {
+        true
+    }
+
+    #[inline]
+    fn popn<const N: usize>(&mut self) -> Option<[U256; N]> {
+        if self.len() < N {
+            return None;
+        }
+        // SAFETY: stack length is checked above.
+        Some(unsafe { self.popn::<N>() })
+    }
+
+    #[inline]
+    fn popn_top<const POPN: usize>(&mut self) -> Option<([U256; POPN], &mut U256)> {
+        if self.len() < POPN + 1 {
+            return None;
+        }
+        // SAFETY: stack length is checked above.
+        Some(unsafe { self.popn_top::<POPN>() })
+    }
+
+    fn exchange(&mut self, n: usize, m: usize) -> bool {
+        self.exchange(n, m)
+    }
+
+    fn dup(&mut self, n: usize) -> bool {
+        self.dup(n)
+    }
+
+    fn push(&mut self, value: U256) -> bool {
+        self.push(value)
     }
 }
 
@@ -113,7 +155,11 @@ impl Stack {
         self.data.get_unchecked_mut(len - 1)
     }
 
+    #[inline]
     pub unsafe fn popn<const N: usize>(&mut self) -> [U256; N] {
+        if N == 0 {
+            return [U256::ZERO; N];
+        }
         let mut result = [U256::ZERO; N];
         for v in result.iter_mut() {
             *v = self.data.pop().unwrap_unchecked();
@@ -121,6 +167,7 @@ impl Stack {
         result
     }
 
+    #[inline]
     pub unsafe fn popn_top<const POPN: usize>(&mut self) -> ([U256; POPN], &mut U256) {
         let result = self.popn::<POPN>();
         let top = self.top_unsafe();
@@ -210,26 +257,19 @@ impl Stack {
         (pop1, pop2, pop3, pop4, pop5)
     }
 
-    /// Push a new value into the stack. If it will exceed the stack limit,
-    /// returns `StackOverflow` error and leaves the stack unchanged.
-    #[inline]
-    pub fn push_b256(&mut self, value: B256) -> Result<(), InstructionResult> {
-        self.push(value.into())
-    }
-
     /// Push a new value onto the stack.
     ///
-    /// If it will exceed the stack limit, returns `StackOverflow` error and leaves the stack
+    /// If it will exceed the stack limit, returns false and leaves the stack
     /// unchanged.
     #[inline]
-    pub fn push(&mut self, value: U256) -> Result<(), InstructionResult> {
+    pub fn push(&mut self, value: U256) -> bool {
         // Allows the compiler to optimize out the `Vec::push` capacity check.
         assume!(self.data.capacity() == STACK_LIMIT);
         if self.data.len() == STACK_LIMIT {
-            return Err(InstructionResult::StackOverflow);
+            return false;
         }
         self.data.push(value);
-        Ok(())
+        true
     }
 
     /// Peek a value at given index for the stack, where the top of
@@ -251,13 +291,11 @@ impl Stack {
     /// Panics if `n` is 0.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn dup(&mut self, n: usize) -> Result<(), InstructionResult> {
+    pub fn dup(&mut self, n: usize) -> bool {
         assume!(n > 0, "attempted to dup 0");
         let len = self.data.len();
-        if len < n {
-            Err(InstructionResult::StackUnderflow)
-        } else if len + 1 > STACK_LIMIT {
-            Err(InstructionResult::StackOverflow)
+        if len < n || len + 1 > STACK_LIMIT {
+            false
         } else {
             // SAFETY: check for out of bounds is done above and it makes this safe to do.
             unsafe {
@@ -265,7 +303,7 @@ impl Stack {
                 ptr::copy_nonoverlapping(ptr.sub(n), ptr, 1);
                 self.data.set_len(len + 1);
             }
-            Ok(())
+            true
         }
     }
 
@@ -276,7 +314,7 @@ impl Stack {
     /// Panics if `n` is 0.
     #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn swap(&mut self, n: usize) -> Result<(), InstructionResult> {
+    pub fn swap(&mut self, n: usize) -> bool {
         self.exchange(0, n)
     }
 
@@ -289,12 +327,12 @@ impl Stack {
     /// Panics if `m` is zero.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn exchange(&mut self, n: usize, m: usize) -> Result<(), InstructionResult> {
+    pub fn exchange(&mut self, n: usize, m: usize) -> bool {
         assume!(m > 0, "overlapping exchange");
         let len = self.data.len();
         let n_m_index = n + m;
         if n_m_index >= len {
-            return Err(InstructionResult::StackUnderflow);
+            return false;
         }
         // SAFETY: `n` and `n_m` are checked to be within bounds, and they don't overlap.
         unsafe {
@@ -305,7 +343,7 @@ impl Stack {
             let top = self.data.as_mut_ptr().add(len - 1);
             core::ptr::swap_nonoverlapping(top.sub(n), top.sub(n_m_index), 1);
         }
-        Ok(())
+        true
     }
 
     /// Pushes an arbitrary length slice of bytes onto the stack, padding the last word with zeros
@@ -480,7 +518,7 @@ mod tests {
         // Test cloning a partially filled stack
         let mut partial_stack = Stack::new();
         for i in 0..10 {
-            partial_stack.push(U256::from(i)).unwrap();
+            assert_eq!(partial_stack.push(U256::from(i)), true);
         }
         let mut cloned_partial = partial_stack.clone();
         assert_eq!(partial_stack, cloned_partial);
@@ -488,7 +526,7 @@ mod tests {
         assert_eq!(cloned_partial.data().capacity(), STACK_LIMIT);
 
         // Test that modifying the clone doesn't affect the original
-        cloned_partial.push(U256::from(100)).unwrap();
+        assert_eq!(cloned_partial.push(U256::from(100)), true);
         assert_ne!(partial_stack, cloned_partial);
         assert_eq!(partial_stack.len(), 10);
         assert_eq!(cloned_partial.len(), 11);
@@ -496,7 +534,7 @@ mod tests {
         // Test cloning a full stack
         let mut full_stack = Stack::new();
         for i in 0..STACK_LIMIT {
-            full_stack.push(U256::from(i)).unwrap();
+            assert_eq!(full_stack.push(U256::from(i)), true);
         }
         let mut cloned_full = full_stack.clone();
         assert_eq!(full_stack, cloned_full);
@@ -504,13 +542,7 @@ mod tests {
         assert_eq!(cloned_full.data().capacity(), STACK_LIMIT);
 
         // Test push to the full original or cloned stack should return StackOverflow
-        assert_eq!(
-            full_stack.push(U256::from(100)),
-            Err(InstructionResult::StackOverflow)
-        );
-        assert_eq!(
-            cloned_full.push(U256::from(100)),
-            Err(InstructionResult::StackOverflow)
-        );
+        assert_eq!(full_stack.push(U256::from(100)), false);
+        assert_eq!(cloned_full.push(U256::from(100)), false);
     }
 }
