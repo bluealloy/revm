@@ -27,6 +27,8 @@ pub struct TestVector {
 pub struct OsakaTestResult {
     #[serde(rename = "Osaka")]
     pub osaka: TestResult,
+    #[serde(rename = "Prague")]
+    pub prague: TestResult,
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
