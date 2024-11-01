@@ -3,7 +3,9 @@ use specification::hardfork::SpecId;
 
 //use crate::instructions::utility::{read_i16, read_u16};
 use crate::{Gas, InstructionResult, InterpreterAction};
-use core::ops::Range;
+use core::{
+    ops::{Deref, Range},
+};
 use primitives::{Address, Bytes, B256, U256};
 
 /// Helper function to read immediates data from the bytecode.
@@ -59,12 +61,12 @@ pub trait MemoryTrait {
     /// # Panics
     ///
     /// Panics if range is out of scope of allocated memory.
-    fn slice(&self, range: Range<usize>) -> &[u8];
+    fn slice(&self, range: Range<usize>) -> impl Deref<Target = [u8]> + '_;
 
     /// Memory slice len
     ///
     /// Uses [`MemoryTrait::mem_slice`] internally.
-    fn slice_len(&self, offset: usize, len: usize) -> &[u8] {
+    fn slice_len(&self, offset: usize, len: usize) -> impl Deref<Target = [u8]> + '_ {
         self.slice(offset..offset + len)
     }
 
@@ -182,33 +184,6 @@ pub trait ReturnData {
     fn buffer(&self) -> &[u8];
     fn buffer_mut(&mut self) -> &mut Bytes;
 }
-
-/// TODO wip probably left for follow up PR.
-/// Ides is to have trait inside instruction so that Interpreter can
-/// be extended even more.
-// pub trait InterpreterWire:
-//     Immediates
-//     + Jumps
-//     + StackTrait
-//     + LegacyBytecode
-//     + ReturnData
-//     + EofData
-//     + MemoryTrait
-//     + InputsTrait
-//     + EofContainer
-//     + SubRoutineStack
-// {
-//     fn gas(&mut self) -> &mut Gas;
-//     fn set_instruction_result(&mut self, result: InstructionResult);
-//     fn set_next_action(&mut self, action: InterpreterAction, result: InstructionResult);
-
-//     fn bytecode(&self) -> &Bytecode;
-//     fn spec_id(&self) -> SpecId;
-
-//     fn is_eof(&self) -> bool;
-//     fn is_static(&self) -> bool;
-//     fn is_eof_init(&self) -> bool;
-// }
 
 pub trait LoopControl {
     fn set_instruction_result(&mut self, result: InstructionResult);

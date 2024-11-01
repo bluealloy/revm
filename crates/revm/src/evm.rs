@@ -1,6 +1,6 @@
 use crate::{
     builder::{EvmBuilder, SetGenericStage},
-    handler::{FrameOrResultGen, Handler},
+    handler::{EthHand, FrameOrResultGen, Hand, Handler},
     Context, ContextWithEvmWiring, EvmContext, EvmWiring, InnerEvmContext,
 };
 use context::JournaledState;
@@ -10,7 +10,7 @@ use interpreter::Host;
 use std::boxed::Box;
 use wiring::{
     default::{CfgEnv, EnvWiring},
-    result::{EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState},
+    result::{EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState},
     Transaction,
 };
 
@@ -22,6 +22,7 @@ pub struct Evm<'a, EvmWiringT: EvmWiring> {
     /// Handler is a component of the of EVM that contains all the logic. Handler contains specification id
     /// and it different depending on the specified fork.
     pub handler: Handler<'a, EvmWiringT, Context<EvmWiringT>>,
+    //pub handler: EthHand<,
 }
 
 impl<EvmWiringT> Debug for Evm<'_, EvmWiringT>
@@ -378,7 +379,7 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
         // create first frame action
         let first_frame = exec.init_first_frame(ctx, gas_limit)?;
         let frame_result = match first_frame {
-            FrameOrResultGen::Frame(frame) => exec.run(ctx, &instructions, frame)?,
+            FrameOrResultGen::Frame(frame) => exec.run(ctx, frame)?,
             FrameOrResultGen::Result(result) => result,
         };
 
@@ -446,12 +447,13 @@ mod tests {
         fn handler<'evm>(hardfork: Self::Hardfork) -> EvmHandler<'evm, Self>
         where
             DB: Database,
+            'a: 'evm,
         {
             spec_to_generic!(
                 hardfork,
                 EvmHandler {
                     spec_id: hardfork,
-                    instruction_table: InstructionTables::new_plain::<SPEC>(),
+                    //instruction_table: InstructionTables::new_plain::<SPEC>(),
                     registers: Vec::new(),
                     pre_execution:
                         EthPreExecution::<Context<Self>, EVMErrorWiring<Self>>::new_boxed(

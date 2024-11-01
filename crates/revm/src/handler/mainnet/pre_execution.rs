@@ -2,17 +2,13 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
-use crate::{handler::PreExecutionWire, ContextPrecompiles, EvmWiring};
+use crate::handler::PreExecutionWire;
 use bytecode::Bytecode;
 use context::{
     BlockGetter, CfgGetter, JournalStateGetter, JournalStateGetterDBError, TransactionGetter,
 };
-use precompile::PrecompileSpecId;
 use primitives::{Address, BLOCKHASH_STORAGE_ADDRESS, U256};
-use specification::{
-    eip7702,
-    hardfork::{Spec, SpecId},
-};
+use specification::{eip7702, hardfork::SpecId};
 use transaction::{eip7702::Authorization, AccessListTrait, Eip4844Tx, Eip7702Tx};
 use wiring::{
     journaled_state::JournaledState, result::InvalidTransaction, Block, Cfg, Transaction,
@@ -126,12 +122,12 @@ where
     }
 }
 
-/// Main precompile load
-/// TODO Include this inside Wire.
-#[inline]
-pub fn load_precompiles<EvmWiringT: EvmWiring, SPEC: Spec>() -> ContextPrecompiles<EvmWiringT> {
-    ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
-}
+// /// Main precompile load
+// /// TODO Include this inside Wire.
+// #[inline]
+// pub fn load_precompiles<EvmWiringT: EvmWiring, SPEC: Spec>() -> ContextPrecompiles<EvmWiringT> {
+//     ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
+// }
 
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
 #[inline]

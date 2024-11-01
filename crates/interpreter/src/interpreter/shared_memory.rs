@@ -1,6 +1,11 @@
-use core::{cmp::min, fmt, ops::Range};
+use core::{
+    cell::{Ref, RefCell},
+    cmp::min,
+    fmt,
+    ops::{Deref, Range},
+};
 use primitives::{hex, B256, U256};
-use std::vec::Vec;
+use std::{rc::Rc, vec::Vec};
 
 use super::MemoryTrait;
 
@@ -50,6 +55,34 @@ impl Default for SharedMemory {
     }
 }
 
+impl MemoryTrait for Rc<RefCell<SharedMemory>> {
+    fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
+        self.borrow_mut()
+            .set_data(memory_offset, data_offset, len, data);
+    }
+
+    fn set(&mut self, memory_offset: usize, data: &[u8]) {
+        self.borrow_mut().set(memory_offset, data);
+    }
+
+    fn size(&self) -> usize {
+        self.borrow().size()
+    }
+
+    fn copy(&mut self, destination: usize, source: usize, len: usize) {
+        self.borrow_mut().copy(destination, source, len);
+    }
+
+    fn slice(&self, range: Range<usize>) -> impl Deref<Target = [u8]> + '_ {
+        Ref::map(self.borrow(), |i| i.slice_range(range))
+    }
+
+    fn resize(&mut self, new_size: usize) -> bool {
+        self.borrow_mut().resize(new_size);
+        true
+    }
+}
+
 impl MemoryTrait for SharedMemory {
     fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         todo!()
@@ -67,8 +100,8 @@ impl MemoryTrait for SharedMemory {
         todo!()
     }
 
-    fn slice(&self, range: Range<usize>) -> &[u8] {
-        todo!()
+    fn slice(&self, range: Range<usize>) -> impl Deref<Target = [u8]> + '_ {
+        self.slice_range(range)
     }
 
     fn resize(&mut self, new_size: usize) -> bool {
@@ -167,7 +200,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn slice(&self, offset: usize, size: usize) -> &[u8] {
+    pub fn slice_len(&self, offset: usize, size: usize) -> &[u8] {
         self.slice_range(offset..offset + size)
     }
 
@@ -207,7 +240,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     pub fn get_byte(&self, offset: usize) -> u8 {
-        self.slice(offset, 1)[0]
+        self.slice_len(offset, 1)[0]
     }
 
     /// Returns a 32-byte slice of the memory region at the given offset.
@@ -217,7 +250,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     pub fn get_word(&self, offset: usize) -> B256 {
-        self.slice(offset, 32).try_into().unwrap()
+        self.slice_len(offset, 32).try_into().unwrap()
     }
 
     /// Returns a U256 of the memory region at the given offset.

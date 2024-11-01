@@ -1,6 +1,7 @@
 use crate::interpreter::ReturnData;
 use primitives::Bytes;
 
+#[derive(Clone, Debug, Default)]
 pub struct ReturnDataImpl(Bytes);
 
 impl ReturnData for ReturnDataImpl {

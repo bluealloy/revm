@@ -132,7 +132,7 @@ macro_rules! resize_memory {
     };
     ($interpreter:expr, $offset:expr, $len:expr, $ret:expr) => {
         let new_size = $offset.saturating_add($len);
-        if !$interpreter.gas.record_memory_expansion(new_size) {
+        if !$interpreter.control.gas().record_memory_expansion(new_size) {
             // TODO move this inside gas. Make a Gas trait.
             $interpreter
                 .control

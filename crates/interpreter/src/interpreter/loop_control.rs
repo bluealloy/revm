@@ -13,6 +13,16 @@ pub struct LoopControl {
     pub gas: Gas,
 }
 
+impl LoopControl {
+    pub fn new(gas_limit: u64) -> Self {
+        Self {
+            instruction_result: InstructionResult::Continue,
+            next_action: InterpreterAction::None,
+            gas: Gas::new(gas_limit),
+        }
+    }
+}
+
 impl LoopControlTrait for LoopControl {
     fn set_instruction_result(&mut self, result: InstructionResult) {
         self.instruction_result = result;

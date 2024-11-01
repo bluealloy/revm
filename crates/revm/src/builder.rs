@@ -466,7 +466,7 @@ mod test {
     use crate::{Context, Evm};
     use bytecode::Bytecode;
     use database::InMemoryDB;
-    use interpreter::Interpreter;
+    use interpreter::NewInterpreter;
     use primitives::{address, TxKind, U256};
     use state::AccountInfo;
     use std::{cell::RefCell, rc::Rc};

@@ -2,13 +2,13 @@ use super::EthFrame;
 use crate::handler::{wires::Frame as FrameTrait, ExecutionWire, FrameOrResultGen};
 use bytecode::EOF_MAGIC_BYTES;
 use context::{
-    BlockGetter, CfgGetter, ErrorGetter, JournalCheckpoint, JournalStateGetter,
-    JournalStateGetterDBError, TransactionGetter,
+    BlockGetter, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
+    TransactionGetter,
 };
 use core::cell::RefCell;
 use interpreter::{
-    return_ok, return_revert, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme,
-    EOFCreateInputs, EOFCreateKind, Gas, NewFrameAction, SharedMemory,
+    interpreter::EthInterpreter, return_ok, return_revert, CallInputs, CallScheme, CallValue,
+    CreateInputs, CreateScheme, EOFCreateInputs, EOFCreateKind, Gas, NewFrameAction, SharedMemory,
 };
 use primitives::TxKind;
 use specification::hardfork::SpecId;
@@ -26,13 +26,13 @@ where
     CTX: TransactionGetter
         + ErrorGetter<Error = ERROR>
         + BlockGetter
-        + JournalStateGetter<Journal: JournaledState<Checkpoint = JournalCheckpoint>>
+        + JournalStateGetter
         + CfgGetter,
     ERROR: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
 {
     type Context = CTX;
     type Error = ERROR;
-    type Frame = EthFrame<CTX, ERROR>;
+    type Frame = EthFrame<CTX, EthInterpreter<()>, ERROR>;
     type ExecResult = <Self::Frame as FrameTrait>::FrameResult;
 
     fn init_first_frame(
@@ -84,7 +84,7 @@ where
         // First frame has dummy data and it is used to create shared context.
         //EthFrame::new()
         let shared_memory = Rc::new(RefCell::new(SharedMemory::new()));
-        EthFrame::init_with_context(init_frame, spec_id, shared_memory, context)
+        EthFrame::init_with_context(0, init_frame, spec_id, shared_memory, context)
     }
 
     fn last_frame_result(

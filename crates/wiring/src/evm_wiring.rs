@@ -5,10 +5,10 @@ use specification::hardfork::SpecId;
 use transaction::Transaction;
 
 /// The type that enumerates the chain's hardforks.
-pub trait HardforkTrait: Clone + Copy + Default + PartialEq + Eq + Into<SpecId> {}
+pub trait HardforkTrait: Clone + Copy + Default + PartialEq + Eq + Into<SpecId>+'static {}
 
 impl<HardforkT> HardforkTrait for HardforkT where
-    HardforkT: Clone + Copy + Default + PartialEq + Eq + Into<SpecId>
+    HardforkT: Clone + Copy + Default + PartialEq + Eq + Into<SpecId>+'static
 {
 }
 

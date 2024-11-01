@@ -211,7 +211,7 @@ fn return_inner(
     if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
         let new_mem_len = offset.saturating_add(len);
-        if !interpreter.gas.record_memory_expansion(new_mem_len) {
+        if !interpreter.control.gas().record_memory_expansion(new_mem_len) {
             return;
         }
         interpreter.memory.resize(new_mem_len);
@@ -220,7 +220,7 @@ fn return_inner(
         output = interpreter.memory.slice_len(offset, len).to_vec().into()
     }
 
-    let gas = interpreter.gas.clone();
+    let gas = interpreter.control.gas().clone();
     interpreter.control.set_next_action(
         InterpreterAction::Return {
             result: InterpreterResult {

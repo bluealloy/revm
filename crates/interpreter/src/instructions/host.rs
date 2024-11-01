@@ -189,7 +189,7 @@ pub fn sstore<WIRE: InterpreterWire, H: Host + ?Sized>(
 
     // EIP-1706 Disable SSTORE with gasleft lower than call stipend
     if interpreter.runtime_flag.spec_id().is_enabled_in(ISTANBUL)
-        && interpreter.gas.remaining() <= CALL_STIPEND
+        && interpreter.control.gas().remaining() <= CALL_STIPEND
     {
         interpreter
             .control
@@ -205,7 +205,7 @@ pub fn sstore<WIRE: InterpreterWire, H: Host + ?Sized>(
         )
     );
 
-    interpreter.gas.record_refund(gas::sstore_refund(
+    interpreter.control.gas().record_refund(gas::sstore_refund(
         interpreter.runtime_flag.spec_id(),
         &state_load.data,
     ));
@@ -254,7 +254,7 @@ pub fn log<const N: usize, H: Host + ?Sized>(
     } else {
         let offset = as_usize_or_fail!(interpreter, offset);
         resize_memory!(interpreter, offset, len);
-        Bytes::copy_from_slice(interpreter.memory.slice_len(offset, len))
+        Bytes::copy_from_slice(interpreter.memory.slice_len(offset, len).as_ref())
     };
     if interpreter.stack.len() < N {
         interpreter
@@ -294,7 +294,7 @@ pub fn selfdestruct<WIRE: InterpreterWire, H: Host + ?Sized>(
 
     // EIP-3529: Reduction in refunds
     if !interpreter.runtime_flag.spec_id().is_enabled_in(LONDON) && !res.previously_destroyed {
-        interpreter.gas.record_refund(gas::SELFDESTRUCT)
+        interpreter.control.gas().record_refund(gas::SELFDESTRUCT)
     }
     gas!(
         interpreter,

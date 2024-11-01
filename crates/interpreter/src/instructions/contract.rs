@@ -70,7 +70,7 @@ pub fn eofcreate<WIRE: InterpreterWire, H: Host + ?Sized>(
         .target_address()
         .create2(salt.to_be_bytes(), keccak256(container));
 
-    let gas_limit = interpreter.gas.remaining_63_of_64_parts();
+    let gas_limit = interpreter.control.gas().remaining_63_of_64_parts();
     gas!(interpreter, gas_limit);
     // Send container for execution container is preverified.
     interpreter.control.set_next_action(
@@ -109,21 +109,23 @@ pub fn return_contract<H: Host + ?Sized>(
     // convert to EOF so we can check data section size.
     let (eof_header, _) = EofHeader::decode(&container).expect("valid EOF header");
 
+    let static_aux_size = eof_header.eof_size() - container.len();
+
     // important: offset must be ignored if len is zeros
-    let aux_slice = if aux_data_size != 0 {
+    let mut output = if aux_data_size != 0 {
         let aux_data_offset = as_usize_or_fail!(interpreter, aux_data_offset);
         resize_memory!(interpreter, aux_data_offset, aux_data_size);
 
-        interpreter.memory.slice_len(aux_data_offset, aux_data_size)
-    } else {
-        &[]
-    };
+        let aux_slice = interpreter.memory.slice_len(aux_data_offset, aux_data_size);
 
-    let static_aux_size = eof_header.eof_size() - container.len();
+        [&container, aux_slice.as_ref()].concat()
+    } else {
+        container.to_vec()
+    };
 
     // data_size - static_aux_size give us current data `container` size.
     // and with aux_slice len we can calculate new data size.
-    let new_data_size = eof_header.data_size as usize - static_aux_size + aux_slice.len();
+    let new_data_size = eof_header.data_size as usize - static_aux_size + aux_data_size;
     if new_data_size > 0xFFFF {
         // aux data is too big
         interpreter
@@ -140,13 +142,12 @@ pub fn return_contract<H: Host + ?Sized>(
     }
     let new_data_size = (new_data_size as u16).to_be_bytes();
 
-    let mut output = [&container, aux_slice].concat();
     // set new data size in eof bytes as we know exact index.
     output[eof_header.data_size_raw_i()..][..2].clone_from_slice(&new_data_size);
     let output: Bytes = output.into();
 
     let result = InstructionResult::ReturnContract;
-    let gas = interpreter.gas.clone();
+    let gas = interpreter.control.gas().clone();
     interpreter.control.set_next_action(
         crate::InterpreterAction::Return {
             result: InterpreterResult {
@@ -169,7 +170,10 @@ pub fn extcall_input(interpreter: &mut NewInterpreter<impl InterpreterWire>) -> 
     }
 
     Some(Bytes::copy_from_slice(
-        interpreter.memory.slice(return_memory_offset.clone()),
+        interpreter
+            .memory
+            .slice(return_memory_offset.clone())
+            .as_ref(),
     ))
 }
 
@@ -191,8 +195,12 @@ pub fn extcall_gas_calc<WIRE: InterpreterWire, H: Host + ?Sized>(
 
     // 7. Calculate the gas available to callee as caller’s
     // remaining gas reduced by max(ceil(gas/64), MIN_RETAINED_GAS) (MIN_RETAINED_GAS is 5000).
-    let gas_reduce = max(interpreter.gas.remaining() / 64, 5000);
-    let gas_limit = interpreter.gas.remaining().saturating_sub(gas_reduce);
+    let gas_reduce = max(interpreter.control.gas().remaining() / 64, 5000);
+    let gas_limit = interpreter
+        .control
+        .gas()
+        .remaining()
+        .saturating_sub(gas_reduce);
 
     // The MIN_CALLEE_GAS rule is a replacement for stipend:
     // it simplifies the reasoning about the gas costs and is
@@ -378,8 +386,7 @@ pub fn create<WIRE: InterpreterWire, const IS_CREATE2: bool, H: Host + ?Sized>(
         if interpreter.runtime_flag.spec_id().is_enabled_in(SHANGHAI) {
             // Limit is set as double of max contract bytecode size
             let max_initcode_size = host
-                .env()
-                .cfg
+                .cfg()
                 .limit_contract_code_size
                 .map(|limit| limit.saturating_mul(2))
                 .unwrap_or(MAX_INITCODE_SIZE);
@@ -394,7 +401,7 @@ pub fn create<WIRE: InterpreterWire, const IS_CREATE2: bool, H: Host + ?Sized>(
 
         let code_offset = as_usize_or_fail!(interpreter, code_offset);
         resize_memory!(interpreter, code_offset, len);
-        code = Bytes::copy_from_slice(interpreter.memory.slice_len(code_offset, len));
+        code = Bytes::copy_from_slice(interpreter.memory.slice_len(code_offset, len).as_ref());
     }
 
     // EIP-1014: Skinny CREATE2
@@ -410,7 +417,7 @@ pub fn create<WIRE: InterpreterWire, const IS_CREATE2: bool, H: Host + ?Sized>(
         CreateScheme::Create
     };
 
-    let mut gas_limit = interpreter.gas.remaining();
+    let mut gas_limit = interpreter.control.gas().remaining();
 
     // EIP-150: Gas cost changes for IO-heavy operations
     if interpreter.runtime_flag.spec_id().is_enabled_in(TANGERINE) {

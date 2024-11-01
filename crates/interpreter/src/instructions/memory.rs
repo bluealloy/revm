@@ -17,7 +17,7 @@ pub fn mload<WIRE: InterpreterWire, H: Host + ?Sized>(
     };
     let offset = as_usize_or_fail!(interpreter, top);
     resize_memory!(interpreter, offset, 32);
-    *top = U256::try_from_be_slice(interpreter.memory.slice_len(offset, 32))
+    *top = U256::try_from_be_slice(interpreter.memory.slice_len(offset, 32).as_ref())
         .unwrap()
         .into();
 }

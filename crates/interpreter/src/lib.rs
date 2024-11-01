@@ -28,12 +28,10 @@ pub mod table;
 
 // Reexport primary types.
 pub use gas::Gas;
-pub use host::{
-    AccountLoad, DummyHost, Eip7702CodeLoad, Host, SStoreResult, SelfDestructResult, StateLoad,
-};
+pub use host::{DummyHost, Host, SStoreResult, SelfDestructResult, StateLoad};
 pub use instruction_result::*;
 pub use interpreter::{
-    num_words, Contract, InterpreterResult, NewInterpreter, SharedMemory, Stack,
+    num_words, Contract, InputsImpl, InterpreterResult, NewInterpreter, SharedMemory, Stack,
     EMPTY_SHARED_MEMORY, STACK_LIMIT,
 };
 pub use interpreter_action::{

@@ -1,20 +1,19 @@
-use crate::{handler::PostExecutionWire, Context, EvmWiring, FrameResult};
+use crate::handler::PostExecutionWire;
 use context::{
     BlockGetter, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
     TransactionGetter,
 };
-use interpreter::{Gas, InternalResult, SuccessOrHalt};
+use interpreter::SuccessOrHalt;
 use primitives::{Log, U256};
-use specification::hardfork::{Spec, SpecId};
+use specification::hardfork::SpecId;
 use state::EvmState;
 use wiring::{
     journaled_state::JournaledState,
-    result::{
-        EVMError, EVMResult, EVMResultGeneric, ExecutionResult, HaltReason, InvalidTransaction,
-        ResultAndState,
-    },
+    result::{ExecutionResult, ResultAndState},
     Block, HaltReasonTrait, Transaction,
 };
+
+use super::frame_data::FrameResult;
 
 pub struct EthPostExecution<CTX, ERROR, HALTREASON> {
     pub spec_id: SpecId,
@@ -55,7 +54,7 @@ where
 
     fn refund(
         &self,
-        ctx: &mut Self::Context,
+        _ctx: &mut Self::Context,
         exec_result: &mut Self::ExecResult,
         eip7702_refund: i64,
     ) {

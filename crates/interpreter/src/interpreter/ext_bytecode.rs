@@ -13,6 +13,17 @@ pub struct ExtBytecode {
     pub instruction_pointer: *const u8,
 }
 
+impl ExtBytecode {
+    /// Create new extended bytecode and set the instruction pointer to the start of the bytecode.
+    pub fn new(base: Bytecode) -> Self {
+        let instruction_pointer = base.bytecode().as_ptr();
+        Self {
+            base,
+            instruction_pointer,
+        }
+    }
+}
+
 impl Jumps for ExtBytecode {
     fn relative_jump(&mut self, offset: isize) {
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(offset) };

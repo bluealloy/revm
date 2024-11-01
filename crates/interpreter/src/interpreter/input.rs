@@ -1,11 +1,11 @@
-pub use crate::interpreter_wiring::InputsTrait;
+use crate::interpreter_wiring::InputsTrait;
 use primitives::{Address, Bytes, U256};
 
 pub struct InputsImpl {
-    target_address: Address,
-    caller_address: Address,
-    input: Bytes,
-    call_value: U256,
+    pub target_address: Address,
+    pub caller_address: Address,
+    pub input: Bytes,
+    pub call_value: U256,
 }
 
 impl InputsTrait for InputsImpl {

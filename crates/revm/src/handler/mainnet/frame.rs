@@ -1,17 +1,22 @@
+use super::frame_data::*;
 use crate::handler::{wires::Frame, FrameOrResultGen};
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context::{
-    BlockGetter, CfgGetter, Context, ErrorGetter, Frame as FrameData, FrameOrResult, FrameResult,
-    JournalCheckpoint, JournalStateGetter, JournalStateGetterDBError, TransactionGetter,
+    BlockGetter, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
+    TransactionGetter,
 };
-use core::{cell::RefCell, mem, ops::DerefMut};
+use core::{cell::RefCell, cmp::min, mem, ops::DerefMut};
 use interpreter::{
-    gas, table::InstructionTables, CallInputs, CallOutcome, CallValue, Contract, CreateInputs,
-    CreateOutcome, CreateScheme, EOFCreateInputs, EOFCreateKind, Gas, InstructionResult,
-    Interpreter, InterpreterAction, InterpreterResult, InterpreterWire, NewFrameAction,
+    gas,
+    interpreter::EthInterpreter,
+    interpreter_wiring::{LoopControl, ReturnData, RuntimeFlag},
+    return_ok, return_revert, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome,
+    CreateScheme, EOFCreateInputs, EOFCreateKind, Gas, InputsImpl, InstructionResult,
+    InterpreterAction, InterpreterResult, InterpreterWire, NewFrameAction, NewInterpreter,
     SharedMemory, EMPTY_SHARED_MEMORY,
 };
-use primitives::{keccak256, Address, Bytes, B256};
+use precompile::Precompile;
+use primitives::{keccak256, Address, Bytes, B256, U256};
 use specification::{
     constants::CALL_STACK_LIMIT,
     hardfork::SpecId::{self, HOMESTEAD, LONDON, PRAGUE_EOF, SPURIOUS_DRAGON},
@@ -19,13 +24,12 @@ use specification::{
 use state::Bytecode;
 use std::{rc::Rc, sync::Arc};
 use wiring::{
-    journaled_state::JournaledState,
-    result::{EVMError, EVMErrorWiring, InvalidTransaction},
-    Cfg, EvmWiring, Transaction,
+    journaled_state::{JournalCheckpoint, JournaledState},
+    Cfg, Transaction,
 };
 
 pub struct EthFrame<CTX, IW: InterpreterWire, ERROR> {
-    _phantom: std::marker::PhantomData<(CTX, ERROR)>,
+    _phantom: std::marker::PhantomData<fn() -> (CTX, ERROR)>,
     data: FrameData<IW>,
     // TODO include this
     depth: usize,
@@ -34,11 +38,21 @@ pub struct EthFrame<CTX, IW: InterpreterWire, ERROR> {
     shared_memory: Rc<RefCell<SharedMemory>>,
 }
 
-impl<CTX, ERROR> EthFrame<CTX, ERROR>
+pub struct FrameContext {
+    memory: SharedMemory,
+    precompiles: Precompile,
+}
+
+impl<CTX, IW, ERROR> EthFrame<CTX, IW, ERROR>
 where
     CTX: JournalStateGetter,
+    IW: InterpreterWire,
 {
-    pub fn new(data: FrameData, shared_memory: Rc<RefCell<SharedMemory>>, spec_id: SpecId) -> Self {
+    pub fn new(
+        data: FrameData<IW>,
+        shared_memory: Rc<RefCell<SharedMemory>>,
+        spec_id: SpecId,
+    ) -> Self {
         Self {
             _phantom: std::marker::PhantomData,
             data,
@@ -49,43 +63,46 @@ where
     }
 }
 
-impl<CTX, ERROR> EthFrame<CTX, ERROR>
+impl<CTX, ERROR> EthFrame<CTX, EthInterpreter<()>, ERROR>
 where
     CTX: TransactionGetter
         + ErrorGetter<Error = ERROR>
         + BlockGetter
-        + JournalStateGetter<Journal: JournaledState<Checkpoint = JournalCheckpoint>>
+        + JournalStateGetter
         + CfgGetter,
     ERROR: From<JournalStateGetterDBError<CTX>>,
 {
     /// Make call frame
     #[inline]
-    pub fn make_call_frame(ctx: &mut CTX, inputs: &CallInputs) -> Result<FrameOrResult, ERROR> {
+    pub fn make_call_frame(
+        depth: usize,
+        memory: Rc<RefCell<SharedMemory>>,
+        ctx: &mut CTX,
+        inputs: &CallInputs,
+        spec_id: SpecId,
+    ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {
-            Ok(FrameOrResult::new_call_result(
-                InterpreterResult {
+            Ok(FrameOrResultGen::Result(FrameResult::Call(CallOutcome {
+                result: InterpreterResult {
                     result: instruction_result,
                     gas,
                     output: Bytes::new(),
                 },
-                inputs.return_memory_offset.clone(),
-            ))
+                memory_offset: inputs.return_memory_offset.clone(),
+            })))
         };
 
         // Check depth
-        // TODO
-        // if self.journal().depth() > CALL_STACK_LIMIT {
-        //     return return_result(InstructionResult::CallTooDeep);
-        // }
+        if depth > CALL_STACK_LIMIT as usize {
+            return return_result(InstructionResult::CallTooDeep);
+        }
 
         // Make account warm and loaded
-        // TODO
-        // let _ = ctx
-        //     .journal()
-        //     .load_account_delegated(inputs.bytecode_address)
-        //     .map_err(EVMError::Database)?;
+        let _ = ctx
+            .journal()
+            .load_account_delegated(inputs.bytecode_address)?;
 
         // Create subroutine checkpoint
         let checkpoint = ctx.journal().checkpoint();
@@ -112,88 +129,99 @@ where
             _ => {}
         };
         // TODO
-        return return_result(InstructionResult::CreateCollision);
-        /*
-        if let Some(result) = self.call_precompile(&inputs.bytecode_address, &inputs.input, gas)? {
-            if matches!(result.result, return_ok!()) {
-                self.journaled_state.checkpoint_commit();
-            } else {
-                self.journaled_state.checkpoint_revert(checkpoint);
-            }
-            Ok(FrameOrResult::new_call_result(
-                result,
-                inputs.return_memory_offset.clone(),
-            ))
-        } else {
-            let account = self
-                .inner
-                .journaled_state
-                .load_code(inputs.bytecode_address)
-                .map_err(EVMError::Database)?;
+        // if let Some(result) = ctx.call_precompile(&inputs.bytecode_address, &inputs.input, gas)? {
+        //     if result.result.is_ok() {
+        //         self.journaled_state.checkpoint_commit();
+        //     } else {
+        //         self.journaled_state.checkpoint_revert(checkpoint);
+        //     }
+        //     Ok(FrameOrResult::new_call_result(
+        //         result,
+        //         inputs.return_memory_offset.clone(),
+        //     ))
+        // } else {
+        let account = ctx.journal().load_account_code(inputs.bytecode_address)?;
 
-            let code_hash = account.info.code_hash();
-            let mut bytecode = account.info.code.clone().unwrap_or_default();
+        let code_hash = account.info.code_hash();
+        let mut bytecode = account.info.code.clone().unwrap_or_default();
 
-            // ExtDelegateCall is not allowed to call non-EOF contracts.
-            if inputs.scheme.is_ext_delegate_call()
-                && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES)
-            {
-                return return_result(InstructionResult::InvalidExtDelegateCallTarget);
-            }
-
-            if bytecode.is_empty() {
-                self.journaled_state.checkpoint_commit();
-                return return_result(InstructionResult::Stop);
-            }
-
-            if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-                bytecode = self
-                    .inner
-                    .journaled_state
-                    .load_code(eip7702_bytecode.delegated_address)
-                    .map_err(EVMError::Database)?
-                    .info
-                    .code
-                    .clone()
-                    .unwrap_or_default();
-            }
-
-            let contract =
-                Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
-            // Create interpreter and executes call and push new CallStackFrame.
-            Ok(FrameOrResult::new_call_frame(
-                inputs.return_memory_offset.clone(),
-                checkpoint,
-                Interpreter::new(contract, gas.limit(), inputs.is_static),
-            ))
-
+        // ExtDelegateCall is not allowed to call non-EOF contracts.
+        if inputs.scheme.is_ext_delegate_call()
+            && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES)
+        {
+            return return_result(InstructionResult::InvalidExtDelegateCallTarget);
         }
-        */
+
+        if bytecode.is_empty() {
+            ctx.journal().checkpoint_commit();
+            return return_result(InstructionResult::Stop);
+        }
+
+        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
+            bytecode = ctx
+                .journal()
+                .load_account_code(eip7702_bytecode.delegated_address)?
+                .info
+                .code
+                .clone()
+                .unwrap_or_default();
+        }
+
+        //let contract =
+        //    Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
+        // Create interpreter and executes call and push new CallStackFrame.
+        let interpreter_input = InputsImpl {
+            target_address: inputs.target_address,
+            caller_address: inputs.caller,
+            input: inputs.input.clone(),
+            call_value: inputs.value.get(),
+        };
+
+        Ok(FrameOrResultGen::Frame(Self::new(
+            FrameData::Call(Box::new(CallFrame {
+                return_memory_range: inputs.return_memory_offset.clone(),
+                checkpoint,
+                interpreter: NewInterpreter::new(
+                    memory.clone(),
+                    bytecode,
+                    interpreter_input,
+                    inputs.is_static,
+                    false,
+                    spec_id,
+                    inputs.gas_limit,
+                ),
+            })),
+            memory,
+            spec_id,
+        )))
     }
 
     /// Make create frame.
     #[inline]
     pub fn make_create_frame(
+        depth: usize,
+        memory: Rc<RefCell<SharedMemory>>,
         ctx: &mut CTX,
-        spec_id: SpecId,
         inputs: &CreateInputs,
-    ) -> Result<FrameOrResult, ERROR> {
+        spec_id: SpecId,
+    ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
         let return_error = |e| {
-            Ok(FrameOrResult::new_create_result(
-                InterpreterResult {
-                    result: e,
-                    gas: Gas::new(inputs.gas_limit),
-                    output: Bytes::new(),
+            Ok(FrameOrResultGen::Result(FrameResult::Create(
+                CreateOutcome {
+                    result: InterpreterResult {
+                        result: e,
+                        gas: Gas::new(inputs.gas_limit),
+                        output: Bytes::new(),
+                    },
+                    address: None,
                 },
-                None,
-            ))
+            )))
         };
 
         // Check depth
-        // TODO add depth check
-        // if ctx.journal().depth() > CALL_STACK_LIMIT {
-        //     return return_error(InstructionResult::CallTooDeep);
-        // }
+        if depth > CALL_STACK_LIMIT as usize {
+            return return_error(InstructionResult::CallTooDeep);
+        }
 
         // Prague EOF
         if spec_id.is_enabled_in(PRAGUE_EOF) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
@@ -239,56 +267,63 @@ where
         ctx.journal().load_account(created_address)?;
 
         // create account, transfer funds and make the journal checkpoint.
-        // TODO add create account checkpoint
-        // let checkpoint = match ctx.journal().create_account_checkpoint(
-        //     inputs.caller,
-        //     created_address,
-        //     inputs.value,
-        //     spec_id,
-        // ) {
-        //     Ok(checkpoint) => checkpoint,
-        //     Err(e) => {
-        //         return return_error(e);
-        //     }
-        // };
-        //let checkpoint = JournalCheckpoint
-
-        let bytecode = Bytecode::new_legacy(inputs.init_code.clone());
-
-        let contract = Contract::new(
-            Bytes::new(),
-            bytecode,
-            Some(init_code_hash),
-            created_address,
-            None,
+        let Some(checkpoint) = ctx.journal().create_account_checkpoint(
             inputs.caller,
+            created_address,
             inputs.value,
-        );
+            spec_id,
+        ) else {
+            return return_error(InstructionResult::CreateCollision);
+        };
 
-        // Ok(FrameOrResult::new_create_frame(
-        //     created_address,
-        //     checkpoint,
-        //     Interpreter::new(contract, inputs.gas_limit, false),
-        // ))
-        todo!()
+        let bytecode = Bytecode::new_legacy(inputs.init_code.clone()).into_analyzed();
+
+        let interpreter_input = InputsImpl {
+            target_address: created_address,
+            caller_address: inputs.caller,
+            input: Bytes::new(),
+            call_value: inputs.value,
+        };
+
+        Ok(FrameOrResultGen::Frame(Self::new(
+            FrameData::Create(Box::new(CreateFrame {
+                created_address,
+                checkpoint,
+                interpreter: NewInterpreter::new(
+                    memory.clone(),
+                    bytecode,
+                    interpreter_input,
+                    false,
+                    false,
+                    spec_id,
+                    inputs.gas_limit,
+                ),
+            })),
+            memory,
+            spec_id,
+        )))
     }
 
     /// Make create frame.
     #[inline]
     pub fn make_eofcreate_frame(
+        depth: usize,
+        memory: Rc<RefCell<SharedMemory>>,
         ctx: &mut CTX,
-        spec_id: SpecId,
         inputs: &EOFCreateInputs,
-    ) -> Result<FrameOrResult, ERROR> {
+        spec_id: SpecId,
+    ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
         let return_error = |e| {
-            Ok(FrameOrResult::new_eofcreate_result(
-                InterpreterResult {
-                    result: e,
-                    gas: Gas::new(inputs.gas_limit),
-                    output: Bytes::new(),
+            Ok(FrameOrResultGen::Result(FrameResult::EOFCreate(
+                CreateOutcome {
+                    result: InterpreterResult {
+                        result: e,
+                        gas: Gas::new(inputs.gas_limit),
+                        output: Bytes::new(),
+                    },
+                    address: None,
                 },
-                None,
-            ))
+            )))
         };
 
         let (input, initcode, created_address) = match &inputs.kind {
@@ -320,10 +355,9 @@ where
         };
 
         // Check depth
-        // TODO check depth
-        // if self.journaled_state.depth() > CALL_STACK_LIMIT {
-        //     return return_error(InstructionResult::CallTooDeep);
-        // }
+        if depth > CALL_STACK_LIMIT as usize {
+            return return_error(InstructionResult::CallTooDeep);
+        }
 
         // Fetch balance of caller.
         let caller_balance = ctx
@@ -355,18 +389,14 @@ where
         ctx.journal().load_account(created_address)?;
 
         // create account, transfer funds and make the journal checkpoint.
-        todo!("create account checkpoint");
-        // let checkpoint = match self.journal().create_account_checkpoint(
-        //     inputs.caller,
-        //     created_address,
-        //     inputs.value,
-        //     spec_id,
-        // ) {
-        //     Ok(checkpoint) => checkpoint,
-        //     Err(e) => {
-        //         return return_error(e);
-        //     }
-        // };
+        let Some(checkpoint) = ctx.journal().create_account_checkpoint(
+            inputs.caller,
+            created_address,
+            inputs.value,
+            spec_id,
+        ) else {
+            return return_error(InstructionResult::CreateCollision);
+        };
 
         // let contract = Contract::new(
         //     input.clone(),
@@ -388,38 +418,63 @@ where
         //     checkpoint,
         //     interpreter,
         // ))
+        let bytecode = Bytecode::new_legacy(input).into_analyzed();
+
+        let interpreter_input = InputsImpl {
+            target_address: created_address,
+            caller_address: inputs.caller,
+            input: Bytes::new(),
+            call_value: inputs.value,
+        };
+
+        Ok(FrameOrResultGen::Frame(Self::new(
+            FrameData::Create(Box::new(CreateFrame {
+                created_address,
+                checkpoint,
+                interpreter: NewInterpreter::new(
+                    memory.clone(),
+                    bytecode,
+                    interpreter_input,
+                    false,
+                    false,
+                    spec_id,
+                    inputs.gas_limit,
+                ),
+            })),
+            memory,
+            spec_id,
+        )))
     }
 
     pub fn init_with_context(
+        depth: usize,
         frame_init: NewFrameAction,
         spec_id: SpecId,
-        shared_memory: Rc<RefCell<SharedMemory>>,
+        memory: Rc<RefCell<SharedMemory>>,
         ctx: &mut CTX,
-    ) -> Result<FrameOrResultGen<Self, <Self as Frame>::FrameResult>, ERROR> {
-        // let frame_or_result = match frame_init {
-        //     NewFrameAction::Call(inputs) => Self::make_call_frame(ctx, &inputs)?,
-        //     NewFrameAction::Create(inputs) => Self::make_create_frame(ctx, spec_id, &inputs)?,
-        //     NewFrameAction::EOFCreate(inputs) => Self::make_eofcreate_frame(ctx, spec_id, &inputs)?,
-        // };
-        // let ret = match frame_or_result {
-        //     FrameOrResult::Frame(frame) => {
-        //         FrameOrResultGen::Frame(EthFrame::new(frame, shared_memory, spec_id))
-        //     }
-        //     FrameOrResult::Result(result) => FrameOrResultGen::Result(result),
-        // };
-        // Ok(ret)
-        todo!()
+    ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
+        match frame_init {
+            NewFrameAction::Call(inputs) => {
+                Self::make_call_frame(depth, memory, ctx, &inputs, spec_id)
+            }
+            NewFrameAction::Create(inputs) => {
+                Self::make_create_frame(depth, memory, ctx, &inputs, spec_id)
+            }
+            NewFrameAction::EOFCreate(inputs) => {
+                Self::make_eofcreate_frame(depth, memory, ctx, &inputs, spec_id)
+            }
+        }
     }
 }
 
 //spub trait HostTemp: TransactionGetter + BlockGetter + JournalStateGetter {}
 
-impl<CTX, ERROR> Frame for EthFrame<CTX, ERROR>
+impl<CTX, ERROR> Frame for EthFrame<CTX, EthInterpreter<()>, ERROR>
 where
     CTX: TransactionGetter
         + ErrorGetter<Error = ERROR>
         + BlockGetter
-        + JournalStateGetter<Journal: JournaledState<Checkpoint = JournalCheckpoint>>
+        + JournalStateGetter
         + CfgGetter,
     ERROR: From<JournalStateGetterDBError<CTX>>,
 {
@@ -438,7 +493,13 @@ where
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
         self.shared_memory.borrow_mut().new_context();
         let spec_id = self.spec_id;
-        Self::init_with_context(frame_init, spec_id, self.shared_memory.clone(), ctx)
+        Self::init_with_context(
+            self.depth + 1,
+            frame_init,
+            spec_id,
+            self.shared_memory.clone(),
+            ctx,
+        )
     }
 
     fn run(
@@ -459,7 +520,7 @@ where
         // };
         let next_action = Default::default();
         // Take the shared memory back.
-        *self.shared_memory.borrow_mut() = interpreter.take_memory();
+        //*self.shared_memory.borrow_mut() = interpreter.take_memory();
 
         let mut interpreter_result = match next_action {
             InterpreterAction::NewFrame(new_frame) => {
@@ -477,7 +538,7 @@ where
                 if interpreter_result.result.is_ok() {
                     ctx.journal().checkpoint_commit();
                 } else {
-                    ctx.journal().checkpoint_revert(frame.frame_data.checkpoint);
+                    ctx.journal().checkpoint_revert(frame.checkpoint);
                 }
                 FrameOrResultGen::Result(FrameResult::Call(CallOutcome::new(
                     interpreter_result,
@@ -488,7 +549,7 @@ where
                 let max_code_size = ctx.cfg().max_code_size();
                 return_create(
                     ctx.journal(),
-                    frame.frame_data.checkpoint,
+                    frame.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
                     max_code_size,
@@ -504,7 +565,7 @@ where
                 let max_code_size = ctx.cfg().max_code_size();
                 return_eofcreate(
                     ctx.journal(),
-                    frame.frame_data.checkpoint,
+                    frame.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
                     max_code_size,
@@ -531,25 +592,120 @@ where
         // Insert result to the top frame.
         match result {
             FrameResult::Call(outcome) => {
-                // return_call
-                let mut shared_memory = self.shared_memory.borrow_mut();
-                self.data
-                    .frame_data_mut()
-                    .interpreter
-                    .insert_call_outcome(&mut shared_memory, outcome);
+                let out_gas = outcome.gas();
+                let ins_result = *outcome.instruction_result();
+                let returned_len = outcome.result.output.len();
+
+                let interpreter = self.data.interpreter_mut();
+                let mem_length = outcome.memory_length();
+                let mem_start = outcome.memory_start();
+                *interpreter.return_data.buffer_mut() = outcome.result.output;
+
+                let target_len = min(mem_length, returned_len);
+
+                if ins_result == InstructionResult::FatalExternalError {
+                    panic!("Fatal external error in insert_call_outcome");
+                }
+
+                let item = {
+                    if interpreter.runtime_flag.is_eof() {
+                        match ins_result {
+                            return_ok!() => U256::ZERO,
+                            return_revert!() => U256::from(1),
+                            _ => U256::from(2),
+                        }
+                    } else {
+                        if ins_result.is_ok() {
+                            U256::from(1)
+                        } else {
+                            U256::ZERO
+                        }
+                    }
+                };
+                interpreter.stack.push(item);
+
+                // return unspend gas.
+                if ins_result.is_ok_or_revert() {
+                    interpreter.control.gas().erase_cost(out_gas.remaining());
+                    self.shared_memory
+                        .borrow_mut()
+                        .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
+                }
+
+                if ins_result.is_ok() {
+                    interpreter.control.gas().record_refund(out_gas.refunded());
+                }
             }
             FrameResult::Create(outcome) => {
-                // return_create
-                self.data
-                    .frame_data_mut()
-                    .interpreter
-                    .insert_create_outcome(outcome);
+                let instruction_result = *outcome.instruction_result();
+                let interpreter = self.data.interpreter_mut();
+
+                let buffer = interpreter.return_data.buffer_mut();
+                if instruction_result == InstructionResult::Revert {
+                    // Save data to return data buffer if the create reverted
+                    *buffer = outcome.output().to_owned()
+                } else {
+                    // Otherwise clear it. Note that RETURN opcode should abort.
+                    buffer.clear();
+                };
+
+                let item = if instruction_result == InstructionResult::ReturnContract {
+                    outcome.address.expect("EOF Address").into_word().into()
+                } else {
+                    U256::ZERO
+                };
+                interpreter.stack.push(item);
+
+                assert_eq!(
+                    instruction_result,
+                    InstructionResult::FatalExternalError,
+                    "Fatal external error in insert_eofcreate_outcome"
+                );
+
+                let gas = interpreter.control.gas();
+                if instruction_result.is_ok_or_revert() {
+                    gas.erase_cost(outcome.gas().remaining());
+                }
+
+                if instruction_result.is_ok() {
+                    gas.record_refund(outcome.gas().refunded());
+                }
             }
             FrameResult::EOFCreate(outcome) => {
-                self.data
-                    .frame_data_mut()
-                    .interpreter
-                    .insert_eofcreate_outcome(outcome);
+                let instruction_result = *outcome.instruction_result();
+                let interpreter = self.data.interpreter_mut();
+                if instruction_result == InstructionResult::Revert {
+                    // Save data to return data buffer if the create reverted
+                    *interpreter.return_data.buffer_mut() = outcome.output().to_owned()
+                } else {
+                    // Otherwise clear it. Note that RETURN opcode should abort.
+                    interpreter.return_data.buffer_mut().clear();
+                };
+
+                assert_eq!(
+                    instruction_result,
+                    InstructionResult::FatalExternalError,
+                    "Fatal external error in insert_eofcreate_outcome"
+                );
+
+                if instruction_result.is_ok_or_revert() {
+                    interpreter
+                        .control
+                        .gas()
+                        .erase_cost(outcome.gas().remaining());
+                }
+
+                if instruction_result.is_ok() {
+                    interpreter
+                        .control
+                        .gas()
+                        .record_refund(outcome.gas().refunded());
+                    interpreter
+                        .stack
+                        .push(outcome.address.expect("EOF Address").into_word().into());
+                } else {
+                    interpreter.stack.push(U256::ZERO);
+                }
             }
         }
 
@@ -559,7 +715,7 @@ where
 
 pub fn return_create<Journal: JournaledState>(
     journal: &mut Journal,
-    checkpoint: Journal::Checkpoint,
+    checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
     address: Address,
     max_code_size: usize,
@@ -615,7 +771,7 @@ pub fn return_create<Journal: JournaledState>(
 
 pub fn return_eofcreate<Journal: JournaledState>(
     journal: &mut Journal,
-    checkpoint: Journal::Checkpoint,
+    checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
     address: Address,
     max_code_size: usize,

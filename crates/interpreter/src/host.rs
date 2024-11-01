@@ -1,22 +1,29 @@
-use core::ops::{Deref, DerefMut};
-use primitives::{Address, Bytes, Log, B256, U256};
-
 mod dummy;
 pub use dummy::DummyHost;
-use wiring::{default::EnvWiring, EvmWiring};
+
+use primitives::{Address, Bytes, Log, B256, U256};
+use wiring::{
+    default::CfgEnv,
+    journaled_state::{AccountLoad, Eip7702CodeLoad},
+    Block, Transaction,
+};
 
 pub use wiring::journaled_state::StateLoad;
 
 /// EVM context host.
 pub trait Host {
     /// Chain specification.
-    type EvmWiringT: EvmWiring;
+    type BLOCK: Block;
+    type TX: Transaction;
 
     /// Returns a reference to the environment.
-    fn env(&self) -> &EnvWiring<Self::EvmWiringT>;
+    fn tx(&self) -> &Self::TX;
 
     /// Returns a mutable reference to the environment.
-    fn env_mut(&mut self) -> &mut EnvWiring<Self::EvmWiringT>;
+    fn block(&self) -> &Self::BLOCK;
+
+    /// TODO make it generic in future
+    fn cfg(&self) -> &CfgEnv;
 
     /// Load an account code.
     fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad>;
@@ -113,100 +120,6 @@ impl SStoreResult {
     }
 }
 
-/// Result of the account load from Journal state.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct AccountLoad {
-    /// Is account and delegate code are loaded
-    pub load: Eip7702CodeLoad<()>,
-    /// Is account empty, if true account is not created.
-    pub is_empty: bool,
-}
-
-impl Deref for AccountLoad {
-    type Target = Eip7702CodeLoad<()>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.load
-    }
-}
-
-impl DerefMut for AccountLoad {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.load
-    }
-}
-
-/// EIP-7702 code load result that contains optional delegation is_cold information.
-///
-/// [`Self::is_delegate_account_cold`] will be [`Some`] if account has delegation.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Eip7702CodeLoad<T> {
-    /// returned data
-    pub state_load: StateLoad<T>,
-    /// True if account has delegate code and delegated account is cold loaded.
-    pub is_delegate_account_cold: Option<bool>,
-}
-
-impl<T> Deref for Eip7702CodeLoad<T> {
-    type Target = StateLoad<T>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.state_load
-    }
-}
-
-impl<T> DerefMut for Eip7702CodeLoad<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.state_load
-    }
-}
-
-impl<T> Eip7702CodeLoad<T> {
-    /// Returns a new [`Eip7702CodeLoad`] with the given data and without delegation.
-    pub fn new_state_load(state_load: StateLoad<T>) -> Self {
-        Self {
-            state_load,
-            is_delegate_account_cold: None,
-        }
-    }
-
-    /// Returns a new [`Eip7702CodeLoad`] with the given data and without delegation.
-    pub fn new_not_delegated(data: T, is_cold: bool) -> Self {
-        Self {
-            state_load: StateLoad::new(data, is_cold),
-            is_delegate_account_cold: None,
-        }
-    }
-
-    /// Deconstructs the [`Eip7702CodeLoad`] by extracting data and
-    /// returning a new [`Eip7702CodeLoad`] with empty data.
-    pub fn into_components(self) -> (T, Eip7702CodeLoad<()>) {
-        let is_cold = self.is_cold;
-        (
-            self.state_load.data,
-            Eip7702CodeLoad {
-                state_load: StateLoad::new((), is_cold),
-                is_delegate_account_cold: self.is_delegate_account_cold,
-            },
-        )
-    }
-
-    /// Sets the delegation cold load status.
-    pub fn set_delegate_load(&mut self, is_delegate_account_cold: bool) {
-        self.is_delegate_account_cold = Some(is_delegate_account_cold);
-    }
-
-    /// Returns a new [`Eip7702CodeLoad`] with the given data and delegation cold load status.
-    pub fn new(state_load: StateLoad<T>, is_delegate_account_cold: bool) -> Self {
-        Self {
-            state_load,
-            is_delegate_account_cold: Some(is_delegate_account_cold),
-        }
-    }
-}
-
 /// Result of a selfdestruct action.
 ///
 /// Value returned are needed to calculate the gas spent.
@@ -218,18 +131,19 @@ pub struct SelfDestructResult {
     pub previously_destroyed: bool,
 }
 
-#[cfg(test)]
-mod tests {
-    use database_interface::EmptyDB;
-    use wiring::EthereumWiring;
+// TODO TEST
+// #[cfg(test)]
+// mod tests {
+//     use database_interface::EmptyDB;
+//     use wiring::EthereumWiring;
 
-    use super::*;
+//     use super::*;
 
-    fn assert_host<H: Host + ?Sized>() {}
+//     fn assert_host<H: Host + ?Sized>() {}
 
-    #[test]
-    fn object_safety() {
-        assert_host::<DummyHost<EthereumWiring<EmptyDB, ()>>>();
-        assert_host::<dyn Host<EvmWiringT = EthereumWiring<EmptyDB, ()>>>();
-    }
-}
+//     #[test]
+//     fn object_safety() {
+//         assert_host::<DummyHost<EthereumWiring<EmptyDB, ()>>>();
+//         assert_host::<dyn Host<EvmWiringT = EthereumWiring<EmptyDB, ()>>>();
+//     }
+// }

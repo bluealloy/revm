@@ -22,7 +22,7 @@ pub fn keccak256<WIRE: InterpreterWire, H: Host + ?Sized>(
     } else {
         let from = as_usize_or_fail!(interpreter, offset);
         resize_memory!(interpreter, from, len);
-        primitives::keccak256(interpreter.memory.slice_len(from, len))
+        primitives::keccak256(interpreter.memory.slice_len(from, len).as_ref())
     };
     push!(interpreter, hash.into());
 }
@@ -215,7 +215,10 @@ pub fn gas<WIRE: InterpreterWire, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(interpreter.gas.remaining()));
+    push!(
+        interpreter,
+        U256::from(interpreter.control.gas().remaining())
+    );
 }
 
 // common logic for copying data from a source buffer to the EVM's memory

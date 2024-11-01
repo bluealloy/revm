@@ -20,13 +20,13 @@ pub type EnvWiring<EvmWiringT> =
 #[derive(Clone, Debug, Default)]
 /// EVM environment configuration.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Env<BlockT: Block, TxT: Transaction> {
+pub struct Env<BLOCK, TX> {
     /// Configuration of the EVM itself.
     pub cfg: CfgEnv,
     /// Configuration of the block the transaction is in.
-    pub block: BlockT,
+    pub block: BLOCK,
     /// Configuration of the transaction that is being executed.
-    pub tx: TxT,
+    pub tx: TX,
 }
 
 impl<BlockT: Block, TxT: Transaction> Env<BlockT, TxT> {

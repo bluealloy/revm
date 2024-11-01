@@ -1,5 +1,6 @@
 use crate::Inspector;
 use core::cell::RefCell;
+use core::{rc::Rc, sync::Arc, vec::Vec};
 use revm::{
     bytecode::opcode,
     handler::{register::EvmHandler, ExecutionWire},
@@ -7,7 +8,6 @@ use revm::{
     wiring::result::EVMResultGeneric,
     Context, EvmWiring, FrameOrResult, FrameResult, JournalEntry,
 };
-use std::{rc::Rc, sync::Arc, vec::Vec};
 
 /// Provides access to an `Inspector` instance.
 pub trait GetInspector<EvmWiringT: EvmWiring> {

@@ -16,7 +16,7 @@ pub fn chainid<WIRE: InterpreterWire, H: Host + ?Sized>(
 ) {
     check!(interpreter, ISTANBUL);
     gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(host.env().cfg.chain_id));
+    push!(interpreter, U256::from(host.cfg().chain_id));
 }
 
 pub fn coinbase<WIRE: InterpreterWire, H: Host + ?Sized>(
@@ -24,10 +24,7 @@ pub fn coinbase<WIRE: InterpreterWire, H: Host + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(
-        interpreter,
-        host.env().block.beneficiary().into_word().into()
-    );
+    push!(interpreter, host.block().beneficiary().into_word().into());
 }
 
 pub fn timestamp<WIRE: InterpreterWire, H: Host + ?Sized>(
@@ -35,7 +32,7 @@ pub fn timestamp<WIRE: InterpreterWire, H: Host + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, *host.env().block.timestamp());
+    push!(interpreter, *host.block().timestamp());
 }
 
 pub fn block_number<WIRE: InterpreterWire, H: Host + ?Sized>(
@@ -43,7 +40,7 @@ pub fn block_number<WIRE: InterpreterWire, H: Host + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, *host.env().block.number());
+    push!(interpreter, *host.block().number());
 }
 
 pub fn difficulty<WIRE: InterpreterWire, H: Host + ?Sized>(
@@ -55,10 +52,10 @@ pub fn difficulty<WIRE: InterpreterWire, H: Host + ?Sized>(
         // Unwrap is safe as this fields is checked in validation handler.
         push!(
             interpreter,
-            (*host.env().block.prevrandao().unwrap()).into_u256()
+            (*host.block().prevrandao().unwrap()).into_u256()
         );
     } else {
-        push!(interpreter, *host.env().block.difficulty());
+        push!(interpreter, *host.block().difficulty());
     }
 }
 
@@ -67,7 +64,7 @@ pub fn gaslimit<WIRE: InterpreterWire, H: Host + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, *host.env().block.gas_limit());
+    push!(interpreter, *host.block().gas_limit());
 }
 
 /// EIP-3198: BASEFEE opcode
@@ -77,7 +74,7 @@ pub fn basefee<WIRE: InterpreterWire, H: Host + ?Sized>(
 ) {
     check!(interpreter, LONDON);
     gas!(interpreter, gas::BASE);
-    push!(interpreter, *host.env().block.basefee());
+    push!(interpreter, *host.block().basefee());
 }
 
 /// EIP-7516: BLOBBASEFEE opcode
@@ -89,6 +86,6 @@ pub fn blob_basefee<WIRE: InterpreterWire, H: Host + ?Sized>(
     gas!(interpreter, gas::BASE);
     push!(
         interpreter,
-        U256::from(host.env().block.blob_gasprice().unwrap_or_default())
+        U256::from(host.block().blob_gasprice().unwrap_or_default())
     );
 }

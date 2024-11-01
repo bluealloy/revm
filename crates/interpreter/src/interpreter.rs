@@ -11,28 +11,20 @@ mod stack;
 mod subroutine_stack;
 
 use crate::{interpreter_wiring::*, Gas, Host, InstructionResult, InterpreterAction};
+use bytecode::Bytecode;
 pub use contract::Contract;
+use core::cell::RefCell;
 pub use ext_bytecode::ExtBytecode;
-use input::InputsImpl;
+pub use input::InputsImpl;
 use loop_control::LoopControl as LoopControlImpl;
 use primitives::Bytes;
 use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, SharedMemory, EMPTY_SHARED_MEMORY};
+use specification::hardfork::SpecId;
 pub use stack::{Stack, STACK_LIMIT};
+use std::rc::Rc;
 use subroutine_stack::SubRoutineImpl;
-
-impl<EXT> InterpreterWire for EthInterpreter<EXT> {
-    type Stack = Stack;
-    type Memory = SharedMemory;
-    type Bytecode = ExtBytecode;
-    type ReturnData = ReturnDataImpl;
-    type Input = InputsImpl;
-    type SubRoutineStack = SubRoutineImpl;
-    type Control = LoopControlImpl;
-    type RuntimeFlag = RuntimeFlags;
-    type Extend = EXT;
-}
 
 #[derive(Debug, Clone)]
 pub struct NewInterpreter<WIRE: InterpreterWire> {
@@ -45,12 +37,53 @@ pub struct NewInterpreter<WIRE: InterpreterWire> {
     pub control: WIRE::Control,
     pub runtime_flag: WIRE::RuntimeFlag,
     pub extend: WIRE::Extend,
-    // TODO make a trait for gas
-    pub gas: Gas,
+}
+
+impl<EXT: Default> NewInterpreter<EthInterpreter<EXT>> {
+    /// Create new interpreter
+    pub fn new(
+        memory: Rc<RefCell<SharedMemory>>,
+        bytecode: Bytecode,
+        inputs: InputsImpl,
+        is_static: bool,
+        is_eof_init: bool,
+        spec_id: SpecId,
+        gas_limit: u64,
+    ) -> Self {
+        let runtime_flag = RuntimeFlags {
+            spec_id,
+            is_static,
+            is_eof: bytecode.is_eof(),
+            is_eof_init,
+        };
+        Self {
+            bytecode: ExtBytecode::new(bytecode),
+            stack: Stack::new(),
+            return_data: ReturnDataImpl::default(),
+            memory,
+            input: inputs,
+            sub_routine: SubRoutineImpl::default(),
+            control: LoopControlImpl::new(gas_limit),
+            runtime_flag,
+            extend: EXT::default(),
+        }
+    }
 }
 
 pub struct EthInterpreter<EXT> {
     _phantom: core::marker::PhantomData<fn() -> EXT>,
+}
+
+impl<EXT> InterpreterWire for EthInterpreter<EXT> {
+    type Stack = Stack;
+    type Memory = Rc<RefCell<SharedMemory>>;
+    type Bytecode = ExtBytecode;
+    type ReturnData = ReturnDataImpl;
+    type Input = InputsImpl;
+    type SubRoutineStack = SubRoutineImpl;
+    type Control = LoopControlImpl;
+    type RuntimeFlag = RuntimeFlags;
+    type Extend = EXT;
 }
 
 impl<IW: InterpreterWire> NewInterpreter<IW> {
@@ -102,7 +135,7 @@ impl<IW: InterpreterWire> NewInterpreter<IW> {
                 result: self.control.instruction_result(),
                 // return empty bytecode
                 output: Bytes::new(),
-                gas: self.gas,
+                gas: self.control.gas().clone(),
             },
         }
     }

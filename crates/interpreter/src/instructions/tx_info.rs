@@ -13,9 +13,8 @@ pub fn gasprice<WIRE: InterpreterWire, H: Host + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    let env = host.env();
-    let basefee = *env.block.basefee();
-    push!(interpreter, env.tx.effective_gas_price(basefee));
+    let basefee = *host.block().basefee();
+    push!(interpreter, host.tx().effective_gas_price(basefee));
     push!(interpreter, U256::ZERO)
 }
 
@@ -26,7 +25,7 @@ pub fn origin<WIRE: InterpreterWire, H: Host + ?Sized>(
     gas!(interpreter, gas::BASE);
     push!(
         interpreter,
-        host.env().tx.common_fields().caller().into_word().into()
+        host.tx().common_fields().caller().into_word().into()
     );
 }
 
@@ -39,7 +38,7 @@ pub fn blob_hash<WIRE: InterpreterWire, H: Host + ?Sized>(
     gas!(interpreter, gas::VERYLOW);
     popn_top!([], index, interpreter);
     let i = as_usize_saturated!(index);
-    let tx = &host.env().tx;
+    let tx = &host.tx();
     *index = if tx.tx_type().into() == TransactionType::Eip4844 {
         tx.eip4844()
             .blob_versioned_hashes()

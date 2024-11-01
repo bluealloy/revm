@@ -1,17 +1,17 @@
 use bytecode::Bytecode;
 use database_interface::Database;
-use interpreter::{
-    AccountLoad, Eip7702CodeLoad, InstructionResult, SStoreResult, SelfDestructResult, StateLoad,
-};
+use interpreter::{InstructionResult, SStoreResult, SelfDestructResult, StateLoad};
 use primitives::{
     hash_map::Entry, Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use specification::hardfork::{SpecId, SpecId::*};
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
-use wiring::journaled_state::JournaledState as JournaledStateTrait;
+use wiring::journaled_state::{
+    AccountLoad, Eip7702CodeLoad, JournalCheckpoint, JournaledState as JournaledStateTrait,
+};
 
 use core::mem;
-use std::vec::Vec;
+use std::{vec, vec::Vec};
 
 /// A journal of state changes internal to the EVM.
 ///
@@ -54,7 +54,6 @@ pub struct JournaledState<DB> {
 
 impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
     type Database = DB;
-    type Checkpoint = JournalCheckpoint;
     // TODO make a struck here.
     type FinalOutput = (EvmState, Vec<Log>);
 
@@ -104,6 +103,10 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
         self.load_code(address)
     }
 
+    fn load_account_delegated(&mut self, address: Address) -> Result<AccountLoad, DB::Error> {
+        self.load_account_delegated(address)
+    }
+
     fn checkpoint(&mut self) -> JournalCheckpoint {
         self.checkpoint()
     }
@@ -126,6 +129,18 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
         // TODO WIRING Clear it up
         //let db = self.database;
         //*self = Self::new(spec, db, HashSet::default());
+    }
+
+    fn create_account_checkpoint(
+        &mut self,
+        caller: Address,
+        address: Address,
+        balance: U256,
+        spec_id: SpecId,
+    ) -> Option<JournalCheckpoint> {
+        // ignore error.
+        self.create_account_checkpoint(caller, address, balance, spec_id)
+            .ok()
     }
 
     fn finalize(&mut self) -> Result<Self::FinalOutput, <Self::Database as Database>::Error> {
@@ -953,12 +968,4 @@ pub enum JournalEntry {
     /// Action: Account code changed
     /// Revert: Revert to previous bytecode.
     CodeChange { address: Address },
-}
-
-/// SubRoutine checkpoint that will help us to go back from this
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct JournalCheckpoint {
-    log_i: usize,
-    journal_i: usize,
 }

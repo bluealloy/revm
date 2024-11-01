@@ -1,35 +1,40 @@
 use crate::{Host, SStoreResult, SelfDestructResult};
-use derive_where::derive_where;
 use primitives::{hash_map::Entry, Address, Bytes, HashMap, Log, B256, KECCAK_EMPTY, U256};
 use std::vec::Vec;
 use wiring::{
-    default::{Env, EnvWiring},
-    EvmWiring,
+    default::{CfgEnv, Env},
+    Block, Transaction,
 };
 
 use super::{AccountLoad, Eip7702CodeLoad, StateLoad};
 
 /// A dummy [Host] implementation.
-#[derive_where(Clone, Debug, Default; EvmWiringT::Block, EvmWiringT::Transaction)]
-pub struct DummyHost<EvmWiringT>
+#[derive(Clone, Debug, Default)]
+pub struct DummyHost<BLOCK, TX>
 where
-    EvmWiringT: EvmWiring,
+    BLOCK: Block,
+    TX: Transaction,
 {
-    pub env: Env<EvmWiringT::Block, EvmWiringT::Transaction>,
+    pub tx: TX,
+    pub block: BLOCK,
+    pub cfg: CfgEnv,
     pub storage: HashMap<U256, U256>,
     pub transient_storage: HashMap<U256, U256>,
     pub log: Vec<Log>,
 }
 
-impl<EvmWiringT> DummyHost<EvmWiringT>
+impl<BLOCK, TX> DummyHost<BLOCK, TX>
 where
-    EvmWiringT: EvmWiring,
+    BLOCK: Block,
+    TX: Transaction,
 {
     /// Create a new dummy host with the given [`Env`].
     #[inline]
-    pub fn new(env: EnvWiring<EvmWiringT>) -> Self {
+    pub fn new(tx: TX, block: BLOCK) -> Self {
         Self {
-            env,
+            tx,
+            block,
+            cfg: CfgEnv::default(),
             storage: HashMap::default(),
             transient_storage: HashMap::default(),
             log: Vec::new(),
@@ -44,20 +49,23 @@ where
     }
 }
 
-impl<EvmWiringT> Host for DummyHost<EvmWiringT>
-where
-    EvmWiringT: EvmWiring,
-{
-    type EvmWiringT = EvmWiringT;
+impl<TX: Transaction, BLOCK: Block> Host for DummyHost<BLOCK, TX> {
+    type TX = TX;
+    type BLOCK = BLOCK;
 
     #[inline]
-    fn env(&self) -> &EnvWiring<Self::EvmWiringT> {
-        &self.env
+    fn tx(&self) -> &Self::TX {
+        &self.tx
     }
 
     #[inline]
-    fn env_mut(&mut self) -> &mut EnvWiring<Self::EvmWiringT> {
-        &mut self.env
+    fn block(&self) -> &Self::BLOCK {
+        &self.block
+    }
+
+    #[inline]
+    fn cfg(&self) -> &CfgEnv {
+        &self.cfg
     }
 
     #[inline]

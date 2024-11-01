@@ -1,4 +1,3 @@
-use crate::JournalCheckpoint;
 use core::ops::Range;
 use interpreter::{
     CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult, InterpreterWire,
@@ -6,38 +5,36 @@ use interpreter::{
 };
 use primitives::Address;
 use std::boxed::Box;
-use wiring::result::Output;
+use wiring::{journaled_state::JournalCheckpoint, result::Output};
 
 /// Call CallStackFrame.
 //#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+//#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallFrame<W: InterpreterWire> {
     /// Call frame has return memory range where output will be stored.
     pub return_memory_range: Range<usize>,
-    /// Frame data.
-    pub frame_data: FrameData<W>,
+    /// Journal checkpoint.
+    pub checkpoint: JournalCheckpoint,
+    /// Interpreter.
+    pub interpreter: NewInterpreter<W>,
 }
 
 //#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+//#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateFrame<W: InterpreterWire> {
     /// Create frame has a created address.
     pub created_address: Address,
-    /// Frame data.
-    pub frame_data: FrameData<W>,
+    /// Journal checkpoint.
+    pub checkpoint: JournalCheckpoint,
+    /// Interpreter.
+    pub interpreter: NewInterpreter<W>,
 }
 
 /// Eof Create Frame.
 //#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+//#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EOFCreateFrame<W: InterpreterWire> {
     pub created_address: Address,
-    pub frame_data: FrameData<W>,
-}
-
-//#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct FrameData<W: InterpreterWire> {
     /// Journal checkpoint.
     pub checkpoint: JournalCheckpoint,
     /// Interpreter.
@@ -46,8 +43,8 @@ pub struct FrameData<W: InterpreterWire> {
 
 /// Call stack frame.
 //#[derive(Debug)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum Frame<W: InterpreterWire> {
+//#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum FrameData<W: InterpreterWire> {
     Call(Box<CallFrame<W>>),
     Create(Box<CreateFrame<W>>),
     EOFCreate(Box<EOFCreateFrame<W>>),
@@ -133,28 +130,16 @@ impl FrameResult {
     }
 }
 
-// /// Contains either a frame or a result.
-// #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-// #[derive(Debug)]
-// pub enum FrameOrResult {
-//     /// Boxed call or create frame.
-//     Frame(Frame),
-//     /// Call or create result.
-//     Result(FrameResult),
-// }
-
-impl<W: InterpreterWire> Frame<W> {
+impl<W: InterpreterWire> FrameData<W> {
     pub fn new_create(
         created_address: Address,
         checkpoint: JournalCheckpoint,
         interpreter: NewInterpreter<W>,
     ) -> Self {
-        Frame::Create(Box::new(CreateFrame {
+        Self::Create(Box::new(CreateFrame {
             created_address,
-            frame_data: FrameData {
-                checkpoint,
-                interpreter,
-            },
+            checkpoint,
+            interpreter,
         }))
     }
 
@@ -163,68 +148,56 @@ impl<W: InterpreterWire> Frame<W> {
         checkpoint: JournalCheckpoint,
         interpreter: NewInterpreter<W>,
     ) -> Self {
-        Frame::Call(Box::new(CallFrame {
+        Self::Call(Box::new(CallFrame {
             return_memory_range,
-            frame_data: FrameData {
-                checkpoint,
-                interpreter,
-            },
+            checkpoint,
+            interpreter,
         }))
     }
 
     /// Returns true if frame is call frame.
     pub fn is_call(&self) -> bool {
-        matches!(self, Frame::Call { .. })
+        matches!(self, Self::Call { .. })
     }
 
     /// Returns true if frame is create frame.
     pub fn is_create(&self) -> bool {
-        matches!(self, Frame::Create { .. })
+        matches!(self, Self::Create { .. })
     }
 
     /// Returns created address if frame is create otherwise returns None.
     pub fn created_address(&self) -> Option<Address> {
         match self {
-            Frame::Create(create_frame) => Some(create_frame.created_address),
+            Self::Create(create_frame) => Some(create_frame.created_address),
             _ => None,
         }
     }
 
     /// Takes frame and returns frame data.
-    pub fn into_frame_data(self) -> FrameData<W> {
+    pub fn into_interpreter(self) -> NewInterpreter<W> {
         match self {
-            Frame::Call(call_frame) => call_frame.frame_data,
-            Frame::Create(create_frame) => create_frame.frame_data,
-            Frame::EOFCreate(eof_create_frame) => eof_create_frame.frame_data,
+            Self::Call(call_frame) => call_frame.interpreter,
+            Self::Create(create_frame) => create_frame.interpreter,
+            Self::EOFCreate(eof_create_frame) => eof_create_frame.interpreter,
         }
     }
 
     /// Returns reference to frame data.
-    pub fn frame_data(&self) -> &FrameData<W> {
+    pub fn interpreter(&self) -> &NewInterpreter<W> {
         match self {
-            Self::Call(call_frame) => &call_frame.frame_data,
-            Self::Create(create_frame) => &create_frame.frame_data,
-            Self::EOFCreate(eof_create_frame) => &eof_create_frame.frame_data,
+            Self::Call(call_frame) => &call_frame.interpreter,
+            Self::Create(create_frame) => &create_frame.interpreter,
+            Self::EOFCreate(eof_create_frame) => &eof_create_frame.interpreter,
         }
     }
 
     /// Returns mutable reference to frame data.
-    pub fn frame_data_mut(&mut self) -> &mut FrameData<W> {
-        match self {
-            Self::Call(call_frame) => &mut call_frame.frame_data,
-            Self::Create(create_frame) => &mut create_frame.frame_data,
-            Self::EOFCreate(eof_create_frame) => &mut eof_create_frame.frame_data,
-        }
-    }
-
-    /// Returns a reference to the interpreter.
-    pub fn interpreter(&self) -> &NewInterpreter<W> {
-        &self.frame_data().interpreter
-    }
-
-    /// Returns a mutable reference to the interpreter.
     pub fn interpreter_mut(&mut self) -> &mut NewInterpreter<W> {
-        &mut self.frame_data_mut().interpreter
+        match self {
+            Self::Call(call_frame) => &mut call_frame.interpreter,
+            Self::Create(create_frame) => &mut create_frame.interpreter,
+            Self::EOFCreate(eof_create_frame) => &mut eof_create_frame.interpreter,
+        }
     }
 }
 

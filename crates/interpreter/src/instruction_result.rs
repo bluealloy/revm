@@ -216,6 +216,11 @@ impl InstructionResult {
     }
 
     #[inline]
+    pub const fn is_ok_or_revert(self) -> bool {
+        matches!(self, crate::return_ok!() | crate::return_revert!())
+    }
+
+    #[inline]
     pub const fn is_continue(self) -> bool {
         matches!(self, InstructionResult::Continue)
     }

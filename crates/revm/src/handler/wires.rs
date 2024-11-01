@@ -1,6 +1,7 @@
 // Modules
 
-use interpreter::table::InstructionTables;
+use precompile::PrecompileResult;
+use primitives::{Address, Bytes};
 
 pub trait ValidationWire {
     type Context;
@@ -105,13 +106,12 @@ pub trait ExecutionWire {
     fn run(
         &self,
         context: &mut Self::Context,
-        instructions: &InstructionTables<'_, Self::Context>,
         frame: Self::Frame,
     ) -> Result<Self::ExecResult, Self::Error> {
         let mut frame_stack: Vec<<Self as ExecutionWire>::Frame> = vec![frame];
         loop {
             let frame = frame_stack.last_mut().unwrap();
-            let call_or_result = frame.run(/*instructions,*/ context)?;
+            let call_or_result = frame.run(context)?;
 
             let result = match call_or_result {
                 FrameOrResultGen::Frame(init) => match frame.init(init, context)? {
@@ -140,6 +140,20 @@ pub enum FrameOrResultGen<Frame, Result> {
     Result(Result),
 }
 
+pub trait PrecompileProvider {
+    type Context;
+
+    fn run(
+        &mut self,
+        ctx: &mut Self::Context,
+        address: &Address,
+        bytes: &Bytes,
+        gas_limit: u64,
+    ) -> Option<PrecompileResult>;
+
+    fn warm_addresses(&self) -> impl Iterator<Item = Address>;
+}
+
 /// Makes sense
 pub trait Frame: Sized {
     type Context;
@@ -155,7 +169,6 @@ pub trait Frame: Sized {
 
     fn run(
         &mut self,
-        //instructions: &InstructionTables<'_, Self::Context>,
         context: &mut Self::Context,
     ) -> Result<FrameOrResultGen<Self::FrameInit, Self::FrameResult>, Self::Error>;
 

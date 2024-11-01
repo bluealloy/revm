@@ -2,11 +2,11 @@ use crate::{
     gas,
     interpreter::NewInterpreter,
     interpreter_wiring::{InterpreterWire, LoopControl, MemoryTrait, RuntimeFlag, StackTrait},
-    AccountLoad,
 };
 use core::{cmp::min, ops::Range};
 use primitives::{Bytes, U256};
 use specification::hardfork::SpecId::*;
+use wiring::journaled_state::AccountLoad;
 
 #[inline]
 pub fn get_memory_input_and_out_ranges(
@@ -18,7 +18,7 @@ pub fn get_memory_input_and_out_ranges(
 
     let mut input = Bytes::new();
     if !in_range.is_empty() {
-        input = Bytes::copy_from_slice(interpreter.memory.slice(in_range));
+        input = Bytes::copy_from_slice(interpreter.memory.slice(in_range).as_ref());
     }
 
     let ret_range = resize_memory(interpreter, out_offset, out_len)?;
@@ -61,7 +61,10 @@ pub fn calc_call_gas(
     // EIP-150: Gas cost changes for IO-heavy operations
     let gas_limit = if interpreter.runtime_flag.spec_id().is_enabled_in(TANGERINE) {
         // take l64 part of gas_limit
-        min(interpreter.gas.remaining_63_of_64_parts(), local_gas_limit)
+        min(
+            interpreter.control.gas().remaining_63_of_64_parts(),
+            local_gas_limit,
+        )
     } else {
         local_gas_limit
     };
