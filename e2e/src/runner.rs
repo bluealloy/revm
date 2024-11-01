@@ -11,7 +11,7 @@ use fluentbase_genesis::{
 };
 use fluentbase_poseidon::poseidon_hash;
 use fluentbase_sdk::derive::derive_keccak256;
-use fluentbase_types::{Address, ExitCode};
+use fluentbase_types::{Address, ExitCode, PRECOMPILE_EVM};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use lazy_static::lazy_static;
@@ -487,7 +487,7 @@ pub fn execute_test_suite(
 
     let devnet_genesis = devnet_genesis_from_file();
     let (proxy_bytecode, proxy_bytecode_hash) = if ENABLE_EVM_PROXY_CONTRACT {
-        let proxy_bytecode = create_rwasm_proxy_bytecode();
+        let proxy_bytecode = create_rwasm_proxy_bytecode(PRECOMPILE_EVM);
         let code_hash = B256::from(poseidon_hash(proxy_bytecode.as_ref()));
         (proxy_bytecode, code_hash)
     } else {
