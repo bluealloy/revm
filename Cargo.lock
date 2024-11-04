@@ -103,6 +103,18 @@ checksum = "c15873ee28dfe5a1aeddd762483bc7f378b465ec49bdce8165c4c46b4f55cb0a"
 dependencies = [
  "alloy-primitives",
  "alloy-rlp",
+ "derive_more 1.0.0",
+ "serde",
+]
+
+[[package]]
+name = "alloy-eip7702"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69fb9fd842fdf10a524bbf2c4de6942ad869c1c8c3d128a1b09e67ed5f7cedbd"
+dependencies = [
+ "alloy-primitives",
+ "alloy-rlp",
  "arbitrary",
  "derive_more 1.0.0",
  "k256",
@@ -117,7 +129,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "769da342b6bcd945013925ef4c40763cc82f11e002c60702dba8b444bb60e5a7"
 dependencies = [
  "alloy-eip2930",
- "alloy-eip7702",
+ "alloy-eip7702 0.3.1",
  "alloy-primitives",
  "alloy-rlp",
  "alloy-serde",
@@ -190,9 +202,9 @@ dependencies = [
 
 [[package]]
 name = "alloy-primitives"
-version = "0.8.8"
+version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38f35429a652765189c1c5092870d8360ee7b7769b09b06d89ebaefd34676446"
+checksum = "8edae627382349b56cd6a7a2106f4fd69b243a9233e560c55c2e03cabb7e1d3c"
 dependencies = [
  "alloy-rlp",
  "arbitrary",
@@ -3240,7 +3252,7 @@ name = "revm-primitives"
 version = "13.0.0"
 dependencies = [
  "alloy-eip2930",
- "alloy-eip7702",
+ "alloy-eip7702 0.4.0",
  "alloy-primitives",
  "auto_impl",
  "bitflags 2.6.0",
