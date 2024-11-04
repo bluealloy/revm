@@ -808,6 +808,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling"
+version = "0.20.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f63b86c8a8826a49b8c21f08a2d07338eec8d900540f8630dc76284be802989"
+dependencies = [
+ "darling_core",
+ "darling_macro",
+]
+
+[[package]]
+name = "darling_core"
+version = "0.20.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95133861a8032aaea082871032f5815eb9e98cef03fa916ab4500513994df9e5"
+dependencies = [
+ "fnv",
+ "ident_case",
+ "proc-macro2",
+ "quote",
+ "strsim 0.11.1",
+ "syn 2.0.82",
+]
+
+[[package]]
+name = "darling_macro"
+version = "0.20.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d336a2a514f6ccccaa3e09b02d41d35330c07ddf03a62165fcec10bb561c7806"
+dependencies = [
+ "darling_core",
+ "quote",
+ "syn 2.0.82",
+]
+
+[[package]]
 name = "data-encoding"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -841,6 +876,28 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "derive-core"
+version = "0.0.0"
+dependencies = [
+ "bytes",
+ "convert_case",
+ "crypto-hashes",
+ "darling",
+ "fluentbase-codec",
+ "hex",
+ "paste",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "serde",
+ "syn 2.0.82",
+ "syn-solidity",
+ "thiserror",
+ "tracing",
 ]
 
 [[package]]
@@ -1233,6 +1290,7 @@ version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "byteorder",
+ "bytes",
  "casey",
  "fluentbase-codec-derive",
  "hashbrown 0.15.0",
@@ -1246,6 +1304,7 @@ version = "0.1.0"
 dependencies = [
  "convert_case",
  "crypto-hashes",
+ "proc-macro2",
  "quote",
  "serde",
  "syn 2.0.82",
@@ -1305,12 +1364,13 @@ name = "fluentbase-runtime"
 version = "0.1.0"
 dependencies = [
  "eth_trie",
+ "fluentbase-codec",
  "fluentbase-poseidon",
  "fluentbase-types",
  "halo2curves 0.6.1 (git+https://github.com/privacy-scaling-explorations/halo2curves?tag=v0.6.1)",
  "hashbrown 0.15.0",
  "k256",
- "keccak-hash 0.10.0",
+ "keccak-hash 0.11.0",
  "rwasm",
 ]
 
@@ -1332,7 +1392,10 @@ version = "0.1.0"
 dependencies = [
  "convert_case",
  "crypto-hashes",
+ "darling",
+ "derive-core",
  "hex",
+ "paste",
  "proc-macro-error",
  "proc-macro2",
  "quote",
@@ -1349,6 +1412,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-rlp",
  "byteorder",
+ "bytes",
  "fluentbase-codec",
  "hashbrown 0.15.0",
  "revm-primitives",
@@ -1790,6 +1854,12 @@ dependencies = [
  "tokio",
  "tokio-rustls",
 ]
+
+[[package]]
+name = "ident_case"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
 
 [[package]]
 name = "idna"
