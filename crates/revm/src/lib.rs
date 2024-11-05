@@ -5,6 +5,8 @@
 #[macro_use]
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
+extern crate core;
+extern crate core;
 
 // reexport dependencies
 pub use bytecode;
@@ -23,12 +25,14 @@ mod context;
 #[cfg(any(test, feature = "test-utils"))]
 pub mod test_utils;
 
-mod evm;
+pub mod evm;
 mod evm_wiring;
 mod frame;
 pub mod handler;
 mod journaled_state;
 
+pub mod ffi;
+mod new_fii;
 // Export items.
 
 pub use builder::EvmBuilder;

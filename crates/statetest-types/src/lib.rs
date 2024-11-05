@@ -8,7 +8,7 @@
 
 mod account_info;
 mod deserializer;
-mod env;
+pub mod env;
 mod spec;
 mod test;
 mod test_authorization;

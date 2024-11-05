@@ -21,28 +21,44 @@ rust_2018_idioms = "deny"
 [lints.rustdoc]
 all = "warn"
 
+[lib]
+crate-type = [
+    "staticlib", # Ensure it gets compiled as a (static) C library
+    "cdylib", # If you want a shared/dynamic C library (advanced)
+    "lib", # For `generate-headers` and other downstream rust dependents
+    # such as integration `tests/`, doctests, and `examples/`
+]
+
+
 [dependencies]
 # revm
 interpreter.workspace = true
 precompile.workspace = true
 wiring.workspace = true
 primitives.workspace = true
-database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
 bytecode.workspace = true
-database = { workspace = true, optional = true }
+database-interface = {workspace = true, features = ["asyncdb"]}
 transaction.workspace = true
+database.workspace = true
+alloy-provider = "0.4.2"
+alloy-eips = { version = "0.4.2" }
+alloy-transport-http = "0.4.2"
+reqwest = { version = "0.12" }
+safer-ffi = "0.1.10-rc4"
 
 # misc
 derive-where = { version = "1.2.7", default-features = false }
 dyn-clone = "1.0"
+
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
     "derive",
     "rc",
 ], optional = true }
+bytes = "1.7.1"
 
 [dev-dependencies]
 database.workspace = true
@@ -53,10 +69,10 @@ ethers-contract = { version = "2.0.14", default-features = false }
 anyhow = "1.0.89"
 criterion = "0.5"
 indicatif = "0.17"
-reqwest = { version = "0.12" }
 rstest = "0.22.0"
 
 alloy-provider = "0.4.2"
+
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
@@ -72,7 +88,7 @@ arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
 portable = ["wiring/portable"]
 
-test-utils = ["database"]
+test-utils = []
 
 dev = [
     "memory_limit",
