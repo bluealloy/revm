@@ -9,13 +9,17 @@ use context::{
 };
 // Exports.
 use mainnet::{EthExecution, EthFrame, EthPostExecution, EthPreExecution, EthValidation};
+use precompile::PrecompileErrors;
 use primitives::Log;
 use state::EvmState;
 pub use wires::*;
 
 // Includes.
 
-use interpreter::{interpreter::EthInterpreter, Host};
+use interpreter::{
+    interpreter::{EthInstructionProvider, EthInterpreter},
+    Host,
+};
 //use register::{EvmHandler, HandleRegisters};
 use std::vec::Vec;
 use wiring::{
@@ -66,7 +70,10 @@ where
         + ErrorGetter<Error = ERROR>
         + JournalStateGetter<Journal: JournaledState<FinalOutput = (EvmState, Vec<Log>)>>
         + Host,
-    ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>,
+    ERROR: From<InvalidTransaction>
+        + From<InvalidHeader>
+        + From<JournalStateGetterDBError<CTX>>
+        + From<PrecompileErrors>,
 {
     type Validation = <EthHand<CTX, ERROR> as Handler>::Validation;
     type PreExecution = <EthHand<CTX, ERROR> as Handler>::PreExecution;
@@ -100,7 +107,10 @@ where
         + ErrorGetter<Error = ERROR>
         + JournalStateGetter<Journal: JournaledState<FinalOutput = (EvmState, Vec<Log>)>>
         + Host,
-    ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>,
+    ERROR: From<InvalidTransaction>
+        + From<InvalidHeader>
+        + From<JournalStateGetterDBError<CTX>>
+        + From<PrecompileErrors>,
     VAL: ValidationWire,
     PREEXEC: PreExecutionWire,
     EXEC: ExecutionWire,
@@ -145,7 +155,7 @@ pub struct EEVM<ERROR, CTX = Context> {
 
 pub type EthContext<DB> = Context<BlockEnv, TxEnv, DB, ()>;
 
-pub type NEW_PRECOMPILE<DB, ERROR> = GEVM<
+pub type NEW_PRECOMPILE<DB, ERROR, PRECOMPILE> = GEVM<
     ERROR,
     EthContext<DB>,
     EthHand<
@@ -153,7 +163,17 @@ pub type NEW_PRECOMPILE<DB, ERROR> = GEVM<
         ERROR,
         EthValidation<EthContext<DB>, ERROR>,
         EthPreExecution<EthContext<DB>, ERROR>,
-        EthExecution<EthContext<DB>, ERROR>,
+        EthExecution<
+            EthContext<DB>,
+            ERROR,
+            EthFrame<
+                EthContext<DB>,
+                ERROR,
+                EthInterpreter<()>,
+                PRECOMPILE,
+                EthInstructionProvider<EthInterpreter<()>, EthContext<DB>>,
+            >,
+        >,
     >,
 >;
 
@@ -171,7 +191,10 @@ where
                 Database = <CTX as DatabaseGetter>::Database,
             >,
         > + Host,
-    ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>,
+    ERROR: From<InvalidTransaction>
+        + From<InvalidHeader>
+        + From<JournalStateGetterDBError<CTX>>
+        + From<PrecompileErrors>,
 {
     // TODO
     // transact_commit (needs DatabaseCommit requirement)
@@ -247,11 +270,6 @@ where
 
         // load access list and beneficiary if needed.
         pre_exec.load_accounts(ctx)?;
-
-        // load precompiles
-        let precompiles = pre_exec.load_precompiles();
-        // TODO SET PRECOMPILE
-        //ctx.evm.set_precompiles(precompiles);
 
         // deduce caller balance with its limit.
         pre_exec.deduct_caller(ctx)?;

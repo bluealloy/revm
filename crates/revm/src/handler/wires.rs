@@ -1,5 +1,8 @@
 use context::CfgGetter;
-use precompile::{PrecompileResult, PrecompileSpecId, Precompiles};
+use precompile::{
+    PrecompileError, PrecompileErrors, PrecompileOutput, PrecompileResult, PrecompileSpecId,
+    Precompiles,
+};
 use primitives::{Address, Bytes};
 use wiring::Cfg;
 
@@ -19,10 +22,7 @@ pub trait ValidationWire {
 
 pub trait PreExecutionWire {
     type Context;
-    type Precompiles;
     type Error;
-
-    fn load_precompiles(&self) -> Self::Precompiles;
 
     fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error>;
 
@@ -159,6 +159,7 @@ pub trait InstructionProvider: Default {
 
 pub trait PrecompileProvider: Clone {
     type Context;
+    type Error;
 
     fn new(ctx: &mut Self::Context) -> Self;
 
@@ -168,17 +169,17 @@ pub trait PrecompileProvider: Clone {
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-    ) -> Option<PrecompileResult>;
+    ) -> Option<Result<PrecompileOutput, Self::Error>>;
 
     fn warm_addresses(&self) -> impl Iterator<Item = Address>;
 }
 
-pub struct EthPrecompileProvider<CTX> {
+pub struct EthPrecompileProvider<CTX, ERROR> {
     precompiles: &'static Precompiles,
-    _phantom: std::marker::PhantomData<fn() -> CTX>,
+    _phantom: std::marker::PhantomData<(CTX, ERROR)>,
 }
 
-impl<CTX> Clone for EthPrecompileProvider<CTX> {
+impl<CTX, ERROR> Clone for EthPrecompileProvider<CTX, ERROR> {
     fn clone(&self) -> Self {
         Self {
             precompiles: self.precompiles,
@@ -187,11 +188,13 @@ impl<CTX> Clone for EthPrecompileProvider<CTX> {
     }
 }
 
-impl<CTX> PrecompileProvider for EthPrecompileProvider<CTX>
+impl<CTX, ERROR> PrecompileProvider for EthPrecompileProvider<CTX, ERROR>
 where
     CTX: CfgGetter,
+    ERROR: From<PrecompileErrors>,
 {
     type Context = CTX;
+    type Error = ERROR;
 
     fn new(ctx: &mut Self::Context) -> Self {
         let spec = ctx.cfg().spec().into();
@@ -207,8 +210,8 @@ where
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-    ) -> Option<PrecompileResult> {
-        Some((self.precompiles.get(address)?)(bytes, gas_limit))
+    ) -> Option<Result<PrecompileOutput, Self::Error>> {
+        Some((self.precompiles.get(address)?)(bytes, gas_limit).map_err(Into::into))
     }
 
     fn warm_addresses(&self) -> impl Iterator<Item = Address> {

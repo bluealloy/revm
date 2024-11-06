@@ -3,7 +3,7 @@ pub trait Cfg {
 
     fn chain_id(&self) -> u64;
 
-    // TODO Make SpecId a associated type but for faster dev we use impl Into.
+    // TODO Make SpecId a associated type but for faster development we use impl Into.
     fn spec(&self) -> impl Into<SpecId>;
 
     fn max_code_size(&self) -> usize;
@@ -47,10 +47,6 @@ pub struct CfgEnv {
     pub chain_id: u64,
     /// Specification for EVM represent the hardfork.
     pub spec: SpecId,
-    /// KZG Settings for point evaluation precompile. By default, this is loaded from the ethereum mainnet trusted setup.
-    #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
-    #[cfg_attr(feature = "serde", serde(skip))]
-    pub kzg_settings: crate::kzg::EnvKzgSettings,
     /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
     /// By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
@@ -170,8 +166,6 @@ impl Default for CfgEnv {
             limit_contract_code_size: None,
             spec: SpecId::PRAGUE,
             disable_nonce_check: false,
-            #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
-            kzg_settings: crate::kzg::EnvKzgSettings::Default,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]

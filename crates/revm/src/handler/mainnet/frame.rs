@@ -18,7 +18,7 @@ use interpreter::{
     InterpreterWire, MemoryGetter, NewFrameAction, NewInterpreter, SharedMemory,
     EMPTY_SHARED_MEMORY,
 };
-use precompile::Precompiles;
+use precompile::{PrecompileErrors, Precompiles};
 use primitives::{keccak256, Address, Bytes, B256, U256};
 use specification::{
     constants::CALL_STACK_LIMIT,
@@ -126,8 +126,8 @@ where
         + BlockGetter
         + JournalStateGetter
         + CfgGetter,
-    //IW = ,
-    ERROR: From<JournalStateGetterDBError<CTX>>,
+    PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR>,
+    ERROR: From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>,
 {
     /// Make call frame
     #[inline]
@@ -187,72 +187,83 @@ where
             _ => {}
         };
         // TODO
-        // if let Some(result) = ctx.call_precompile(&inputs.bytecode_address, &inputs.input, gas)? {
-        //     if result.result.is_ok() {
-        //         self.journaled_state.checkpoint_commit();
-        //     } else {
-        //         self.journaled_state.checkpoint_revert(checkpoint);
-        //     }
-        //     Ok(FrameOrResult::new_call_result(
-        //         result,
-        //         inputs.return_memory_offset.clone(),
-        //     ))
-        // } else {
-        let account = ctx.journal().load_account_code(inputs.bytecode_address)?;
+        if let Some(result) = precompile.run(
+            ctx,
+            &inputs.bytecode_address,
+            &inputs.input,
+            inputs.gas_limit,
+        ) {
+            let result = result?;
+            if result.result.is_ok() {
+                ctx.journal().checkpoint_commit();
+            } else {
+                ctx.journal().checkpoint_revert(checkpoint);
+            }
+            Ok(FrameOrResultGen::Result(FrameResult::Call(CallOutcome {
+                result: InterpreterResult {
+                    result: result,
+                    gas,
+                    output: Bytes::new(),
+                },
+                memory_offset,
+            })))
+        } else {
+            let account = ctx.journal().load_account_code(inputs.bytecode_address)?;
 
-        let code_hash = account.info.code_hash();
-        let mut bytecode = account.info.code.clone().unwrap_or_default();
+            let code_hash = account.info.code_hash();
+            let mut bytecode = account.info.code.clone().unwrap_or_default();
 
-        // ExtDelegateCall is not allowed to call non-EOF contracts.
-        if inputs.scheme.is_ext_delegate_call()
-            && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES)
-        {
-            return return_result(InstructionResult::InvalidExtDelegateCallTarget);
+            // ExtDelegateCall is not allowed to call non-EOF contracts.
+            if inputs.scheme.is_ext_delegate_call()
+                && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES)
+            {
+                return return_result(InstructionResult::InvalidExtDelegateCallTarget);
+            }
+
+            if bytecode.is_empty() {
+                ctx.journal().checkpoint_commit();
+                return return_result(InstructionResult::Stop);
+            }
+
+            if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
+                bytecode = ctx
+                    .journal()
+                    .load_account_code(eip7702_bytecode.delegated_address)?
+                    .info
+                    .code
+                    .clone()
+                    .unwrap_or_default();
+            }
+
+            //let contract =
+            //    Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
+            // Create interpreter and executes call and push new CallStackFrame.
+            let interpreter_input = InputsImpl {
+                target_address: inputs.target_address,
+                caller_address: inputs.caller,
+                input: inputs.input.clone(),
+                call_value: inputs.value.get(),
+            };
+
+            Ok(FrameOrResultGen::Frame(Self::new(
+                FrameData::Call(CallFrame {
+                    return_memory_range: inputs.return_memory_offset.clone(),
+                }),
+                NewInterpreter::new(
+                    memory.clone(),
+                    bytecode,
+                    interpreter_input,
+                    inputs.is_static,
+                    false,
+                    ctx.cfg().spec().into(),
+                    inputs.gas_limit,
+                ),
+                checkpoint,
+                precompile,
+                instructions,
+                memory,
+            )))
         }
-
-        if bytecode.is_empty() {
-            ctx.journal().checkpoint_commit();
-            return return_result(InstructionResult::Stop);
-        }
-
-        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-            bytecode = ctx
-                .journal()
-                .load_account_code(eip7702_bytecode.delegated_address)?
-                .info
-                .code
-                .clone()
-                .unwrap_or_default();
-        }
-
-        //let contract =
-        //    Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
-        // Create interpreter and executes call and push new CallStackFrame.
-        let interpreter_input = InputsImpl {
-            target_address: inputs.target_address,
-            caller_address: inputs.caller,
-            input: inputs.input.clone(),
-            call_value: inputs.value.get(),
-        };
-
-        Ok(FrameOrResultGen::Frame(Self::new(
-            FrameData::Call(CallFrame {
-                return_memory_range: inputs.return_memory_offset.clone(),
-            }),
-            NewInterpreter::new(
-                memory.clone(),
-                bytecode,
-                interpreter_input,
-                inputs.is_static,
-                false,
-                ctx.cfg().spec().into(),
-                inputs.gas_limit,
-            ),
-            checkpoint,
-            precompile,
-            instructions,
-            memory,
-        )))
     }
 
     /// Make create frame.
@@ -460,26 +471,6 @@ where
             return return_error(InstructionResult::CreateCollision);
         };
 
-        // let contract = Contract::new(
-        //     input.clone(),
-        //     // fine to clone as it is Bytes.
-        //     Bytecode::Eof(Arc::new(initcode.clone())),
-        //     None,
-        //     created_address,
-        //     None,
-        //     inputs.caller,
-        //     inputs.value,
-        // );
-
-        // let mut interpreter = Interpreter::new(contract, inputs.gas_limit, false);
-        // // EOF init will enable RETURNCONTRACT opcode.
-        // interpreter.set_is_eof_init();
-
-        // Ok(FrameOrResult::new_eofcreate_frame(
-        //     created_address,
-        //     checkpoint,
-        //     interpreter,
-        // ))
         let bytecode = Bytecode::new_legacy(input).into_analyzed();
 
         let interpreter_input = InputsImpl {
@@ -540,8 +531,8 @@ where
         + JournalStateGetter
         + CfgGetter
         + Host,
-    ERROR: From<JournalStateGetterDBError<CTX>>,
-    PRECOMPILE: PrecompileProvider<Context = CTX>,
+    ERROR: From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>,
+    PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR>,
     INSTRUCTION: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
 {
     type Context = CTX;
@@ -556,6 +547,12 @@ where
         let memory = Rc::new(RefCell::new(SharedMemory::new()));
         let precompiles = PRECOMPILE::new(ctx);
         let instructions = INSTRUCTION::new(ctx);
+
+        // load precompiles addresses as warm.
+        for address in precompiles.warm_addresses() {
+            ctx.journal().load_account(address)?;
+        }
+
         memory.borrow_mut().new_context();
         Self::init_with_context(0, frame_action, memory, precompiles, instructions, ctx)
     }

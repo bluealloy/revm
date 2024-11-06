@@ -1,26 +1,22 @@
 use super::{frame_data::FrameResult, EthFrame};
 use crate::handler::{
     wires::Frame as FrameTrait, EthPrecompileProvider, ExecutionWire, FrameOrResultGen,
-    PrecompileProvider,
 };
 use bytecode::EOF_MAGIC_BYTES;
 use context::{
     BlockGetter, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
     TransactionGetter,
 };
-use core::cell::RefCell;
 use interpreter::{
     interpreter::{EthInstructionProvider, EthInterpreter},
     return_ok, return_revert, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme,
-    EOFCreateInputs, EOFCreateKind, Gas, NewFrameAction, SharedMemory,
+    EOFCreateInputs, EOFCreateKind, Gas, NewFrameAction,
 };
-use precompile::PrecompileSpecId;
 use primitives::TxKind;
 use specification::hardfork::SpecId;
-use std::{boxed::Box, rc::Rc};
-use wiring::{journaled_state::JournaledState, result::InvalidTransaction, Cfg, Transaction};
+use std::boxed::Box;
+use wiring::{result::InvalidTransaction, Cfg, Transaction};
 
-/// TODO EvmWiringT is temporary, replace it with getter traits.
 pub struct EthExecution<
     CTX,
     ERROR,
@@ -28,7 +24,7 @@ pub struct EthExecution<
         CTX,
         ERROR,
         EthInterpreter<()>,
-        EthPrecompileProvider<CTX>,
+        EthPrecompileProvider<CTX, ERROR>,
         EthInstructionProvider<EthInterpreter<()>, CTX>,
     >,
 > {
@@ -61,14 +57,6 @@ where
         gas_limit: u64,
     ) -> Result<FrameOrResultGen<Self::Frame, <Self::Frame as FrameTrait>::FrameResult>, Self::Error>
     {
-        // TODO do this in frame
-        // self.precompiles
-        //     .set_spec_id(PrecompileSpecId::from_spec_id(self.spec_id));
-        // // wamr up precompile address.
-        // for address in self.precompiles.warm_addresses() {
-        //     context.journal().warm_account(address);
-        // }
-
         // Make new frame action.
         let spec = context.cfg().spec().into();
         let tx = context.tx();

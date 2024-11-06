@@ -40,11 +40,6 @@ where
 {
     type Context = CTX;
     type Error = ERROR;
-    type Precompiles = ();
-
-    fn load_precompiles(&self) -> Self::Precompiles {
-        todo!()
-    }
 
     fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
         // set journaling state flag.

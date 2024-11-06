@@ -14,10 +14,3 @@ pub mod result;
 pub use block::Block;
 pub use cfg::{Cfg, CfgEnv, CreateScheme, TransactTo};
 pub use transaction::{Transaction, TransactionType};
-
-// silence kzg-rs lint as c-kzg will be used as default if both are enabled.
-
-#[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
-use kzg_rs as _;
-#[cfg(all(feature = "c-kzg", feature = "kzg-rs"))]
-use once_cell as _;
