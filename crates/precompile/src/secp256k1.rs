@@ -1,13 +1,11 @@
 use crate::{
-    utilities::right_pad, Precompile, PrecompileError, PrecompileOutput, PrecompileResult,
+    utilities::right_pad, PrecompileError, PrecompileOutput, PrecompileResult,
     PrecompileWithAddress,
 };
 use primitives::{alloy_primitives::B512, Bytes, B256};
 
-pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
-    crate::u64_to_address(1),
-    Precompile::Standard(ec_recover_run),
-);
+pub const ECRECOVER: PrecompileWithAddress =
+    PrecompileWithAddress(crate::u64_to_address(1), ec_recover_run);
 
 pub use self::secp256k1::ecrecover;
 

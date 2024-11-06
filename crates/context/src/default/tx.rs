@@ -1,4 +1,3 @@
-use crate::{result::InvalidTransaction, Transaction};
 use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, U256};
 use specification::eip2930::AccessList;
@@ -8,6 +7,7 @@ use transaction::{
     eip7702::Authorization, CommonTxFields, Eip1559CommonTxFields, Eip1559Tx, Eip2930Tx, Eip4844Tx,
     Eip7702Tx, LegacyTx, TransactionType,
 };
+use wiring::{result::InvalidTransaction, Transaction};
 
 /// The transaction environment.
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -31,6 +31,3 @@ pub mod handler;
 pub use context::journaled_state::{JournalEntry, JournaledState};
 pub use context::Context;
 pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
-//pub use evm::Evm;
-//pub use evm_wiring::EvmWiring;
-//pub use handler::{register::EvmHandler, Handler};

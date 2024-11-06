@@ -1,13 +1,10 @@
-use crate::{
-    Precompile, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
-};
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress};
 use primitives::Bytes;
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
 
-pub const FUN: PrecompileWithAddress =
-    PrecompileWithAddress(crate::u64_to_address(9), Precompile::Standard(run));
+pub const FUN: PrecompileWithAddress = PrecompileWithAddress(crate::u64_to_address(9), run);
 
 /// reference: <https://eips.ethereum.org/EIPS/eip-152>
 /// input format:

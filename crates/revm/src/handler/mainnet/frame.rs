@@ -1,21 +1,24 @@
 use super::frame_data::*;
-use crate::handler::{wires::Frame, FrameOrResultGen};
+use crate::handler::{wires::Frame, EthPrecompileProvider, FrameOrResultGen, PrecompileProvider};
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context::{
     BlockGetter, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
     TransactionGetter,
 };
-use core::{cell::RefCell, cmp::min, mem, ops::DerefMut};
+use core::{cell::RefCell, cmp::min};
 use interpreter::{
     gas,
-    interpreter::EthInterpreter,
-    interpreter_wiring::{LoopControl, ReturnData, RuntimeFlag},
-    return_ok, return_revert, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome,
-    CreateScheme, EOFCreateInputs, EOFCreateKind, Gas, InputsImpl, InstructionResult,
-    InterpreterAction, InterpreterResult, InterpreterWire, NewFrameAction, NewInterpreter,
-    SharedMemory, EMPTY_SHARED_MEMORY,
+    instructions::{self, memory},
+    interpreter::{EthInterpreter, InstructionProvider},
+    interpreter_wiring::{LoopControl, MemoryTrait, ReturnData, RuntimeFlag},
+    return_ok, return_revert,
+    table::InstructionTable,
+    CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, CreateScheme, EOFCreateInputs,
+    EOFCreateKind, Gas, Host, InputsImpl, InstructionResult, InterpreterAction, InterpreterResult,
+    InterpreterWire, MemoryGetter, NewFrameAction, NewInterpreter, SharedMemory,
+    EMPTY_SHARED_MEMORY,
 };
-use precompile::Precompile;
+use precompile::Precompiles;
 use primitives::{keccak256, Address, Bytes, B256, U256};
 use specification::{
     constants::CALL_STACK_LIMIT,
@@ -28,58 +31,113 @@ use wiring::{
     Cfg, Transaction,
 };
 
-pub struct EthFrame<CTX, IW: InterpreterWire, ERROR> {
+/*
+EVM
+    context:
+        TX
+        BLOCK
+        JOURNAL
+        CFG
+    handler:
+        VAL
+        PRE
+        POST
+        EXEC:
+            FRAME
+                Data: CALL/CREATE/EOFCREATE
+                INTERPRETER
+                INSTRUCTION
+                PRECOMPILE
+
+
+EthFrame<CTX,IW,PR<CTX>,IP<IW,CTX> {
+
+}
+*/
+
+/*
+
+EXEC -> FRAME makes sense
+
+FRAME needs to have
+NewInterpreter<WIRE>
+InnerContext<PRECOMPILES,INSTRUCTIONS, MEMORY>
+
+
+*/
+
+pub struct EthFrame<CTX, ERROR, IW: InterpreterWire, PRECOMPILE, INSTRUCTIONS> {
     _phantom: std::marker::PhantomData<fn() -> (CTX, ERROR)>,
-    data: FrameData<IW>,
+    data: FrameData,
     // TODO include this
     depth: usize,
-    spec_id: SpecId,
+    /// Journal checkpoint.
+    pub checkpoint: JournalCheckpoint,
+    /// Interpreter.
+    pub interpreter: NewInterpreter<IW>,
+    /// Precompiles provider.
+    pub precompiles: PRECOMPILE,
+    /// Insturction provider.
+    pub instructions: INSTRUCTIONS,
     // This is worth making as a generic type FrameSharedContext.
-    shared_memory: Rc<RefCell<SharedMemory>>,
+    pub memory: Rc<RefCell<SharedMemory>>,
 }
+
+/*
+
+*/
 
 pub struct FrameContext {
     memory: SharedMemory,
-    precompiles: Precompile,
+    precompiles: Precompiles,
 }
 
-impl<CTX, IW, ERROR> EthFrame<CTX, IW, ERROR>
+impl<CTX, IW, ERROR, PRECOMP, INST> EthFrame<CTX, ERROR, IW, PRECOMP, INST>
 where
     CTX: JournalStateGetter,
     IW: InterpreterWire,
 {
     pub fn new(
-        data: FrameData<IW>,
-        shared_memory: Rc<RefCell<SharedMemory>>,
-        spec_id: SpecId,
+        data: FrameData,
+        interpreter: NewInterpreter<IW>,
+        checkpoint: JournalCheckpoint,
+        precompiles: PRECOMP,
+        instructions: INST,
+        memory: Rc<RefCell<SharedMemory>>,
     ) -> Self {
         Self {
             _phantom: std::marker::PhantomData,
             data,
             depth: 0,
-            spec_id,
-            shared_memory,
+            interpreter,
+            checkpoint,
+            precompiles,
+            instructions,
+            memory,
         }
     }
 }
 
-impl<CTX, ERROR> EthFrame<CTX, EthInterpreter<()>, ERROR>
+impl<CTX, ERROR, PRECOMPILE, INSTRUCTION>
+    EthFrame<CTX, ERROR, EthInterpreter<()>, PRECOMPILE, INSTRUCTION>
 where
     CTX: TransactionGetter
         + ErrorGetter<Error = ERROR>
         + BlockGetter
         + JournalStateGetter
         + CfgGetter,
+    //IW = ,
     ERROR: From<JournalStateGetterDBError<CTX>>,
 {
     /// Make call frame
     #[inline]
     pub fn make_call_frame(
+        ctx: &mut CTX,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
-        ctx: &mut CTX,
         inputs: &CallInputs,
-        spec_id: SpecId,
+        precompile: PRECOMPILE,
+        instructions: INSTRUCTION,
     ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
 
@@ -178,33 +236,36 @@ where
         };
 
         Ok(FrameOrResultGen::Frame(Self::new(
-            FrameData::Call(Box::new(CallFrame {
+            FrameData::Call(CallFrame {
                 return_memory_range: inputs.return_memory_offset.clone(),
-                checkpoint,
-                interpreter: NewInterpreter::new(
-                    memory.clone(),
-                    bytecode,
-                    interpreter_input,
-                    inputs.is_static,
-                    false,
-                    spec_id,
-                    inputs.gas_limit,
-                ),
-            })),
+            }),
+            NewInterpreter::new(
+                memory.clone(),
+                bytecode,
+                interpreter_input,
+                inputs.is_static,
+                false,
+                ctx.cfg().spec().into(),
+                inputs.gas_limit,
+            ),
+            checkpoint,
+            precompile,
+            instructions,
             memory,
-            spec_id,
         )))
     }
 
     /// Make create frame.
     #[inline]
     pub fn make_create_frame(
+        ctx: &mut CTX,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
-        ctx: &mut CTX,
         inputs: &CreateInputs,
-        spec_id: SpecId,
+        precompile: PRECOMPILE,
+        instructions: INSTRUCTION,
     ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
+        let spec = ctx.cfg().spec().into();
         let return_error = |e| {
             Ok(FrameOrResultGen::Result(FrameResult::Create(
                 CreateOutcome {
@@ -224,7 +285,7 @@ where
         }
 
         // Prague EOF
-        if spec_id.is_enabled_in(PRAGUE_EOF) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
+        if spec.is_enabled_in(PRAGUE_EOF) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
             return return_error(InstructionResult::CreateInitCodeStartingEF00);
         }
 
@@ -271,7 +332,7 @@ where
             inputs.caller,
             created_address,
             inputs.value,
-            spec_id,
+            spec,
         ) else {
             return return_error(InstructionResult::CreateCollision);
         };
@@ -286,33 +347,34 @@ where
         };
 
         Ok(FrameOrResultGen::Frame(Self::new(
-            FrameData::Create(Box::new(CreateFrame {
-                created_address,
-                checkpoint,
-                interpreter: NewInterpreter::new(
-                    memory.clone(),
-                    bytecode,
-                    interpreter_input,
-                    false,
-                    false,
-                    spec_id,
-                    inputs.gas_limit,
-                ),
-            })),
+            FrameData::Create(CreateFrame { created_address }),
+            NewInterpreter::new(
+                memory.clone(),
+                bytecode,
+                interpreter_input,
+                false,
+                false,
+                spec,
+                inputs.gas_limit,
+            ),
+            checkpoint,
+            precompile,
+            instructions,
             memory,
-            spec_id,
         )))
     }
 
     /// Make create frame.
     #[inline]
     pub fn make_eofcreate_frame(
+        ctx: &mut CTX,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
-        ctx: &mut CTX,
         inputs: &EOFCreateInputs,
-        spec_id: SpecId,
+        precompile: PRECOMPILE,
+        instructions: INSTRUCTION,
     ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
+        let spec = ctx.cfg().spec().into();
         let return_error = |e| {
             Ok(FrameOrResultGen::Result(FrameResult::EOFCreate(
                 CreateOutcome {
@@ -393,7 +455,7 @@ where
             inputs.caller,
             created_address,
             inputs.value,
-            spec_id,
+            spec,
         ) else {
             return return_error(InstructionResult::CreateCollision);
         };
@@ -428,40 +490,40 @@ where
         };
 
         Ok(FrameOrResultGen::Frame(Self::new(
-            FrameData::Create(Box::new(CreateFrame {
-                created_address,
-                checkpoint,
-                interpreter: NewInterpreter::new(
-                    memory.clone(),
-                    bytecode,
-                    interpreter_input,
-                    false,
-                    false,
-                    spec_id,
-                    inputs.gas_limit,
-                ),
-            })),
+            FrameData::Create(CreateFrame { created_address }),
+            NewInterpreter::new(
+                memory.clone(),
+                bytecode,
+                interpreter_input,
+                false,
+                false,
+                spec,
+                inputs.gas_limit,
+            ),
+            checkpoint,
+            precompile,
+            instructions,
             memory,
-            spec_id,
         )))
     }
 
     pub fn init_with_context(
         depth: usize,
         frame_init: NewFrameAction,
-        spec_id: SpecId,
         memory: Rc<RefCell<SharedMemory>>,
+        precompile: PRECOMPILE,
+        instructions: INSTRUCTION,
         ctx: &mut CTX,
     ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
         match frame_init {
             NewFrameAction::Call(inputs) => {
-                Self::make_call_frame(depth, memory, ctx, &inputs, spec_id)
+                Self::make_call_frame(ctx, depth, memory, &inputs, precompile, instructions)
             }
             NewFrameAction::Create(inputs) => {
-                Self::make_create_frame(depth, memory, ctx, &inputs, spec_id)
+                Self::make_create_frame(ctx, depth, memory, &inputs, precompile, instructions)
             }
             NewFrameAction::EOFCreate(inputs) => {
-                Self::make_eofcreate_frame(depth, memory, ctx, &inputs, spec_id)
+                Self::make_eofcreate_frame(ctx, depth, memory, &inputs, precompile, instructions)
             }
         }
     }
@@ -469,35 +531,47 @@ where
 
 //spub trait HostTemp: TransactionGetter + BlockGetter + JournalStateGetter {}
 
-impl<CTX, ERROR> Frame for EthFrame<CTX, EthInterpreter<()>, ERROR>
+impl<CTX, ERROR, PRECOMPILE, INSTRUCTION> Frame
+    for EthFrame<CTX, ERROR, EthInterpreter<()>, PRECOMPILE, INSTRUCTION>
 where
     CTX: TransactionGetter
         + ErrorGetter<Error = ERROR>
         + BlockGetter
         + JournalStateGetter
-        + CfgGetter,
+        + CfgGetter
+        + Host,
     ERROR: From<JournalStateGetterDBError<CTX>>,
+    PRECOMPILE: PrecompileProvider<Context = CTX>,
+    INSTRUCTION: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
 {
     type Context = CTX;
-
     type Error = ERROR;
-
     type FrameInit = NewFrameAction;
-
     type FrameResult = FrameResult;
+
+    fn init_first(
+        ctx: &mut Self::Context,
+        frame_action: Self::FrameInit,
+    ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
+        let memory = Rc::new(RefCell::new(SharedMemory::new()));
+        let precompiles = PRECOMPILE::new(ctx);
+        let instructions = INSTRUCTION::new(ctx);
+        memory.borrow_mut().new_context();
+        Self::init_with_context(0, frame_action, memory, precompiles, instructions, ctx)
+    }
 
     fn init(
         &self,
-        frame_init: Self::FrameInit,
         ctx: &mut CTX,
+        frame_init: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
-        self.shared_memory.borrow_mut().new_context();
-        let spec_id = self.spec_id;
+        self.memory.borrow_mut().new_context();
         Self::init_with_context(
             self.depth + 1,
             frame_init,
-            spec_id,
-            self.shared_memory.clone(),
+            self.memory.clone(),
+            self.precompiles.clone(),
+            self.instructions.clone(),
             ctx,
         )
     }
@@ -507,20 +581,10 @@ where
         //instructions: &InstructionTables<'_, Context<EvmWiringT>>,
         ctx: &mut Self::Context,
     ) -> Result<FrameOrResultGen<Self::FrameInit, Self::FrameResult>, Self::Error> {
-        let interpreter = self.data.interpreter_mut();
+        let spec = ctx.cfg().spec().into();
 
-        let memory = mem::replace(
-            self.shared_memory.borrow_mut().deref_mut(),
-            EMPTY_SHARED_MEMORY,
-        );
-        // TODO fix after instructions are implemented.
-        // let next_action = match instructions {
-        //     InstructionTables::Plain(table) => interpreter.run(memory, table, ctx),
-        //     InstructionTables::Boxed(table) => interpreter.run(memory, table, ctx),
-        // };
-        let next_action = Default::default();
-        // Take the shared memory back.
-        //*self.shared_memory.borrow_mut() = interpreter.take_memory();
+        // run interpreter
+        let next_action = self.interpreter.run(self.instructions.table(), ctx);
 
         let mut interpreter_result = match next_action {
             InterpreterAction::NewFrame(new_frame) => {
@@ -538,7 +602,7 @@ where
                 if interpreter_result.result.is_ok() {
                     ctx.journal().checkpoint_commit();
                 } else {
-                    ctx.journal().checkpoint_revert(frame.checkpoint);
+                    ctx.journal().checkpoint_revert(self.checkpoint);
                 }
                 FrameOrResultGen::Result(FrameResult::Call(CallOutcome::new(
                     interpreter_result,
@@ -549,11 +613,11 @@ where
                 let max_code_size = ctx.cfg().max_code_size();
                 return_create(
                     ctx.journal(),
-                    frame.checkpoint,
+                    self.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
                     max_code_size,
-                    self.spec_id,
+                    spec,
                 );
 
                 FrameOrResultGen::Result(FrameResult::Create(CreateOutcome::new(
@@ -565,7 +629,7 @@ where
                 let max_code_size = ctx.cfg().max_code_size();
                 return_eofcreate(
                     ctx.journal(),
-                    frame.checkpoint,
+                    self.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
                     max_code_size,
@@ -586,7 +650,7 @@ where
         ctx: &mut Self::Context,
         result: Self::FrameResult,
     ) -> Result<(), Self::Error> {
-        self.shared_memory.borrow_mut().free_context();
+        self.memory.borrow_mut().free_context();
         ctx.take_error()?;
 
         // Insert result to the top frame.
@@ -596,7 +660,7 @@ where
                 let ins_result = *outcome.instruction_result();
                 let returned_len = outcome.result.output.len();
 
-                let interpreter = self.data.interpreter_mut();
+                let interpreter = &mut self.interpreter;
                 let mem_length = outcome.memory_length();
                 let mem_start = outcome.memory_start();
                 *interpreter.return_data.buffer_mut() = outcome.result.output;
@@ -627,7 +691,7 @@ where
                 // return unspend gas.
                 if ins_result.is_ok_or_revert() {
                     interpreter.control.gas().erase_cost(out_gas.remaining());
-                    self.shared_memory
+                    self.memory
                         .borrow_mut()
                         .set(mem_start, &interpreter.return_data.buffer()[..target_len]);
                 }
@@ -638,7 +702,7 @@ where
             }
             FrameResult::Create(outcome) => {
                 let instruction_result = *outcome.instruction_result();
-                let interpreter = self.data.interpreter_mut();
+                let interpreter = &mut self.interpreter;
 
                 let buffer = interpreter.return_data.buffer_mut();
                 if instruction_result == InstructionResult::Revert {
@@ -673,7 +737,7 @@ where
             }
             FrameResult::EOFCreate(outcome) => {
                 let instruction_result = *outcome.instruction_result();
-                let interpreter = self.data.interpreter_mut();
+                let interpreter = &mut self.interpreter;
                 if instruction_result == InstructionResult::Revert {
                     // Save data to return data buffer if the create reverted
                     *interpreter.return_data.buffer_mut() = outcome.output().to_owned()

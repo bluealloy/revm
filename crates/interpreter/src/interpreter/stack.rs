@@ -1,6 +1,6 @@
 use crate::InstructionResult;
 use core::{fmt, ptr};
-use primitives::{B256, U256};
+use primitives::U256;
 use std::vec::Vec;
 
 use super::StackTrait;

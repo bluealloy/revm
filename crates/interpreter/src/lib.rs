@@ -31,7 +31,7 @@ pub use gas::Gas;
 pub use host::{DummyHost, Host, SStoreResult, SelfDestructResult, StateLoad};
 pub use instruction_result::*;
 pub use interpreter::{
-    num_words, Contract, InputsImpl, InterpreterResult, NewInterpreter, SharedMemory, Stack,
+    num_words, InputsImpl, InterpreterResult, MemoryGetter, NewInterpreter, SharedMemory, Stack,
     EMPTY_SHARED_MEMORY, STACK_LIMIT,
 };
 pub use interpreter_action::{
@@ -41,4 +41,4 @@ pub use interpreter_action::{
 pub use interpreter_wiring::InterpreterWire;
 pub use specification::constants::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 pub use table::Instruction;
-pub use wiring::default::CreateScheme;
+pub use wiring::CreateScheme;

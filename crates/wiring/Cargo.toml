@@ -40,20 +40,10 @@ serde = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 
-# For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
-# Optionally use `kzg-rs`(Not audited) for a pure Rust implementation of KZG.
-c-kzg = { version = "1.0.3", default-features = false, optional = true, features = [
-    "ethereum_kzg_settings",
-] }
-kzg-rs = { version = "0.2.3", default-features = false, optional = true }
-once_cell = { version = "1.19", default-features = false, optional = true, features = [
-    "alloc",
-] }
-
 [dev-dependencies]
 
 [features]
-default = ["std", "portable"]
+default = ["std"]
 std = ["serde?/std"]
 serde = [
     "dep:serde",
@@ -62,12 +52,6 @@ serde = [
     "specification/serde",
     "state/serde",
 ]
-portable = ["c-kzg?/portable"]
-
-c-kzg = ["dep:c-kzg"]
-# `kzg-rs` is not audited but useful for `no_std` environment.
-#    use it with causing and default to `c-kzg` if possible!
-kzg-rs = ["dep:kzg-rs", "dep:once_cell"]
 
 # Enable additional features for development
 dev = [

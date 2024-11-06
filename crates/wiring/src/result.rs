@@ -1,24 +1,17 @@
-use crate::{evm_wiring::HaltReasonTrait, EvmWiring};
 use core::fmt::{self, Debug};
-use database_interface::{DBErrorMarker, Database};
+use database_interface::DBErrorMarker;
 use primitives::{Address, Bytes, Log, U256};
 use specification::eip7702::InvalidAuthorization;
 use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
-use transaction::{Transaction, TransactionError};
+use transaction::TransactionError;
 
-/// Result of EVM execution.
-pub type EVMResult<EvmWiringT> =
-    EVMResultGeneric<ResultAndState<<EvmWiringT as EvmWiring>::HaltReason>, EvmWiringT>;
+pub trait HaltReasonTrait: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
 
-/// Generic result of EVM execution. Used to represent error and generic output.
-pub type EVMResultGeneric<T, EvmWiringT> = core::result::Result<T, EVMErrorForChain<EvmWiringT>>;
-
-/// EVM error type for a specific chain.
-pub type EVMErrorForChain<EvmWiringT> = EVMError<
-    <<EvmWiringT as EvmWiring>::Database as Database>::Error,
-    <<EvmWiringT as EvmWiring>::Transaction as Transaction>::TransactionError,
->;
+impl<HaltReasonT> HaltReasonTrait for HaltReasonT where
+    HaltReasonT: Clone + Debug + PartialEq + Eq + From<HaltReason>
+{
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -89,7 +82,7 @@ impl<HaltReasonT: HaltReasonTrait> ExecutionResult<HaltReasonT> {
     /// Returns the logs if execution is successful, or an empty list otherwise.
     pub fn logs(&self) -> &[Log] {
         match self {
-            Self::Success { logs, .. } => logs,
+            Self::Success { logs, .. } => logs.as_slice(),
             _ => &[],
         }
     }
@@ -145,11 +138,6 @@ impl Output {
         }
     }
 }
-
-pub type EVMErrorWiring<EvmWiringT> = EVMError<
-    <<EvmWiringT as EvmWiring>::Database as Database>::Error,
-    <<EvmWiringT as EvmWiring>::Transaction as Transaction>::TransactionError,
->;
 
 /// Main EVM error.
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -1,8 +1,5 @@
 use core::fmt::Debug;
-use wiring::{
-    result::{HaltReason, OutOfGasError, SuccessReason},
-    HaltReasonTrait,
-};
+use wiring::result::{HaltReason, HaltReasonTrait, OutOfGasError, SuccessReason};
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]

@@ -3,9 +3,7 @@ use specification::hardfork::SpecId;
 
 //use crate::instructions::utility::{read_i16, read_u16};
 use crate::{Gas, InstructionResult, InterpreterAction};
-use core::{
-    ops::{Deref, Range},
-};
+use core::ops::{Deref, Range};
 use primitives::{Address, Bytes, B256, U256};
 
 /// Helper function to read immediates data from the bytecode.

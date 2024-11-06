@@ -1,8 +1,6 @@
-use core::iter::Cloned;
-
 use crate::Eip1559Tx;
 use auto_impl::auto_impl;
-use primitives::{Address, U256};
+use primitives::Address;
 
 /// EIP-7702 transaction, TODO set Trait for AuthorizationList.
 #[auto_impl(&, Box, Arc, Rc)]

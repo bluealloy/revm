@@ -1,5 +1,5 @@
 use primitives::{Address, Bytes, U256};
-use wiring::default::CreateScheme;
+use wiring::CreateScheme;
 
 /// Inputs for a create call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

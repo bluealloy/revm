@@ -9,8 +9,8 @@ use specification::hardfork::SpecId;
 use state::EvmState;
 use wiring::{
     journaled_state::JournaledState,
-    result::{ExecutionResult, ResultAndState},
-    Block, HaltReasonTrait, Transaction,
+    result::{ExecutionResult, HaltReasonTrait, ResultAndState},
+    Block, Transaction,
 };
 
 use super::frame_data::FrameResult;

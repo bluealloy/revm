@@ -13,7 +13,7 @@ use revm_precompile::{
 use secp256k1::{Message, SecretKey, SECP256K1};
 use sha2::{Digest, Sha256};
 use specification::eip4844::VERSIONED_HASH_VERSION_KZG;
-use wiring::default::CfgEnv;
+use wiring::CfgEnv;
 
 /// Benchmarks different cryptography-related precompiles.
 pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
@@ -108,8 +108,7 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     let kzg_input = [versioned_hash, z, y, commitment, proof].concat().into();
 
     let gas = 50000;
-    let env = CfgEnv::default();
-    let output = run(&kzg_input, gas, &env).unwrap();
+    let output = run(&kzg_input, gas).unwrap();
     println!("gas used by kzg precompile: {:?}", output.gas_used);
 
     group.bench_function(group_name("ecrecover precompile"), |b| {
@@ -141,7 +140,7 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
 
     group.bench_function(group_name("kzg precompile"), |b| {
         b.iter(|| {
-            run(&kzg_input, gas, &env).unwrap();
+            run(&kzg_input, gas).unwrap();
             black_box(())
         })
     });

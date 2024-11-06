@@ -2935,11 +2935,8 @@ dependencies = [
 name = "revm-wiring"
 version = "1.0.0"
 dependencies = [
- "c-kzg",
  "cfg-if",
  "dyn-clone",
- "kzg-rs",
- "once_cell",
  "revm-database-interface",
  "revm-primitives",
  "revm-specification",

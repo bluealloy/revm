@@ -10,44 +10,32 @@ use wiring::{journaled_state::JournalCheckpoint, result::Output};
 /// Call CallStackFrame.
 //#[derive(Debug)]
 //#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct CallFrame<W: InterpreterWire> {
+pub struct CallFrame {
     /// Call frame has return memory range where output will be stored.
     pub return_memory_range: Range<usize>,
-    /// Journal checkpoint.
-    pub checkpoint: JournalCheckpoint,
-    /// Interpreter.
-    pub interpreter: NewInterpreter<W>,
 }
 
 //#[derive(Debug)]
 //#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct CreateFrame<W: InterpreterWire> {
+pub struct CreateFrame {
     /// Create frame has a created address.
     pub created_address: Address,
-    /// Journal checkpoint.
-    pub checkpoint: JournalCheckpoint,
-    /// Interpreter.
-    pub interpreter: NewInterpreter<W>,
 }
 
 /// Eof Create Frame.
 //#[derive(Debug)]
 //#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct EOFCreateFrame<W: InterpreterWire> {
+pub struct EOFCreateFrame {
     pub created_address: Address,
-    /// Journal checkpoint.
-    pub checkpoint: JournalCheckpoint,
-    /// Interpreter.
-    pub interpreter: NewInterpreter<W>,
 }
 
 /// Call stack frame.
 //#[derive(Debug)]
 //#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum FrameData<W: InterpreterWire> {
-    Call(Box<CallFrame<W>>),
-    Create(Box<CreateFrame<W>>),
-    EOFCreate(Box<EOFCreateFrame<W>>),
+pub enum FrameData {
+    Call(CallFrame),
+    Create(CreateFrame),
+    EOFCreate(EOFCreateFrame),
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -130,29 +118,15 @@ impl FrameResult {
     }
 }
 
-impl<W: InterpreterWire> FrameData<W> {
-    pub fn new_create(
-        created_address: Address,
-        checkpoint: JournalCheckpoint,
-        interpreter: NewInterpreter<W>,
-    ) -> Self {
-        Self::Create(Box::new(CreateFrame {
-            created_address,
-            checkpoint,
-            interpreter,
-        }))
+impl FrameData {
+    pub fn new_create(created_address: Address) -> Self {
+        Self::Create(CreateFrame { created_address })
     }
 
-    pub fn new_call(
-        return_memory_range: Range<usize>,
-        checkpoint: JournalCheckpoint,
-        interpreter: NewInterpreter<W>,
-    ) -> Self {
-        Self::Call(Box::new(CallFrame {
+    pub fn new_call(return_memory_range: Range<usize>) -> Self {
+        Self::Call(CallFrame {
             return_memory_range,
-            checkpoint,
-            interpreter,
-        }))
+        })
     }
 
     /// Returns true if frame is call frame.
@@ -172,100 +146,4 @@ impl<W: InterpreterWire> FrameData<W> {
             _ => None,
         }
     }
-
-    /// Takes frame and returns frame data.
-    pub fn into_interpreter(self) -> NewInterpreter<W> {
-        match self {
-            Self::Call(call_frame) => call_frame.interpreter,
-            Self::Create(create_frame) => create_frame.interpreter,
-            Self::EOFCreate(eof_create_frame) => eof_create_frame.interpreter,
-        }
-    }
-
-    /// Returns reference to frame data.
-    pub fn interpreter(&self) -> &NewInterpreter<W> {
-        match self {
-            Self::Call(call_frame) => &call_frame.interpreter,
-            Self::Create(create_frame) => &create_frame.interpreter,
-            Self::EOFCreate(eof_create_frame) => &eof_create_frame.interpreter,
-        }
-    }
-
-    /// Returns mutable reference to frame data.
-    pub fn interpreter_mut(&mut self) -> &mut NewInterpreter<W> {
-        match self {
-            Self::Call(call_frame) => &mut call_frame.interpreter,
-            Self::Create(create_frame) => &mut create_frame.interpreter,
-            Self::EOFCreate(eof_create_frame) => &mut eof_create_frame.interpreter,
-        }
-    }
 }
-
-// impl FrameOrResult {
-//     /// Creates new create frame.
-//     pub fn new_create_frame(
-//         created_address: Address,
-//         checkpoint: JournalCheckpoint,
-//         interpreter: NewInterpreter<W>,
-//     ) -> Self {
-//         Self::Frame(Frame::new_create(created_address, checkpoint, interpreter))
-//     }
-
-//     pub fn new_eofcreate_frame(
-//         created_address: Address,
-//         checkpoint: JournalCheckpoint,
-//         interpreter: Interpreter,
-//     ) -> Self {
-//         Self::Frame(Frame::EOFCreate(Box::new(EOFCreateFrame {
-//             created_address,
-//             frame_data: FrameData {
-//                 checkpoint,
-//                 interpreter,
-//             },
-//         })))
-//     }
-
-//     /// Creates new call frame.
-//     pub fn new_call_frame(
-//         return_memory_range: Range<usize>,
-//         checkpoint: JournalCheckpoint,
-//         interpreter: Interpreter,
-//     ) -> Self {
-//         Self::Frame(Frame::new_call(
-//             return_memory_range,
-//             checkpoint,
-//             interpreter,
-//         ))
-//     }
-
-//     /// Creates new create result.
-//     pub fn new_create_result(
-//         interpreter_result: InterpreterResult,
-//         address: Option<Address>,
-//     ) -> Self {
-//         FrameOrResult::Result(FrameResult::Create(CreateOutcome {
-//             result: interpreter_result,
-//             address,
-//         }))
-//     }
-
-//     pub fn new_eofcreate_result(
-//         interpreter_result: InterpreterResult,
-//         address: Option<Address>,
-//     ) -> Self {
-//         FrameOrResult::Result(FrameResult::EOFCreate(CreateOutcome {
-//             result: interpreter_result,
-//             address,
-//         }))
-//     }
-
-//     pub fn new_call_result(
-//         interpreter_result: InterpreterResult,
-//         memory_offset: Range<usize>,
-//     ) -> Self {
-//         FrameOrResult::Result(FrameResult::Call(CallOutcome {
-//             result: interpreter_result,
-//             memory_offset,
-//         }))
-//     }
-// }

@@ -8,11 +8,6 @@ use interpreter::table::InstructionTables;
 use specification::spec_to_generic;
 use std::fmt::Debug;
 use std::vec::Vec;
-use wiring::{
-    journaled_state::JournaledState as JournaledStateTrait,
-    result::{EVMError, EVMErrorWiring, HaltReason},
-    EthereumWiring, EvmWiring as PrimitiveEvmWiring, Transaction,
-};
 
 // pub trait EvmWiring: PrimitiveEvmWiring {
 //     /// Creates a new handler with the given hardfork.

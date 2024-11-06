@@ -1,21 +1,25 @@
-use crate::{getters::*, journaled_state::JournaledState};
+use crate::{
+    default::{block::BlockEnv, tx::TxEnv},
+    getters::*,
+    journaled_state::JournaledState,
+};
 use bytecode::{Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
-use database_interface::Database;
+use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
 use interpreter::{as_u64_saturated, Host, SStoreResult, SelfDestructResult, StateLoad};
 use primitives::{Address, Bytes, HashSet, Log, B256, BLOCK_HASH_HISTORY, U256};
 use specification::hardfork::SpecId;
 
 use wiring::{
-    default::CfgEnv,
     journaled_state::{AccountLoad, Eip7702CodeLoad},
     result::EVMError,
-    Block, Transaction,
+    Block, CfgEnv, Transaction,
 };
 
 /// EVM context contains data that EVM needs for execution.
-#[derive_where(Clone, Debug; BLOCK, CHAIN, TX, DB, <DB as Database>::Error)]
-pub struct Context<BLOCK, TX, DB: Database, CHAIN> {
+#[derive_where(Clone, Debug; BLOCK, SPEC, CHAIN, TX, DB, <DB as Database>::Error)]
+pub struct Context<BLOCK = BlockEnv, TX = TxEnv, SPEC = SpecId, DB: Database = EmptyDB, CHAIN = ()>
+{
     /// Transaction information.
     pub tx: TX,
     /// Block information.
@@ -26,25 +30,29 @@ pub struct Context<BLOCK, TX, DB: Database, CHAIN> {
     pub journaled_state: JournaledState<DB>,
     /// Inner context.
     pub chain: CHAIN,
+    /// Consider including it inside CfgEnv but for development
+    /// it is easier to make it as standalone and reevaluate inclusion later.
+    pub spec: SPEC,
     /// Error that happened during execution.
     pub error: Result<(), <DB as Database>::Error>,
 }
 
-impl<BLOCK: Block + Default, TX: Transaction + Default, DB: Database, CHAIN: Default>
-    Context<BLOCK, TX, DB, CHAIN>
+impl<BLOCK: Block + Default, TX: Transaction + Default, SPEC, DB: Database, CHAIN: Default>
+    Context<BLOCK, TX, SPEC, DB, CHAIN>
 {
-    pub fn new(db: DB) -> Self {
+    pub fn new(db: DB, spec: SPEC) -> Self {
         Self {
             tx: TX::default(),
             block: BLOCK::default(),
             cfg: CfgEnv::default(),
             journaled_state: JournaledState::new(SpecId::LATEST, db, HashSet::default()),
+            spec,
             chain: Default::default(),
             error: Ok(()),
         }
     }
 }
-impl<BLOCK: Block, TX: Transaction, DB: Database, CHAIN> Context<BLOCK, TX, DB, CHAIN> {
+impl<BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> Context<BLOCK, TX, SPEC, DB, CHAIN> {
     /*
     TODO IMPORTANT NEEDS TO BE MOVED TO FRAME
 
@@ -187,7 +195,9 @@ impl<BLOCK: Block, TX: Transaction, DB: Database, CHAIN> Context<BLOCK, TX, DB, 
     }
 }
 
-impl<BLOCK: Block, TX: Transaction, DB: Database, CHAIN> Host for Context<BLOCK, TX, DB, CHAIN> {
+impl<BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> Host
+    for Context<BLOCK, TX, SPEC, DB, CHAIN>
+{
     type BLOCK = BLOCK;
     type TX = TX;
 
@@ -295,7 +305,7 @@ impl<BLOCK: Block, TX: Transaction, DB: Database, CHAIN> Host for Context<BLOCK,
     }
 }
 
-impl<BLOCK, TX, DB: Database, CHAIN> CfgGetter for Context<BLOCK, TX, DB, CHAIN> {
+impl<BLOCK, TX, DB: Database, SPEC, CHAIN> CfgGetter for Context<BLOCK, TX, SPEC, DB, CHAIN> {
     type Cfg = CfgEnv;
 
     fn cfg(&self) -> &Self::Cfg {
@@ -303,7 +313,9 @@ impl<BLOCK, TX, DB: Database, CHAIN> CfgGetter for Context<BLOCK, TX, DB, CHAIN>
     }
 }
 
-impl<BLOCK, TX, DB: Database, CHAIN> JournalStateGetter for Context<BLOCK, TX, DB, CHAIN> {
+impl<BLOCK, TX, SPEC, DB: Database, CHAIN> JournalStateGetter
+    for Context<BLOCK, TX, SPEC, DB, CHAIN>
+{
     type Journal = JournaledState<DB>;
 
     fn journal(&mut self) -> &mut Self::Journal {
@@ -311,7 +323,7 @@ impl<BLOCK, TX, DB: Database, CHAIN> JournalStateGetter for Context<BLOCK, TX, D
     }
 }
 
-impl<BLOCK, TX, DB: Database, CHAIN> DatabaseGetter for Context<BLOCK, TX, DB, CHAIN> {
+impl<BLOCK, TX, SPEC, DB: Database, CHAIN> DatabaseGetter for Context<BLOCK, TX, SPEC, DB, CHAIN> {
     type Database = DB;
 
     fn db(&mut self) -> &mut Self::Database {
@@ -319,7 +331,9 @@ impl<BLOCK, TX, DB: Database, CHAIN> DatabaseGetter for Context<BLOCK, TX, DB, C
     }
 }
 
-impl<BLOCK, TX: Transaction, DB: Database, CHAIN> ErrorGetter for Context<BLOCK, TX, DB, CHAIN> {
+impl<BLOCK, TX: Transaction, SPEC, DB: Database, CHAIN> ErrorGetter
+    for Context<BLOCK, TX, SPEC, DB, CHAIN>
+{
     type Error = EVMError<DB::Error, TX::TransactionError>;
 
     fn take_error(&mut self) -> Result<(), Self::Error> {
@@ -327,8 +341,8 @@ impl<BLOCK, TX: Transaction, DB: Database, CHAIN> ErrorGetter for Context<BLOCK,
     }
 }
 
-impl<BLOCK, TX: Transaction, DB: Database, CHAIN> TransactionGetter
-    for Context<BLOCK, TX, DB, CHAIN>
+impl<BLOCK, TX: Transaction, SPEC, DB: Database, CHAIN> TransactionGetter
+    for Context<BLOCK, TX, SPEC, DB, CHAIN>
 {
     type Transaction = TX;
 
@@ -336,7 +350,9 @@ impl<BLOCK, TX: Transaction, DB: Database, CHAIN> TransactionGetter
         &self.tx
     }
 }
-impl<BLOCK: Block, TX, DB: Database, CHAIN> BlockGetter for Context<BLOCK, TX, DB, CHAIN> {
+impl<BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockGetter
+    for Context<BLOCK, TX, SPEC, DB, CHAIN>
+{
     type Block = BLOCK;
 
     fn block(&self) -> &Self::Block {
@@ -344,7 +360,7 @@ impl<BLOCK: Block, TX, DB: Database, CHAIN> BlockGetter for Context<BLOCK, TX, D
     }
 }
 
-impl<BLOCK: Block, TX: Transaction, DB: Database, CHAIN> AllGetters
-    for Context<BLOCK, TX, DB, CHAIN>
+impl<BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> AllGetters
+    for Context<BLOCK, TX, SPEC, DB, CHAIN>
 {
 }

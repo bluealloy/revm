@@ -1,6 +1,6 @@
 use super::g2::{encode_g2_point, extract_g2_input, G2_INPUT_ITEM_LENGTH};
 use crate::{u64_to_address, PrecompileWithAddress};
-use crate::{Precompile, PrecompileError, PrecompileOutput, PrecompileResult};
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{
     blst_p2, blst_p2_add_or_double_affine, blst_p2_affine, blst_p2_from_affine, blst_p2_to_affine,
 };
@@ -8,7 +8,7 @@ use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G2ADD precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(g2_add));
+    PrecompileWithAddress(u64_to_address(ADDRESS), g2_add);
 /// BLS12_G2ADD precompile address.
 pub const ADDRESS: u64 = 0x0e;
 /// Base gas fee for BLS12-381 g2_add operation.

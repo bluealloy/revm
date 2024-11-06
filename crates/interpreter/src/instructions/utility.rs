@@ -98,7 +98,7 @@ mod tests {
     use super::*;
 
     #[test]
-    pub fn test_into_u256() {
+    fn test_into_u256() {
         let addr = address!("0000000000000000000000000000000000000001");
         let u256 = addr.into_u256();
         assert_eq!(u256, U256::from(0x01));

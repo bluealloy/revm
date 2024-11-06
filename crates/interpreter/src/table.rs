@@ -10,7 +10,7 @@ use specification::hardfork::Spec;
 use std::boxed::Box;
 
 /// EVM opcode function signature.
-pub type Instruction<W, H> = fn(&mut NewInterpreter<W>, &mut H);
+pub type Instruction<W, H> = for<'a> fn(&'a mut NewInterpreter<W>, &'a mut H);
 
 /// Instruction table is list of instruction function pointers mapped to 256 EVM opcodes.
 pub type InstructionTable<W, H> = [Instruction<W, H>; 256];

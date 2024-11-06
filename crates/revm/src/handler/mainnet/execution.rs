@@ -1,5 +1,8 @@
-use super::EthFrame;
-use crate::handler::{wires::Frame as FrameTrait, ExecutionWire, FrameOrResultGen};
+use super::{frame_data::FrameResult, EthFrame};
+use crate::handler::{
+    wires::Frame as FrameTrait, EthPrecompileProvider, ExecutionWire, FrameOrResultGen,
+    PrecompileProvider,
+};
 use bytecode::EOF_MAGIC_BYTES;
 use context::{
     BlockGetter, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
@@ -7,21 +10,32 @@ use context::{
 };
 use core::cell::RefCell;
 use interpreter::{
-    interpreter::EthInterpreter, return_ok, return_revert, CallInputs, CallScheme, CallValue,
-    CreateInputs, CreateScheme, EOFCreateInputs, EOFCreateKind, Gas, NewFrameAction, SharedMemory,
+    interpreter::{EthInstructionProvider, EthInterpreter},
+    return_ok, return_revert, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme,
+    EOFCreateInputs, EOFCreateKind, Gas, NewFrameAction, SharedMemory,
 };
+use precompile::PrecompileSpecId;
 use primitives::TxKind;
 use specification::hardfork::SpecId;
 use std::{boxed::Box, rc::Rc};
-use wiring::{journaled_state::JournaledState, result::InvalidTransaction, Transaction};
+use wiring::{journaled_state::JournaledState, result::InvalidTransaction, Cfg, Transaction};
 
 /// TODO EvmWiringT is temporary, replace it with getter traits.
-pub struct EthExecution<CTX, ERROR> {
-    spec_id: SpecId,
-    _phantom: std::marker::PhantomData<(CTX, ERROR)>,
+pub struct EthExecution<
+    CTX,
+    ERROR,
+    FRAME = EthFrame<
+        CTX,
+        ERROR,
+        EthInterpreter<()>,
+        EthPrecompileProvider<CTX>,
+        EthInstructionProvider<EthInterpreter<()>, CTX>,
+    >,
+> {
+    _phantom: std::marker::PhantomData<(CTX, FRAME, ERROR)>,
 }
 
-impl<CTX, ERROR> ExecutionWire for EthExecution<CTX, ERROR>
+impl<CTX, ERROR, FRAME> ExecutionWire for EthExecution<CTX, ERROR, FRAME>
 where
     CTX: TransactionGetter
         + ErrorGetter<Error = ERROR>
@@ -29,24 +43,38 @@ where
         + JournalStateGetter
         + CfgGetter,
     ERROR: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
+    FRAME: FrameTrait<
+        Context = CTX,
+        Error = ERROR,
+        FrameInit = NewFrameAction,
+        FrameResult = FrameResult,
+    >,
 {
     type Context = CTX;
     type Error = ERROR;
-    type Frame = EthFrame<CTX, EthInterpreter<()>, ERROR>;
-    type ExecResult = <Self::Frame as FrameTrait>::FrameResult;
+    type Frame = FRAME;
+    type ExecResult = FrameResult;
 
     fn init_first_frame(
-        &self,
+        &mut self,
         context: &mut Self::Context,
         gas_limit: u64,
     ) -> Result<FrameOrResultGen<Self::Frame, <Self::Frame as FrameTrait>::FrameResult>, Self::Error>
     {
+        // TODO do this in frame
+        // self.precompiles
+        //     .set_spec_id(PrecompileSpecId::from_spec_id(self.spec_id));
+        // // wamr up precompile address.
+        // for address in self.precompiles.warm_addresses() {
+        //     context.journal().warm_account(address);
+        // }
+
         // Make new frame action.
-        let spec_id = self.spec_id;
+        let spec = context.cfg().spec().into();
         let tx = context.tx();
         let input = tx.common_fields().input().clone();
 
-        let init_frame = match tx.kind() {
+        let init_frame: NewFrameAction = match tx.kind() {
             TxKind::Call(target_address) => NewFrameAction::Call(Box::new(CallInputs {
                 input,
                 gas_limit,
@@ -61,9 +89,7 @@ where
             })),
             TxKind::Create => {
                 // if first byte of data is magic 0xEF00, then it is EOFCreate.
-                if self.spec_id.is_enabled_in(SpecId::PRAGUE_EOF)
-                    && input.starts_with(&EOF_MAGIC_BYTES)
-                {
+                if spec.is_enabled_in(SpecId::PRAGUE_EOF) && input.starts_with(&EOF_MAGIC_BYTES) {
                     NewFrameAction::EOFCreate(Box::new(EOFCreateInputs::new(
                         tx.common_fields().caller(),
                         tx.common_fields().value(),
@@ -83,8 +109,9 @@ where
         };
         // First frame has dummy data and it is used to create shared context.
         //EthFrame::new()
-        let shared_memory = Rc::new(RefCell::new(SharedMemory::new()));
-        EthFrame::init_with_context(0, init_frame, spec_id, shared_memory, context)
+        //let shared_memory = Rc::new(RefCell::new(SharedMemory::new()));
+        //EthFrame::init_with_context(0, init_frame, spec_id, shared_memory, context)
+        FRAME::init_first(context, init_frame)
     }
 
     fn last_frame_result(
@@ -110,238 +137,21 @@ where
             }
             _ => {}
         }
-        Ok(frame_result)
+        Ok(frame_result.into())
     }
 }
 
 impl<CTX, ERROR> EthExecution<CTX, ERROR> {
-    pub fn new(spec_id: SpecId) -> Self {
+    pub fn new() -> Self {
         Self {
-            spec_id,
             _phantom: std::marker::PhantomData,
         }
     }
 
-    pub fn new_boxed(spec_id: SpecId) -> Box<Self> {
-        Box::new(Self::new(spec_id))
+    pub fn new_boxed() -> Box<Self> {
+        Box::new(Self::new())
     }
 }
-
-// /// Execute frame
-// #[inline]
-// pub fn execute_frame<EvmWiringT: EvmWiring, SPEC: Spec>(
-//     frame: &mut Frame,
-//     shared_memory: &mut SharedMemory,
-//     instruction_tables: &InstructionTables<'_, Context<EvmWiringT>>,
-//     context: &mut Context<EvmWiringT>,
-// ) -> EVMResultGeneric<InterpreterAction, EvmWiringT> {
-//     let interpreter = frame.interpreter_mut();
-//     let memory = mem::replace(shared_memory, EMPTY_SHARED_MEMORY);
-//     let next_action = match instruction_tables {
-//         InstructionTables::Plain(table) => interpreter.run(memory, table, context),
-//         InstructionTables::Boxed(table) => interpreter.run(memory, table, context),
-//     };
-//     // Take the shared memory back.
-//     *shared_memory = interpreter.take_memory();
-
-//     Ok(next_action)
-// }
-
-// /// First frame creation.
-// pub fn first_frame_creation<EvmWiringT: EvmWiring, SPEC: Spec>(
-//     context: &mut Context<EvmWiringT>,
-//     gas_limit: u64,
-// ) -> EVMResultGeneric<NewFrameAction, EvmWiringT> {
-//     // Make new frame action.
-//     let tx = &context.evm.env.tx;
-
-//     let input = tx.common_fields().input().clone();
-
-//     let new_frame = match tx.kind() {
-//         TxKind::Call(target_address) => NewFrameAction::Call(Box::new(CallInputs {
-//             input,
-//             gas_limit,
-//             target_address,
-//             bytecode_address: target_address,
-//             caller: tx.common_fields().caller(),
-//             value: CallValue::Transfer(tx.common_fields().value()),
-//             scheme: CallScheme::Call,
-//             is_static: false,
-//             is_eof: false,
-//             return_memory_offset: 0..0,
-//         })),
-//         TxKind::Create => {
-//             // if first byte of data is magic 0xEF00, then it is EOFCreate.
-//             if SPEC::enabled(SpecId::PRAGUE_EOF) && input.starts_with(&EOF_MAGIC_BYTES) {
-//                 NewFrameAction::EOFCreate(Box::new(EOFCreateInputs::new(
-//                     tx.common_fields().caller(),
-//                     tx.common_fields().value(),
-//                     gas_limit,
-//                     EOFCreateKind::Tx { initdata: input },
-//                 )))
-//             } else {
-//                 NewFrameAction::Create(Box::new(CreateInputs {
-//                     caller: tx.common_fields().caller(),
-//                     scheme: CreateScheme::Create,
-//                     value: tx.common_fields().value(),
-//                     init_code: input,
-//                     gas_limit,
-//                 }))
-//             }
-//         }
-//     };
-
-//     Ok(new_frame)
-// }
-
-// /// Handle output of the transaction
-// #[inline]
-// pub fn last_frame_return<EvmWiringT: EvmWiring, SPEC: Spec>(
-//     context: &mut Context<EvmWiringT>,
-//     frame_result: &mut FrameResult,
-// ) -> EVMResultGeneric<(), EvmWiringT> {
-//     let instruction_result = frame_result.interpreter_result().result;
-//     let gas = frame_result.gas_mut();
-//     let remaining = gas.remaining();
-//     let refunded = gas.refunded();
-
-//     // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-//     *gas = Gas::new_spent(context.evm.env.tx.common_fields().gas_limit());
-
-//     match instruction_result {
-//         return_ok!() => {
-//             gas.erase_cost(remaining);
-//             gas.record_refund(refunded);
-//         }
-//         return_revert!() => {
-//             gas.erase_cost(remaining);
-//         }
-//         _ => {}
-//     }
-//     Ok(())
-// }
-
-// /// Handle frame sub call.
-// #[inline]
-// pub fn call<EvmWiringT: EvmWiring, SPEC: Spec>(
-//     context: &mut Context<EvmWiringT>,
-//     inputs: Box<CallInputs>,
-// ) -> EVMResultGeneric<FrameOrResult, EvmWiringT> {
-//     context.evm.make_call_frame(&inputs)
-// }
-
-// #[inline]
-// pub fn call_return<EvmWiringT: EvmWiring>(
-//     context: &mut Context<EvmWiringT>,
-//     frame: Box<CallFrame>,
-//     interpreter_result: InterpreterResult,
-// ) -> EVMResultGeneric<CallOutcome, EvmWiringT> {
-//     context
-//         .evm
-//         .call_return(&interpreter_result, frame.frame_data.checkpoint);
-//     Ok(CallOutcome::new(
-//         interpreter_result,
-//         frame.return_memory_range,
-//     ))
-// }
-
-// #[inline]
-// pub fn insert_call_outcome<EvmWiringT: EvmWiring>(
-//     context: &mut Context<EvmWiringT>,
-//     frame: &mut Frame,
-//     shared_memory: &mut SharedMemory,
-//     outcome: CallOutcome,
-// ) -> EVMResultGeneric<(), EvmWiringT> {
-//     context.evm.take_error().map_err(EVMError::Database)?;
-
-//     frame
-//         .frame_data_mut()
-//         .interpreter
-//         .insert_call_outcome(shared_memory, outcome);
-//     Ok(())
-// }
-
-// /// Handle frame sub create.
-// #[inline]
-// pub fn create<EvmWiringT: EvmWiring, SPEC: Spec>(
-//     context: &mut Context<EvmWiringT>,
-//     inputs: Box<CreateInputs>,
-// ) -> EVMResultGeneric<FrameOrResult, EvmWiringT> {
-//     context.evm.make_create_frame(SPEC::SPEC_ID, &inputs)
-// }
-
-// #[inline]
-// pub fn create_return<EvmWiringT: EvmWiring, SPEC: Spec>(
-//     context: &mut Context<EvmWiringT>,
-//     frame: Box<CreateFrame>,
-//     mut interpreter_result: InterpreterResult,
-// ) -> EVMResultGeneric<CreateOutcome, EvmWiringT> {
-//     context.evm.create_return::<SPEC>(
-//         &mut interpreter_result,
-//         frame.created_address,
-//         frame.frame_data.checkpoint,
-//     );
-//     Ok(CreateOutcome::new(
-//         interpreter_result,
-//         Some(frame.created_address),
-//     ))
-// }
-
-// #[inline]
-// pub fn insert_create_outcome<EvmWiringT: EvmWiring>(
-//     context: &mut Context<EvmWiringT>,
-//     frame: &mut Frame,
-//     outcome: CreateOutcome,
-// ) -> EVMResultGeneric<(), EvmWiringT> {
-//     context.evm.take_error().map_err(EVMError::Database)?;
-
-//     frame
-//         .frame_data_mut()
-//         .interpreter
-//         .insert_create_outcome(outcome);
-//     Ok(())
-// }
-
-// /// Handle frame sub create.
-// #[inline]
-// pub fn eofcreate<EvmWiringT: EvmWiring, SPEC: Spec>(
-//     context: &mut Context<EvmWiringT>,
-//     inputs: Box<EOFCreateInputs>,
-// ) -> EVMResultGeneric<FrameOrResult, EvmWiringT> {
-//     context.evm.make_eofcreate_frame(SPEC::SPEC_ID, &inputs)
-// }
-
-// #[inline]
-// pub fn eofcreate_return<EvmWiringT: EvmWiring, SPEC: Spec>(
-//     context: &mut Context<EvmWiringT>,
-//     frame: Box<EOFCreateFrame>,
-//     mut interpreter_result: InterpreterResult,
-// ) -> EVMResultGeneric<CreateOutcome, EvmWiringT> {
-//     context.evm.eofcreate_return::<SPEC>(
-//         &mut interpreter_result,
-//         frame.created_address,
-//         frame.frame_data.checkpoint,
-//     );
-//     Ok(CreateOutcome::new(
-//         interpreter_result,
-//         Some(frame.created_address),
-//     ))
-// }
-
-// #[inline]
-// pub fn insert_eofcreate_outcome<EvmWiringT: EvmWiring>(
-//     context: &mut Context<EvmWiringT>,
-//     frame: &mut Frame,
-//     outcome: CreateOutcome,
-// ) -> EVMResultGeneric<(), EvmWiringT> {
-//     context.evm.take_error().map_err(EVMError::Database)?;
-
-//     frame
-//         .frame_data_mut()
-//         .interpreter
-//         .insert_eofcreate_outcome(outcome);
-//     Ok(())
-// }
 
 // #[cfg(test)]
 // mod tests {

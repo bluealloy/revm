@@ -84,12 +84,6 @@ impl SubRoutineStack for SubRoutineImpl {
         })
     }
 
-    // fn eof_code_info(&self, idx: usize) -> Option<&TypesSection> {
-    //     self.eof()
-    //         .map(|eof| eof.body.types_section.get(idx))
-    //         .flatten()
-    // }
-
     fn set_routine_idx(&mut self, idx: usize) {
         self.current_code_idx = idx;
     }

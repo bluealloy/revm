@@ -6,6 +6,7 @@
 extern crate alloc as std;
 
 pub mod context;
+pub mod default;
 pub mod getters;
 pub mod journaled_state;
 

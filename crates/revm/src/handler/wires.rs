@@ -1,7 +1,7 @@
-// Modules
-
-use precompile::PrecompileResult;
+use context::CfgGetter;
+use precompile::{PrecompileResult, PrecompileSpecId, Precompiles};
 use primitives::{Address, Bytes};
+use wiring::Cfg;
 
 pub trait ValidationWire {
     type Context;
@@ -91,7 +91,7 @@ pub trait ExecutionWire {
 
     /// Execute call.
     fn init_first_frame(
-        &self,
+        &mut self,
         context: &mut Self::Context,
         gas_limit: u64,
     ) -> Result<FrameOrResultGen<Self::Frame, <Self::Frame as Frame>::FrameResult>, Self::Error>;
@@ -114,7 +114,7 @@ pub trait ExecutionWire {
             let call_or_result = frame.run(context)?;
 
             let result = match call_or_result {
-                FrameOrResultGen::Frame(init) => match frame.init(init, context)? {
+                FrameOrResultGen::Frame(init) => match frame.init(context, init)? {
                     FrameOrResultGen::Frame(new_frame) => {
                         frame_stack.push(new_frame);
                         continue;
@@ -140,8 +140,11 @@ pub enum FrameOrResultGen<Frame, Result> {
     Result(Result),
 }
 
-pub trait PrecompileProvider {
+pub trait InstructionProvider: Default {
     type Context;
+    type SpecId;
+
+    fn set_spec_id(&mut self, spec_id: Self::SpecId);
 
     fn run(
         &mut self,
@@ -154,6 +157,65 @@ pub trait PrecompileProvider {
     fn warm_addresses(&self) -> impl Iterator<Item = Address>;
 }
 
+pub trait PrecompileProvider: Clone {
+    type Context;
+
+    fn new(ctx: &mut Self::Context) -> Self;
+
+    fn run(
+        &mut self,
+        ctx: &mut Self::Context,
+        address: &Address,
+        bytes: &Bytes,
+        gas_limit: u64,
+    ) -> Option<PrecompileResult>;
+
+    fn warm_addresses(&self) -> impl Iterator<Item = Address>;
+}
+
+pub struct EthPrecompileProvider<CTX> {
+    precompiles: &'static Precompiles,
+    _phantom: std::marker::PhantomData<fn() -> CTX>,
+}
+
+impl<CTX> Clone for EthPrecompileProvider<CTX> {
+    fn clone(&self) -> Self {
+        Self {
+            precompiles: self.precompiles,
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<CTX> PrecompileProvider for EthPrecompileProvider<CTX>
+where
+    CTX: CfgGetter,
+{
+    type Context = CTX;
+
+    fn new(ctx: &mut Self::Context) -> Self {
+        let spec = ctx.cfg().spec().into();
+        Self {
+            precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(spec)),
+            _phantom: std::marker::PhantomData,
+        }
+    }
+
+    fn run(
+        &mut self,
+        _ctx: &mut Self::Context,
+        address: &Address,
+        bytes: &Bytes,
+        gas_limit: u64,
+    ) -> Option<PrecompileResult> {
+        Some((self.precompiles.get(address)?)(bytes, gas_limit))
+    }
+
+    fn warm_addresses(&self) -> impl Iterator<Item = Address> {
+        self.precompiles.addresses().cloned()
+    }
+}
+
 /// Makes sense
 pub trait Frame: Sized {
     type Context;
@@ -161,10 +223,15 @@ pub trait Frame: Sized {
     type FrameResult;
     type Error;
 
+    fn init_first(
+        cxt: &mut Self::Context,
+        frame_action: Self::FrameInit,
+    ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error>;
+
     fn init(
         &self,
-        frame_action: Self::FrameInit,
         cxt: &mut Self::Context,
+        frame_action: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error>;
 
     fn run(

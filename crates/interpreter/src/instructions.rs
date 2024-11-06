@@ -16,7 +16,7 @@ pub mod system;
 pub mod tx_info;
 pub mod utility;
 
-use crate::{interpreter::NewInterpreter, interpreter_wiring::InterpreterWire, Host};
+use crate::{interpreter_wiring::InterpreterWire, Host};
 
 /// Returns the instruction function for the given opcode and spec.
 pub const fn instruction<WIRE: InterpreterWire, H: Host + ?Sized>(
@@ -222,10 +222,9 @@ pub const fn instruction_table<WIRE: InterpreterWire, H: Host + ?Sized>(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::DummyHost;
-    use bytecode::opcode::*;
-    use wiring::DefaultEthereumWiring;
+    // use super::*;
+    // use crate::DummyHost;
+    // use bytecode::opcode::*;
 
     // TODO define EthEthereumWire
     // #[test]

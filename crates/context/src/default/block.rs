@@ -1,5 +1,5 @@
-use crate::block::{BlobExcessGasAndPrice, Block};
 use primitives::{Address, B256, U256};
+use wiring::block::{BlobExcessGasAndPrice, Block};
 
 /// The block environment.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -7,10 +7,10 @@ use primitives::{Address, B256, U256};
 pub struct BlockEnv {
     /// The number of ancestor blocks of this block (block height).
     pub number: U256,
-    /// Coinbase or miner or address that created and signed the block.
+    /// Beneficiary (Coinbase or miner) is a address that have signed the block.
     ///
     /// This is the receiver address of all the gas spent in the block.
-    pub coinbase: Address,
+    pub beneficiary: Address,
 
     /// The timestamp of the block in seconds since the UNIX epoch.
     pub timestamp: U256,
@@ -57,8 +57,8 @@ impl Block for BlockEnv {
     }
 
     #[inline]
-    fn coinbase(&self) -> &Address {
-        &self.coinbase
+    fn beneficiary(&self) -> &Address {
+        &self.beneficiary
     }
 
     #[inline]
@@ -96,7 +96,7 @@ impl Default for BlockEnv {
     fn default() -> Self {
         Self {
             number: U256::ZERO,
-            coinbase: Address::ZERO,
+            beneficiary: Address::ZERO,
             timestamp: U256::from(1),
             gas_limit: U256::MAX,
             basefee: U256::ZERO,

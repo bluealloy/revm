@@ -3,9 +3,8 @@ pub use dummy::DummyHost;
 
 use primitives::{Address, Bytes, Log, B256, U256};
 use wiring::{
-    default::CfgEnv,
     journaled_state::{AccountLoad, Eip7702CodeLoad},
-    Block, Transaction,
+    Block, CfgEnv, Transaction,
 };
 
 pub use wiring::journaled_state::StateLoad;

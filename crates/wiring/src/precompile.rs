@@ -1,4 +1,4 @@
-use crate::default::CfgEnv;
+use crate::CfgEnv;
 use core::fmt;
 use dyn_clone::DynClone;
 use primitives::Bytes;

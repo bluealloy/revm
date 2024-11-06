@@ -5,13 +5,9 @@ use context::{
     BlockGetter, CfgGetter, JournalStateGetter, JournalStateGetterDBError, TransactionGetter,
 };
 
-use database_interface::Database;
 use interpreter::gas;
 use primitives::{B256, U256};
-use specification::{
-    eip4844,
-    hardfork::{Spec, SpecId},
-};
+use specification::{eip4844, hardfork::SpecId};
 use state::Account;
 use std::boxed::Box;
 use transaction::{
@@ -350,29 +346,6 @@ where
     }
 
     Ok(())
-}
-
-/// Validates transaction against the state.
-pub fn validate_tx_against_state<
-    CTX: JournalStateGetter + TransactionGetter + CfgGetter,
-    SPEC: Spec,
-    ERROR,
->(
-    ctx: &mut CTX,
-) -> Result<(), ERROR>
-where
-    ERROR: From<InvalidTransaction>
-        + From<
-            <<<CTX as JournalStateGetter>::Journal as JournaledState>::Database as Database>::Error,
-        >,
-{
-    let tx_caller = ctx.tx().common_fields().caller();
-
-    // load acc
-    let account = &mut ctx.journal().load_account_code(tx_caller)?;
-    let account = account.data.clone();
-
-    validate_tx_against_account::<CTX, ERROR>(&account, ctx)
 }
 
 /// Validate initial transaction gas.

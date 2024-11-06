@@ -55,57 +55,51 @@ impl Default for SharedMemory {
     }
 }
 
-impl MemoryTrait for Rc<RefCell<SharedMemory>> {
+pub trait MemoryGetter {
+    fn memory_mut(&mut self) -> &mut SharedMemory;
+    fn memory(&self) -> &SharedMemory;
+}
+
+impl MemoryGetter for SharedMemory {
+    #[inline]
+    fn memory_mut(&mut self) -> &mut SharedMemory {
+        self
+    }
+
+    #[inline]
+    fn memory(&self) -> &SharedMemory {
+        self
+    }
+}
+
+impl<T: MemoryGetter> MemoryTrait for Rc<RefCell<T>> {
     fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         self.borrow_mut()
+            .memory_mut()
             .set_data(memory_offset, data_offset, len, data);
     }
 
     fn set(&mut self, memory_offset: usize, data: &[u8]) {
-        self.borrow_mut().set(memory_offset, data);
+        self.borrow_mut().memory_mut().set(memory_offset, data);
     }
 
     fn size(&self) -> usize {
-        self.borrow().size()
+        self.borrow().memory().len()
     }
 
     fn copy(&mut self, destination: usize, source: usize, len: usize) {
-        self.borrow_mut().copy(destination, source, len);
+        self.borrow_mut()
+            .memory_mut()
+            .copy(destination, source, len);
     }
 
     fn slice(&self, range: Range<usize>) -> impl Deref<Target = [u8]> + '_ {
-        Ref::map(self.borrow(), |i| i.slice_range(range))
+        Ref::map(self.borrow(), |i| i.memory().slice_range(range))
     }
 
     fn resize(&mut self, new_size: usize) -> bool {
-        self.borrow_mut().resize(new_size);
+        self.borrow_mut().memory_mut().resize(new_size);
         true
-    }
-}
-
-impl MemoryTrait for SharedMemory {
-    fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
-        todo!()
-    }
-
-    fn set(&mut self, memory_offset: usize, data: &[u8]) {
-        todo!()
-    }
-
-    fn size(&self) -> usize {
-        todo!()
-    }
-
-    fn copy(&mut self, destination: usize, source: usize, len: usize) {
-        todo!()
-    }
-
-    fn slice(&self, range: Range<usize>) -> impl Deref<Target = [u8]> + '_ {
-        self.slice_range(range)
-    }
-
-    fn resize(&mut self, new_size: usize) -> bool {
-        todo!()
     }
 }
 
