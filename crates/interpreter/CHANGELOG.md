@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v13.0.0...revm-interpreter-v14.0.0) - 2024-11-06
+
+### Other
+
+- bump alloy-eip7702 and remove `Parity` re-export ([#1842](https://github.com/bluealloy/revm/pull/1842))
+
 ## [13.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v12.0.0...revm-interpreter-v13.0.0) - 2024-10-23
 
 ### Other
