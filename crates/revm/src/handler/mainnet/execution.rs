@@ -130,7 +130,7 @@ where
     }
 }
 
-impl<CTX, ERROR> EthExecution<CTX, ERROR> {
+impl<CTX, ERROR, FRAME> EthExecution<CTX, ERROR, FRAME> {
     pub fn new() -> Self {
         Self {
             _phantom: std::marker::PhantomData,

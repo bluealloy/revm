@@ -1,12 +1,11 @@
 //! Custom print inspector, it has step level information of execution.
 //! It is a great tool if some debugging is needed.
 
-use crate::{inspectors::GasInspector, Inspector};
+use crate::Inspector;
 use revm::{
     bytecode::opcode::OpCode,
-    interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter},
+    interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome},
     primitives::{Address, U256},
-    EvmContext, EvmWiring,
 };
 
 /// Custom print [Inspector], it has step level information of execution.
@@ -14,7 +13,7 @@ use revm::{
 /// It is a great tool if some debugging is needed.
 #[derive(Clone, Debug, Default)]
 pub struct CustomPrintTracer {
-    gas_inspector: GasInspector,
+    //gas_inspector: GasInspector,
 }
 
 impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for CustomPrintTracer {
@@ -23,7 +22,7 @@ impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for CustomPrintTracer {
         interp: &mut Interpreter,
         context: &mut EvmContext<EvmWiringT>,
     ) {
-        self.gas_inspector.initialize_interp(interp, context);
+        //self.gas_inspector.initialize_interp(interp, context);
     }
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
@@ -32,7 +31,7 @@ impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for CustomPrintTracer {
         let opcode = interp.current_opcode();
         let name = OpCode::name_by_op(opcode);
 
-        let gas_remaining = self.gas_inspector.gas_remaining();
+        let gas_remaining = 0; //self.gas_inspector.gas_remaining();
 
         let memory_size = interp.shared_memory.len();
 
@@ -52,66 +51,8 @@ impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for CustomPrintTracer {
 
         self.gas_inspector.step(interp, context);
     }
-
-    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>) {
-        self.gas_inspector.step_end(interp, context);
-    }
-
-    fn call_end(
-        &mut self,
-        context: &mut EvmContext<EvmWiringT>,
-        inputs: &CallInputs,
-        outcome: CallOutcome,
-    ) -> CallOutcome {
-        self.gas_inspector.call_end(context, inputs, outcome)
-    }
-
-    fn create_end(
-        &mut self,
-        context: &mut EvmContext<EvmWiringT>,
-        inputs: &CreateInputs,
-        outcome: CreateOutcome,
-    ) -> CreateOutcome {
-        self.gas_inspector.create_end(context, inputs, outcome)
-    }
-
-    fn call(
-        &mut self,
-        _context: &mut EvmContext<EvmWiringT>,
-        inputs: &mut CallInputs,
-    ) -> Option<CallOutcome> {
-        println!(
-            "SM Address: {:?}, caller:{:?},target:{:?} is_static:{:?}, transfer:{:?}, input_size:{:?}",
-            inputs.bytecode_address,
-            inputs.caller,
-            inputs.target_address,
-            inputs.is_static,
-            inputs.value,
-            inputs.input.len(),
-        );
-        None
-    }
-
-    fn create(
-        &mut self,
-        _context: &mut EvmContext<EvmWiringT>,
-        inputs: &mut CreateInputs,
-    ) -> Option<CreateOutcome> {
-        println!(
-            "CREATE CALL: caller:{:?}, scheme:{:?}, value:{:?}, init_code:{:?}, gas:{:?}",
-            inputs.caller, inputs.scheme, inputs.value, inputs.init_code, inputs.gas_limit
-        );
-        None
-    }
-
-    fn selfdestruct(&mut self, contract: Address, target: Address, value: U256) {
-        println!(
-            "SELFDESTRUCT: contract: {:?}, refund target: {:?}, value {:?}",
-            contract, target, value
-        );
-    }
 }
-
+/*
 #[cfg(test)]
 mod test {
     use super::*;
@@ -160,3 +101,4 @@ mod test {
         evm.transact().expect("Transaction to work");
     }
 }
+*/

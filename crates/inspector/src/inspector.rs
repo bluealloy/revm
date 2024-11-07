@@ -4,7 +4,7 @@ use std::rc::Rc;
 use auto_impl::auto_impl;
 use derive_where::derive_where;
 use revm::{
-    bytecode::{Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
+    bytecode::{opcode::OpCode, Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
     context::{
         default::{block::BlockEnv, tx::TxEnv},
         BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
@@ -12,12 +12,13 @@ use revm::{
     },
     database_interface::{Database, EmptyDB},
     handler::{
-        mainnet::FrameResult, EthHand, EthPrecompileProvider, Frame, PrecompileProvider, GEVM,
+        mainnet::FrameResult, EthHand, EthPrecompileProvider, Frame, PrecompileProvider, EEVM, GEVM,
     },
     interpreter::{
         as_u64_saturated,
         instructions::{arithmetic::addmod, host, instruction},
         interpreter::{EthInstructionProvider, EthInterpreter, InstructionProvider},
+        interpreter_wiring::{Jumps, MemoryTrait},
         table::{self, CustomInstruction},
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Host, Instruction,
         InterpreterWire, NewFrameAction, NewInterpreter, SStoreResult, SelfDestructResult,
@@ -28,7 +29,7 @@ use revm::{
     specification::hardfork::SpecId,
     wiring::{
         journaled_state::{AccountLoad, Eip7702CodeLoad},
-        result::EVMError,
+        result::{EVMError, InvalidTransaction},
         Block, CfgEnv, Transaction,
     },
     Context, JournaledState,
@@ -192,6 +193,59 @@ pub trait Inspector {
         let _ = contract;
         let _ = target;
         let _ = value;
+    }
+}
+
+pub struct StepPrintInspector<CTX> {
+    _phantom: core::marker::PhantomData<CTX>,
+}
+
+impl<CTX> StepPrintInspector<CTX> {
+    pub fn new() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+impl<CTX> Inspector for StepPrintInspector<CTX> {
+    type Context = CTX;
+    type InterpreterWire = EthInterpreter;
+
+    /// Called on each step of the interpreter.
+    ///
+    /// Information about the current execution, including the memory, stack and more is available
+    /// on `interp` (see [Interpreter]).
+    ///
+    /// # Example
+    ///
+    /// To get the current opcode, use `interp.current_opcode()`.
+    #[inline]
+    fn step(
+        &mut self,
+        interp: &mut NewInterpreter<Self::InterpreterWire>,
+        context: &mut Self::Context,
+    ) {
+        let opcode = interp.bytecode.opcode();
+        let name = OpCode::name_by_op(opcode);
+
+        let gas_remaining = 0; //self.gas_inspector.gas_remaining();
+
+        let memory_size = interp.memory.size();
+
+        println!(
+            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
+            0,
+            interp.bytecode.pc(),
+            gas_remaining,
+            gas_remaining,
+            name,
+            opcode,
+            0, //interp.gas.refunded(),
+            0, //interp.gas.refunded(),
+            interp.stack.data(),
+            memory_size,
+        );
     }
 }
 
@@ -568,21 +622,54 @@ where
     }
 }
 
-pub type INSPECTOR_EVM<DB, ERROR> = GEVM<
+pub type I_GEEVM<DB, INSP> =
+    INSPECTOR_EVM<DB, INSP, EVMError<<DB as Database>::Error, InvalidTransaction>>;
+
+pub type I_EthContext<INSP, DB> = InspectorContext<INSP, BlockEnv, TxEnv, SpecId, DB, ()>;
+
+pub type INSPECTOR_EVM<DB, INSP, ERROR> = GEVM<
     ERROR,
-    InspectorContext<DB>,
+    I_EthContext<INSP, DB>,
     EthHand<
-        InspectorContext<DB>,
+        I_EthContext<INSP, DB>,
         ERROR,
-        EthValidation<InspectorContext<DB>, ERROR>,
-        EthPreExecution<InspectorContext<DB>, ERROR>,
+        EthValidation<I_EthContext<INSP, DB>, ERROR>,
+        EthPreExecution<I_EthContext<INSP, DB>, ERROR>,
         EthExecution<
-            InspectorContext<DB>,
+            I_EthContext<INSP, DB>,
             ERROR,
             InspectorEthFrame<
-                InspectorContext<DB>,
+                I_EthContext<INSP, DB>,
                 ERROR,
-                EthPrecompileProvider<InspectorContext<DB>, ERROR>,
+                EthPrecompileProvider<I_EthContext<INSP, DB>, ERROR>,
+            >,
+        >,
+    >,
+>;
+
+pub type GEEVM<DB> = EEVM<EVMError<<DB as Database>::Error, InvalidTransaction>, EthContext<DB>>;
+
+pub type EthContext<DB> = Context<BlockEnv, TxEnv, SpecId, DB, ()>;
+
+pub type NNEW_EVMM<DB> = NEW_EVM<DB, EVMError<<DB as Database>::Error, InvalidTransaction>>;
+
+pub type NEW_EVM<DB, ERROR> = GEVM<
+    ERROR,
+    EthContext<DB>,
+    EthHand<
+        EthContext<DB>,
+        ERROR,
+        EthValidation<EthContext<DB>, ERROR>,
+        EthPreExecution<EthContext<DB>, ERROR>,
+        EthExecution<
+            EthContext<DB>,
+            ERROR,
+            EthFrame<
+                EthContext<DB>,
+                ERROR,
+                EthInterpreter<()>,
+                EthPrecompileProvider<EthContext<DB>, ERROR>,
+                EthInstructionProvider<EthInterpreter<()>, EthContext<DB>>,
             >,
         >,
     >,

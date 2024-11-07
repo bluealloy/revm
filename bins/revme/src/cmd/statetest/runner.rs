@@ -4,14 +4,17 @@ use super::{
 };
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use inspector::INSPECTOR_EVM;
+use inspector::{
+    EthContext, I_EthContext, InspectorContext, InspectorEthFrame, StepPrintInspector,
+    INSPECTOR_EVM, I_GEEVM,
+};
 use revm::{
     bytecode::Bytecode,
     context::default::{block::BlockEnv, tx::TxEnv},
     database_interface::EmptyDB,
     handler::{
         mainnet::{EthExecution, EthPostExecution, EthPreExecution, EthValidation},
-        EthHand, GEEVM, NEW_EVM, NNEW_EVMM,
+        EthHand, EthPrecompileProvider, GEEVM, NEW_EVM, NNEW_EVMM,
     },
     primitives::{keccak256, Bytes, TxKind, B256},
     specification::{eip7702::AuthorizationList, hardfork::SpecId},
@@ -440,33 +443,48 @@ pub fn execute_test_suite(
 
                 // do the deed
                 let (e, exec_result) = if trace {
-                    todo!();
-                    // let mut evm = evm
-                    //     .modify()
-                    //     .reset_handler_with_external_context::<EthereumWiring<_, TracerEip3155>>()
-                    //     .with_external_context(
-                    //         TracerEip3155::new(Box::new(stderr())).without_summary(),
-                    //     )
-                    //     .with_spec_id(spec_id)
-                    //     .append_handler_register(inspector_handle_register)
-                    //     .build();
+                    //todo!();
+                    let mut evm = I_GEEVM {
+                        context: InspectorContext {
+                            inner: Context {
+                                block: block.clone(),
+                                tx: tx.clone(),
+                                cfg: cfg.clone(),
+                                journaled_state: JournaledState::new(
+                                    cfg.spec().into(),
+                                    &mut state,
+                                    Default::default(),
+                                ),
+                                chain: (),
+                                spec: cfg.spec().into(),
+                                error: Ok(()),
+                            },
+                            inspector: StepPrintInspector::new(),
+                        },
+                        handler: EthHand::new(
+                            EthValidation::new(),
+                            EthPreExecution::new(),
+                            EthExecution::<
+                                _,
+                                _,
+                                InspectorEthFrame<_, _, EthPrecompileProvider<_, _>>,
+                            >::new(),
+                            EthPostExecution::new(),
+                        ),
+                        _error: std::marker::PhantomData,
+                    };
 
                     // let timer = Instant::now();
                     // let res = evm.transact_commit();
                     // *elapsed.lock().unwrap() += timer.elapsed();
 
-                    // let Err(e) = check_evm_execution(
-                    //     &test,
-                    //     unit.out.as_ref(),
-                    //     &name,
-                    //     &res,
-                    //     &evm,
-                    //     print_json_outcome,
-                    // ) else {
-                    //     continue;
-                    // };
-                    // // reset external context
-                    // (e, res)
+                    let res = evm.transact();
+                    let res = res.map(|r| {
+                        evm.context.inner.journaled_state.database.commit(r.state);
+                        r.result
+                    });
+
+                    todo!("TODO");
                 } else {
                     let timer = Instant::now();
                     let res = evm.transact();

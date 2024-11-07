@@ -1,10 +1,7 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
 
 use crate::Inspector;
-use revm::{
-    interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter},
-    EvmContext, EvmWiring,
-};
+use revm::interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome};
 
 /// Helper [Inspector] that keeps track of gas.
 #[allow(dead_code)]

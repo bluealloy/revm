@@ -6,10 +6,10 @@
 extern crate alloc as std;
 
 // #[cfg(feature = "std")]
-// mod customprinter;
+// pub mod customprinter;
 // #[cfg(all(feature = "std", feature = "serde-json"))]
 // mod eip3155;
-// mod gas;
+//mod gas;
 mod handler_register;
 mod inspector;
 // mod noop;

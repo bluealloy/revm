@@ -54,7 +54,6 @@ impl<BLOCK: Block + Default, TX: Transaction + Default, SPEC, DB: Database, CHAI
     }
 }
 impl<BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> Context<BLOCK, TX, SPEC, DB, CHAIN> {
-
     /// Return account code bytes and if address is cold loaded.
     ///
     /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
