@@ -125,9 +125,9 @@ pub const fn verylowcopy_cost(len: u64) -> Option<u64> {
 
 /// `EXTCODECOPY` opcode cost calculation.
 #[inline]
-pub const fn extcodecopy_cost(spec_id: SpecId, len: u64, load: Eip7702CodeLoad<()>) -> Option<u64> {
+pub const fn extcodecopy_cost(spec_id: SpecId, len: u64, is_cold: bool) -> Option<u64> {
     let base_gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
-        warm_cold_cost_with_delegation(load)
+        warm_cold_cost(is_cold)
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
         700
     } else {
