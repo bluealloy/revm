@@ -1,15 +1,15 @@
 use crate::{
     db::Database,
     interpreter::{
-        analysis::to_analysed, gas, return_ok, AccountLoad, InstructionResult,
-        InterpreterResult, SStoreResult, SelfDestructResult, StateLoad,
+        analysis::to_analysed, gas, return_ok, AccountLoad, InstructionResult, InterpreterResult,
+        SStoreResult, SelfDestructResult, StateLoad,
     },
     journaled_state::JournaledState,
     primitives::{
         AccessListItem, Account, Address, AnalysisKind, Bytecode, Bytes, CfgEnv, EVMError, Env,
         Eof, HashSet, Spec,
         SpecId::{self, *},
-        B256, EIP7702_MAGIC_BYTES, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256, EIP7702_MAGIC_HASH
+        B256, EIP7702_MAGIC_BYTES, EIP7702_MAGIC_HASH, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, U256,
     },
     JournalCheckpoint,
 };
