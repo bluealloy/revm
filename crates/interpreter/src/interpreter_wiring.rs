@@ -141,12 +141,6 @@ pub trait StackTrait {
         self.pop().map(|value| Address::from(value.to_be_bytes()))
     }
 
-    /// Reads N bytes from bytecode and pushes it into stack.
-    ///
-    /// As pushn is very frequently used, we have this specialized implementation.
-    #[must_use]
-    fn pushn(&mut self, size: usize) -> bool;
-
     /// Exchange two values on the stack.
     ///
     /// Indexes are based from the top of the stack.

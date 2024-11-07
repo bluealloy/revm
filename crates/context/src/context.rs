@@ -32,6 +32,7 @@ pub struct Context<BLOCK = BlockEnv, TX = TxEnv, SPEC = SpecId, DB: Database = E
     pub chain: CHAIN,
     /// Consider including it inside CfgEnv but for development
     /// it is easier to make it as standalone and reevaluate inclusion later.
+    /// TODO not used
     pub spec: SPEC,
     /// Error that happened during execution.
     pub error: Result<(), <DB as Database>::Error>,
@@ -53,51 +54,6 @@ impl<BLOCK: Block + Default, TX: Transaction + Default, SPEC, DB: Database, CHAI
     }
 }
 impl<BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> Context<BLOCK, TX, SPEC, DB, CHAIN> {
-    /*
-    TODO IMPORTANT NEEDS TO BE MOVED TO FRAME
-
-    /// Call precompile contract
-    #[inline]
-    fn call_precompile(
-        &mut self,
-        address: &Address,
-        input_data: &Bytes,
-        gas: Gas,
-    ) -> EVMResultGeneric<Option<InterpreterResult>, EvmWiringT> {
-        let Some(outcome) =
-            self.precompiles
-                .call(address, input_data, gas.limit(), &mut self.inner)
-        else {
-            return Ok(None);
-        };
-
-        let mut result = InterpreterResult {
-            result: InstructionResult::Return,
-            gas,
-            output: Bytes::new(),
-        };
-
-        match outcome {
-            Ok(output) => {
-                if result.gas.record_cost(output.gas_used) {
-                    result.result = InstructionResult::Return;
-                    result.output = output.bytes;
-                } else {
-                    result.result = InstructionResult::PrecompileOOG;
-                }
-            }
-            Err(PrecompileErrors::Error(e)) => {
-                result.result = if e.is_oog() {
-                    InstructionResult::PrecompileOOG
-                } else {
-                    InstructionResult::PrecompileError
-                };
-            }
-            Err(PrecompileErrors::Fatal { msg }) => return Err(EVMError::Precompile(msg)),
-        }
-        Ok(Some(result))
-    }
-     */
 
     /// Return account code bytes and if address is cold loaded.
     ///

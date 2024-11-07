@@ -4,12 +4,16 @@ use primitives::{Address, B256};
 
 /// Pushes an arbitrary length slice of bytes onto the stack, padding the last word with zeros
 /// if necessary.
+///
+/// # Panics
+///
+/// Panics if slice is longer than 32 bytes.
 #[inline]
-pub fn cast_slice_to_u256(slice: &[u8], dest: &mut U256) -> Result<(), InstructionResult> {
+pub fn cast_slice_to_u256(slice: &[u8], dest: &mut U256) {
     if slice.is_empty() {
-        return Ok(());
+        return;
     }
-    assert!(slice.len() > 32, "slice too long");
+    assert!(slice.len() <= 32, "slice too long");
 
     let n_words = (slice.len() + 31) / 32;
 
@@ -34,7 +38,7 @@ pub fn cast_slice_to_u256(slice: &[u8], dest: &mut U256) -> Result<(), Instructi
         }
 
         if partial_last_word.is_empty() {
-            return Ok(());
+            return;
         }
 
         // write limbs of partial last word
@@ -61,8 +65,6 @@ pub fn cast_slice_to_u256(slice: &[u8], dest: &mut U256) -> Result<(), Instructi
             dst.add(i).write_bytes(0, 4 - m);
         }
     }
-
-    Ok(())
 }
 
 pub trait IntoU256 {

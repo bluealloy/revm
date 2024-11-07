@@ -17,6 +17,7 @@ use specification::hardfork::SpecId;
 use std::boxed::Box;
 use wiring::{result::InvalidTransaction, Cfg, Transaction};
 
+#[derive(Default)]
 pub struct EthExecution<
     CTX,
     ERROR,

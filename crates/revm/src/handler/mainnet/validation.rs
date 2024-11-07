@@ -20,21 +20,20 @@ use wiring::{
     Block, Cfg, TransactionType,
 };
 
+#[derive(Default)]
 pub struct EthValidation<CTX, ERROR> {
-    pub spec_id: SpecId,
     pub _phantom: std::marker::PhantomData<(CTX, ERROR)>,
 }
 
 impl<CTX, ERROR> EthValidation<CTX, ERROR> {
-    pub fn new(spec_id: SpecId) -> Self {
+    pub fn new() -> Self {
         Self {
-            spec_id,
             _phantom: std::marker::PhantomData,
         }
     }
 
-    pub fn new_boxed(spec_id: SpecId) -> Box<Self> {
-        Box::new(Self::new(spec_id))
+    pub fn new_boxed() -> Box<Self> {
+        Box::new(Self::new())
     }
 }
 
@@ -47,17 +46,16 @@ where
     type Error = ERROR;
 
     fn validate_env(&self, ctx: &Self::Context) -> Result<(), Self::Error> {
+        let spec = ctx.cfg().spec().into();
         // `prevrandao` is required for the merge
-        if self.spec_id.is_enabled_in(SpecId::MERGE) && ctx.block().prevrandao().is_none() {
+        if spec.is_enabled_in(SpecId::MERGE) && ctx.block().prevrandao().is_none() {
             return Err(InvalidHeader::PrevrandaoNotSet.into());
         }
         // `excess_blob_gas` is required for Cancun
-        if self.spec_id.is_enabled_in(SpecId::CANCUN)
-            && ctx.block().blob_excess_gas_and_price().is_none()
-        {
+        if spec.is_enabled_in(SpecId::CANCUN) && ctx.block().blob_excess_gas_and_price().is_none() {
             return Err(InvalidHeader::ExcessBlobGasNotSet.into());
         }
-        validate_tx_env::<&Self::Context, InvalidTransaction>(ctx, self.spec_id).map_err(Into::into)
+        validate_tx_env::<&Self::Context, InvalidTransaction>(ctx, spec).map_err(Into::into)
     }
 
     fn validate_tx_against_state(&self, ctx: &mut Self::Context) -> Result<(), Self::Error> {
@@ -71,7 +69,8 @@ where
     }
 
     fn validate_initial_tx_gas(&self, ctx: &Self::Context) -> Result<u64, Self::Error> {
-        validate_initial_tx_gas::<&Self::Context, InvalidTransaction>(&ctx, self.spec_id)
+        let spec = ctx.cfg().spec().into();
+        validate_initial_tx_gas::<&Self::Context, InvalidTransaction>(&ctx, spec)
             .map_err(Into::into)
     }
 }

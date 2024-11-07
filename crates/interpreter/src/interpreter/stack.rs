@@ -51,11 +51,7 @@ impl StackTrait for Stack {
     fn len(&self) -> usize {
         self.len()
     }
-
-    fn pushn(&mut self, num: usize) -> bool {
-        true
-    }
-
+    
     #[inline]
     fn popn<const N: usize>(&mut self) -> Option<[U256; N]> {
         if self.len() < N {

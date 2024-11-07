@@ -1,5 +1,6 @@
 use crate::{
     gas,
+    instructions::utility::cast_slice_to_u256,
     interpreter::NewInterpreter,
     interpreter_wiring::{
         Immediates, InterpreterWire, Jumps, LoopControl, RuntimeFlag, StackTrait,
@@ -26,7 +27,7 @@ pub fn push0<WIRE: InterpreterWire, H: Host + ?Sized>(
 ) {
     check!(interpreter, SHANGHAI);
     gas!(interpreter, gas::BASE);
-    let _ = interpreter.stack.push(U256::ZERO);
+    push!(interpreter, U256::ZERO);
 }
 
 pub fn push<const N: usize, WIRE: InterpreterWire, H: Host + ?Sized>(
@@ -34,13 +35,15 @@ pub fn push<const N: usize, WIRE: InterpreterWire, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
+    // TODO check performance degradation
+    push!(interpreter, U256::ZERO);
+    popn_top!([], top, interpreter);
 
-    // can ignore return. as relative N jump is safe opeation.
-    if !interpreter.stack.pushn(N) {
-        interpreter
-            .control
-            .set_instruction_result(crate::InstructionResult::StackOverflow);
-    }
+    let imm = interpreter.bytecode.read_slice(N);
+    println!("imm: {:?}", imm);
+    cast_slice_to_u256(imm, top);
+
+    // can ignore return. as relative N jump is safe operation
     interpreter.bytecode.relative_jump(N as isize);
 }
 

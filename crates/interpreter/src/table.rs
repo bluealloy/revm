@@ -23,30 +23,11 @@ pub type CustomInstructionTable<IT> = [IT; 256];
 
 pub trait CustomInstruction {
     type Wire: InterpreterWire;
-    type Host: ?Sized;
+    type Host;
 
-    fn exec(&mut self, interpreter: &mut NewInterpreter<Self::Wire>, host: &mut Self::Host);
+    fn exec(&self, interpreter: &mut NewInterpreter<Self::Wire>, host: &mut Self::Host);
 
     fn from_base(instruction: Instruction<Self::Wire, Self::Host>) -> Self;
-}
-
-pub struct EthInstructionImpl<W: InterpreterWire, H: ?Sized> {
-    function: Instruction<W, H>,
-}
-
-impl<W: InterpreterWire, H: ?Sized> CustomInstruction for EthInstructionImpl<W, H> {
-    type Wire = W;
-    type Host = H;
-
-    fn exec(&mut self, interpreter: &mut NewInterpreter<Self::Wire>, host: &mut Self::Host) {
-        (self.function)(interpreter, host);
-    }
-
-    fn from_base(instruction: Instruction<Self::Wire, Self::Host>) -> Self {
-        Self {
-            function: instruction,
-        }
-    }
 }
 
 /// Either a plain, static instruction table, or a boxed, dynamic instruction table.
@@ -56,16 +37,6 @@ pub enum InstructionTables<W: InterpreterWire, H: ?Sized, CI: CustomInstruction<
 {
     Plain(InstructionTable<W, H>),
     Custom(CustomInstructionTable<CI>),
-}
-
-impl<WIRE: InterpreterWire, H: Host + ?Sized>
-    InstructionTables<WIRE, H, EthInstructionImpl<WIRE, H>>
-{
-    /// Creates a plain instruction table for the given spec. See [`make_instruction_table`].
-    #[inline]
-    pub const fn new_plain<SPEC: Spec>() -> Self {
-        Self::Plain(make_instruction_table::<WIRE, H>())
-    }
 }
 
 impl<WIRE, H, CI> InstructionTables<WIRE, H, CI>

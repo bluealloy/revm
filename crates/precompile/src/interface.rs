@@ -1,6 +1,7 @@
 use core::fmt;
 use primitives::Bytes;
 use std::string::String;
+use wiring::result::EVMError;
 
 /// A precompile operation result.
 ///
@@ -30,6 +31,12 @@ pub type PrecompileFn = fn(&Bytes, u64) -> PrecompileResult;
 pub enum PrecompileErrors {
     Error(PrecompileError),
     Fatal { msg: String },
+}
+
+impl<DB, TXERROR> From<PrecompileErrors> for EVMError<DB, TXERROR> {
+    fn from(value: PrecompileErrors) -> Self {
+        Self::Precompile(value.to_string())
+    }
 }
 
 impl core::error::Error for PrecompileErrors {}

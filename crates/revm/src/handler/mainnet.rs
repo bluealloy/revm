@@ -11,6 +11,7 @@ mod validation;
 
 pub use execution::EthExecution;
 pub use frame::{return_create, return_eofcreate, EthFrame};
+pub use frame_data::{FrameData, FrameResult};
 pub use post_execution::EthPostExecution;
 pub use pre_execution::{apply_eip7702_auth_list, /*load_precompiles,*/ EthPreExecution};
 pub use validation::{

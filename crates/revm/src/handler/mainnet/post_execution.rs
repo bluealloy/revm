@@ -10,21 +10,20 @@ use state::EvmState;
 use wiring::{
     journaled_state::JournaledState,
     result::{ExecutionResult, HaltReasonTrait, ResultAndState},
-    Block, Transaction,
+    Block, Cfg, Transaction,
 };
 
 use super::frame_data::FrameResult;
 
+#[derive(Default)]
 pub struct EthPostExecution<CTX, ERROR, HALTREASON> {
-    pub spec_id: SpecId,
     pub _phantom: std::marker::PhantomData<(CTX, ERROR, HALTREASON)>,
 }
 
 impl<CTX, ERROR, HALTREASON> EthPostExecution<CTX, ERROR, HALTREASON> {
     /// Create new instance of post execution handler.
-    pub fn new(spec_id: SpecId) -> Self {
+    pub fn new() -> Self {
         Self {
-            spec_id,
             _phantom: std::marker::PhantomData,
         }
     }
@@ -32,8 +31,8 @@ impl<CTX, ERROR, HALTREASON> EthPostExecution<CTX, ERROR, HALTREASON> {
     /// Create new boxed instance of post execution handler.
     ///
     /// Boxed instance is useful to erase FORK type.
-    pub fn new_boxed(spec_id: SpecId) -> Box<Self> {
-        Box::new(Self::new(spec_id))
+    pub fn new_boxed() -> Box<Self> {
+        Box::new(Self::new())
     }
 }
 
@@ -54,7 +53,7 @@ where
 
     fn refund(
         &self,
-        _ctx: &mut Self::Context,
+        ctx: &mut Self::Context,
         exec_result: &mut Self::ExecResult,
         eip7702_refund: i64,
     ) {
@@ -64,7 +63,7 @@ where
         // Calculate gas refund for transaction.
         // If spec is set to london, it will decrease the maximum refund amount to 5th part of
         // gas spend. (Before london it was 2th part of gas spend)
-        gas.set_final_refund(self.spec_id.is_enabled_in(SpecId::LONDON));
+        gas.set_final_refund(ctx.cfg().spec().into().is_enabled_in(SpecId::LONDON));
     }
 
     fn reimburse_caller(
@@ -101,7 +100,7 @@ where
 
         // transfer fee to coinbase/beneficiary.
         // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
-        let coinbase_gas_price = if self.spec_id.is_enabled_in(SpecId::LONDON) {
+        let coinbase_gas_price = if ctx.cfg().spec().into().is_enabled_in(SpecId::LONDON) {
             effective_gas_price.saturating_sub(basefee)
         } else {
             effective_gas_price

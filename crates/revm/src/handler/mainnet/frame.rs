@@ -83,15 +83,6 @@ pub struct EthFrame<CTX, ERROR, IW: InterpreterWire, PRECOMPILE, INSTRUCTIONS> {
     pub memory: Rc<RefCell<SharedMemory>>,
 }
 
-/*
-
-*/
-
-pub struct FrameContext {
-    memory: SharedMemory,
-    precompiles: Precompiles,
-}
-
 impl<CTX, IW, ERROR, PRECOMP, INST> EthFrame<CTX, ERROR, IW, PRECOMP, INST>
 where
     CTX: JournalStateGetter,
@@ -136,7 +127,7 @@ where
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
         inputs: &CallInputs,
-        precompile: PRECOMPILE,
+        mut precompile: PRECOMPILE,
         instructions: INSTRUCTION,
     ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
         let gas = Gas::new(inputs.gas_limit);
@@ -192,20 +183,15 @@ where
             &inputs.bytecode_address,
             &inputs.input,
             inputs.gas_limit,
-        ) {
-            let result = result?;
+        )? {
             if result.result.is_ok() {
                 ctx.journal().checkpoint_commit();
             } else {
                 ctx.journal().checkpoint_revert(checkpoint);
             }
             Ok(FrameOrResultGen::Result(FrameResult::Call(CallOutcome {
-                result: InterpreterResult {
-                    result: result,
-                    gas,
-                    output: Bytes::new(),
-                },
-                memory_offset,
+                result,
+                memory_offset: inputs.return_memory_offset.clone(),
             })))
         } else {
             let account = ctx.journal().load_account_code(inputs.bytecode_address)?;
@@ -520,8 +506,6 @@ where
     }
 }
 
-//spub trait HostTemp: TransactionGetter + BlockGetter + JournalStateGetter {}
-
 impl<CTX, ERROR, PRECOMPILE, INSTRUCTION> Frame
     for EthFrame<CTX, ERROR, EthInterpreter<()>, PRECOMPILE, INSTRUCTION>
 where
@@ -550,7 +534,7 @@ where
 
         // load precompiles addresses as warm.
         for address in precompiles.warm_addresses() {
-            ctx.journal().load_account(address)?;
+            ctx.journal().warm_account(address);
         }
 
         memory.borrow_mut().new_context();

@@ -15,21 +15,20 @@ use wiring::{
     TransactionType,
 };
 
+#[derive(Default)]
 pub struct EthPreExecution<CTX, ERROR> {
-    pub spec_id: SpecId,
     pub _phantom: std::marker::PhantomData<(CTX, ERROR)>,
 }
 
 impl<CTX, ERROR> EthPreExecution<CTX, ERROR> {
-    pub fn new(spec_id: SpecId) -> Self {
+    pub fn new() -> Self {
         Self {
-            spec_id,
             _phantom: std::marker::PhantomData,
         }
     }
 
-    pub fn new_boxed(spec_id: SpecId) -> Box<Self> {
-        Box::new(Self::new(spec_id))
+    pub fn new_boxed() -> Box<Self> {
+        Box::new(Self::new())
     }
 }
 
@@ -41,27 +40,28 @@ where
     type Context = CTX;
     type Error = ERROR;
 
-    fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
+    fn load_accounts(&self, ctx: &mut Self::Context) -> Result<(), Self::Error> {
+        let spec = ctx.cfg().spec().into();
         // set journaling state flag.
-        context.journal().set_spec_id(self.spec_id);
+        ctx.journal().set_spec_id(spec);
 
         // load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
-        if self.spec_id.is_enabled_in(SpecId::SHANGHAI) {
-            let coinbase = *context.block().beneficiary();
-            context.journal().warm_account(coinbase);
+        if spec.is_enabled_in(SpecId::SHANGHAI) {
+            let coinbase = *ctx.block().beneficiary();
+            ctx.journal().warm_account(coinbase);
         }
 
         // Load blockhash storage address
         // EIP-2935: Serve historical block hashes from state
-        if self.spec_id.is_enabled_in(SpecId::PRAGUE) {
-            context.journal().warm_account(BLOCKHASH_STORAGE_ADDRESS);
+        if spec.is_enabled_in(SpecId::PRAGUE) {
+            ctx.journal().warm_account(BLOCKHASH_STORAGE_ADDRESS);
         }
 
         // Load access list
-        if let Some(access_list) = context.tx().access_list().cloned() {
+        if let Some(access_list) = ctx.tx().access_list().cloned() {
             for access_list in access_list.iter() {
-                context.journal().warm_account_and_storage(
+                ctx.journal().warm_account_and_storage(
                     access_list.0,
                     access_list.1.map(|i| U256::from_be_bytes(i.0)),
                 )?;
@@ -71,9 +71,10 @@ where
         Ok(())
     }
 
-    fn apply_eip7702_auth_list(&self, context: &mut Self::Context) -> Result<u64, Self::Error> {
-        if self.spec_id.is_enabled_in(SpecId::PRAGUE) {
-            apply_eip7702_auth_list::<CTX, ERROR>(context)
+    fn apply_eip7702_auth_list(&self, ctx: &mut Self::Context) -> Result<u64, Self::Error> {
+        let spec = ctx.cfg().spec().into();
+        if spec.is_enabled_in(SpecId::PRAGUE) {
+            apply_eip7702_auth_list::<CTX, ERROR>(ctx)
         } else {
             Ok(0)
         }

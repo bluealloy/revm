@@ -7,10 +7,12 @@ use context::{
     BlockGetter, CfgGetter, Context, DatabaseGetter, ErrorGetter, JournalStateGetter,
     JournalStateGetterDBError, TransactionGetter,
 };
+use database_interface::Database;
 // Exports.
 use mainnet::{EthExecution, EthFrame, EthPostExecution, EthPreExecution, EthValidation};
 use precompile::PrecompileErrors;
 use primitives::Log;
+use specification::hardfork::SpecId;
 use state::EvmState;
 pub use wires::*;
 
@@ -24,7 +26,7 @@ use interpreter::{
 use std::vec::Vec;
 use wiring::{
     journaled_state::JournaledState,
-    result::{HaltReason, InvalidHeader, InvalidTransaction, ResultAndState},
+    result::{EVMError, HaltReason, InvalidHeader, InvalidTransaction, ResultAndState},
     Transaction,
 };
 
@@ -41,6 +43,7 @@ pub trait Handler {
 }
 
 /// TODO Halt needs to be generalized.
+#[derive(Default)]
 pub struct EthHand<
     CTX,
     ERROR,
@@ -54,6 +57,23 @@ pub struct EthHand<
     pub execution: EXEC,
     pub post_execution: POSTEXEC,
     _phantom: std::marker::PhantomData<fn() -> (CTX, ERROR)>,
+}
+
+impl<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC> EthHand<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC> {
+    pub fn new(
+        validation: VAL,
+        pre_execution: PREEXEC,
+        execution: EXEC,
+        post_execution: POSTEXEC,
+    ) -> Self {
+        Self {
+            validation,
+            pre_execution,
+            execution,
+            post_execution,
+            _phantom: std::marker::PhantomData,
+        }
+    }
 }
 
 pub struct CustomEthHand<CTX, ERROR> {
@@ -153,9 +173,13 @@ pub struct EEVM<ERROR, CTX = Context> {
     pub handler: EthHand<CTX, ERROR>,
 }
 
-pub type EthContext<DB> = Context<BlockEnv, TxEnv, DB, ()>;
+pub type GEEVM<DB> = EEVM<EVMError<<DB as Database>::Error, InvalidTransaction>, EthContext<DB>>;
 
-pub type NEW_PRECOMPILE<DB, ERROR, PRECOMPILE> = GEVM<
+pub type EthContext<DB> = Context<BlockEnv, TxEnv, SpecId, DB, ()>;
+
+pub type NNEW_EVMM<DB> = NEW_EVM<DB, EVMError<<DB as Database>::Error, InvalidTransaction>>;
+
+pub type NEW_EVM<DB, ERROR> = GEVM<
     ERROR,
     EthContext<DB>,
     EthHand<
@@ -170,12 +194,35 @@ pub type NEW_PRECOMPILE<DB, ERROR, PRECOMPILE> = GEVM<
                 EthContext<DB>,
                 ERROR,
                 EthInterpreter<()>,
-                PRECOMPILE,
+                EthPrecompileProvider<EthContext<DB>, ERROR>,
                 EthInstructionProvider<EthInterpreter<()>, EthContext<DB>>,
             >,
         >,
     >,
 >;
+
+impl<ERROR, CTX> EEVM<ERROR, CTX>
+where
+    CTX: TransactionGetter
+        + BlockGetter
+        + JournalStateGetter
+        + CfgGetter
+        + DatabaseGetter
+        + ErrorGetter<Error = ERROR>
+        + JournalStateGetter<
+            Journal: JournaledState<
+                FinalOutput = (EvmState, Vec<Log>),
+                Database = <CTX as DatabaseGetter>::Database,
+            >,
+        > + Host,
+    ERROR: From<InvalidTransaction>
+        + From<InvalidHeader>
+        + From<JournalStateGetterDBError<CTX>>
+        + From<PrecompileErrors>,
+{
+    // TODO
+    // transact_commit (needs DatabaseCommit requirement)
+}
 
 impl<ERROR, CTX> EEVM<ERROR, CTX>
 where

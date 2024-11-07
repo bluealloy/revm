@@ -9,7 +9,10 @@ mod shared_memory;
 mod stack;
 mod subroutine_stack;
 
-use crate::{interpreter_wiring::*, Gas, Host, Instruction, InstructionResult, InterpreterAction};
+use crate::{
+    interpreter_wiring::*, table::CustomInstruction, Gas, Host, Instruction, InstructionResult,
+    InterpreterAction,
+};
 use bytecode::Bytecode;
 
 use core::cell::RefCell;
@@ -69,7 +72,7 @@ impl<EXT: Default, MG: MemoryGetter> NewInterpreter<EthInterpreter<EXT, MG>> {
     }
 }
 
-pub struct EthInterpreter<EXT, MG = SharedMemory> {
+pub struct EthInterpreter<EXT = (), MG = SharedMemory> {
     _phantom: core::marker::PhantomData<fn() -> (EXT, MG)>,
 }
 
@@ -91,7 +94,7 @@ pub trait InstructionProvider: Clone {
 
     fn new(ctx: &mut Self::Host) -> Self;
 
-    fn table(&mut self) -> &[fn(&mut NewInterpreter<Self::WIRE>, &mut Self::Host); 256];
+    fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256];
 }
 
 pub struct EthInstructionProvider<WIRE: InterpreterWire, HOST> {
@@ -123,8 +126,25 @@ where
         }
     }
 
-    fn table(&mut self) -> &[fn(&mut NewInterpreter<Self::WIRE>, &mut Self::Host); 256] {
+    // TODO make impl a associate type. With this associate type we can implement
+    // InspectorInstructionProvider over generic type.
+    fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256] {
         self.instruction_table.as_ref()
+    }
+}
+
+impl<IW: InterpreterWire, H: Host> CustomInstruction for Instruction<IW, H> {
+    type Wire = IW;
+    type Host = H;
+
+    #[inline]
+    fn exec(&self, interpreter: &mut NewInterpreter<Self::Wire>, host: &mut Self::Host) {
+        (self)(interpreter, host);
+    }
+
+    #[inline]
+    fn from_base(instruction: Instruction<Self::Wire, Self::Host>) -> Self {
+        instruction
     }
 }
 
@@ -133,9 +153,9 @@ impl<IW: InterpreterWire> NewInterpreter<IW> {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline]
-    pub(crate) fn step<FN, H: Host + ?Sized>(&mut self, instruction_table: &[FN; 256], host: &mut H)
+    pub(crate) fn step<FN, H: Host>(&mut self, instruction_table: &[FN; 256], host: &mut H)
     where
-        FN: Fn(&mut NewInterpreter<IW>, &mut H),
+        FN: CustomInstruction<Wire = IW, Host = H>,
     {
         // Get current opcode.
         let opcode = self.bytecode.opcode();
@@ -146,17 +166,17 @@ impl<IW: InterpreterWire> NewInterpreter<IW> {
         self.bytecode.relative_jump(1);
 
         // execute instruction.
-        (instruction_table[opcode as usize])(self, host)
+        instruction_table[opcode as usize].exec(self, host)
     }
 
     /// Executes the interpreter until it returns or stops.
-    pub fn run<FN, H: Host + ?Sized>(
+    pub fn run<FN, H: Host>(
         &mut self,
         instruction_table: &[FN; 256],
         host: &mut H,
     ) -> InterpreterAction
     where
-        FN: Fn(&mut NewInterpreter<IW>, &mut H),
+        FN: CustomInstruction<Wire = IW, Host = H>,
     {
         self.control
             .set_next_action(InterpreterAction::None, InstructionResult::Continue);

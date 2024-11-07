@@ -96,16 +96,6 @@ impl Default for TxEnv {
     }
 }
 
-use std::sync::{Arc, OnceLock};
-
-impl Default for &'static TxEnv {
-    fn default() -> Self {
-        static INSTANCE: OnceLock<Arc<TxEnv>> = OnceLock::new();
-
-        INSTANCE.get_or_init(|| Arc::new(TxEnv::default()))
-    }
-}
-
 impl CommonTxFields for TxEnv {
     fn caller(&self) -> Address {
         self.caller

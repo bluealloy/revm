@@ -1,4 +1,5 @@
 use context::CfgGetter;
+use interpreter::{Gas, InstructionResult, InterpreterResult};
 use precompile::{
     PrecompileError, PrecompileErrors, PrecompileOutput, PrecompileResult, PrecompileSpecId,
     Precompiles,
@@ -140,21 +141,20 @@ pub enum FrameOrResultGen<Frame, Result> {
     Result(Result),
 }
 
-pub trait InstructionProvider: Default {
-    type Context;
-    type SpecId;
+impl<F, R> FrameOrResultGen<F, R> {
+    pub fn map_frame<F2>(self, f: impl FnOnce(F) -> F2) -> FrameOrResultGen<F2, R> {
+        match self {
+            FrameOrResultGen::Frame(frame) => FrameOrResultGen::Frame(f(frame)),
+            FrameOrResultGen::Result(result) => FrameOrResultGen::Result(result),
+        }
+    }
 
-    fn set_spec_id(&mut self, spec_id: Self::SpecId);
-
-    fn run(
-        &mut self,
-        ctx: &mut Self::Context,
-        address: &Address,
-        bytes: &Bytes,
-        gas_limit: u64,
-    ) -> Option<PrecompileResult>;
-
-    fn warm_addresses(&self) -> impl Iterator<Item = Address>;
+    pub fn map_result<R2>(self, f: impl FnOnce(R) -> R2) -> FrameOrResultGen<F, R2> {
+        match self {
+            FrameOrResultGen::Frame(frame) => FrameOrResultGen::Frame(frame),
+            FrameOrResultGen::Result(result) => FrameOrResultGen::Result(f(result)),
+        }
+    }
 }
 
 pub trait PrecompileProvider: Clone {
@@ -169,7 +169,7 @@ pub trait PrecompileProvider: Clone {
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-    ) -> Option<Result<PrecompileOutput, Self::Error>>;
+    ) -> Result<Option<InterpreterResult>, Self::Error>;
 
     fn warm_addresses(&self) -> impl Iterator<Item = Address>;
 }
@@ -210,8 +210,34 @@ where
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-    ) -> Option<Result<PrecompileOutput, Self::Error>> {
-        Some((self.precompiles.get(address)?)(bytes, gas_limit).map_err(Into::into))
+    ) -> Result<Option<InterpreterResult>, Self::Error> {
+        let Some(precompile) = self.precompiles.get(address) else {
+            return Ok(None);
+        };
+
+        let mut result = InterpreterResult {
+            result: InstructionResult::Return,
+            gas: Gas::new(gas_limit),
+            output: Bytes::new(),
+        };
+
+        match (*precompile)(bytes, gas_limit) {
+            Ok(output) => {
+                let underflow = result.gas.record_cost(output.gas_used);
+                assert!(underflow, "Gas underflow is not possible");
+                result.result = InstructionResult::Return;
+                result.output = output.bytes;
+            }
+            Err(PrecompileErrors::Error(e)) => {
+                result.result = if e.is_oog() {
+                    InstructionResult::PrecompileOOG
+                } else {
+                    InstructionResult::PrecompileError
+                };
+            }
+            Err(err @ PrecompileErrors::Fatal { .. }) => return Err(err.into()),
+        }
+        Ok(Some(result))
     }
 
     fn warm_addresses(&self) -> impl Iterator<Item = Address> {
