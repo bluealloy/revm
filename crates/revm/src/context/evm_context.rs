@@ -88,7 +88,7 @@ impl<DB: Database> DerefMut for EvmContext<DB> {
 }
 
 impl<DB: Database> EvmContext<DB> {
-    /// Create new context with database.
+    /// Create a new context with a database.
     pub fn new(db: DB) -> Self {
         Self {
             inner: InnerEvmContext::new(db),
@@ -119,7 +119,7 @@ impl<DB: Database> EvmContext<DB> {
     /// Sets precompiles
     #[inline]
     pub fn set_precompiles(&mut self, precompiles: ContextPrecompiles<DB>) {
-        // set warm loaded addresses.
+        // set warm-loaded addresses.
         self.journaled_state
             .warm_preloaded_addresses
             .extend(precompiles.addresses_set());

@@ -174,7 +174,7 @@ impl<DB: Database> InnerEvmContext<DB> {
 
     /// Loads an account into memory. Returns `true` if it is cold accessed.
     #[inline]
-    pub fn load_account_with_code(
+    pub fn load_code(
         &mut self,
         address: Address,
     ) -> Result<StateLoad<&mut Account>, EVMError<DB::Error>> {

@@ -701,7 +701,7 @@ impl JournaledState {
     ) -> Result<StateLoad<U256>, EVMError<DB::Error>> {
         // assume acc is warm
         let account = self.state.get_mut(&address).unwrap();
-        // only if account is created in this tx we can assume that storage is empty.
+        // only if an account is created in this tx, we can assume that storage is empty.
         let is_newly_created = account.is_created();
         let (value, is_cold) = match account.storage.entry(key) {
             Entry::Occupied(occ) => {
@@ -724,7 +724,7 @@ impl JournaledState {
         };
 
         if is_cold {
-            // add it to journal as cold loaded.
+            // add it to the journal as cold loaded.
             self.journal
                 .last_mut()
                 .unwrap()
@@ -735,7 +735,7 @@ impl JournaledState {
     }
 
     /// Stores storage slot.
-    /// And returns (original,present,new) slot value.
+    /// And returns (original, present, new) slot value.
     ///
     /// Note:
     ///
