@@ -2726,7 +2726,6 @@ dependencies = [
  "ethers-core",
  "ethers-providers",
  "fluentbase-core",
- "fluentbase-runtime",
  "fluentbase-sdk",
  "revm-interpreter",
  "revm-precompile",
