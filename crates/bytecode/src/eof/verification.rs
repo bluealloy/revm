@@ -374,7 +374,7 @@ impl fmt::Display for EofValidationError {
             Self::CodeSectionNotAccessed => "Code section was not accessed",
             Self::InvalidTypesSection => "Invalid types section",
             Self::InvalidFirstTypesSection => "Invalid first types section",
-            Self::MaxStackMismatch => "Max stack element mismatchs",
+            Self::MaxStackMismatch => "Max stack element mismatches",
             Self::NoCodeSections => "No code sections",
             Self::SubContainerCalledInTwoModes => "Sub container called in two modes",
             Self::SubContainerNotAccessed => "Sub container not accessed",
@@ -543,7 +543,7 @@ pub fn validate_eof_code(
                     return Err(EofValidationError::CodeSectionOutOfBounds);
                 };
 
-                // CALLF operand must not point to to a section with 0x80 as outputs (non-returning)
+                // CALLF operand must not point to a section with 0x80 as outputs (non-returning)
                 if target_types.is_non_returning() {
                     return Err(EofValidationError::CALLFNonReturningFunction);
                 }
