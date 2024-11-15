@@ -4,18 +4,13 @@ use super::{
 };
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use inspector::{
-    EthContext, I_EthContext, InspectorContext, InspectorEthFrame, StepPrintInspector,
-    INSPECTOR_EVM, I_GEEVM,
-};
+use inspector::{InspectorContext, InspectorEthFrame, InspectorMainEvm, StepPrintInspector};
 use revm::{
     bytecode::Bytecode,
     context::default::{block::BlockEnv, tx::TxEnv},
     database_interface::EmptyDB,
-    handler::{
-        mainnet::{EthExecution, EthPostExecution, EthPreExecution, EthValidation},
-        EthHand, EthPrecompileProvider, GEEVM, NEW_EVM, NNEW_EVMM,
-    },
+    handler::EthPrecompileProvider,
+    mainnet::{EthExecution, EthHandler, EthPostExecution, EthPreExecution, EthValidation},
     primitives::{keccak256, Bytes, TxKind, B256},
     specification::{eip7702::AuthorizationList, hardfork::SpecId},
     wiring::{
@@ -23,7 +18,7 @@ use revm::{
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
         Cfg, CfgEnv,
     },
-    Context, DatabaseCommit, JournaledState,
+    Context, DatabaseCommit, JournaledState, MainEvm,
 };
 use serde_json::json;
 use statetest_types::{SpecName, Test, TestSuite};
@@ -155,7 +150,7 @@ fn check_evm_execution(
     expected_output: Option<&Bytes>,
     test_name: &str,
     exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
-    evm: &GEEVM<&mut State<EmptyDB>>,
+    evm: &MainEvm<&mut State<EmptyDB>>,
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
@@ -419,7 +414,7 @@ pub fn execute_test_suite(
                     .with_bundle_update()
                     .build();
 
-                let mut evm = GEEVM {
+                let mut evm = MainEvm {
                     context: Context {
                         block: block.clone(),
                         tx: tx.clone(),
@@ -433,18 +428,19 @@ pub fn execute_test_suite(
                         spec: cfg.spec().into(),
                         error: Ok(()),
                     },
-                    handler: EthHand::new(
+                    handler: EthHandler::new(
                         EthValidation::new(),
                         EthPreExecution::new(),
                         EthExecution::new(),
                         EthPostExecution::new(),
                     ),
+                    _error: std::marker::PhantomData,
                 };
 
                 // do the deed
                 let (e, exec_result) = if trace {
                     //todo!();
-                    let mut evm = I_GEEVM {
+                    let mut evm = InspectorMainEvm {
                         context: InspectorContext {
                             inner: Context {
                                 block: block.clone(),
@@ -461,7 +457,7 @@ pub fn execute_test_suite(
                             },
                             inspector: StepPrintInspector::new(),
                         },
-                        handler: EthHand::new(
+                        handler: EthHandler::new(
                             EthValidation::new(),
                             EthPreExecution::new(),
                             EthExecution::<

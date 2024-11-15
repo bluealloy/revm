@@ -11,9 +11,7 @@ use revm::{
         JournalStateGetterDBError, TransactionGetter,
     },
     database_interface::{Database, EmptyDB},
-    handler::{
-        mainnet::FrameResult, EthHand, EthPrecompileProvider, Frame, PrecompileProvider, EEVM, GEVM,
-    },
+    handler::{EthPrecompileProvider, Frame, PrecompileProvider},
     interpreter::{
         as_u64_saturated,
         instructions::{arithmetic::addmod, host, instruction},
@@ -24,6 +22,7 @@ use revm::{
         InterpreterWire, NewFrameAction, NewInterpreter, SStoreResult, SelfDestructResult,
         StateLoad,
     },
+    mainnet::{EthHandler, FrameResult},
     precompile::PrecompileErrors,
     primitives::{Address, Bytes, HashSet, Log, B256, BLOCK_HASH_HISTORY, U256},
     specification::hardfork::SpecId,
@@ -32,7 +31,7 @@ use revm::{
         result::{EVMError, InvalidTransaction},
         Block, CfgEnv, Transaction,
     },
-    Context, JournaledState,
+    Context, Error, Evm, JournaledState,
 };
 
 /// EVM [Interpreter] callbacks.
@@ -441,31 +440,7 @@ impl<INSP, BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockGetter
     }
 }
 
-use revm::handler::mainnet::{
-    EthExecution, EthFrame, EthPostExecution, EthPreExecution, EthValidation,
-};
-
-pub type InspectorEvm<INSP, ERROR, PRECOMPILE> = GEVM<
-    ERROR,
-    InspectorContext<INSP>,
-    EthHand<
-        InspectorContext<INSP>,
-        ERROR,
-        EthValidation<InspectorContext<INSP>, ERROR>,
-        EthPreExecution<InspectorContext<INSP>, ERROR>,
-        EthExecution<
-            InspectorContext<INSP>,
-            ERROR,
-            EthFrame<
-                InspectorContext<INSP>,
-                ERROR,
-                EthInterpreter<()>,
-                PRECOMPILE,
-                EthInstructionProvider<EthInterpreter<()>, InspectorContext<INSP>>,
-            >,
-        >,
-    >,
->;
+use revm::mainnet::{EthExecution, EthFrame, EthPostExecution, EthPreExecution, EthValidation};
 
 #[derive(Clone)]
 pub struct InspectorInstruction<WIRE: InterpreterWire, HOST> {
@@ -622,54 +597,23 @@ where
     }
 }
 
-pub type I_GEEVM<DB, INSP> =
-    INSPECTOR_EVM<DB, INSP, EVMError<<DB as Database>::Error, InvalidTransaction>>;
+pub type InspCtxType<INSP, DB> = InspectorContext<INSP, BlockEnv, TxEnv, SpecId, DB, ()>;
 
-pub type I_EthContext<INSP, DB> = InspectorContext<INSP, BlockEnv, TxEnv, SpecId, DB, ()>;
-
-pub type INSPECTOR_EVM<DB, INSP, ERROR> = GEVM<
-    ERROR,
-    I_EthContext<INSP, DB>,
-    EthHand<
-        I_EthContext<INSP, DB>,
-        ERROR,
-        EthValidation<I_EthContext<INSP, DB>, ERROR>,
-        EthPreExecution<I_EthContext<INSP, DB>, ERROR>,
+pub type InspectorMainEvm<DB, INSP> = Evm<
+    Error<DB>,
+    InspCtxType<INSP, DB>,
+    EthHandler<
+        InspCtxType<INSP, DB>,
+        Error<DB>,
+        EthValidation<InspCtxType<INSP, DB>, Error<DB>>,
+        EthPreExecution<InspCtxType<INSP, DB>, Error<DB>>,
         EthExecution<
-            I_EthContext<INSP, DB>,
-            ERROR,
+            InspCtxType<INSP, DB>,
+            Error<DB>,
             InspectorEthFrame<
-                I_EthContext<INSP, DB>,
-                ERROR,
-                EthPrecompileProvider<I_EthContext<INSP, DB>, ERROR>,
-            >,
-        >,
-    >,
->;
-
-pub type GEEVM<DB> = EEVM<EVMError<<DB as Database>::Error, InvalidTransaction>, EthContext<DB>>;
-
-pub type EthContext<DB> = Context<BlockEnv, TxEnv, SpecId, DB, ()>;
-
-pub type NNEW_EVMM<DB> = NEW_EVM<DB, EVMError<<DB as Database>::Error, InvalidTransaction>>;
-
-pub type NEW_EVM<DB, ERROR> = GEVM<
-    ERROR,
-    EthContext<DB>,
-    EthHand<
-        EthContext<DB>,
-        ERROR,
-        EthValidation<EthContext<DB>, ERROR>,
-        EthPreExecution<EthContext<DB>, ERROR>,
-        EthExecution<
-            EthContext<DB>,
-            ERROR,
-            EthFrame<
-                EthContext<DB>,
-                ERROR,
-                EthInterpreter<()>,
-                EthPrecompileProvider<EthContext<DB>, ERROR>,
-                EthInstructionProvider<EthInterpreter<()>, EthContext<DB>>,
+                InspCtxType<INSP, DB>,
+                Error<DB>,
+                EthPrecompileProvider<InspCtxType<INSP, DB>, Error<DB>>,
             >,
         >,
     >,

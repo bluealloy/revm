@@ -30,9 +30,7 @@ pub struct Context<BLOCK = BlockEnv, TX = TxEnv, SPEC = SpecId, DB: Database = E
     pub journaled_state: JournaledState<DB>,
     /// Inner context.
     pub chain: CHAIN,
-    /// Consider including it inside CfgEnv but for development
-    /// it is easier to make it as standalone and reevaluate inclusion later.
-    /// TODO not used
+    /// TODO include it inside CfgEnv.
     pub spec: SPEC,
     /// Error that happened during execution.
     pub error: Result<(), <DB as Database>::Error>,

@@ -1,5 +1,5 @@
 use super::frame_data::*;
-use crate::handler::{wires::Frame, EthPrecompileProvider, FrameOrResultGen, PrecompileProvider};
+use crate::handler::{EthPrecompileProvider, Frame, FrameOrResultGen, PrecompileProvider};
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context::{
     BlockGetter, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
