@@ -1,8 +1,12 @@
 //! Optimism-specific constants, types, and helpers.
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
+use alloy_consensus::Transaction;
 use alloy_eips::{BlockId, BlockNumberOrTag};
-use alloy_provider::{network::primitives::BlockTransactions, Provider, ProviderBuilder};
+use alloy_provider::{
+    network::primitives::{BlockTransactions, BlockTransactionsKind},
+    Provider, ProviderBuilder,
+};
 use database::{AlloyDB, CacheDB, StateBuilder};
 use indicatif::ProgressBar;
 use inspector::{inspector_handle_register, inspectors::TracerEip3155};
@@ -53,7 +57,10 @@ async fn main() -> anyhow::Result<()> {
 
     // Fetch the transaction-rich block
     let block = match client
-        .get_block_by_number(BlockNumberOrTag::Number(block_number), true)
+        .get_block_by_number(
+            BlockNumberOrTag::Number(block_number),
+            BlockTransactionsKind::Full,
+        )
         .await
     {
         Ok(Some(block)) => block,
@@ -75,7 +82,7 @@ async fn main() -> anyhow::Result<()> {
         .with_external_context(TracerEip3155::new(Box::new(std::io::stdout())))
         .modify_block_env(|b| {
             b.number = U256::from(block.header.number);
-            b.coinbase = block.header.miner;
+            b.coinbase = block.header.inner.beneficiary;
             b.timestamp = U256::from(block.header.timestamp);
 
             b.difficulty = block.header.difficulty;
@@ -111,23 +118,20 @@ async fn main() -> anyhow::Result<()> {
             .modify()
             .modify_tx_env(|etx| {
                 etx.caller = tx.from;
-                etx.gas_limit = tx.gas;
-                etx.gas_price = U256::from(
-                    tx.gas_price
-                        .unwrap_or(tx.max_fee_per_gas.unwrap_or_default()),
-                );
-                etx.value = tx.value;
-                etx.data = tx.input.0.into();
-                etx.gas_priority_fee = tx.max_priority_fee_per_gas.map(U256::from);
+                etx.gas_limit = tx.gas_limit();
+                etx.gas_price = U256::from(tx.gas_price().unwrap_or(tx.inner.max_fee_per_gas()));
+                etx.value = tx.value();
+                etx.data = tx.input().to_owned();
+                etx.gas_priority_fee = tx.max_priority_fee_per_gas().map(U256::from);
                 etx.chain_id = Some(chain_id);
-                etx.nonce = tx.nonce;
-                if let Some(access_list) = tx.access_list {
-                    etx.access_list = access_list;
+                etx.nonce = tx.nonce();
+                if let Some(access_list) = tx.inner.access_list() {
+                    etx.access_list = access_list.to_owned();
                 } else {
                     etx.access_list = Default::default();
                 }
 
-                etx.transact_to = match tx.to {
+                etx.transact_to = match tx.to() {
                     Some(to_address) => TxKind::Call(to_address),
                     None => TxKind::Create,
                 };

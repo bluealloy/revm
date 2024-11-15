@@ -1409,6 +1409,7 @@ dependencies = [
 name = "example-block-traces"
 version = "0.0.0"
 dependencies = [
+ "alloy-consensus",
  "alloy-eips",
  "alloy-provider",
  "anyhow",
