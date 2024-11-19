@@ -9,6 +9,7 @@ pub mod bn128;
 pub mod fast_lz;
 pub mod handler_register;
 pub mod l1block;
+pub mod precompile;
 pub mod result;
 pub mod spec;
 pub mod transaction;

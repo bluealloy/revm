@@ -3013,6 +3013,7 @@ dependencies = [
  "criterion",
  "enumn",
  "indicatif",
+ "once_cell",
  "revm",
  "revm-database",
  "revm-precompile",

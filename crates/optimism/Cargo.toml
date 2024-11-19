@@ -28,6 +28,7 @@ precompile = { workspace = true, features = ["secp256r1"] }
 
 # misc
 enumn = { version = "0.1" }
+once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [

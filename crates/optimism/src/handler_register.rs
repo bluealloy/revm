@@ -2,6 +2,7 @@
 
 use crate::{
     optimism_spec_to_generic,
+    precompile::{fjord, granite},
     transaction::{
         deposit::DepositTransaction, error::OpTransactionError, OpTransactionType, OpTxTrait,
     },
@@ -17,7 +18,7 @@ use revm::{
         register::EvmHandler,
     },
     interpreter::{return_ok, return_revert, Gas},
-    precompile::{secp256r1, PrecompileSpecId},
+    precompile::PrecompileSpecId,
     primitives::{HashMap, U256},
     state::Account,
     transaction::CommonTxFields,
@@ -194,23 +195,13 @@ pub fn refund<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 #[inline]
 pub fn load_precompiles<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 ) -> ContextPrecompiles<EvmWiringT> {
-    let mut precompiles = ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID));
-
-    if SPEC::optimism_enabled(OptimismSpecId::FJORD) {
-        precompiles.extend([
-            // EIP-7212: secp256r1 P256verify
-            secp256r1::P256VERIFY,
-        ])
-    }
-
     if SPEC::optimism_enabled(OptimismSpecId::GRANITE) {
-        precompiles.extend([
-            // Restrict bn256Pairing input size
-            crate::bn128::pair::GRANITE,
-        ])
+        ContextPrecompiles::from_static_precompiles(granite())
+    } else if SPEC::optimism_enabled(OptimismSpecId::FJORD) {
+        ContextPrecompiles::from_static_precompiles(fjord())
+    } else {
+        ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
     }
-
-    precompiles
 }
 
 /// Load account (make them warm) and l1 data from database.
