@@ -32,6 +32,9 @@ cfg-if = "1.0"
 dyn-clone = "1.0"
 
 # Optional
+once_cell = { version = "1.19", default-features = false, features = [
+    "alloc",
+], optional = true }
 serde = { version = "1.0", default-features = false, features = [
     "derive",
     "rc",
@@ -83,7 +86,11 @@ portable = ["revm-precompile/portable", "revm-interpreter/portable"]
 
 test-utils = []
 
-optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
+optimism = [
+    "revm-interpreter/optimism",
+    "revm-precompile/optimism",
+    "dep:once_cell",
+]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
 optimism-default-handler = [
     "optimism",
