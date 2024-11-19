@@ -19,14 +19,16 @@ pub struct TestUnit {
 pub struct TestVector {
     pub code: Bytes,
     pub container_kind: Option<String>,
-    pub results: PragueTestResult,
+    pub results: TestResults,
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct PragueTestResult {
+pub struct TestResults {
     #[serde(rename = "Prague")]
-    pub prague: TestResult,
+    pub prague: Option<TestResult>,
+    #[serde(rename = "Osaka")]
+    pub osaka: Option<TestResult>,
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]

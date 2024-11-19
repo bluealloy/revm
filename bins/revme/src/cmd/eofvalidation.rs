@@ -1,6 +1,6 @@
 mod test_suite;
 
-pub use test_suite::{PragueTestResult, TestResult, TestSuite, TestUnit, TestVector};
+pub use test_suite::{TestResult, TestResults, TestSuite, TestUnit, TestVector};
 
 use crate::{cmd::Error, dir_utils::find_all_json_tests};
 use clap::Parser;
@@ -82,24 +82,33 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
                     Some(CodeType::ReturnOrStop)
                 };
                 let res = validate_raw_eof_inner(test_vector.code.clone(), kind);
-                if res.is_ok() != test_vector.results.prague.result {
-                    println!(
-                        "\nTest failed: {} - {}\nresult:{:?}\nrevm err_result:{:#?}\nbytes:{:?}\n",
-                        name,
-                        vector_name,
-                        test_vector.results.prague,
-                        res.as_ref().err(),
-                        test_vector.code
-                    );
-                    *types_of_error
-                        .entry(
-                            res.err()
-                                .map(ErrorType::Error)
-                                .unwrap_or(ErrorType::FalsePositive),
-                        )
-                        .or_default() += 1;
-                } else {
-                    passed_tests += 1;
+                let mut check_res = |result: TestResult| {
+                    if res.is_ok() != result.result {
+                        let err = res.as_ref().err();
+                        println!(
+                            "\nTest failed: {} - {}\nresult:{:?}\nrevm err_result:{:#?}\nbytes:{:?}\n",
+                            name,
+                            vector_name,
+                            result,
+                            err,
+                            test_vector.code
+                        );
+                        *types_of_error
+                            .entry(
+                                err.cloned()
+                                    .map(ErrorType::Error)
+                                    .unwrap_or(ErrorType::FalsePositive),
+                            )
+                            .or_default() += 1;
+                    } else {
+                        passed_tests += 1;
+                    }
+                };
+                if let Some(prague_result) = test_vector.results.prague {
+                    check_res(prague_result);
+                }
+                if let Some(osaka_result) = test_vector.results.osaka {
+                    check_res(osaka_result);
                 }
             }
         }
