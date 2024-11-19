@@ -1,5 +1,7 @@
 /// Returns the length of the data after compression through FastLZ, based on
-// https://github.com/Vectorized/solady/blob/5315d937d79b335c668896d7533ac603adac5315/js/solady.js
+/// <https://github.com/Vectorized/solady/blob/5315d937d79b335c668896d7533ac603adac5315/js/solady.js>
+/// The u32s match op-geth's Go port:
+/// <https://github.com/ethereum-optimism/op-geth/blob/647c346e2bef36219cc7b47d76b1cb87e7ca29e4/core/types/rollup_cost.go#L411>
 pub(crate) fn flz_compress_len(input: &[u8]) -> u32 {
     let mut idx: u32 = 2;
 

@@ -35,6 +35,16 @@ pub const BASE_FEE_RECIPIENT: Address = address!("420000000000000000000000000000
 /// The address of the L1Block contract.
 pub const L1_BLOCK_CONTRACT: Address = address!("4200000000000000000000000000000000000015");
 
+/// <https://github.com/ethereum-optimism/op-geth/blob/647c346e2bef36219cc7b47d76b1cb87e7ca29e4/core/types/rollup_cost.go#L79>
+const L1_COST_FASTLZ_COEF: u64 = 836_500;
+
+/// <https://github.com/ethereum-optimism/op-geth/blob/647c346e2bef36219cc7b47d76b1cb87e7ca29e4/core/types/rollup_cost.go#L78>
+/// Inverted to be used with `saturating_sub`.
+const L1_COST_INTERCEPT: u64 = 42_585_600;
+
+/// <https://github.com/ethereum-optimism/op-geth/blob/647c346e2bef36219cc7b47d76b1cb87e7ca29e4/core/types/rollup_cost.go#82>
+const MIN_TX_SIZE_SCALED: u64 = 100 * 1_000_000;
+
 /// L1 block info
 ///
 /// We can extract L1 epoch data from each L2 block, by looking at the `setL1BlockValues`
@@ -153,12 +163,14 @@ impl L1BlockInfo {
     // This value is computed based on the following formula:
     // max(minTransactionSize, intercept + fastlzCoef*fastlzSize)
     fn tx_estimated_size_fjord(&self, input: &[u8]) -> U256 {
-        let fastlz_size = U256::from(flz_compress_len(input));
+        let fastlz_size = flz_compress_len(input) as u64;
 
-        fastlz_size
-            .saturating_mul(U256::from(836_500))
-            .saturating_sub(U256::from(42_585_600))
-            .max(U256::from(100_000_000))
+        U256::from(
+            fastlz_size
+                .saturating_mul(L1_COST_FASTLZ_COEF)
+                .saturating_sub(L1_COST_INTERCEPT)
+                .max(MIN_TX_SIZE_SCALED),
+        )
     }
 
     /// Calculate the gas cost of a transaction based on L1 block data posted on L2, depending on the [SpecId] passed.
