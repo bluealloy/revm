@@ -1,20 +1,16 @@
-use crate::{
-    default::{block::BlockEnv, tx::TxEnv},
-    getters::*,
-    journaled_state::JournaledState,
-};
+use crate::{block::BlockEnv, journaled_state::JournaledState, tx::TxEnv};
 use bytecode::{Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
+use context_interface::{
+    journaled_state::{AccountLoad, Eip7702CodeLoad},
+    result::EVMError,
+    Block, BlockGetter, CfgEnv, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
+    Transaction, TransactionGetter,
+};
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
 use interpreter::{as_u64_saturated, Host, SStoreResult, SelfDestructResult, StateLoad};
 use primitives::{Address, Bytes, HashSet, Log, B256, BLOCK_HASH_HISTORY, U256};
 use specification::hardfork::SpecId;
-
-use context_interface::{
-    journaled_state::{AccountLoad, Eip7702CodeLoad},
-    result::EVMError,
-    Block, CfgEnv, Transaction,
-};
 
 /// EVM context contains data that EVM needs for execution.
 #[derive_where(Clone, Debug; BLOCK, SPEC, CHAIN, TX, DB, <DB as Database>::Error)]

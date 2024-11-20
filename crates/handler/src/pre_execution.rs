@@ -2,31 +2,30 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
-use crate::handler::PreExecutionWire;
 use bytecode::Bytecode;
-use context::{
-    BlockGetter, CfgGetter, JournalStateGetter, JournalStateGetterDBError, TransactionGetter,
-};
 use context_interface::{
     journaled_state::JournaledState,
     result::InvalidTransaction,
     transaction::{
         eip7702::Authorization, AccessListTrait, Eip4844Tx, Eip7702Tx, Transaction, TransactionType,
     },
-    Block, Cfg,
+    Block, BlockGetter, Cfg, CfgGetter, JournalStateGetter, JournalStateGetterDBError,
+    TransactionGetter,
 };
+use handler_interface::PreExecutionHandler;
 use primitives::{Address, BLOCKHASH_STORAGE_ADDRESS, U256};
 use specification::{eip7702, hardfork::SpecId};
+use std::{boxed::Box, vec::Vec};
 
 #[derive(Default)]
 pub struct EthPreExecution<CTX, ERROR> {
-    pub _phantom: std::marker::PhantomData<(CTX, ERROR)>,
+    pub _phantom: core::marker::PhantomData<(CTX, ERROR)>,
 }
 
 impl<CTX, ERROR> EthPreExecution<CTX, ERROR> {
     pub fn new() -> Self {
         Self {
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         }
     }
 
@@ -35,7 +34,7 @@ impl<CTX, ERROR> EthPreExecution<CTX, ERROR> {
     }
 }
 
-impl<CTX, ERROR> PreExecutionWire for EthPreExecution<CTX, ERROR>
+impl<CTX, ERROR> PreExecutionHandler for EthPreExecution<CTX, ERROR>
 where
     CTX: TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter,
     ERROR: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,

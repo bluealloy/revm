@@ -5,13 +5,19 @@ use auto_impl::auto_impl;
 use derive_where::derive_where;
 use revm::{
     bytecode::{opcode::OpCode, Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
-    context::{
-        default::{block::BlockEnv, tx::TxEnv},
-        BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
-        JournalStateGetterDBError, TransactionGetter,
+    context::{block::BlockEnv, tx::TxEnv},
+    context_interface::{
+        journaled_state::{AccountLoad, Eip7702CodeLoad},
+        result::{EVMError, InvalidTransaction},
+        Block, BlockGetter, CfgEnv, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
+        JournalStateGetterDBError, Transaction, TransactionGetter,
     },
     database_interface::{Database, EmptyDB},
-    handler::{EthPrecompileProvider, Frame, PrecompileProvider},
+    handler::{
+        EthExecution, EthFrame, EthHandler, EthPostExecution, EthPreExecution,
+        EthPrecompileProvider, EthValidation, FrameResult,
+    },
+    handler_interface::{Frame, FrameOrResultGen, PrecompileProvider},
     interpreter::{
         as_u64_saturated,
         instructions::{arithmetic::addmod, host, instruction},
@@ -22,15 +28,9 @@ use revm::{
         InterpreterWire, NewFrameAction, NewInterpreter, SStoreResult, SelfDestructResult,
         StateLoad,
     },
-    mainnet::{EthHandler, FrameResult},
     precompile::PrecompileErrors,
     primitives::{Address, Bytes, HashSet, Log, B256, BLOCK_HASH_HISTORY, U256},
     specification::hardfork::SpecId,
-    context_interface::{
-        journaled_state::{AccountLoad, Eip7702CodeLoad},
-        result::{EVMError, InvalidTransaction},
-        Block, CfgEnv, Transaction,
-    },
     Context, Error, Evm, JournaledState,
 };
 
@@ -440,8 +440,6 @@ impl<INSP, BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockGetter
     }
 }
 
-use revm::mainnet::{EthExecution, EthFrame, EthPostExecution, EthPreExecution, EthValidation};
-
 #[derive(Clone)]
 pub struct InspectorInstruction<WIRE: InterpreterWire, HOST> {
     pub instruction: fn(&mut NewInterpreter<WIRE>, &mut HOST),
@@ -565,7 +563,7 @@ where
     fn init_first(
         cxt: &mut Self::Context,
         frame_action: Self::FrameInit,
-    ) -> Result<revm::handler::FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
+    ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
         EthFrame::init_first(cxt, frame_action)
             .map(|frame| frame.map_frame(|eth_frame| Self { eth_frame }))
     }
@@ -574,7 +572,7 @@ where
         &self,
         cxt: &mut Self::Context,
         frame_action: Self::FrameInit,
-    ) -> Result<revm::handler::FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
+    ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
         self.eth_frame
             .init(cxt, frame_action)
             .map(|frame| frame.map_frame(|eth_frame| Self { eth_frame }))
@@ -583,8 +581,7 @@ where
     fn run(
         &mut self,
         context: &mut Self::Context,
-    ) -> Result<revm::handler::FrameOrResultGen<Self::FrameInit, Self::FrameResult>, Self::Error>
-    {
+    ) -> Result<FrameOrResultGen<Self::FrameInit, Self::FrameResult>, Self::Error> {
         self.eth_frame.run(context)
     }
 

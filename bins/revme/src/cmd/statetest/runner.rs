@@ -7,17 +7,19 @@ use indicatif::{ProgressBar, ProgressDrawTarget};
 use inspector::{InspectorContext, InspectorEthFrame, InspectorMainEvm, StepPrintInspector};
 use revm::{
     bytecode::Bytecode,
-    context::default::{block::BlockEnv, tx::TxEnv},
-    database_interface::EmptyDB,
-    handler::EthPrecompileProvider,
-    mainnet::{EthExecution, EthHandler, EthPostExecution, EthPreExecution, EthValidation},
-    primitives::{keccak256, Bytes, TxKind, B256},
-    specification::{eip7702::AuthorizationList, hardfork::SpecId},
+    context::{block::BlockEnv, tx::TxEnv},
     context_interface::{
         block::calc_excess_blob_gas,
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
         Cfg, CfgEnv,
     },
+    database_interface::EmptyDB,
+    handler::{
+        EthExecution, EthHandler, EthPostExecution, EthPreExecution, EthPrecompileProvider,
+        EthValidation,
+    },
+    primitives::{keccak256, Bytes, TxKind, B256},
+    specification::{eip7702::AuthorizationList, hardfork::SpecId},
     Context, DatabaseCommit, JournaledState, MainEvm,
 };
 use serde_json::json;

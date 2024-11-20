@@ -121,3 +121,10 @@ impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
         self.0.commit(changes)
     }
 }
+
+#[auto_impl(&mut, Box)]
+pub trait DatabaseGetter {
+    type Database: Database;
+
+    fn db(&mut self) -> &mut Self::Database;
+}

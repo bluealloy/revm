@@ -2,6 +2,7 @@ pub mod blob;
 
 pub use blob::{calc_blob_gasprice, calc_excess_blob_gas, BlobExcessGasAndPrice};
 
+use auto_impl::auto_impl;
 use primitives::{Address, B256, U256};
 
 /// Trait for retrieving block information required for execution.
@@ -65,4 +66,11 @@ pub trait Block {
     fn blob_excess_gas(&self) -> Option<u64> {
         self.blob_excess_gas_and_price().map(|a| a.excess_blob_gas)
     }
+}
+
+#[auto_impl(&, &mut, Box, Arc)]
+pub trait BlockGetter {
+    type Block: Block;
+
+    fn block(&self) -> &Self::Block;
 }

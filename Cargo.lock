@@ -2847,6 +2847,8 @@ dependencies = [
  "revm-context-interface",
  "revm-database",
  "revm-database-interface",
+ "revm-handler",
+ "revm-handler-interface",
  "revm-interpreter",
  "revm-precompile",
  "revm-primitives",
@@ -2940,6 +2942,43 @@ dependencies = [
  "rstest",
  "serde",
  "tokio",
+]
+
+[[package]]
+name = "revm-handler"
+version = "1.0.0"
+dependencies = [
+ "auto_impl",
+ "derive-where",
+ "dyn-clone",
+ "revm-bytecode",
+ "revm-context-interface",
+ "revm-database",
+ "revm-database-interface",
+ "revm-handler-interface",
+ "revm-interpreter",
+ "revm-precompile",
+ "revm-primitives",
+ "revm-specification",
+ "revm-state",
+ "serde",
+]
+
+[[package]]
+name = "revm-handler-interface"
+version = "1.0.0"
+dependencies = [
+ "auto_impl",
+ "cfg-if",
+ "dyn-clone",
+ "revm-bytecode",
+ "revm-database",
+ "revm-database-interface",
+ "revm-interpreter",
+ "revm-primitives",
+ "revm-specification",
+ "revm-state",
+ "serde",
 ]
 
 [[package]]

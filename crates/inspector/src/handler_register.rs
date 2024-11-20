@@ -5,7 +5,7 @@
 // use revm::interpreter::{InterpreterWire, NewInterpreter};
 // use revm::{
 //     bytecode::opcode,
-//     handler::{register::EvmHandler, ExecutionWire},
+//     handler::{register::EvmHandler, ExecutionHandler},
 //     interpreter::{table::DynInstruction, InstructionResult, Interpreter},
 //     context_interface::result::EVMResultGeneric,
 //     Context, EvmWiring, FrameOrResult, FrameResult, JournalEntry,
@@ -195,7 +195,7 @@
 //     });
 
 //     pub struct InspectorExecWire {
-//         prev_handle: Box<dyn ExecutionWire + 'a>,
+//         prev_handle: Box<dyn ExecutionHandler + 'a>,
 //     }
 
 //     // last frame outcome

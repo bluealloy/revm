@@ -1,3 +1,4 @@
+use auto_impl::auto_impl;
 use core::ops::{Deref, DerefMut};
 use database_interface::Database;
 use primitives::{Address, B256, U256};
@@ -222,4 +223,15 @@ impl<T> Eip7702CodeLoad<T> {
             is_delegate_account_cold: Some(is_delegate_account_cold),
         }
     }
+}
+
+/// Helper that extracts database error from [`JournalStateGetter`].
+pub type JournalStateGetterDBError<CTX> =
+    <<<CTX as JournalStateGetter>::Journal as JournaledState>::Database as Database>::Error;
+
+#[auto_impl(&mut, Box)]
+pub trait JournalStateGetter {
+    type Journal: JournaledState;
+
+    fn journal(&mut self) -> &mut Self::Journal;
 }

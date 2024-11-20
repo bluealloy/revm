@@ -1,3 +1,9 @@
+use auto_impl::auto_impl;
+use core::fmt::Debug;
+use core::hash::Hash;
+use primitives::{TxKind, U256};
+use specification::{constants::MAX_CODE_SIZE, hardfork::SpecId};
+
 pub trait Cfg {
     //type Spec;
 
@@ -20,11 +26,6 @@ pub trait Cfg {
 
     fn is_base_fee_check_disabled(&self) -> bool;
 }
-
-use core::fmt::Debug;
-use core::hash::Hash;
-use primitives::{TxKind, U256};
-use specification::{constants::MAX_CODE_SIZE, hardfork::SpecId};
 
 /// What bytecode analysis to perform.
 #[derive(Clone, Default, Debug, Eq, PartialEq, Hash)]
@@ -196,4 +197,11 @@ pub enum CreateScheme {
         /// Salt.
         salt: U256,
     },
+}
+
+#[auto_impl(&, &mut, Box, Arc)]
+pub trait CfgGetter {
+    type Cfg: Cfg;
+
+    fn cfg(&self) -> &Self::Cfg;
 }

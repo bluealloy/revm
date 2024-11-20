@@ -1,7 +1,7 @@
 use revm::{
     context::{BlockGetter, CfgGetter, DatabaseGetter, EvmError, TransactionGetter},
     database_interface::Database,
-    handler::{EthValidation, ValidationWire},
+    handler::{EthValidation, ValidationHadler},
     precompile::PrecompileSpecId,
     specification::hardfork::{Spec, SpecId},
     context_interface::result::{EVMError, InvalidTransaction},
@@ -55,7 +55,7 @@ impl<CTX, ERROR, FORK: OptimismSpec> VV<CTX, ERROR, FORK> {
     }
 }
 
-impl<CTX, ERROR, FORK: OptimismSpec> ValidationWire for VV<CTX, ERROR, FORK>
+impl<CTX, ERROR, FORK: OptimismSpec> ValidationHadler for VV<CTX, ERROR, FORK>
 where
     CTX: TransactionGetter + BlockGetter + DatabaseGetter + CfgGetter,
     ERROR: From<InvalidTransaction>,

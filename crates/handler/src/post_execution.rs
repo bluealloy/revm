@@ -1,30 +1,28 @@
-use crate::handler::PostExecutionWire;
-use context::{
-    BlockGetter, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
-    TransactionGetter,
+use context_interface::{
+    journaled_state::JournaledState,
+    result::{ExecutionResult, HaltReasonTrait, ResultAndState},
+    Block, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
+    Transaction, TransactionGetter,
 };
+use handler_interface::PostExecutionHandler;
 use interpreter::SuccessOrHalt;
 use primitives::{Log, U256};
 use specification::hardfork::SpecId;
 use state::EvmState;
-use context_interface::{
-    journaled_state::JournaledState,
-    result::{ExecutionResult, HaltReasonTrait, ResultAndState},
-    Block, Cfg, Transaction,
-};
+use std::{boxed::Box, vec::Vec};
 
 use super::frame_data::FrameResult;
 
 #[derive(Default)]
 pub struct EthPostExecution<CTX, ERROR, HALTREASON> {
-    pub _phantom: std::marker::PhantomData<(CTX, ERROR, HALTREASON)>,
+    pub _phantom: core::marker::PhantomData<(CTX, ERROR, HALTREASON)>,
 }
 
 impl<CTX, ERROR, HALTREASON> EthPostExecution<CTX, ERROR, HALTREASON> {
     /// Create new instance of post execution handler.
     pub fn new() -> Self {
         Self {
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         }
     }
 
@@ -36,7 +34,7 @@ impl<CTX, ERROR, HALTREASON> EthPostExecution<CTX, ERROR, HALTREASON> {
     }
 }
 
-impl<CTX, ERROR, HALTREASON> PostExecutionWire for EthPostExecution<CTX, ERROR, HALTREASON>
+impl<CTX, ERROR, HALTREASON> PostExecutionHandler for EthPostExecution<CTX, ERROR, HALTREASON>
 where
     CTX: TransactionGetter
         + ErrorGetter<Error = ERROR>

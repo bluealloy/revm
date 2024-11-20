@@ -11,6 +11,8 @@ pub use bytecode;
 pub use context;
 pub use context_interface;
 pub use database_interface;
+pub use handler;
+pub use handler_interface;
 pub use interpreter;
 pub use precompile;
 pub use primitives;
@@ -20,8 +22,6 @@ pub use state;
 // Modules.
 
 mod evm;
-pub mod handler;
-pub mod mainnet;
 
 // Export items.
 

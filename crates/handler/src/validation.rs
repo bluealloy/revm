@@ -1,10 +1,3 @@
-use core::cmp::{self, Ordering};
-
-use crate::handler::ValidationWire;
-use context::{
-    BlockGetter, CfgGetter, JournalStateGetter, JournalStateGetterDBError, TransactionGetter,
-};
-
 use context_interface::{
     journaled_state::JournaledState,
     result::{InvalidHeader, InvalidTransaction},
@@ -12,8 +5,11 @@ use context_interface::{
         eip7702::Authorization, Eip1559CommonTxFields, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx,
         Transaction, TransactionType,
     },
-    Block, Cfg,
+    Block, BlockGetter, Cfg, CfgGetter, JournalStateGetter, JournalStateGetterDBError,
+    TransactionGetter,
 };
+use core::cmp::{self, Ordering};
+use handler_interface::ValidationHandler;
 use interpreter::gas;
 use primitives::{B256, U256};
 use specification::{eip4844, hardfork::SpecId};
@@ -22,13 +18,13 @@ use std::boxed::Box;
 
 #[derive(Default)]
 pub struct EthValidation<CTX, ERROR> {
-    pub _phantom: std::marker::PhantomData<(CTX, ERROR)>,
+    pub _phantom: core::marker::PhantomData<(CTX, ERROR)>,
 }
 
 impl<CTX, ERROR> EthValidation<CTX, ERROR> {
     pub fn new() -> Self {
         Self {
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         }
     }
 
@@ -37,7 +33,7 @@ impl<CTX, ERROR> EthValidation<CTX, ERROR> {
     }
 }
 
-impl<CTX, ERROR> ValidationWire for EthValidation<CTX, ERROR>
+impl<CTX, ERROR> ValidationHandler for EthValidation<CTX, ERROR>
 where
     CTX: TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter,
     ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>,

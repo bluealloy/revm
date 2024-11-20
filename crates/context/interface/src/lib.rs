@@ -7,10 +7,14 @@ extern crate alloc as std;
 
 pub mod block;
 pub mod cfg;
+pub mod errors;
 pub mod journaled_state;
 pub mod result;
 pub mod transaction;
 
-pub use block::Block;
-pub use cfg::{Cfg, CfgEnv, CreateScheme, TransactTo};
-pub use transaction::{Transaction, TransactionType};
+pub use block::{Block, BlockGetter};
+pub use cfg::{Cfg, CfgEnv, CfgGetter, CreateScheme, TransactTo};
+pub use database_interface::{DBErrorMarker, Database, DatabaseGetter};
+pub use errors::ErrorGetter;
+pub use journaled_state::{JournalStateGetter, JournalStateGetterDBError, JournaledState};
+pub use transaction::{Transaction, TransactionGetter, TransactionType};

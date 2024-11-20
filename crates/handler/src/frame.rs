@@ -1,11 +1,12 @@
-use super::frame_data::*;
-use crate::handler::{EthPrecompileProvider, Frame, FrameOrResultGen, PrecompileProvider};
+use super::{frame_data::*, EthPrecompileProvider};
 use bytecode::{Eof, EOF_MAGIC_BYTES};
-use context::{
-    BlockGetter, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
-    TransactionGetter,
+use context_interface::{
+    journaled_state::{JournalCheckpoint, JournaledState},
+    BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
+    Transaction, TransactionGetter,
 };
 use core::{cell::RefCell, cmp::min};
+use handler_interface::{Frame, FrameOrResultGen, PrecompileProvider};
 use interpreter::{
     gas,
     instructions::{self, memory},
@@ -25,11 +26,8 @@ use specification::{
     hardfork::SpecId::{self, HOMESTEAD, LONDON, PRAGUE_EOF, SPURIOUS_DRAGON},
 };
 use state::Bytecode;
+use std::borrow::ToOwned;
 use std::{rc::Rc, sync::Arc};
-use context_interface::{
-    journaled_state::{JournalCheckpoint, JournaledState},
-    Cfg, Transaction,
-};
 
 /*
 EVM
@@ -67,7 +65,7 @@ InnerContext<PRECOMPILES,INSTRUCTIONS, MEMORY>
 */
 
 pub struct EthFrame<CTX, ERROR, IW: InterpreterWire, PRECOMPILE, INSTRUCTIONS> {
-    _phantom: std::marker::PhantomData<fn() -> (CTX, ERROR)>,
+    _phantom: core::marker::PhantomData<fn() -> (CTX, ERROR)>,
     data: FrameData,
     // TODO include this
     depth: usize,
@@ -97,7 +95,7 @@ where
         memory: Rc<RefCell<SharedMemory>>,
     ) -> Self {
         Self {
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
             data,
             depth: 0,
             interpreter,

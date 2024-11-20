@@ -1,10 +1,10 @@
-use super::{frame_data::FrameResult, EthFrame};
-use crate::handler::{EthPrecompileProvider, ExecutionWire, Frame as FrameTrait, FrameOrResultGen};
+use super::{frame_data::FrameResult, EthFrame, EthPrecompileProvider};
 use bytecode::EOF_MAGIC_BYTES;
-use context::{
-    BlockGetter, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
-    TransactionGetter,
+use context_interface::{
+    result::InvalidTransaction, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalStateGetter,
+    JournalStateGetterDBError, Transaction, TransactionGetter,
 };
+use handler_interface::{ExecutionHandler, Frame as FrameTrait, FrameOrResultGen};
 use interpreter::{
     interpreter::{EthInstructionProvider, EthInterpreter},
     return_ok, return_revert, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme,
@@ -13,7 +13,6 @@ use interpreter::{
 use primitives::TxKind;
 use specification::hardfork::SpecId;
 use std::boxed::Box;
-use context_interface::{result::InvalidTransaction, Cfg, Transaction};
 
 #[derive(Default)]
 pub struct EthExecution<
@@ -27,10 +26,10 @@ pub struct EthExecution<
         EthInstructionProvider<EthInterpreter<()>, CTX>,
     >,
 > {
-    _phantom: std::marker::PhantomData<(CTX, FRAME, ERROR)>,
+    _phantom: core::marker::PhantomData<(CTX, FRAME, ERROR)>,
 }
 
-impl<CTX, ERROR, FRAME> ExecutionWire for EthExecution<CTX, ERROR, FRAME>
+impl<CTX, ERROR, FRAME> ExecutionHandler for EthExecution<CTX, ERROR, FRAME>
 where
     CTX: TransactionGetter
         + ErrorGetter<Error = ERROR>
@@ -131,7 +130,7 @@ where
 impl<CTX, ERROR, FRAME> EthExecution<CTX, ERROR, FRAME> {
     pub fn new() -> Self {
         Self {
-            _phantom: std::marker::PhantomData,
+            _phantom: core::marker::PhantomData,
         }
     }
 

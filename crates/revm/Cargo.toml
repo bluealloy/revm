@@ -33,6 +33,8 @@ bytecode.workspace = true
 database = { workspace = true, optional = true }
 context.workspace = true
 context-interface.workspace = true
+handler.workspace = true
+handler-interface.workspace = true
 
 # misc
 derive-where = { version = "1.2.7", default-features = false }

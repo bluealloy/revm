@@ -149,3 +149,10 @@ pub trait Transaction {
         }
     }
 }
+
+#[auto_impl(&, &mut, Box, Arc)]
+pub trait TransactionGetter {
+    type Transaction: Transaction;
+
+    fn tx(&self) -> &Self::Transaction;
+}
