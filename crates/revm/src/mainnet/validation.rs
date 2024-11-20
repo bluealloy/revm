@@ -5,20 +5,20 @@ use context::{
     BlockGetter, CfgGetter, JournalStateGetter, JournalStateGetterDBError, TransactionGetter,
 };
 
+use context_interface::{
+    journaled_state::JournaledState,
+    result::{InvalidHeader, InvalidTransaction},
+    transaction::{
+        eip7702::Authorization, Eip1559CommonTxFields, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx,
+        Transaction, TransactionType,
+    },
+    Block, Cfg,
+};
 use interpreter::gas;
 use primitives::{B256, U256};
 use specification::{eip4844, hardfork::SpecId};
 use state::Account;
 use std::boxed::Box;
-use transaction::{
-    eip7702::Authorization, Eip1559CommonTxFields, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx,
-    Transaction,
-};
-use wiring::{
-    journaled_state::JournaledState,
-    result::{InvalidHeader, InvalidTransaction},
-    Block, Cfg, TransactionType,
-};
 
 #[derive(Default)]
 pub struct EthValidation<CTX, ERROR> {

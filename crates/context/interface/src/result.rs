@@ -1,10 +1,10 @@
+use crate::transaction::TransactionError;
 use core::fmt::{self, Debug};
 use database_interface::DBErrorMarker;
 use primitives::{Address, Bytes, Log, U256};
 use specification::eip7702::InvalidAuthorization;
 use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
-use transaction::TransactionError;
 
 pub trait HaltReasonTrait: Clone + Debug + PartialEq + Eq + From<HaltReason> {}
 

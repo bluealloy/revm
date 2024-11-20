@@ -4,7 +4,7 @@ use revm::{
     handler::{EthValidation, ValidationWire},
     precompile::PrecompileSpecId,
     specification::hardfork::{Spec, SpecId},
-    wiring::result::{EVMError, InvalidTransaction},
+    context_interface::result::{EVMError, InvalidTransaction},
 };
 
 /// Specification IDs for the optimism blockchain.

@@ -4,7 +4,7 @@ use inspector::{inspector_handle_register, inspectors::TracerEip3155};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
     primitives::{address, hex, Address, TxKind},
-    wiring::EthereumWiring,
+    context_interface::EthereumWiring,
     Database, Evm,
 };
 use std::io::Error as IoError;

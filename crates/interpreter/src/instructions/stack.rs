@@ -129,7 +129,7 @@ mod test {
     use bytecode::opcode::{DUPN, EXCHANGE, SWAPN};
     use bytecode::Bytecode;
     use specification::hardfork::SpecId;
-    use wiring::DefaultEthereumWiring;
+    use context_interface::DefaultEthereumWiring;
 
     #[test]
     fn dupn() {

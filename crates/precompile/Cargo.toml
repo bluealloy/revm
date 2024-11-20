@@ -24,7 +24,7 @@ all = "warn"
 [dependencies]
 # revm
 primitives.workspace = true
-wiring.workspace = true
+context-interface.workspace = true
 specification.workspace = true
 
 # static precompile sets.

@@ -6,7 +6,7 @@ use primitives::{
 };
 use specification::hardfork::{SpecId, SpecId::*};
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
-use wiring::journaled_state::{
+use context_interface::journaled_state::{
     AccountLoad, Eip7702CodeLoad, JournalCheckpoint, JournaledState as JournaledStateTrait,
 };
 

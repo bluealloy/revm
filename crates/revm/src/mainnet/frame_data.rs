@@ -5,7 +5,7 @@ use interpreter::{
 };
 use primitives::Address;
 use std::boxed::Box;
-use wiring::{journaled_state::JournalCheckpoint, result::Output};
+use context_interface::{journaled_state::JournalCheckpoint, result::Output};
 
 /// Call CallStackFrame.
 //#[derive(Debug)]

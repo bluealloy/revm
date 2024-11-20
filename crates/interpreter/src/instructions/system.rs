@@ -248,7 +248,7 @@ mod test {
     use bytecode::Bytecode;
     use primitives::bytes;
     use specification::hardfork::{PragueSpec, SpecId};
-    use wiring::DefaultEthereumWiring;
+    use context_interface::DefaultEthereumWiring;
 
     #[test]
     fn returndataload() {

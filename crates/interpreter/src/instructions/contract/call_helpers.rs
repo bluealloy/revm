@@ -6,7 +6,7 @@ use crate::{
 use core::{cmp::min, ops::Range};
 use primitives::{Bytes, U256};
 use specification::hardfork::SpecId::*;
-use wiring::journaled_state::AccountLoad;
+use context_interface::journaled_state::AccountLoad;
 
 #[inline]
 pub fn get_memory_input_and_out_ranges(

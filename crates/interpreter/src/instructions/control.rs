@@ -297,7 +297,7 @@ mod test {
     use primitives::bytes;
     use specification::hardfork::SpecId;
     use std::sync::Arc;
-    use wiring::DefaultEthereumWiring;
+    use context_interface::DefaultEthereumWiring;
 
     #[test]
     fn rjump() {

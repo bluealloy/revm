@@ -7,7 +7,7 @@ use crate::{
 };
 use primitives::U256;
 use specification::hardfork::SpecId::*;
-use wiring::Block;
+use context_interface::Block;
 
 /// EIP-1344: ChainID opcode
 pub fn chainid<WIRE: InterpreterWire, H: Host + ?Sized>(

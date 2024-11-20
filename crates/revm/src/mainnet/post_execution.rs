@@ -7,7 +7,7 @@ use interpreter::SuccessOrHalt;
 use primitives::{Log, U256};
 use specification::hardfork::SpecId;
 use state::EvmState;
-use wiring::{
+use context_interface::{
     journaled_state::JournaledState,
     result::{ExecutionResult, HaltReasonTrait, ResultAndState},
     Block, Cfg, Transaction,

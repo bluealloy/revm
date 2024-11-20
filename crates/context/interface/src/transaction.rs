@@ -1,7 +1,21 @@
-use crate::{
-    eip1559::Eip1559CommonTxFields, AccessListTrait, CommonTxFields, Eip1559Tx, Eip2930Tx,
-    Eip4844Tx, Eip7702Tx, LegacyTx, TransactionType,
-};
+mod access_list;
+mod common;
+pub mod eip1559;
+pub mod eip2930;
+pub mod eip4844;
+pub mod eip7702;
+pub mod legacy;
+pub mod transaction_type;
+
+pub use access_list::AccessListTrait;
+pub use common::CommonTxFields;
+pub use eip1559::{Eip1559CommonTxFields, Eip1559Tx};
+pub use eip2930::Eip2930Tx;
+pub use eip4844::Eip4844Tx;
+pub use eip7702::Eip7702Tx;
+pub use legacy::LegacyTx;
+pub use transaction_type::TransactionType;
+
 use auto_impl::auto_impl;
 use core::cmp::min;
 use core::fmt::Debug;

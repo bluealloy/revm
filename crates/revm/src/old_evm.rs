@@ -8,7 +8,7 @@ use core::fmt::{self, Debug};
 use database_interface::{Database, DatabaseCommit};
 use interpreter::Host;
 use std::boxed::Box;
-use wiring::{
+use context_interface::{
     default::{CfgEnv, EnvWiring},
     result::{EVMError, EVMResult, EVMResultGeneric, ExecutionResult, ResultAndState},
     Transaction,
@@ -347,7 +347,7 @@ impl<EvmWiringT: EvmWiring> Evm<'_, EvmWiringT> {
     /// Returns [Context] and hardfork.
     #[inline]
     pub fn into_context_with_spec_id(self) -> ContextWithEvmWiring<EvmWiringT> {
-        ContextWithEvmWiring::new(self.context, self.handler.spec_id)
+        ContextWithEvmcontext_interface::new(self.context, self.handler.spec_id)
     }
 
     /// Transact pre-verified transaction.
@@ -422,7 +422,7 @@ mod tests {
         spec_to_generic,
     };
     use transaction::TransactionType;
-    use wiring::{
+    use context_interface::{
         default::{self, block::BlockEnv, Env, TxEnv},
         result::{EVMErrorWiring, HaltReason},
         EthereumWiring, EvmWiring as InnerEvmWiring,
@@ -508,7 +508,7 @@ mod tests {
             BenchmarkDB::default(),
             (),
             Env::boxed(CfgEnv::default(), BlockEnv::default(), &tx),
-            CEthereumWiring::handler(SpecId::LATEST),
+            CEthereumcontext_interface::handler(SpecId::LATEST),
         )
         .build();
 

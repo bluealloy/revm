@@ -41,4 +41,4 @@ pub use interpreter_action::{
 pub use interpreter_wiring::InterpreterWire;
 pub use specification::constants::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 pub use table::Instruction;
-pub use wiring::CreateScheme;
+pub use context_interface::CreateScheme;

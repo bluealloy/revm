@@ -2844,6 +2844,7 @@ dependencies = [
  "reqwest",
  "revm-bytecode",
  "revm-context",
+ "revm-context-interface",
  "revm-database",
  "revm-database-interface",
  "revm-interpreter",
@@ -2851,8 +2852,6 @@ dependencies = [
  "revm-primitives",
  "revm-specification",
  "revm-state",
- "revm-transaction",
- "revm-wiring",
  "rstest",
  "serde",
 ]
@@ -2877,6 +2876,7 @@ dependencies = [
  "derive-where",
  "dyn-clone",
  "revm-bytecode",
+ "revm-context-interface",
  "revm-database",
  "revm-database-interface",
  "revm-interpreter",
@@ -2884,8 +2884,22 @@ dependencies = [
  "revm-primitives",
  "revm-specification",
  "revm-state",
- "revm-transaction",
- "revm-wiring",
+ "serde",
+]
+
+[[package]]
+name = "revm-context-interface"
+version = "1.0.0"
+dependencies = [
+ "auto_impl",
+ "cfg-if",
+ "dyn-clone",
+ "revm-bytecode",
+ "revm-database",
+ "revm-database-interface",
+ "revm-primitives",
+ "revm-specification",
+ "revm-state",
  "serde",
 ]
 
@@ -2902,10 +2916,10 @@ dependencies = [
  "criterion",
  "indicatif",
  "revm-bytecode",
+ "revm-context-interface",
  "revm-database-interface",
  "revm-primitives",
  "revm-state",
- "revm-wiring",
  "rstest",
  "serde",
  "serde_json",
@@ -2947,11 +2961,10 @@ dependencies = [
  "bincode",
  "derive-where",
  "revm-bytecode",
+ "revm-context-interface",
  "revm-database-interface",
  "revm-primitives",
  "revm-specification",
- "revm-transaction",
- "revm-wiring",
  "serde",
  "serde_json",
  "walkdir",
@@ -2973,9 +2986,9 @@ dependencies = [
  "once_cell",
  "p256",
  "rand",
+ "revm-context-interface",
  "revm-primitives",
  "revm-specification",
- "revm-wiring",
  "ripemd",
  "rstest",
  "secp256k1",
@@ -3023,30 +3036,6 @@ dependencies = [
  "revm",
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "revm-transaction"
-version = "1.0.0"
-dependencies = [
- "auto_impl",
- "revm-primitives",
- "revm-specification",
- "serde",
-]
-
-[[package]]
-name = "revm-wiring"
-version = "1.0.0"
-dependencies = [
- "cfg-if",
- "dyn-clone",
- "revm-database-interface",
- "revm-primitives",
- "revm-specification",
- "revm-state",
- "revm-transaction",
- "serde",
 ]
 
 [[package]]

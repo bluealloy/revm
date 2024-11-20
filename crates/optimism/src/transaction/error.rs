@@ -1,7 +1,7 @@
 use core::fmt::Display;
 use revm::{
     transaction::TransactionError,
-    wiring::result::{EVMError, InvalidTransaction},
+    context_interface::result::{EVMError, InvalidTransaction},
 };
 
 /// Optimism transaction validation error.

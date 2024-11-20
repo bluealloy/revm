@@ -13,7 +13,7 @@ use revm::{
     database_interface::EmptyDB,
     primitives::{address, hex, keccak256, Address, Bytes, TxKind, B256, U256},
     state::{AccountInfo, Bytecode},
-    wiring::{
+    context_interface::{
         result::{ExecutionResult, Output},
         EthereumWiring,
     },

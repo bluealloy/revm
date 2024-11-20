@@ -76,8 +76,8 @@ mod tests {
         bytecode::{opcode, Bytecode},
         interpreter::Interpreter,
         primitives::{address, Bytes, Log, TxKind},
-        wiring::EvmWiring as PrimitiveEvmWiring,
-        wiring::{DefaultEthereumWiring, EthereumWiring},
+        context_interface::EvmWiring as PrimitiveEvmWiring,
+        context_interface::{DefaultEthereumWiring, EthereumWiring},
         Evm, EvmWiring,
     };
 

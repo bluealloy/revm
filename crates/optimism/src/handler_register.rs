@@ -5,7 +5,7 @@ use crate::{
     transaction::{
         deposit::DepositTransaction, error::OpTransactionError, OpTransactionType, OpTxTrait,
     },
-    wiring::{OptimismContextTrait, OptimismWiring},
+    context_interface::{OptimismContextTrait, OptimismWiring},
     OptimismHaltReason, OptimismSpec, OptimismSpecId,
 };
 use crate::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT};
@@ -22,7 +22,7 @@ use revm::{
     primitives::{HashMap, U256},
     state::Account,
     transaction::CommonTxFields,
-    wiring::{
+    context_interface::{
         default::EnvWiring,
         result::{
             EVMError, EVMResult, EVMResultGeneric, ExecutionResult, InvalidTransaction,
@@ -444,7 +444,7 @@ pub fn end<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
 mod tests {
     use super::*;
     use crate::{
-        transaction::deposit::TxDeposit, wiring::OptimismEvmWiring, BedrockSpec, L1BlockInfo,
+        transaction::deposit::TxDeposit, context_interface::OptimismEvmWiring, BedrockSpec, L1BlockInfo,
         LatestSpec, OpTransaction, RegolithSpec,
     };
     use database::InMemoryDB;
@@ -453,7 +453,7 @@ mod tests {
         interpreter::{CallOutcome, InstructionResult, InterpreterResult},
         primitives::{bytes, Address, Bytes, B256},
         state::AccountInfo,
-        wiring::default::{block::BlockEnv, Env, TxEnv},
+        context_interface::default::{block::BlockEnv, Env, TxEnv},
     };
     use std::boxed::Box;
 
@@ -486,7 +486,7 @@ mod tests {
 
     #[test]
     fn test_revert_gas() {
-        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
+        let mut env = Envcontext_interface::<TestEmptyOpWiring>::default();
         let tx = TxEnv {
             gas_limit: 100,
             ..Default::default()
@@ -505,7 +505,7 @@ mod tests {
 
     #[test]
     fn test_consume_gas() {
-        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
+        let mut env = Envcontext_interface::<TestEmptyOpWiring>::default();
         //env.tx.base.gas_limit = 100;
         //env.tx.source_hash = Some(B256::ZERO);
 
@@ -525,7 +525,7 @@ mod tests {
 
     #[test]
     fn test_consume_gas_with_refund() {
-        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
+        let mut env = Envcontext_interface::<TestEmptyOpWiring>::default();
         //env.tx.base.gas_limit = 100;
         //env.tx.source_hash = Some(B256::ZERO);
         let deposit = TxDeposit {
@@ -552,7 +552,7 @@ mod tests {
 
     #[test]
     fn test_consume_gas_sys_deposit_tx() {
-        let mut env = EnvWiring::<TestEmptyOpWiring>::default();
+        let mut env = Envcontext_interface::<TestEmptyOpWiring>::default();
         //env.tx.base.gas_limit = 100;
         //env.tx.source_hash = Some(B256::ZERO);
 

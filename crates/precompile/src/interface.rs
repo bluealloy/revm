@@ -1,7 +1,7 @@
 use core::fmt;
 use primitives::Bytes;
 use std::string::String;
-use wiring::result::EVMError;
+use context_interface::result::EVMError;
 
 /// A precompile operation result.
 ///

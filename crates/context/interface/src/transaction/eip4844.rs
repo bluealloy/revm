@@ -1,4 +1,4 @@
-use crate::eip1559::Eip1559CommonTxFields;
+use super::eip1559::Eip1559CommonTxFields;
 use auto_impl::auto_impl;
 use primitives::{Address, B256, U256};
 use specification::eip4844::GAS_PER_BLOB;

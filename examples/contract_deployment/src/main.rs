@@ -6,7 +6,7 @@ use database::InMemoryDB;
 use revm::{
     bytecode::opcode,
     primitives::{hex, Bytes, TxKind, U256},
-    wiring::{
+    context_interface::{
         result::{ExecutionResult, Output},
         EthereumWiring,
     },

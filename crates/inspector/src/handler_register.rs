@@ -7,7 +7,7 @@
 //     bytecode::opcode,
 //     handler::{register::EvmHandler, ExecutionWire},
 //     interpreter::{table::DynInstruction, InstructionResult, Interpreter},
-//     wiring::result::EVMResultGeneric,
+//     context_interface::result::EVMResultGeneric,
 //     Context, EvmWiring, FrameOrResult, FrameResult, JournalEntry,
 // };
 
@@ -264,7 +264,7 @@
 //         database_interface::EmptyDB,
 //         interpreter::{CallInputs, CallOutcome, CreateInputs, CreateOutcome},
 //         primitives::{address, Bytes, TxKind},
-//         wiring::{DefaultEthereumWiring, EthereumWiring, EvmWiring as PrimitiveEvmWiring},
+//         context_interface::{DefaultEthereumWiring, EthereumWiring, EvmWiring as PrimitiveEvmWiring},
 //         Evm, EvmContext, EvmWiring,
 //     };
 

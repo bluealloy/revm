@@ -30,7 +30,7 @@ use crate::handler::{
     ValidationWire,
 };
 use context::{BlockGetter, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError, TransactionGetter};
-use wiring::{journaled_state::JournaledState, result::{HaltReason, InvalidHeader, InvalidTransaction}};
+use context_interface::{journaled_state::JournaledState, result::{HaltReason, InvalidHeader, InvalidTransaction}};
 
 /// TODO Halt needs to be generalized.
 #[derive(Default)]

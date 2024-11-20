@@ -1,4 +1,4 @@
-use crate::CommonTxFields;
+use super::CommonTxFields;
 use auto_impl::auto_impl;
 use primitives::TxKind;
 

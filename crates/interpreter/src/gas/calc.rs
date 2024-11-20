@@ -1,9 +1,11 @@
 use super::constants::*;
 use crate::{num_words, tri, SStoreResult, SelfDestructResult, StateLoad};
+use context_interface::{
+    journaled_state::{AccountLoad, Eip7702CodeLoad},
+    transaction::AccessListTrait,
+};
 use primitives::U256;
 use specification::{eip7702, hardfork::SpecId};
-use transaction::AccessListTrait;
-use wiring::journaled_state::{AccountLoad, Eip7702CodeLoad};
 
 /// `SSTORE` opcode refund calculation.
 #[allow(clippy::collapsible_else_if)]

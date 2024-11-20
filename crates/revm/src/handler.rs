@@ -5,7 +5,7 @@ use precompile::PrecompileErrors;
 use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{Address, Bytes};
 use std::vec::Vec;
-use wiring::Cfg;
+use context_interface::Cfg;
 
 pub trait Handler {
     type Validation: ValidationWire;

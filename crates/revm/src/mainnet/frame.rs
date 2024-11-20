@@ -26,7 +26,7 @@ use specification::{
 };
 use state::Bytecode;
 use std::{rc::Rc, sync::Arc};
-use wiring::{
+use context_interface::{
     journaled_state::{JournalCheckpoint, JournaledState},
     Cfg, Transaction,
 };

@@ -3,7 +3,7 @@ use crate::OpTransactionError;
 use revm::{
     primitives::Bytes,
     transaction::{CommonTxFields, Transaction, TransactionType},
-    wiring::default::TxEnv,
+    context_interface::default::TxEnv,
 };
 
 pub trait OpTxTrait: Transaction {

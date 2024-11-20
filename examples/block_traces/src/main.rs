@@ -9,7 +9,7 @@ use inspector::{inspector_handle_register, inspectors::TracerEip3155};
 use revm::{
     database_interface::WrapDatabaseAsync,
     primitives::{TxKind, U256},
-    wiring::EthereumWiring,
+    context_interface::EthereumWiring,
     Evm,
 };
 use std::fs::OpenOptions;

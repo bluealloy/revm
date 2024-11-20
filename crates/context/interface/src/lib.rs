@@ -8,8 +8,8 @@ extern crate alloc as std;
 pub mod block;
 pub mod cfg;
 pub mod journaled_state;
-pub mod precompile;
 pub mod result;
+pub mod transaction;
 
 pub use block::Block;
 pub use cfg::{Cfg, CfgEnv, CreateScheme, TransactTo};

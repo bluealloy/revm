@@ -25,15 +25,14 @@ all = "warn"
 # revm
 interpreter.workspace = true
 precompile.workspace = true
-wiring.workspace = true
 primitives.workspace = true
 database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
 bytecode.workspace = true
 database = { workspace = true, optional = true }
-transaction.workspace = true
 context.workspace = true
+context-interface.workspace = true
 
 # misc
 derive-where = { version = "1.2.7", default-features = false }
@@ -84,12 +83,12 @@ dev = [
     "optional_gas_refund",
     "optional_no_base_fee",
 ]
-memory_limit = ["wiring/memory_limit", "interpreter/memory_limit"]
-optional_balance_check = ["wiring/optional_balance_check"]
-optional_block_gas_limit = ["wiring/optional_block_gas_limit"]
-optional_eip3607 = ["wiring/optional_eip3607"]
-optional_gas_refund = ["wiring/optional_gas_refund"]
-optional_no_base_fee = ["wiring/optional_no_base_fee"]
+memory_limit = ["context-interface/memory_limit", "interpreter/memory_limit"]
+optional_balance_check = ["context-interface/optional_balance_check"]
+optional_block_gas_limit = ["context-interface/optional_block_gas_limit"]
+optional_eip3607 = ["context-interface/optional_eip3607"]
+optional_gas_refund = ["context-interface/optional_gas_refund"]
+optional_no_base_fee = ["context-interface/optional_no_base_fee"]
 
 # See comments in `precompile`
 secp256k1 = ["precompile/secp256k1"]

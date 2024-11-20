@@ -1,15 +1,16 @@
 mod dummy;
 pub use dummy::DummyHost;
 
-use primitives::{Address, Bytes, Log, B256, U256};
-use wiring::{
+use context_interface::{
     journaled_state::{AccountLoad, Eip7702CodeLoad},
     Block, CfgEnv, Transaction,
 };
+use primitives::{Address, Bytes, Log, B256, U256};
 
-pub use wiring::journaled_state::StateLoad;
+pub use context_interface::journaled_state::StateLoad;
 
 /// EVM context host.
+/// TODO move to context-interface
 pub trait Host {
     /// Chain specification.
     type BLOCK: Block;
@@ -134,7 +135,7 @@ pub struct SelfDestructResult {
 // #[cfg(test)]
 // mod tests {
 //     use database_interface::EmptyDB;
-//     use wiring::EthereumWiring;
+//     use context_interface::EthereumWiring;
 
 //     use super::*;
 

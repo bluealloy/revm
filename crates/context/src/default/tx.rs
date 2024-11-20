@@ -3,11 +3,15 @@ use primitives::{Address, Bytes, TxKind, B256, U256};
 use specification::eip2930::AccessList;
 use specification::eip7702::AuthorizationList;
 use std::vec::Vec;
-use transaction::{
-    eip7702::Authorization, CommonTxFields, Eip1559CommonTxFields, Eip1559Tx, Eip2930Tx, Eip4844Tx,
-    Eip7702Tx, LegacyTx, TransactionType,
+
+use context_interface::{
+    result::InvalidTransaction,
+    transaction::{
+        eip7702::Authorization, CommonTxFields, Eip1559CommonTxFields, Eip1559Tx, Eip2930Tx,
+        Eip4844Tx, Eip7702Tx, LegacyTx, TransactionType,
+    },
+    Transaction,
 };
-use wiring::{result::InvalidTransaction, Transaction};
 
 /// The transaction environment.
 #[derive(Clone, Debug, PartialEq, Eq)]

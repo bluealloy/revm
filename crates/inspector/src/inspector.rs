@@ -26,7 +26,7 @@ use revm::{
     precompile::PrecompileErrors,
     primitives::{Address, Bytes, HashSet, Log, B256, BLOCK_HASH_HISTORY, U256},
     specification::hardfork::SpecId,
-    wiring::{
+    context_interface::{
         journaled_state::{AccountLoad, Eip7702CodeLoad},
         result::{EVMError, InvalidTransaction},
         Block, CfgEnv, Transaction,

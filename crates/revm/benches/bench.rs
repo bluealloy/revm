@@ -7,7 +7,7 @@
 //     bytecode::Bytecode,
 //     interpreter::{Contract, DummyHost, Interpreter},
 //     primitives::{address, bytes, hex, Bytes, TxKind, U256},
-//     wiring::EthereumWiring,
+//     context_interface::EthereumWiring,
 //     Evm,
 // };
 // use std::time::Duration;

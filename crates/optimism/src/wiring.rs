@@ -7,8 +7,8 @@ use core::marker::PhantomData;
 use revm::{
     database_interface::Database,
     handler::register::HandleRegisters,
-    wiring::default::{block::BlockEnv, TxEnv},
-    wiring::EvmWiring,
+    context_interface::default::{block::BlockEnv, TxEnv},
+    context_interface::EvmWiring,
     EvmHandler,
 };
 

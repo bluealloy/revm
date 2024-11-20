@@ -11,7 +11,7 @@ use revm::{
     database_interface::DatabaseRef,
     database_interface::EmptyDB,
     primitives::{address, TxKind, U256},
-    wiring::{
+    context_interface::{
         result::{ExecutionResult, Output},
         EthereumWiring,
     },

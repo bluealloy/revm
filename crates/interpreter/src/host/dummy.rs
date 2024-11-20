@@ -1,7 +1,7 @@
 use crate::{Host, SStoreResult, SelfDestructResult};
 use primitives::{hash_map::Entry, Address, Bytes, HashMap, Log, B256, KECCAK_EMPTY, U256};
 use std::vec::Vec;
-use wiring::{Block, CfgEnv, Transaction};
+use context_interface::{Block, CfgEnv, Transaction};
 
 use super::{AccountLoad, Eip7702CodeLoad, StateLoad};
 

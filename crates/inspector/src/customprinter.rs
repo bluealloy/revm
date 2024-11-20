@@ -64,7 +64,7 @@ mod test {
         primitives::{address, bytes, keccak256, Bytes, TxKind, U256},
         specification::hardfork::SpecId,
         state::AccountInfo,
-        wiring::EthereumWiring,
+        context_interface::EthereumWiring,
         Evm,
     };
 

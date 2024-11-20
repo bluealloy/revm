@@ -13,7 +13,7 @@ use revm::{
     mainnet::{EthExecution, EthHandler, EthPostExecution, EthPreExecution, EthValidation},
     primitives::{keccak256, Bytes, TxKind, B256},
     specification::{eip7702::AuthorizationList, hardfork::SpecId},
-    wiring::{
+    context_interface::{
         block::calc_excess_blob_gas,
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
         Cfg, CfgEnv,

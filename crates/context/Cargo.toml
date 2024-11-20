@@ -25,14 +25,13 @@ all = "warn"
 # revm
 interpreter.workspace = true
 precompile.workspace = true
-wiring.workspace = true
+context-interface.workspace = true
 primitives.workspace = true
 database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
 bytecode.workspace = true
 database = { workspace = true, optional = true }
-transaction.workspace = true
 
 # misc
 derive-where = { version = "1.2.7", default-features = false }
@@ -51,5 +50,11 @@ database.workspace = true
 [features]
 default = ["std"]
 std = ["serde?/std"]
-serde = ["dep:serde"]
+serde = [
+    "dep:serde",
+    "primitives/serde",
+    "specification/serde",
+    "state/serde",
+    "context-interface/serde",
+]
 serde-json = ["serde"]

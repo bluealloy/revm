@@ -7,13 +7,16 @@ use bytecode::Bytecode;
 use context::{
     BlockGetter, CfgGetter, JournalStateGetter, JournalStateGetterDBError, TransactionGetter,
 };
+use context_interface::{
+    journaled_state::JournaledState,
+    result::InvalidTransaction,
+    transaction::{
+        eip7702::Authorization, AccessListTrait, Eip4844Tx, Eip7702Tx, Transaction, TransactionType,
+    },
+    Block, Cfg,
+};
 use primitives::{Address, BLOCKHASH_STORAGE_ADDRESS, U256};
 use specification::{eip7702, hardfork::SpecId};
-use transaction::{eip7702::Authorization, AccessListTrait, Eip4844Tx, Eip7702Tx};
-use wiring::{
-    journaled_state::JournaledState, result::InvalidTransaction, Block, Cfg, Transaction,
-    TransactionType,
-};
 
 #[derive(Default)]
 pub struct EthPreExecution<CTX, ERROR> {

@@ -12,7 +12,7 @@ use revm::{
     database_interface::WrapDatabaseAsync,
     primitives::{address, keccak256, Address, Bytes, TxKind, U256},
     state::AccountInfo,
-    wiring::{
+    context_interface::{
         result::{ExecutionResult, Output},
         EthereumWiring,
     },

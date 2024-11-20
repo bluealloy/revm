@@ -13,7 +13,7 @@ use revm_precompile::{
 use secp256k1::{Message, SecretKey, SECP256K1};
 use sha2::{Digest, Sha256};
 use specification::eip4844::VERSIONED_HASH_VERSION_KZG;
-use wiring::CfgEnv;
+use context_interface::CfgEnv;
 
 /// Benchmarks different cryptography-related precompiles.
 pub fn benchmark_crypto_precompiles(c: &mut Criterion) {

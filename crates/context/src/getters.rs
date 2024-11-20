@@ -1,7 +1,6 @@
 use auto_impl::auto_impl;
+use context_interface::{journaled_state::JournaledState, Block, Cfg, Transaction};
 use database_interface::Database;
-use transaction::Transaction;
-use wiring::{journaled_state::JournaledState, Block, Cfg};
 
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait CfgGetter {
@@ -47,9 +46,4 @@ pub trait BlockGetter {
     type Block: Block;
 
     fn block(&self) -> &Self::Block;
-}
-
-pub trait AllGetters:
-    CfgGetter + JournalStateGetter + DatabaseGetter + ErrorGetter + TransactionGetter + BlockGetter
-{
 }

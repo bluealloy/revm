@@ -10,7 +10,7 @@ use interpreter::{as_u64_saturated, Host, SStoreResult, SelfDestructResult, Stat
 use primitives::{Address, Bytes, HashSet, Log, B256, BLOCK_HASH_HISTORY, U256};
 use specification::hardfork::SpecId;
 
-use wiring::{
+use context_interface::{
     journaled_state::{AccountLoad, Eip7702CodeLoad},
     result::EVMError,
     Block, CfgEnv, Transaction,
@@ -311,9 +311,4 @@ impl<BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockGetter
     fn block(&self) -> &Self::Block {
         &self.block
     }
-}
-
-impl<BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> AllGetters
-    for Context<BLOCK, TX, SPEC, DB, CHAIN>
-{
 }

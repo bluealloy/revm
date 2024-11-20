@@ -1,4 +1,4 @@
-use crate::{AccessListTrait, CommonTxFields};
+use super::{AccessListTrait, CommonTxFields};
 use auto_impl::auto_impl;
 use primitives::TxKind;
 

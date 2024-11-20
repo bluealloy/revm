@@ -6,7 +6,7 @@ use revm::{
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
     },
     primitives::{hex, HashMap, B256, U256},
-    wiring::Transaction,
+    context_interface::Transaction,
     EvmContext, EvmWiring,
 };
 use serde::Serialize;

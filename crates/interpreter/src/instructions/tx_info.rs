@@ -4,9 +4,8 @@ use crate::{
     interpreter_wiring::{InterpreterWire, LoopControl, RuntimeFlag, StackTrait},
     Host,
 };
+use context_interface::{transaction::Eip4844Tx, Block, Transaction, TransactionType};
 use primitives::U256;
-use transaction::Eip4844Tx;
-use wiring::{Block, Transaction, TransactionType};
 
 pub fn gasprice<WIRE: InterpreterWire, H: Host + ?Sized>(
     interpreter: &mut NewInterpreter<WIRE>,

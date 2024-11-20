@@ -105,7 +105,7 @@ fn u24(input: &[u8], idx: u32) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use crate::wiring::OptimismEvmWiring;
+    use crate::context_interface::OptimismEvmWiring;
     use crate::OpTransaction;
 
     use super::*;

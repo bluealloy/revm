@@ -19,7 +19,7 @@ use core::cmp::max;
 use primitives::{keccak256, Address, Bytes, B256, U256};
 use specification::hardfork::{BerlinSpec, Spec, SpecId::*};
 use std::boxed::Box;
-use wiring::CreateScheme;
+use context_interface::CreateScheme;
 
 /// EOF Create instruction
 pub fn eofcreate<WIRE: InterpreterWire, H: Host + ?Sized>(

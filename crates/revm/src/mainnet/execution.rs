@@ -13,7 +13,7 @@ use interpreter::{
 use primitives::TxKind;
 use specification::hardfork::SpecId;
 use std::boxed::Box;
-use wiring::{result::InvalidTransaction, Cfg, Transaction};
+use context_interface::{result::InvalidTransaction, Cfg, Transaction};
 
 #[derive(Default)]
 pub struct EthExecution<
@@ -147,11 +147,11 @@ impl<CTX, ERROR, FRAME> EthExecution<CTX, ERROR, FRAME> {
 //     use interpreter::InstructionResult;
 //     use primitives::Bytes;
 //     use specification::hardfork::CancunSpec;
-//     use wiring::{default::EnvWiring, DefaultEthereumWiring};
+//     use context_interface::{default::EnvWiring, DefaultEthereumWiring};
 
 //     /// Creates frame result.
 //     fn call_last_frame_return(instruction_result: InstructionResult, gas: Gas) -> Gas {
-//         let mut env = EnvWiring::<DefaultEthereumWiring>::default();
+//         let mut env = Envcontext_interface::<DefaultEthereumWiring>::default();
 //         env.tx.gas_limit = 100;
 
 //         let mut ctx = Context::default();

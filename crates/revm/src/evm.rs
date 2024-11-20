@@ -19,7 +19,7 @@ use primitives::Log;
 use specification::hardfork::SpecId;
 use state::EvmState;
 use std::vec::Vec;
-use wiring::{
+use context_interface::{
     journaled_state::JournaledState,
     result::{EVMError, HaltReason, InvalidHeader, InvalidTransaction, ResultAndState},
     Transaction,

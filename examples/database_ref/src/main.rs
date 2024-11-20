@@ -11,7 +11,7 @@ use inspector::{
 use revm::{
     database_interface::{EmptyDB, WrapDatabaseRef},
     handler::register::HandleRegister,
-    wiring::{
+    context_interface::{
         result::{HaltReason, ResultAndState},
         EthereumWiring,
     },

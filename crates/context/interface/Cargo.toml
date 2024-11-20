@@ -1,6 +1,6 @@
 [package]
-name = "revm-wiring"
-description = "Revm generic types wiring"
+name = "revm-context-interface"
+description = "Revm context interface crates"
 version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
@@ -25,12 +25,14 @@ all = "warn"
 # revm
 primitives.workspace = true
 database-interface.workspace = true
-specification.workspace = true
 state.workspace = true
+specification.workspace = true
+bytecode.workspace = true
 
 # mics
 dyn-clone = "1.0"
 cfg-if = { version = "1.0", default-features = false }
+auto_impl = "1.2.0"
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -38,10 +40,29 @@ serde = { version = "1.0", default-features = false, features = [
     "rc",
 ], optional = true }
 
-
 [dev-dependencies]
+database.workspace = true
 
 [features]
 default = ["std"]
 std = ["serde?/std"]
 serde = ["dep:serde", "primitives/serde", "specification/serde", "state/serde"]
+serde-json = ["serde"]
+
+# Enable additional features for development
+# They add functions to Cfg trait.
+dev = [
+    "memory_limit",
+    "optional_balance_check",
+    "optional_block_gas_limit",
+    "optional_eip3607",
+    "optional_gas_refund",
+    "optional_no_base_fee",
+
+]
+memory_limit = []
+optional_balance_check = []
+optional_block_gas_limit = []
+optional_eip3607 = []
+optional_gas_refund = []
+optional_no_base_fee = []

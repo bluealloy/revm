@@ -199,7 +199,7 @@ mod tests {
     use crate::{Contract, DummyHost, Interpreter};
     use primitives::{uint, U256};
     use specification::hardfork::LatestSpec;
-    use wiring::{default::Env, DefaultEthereumWiring};
+    use context_interface::{default::Env, DefaultEthereumWiring};
 
     #[test]
     fn test_shift_left() {
