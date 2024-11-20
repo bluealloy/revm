@@ -2835,10 +2835,7 @@ dependencies = [
  "alloy-provider",
  "alloy-sol-types",
  "anyhow",
- "auto_impl",
  "criterion",
- "derive-where",
- "dyn-clone",
  "ethers-contract",
  "indicatif",
  "reqwest",
@@ -2954,7 +2951,6 @@ dependencies = [
  "revm-bytecode",
  "revm-context-interface",
  "revm-database",
- "revm-database-interface",
  "revm-handler-interface",
  "revm-interpreter",
  "revm-precompile",
@@ -2968,16 +2964,9 @@ dependencies = [
 name = "revm-handler-interface"
 version = "1.0.0"
 dependencies = [
- "auto_impl",
- "cfg-if",
- "dyn-clone",
- "revm-bytecode",
  "revm-database",
- "revm-database-interface",
  "revm-interpreter",
  "revm-primitives",
- "revm-specification",
- "revm-state",
  "serde",
 ]
 

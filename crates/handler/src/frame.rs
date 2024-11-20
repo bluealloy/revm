@@ -1,4 +1,4 @@
-use super::{frame_data::*, EthPrecompileProvider};
+use super::frame_data::*;
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context_interface::{
     journaled_state::{JournalCheckpoint, JournaledState},
@@ -9,17 +9,14 @@ use core::{cell::RefCell, cmp::min};
 use handler_interface::{Frame, FrameOrResultGen, PrecompileProvider};
 use interpreter::{
     gas,
-    instructions::{self, memory},
     interpreter::{EthInterpreter, InstructionProvider},
-    interpreter_wiring::{LoopControl, MemoryTrait, ReturnData, RuntimeFlag},
-    return_ok, return_revert,
-    table::InstructionTable,
-    CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome, CreateScheme, EOFCreateInputs,
-    EOFCreateKind, Gas, Host, InputsImpl, InstructionResult, InterpreterAction, InterpreterResult,
-    InterpreterWire, MemoryGetter, NewFrameAction, NewInterpreter, SharedMemory,
-    EMPTY_SHARED_MEMORY,
+    interpreter_wiring::{LoopControl, ReturnData, RuntimeFlag},
+    return_ok, return_revert, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome,
+    CreateScheme, EOFCreateInputs, EOFCreateKind, Gas, Host, InputsImpl, InstructionResult,
+    InterpreterAction, InterpreterResult, InterpreterWire, NewFrameAction, NewInterpreter,
+    SharedMemory,
 };
-use precompile::{PrecompileErrors, Precompiles};
+use precompile::PrecompileErrors;
 use primitives::{keccak256, Address, Bytes, B256, U256};
 use specification::{
     constants::CALL_STACK_LIMIT,
@@ -164,7 +161,7 @@ where
             CallValue::Transfer(value) => {
                 // Transfer value from caller to called account. As value get transferred
                 // target gets touched.
-                if let Some(result) =
+                if let Some(_) =
                     ctx.journal()
                         .transfer(&inputs.caller, &inputs.target_address, value)?
                 {

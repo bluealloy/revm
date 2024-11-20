@@ -24,16 +24,8 @@ all = "warn"
 [dependencies]
 # revm
 primitives.workspace = true
-database-interface.workspace = true
-state.workspace = true
-specification.workspace = true
-bytecode.workspace = true
 interpreter.workspace = true
 
-# mics
-dyn-clone = "1.0"
-cfg-if = { version = "1.0", default-features = false }
-auto_impl = "1.2.0"
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -47,7 +39,7 @@ database.workspace = true
 [features]
 default = ["std"]
 std = ["serde?/std"]
-serde = ["dep:serde", "primitives/serde", "specification/serde", "state/serde"]
+serde = ["dep:serde", "primitives/serde"]
 serde-json = ["serde"]
 
 # Enable additional features for development

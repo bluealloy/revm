@@ -1,11 +1,7 @@
+use context_interface::result::Output;
 use core::ops::Range;
-use interpreter::{
-    CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult, InterpreterWire,
-    NewInterpreter,
-};
+use interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
 use primitives::Address;
-use std::boxed::Box;
-use context_interface::{journaled_state::JournalCheckpoint, result::Output};
 
 /// Call CallStackFrame.
 //#[derive(Debug)]

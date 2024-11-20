@@ -27,7 +27,6 @@ interpreter.workspace = true
 precompile.workspace = true
 context-interface.workspace = true
 primitives.workspace = true
-database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
 bytecode.workspace = true
