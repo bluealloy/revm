@@ -1,4 +1,5 @@
-#[cfg(feature = "std")]
+#![cfg(feature = "std")]
+
 pub fn print(code: &[u8]) {
     use crate::{opcode::*, utils::read_i16};
     use primitives::hex;
@@ -60,7 +61,6 @@ pub fn print(code: &[u8]) {
 mod test {
     use primitives::hex;
 
-    #[cfg(feature = "std")]
     #[test]
     fn sanity_test() {
         super::print(&hex!("6001e200ffff00"));
