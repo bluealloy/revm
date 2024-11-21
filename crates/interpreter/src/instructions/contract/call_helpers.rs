@@ -3,10 +3,10 @@ use crate::{
     interpreter::NewInterpreter,
     interpreter_wiring::{InterpreterWire, LoopControl, MemoryTrait, RuntimeFlag, StackTrait},
 };
+use context_interface::journaled_state::AccountLoad;
 use core::{cmp::min, ops::Range};
 use primitives::{Bytes, U256};
 use specification::hardfork::SpecId::*;
-use context_interface::journaled_state::AccountLoad;
 
 #[inline]
 pub fn get_memory_input_and_out_ranges(

@@ -1,7 +1,7 @@
+use context_interface::result::EVMError;
 use core::fmt;
 use primitives::Bytes;
 use std::string::String;
-use context_interface::result::EVMError;
 
 /// A precompile operation result.
 ///

@@ -15,11 +15,11 @@ use crate::{
     InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE,
 };
 use bytecode::eof::{Eof, EofHeader};
+use context_interface::CreateScheme;
 use core::cmp::max;
 use primitives::{keccak256, Address, Bytes, B256, U256};
 use specification::hardfork::{BerlinSpec, Spec, SpecId::*};
 use std::boxed::Box;
-use context_interface::CreateScheme;
 
 /// EOF Create instruction
 pub fn eofcreate<WIRE: InterpreterWire, H: Host + ?Sized>(

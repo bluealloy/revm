@@ -1,5 +1,5 @@
-use primitives::{Address, Bytes, U256};
 use context_interface::CreateScheme;
+use primitives::{Address, Bytes, U256};
 
 /// Inputs for a create call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

@@ -1,4 +1,7 @@
 use bytecode::Bytecode;
+use context_interface::journaled_state::{
+    AccountLoad, Eip7702CodeLoad, JournalCheckpoint, JournaledState as JournaledStateTrait,
+};
 use database_interface::Database;
 use interpreter::{InstructionResult, SStoreResult, SelfDestructResult, StateLoad};
 use primitives::{
@@ -6,9 +9,6 @@ use primitives::{
 };
 use specification::hardfork::{SpecId, SpecId::*};
 use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
-use context_interface::journaled_state::{
-    AccountLoad, Eip7702CodeLoad, JournalCheckpoint, JournaledState as JournaledStateTrait,
-};
 
 use core::mem;
 use std::{vec, vec::Vec};

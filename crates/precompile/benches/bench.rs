@@ -1,3 +1,4 @@
+use context_interface::CfgEnv;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use primitives::{hex, keccak256, U256};
 use revm_precompile::{
@@ -13,7 +14,6 @@ use revm_precompile::{
 use secp256k1::{Message, SecretKey, SECP256K1};
 use sha2::{Digest, Sha256};
 use specification::eip4844::VERSIONED_HASH_VERSION_KZG;
-use context_interface::CfgEnv;
 
 /// Benchmarks different cryptography-related precompiles.
 pub fn benchmark_crypto_precompiles(c: &mut Criterion) {

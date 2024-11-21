@@ -1,5 +1,5 @@
-use primitives::{Address, B256, U256};
 use context_interface::block::{BlobExcessGasAndPrice, Block};
+use primitives::{Address, B256, U256};
 
 /// The block environment.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

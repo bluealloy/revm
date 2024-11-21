@@ -1,5 +1,5 @@
-use core::fmt::Debug;
 use context_interface::result::{HaltReason, HaltReasonTrait, OutOfGasError, SuccessReason};
+use core::fmt::Debug;
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]

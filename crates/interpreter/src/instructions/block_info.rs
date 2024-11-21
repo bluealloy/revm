@@ -5,9 +5,9 @@ use crate::{
     interpreter_wiring::{InterpreterWire, LoopControl, RuntimeFlag, StackTrait},
     Host,
 };
+use context_interface::Block;
 use primitives::U256;
 use specification::hardfork::SpecId::*;
-use context_interface::Block;
 
 /// EIP-1344: ChainID opcode
 pub fn chainid<WIRE: InterpreterWire, H: Host + ?Sized>(

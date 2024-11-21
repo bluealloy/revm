@@ -1,5 +1,5 @@
-use primitives::{Address, Bytes};
 use interpreter::InterpreterResult;
+use primitives::{Address, Bytes};
 
 pub trait PrecompileProvider: Clone {
     type Context;

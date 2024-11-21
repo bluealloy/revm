@@ -27,6 +27,7 @@ pub mod interpreter_wiring;
 pub mod table;
 
 // Reexport primary types.
+pub use context_interface::CreateScheme;
 pub use gas::Gas;
 pub use host::{DummyHost, Host, SStoreResult, SelfDestructResult, StateLoad};
 pub use instruction_result::*;
@@ -41,4 +42,3 @@ pub use interpreter_action::{
 pub use interpreter_wiring::InterpreterWire;
 pub use specification::constants::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 pub use table::Instruction;
-pub use context_interface::CreateScheme;
