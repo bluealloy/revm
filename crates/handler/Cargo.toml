@@ -33,11 +33,6 @@ bytecode.workspace = true
 database = { workspace = true, optional = true }
 handler-interface.workspace = true
 
-# misc
-derive-where = { version = "1.2.7", default-features = false }
-dyn-clone = "1.0"
-auto_impl = "1.2.0"
-
 # Optional
 serde = { version = "1.0", default-features = false, features = [
     "derive",

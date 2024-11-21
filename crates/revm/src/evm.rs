@@ -6,18 +6,12 @@ use context_interface::{
     JournalStateGetterDBError, Transaction, TransactionGetter,
 };
 use database_interface::Database;
-use handler::{
-    EthExecution, EthFrame, EthHandler, EthPreExecution, EthPrecompileProvider, EthValidation,
-    FrameResult,
-};
+use handler::{EthHandler, FrameResult};
 use handler_interface::{
     ExecutionHandler, Frame, FrameOrResultGen, Handler, PostExecutionHandler, PreExecutionHandler,
     ValidationHandler,
 };
-use interpreter::{
-    interpreter::{EthInstructionProvider, EthInterpreter},
-    Host,
-};
+use interpreter::Host;
 use precompile::PrecompileErrors;
 use primitives::Log;
 use specification::hardfork::SpecId;
@@ -25,37 +19,20 @@ use state::EvmState;
 use std::vec::Vec;
 
 /// Main EVM structure
-pub struct Evm<ERROR, CTX = Context, HAND = EthHandler<CTX, ERROR>> {
+pub struct Evm<ERROR, CTX = Context, HANDLER = EthHandler<CTX, ERROR>> {
     pub context: CTX,
-    pub handler: HAND,
+    pub handler: HANDLER,
     pub _error: std::marker::PhantomData<fn() -> ERROR>,
 }
 
+/// Mainnet Error.
 pub type Error<DB> = EVMError<<DB as Database>::Error, InvalidTransaction>;
 
+/// Mainnet Contexts.
 pub type EthContext<DB> = Context<BlockEnv, TxEnv, SpecId, DB, ()>;
 
-pub type MainEvm<DB> = Evm<
-    Error<DB>,
-    EthContext<DB>,
-    EthHandler<
-        EthContext<DB>,
-        Error<DB>,
-        EthValidation<EthContext<DB>, Error<DB>>,
-        EthPreExecution<EthContext<DB>, Error<DB>>,
-        EthExecution<
-            EthContext<DB>,
-            Error<DB>,
-            EthFrame<
-                EthContext<DB>,
-                Error<DB>,
-                EthInterpreter<()>,
-                EthPrecompileProvider<EthContext<DB>, Error<DB>>,
-                EthInstructionProvider<EthInterpreter<()>, EthContext<DB>>,
-            >,
-        >,
-    >,
->;
+/// Mainnet EVM type.
+pub type MainEvm<DB> = Evm<Error<DB>, EthContext<DB>>;
 
 impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC>
     Evm<ERROR, CTX, EthHandler<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC>>

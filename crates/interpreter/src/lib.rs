@@ -37,7 +37,7 @@ pub use interpreter::{
 };
 pub use interpreter_action::{
     CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome, EOFCreateInputs,
-    EOFCreateKind, InterpreterAction, NewFrameAction,
+    EOFCreateKind, FrameInput, InterpreterAction,
 };
 pub use interpreter_wiring::InterpreterWire;
 pub use specification::constants::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};

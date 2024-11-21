@@ -1,6 +1,5 @@
 use context_interface::{Cfg, CfgGetter};
 use handler_interface::PrecompileProvider;
-use interpreter::Host;
 use interpreter::{Gas, InstructionResult, InterpreterResult};
 use precompile::PrecompileErrors;
 use precompile::{PrecompileSpecId, Precompiles};

@@ -55,6 +55,10 @@ context-interface = { path = "crates/context/interface", package = "revm-context
 handler = { path = "crates/handler", package = "revm-handler", version = "1.0.0", default-features = false }
 handler-interface = { path = "crates/handler/interface", package = "revm-handler-interface", version = "1.0.0", default-features = false }
 
+# mics
+cfg-if = { version = "1.0", default-features = false }
+auto_impl = { version = "1.2.0" }
+derive-where = { version = "1.2.7", default-features = false }
 
 [workspace.package]
 license = "MIT"

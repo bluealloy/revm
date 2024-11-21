@@ -39,7 +39,7 @@ pub trait Jumps {
     /// Absolute jumps require checking for overflow and if target is a jump destination
     /// from jump table.
     fn absolute_jump(&mut self, offset: usize);
-    /// Check legacy jump destionation from jump table.
+    /// Check legacy jump destination from jump table.
     fn is_valid_legacy_jump(&mut self, offset: usize) -> bool;
     /// Return current program counter.
     fn pc(&self) -> usize;

@@ -28,9 +28,6 @@ primitives.workspace = true
 specification.workspace = true
 context-interface.workspace = true
 
-# mics
-derive-where = { version = "1.2.7", default-features = false }
-
 # optional
 serde = { version = "1.0", default-features = false, features = [
     "derive",

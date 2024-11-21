@@ -6,8 +6,6 @@ use crate::{
     interpreter_wiring::InterpreterWire,
     Host,
 };
-use specification::hardfork::Spec;
-use std::boxed::Box;
 
 /// EVM opcode function signature.
 pub type Instruction<W, H> = for<'a> fn(&'a mut NewInterpreter<W>, &'a mut H);

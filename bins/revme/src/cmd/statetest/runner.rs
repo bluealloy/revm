@@ -458,6 +458,7 @@ pub fn execute_test_suite(
                                 error: Ok(()),
                             },
                             inspector: StepPrintInspector::new(),
+                            frame_input_stack: Vec::new(),
                         },
                         handler: EthHandler::new(
                             EthValidation::new(),

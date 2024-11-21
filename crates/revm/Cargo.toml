@@ -37,10 +37,11 @@ handler.workspace = true
 handler-interface.workspace = true
 
 # Optional
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
-], optional = true }
+# TODO check if needed.
+# serde = { version = "1.0", default-features = false, features = [
+#     "derive",
+#     "rc",
+# ], optional = true }
 
 [dev-dependencies]
 database.workspace = true
@@ -58,10 +59,9 @@ alloy-provider = "0.4.2"
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
-std = ["serde?/std", "interpreter/std", "precompile/std"]
+std = ["interpreter/std", "precompile/std"]
 hashbrown = ["interpreter/hashbrown", "precompile/hashbrown"]
 serde = [
-    "dep:serde",
     "interpreter/serde",
     "database-interface/serde",
     "primitives/serde",

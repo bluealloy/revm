@@ -4,34 +4,33 @@ use std::rc::Rc;
 use auto_impl::auto_impl;
 use derive_where::derive_where;
 use revm::{
-    bytecode::{opcode::OpCode, Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH},
+    bytecode::opcode::OpCode,
     context::{block::BlockEnv, tx::TxEnv},
     context_interface::{
         journaled_state::{AccountLoad, Eip7702CodeLoad},
-        result::{EVMError, InvalidTransaction},
+        result::EVMError,
         Block, BlockGetter, CfgEnv, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
         JournalStateGetterDBError, Transaction, TransactionGetter,
     },
     database_interface::{Database, EmptyDB},
     handler::{
-        EthExecution, EthFrame, EthHandler, EthPostExecution, EthPreExecution,
-        EthPrecompileProvider, EthValidation, FrameResult,
+        EthExecution, EthFrame, EthHandler, EthPreExecution, EthPrecompileProvider, EthValidation,
+        FrameResult,
     },
     handler_interface::{Frame, FrameOrResultGen, PrecompileProvider},
     interpreter::{
-        as_u64_saturated,
-        instructions::{arithmetic::addmod, host, instruction},
-        interpreter::{EthInstructionProvider, EthInterpreter, InstructionProvider},
-        interpreter_wiring::{Jumps, MemoryTrait},
+        instructions::host::{log, selfdestruct},
+        interpreter::{EthInterpreter, InstructionProvider},
+        interpreter_wiring::{Jumps, LoopControl, MemoryTrait},
         table::{self, CustomInstruction},
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Host, Instruction,
-        InterpreterWire, NewFrameAction, NewInterpreter, SStoreResult, SelfDestructResult,
-        StateLoad,
+        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
+        Instruction, InstructionResult, InterpreterWire, NewInterpreter, SStoreResult,
+        SelfDestructResult, StateLoad,
     },
     precompile::PrecompileErrors,
-    primitives::{Address, Bytes, HashSet, Log, B256, BLOCK_HASH_HISTORY, U256},
+    primitives::{Address, Bytes, Log, B256, U256},
     specification::hardfork::SpecId,
-    Context, Error, Evm, JournaledState,
+    Context, Error, Evm, JournalEntry, JournaledState,
 };
 
 /// EVM [Interpreter] callbacks.
@@ -122,11 +121,11 @@ pub trait Inspector {
         &mut self,
         context: &mut Self::Context,
         inputs: &CallInputs,
-        outcome: CallOutcome,
-    ) -> CallOutcome {
+        outcome: &mut CallOutcome,
+    ) {
         let _ = context;
         let _ = inputs;
-        outcome
+        let _ = outcome;
     }
 
     /// Called when a contract is about to be created.
@@ -154,11 +153,11 @@ pub trait Inspector {
         &mut self,
         context: &mut Self::Context,
         inputs: &CreateInputs,
-        outcome: CreateOutcome,
-    ) -> CreateOutcome {
+        outcome: &mut CreateOutcome,
+    ) {
         let _ = context;
         let _ = inputs;
-        outcome
+        let _ = outcome;
     }
 
     /// Called when EOF creating is called.
@@ -179,11 +178,11 @@ pub trait Inspector {
         &mut self,
         context: &mut Self::Context,
         inputs: &EOFCreateInputs,
-        outcome: CreateOutcome,
-    ) -> CreateOutcome {
+        outcome: &mut CreateOutcome,
+    ) {
         let _ = context;
         let _ = inputs;
-        outcome
+        let _ = outcome;
     }
 
     /// Called when a contract has been self-destructed with funds transferred to target.
@@ -223,7 +222,7 @@ impl<CTX> Inspector for StepPrintInspector<CTX> {
     fn step(
         &mut self,
         interp: &mut NewInterpreter<Self::InterpreterWire>,
-        context: &mut Self::Context,
+        _context: &mut Self::Context,
     ) {
         let opcode = interp.bytecode.opcode();
         let name = OpCode::name_by_op(opcode);
@@ -259,8 +258,12 @@ pub trait InspectorCtx {
     type IW: InterpreterWire;
 
     fn step(&mut self, interp: &mut NewInterpreter<Self::IW>);
-
     fn step_end(&mut self, interp: &mut NewInterpreter<Self::IW>);
+    fn initialize_interp(&mut self, interp: &mut NewInterpreter<Self::IW>);
+    fn frame_start(&mut self, frame_input: &mut FrameInput) -> Option<FrameResult>;
+    fn frame_end(&mut self, frame_output: &mut FrameResult);
+    fn inspector_selfdestruct(&mut self, contract: Address, target: Address, value: U256);
+    fn inspector_log(&mut self, interp: &mut NewInterpreter<Self::IW>, log: &Log);
 }
 
 impl<INSP: Inspector> GetInspector for INSP {
@@ -283,6 +286,7 @@ pub struct InspectorContext<
 > {
     pub inner: Context<BLOCK, TX, SPEC, DB, CHAIN>,
     pub inspector: INSP,
+    pub frame_input_stack: Vec<FrameInput>,
 }
 
 impl<INSP: GetInspector, BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> Host
@@ -389,6 +393,73 @@ where
             .get_inspector()
             .step_end(interp, &mut self.inner);
     }
+
+    fn initialize_interp(&mut self, interp: &mut NewInterpreter<Self::IW>) {
+        self.inspector
+            .get_inspector()
+            .initialize_interp(interp, &mut self.inner);
+    }
+    fn inspector_log(&mut self, interp: &mut NewInterpreter<Self::IW>, log: &Log) {
+        self.inspector
+            .get_inspector()
+            .log(interp, &mut self.inner, log);
+    }
+
+    fn frame_start(&mut self, frame_input: &mut FrameInput) -> Option<FrameResult> {
+        let insp = self.inspector.get_inspector();
+        let ctx = &mut self.inner;
+        match frame_input {
+            FrameInput::Call(i) => {
+                if let Some(output) = insp.call(ctx, i) {
+                    return Some(FrameResult::Call(output));
+                }
+            }
+            FrameInput::Create(i) => {
+                if let Some(output) = insp.create(ctx, i) {
+                    return Some(FrameResult::Create(output));
+                }
+            }
+            FrameInput::EOFCreate(i) => {
+                if let Some(output) = insp.eofcreate(ctx, i) {
+                    return Some(FrameResult::EOFCreate(output));
+                }
+            }
+        }
+        self.frame_input_stack.push(frame_input.clone());
+        None
+    }
+
+    fn frame_end(&mut self, frame_output: &mut FrameResult) {
+        let insp = self.inspector.get_inspector();
+        let ctx = &mut self.inner;
+        let frame_input = self.frame_input_stack.pop().expect("Frame pushed");
+        match frame_output {
+            FrameResult::Call(outcome) => {
+                let FrameInput::Call(i) = frame_input else {
+                    panic!("FrameInput::Call expected");
+                };
+                insp.call_end(ctx, &i, outcome);
+            }
+            FrameResult::Create(outcome) => {
+                let FrameInput::Create(i) = frame_input else {
+                    panic!("FrameInput::Create expected");
+                };
+                insp.create_end(ctx, &i, outcome);
+            }
+            FrameResult::EOFCreate(outcome) => {
+                let FrameInput::EOFCreate(i) = frame_input else {
+                    panic!("FrameInput::EofCreate expected");
+                };
+                insp.eofcreate_end(ctx, &i, outcome);
+            }
+        }
+    }
+
+    fn inspector_selfdestruct(&mut self, contract: Address, target: Address, value: U256) {
+        self.inspector
+            .get_inspector()
+            .selfdestruct(contract, target, value)
+    }
 }
 
 impl<INSP, BLOCK, TX, SPEC, DB: Database, CHAIN> JournalStateGetter
@@ -440,6 +511,16 @@ impl<INSP, BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockGetter
     }
 }
 
+impl<INSP, BLOCK: Block, TX, SPEC, DB: Database, CHAIN> JournalExtGetter
+    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
+{
+    type JournalExt = JournaledState<DB>;
+
+    fn journal_ext(&self) -> &Self::JournalExt {
+        &self.inner.journaled_state
+    }
+}
+
 #[derive(Clone)]
 pub struct InspectorInstruction<WIRE: InterpreterWire, HOST> {
     pub instruction: fn(&mut NewInterpreter<WIRE>, &mut HOST),
@@ -480,6 +561,29 @@ where
     }
 }
 
+pub trait JournalExt {
+    fn logs(&self) -> &[Log];
+
+    fn last_journal(&self) -> &[JournalEntry];
+}
+
+impl<DB: Database> JournalExt for JournaledState<DB> {
+    fn logs(&self) -> &[Log] {
+        &self.logs
+    }
+
+    fn last_journal(&self) -> &[JournalEntry] {
+        self.journal.last().expect("Journal is never empty")
+    }
+}
+
+#[auto_impl(&, &mut, Box, Arc)]
+pub trait JournalExtGetter {
+    type JournalExt: JournalExt;
+
+    fn journal_ext(&self) -> &Self::JournalExt;
+}
+
 /*
 INSPECTOR FEATURES:
 - [x] Step/StepEnd (Step/StepEnd are wrapped inside InspectorInstructionProvider)
@@ -496,13 +600,12 @@ INSPECTOR FEATURES:
 impl<WIRE, HOST> InstructionProvider for InspectorInstructionProvider<WIRE, HOST>
 where
     WIRE: InterpreterWire,
-    HOST: Host + InspectorCtx<IW = WIRE>,
+    HOST: Host + JournalExtGetter + JournalStateGetter + InspectorCtx<IW = WIRE>,
 {
     type WIRE = WIRE;
     type Host = HOST;
 
     fn new(_ctx: &mut Self::Host) -> Self {
-        // TODO make this configurable. Inspection over same instruction is not useful.
         let main_table = table::make_instruction_table::<WIRE, HOST>();
         let mut table: [MaybeUninit<InspectorInstruction<WIRE, HOST>>; 256] =
             unsafe { MaybeUninit::uninit().assume_init() };
@@ -514,10 +617,75 @@ where
             *element = MaybeUninit::new(foo);
         }
 
-        /* LOG and Selfdestruct instructions */
-
-        let table =
+        let mut table =
             unsafe { core::mem::transmute::<_, [InspectorInstruction<WIRE, HOST>; 256]>(table) };
+
+        // inspector log wrapper
+
+        fn inspector_log<CTX: Host + JournalExtGetter + InspectorCtx>(
+            interpreter: &mut NewInterpreter<<CTX as InspectorCtx>::IW>,
+            ctx: &mut CTX,
+            prev: Instruction<<CTX as InspectorCtx>::IW, CTX>,
+        ) {
+            prev(interpreter, ctx);
+
+            if interpreter.control.instruction_result() == InstructionResult::Continue {
+                let last_log = ctx.journal_ext().logs().last().unwrap().clone();
+                ctx.inspector_log(interpreter, &last_log);
+            }
+        }
+
+        /* LOG and Selfdestruct instructions */
+        table[OpCode::LOG0.as_usize()] = InspectorInstruction {
+            instruction: |interp, ctx| {
+                inspector_log(interp, ctx, log::<0, HOST>);
+            },
+        };
+        table[OpCode::LOG1.as_usize()] = InspectorInstruction {
+            instruction: |interp, ctx| {
+                inspector_log(interp, ctx, log::<1, HOST>);
+            },
+        };
+        table[OpCode::LOG2.as_usize()] = InspectorInstruction {
+            instruction: |interp, ctx| {
+                inspector_log(interp, ctx, log::<2, HOST>);
+            },
+        };
+        table[OpCode::LOG3.as_usize()] = InspectorInstruction {
+            instruction: |interp, ctx| {
+                inspector_log(interp, ctx, log::<3, HOST>);
+            },
+        };
+        table[OpCode::LOG4.as_usize()] = InspectorInstruction {
+            instruction: |interp, ctx| {
+                inspector_log(interp, ctx, log::<4, HOST>);
+            },
+        };
+
+        table[OpCode::SELFDESTRUCT.as_usize()] = InspectorInstruction {
+            instruction: |interp, ctx| {
+                selfdestruct::<Self::WIRE, HOST>(interp, ctx);
+                if interp.control.instruction_result() == InstructionResult::SelfDestruct {
+                    match ctx.journal_ext().last_journal().last() {
+                        Some(JournalEntry::AccountDestroyed {
+                            address,
+                            target,
+                            had_balance,
+                            ..
+                        }) => {
+                            ctx.inspector_selfdestruct(*address, *target, *had_balance);
+                        }
+                        Some(JournalEntry::BalanceTransfer {
+                            from, to, balance, ..
+                        }) => {
+                            ctx.inspector_selfdestruct(*from, *to, *balance);
+                        }
+                        _ => {}
+                    }
+                }
+            },
+        };
+
         Self {
             instruction_table: Rc::new(table),
         }
@@ -550,6 +718,7 @@ where
         + BlockGetter
         + JournalStateGetter
         + CfgGetter
+        + JournalExtGetter
         + Host
         + InspectorCtx<IW = EthInterpreter>,
     ERROR: From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>,
@@ -557,25 +726,56 @@ where
 {
     type Context = CTX;
     type Error = ERROR;
-    type FrameInit = NewFrameAction;
+    type FrameInit = FrameInput;
     type FrameResult = FrameResult;
 
     fn init_first(
-        cxt: &mut Self::Context,
-        frame_action: Self::FrameInit,
+        ctx: &mut Self::Context,
+        mut frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
-        EthFrame::init_first(cxt, frame_action)
-            .map(|frame| frame.map_frame(|eth_frame| Self { eth_frame }))
+        if let Some(output) = ctx.frame_start(&mut frame_input) {
+            return Ok(FrameOrResultGen::Result(output));
+        }
+        let mut ret = EthFrame::init_first(ctx, frame_input)
+            .map(|frame| frame.map_frame(|eth_frame| Self { eth_frame }));
+
+        match &mut ret {
+            Ok(FrameOrResultGen::Result(res)) => {
+                ctx.frame_end(res);
+            }
+            Ok(FrameOrResultGen::Frame(frame)) => {
+                ctx.initialize_interp(&mut frame.eth_frame.interpreter);
+            }
+            _ => (),
+        }
+
+        ret
     }
 
     fn init(
         &self,
-        cxt: &mut Self::Context,
-        frame_action: Self::FrameInit,
+        ctx: &mut Self::Context,
+        mut frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
-        self.eth_frame
-            .init(cxt, frame_action)
-            .map(|frame| frame.map_frame(|eth_frame| Self { eth_frame }))
+        if let Some(output) = ctx.frame_start(&mut frame_input) {
+            return Ok(FrameOrResultGen::Result(output));
+        }
+        let mut ret = self
+            .eth_frame
+            .init(ctx, frame_input)
+            .map(|frame| frame.map_frame(|eth_frame| Self { eth_frame }));
+
+        match &mut ret {
+            Ok(FrameOrResultGen::Result(res)) => {
+                ctx.frame_end(res);
+            }
+            Ok(FrameOrResultGen::Frame(frame)) => {
+                ctx.initialize_interp(&mut frame.eth_frame.interpreter);
+            }
+            _ => (),
+        }
+
+        ret
     }
 
     fn run(
@@ -587,10 +787,11 @@ where
 
     fn return_result(
         &mut self,
-        cxt: &mut Self::Context,
-        result: Self::FrameResult,
+        ctx: &mut Self::Context,
+        mut result: Self::FrameResult,
     ) -> Result<(), Self::Error> {
-        self.eth_frame.return_result(cxt, result)
+        ctx.frame_end(&mut result);
+        self.eth_frame.return_result(ctx, result)
     }
 }
 

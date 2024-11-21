@@ -37,8 +37,8 @@ macro_rules! require_non_staticcall {
 
 #[macro_export]
 macro_rules! otry {
-    ($expresion: expr) => {{
-        let Some(value) = $expresion else {
+    ($expression: expr) => {{
+        let Some(value) = $expression else {
             return;
         };
         value

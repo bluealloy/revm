@@ -12,8 +12,8 @@ use interpreter::{
     interpreter::{EthInterpreter, InstructionProvider},
     interpreter_wiring::{LoopControl, ReturnData, RuntimeFlag},
     return_ok, return_revert, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome,
-    CreateScheme, EOFCreateInputs, EOFCreateKind, Gas, Host, InputsImpl, InstructionResult,
-    InterpreterAction, InterpreterResult, InterpreterWire, NewFrameAction, NewInterpreter,
+    CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, Host, InputsImpl,
+    InstructionResult, InterpreterAction, InterpreterResult, InterpreterWire, NewInterpreter,
     SharedMemory,
 };
 use precompile::PrecompileErrors;
@@ -72,7 +72,7 @@ pub struct EthFrame<CTX, ERROR, IW: InterpreterWire, PRECOMPILE, INSTRUCTIONS> {
     pub interpreter: NewInterpreter<IW>,
     /// Precompiles provider.
     pub precompiles: PRECOMPILE,
-    /// Insturction provider.
+    /// Instruction provider.
     pub instructions: INSTRUCTIONS,
     // This is worth making as a generic type FrameSharedContext.
     pub memory: Rc<RefCell<SharedMemory>>,
@@ -191,7 +191,8 @@ where
         } else {
             let account = ctx.journal().load_account_code(inputs.bytecode_address)?;
 
-            let code_hash = account.info.code_hash();
+            // TODO Request from foundry to get bytecode hash.
+            let _code_hash = account.info.code_hash();
             let mut bytecode = account.info.code.clone().unwrap_or_default();
 
             // ExtDelegateCall is not allowed to call non-EOF contracts.
@@ -301,12 +302,13 @@ where
         }
 
         // Create address
-        let mut init_code_hash = B256::ZERO;
+        // TODO incorporating code hash inside interpreter. It was a request by foundry.
+        let mut _init_code_hash = B256::ZERO;
         let created_address = match inputs.scheme {
             CreateScheme::Create => inputs.caller.create(old_nonce),
             CreateScheme::Create2 { salt } => {
-                init_code_hash = keccak256(&inputs.init_code);
-                inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
+                _init_code_hash = keccak256(&inputs.init_code);
+                inputs.caller.create2(salt.to_be_bytes(), _init_code_hash)
             }
         };
 
@@ -452,12 +454,10 @@ where
             return return_error(InstructionResult::CreateCollision);
         };
 
-        let bytecode = Bytecode::new_legacy(input).into_analyzed();
-
         let interpreter_input = InputsImpl {
             target_address: created_address,
             caller_address: inputs.caller,
-            input: Bytes::new(),
+            input,
             call_value: inputs.value,
         };
 
@@ -465,7 +465,7 @@ where
             FrameData::Create(CreateFrame { created_address }),
             NewInterpreter::new(
                 memory.clone(),
-                bytecode,
+                Bytecode::Eof(Arc::new(initcode)),
                 interpreter_input,
                 false,
                 false,
@@ -481,20 +481,20 @@ where
 
     pub fn init_with_context(
         depth: usize,
-        frame_init: NewFrameAction,
+        frame_init: FrameInput,
         memory: Rc<RefCell<SharedMemory>>,
         precompile: PRECOMPILE,
         instructions: INSTRUCTION,
         ctx: &mut CTX,
     ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
         match frame_init {
-            NewFrameAction::Call(inputs) => {
+            FrameInput::Call(inputs) => {
                 Self::make_call_frame(ctx, depth, memory, &inputs, precompile, instructions)
             }
-            NewFrameAction::Create(inputs) => {
+            FrameInput::Create(inputs) => {
                 Self::make_create_frame(ctx, depth, memory, &inputs, precompile, instructions)
             }
-            NewFrameAction::EOFCreate(inputs) => {
+            FrameInput::EOFCreate(inputs) => {
                 Self::make_eofcreate_frame(ctx, depth, memory, &inputs, precompile, instructions)
             }
         }
@@ -516,12 +516,12 @@ where
 {
     type Context = CTX;
     type Error = ERROR;
-    type FrameInit = NewFrameAction;
+    type FrameInit = FrameInput;
     type FrameResult = FrameResult;
 
     fn init_first(
         ctx: &mut Self::Context,
-        frame_action: Self::FrameInit,
+        frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
         let memory = Rc::new(RefCell::new(SharedMemory::new()));
         let precompiles = PRECOMPILE::new(ctx);
@@ -533,7 +533,7 @@ where
         }
 
         memory.borrow_mut().new_context();
-        Self::init_with_context(0, frame_action, memory, precompiles, instructions, ctx)
+        Self::init_with_context(0, frame_input, memory, precompiles, instructions, ctx)
     }
 
     fn init(

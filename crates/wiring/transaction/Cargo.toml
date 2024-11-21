@@ -33,7 +33,7 @@ serde = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 # mics
-auto_impl = "1.2"
+auto_impl.workspace = true
 
 [features]
 default = ["std"]

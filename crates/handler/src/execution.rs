@@ -8,7 +8,7 @@ use handler_interface::{ExecutionHandler, Frame as FrameTrait, FrameOrResultGen}
 use interpreter::{
     interpreter::{EthInstructionProvider, EthInterpreter},
     return_ok, return_revert, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme,
-    EOFCreateInputs, EOFCreateKind, Gas, NewFrameAction,
+    EOFCreateInputs, EOFCreateKind, FrameInput, Gas,
 };
 use primitives::TxKind;
 use specification::hardfork::SpecId;
@@ -37,12 +37,8 @@ where
         + JournalStateGetter
         + CfgGetter,
     ERROR: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
-    FRAME: FrameTrait<
-        Context = CTX,
-        Error = ERROR,
-        FrameInit = NewFrameAction,
-        FrameResult = FrameResult,
-    >,
+    FRAME:
+        FrameTrait<Context = CTX, Error = ERROR, FrameInit = FrameInput, FrameResult = FrameResult>,
 {
     type Context = CTX;
     type Error = ERROR;
@@ -60,8 +56,8 @@ where
         let tx = context.tx();
         let input = tx.common_fields().input().clone();
 
-        let init_frame: NewFrameAction = match tx.kind() {
-            TxKind::Call(target_address) => NewFrameAction::Call(Box::new(CallInputs {
+        let init_frame: FrameInput = match tx.kind() {
+            TxKind::Call(target_address) => FrameInput::Call(Box::new(CallInputs {
                 input,
                 gas_limit,
                 target_address,
@@ -76,14 +72,14 @@ where
             TxKind::Create => {
                 // if first byte of data is magic 0xEF00, then it is EOFCreate.
                 if spec.is_enabled_in(SpecId::PRAGUE_EOF) && input.starts_with(&EOF_MAGIC_BYTES) {
-                    NewFrameAction::EOFCreate(Box::new(EOFCreateInputs::new(
+                    FrameInput::EOFCreate(Box::new(EOFCreateInputs::new(
                         tx.common_fields().caller(),
                         tx.common_fields().value(),
                         gas_limit,
                         EOFCreateKind::Tx { initdata: input },
                     )))
                 } else {
-                    NewFrameAction::Create(Box::new(CreateInputs {
+                    FrameInput::Create(Box::new(CreateInputs {
                         caller: tx.common_fields().caller(),
                         scheme: CreateScheme::Create,
                         value: tx.common_fields().value(),

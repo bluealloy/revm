@@ -1,4 +1,3 @@
-use context_interface::CfgEnv;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use primitives::{hex, keccak256, U256};
 use revm_precompile::{

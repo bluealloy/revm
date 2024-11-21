@@ -27,12 +27,10 @@ primitives.workspace = true
 database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
-bytecode.workspace = true
 
 # mics
-dyn-clone = "1.0"
-cfg-if = { version = "1.0", default-features = false }
-auto_impl = "1.2.0"
+cfg-if.workspace = true
+auto_impl.workspace = true
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [

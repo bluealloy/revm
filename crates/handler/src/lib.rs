@@ -43,8 +43,7 @@ use context_interface::{
     TransactionGetter,
 };
 use handler_interface::{
-    ExecutionHandler, Frame, FrameOrResultGen, Handler, PostExecutionHandler, PreExecutionHandler,
-    ValidationHandler,
+    ExecutionHandler, Handler, PostExecutionHandler, PreExecutionHandler, ValidationHandler,
 };
 use interpreter::Host;
 

@@ -6,7 +6,7 @@ use crate::{
     gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD, MIN_CALLEE_GAS},
     instructions::utility::IntoAddress,
     interpreter::NewInterpreter,
-    interpreter_action::NewFrameAction,
+    interpreter_action::FrameInput,
     interpreter_wiring::{
         EofContainer, Immediates, InputsTrait, InterpreterWire, Jumps, LoopControl, MemoryTrait,
         ReturnData, RuntimeFlag, StackTrait,
@@ -74,7 +74,7 @@ pub fn eofcreate<WIRE: InterpreterWire, H: Host + ?Sized>(
     gas!(interpreter, gas_limit);
     // Send container for execution container is preverified.
     interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(NewFrameAction::EOFCreate(Box::new(
+        InterpreterAction::NewFrame(FrameInput::EOFCreate(Box::new(
             EOFCreateInputs::new_opcode(
                 interpreter.input.target_address(),
                 created_address,
@@ -272,7 +272,7 @@ pub fn extcall<WIRE: InterpreterWire, H: Host + ?Sized>(
 
     // Call host to interact with target contract
     interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
+        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address,
@@ -310,7 +310,7 @@ pub fn extdelegatecall<WIRE: InterpreterWire, H: Host + ?Sized>(
 
     // Call host to interact with target contract
     interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
+        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address: interpreter.input.target_address(),
@@ -348,7 +348,7 @@ pub fn extstaticcall<WIRE: InterpreterWire, H: Host + ?Sized>(
 
     // Call host to interact with target contract
     interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
+        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address,
@@ -428,7 +428,7 @@ pub fn create<WIRE: InterpreterWire, const IS_CREATE2: bool, H: Host + ?Sized>(
 
     // Call host to interact with target contract
     interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(NewFrameAction::Create(Box::new(CreateInputs {
+        InterpreterAction::NewFrame(FrameInput::Create(Box::new(CreateInputs {
             caller: interpreter.input.target_address(),
             scheme,
             value,
@@ -481,7 +481,7 @@ pub fn call<WIRE: InterpreterWire, H: Host + ?Sized>(
 
     // Call host to interact with target contract
     interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
+        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address: to,
@@ -535,7 +535,7 @@ pub fn call_code<WIRE: InterpreterWire, H: Host + ?Sized>(
 
     // Call host to interact with target contract
     interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
+        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address: interpreter.input.target_address(),
@@ -583,7 +583,7 @@ pub fn delegate_call<WIRE: InterpreterWire, H: Host + ?Sized>(
 
     // Call host to interact with target contract
     interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
+        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address: interpreter.input.target_address(),
@@ -630,7 +630,7 @@ pub fn static_call<WIRE: InterpreterWire, H: Host + ?Sized>(
 
     // Call host to interact with target contract
     interpreter.control.set_next_action(
-        InterpreterAction::NewFrame(NewFrameAction::Call(Box::new(CallInputs {
+        InterpreterAction::NewFrame(FrameInput::Call(Box::new(CallInputs {
             input,
             gas_limit,
             target_address: to,
