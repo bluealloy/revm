@@ -2,7 +2,7 @@
 // use crate::Inspector;
 // use core::cell::RefCell;
 // use core::{rc::Rc, sync::Arc, vec::Vec};
-// use revm::interpreter::{InterpreterWire, NewInterpreter};
+// use revm::interpreter::{InterpreterTypes, Interpreter};
 // use revm::{
 //     bytecode::opcode,
 //     handler::{register::EvmHandler, ExecutionHandler},
@@ -221,9 +221,9 @@
 //     });
 // }
 
-// fn inspector_instruction<WIRE: InterpreterWire, EvmWiringT>(
+// fn inspector_instruction<WIRE: InterpreterTypes, EvmWiringT>(
 //     prev: &DynInstruction<'_, Context<EvmWiringT>>,
-//     interpreter: &mut NewInterpreter<WIRE>,
+//     interpreter: &mut Interpreter<WIRE>,
 //     host: &mut Context<EvmWiringT>,
 // ) where
 //     EvmWiringT: EvmWiring,

@@ -199,7 +199,7 @@ pub trait Interp {
     fn run(&mut self, instructions: &[Self::Instruction; 256]) -> Self::Action;
 }
 
-pub trait InterpreterWire {
+pub trait InterpreterTypes {
     type Stack: StackTrait;
     type Memory: MemoryTrait;
     type Bytecode: Jumps + Immediates + LegacyBytecode + EofData + EofContainer + EofCodeInfo;

@@ -1,8 +1,8 @@
 use crate::{
     gas::{self, warm_cold_cost, warm_cold_cost_with_delegation, CALL_STIPEND},
-    interpreter::NewInterpreter,
+    interpreter::Interpreter,
     interpreter_wiring::{
-        InputsTrait, InterpreterWire, LoopControl, MemoryTrait, RuntimeFlag, StackTrait,
+        InputsTrait, InterpreterTypes, LoopControl, MemoryTrait, RuntimeFlag, StackTrait,
     },
     Host, InstructionResult,
 };
@@ -10,8 +10,8 @@ use core::cmp::min;
 use primitives::{Bytes, Log, LogData, B256, U256};
 use specification::hardfork::SpecId::*;
 
-pub fn balance<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     popn!([address], interpreter);
@@ -40,8 +40,8 @@ pub fn balance<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 /// EIP-1884: Repricing for trie-size-dependent opcodes
-pub fn selfbalance<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn selfbalance<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     check!(interpreter, ISTANBUL);
@@ -55,8 +55,8 @@ pub fn selfbalance<WIRE: InterpreterWire, H: Host + ?Sized>(
     push!(interpreter, balance.data);
 }
 
-pub fn extcodesize<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     popn!([address], interpreter);
@@ -81,8 +81,8 @@ pub fn extcodesize<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 /// EIP-1052: EXTCODEHASH opcode
-pub fn extcodehash<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     check!(interpreter, CONSTANTINOPLE);
@@ -106,8 +106,8 @@ pub fn extcodehash<WIRE: InterpreterWire, H: Host + ?Sized>(
     push!(interpreter, code_hash.into());
 }
 
-pub fn extcodecopy<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     popn!([address, memory_offset, code_offset, len_u256], interpreter);
@@ -138,8 +138,8 @@ pub fn extcodecopy<WIRE: InterpreterWire, H: Host + ?Sized>(
         .set_data(memory_offset, code_offset, len, &code);
 }
 
-pub fn blockhash<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn blockhash<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     gas!(interpreter, gas::BLOCKHASH);
@@ -155,8 +155,8 @@ pub fn blockhash<WIRE: InterpreterWire, H: Host + ?Sized>(
     *number = U256::from_be_bytes(hash.0);
 }
 
-pub fn sload<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn sload<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     popn_top!([], index, interpreter);
@@ -173,8 +173,8 @@ pub fn sload<WIRE: InterpreterWire, H: Host + ?Sized>(
     *index = value.data;
 }
 
-pub fn sstore<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn sstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     require_non_staticcall!(interpreter);
@@ -213,8 +213,8 @@ pub fn sstore<WIRE: InterpreterWire, H: Host + ?Sized>(
 
 /// EIP-1153: Transient storage opcodes
 /// Store value to transient storage
-pub fn tstore<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn tstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     check!(interpreter, CANCUN);
@@ -228,8 +228,8 @@ pub fn tstore<WIRE: InterpreterWire, H: Host + ?Sized>(
 
 /// EIP-1153: Transient storage opcodes
 /// Load value from transient storage
-pub fn tload<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn tload<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     check!(interpreter, CANCUN);
@@ -241,7 +241,7 @@ pub fn tload<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 pub fn log<const N: usize, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<impl InterpreterWire>,
+    interpreter: &mut Interpreter<impl InterpreterTypes>,
     host: &mut H,
 ) {
     require_non_staticcall!(interpreter);
@@ -278,8 +278,8 @@ pub fn log<const N: usize, H: Host + ?Sized>(
     host.log(log);
 }
 
-pub fn selfdestruct<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     require_non_staticcall!(interpreter);

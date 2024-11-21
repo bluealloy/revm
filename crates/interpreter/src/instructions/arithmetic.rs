@@ -1,14 +1,14 @@
 use super::i256::{i256_div, i256_mod};
 use crate::{
     gas,
-    interpreter::NewInterpreter,
-    interpreter_wiring::{InterpreterWire, LoopControl, RuntimeFlag, StackTrait},
+    interpreter::Interpreter,
+    interpreter_wiring::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
     Host,
 };
 use primitives::U256;
 
-pub fn add<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn add<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -16,8 +16,8 @@ pub fn add<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op2 = op1.wrapping_add(*op2);
 }
 
-pub fn mul<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn mul<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::LOW);
@@ -25,8 +25,8 @@ pub fn mul<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op2 = op1.wrapping_mul(*op2);
 }
 
-pub fn sub<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn sub<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -34,8 +34,8 @@ pub fn sub<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op2 = op1.wrapping_sub(*op2);
 }
 
-pub fn div<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn div<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::LOW);
@@ -45,8 +45,8 @@ pub fn div<WIRE: InterpreterWire, H: Host + ?Sized>(
     }
 }
 
-pub fn sdiv<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn sdiv<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::LOW);
@@ -54,8 +54,8 @@ pub fn sdiv<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op2 = i256_div(op1, *op2);
 }
 
-pub fn rem<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn rem<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::LOW);
@@ -65,8 +65,8 @@ pub fn rem<WIRE: InterpreterWire, H: Host + ?Sized>(
     }
 }
 
-pub fn smod<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn smod<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::LOW);
@@ -74,8 +74,8 @@ pub fn smod<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op2 = i256_mod(op1, *op2)
 }
 
-pub fn addmod<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn addmod<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::MID);
@@ -83,8 +83,8 @@ pub fn addmod<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op3 = op1.add_mod(op2, *op3)
 }
 
-pub fn mulmod<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn mulmod<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::MID);
@@ -92,8 +92,8 @@ pub fn mulmod<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op3 = op1.mul_mod(op2, *op3)
 }
 
-pub fn exp<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn exp<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     let spec_id = interpreter.runtime_flag.spec_id();
@@ -119,8 +119,8 @@ pub fn exp<WIRE: InterpreterWire, H: Host + ?Sized>(
 /// `y | !mask` where `|` is the bitwise `OR` and `!` is bitwise negation. Similarly, if
 /// `b == 0` then the yellow paper says the output should start with all zeros, then end with
 /// bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
-pub fn signextend<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn signextend<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::LOW);

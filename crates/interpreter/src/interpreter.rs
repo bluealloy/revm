@@ -29,7 +29,7 @@ use std::rc::Rc;
 use subroutine_stack::SubRoutineImpl;
 
 #[derive(Debug, Clone)]
-pub struct NewInterpreter<WIRE: InterpreterWire> {
+pub struct Interpreter<WIRE: InterpreterTypes> {
     pub bytecode: WIRE::Bytecode,
     pub stack: WIRE::Stack,
     pub return_data: WIRE::ReturnData,
@@ -41,7 +41,7 @@ pub struct NewInterpreter<WIRE: InterpreterWire> {
     pub extend: WIRE::Extend,
 }
 
-impl<EXT: Default, MG: MemoryGetter> NewInterpreter<EthInterpreter<EXT, MG>> {
+impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
     /// Create new interpreter
     pub fn new(
         memory: Rc<RefCell<MG>>,
@@ -76,7 +76,7 @@ pub struct EthInterpreter<EXT = (), MG = SharedMemory> {
     _phantom: core::marker::PhantomData<fn() -> (EXT, MG)>,
 }
 
-impl<EXT, MG: MemoryGetter> InterpreterWire for EthInterpreter<EXT, MG> {
+impl<EXT, MG: MemoryGetter> InterpreterTypes for EthInterpreter<EXT, MG> {
     type Stack = Stack;
     type Memory = Rc<RefCell<MG>>;
     type Bytecode = ExtBytecode;
@@ -89,7 +89,7 @@ impl<EXT, MG: MemoryGetter> InterpreterWire for EthInterpreter<EXT, MG> {
 }
 
 pub trait InstructionProvider: Clone {
-    type WIRE: InterpreterWire;
+    type WIRE: InterpreterTypes;
     type Host;
 
     fn new(ctx: &mut Self::Host) -> Self;
@@ -97,13 +97,13 @@ pub trait InstructionProvider: Clone {
     fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256];
 }
 
-pub struct EthInstructionProvider<WIRE: InterpreterWire, HOST> {
+pub struct EthInstructionProvider<WIRE: InterpreterTypes, HOST> {
     instruction_table: Rc<[Instruction<WIRE, HOST>; 256]>,
 }
 
 impl<WIRE, HOST> Clone for EthInstructionProvider<WIRE, HOST>
 where
-    WIRE: InterpreterWire,
+    WIRE: InterpreterTypes,
 {
     fn clone(&self) -> Self {
         Self {
@@ -114,7 +114,7 @@ where
 
 impl<WIRE, HOST> InstructionProvider for EthInstructionProvider<WIRE, HOST>
 where
-    WIRE: InterpreterWire,
+    WIRE: InterpreterTypes,
     HOST: Host,
 {
     type WIRE = WIRE;
@@ -133,12 +133,12 @@ where
     }
 }
 
-impl<IW: InterpreterWire, H: Host> CustomInstruction for Instruction<IW, H> {
+impl<IW: InterpreterTypes, H: Host> CustomInstruction for Instruction<IW, H> {
     type Wire = IW;
     type Host = H;
 
     #[inline]
-    fn exec(&self, interpreter: &mut NewInterpreter<Self::Wire>, host: &mut Self::Host) {
+    fn exec(&self, interpreter: &mut Interpreter<Self::Wire>, host: &mut Self::Host) {
         (self)(interpreter, host);
     }
 
@@ -148,7 +148,7 @@ impl<IW: InterpreterWire, H: Host> CustomInstruction for Instruction<IW, H> {
     }
 }
 
-impl<IW: InterpreterWire> NewInterpreter<IW> {
+impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Executes the instruction at the current instruction pointer.
     ///
     /// Internally it will increment instruction pointer by one.

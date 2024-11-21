@@ -1,8 +1,8 @@
 use crate::{
     gas,
-    interpreter::NewInterpreter,
+    interpreter::Interpreter,
     interpreter_wiring::{
-        InputsTrait, InterpreterWire, LegacyBytecode, LoopControl, MemoryTrait, ReturnData,
+        InputsTrait, InterpreterTypes, LegacyBytecode, LoopControl, MemoryTrait, ReturnData,
         RuntimeFlag, StackTrait,
     },
     Host, InstructionResult,
@@ -10,8 +10,8 @@ use crate::{
 use core::ptr;
 use primitives::{B256, KECCAK_EMPTY, U256};
 
-pub fn keccak256<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     popn!([offset, len_ptr], interpreter);
@@ -27,8 +27,8 @@ pub fn keccak256<WIRE: InterpreterWire, H: Host + ?Sized>(
     push!(interpreter, hash.into());
 }
 
-pub fn address<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn address<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
@@ -38,8 +38,8 @@ pub fn address<WIRE: InterpreterWire, H: Host + ?Sized>(
     );
 }
 
-pub fn caller<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn caller<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
@@ -49,16 +49,16 @@ pub fn caller<WIRE: InterpreterWire, H: Host + ?Sized>(
     );
 }
 
-pub fn codesize<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn codesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.bytecode.bytecode_len()));
 }
 
-pub fn codecopy<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     let Some([memory_offset, code_offset, len]) = interpreter.stack.popn() else {
@@ -79,8 +79,8 @@ pub fn codecopy<WIRE: InterpreterWire, H: Host + ?Sized>(
     );
 }
 
-pub fn calldataload<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn calldataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -104,24 +104,24 @@ pub fn calldataload<WIRE: InterpreterWire, H: Host + ?Sized>(
     push!(interpreter, offset_ptr);
 }
 
-pub fn calldatasize<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn calldatasize<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.input.input().len()));
 }
 
-pub fn callvalue<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn callvalue<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, interpreter.input.call_value());
 }
 
-pub fn calldatacopy<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn calldatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     popn!([memory_offset, data_offset, len], interpreter);
@@ -138,8 +138,8 @@ pub fn calldatacopy<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatasize<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn returndatasize<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     check!(interpreter, BYZANTIUM);
@@ -151,8 +151,8 @@ pub fn returndatasize<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatacopy<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn returndatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     check!(interpreter, BYZANTIUM);
@@ -185,8 +185,8 @@ pub fn returndatacopy<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 /// Part of EOF `<https://eips.ethereum.org/EIPS/eip-7069>`.
-pub fn returndataload<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn returndataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -210,8 +210,8 @@ pub fn returndataload<WIRE: InterpreterWire, H: Host + ?Sized>(
     *offset = B256::from(output).into();
 }
 
-pub fn gas<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn gas<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
@@ -223,7 +223,7 @@ pub fn gas<WIRE: InterpreterWire, H: Host + ?Sized>(
 
 // common logic for copying data from a source buffer to the EVM's memory
 pub fn memory_resize(
-    interpreter: &mut NewInterpreter<impl InterpreterWire>,
+    interpreter: &mut Interpreter<impl InterpreterTypes>,
     memory_offset: U256,
     len: usize,
 ) -> Option<usize> {

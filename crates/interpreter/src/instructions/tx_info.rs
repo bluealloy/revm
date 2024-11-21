@@ -1,14 +1,14 @@
 use crate::{
     gas,
-    interpreter::NewInterpreter,
-    interpreter_wiring::{InterpreterWire, LoopControl, RuntimeFlag, StackTrait},
+    interpreter::Interpreter,
+    interpreter_wiring::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
     Host,
 };
 use context_interface::{transaction::Eip4844Tx, Block, Transaction, TransactionType};
 use primitives::U256;
 
-pub fn gasprice<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
@@ -17,8 +17,8 @@ pub fn gasprice<WIRE: InterpreterWire, H: Host + ?Sized>(
     push!(interpreter, U256::ZERO)
 }
 
-pub fn origin<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
@@ -29,8 +29,8 @@ pub fn origin<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 // EIP-4844: Shard Blob Transactions
-pub fn blob_hash<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn blob_hash<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     check!(interpreter, CANCUN);

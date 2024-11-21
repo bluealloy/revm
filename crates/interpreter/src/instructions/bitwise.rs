@@ -1,15 +1,15 @@
 use super::i256::i256_cmp;
 use crate::{
     gas,
-    interpreter::NewInterpreter,
-    interpreter_wiring::{InterpreterWire, LoopControl, RuntimeFlag, StackTrait},
+    interpreter::Interpreter,
+    interpreter_wiring::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
     Host,
 };
 use core::cmp::Ordering;
 use primitives::U256;
 
-pub fn lt<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn lt<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -19,8 +19,8 @@ pub fn lt<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op2 = U256::from(op1 < *op2);
 }
 
-pub fn gt<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn gt<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -30,8 +30,8 @@ pub fn gt<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op2 = U256::from(op1 > *op2);
 }
 
-pub fn slt<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn slt<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -41,8 +41,8 @@ pub fn slt<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Less);
 }
 
-pub fn sgt<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn sgt<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -52,8 +52,8 @@ pub fn sgt<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Greater);
 }
 
-pub fn eq<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn eq<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -63,8 +63,8 @@ pub fn eq<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op2 = U256::from(op1 == *op2);
 }
 
-pub fn iszero<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn iszero<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -72,8 +72,8 @@ pub fn iszero<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op1 = U256::from(op1.is_zero());
 }
 
-pub fn bitand<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn bitand<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -81,8 +81,8 @@ pub fn bitand<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op2 = op1 & *op2;
 }
 
-pub fn bitor<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn bitor<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -92,8 +92,8 @@ pub fn bitor<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op2 = op1 | *op2;
 }
 
-pub fn bitxor<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn bitxor<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -103,8 +103,8 @@ pub fn bitxor<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op2 = op1 ^ *op2;
 }
 
-pub fn not<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn not<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -114,8 +114,8 @@ pub fn not<WIRE: InterpreterWire, H: Host + ?Sized>(
     *op1 = !*op1;
 }
 
-pub fn byte<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn byte<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -133,8 +133,8 @@ pub fn byte<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shl<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn shl<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     check!(interpreter, CONSTANTINOPLE);
@@ -151,8 +151,8 @@ pub fn shl<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shr<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn shr<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     check!(interpreter, CONSTANTINOPLE);
@@ -169,8 +169,8 @@ pub fn shr<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn sar<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn sar<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     check!(interpreter, CONSTANTINOPLE);

@@ -1,8 +1,8 @@
 use crate::{
     gas,
     instructions::utility::IntoU256,
-    interpreter::NewInterpreter,
-    interpreter_wiring::{InterpreterWire, LoopControl, RuntimeFlag, StackTrait},
+    interpreter::Interpreter,
+    interpreter_wiring::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
     Host,
 };
 use context_interface::Block;
@@ -10,8 +10,8 @@ use primitives::U256;
 use specification::hardfork::SpecId::*;
 
 /// EIP-1344: ChainID opcode
-pub fn chainid<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     check!(interpreter, ISTANBUL);
@@ -19,32 +19,32 @@ pub fn chainid<WIRE: InterpreterWire, H: Host + ?Sized>(
     push!(interpreter, U256::from(host.cfg().chain_id));
 }
 
-pub fn coinbase<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, host.block().beneficiary().into_word().into());
 }
 
-pub fn timestamp<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, *host.block().timestamp());
 }
 
-pub fn block_number<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, *host.block().number());
 }
 
-pub fn difficulty<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
@@ -59,8 +59,8 @@ pub fn difficulty<WIRE: InterpreterWire, H: Host + ?Sized>(
     }
 }
 
-pub fn gaslimit<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
@@ -68,8 +68,8 @@ pub fn gaslimit<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 /// EIP-3198: BASEFEE opcode
-pub fn basefee<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     check!(interpreter, LONDON);
@@ -78,8 +78,8 @@ pub fn basefee<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 /// EIP-7516: BLOBBASEFEE opcode
-pub fn blob_basefee<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn blob_basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     check!(interpreter, CANCUN);

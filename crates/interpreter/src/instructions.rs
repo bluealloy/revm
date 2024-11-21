@@ -16,17 +16,17 @@ pub mod system;
 pub mod tx_info;
 pub mod utility;
 
-use crate::{interpreter_wiring::InterpreterWire, Host};
+use crate::{interpreter_wiring::InterpreterTypes, Host};
 
 /// Returns the instruction function for the given opcode and spec.
-pub const fn instruction<WIRE: InterpreterWire, H: Host + ?Sized>(
+pub const fn instruction<WIRE: InterpreterTypes, H: Host + ?Sized>(
     opcode: u8,
 ) -> crate::table::Instruction<WIRE, H> {
     let table = instruction_table::<WIRE, H>();
     table[opcode as usize]
 }
 
-pub const fn instruction_table<WIRE: InterpreterWire, H: Host + ?Sized>(
+pub const fn instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) -> [crate::table::Instruction<WIRE, H>; 256] {
     use bytecode::opcode::*;
     let mut table = [control::unknown as crate::table::Instruction<WIRE, H>; 256];
@@ -231,7 +231,7 @@ mod tests {
     // fn all_instructions_and_opcodes_used() {
     //     // known unknown instruction we compare it with other instructions from table.
     //     let unknown_instruction = 0x0C_usize;
-    //     let instr_table = instruction_table::<InterpreterWire, DummyHost<DefaultEthereumWiring>>();
+    //     let instr_table = instruction_table::<InterpreterTypes, DummyHost<DefaultEthereumWiring>>();
 
     //     let unknown_istr = instr_table[unknown_instruction];
     //     for (i, instr) in instr_table.iter().enumerate() {

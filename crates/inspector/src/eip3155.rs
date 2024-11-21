@@ -6,18 +6,16 @@ use revm::{
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
     },
     primitives::{hex, HashMap, B256, U256},
-    context_interface::Transaction,
-    EvmContext, EvmWiring,
 };
 use serde::Serialize;
 use std::io::Write;
 
 /// [EIP-3155](https://eips.ethereum.org/EIPS/eip-3155) tracer [Inspector].
-#[derive_where(Debug)]
-pub struct TracerEip3155 {
+#[derive_where(Debug; CTX, INTR)]
+pub struct TracerEip3155<CTX, INTR> {
     #[derive_where(skip)]
     output: Box<dyn Write>,
-    gas_inspector: GasInspector,
+    gas_inspector: GasInspector<CTX, INTR>,
 
     /// Print summary of the execution.
     print_summary: bool,
@@ -99,7 +97,7 @@ struct Summary {
     fork: Option<String>,
 }
 
-impl TracerEip3155 {
+impl<CTX, INTR> TracerEip3155<CTX, INTR> {
     /// Sets the writer to use for the output.
     pub fn set_writer(&mut self, writer: Box<dyn Write>) {
         self.output = writer;
@@ -128,9 +126,7 @@ impl TracerEip3155 {
         *mem_size = 0;
         *skip = false;
     }
-}
 
-impl TracerEip3155 {
     pub fn new(output: Box<dyn Write>) -> Self {
         Self {
             output,
@@ -166,11 +162,7 @@ impl TracerEip3155 {
         self.output.flush()
     }
 
-    fn print_summary<EvmWiringT: EvmWiring>(
-        &mut self,
-        result: &InterpreterResult,
-        context: &mut EvmContext<EvmWiringT>,
-    ) {
+    fn print_summary(&mut self, result: &InterpreterResult, context: &mut CTX) {
         if self.print_summary {
             let spec_name: &str = context.spec_id().into();
             let value = Summary {
@@ -189,7 +181,10 @@ impl TracerEip3155 {
     }
 }
 
-impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for TracerEip3155 {
+impl<CTX, INTR> Inspector for TracerEip3155<CTX, INTR> {
+    type Context = CTX;
+    type InterpreterTypes = INTR;
+
     fn initialize_interp(
         &mut self,
         interp: &mut Interpreter,

@@ -24,7 +24,7 @@ use revm::{
         interpreter_wiring::{Jumps, LoopControl, MemoryTrait},
         table::{self, CustomInstruction},
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
-        Instruction, InstructionResult, InterpreterWire, NewInterpreter, SStoreResult,
+        Instruction, InstructionResult, Interpreter, InterpreterTypes, SStoreResult,
         SelfDestructResult, StateLoad,
     },
     precompile::PrecompileErrors,
@@ -37,7 +37,7 @@ use revm::{
 #[auto_impl(&mut, Box)]
 pub trait Inspector {
     type Context;
-    type InterpreterWire: InterpreterWire;
+    type InterpreterTypes: InterpreterTypes;
     /// Called before the interpreter is initialized.
     ///
     /// If `interp.instruction_result` is set to anything other than [revm::interpreter::InstructionResult::Continue] then the execution of the interpreter
@@ -45,7 +45,7 @@ pub trait Inspector {
     #[inline]
     fn initialize_interp(
         &mut self,
-        interp: &mut NewInterpreter<Self::InterpreterWire>,
+        interp: &mut Interpreter<Self::InterpreterTypes>,
         context: &mut Self::Context,
     ) {
         let _ = interp;
@@ -63,7 +63,7 @@ pub trait Inspector {
     #[inline]
     fn step(
         &mut self,
-        interp: &mut NewInterpreter<Self::InterpreterWire>,
+        interp: &mut Interpreter<Self::InterpreterTypes>,
         context: &mut Self::Context,
     ) {
         let _ = interp;
@@ -77,7 +77,7 @@ pub trait Inspector {
     #[inline]
     fn step_end(
         &mut self,
-        interp: &mut NewInterpreter<Self::InterpreterWire>,
+        interp: &mut Interpreter<Self::InterpreterTypes>,
         context: &mut Self::Context,
     ) {
         let _ = interp;
@@ -88,7 +88,7 @@ pub trait Inspector {
     #[inline]
     fn log(
         &mut self,
-        interp: &mut NewInterpreter<Self::InterpreterWire>,
+        interp: &mut Interpreter<Self::InterpreterTypes>,
         context: &mut Self::Context,
         log: &Log,
     ) {
@@ -208,7 +208,7 @@ impl<CTX> StepPrintInspector<CTX> {
 
 impl<CTX> Inspector for StepPrintInspector<CTX> {
     type Context = CTX;
-    type InterpreterWire = EthInterpreter;
+    type InterpreterTypes = EthInterpreter;
 
     /// Called on each step of the interpreter.
     ///
@@ -221,7 +221,7 @@ impl<CTX> Inspector for StepPrintInspector<CTX> {
     #[inline]
     fn step(
         &mut self,
-        interp: &mut NewInterpreter<Self::InterpreterWire>,
+        interp: &mut Interpreter<Self::InterpreterTypes>,
         _context: &mut Self::Context,
     ) {
         let opcode = interp.bytecode.opcode();
@@ -255,15 +255,15 @@ pub trait GetInspector {
 }
 
 pub trait InspectorCtx {
-    type IW: InterpreterWire;
+    type IT: InterpreterTypes;
 
-    fn step(&mut self, interp: &mut NewInterpreter<Self::IW>);
-    fn step_end(&mut self, interp: &mut NewInterpreter<Self::IW>);
-    fn initialize_interp(&mut self, interp: &mut NewInterpreter<Self::IW>);
+    fn step(&mut self, interp: &mut Interpreter<Self::IT>);
+    fn step_end(&mut self, interp: &mut Interpreter<Self::IT>);
+    fn initialize_interp(&mut self, interp: &mut Interpreter<Self::IT>);
     fn frame_start(&mut self, frame_input: &mut FrameInput) -> Option<FrameResult>;
     fn frame_end(&mut self, frame_output: &mut FrameResult);
     fn inspector_selfdestruct(&mut self, contract: Address, target: Address, value: U256);
-    fn inspector_log(&mut self, interp: &mut NewInterpreter<Self::IW>, log: &Log);
+    fn inspector_log(&mut self, interp: &mut Interpreter<Self::IT>, log: &Log);
 }
 
 impl<INSP: Inspector> GetInspector for INSP {
@@ -378,28 +378,28 @@ where
     INSP: GetInspector<
         Inspector: Inspector<
             Context = Context<BLOCK, TX, SPEC, DB, CHAIN>,
-            InterpreterWire = EthInterpreter,
+            InterpreterTypes = EthInterpreter,
         >,
     >,
 {
-    type IW = EthInterpreter<()>;
+    type IT = EthInterpreter<()>;
 
-    fn step(&mut self, interp: &mut NewInterpreter<Self::IW>) {
+    fn step(&mut self, interp: &mut Interpreter<Self::IT>) {
         self.inspector.get_inspector().step(interp, &mut self.inner);
     }
 
-    fn step_end(&mut self, interp: &mut NewInterpreter<Self::IW>) {
+    fn step_end(&mut self, interp: &mut Interpreter<Self::IT>) {
         self.inspector
             .get_inspector()
             .step_end(interp, &mut self.inner);
     }
 
-    fn initialize_interp(&mut self, interp: &mut NewInterpreter<Self::IW>) {
+    fn initialize_interp(&mut self, interp: &mut Interpreter<Self::IT>) {
         self.inspector
             .get_inspector()
             .initialize_interp(interp, &mut self.inner);
     }
-    fn inspector_log(&mut self, interp: &mut NewInterpreter<Self::IW>, log: &Log) {
+    fn inspector_log(&mut self, interp: &mut Interpreter<Self::IT>, log: &Log) {
         self.inspector
             .get_inspector()
             .log(interp, &mut self.inner, log);
@@ -522,18 +522,18 @@ impl<INSP, BLOCK: Block, TX, SPEC, DB: Database, CHAIN> JournalExtGetter
 }
 
 #[derive(Clone)]
-pub struct InspectorInstruction<WIRE: InterpreterWire, HOST> {
-    pub instruction: fn(&mut NewInterpreter<WIRE>, &mut HOST),
+pub struct InspectorInstruction<IT: InterpreterTypes, HOST> {
+    pub instruction: fn(&mut Interpreter<IT>, &mut HOST),
 }
 
-impl<WIRE: InterpreterWire, HOST> CustomInstruction for InspectorInstruction<WIRE, HOST>
+impl<IT: InterpreterTypes, HOST> CustomInstruction for InspectorInstruction<IT, HOST>
 where
-    HOST: InspectorCtx<IW = WIRE>,
+    HOST: InspectorCtx<IT = IT>,
 {
-    type Wire = WIRE;
+    type Wire = IT;
     type Host = HOST;
 
-    fn exec(&self, interpreter: &mut NewInterpreter<Self::Wire>, host: &mut Self::Host) {
+    fn exec(&self, interpreter: &mut Interpreter<Self::Wire>, host: &mut Self::Host) {
         host.step(interpreter);
         (self.instruction)(interpreter, host);
         host.step_end(interpreter);
@@ -546,13 +546,13 @@ where
     }
 }
 
-pub struct InspectorInstructionProvider<WIRE: InterpreterWire, HOST> {
+pub struct InspectorInstructionProvider<WIRE: InterpreterTypes, HOST> {
     instruction_table: Rc<[InspectorInstruction<WIRE, HOST>; 256]>,
 }
 
 impl<WIRE, HOST> Clone for InspectorInstructionProvider<WIRE, HOST>
 where
-    WIRE: InterpreterWire,
+    WIRE: InterpreterTypes,
 {
     fn clone(&self) -> Self {
         Self {
@@ -584,23 +584,10 @@ pub trait JournalExtGetter {
     fn journal_ext(&self) -> &Self::JournalExt;
 }
 
-/*
-INSPECTOR FEATURES:
-- [x] Step/StepEnd (Step/StepEnd are wrapped inside InspectorInstructionProvider)
-        * currently limited to mainnet instructions.
-- [ ] Initialize
-        * Needs EthFrame wrapper.
-- [ ] Call/CallEnd
-- [ ] Create/CreateEnd
-- [ ] EOFCreate/EOFCreateEnd
-- [ ] SelfDestruct
-- [ ] Log
-*/
-
 impl<WIRE, HOST> InstructionProvider for InspectorInstructionProvider<WIRE, HOST>
 where
-    WIRE: InterpreterWire,
-    HOST: Host + JournalExtGetter + JournalStateGetter + InspectorCtx<IW = WIRE>,
+    WIRE: InterpreterTypes,
+    HOST: Host + JournalExtGetter + JournalStateGetter + InspectorCtx<IT = WIRE>,
 {
     type WIRE = WIRE;
     type Host = HOST;
@@ -623,9 +610,9 @@ where
         // inspector log wrapper
 
         fn inspector_log<CTX: Host + JournalExtGetter + InspectorCtx>(
-            interpreter: &mut NewInterpreter<<CTX as InspectorCtx>::IW>,
+            interpreter: &mut Interpreter<<CTX as InspectorCtx>::IT>,
             ctx: &mut CTX,
-            prev: Instruction<<CTX as InspectorCtx>::IW, CTX>,
+            prev: Instruction<<CTX as InspectorCtx>::IT, CTX>,
         ) {
             prev(interpreter, ctx);
 
@@ -720,7 +707,7 @@ where
         + CfgGetter
         + JournalExtGetter
         + Host
-        + InspectorCtx<IW = EthInterpreter>,
+        + InspectorCtx<IT = EthInterpreter>,
     ERROR: From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>,
     PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR>,
 {

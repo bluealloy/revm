@@ -13,7 +13,7 @@ use interpreter::{
     interpreter_wiring::{LoopControl, ReturnData, RuntimeFlag},
     return_ok, return_revert, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome,
     CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, Host, InputsImpl,
-    InstructionResult, InterpreterAction, InterpreterResult, InterpreterWire, NewInterpreter,
+    InstructionResult, Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes,
     SharedMemory,
 };
 use precompile::PrecompileErrors;
@@ -55,13 +55,13 @@ EthFrame<CTX,IW,PR<CTX>,IP<IW,CTX> {
 EXEC -> FRAME makes sense
 
 FRAME needs to have
-NewInterpreter<WIRE>
+Interpreter<WIRE>
 InnerContext<PRECOMPILES,INSTRUCTIONS, MEMORY>
 
 
 */
 
-pub struct EthFrame<CTX, ERROR, IW: InterpreterWire, PRECOMPILE, INSTRUCTIONS> {
+pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, PRECOMPILE, INSTRUCTIONS> {
     _phantom: core::marker::PhantomData<fn() -> (CTX, ERROR)>,
     data: FrameData,
     // TODO include this
@@ -69,7 +69,7 @@ pub struct EthFrame<CTX, ERROR, IW: InterpreterWire, PRECOMPILE, INSTRUCTIONS> {
     /// Journal checkpoint.
     pub checkpoint: JournalCheckpoint,
     /// Interpreter.
-    pub interpreter: NewInterpreter<IW>,
+    pub interpreter: Interpreter<IW>,
     /// Precompiles provider.
     pub precompiles: PRECOMPILE,
     /// Instruction provider.
@@ -81,11 +81,11 @@ pub struct EthFrame<CTX, ERROR, IW: InterpreterWire, PRECOMPILE, INSTRUCTIONS> {
 impl<CTX, IW, ERROR, PRECOMP, INST> EthFrame<CTX, ERROR, IW, PRECOMP, INST>
 where
     CTX: JournalStateGetter,
-    IW: InterpreterWire,
+    IW: InterpreterTypes,
 {
     pub fn new(
         data: FrameData,
-        interpreter: NewInterpreter<IW>,
+        interpreter: Interpreter<IW>,
         checkpoint: JournalCheckpoint,
         precompiles: PRECOMP,
         instructions: INST,
@@ -231,7 +231,7 @@ where
                 FrameData::Call(CallFrame {
                     return_memory_range: inputs.return_memory_offset.clone(),
                 }),
-                NewInterpreter::new(
+                Interpreter::new(
                     memory.clone(),
                     bytecode,
                     interpreter_input,
@@ -342,7 +342,7 @@ where
 
         Ok(FrameOrResultGen::Frame(Self::new(
             FrameData::Create(CreateFrame { created_address }),
-            NewInterpreter::new(
+            Interpreter::new(
                 memory.clone(),
                 bytecode,
                 interpreter_input,
@@ -463,7 +463,7 @@ where
 
         Ok(FrameOrResultGen::Frame(Self::new(
             FrameData::Create(CreateFrame { created_address }),
-            NewInterpreter::new(
+            Interpreter::new(
                 memory.clone(),
                 Bytecode::Eof(Arc::new(initcode)),
                 interpreter_input,

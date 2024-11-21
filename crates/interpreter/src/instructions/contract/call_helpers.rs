@@ -1,7 +1,7 @@
 use crate::{
     gas,
-    interpreter::NewInterpreter,
-    interpreter_wiring::{InterpreterWire, LoopControl, MemoryTrait, RuntimeFlag, StackTrait},
+    interpreter::Interpreter,
+    interpreter_wiring::{InterpreterTypes, LoopControl, MemoryTrait, RuntimeFlag, StackTrait},
 };
 use context_interface::journaled_state::AccountLoad;
 use core::{cmp::min, ops::Range};
@@ -10,7 +10,7 @@ use specification::hardfork::SpecId::*;
 
 #[inline]
 pub fn get_memory_input_and_out_ranges(
-    interpreter: &mut NewInterpreter<impl InterpreterWire>,
+    interpreter: &mut Interpreter<impl InterpreterTypes>,
 ) -> Option<(Bytes, Range<usize>)> {
     popn!([in_offset, in_len, out_offset, out_len], interpreter, None);
 
@@ -29,7 +29,7 @@ pub fn get_memory_input_and_out_ranges(
 /// If `len` is 0 dont touch memory and return `usize::MAX` as offset and 0 as length.
 #[inline]
 pub fn resize_memory(
-    interpreter: &mut NewInterpreter<impl InterpreterWire>,
+    interpreter: &mut Interpreter<impl InterpreterTypes>,
     offset: U256,
     len: U256,
 ) -> Option<Range<usize>> {
@@ -46,7 +46,7 @@ pub fn resize_memory(
 
 #[inline]
 pub fn calc_call_gas(
-    interpreter: &mut NewInterpreter<impl InterpreterWire>,
+    interpreter: &mut Interpreter<impl InterpreterTypes>,
     account_load: AccountLoad,
     has_transfer: bool,
     local_gas_limit: u64,

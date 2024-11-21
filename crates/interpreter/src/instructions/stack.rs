@@ -1,16 +1,16 @@
 use crate::{
     gas,
     instructions::utility::cast_slice_to_u256,
-    interpreter::NewInterpreter,
+    interpreter::Interpreter,
     interpreter_wiring::{
-        Immediates, InterpreterWire, Jumps, LoopControl, RuntimeFlag, StackTrait,
+        Immediates, InterpreterTypes, Jumps, LoopControl, RuntimeFlag, StackTrait,
     },
     Host,
 };
 use primitives::U256;
 
-pub fn pop<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn pop<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
@@ -21,8 +21,8 @@ pub fn pop<WIRE: InterpreterWire, H: Host + ?Sized>(
 /// EIP-3855: PUSH0 instruction
 ///
 /// Introduce a new instruction which pushes the constant value 0 onto the stack.
-pub fn push0<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn push0<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     check!(interpreter, SHANGHAI);
@@ -30,8 +30,8 @@ pub fn push0<WIRE: InterpreterWire, H: Host + ?Sized>(
     push!(interpreter, U256::ZERO);
 }
 
-pub fn push<const N: usize, WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn push<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -47,8 +47,8 @@ pub fn push<const N: usize, WIRE: InterpreterWire, H: Host + ?Sized>(
     interpreter.bytecode.relative_jump(N as isize);
 }
 
-pub fn dup<const N: usize, WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn dup<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -59,8 +59,8 @@ pub fn dup<const N: usize, WIRE: InterpreterWire, H: Host + ?Sized>(
     }
 }
 
-pub fn swap<const N: usize, WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn swap<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -72,8 +72,8 @@ pub fn swap<const N: usize, WIRE: InterpreterWire, H: Host + ?Sized>(
     }
 }
 
-pub fn dupn<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn dupn<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -87,8 +87,8 @@ pub fn dupn<WIRE: InterpreterWire, H: Host + ?Sized>(
     interpreter.bytecode.relative_jump(1);
 }
 
-pub fn swapn<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn swapn<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -102,8 +102,8 @@ pub fn swapn<WIRE: InterpreterWire, H: Host + ?Sized>(
     interpreter.bytecode.relative_jump(1);
 }
 
-pub fn exchange<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn exchange<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);

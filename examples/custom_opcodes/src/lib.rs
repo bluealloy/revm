@@ -245,8 +245,8 @@ pub fn make_custom_instruction_table<
     table
 }
 
-fn custom_opcode_handler<WIRE: InterpreterWire, H: Host + ?Sized, SPEC: CustomOpcodeSpec>(
-    interpreter: &mut NewInterpreter<WIRE>,
+fn custom_opcode_handler<WIRE: InterpreterTypes, H: Host + ?Sized, SPEC: CustomOpcodeSpec>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     // opcode has access to the chain-specific spec

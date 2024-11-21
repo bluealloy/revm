@@ -1,16 +1,16 @@
 use crate::{
     gas::{cost_per_word, BASE, DATA_LOAD_GAS, VERYLOW},
-    interpreter::NewInterpreter,
+    interpreter::Interpreter,
     interpreter_wiring::{
-        EofData, Immediates, InterpreterWire, Jumps, LoopControl, MemoryTrait, RuntimeFlag,
+        EofData, Immediates, InterpreterTypes, Jumps, LoopControl, MemoryTrait, RuntimeFlag,
         StackTrait,
     },
     Host,
 };
 use primitives::{B256, U256};
 
-pub fn data_load<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn data_load<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -27,8 +27,8 @@ pub fn data_load<WIRE: InterpreterWire, H: Host + ?Sized>(
     *offset = U256::from_be_bytes(word);
 }
 
-pub fn data_loadn<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn data_loadn<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -46,8 +46,8 @@ pub fn data_loadn<WIRE: InterpreterWire, H: Host + ?Sized>(
     interpreter.bytecode.relative_jump(2);
 }
 
-pub fn data_size<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn data_size<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -56,8 +56,8 @@ pub fn data_size<WIRE: InterpreterWire, H: Host + ?Sized>(
     push!(interpreter, U256::from(interpreter.bytecode.data_size()));
 }
 
-pub fn data_copy<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn data_copy<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);

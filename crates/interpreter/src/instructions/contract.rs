@@ -5,10 +5,10 @@ pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges, resize_me
 use crate::{
     gas::{self, cost_per_word, EOF_CREATE_GAS, KECCAK256WORD, MIN_CALLEE_GAS},
     instructions::utility::IntoAddress,
-    interpreter::NewInterpreter,
+    interpreter::Interpreter,
     interpreter_action::FrameInput,
     interpreter_wiring::{
-        EofContainer, Immediates, InputsTrait, InterpreterWire, Jumps, LoopControl, MemoryTrait,
+        EofContainer, Immediates, InputsTrait, InterpreterTypes, Jumps, LoopControl, MemoryTrait,
         ReturnData, RuntimeFlag, StackTrait,
     },
     CallInputs, CallScheme, CallValue, CreateInputs, EOFCreateInputs, Host, InstructionResult,
@@ -22,8 +22,8 @@ use specification::hardfork::{BerlinSpec, Spec, SpecId::*};
 use std::boxed::Box;
 
 /// EOF Create instruction
-pub fn eofcreate<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -91,7 +91,7 @@ pub fn eofcreate<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 pub fn return_contract<H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<impl InterpreterWire>,
+    interpreter: &mut Interpreter<impl InterpreterTypes>,
     _host: &mut H,
 ) {
     require_init_eof!(interpreter);
@@ -160,7 +160,7 @@ pub fn return_contract<H: Host + ?Sized>(
     );
 }
 
-pub fn extcall_input(interpreter: &mut NewInterpreter<impl InterpreterWire>) -> Option<Bytes> {
+pub fn extcall_input(interpreter: &mut Interpreter<impl InterpreterTypes>) -> Option<Bytes> {
     let [input_offset, input_size] = interpreter.stack.popn()?;
 
     let return_memory_offset = resize_memory(interpreter, input_offset, input_size)?;
@@ -177,8 +177,8 @@ pub fn extcall_input(interpreter: &mut NewInterpreter<impl InterpreterWire>) -> 
     ))
 }
 
-pub fn extcall_gas_calc<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn extcall_gas_calc<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
     target: Address,
     transfers_value: bool,
@@ -225,7 +225,7 @@ pub fn extcall_gas_calc<WIRE: InterpreterWire, H: Host + ?Sized>(
 /// Valid address has first 12 bytes as zeroes.
 #[inline]
 pub fn pop_extcall_target_address(
-    interpreter: &mut NewInterpreter<impl InterpreterWire>,
+    interpreter: &mut Interpreter<impl InterpreterTypes>,
 ) -> Option<Address> {
     let target_address = B256::from(interpreter.stack.pop()?);
     // Check if target is left padded with zeroes.
@@ -239,8 +239,8 @@ pub fn pop_extcall_target_address(
     Some(Address::from_word(target_address))
 }
 
-pub fn extcall<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -288,8 +288,8 @@ pub fn extcall<WIRE: InterpreterWire, H: Host + ?Sized>(
     );
 }
 
-pub fn extdelegatecall<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -326,8 +326,8 @@ pub fn extdelegatecall<WIRE: InterpreterWire, H: Host + ?Sized>(
     );
 }
 
-pub fn extstaticcall<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -364,8 +364,8 @@ pub fn extstaticcall<WIRE: InterpreterWire, H: Host + ?Sized>(
     );
 }
 
-pub fn create<WIRE: InterpreterWire, const IS_CREATE2: bool, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     require_non_staticcall!(interpreter);
@@ -439,8 +439,8 @@ pub fn create<WIRE: InterpreterWire, const IS_CREATE2: bool, H: Host + ?Sized>(
     );
 }
 
-pub fn call<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     popn!([local_gas_limit, to, value], interpreter);
@@ -497,8 +497,8 @@ pub fn call<WIRE: InterpreterWire, H: Host + ?Sized>(
     );
 }
 
-pub fn call_code<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     let Some([local_gas_limit, to, value]) = interpreter.stack.popn() else {
@@ -551,8 +551,8 @@ pub fn call_code<WIRE: InterpreterWire, H: Host + ?Sized>(
     );
 }
 
-pub fn delegate_call<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     check!(interpreter, HOMESTEAD);
@@ -599,8 +599,8 @@ pub fn delegate_call<WIRE: InterpreterWire, H: Host + ?Sized>(
     );
 }
 
-pub fn static_call<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
     check!(interpreter, BYZANTIUM);

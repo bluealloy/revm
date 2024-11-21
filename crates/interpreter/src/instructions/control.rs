@@ -1,16 +1,16 @@
 use crate::{
     gas,
-    interpreter::NewInterpreter,
+    interpreter::Interpreter,
     interpreter_wiring::{
-        EofCodeInfo, Immediates, InterpreterWire, Jumps, LoopControl, MemoryTrait, RuntimeFlag,
+        EofCodeInfo, Immediates, InterpreterTypes, Jumps, LoopControl, MemoryTrait, RuntimeFlag,
         StackTrait, SubRoutineStack,
     },
     Host, InstructionResult, InterpreterAction, InterpreterResult,
 };
 use primitives::{Bytes, U256};
 
-pub fn rjump<WIRE: InterpreterWire, H: ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn rjump<WIRE: InterpreterTypes, H: ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -21,8 +21,8 @@ pub fn rjump<WIRE: InterpreterWire, H: ?Sized>(
     interpreter.bytecode.relative_jump(offset + 2);
 }
 
-pub fn rjumpi<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn rjumpi<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -38,8 +38,8 @@ pub fn rjumpi<WIRE: InterpreterWire, H: Host + ?Sized>(
     interpreter.bytecode.relative_jump(offset);
 }
 
-pub fn rjumpv<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn rjumpv<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -58,8 +58,8 @@ pub fn rjumpv<WIRE: InterpreterWire, H: Host + ?Sized>(
     interpreter.bytecode.relative_jump(offset);
 }
 
-pub fn jump<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn jump<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::MID);
@@ -67,8 +67,8 @@ pub fn jump<WIRE: InterpreterWire, H: Host + ?Sized>(
     jump_inner(interpreter, target);
 }
 
-pub fn jumpi<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn jumpi<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::HIGH);
@@ -80,7 +80,7 @@ pub fn jumpi<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 #[inline]
-fn jump_inner<WIRE: InterpreterWire>(interpreter: &mut NewInterpreter<WIRE>, target: U256) {
+fn jump_inner<WIRE: InterpreterTypes>(interpreter: &mut Interpreter<WIRE>, target: U256) {
     let target = as_usize_or_fail!(interpreter, target, InstructionResult::InvalidJump);
     if !interpreter.bytecode.is_valid_legacy_jump(target) {
         interpreter
@@ -92,15 +92,15 @@ fn jump_inner<WIRE: InterpreterWire>(interpreter: &mut NewInterpreter<WIRE>, tar
     interpreter.bytecode.absolute_jump(target);
 }
 
-pub fn jumpdest_or_nop<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn jumpdest_or_nop<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::JUMPDEST);
 }
 
-pub fn callf<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -141,8 +141,8 @@ pub fn callf<WIRE: InterpreterWire, H: Host + ?Sized>(
     interpreter.bytecode.absolute_jump(pc);
 }
 
-pub fn retf<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn retf<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -155,8 +155,8 @@ pub fn retf<WIRE: InterpreterWire, H: Host + ?Sized>(
     interpreter.bytecode.absolute_jump(jump);
 }
 
-pub fn jumpf<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn jumpf<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     require_eof!(interpreter);
@@ -186,8 +186,8 @@ pub fn jumpf<WIRE: InterpreterWire, H: Host + ?Sized>(
     interpreter.bytecode.absolute_jump(pc);
 }
 
-pub fn pc<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn pc<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
@@ -197,7 +197,7 @@ pub fn pc<WIRE: InterpreterWire, H: Host + ?Sized>(
 
 #[inline]
 fn return_inner(
-    interpreter: &mut NewInterpreter<impl InterpreterWire>,
+    interpreter: &mut Interpreter<impl InterpreterTypes>,
     instruction_result: InstructionResult,
 ) {
     // zero gas cost
@@ -237,16 +237,16 @@ fn return_inner(
     );
 }
 
-pub fn ret<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn ret<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     return_inner(interpreter, InstructionResult::Return);
 }
 
 /// EIP-140: REVERT instruction
-pub fn revert<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn revert<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     check!(interpreter, BYZANTIUM);
@@ -254,8 +254,8 @@ pub fn revert<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 /// Stop opcode. This opcode halts the execution.
-pub fn stop<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn stop<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     interpreter
@@ -264,8 +264,8 @@ pub fn stop<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 /// Invalid opcode. This opcode halts the execution.
-pub fn invalid<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn invalid<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     interpreter
@@ -274,8 +274,8 @@ pub fn invalid<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 /// Unknown opcode. This opcode halts the execution.
-pub fn unknown<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn unknown<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     interpreter

@@ -2,28 +2,28 @@
 
 use crate::{
     instructions::{control, instruction},
-    interpreter::NewInterpreter,
-    interpreter_wiring::InterpreterWire,
+    interpreter::Interpreter,
+    interpreter_wiring::InterpreterTypes,
     Host,
 };
 
 /// EVM opcode function signature.
-pub type Instruction<W, H> = for<'a> fn(&'a mut NewInterpreter<W>, &'a mut H);
+pub type Instruction<W, H> = for<'a> fn(&'a mut Interpreter<W>, &'a mut H);
 
 /// Instruction table is list of instruction function pointers mapped to 256 EVM opcodes.
 pub type InstructionTable<W, H> = [Instruction<W, H>; 256];
 
 /// EVM dynamic opcode function signature.
-pub type DynInstruction<W, H> = dyn Fn(&mut NewInterpreter<W>, &mut H);
+pub type DynInstruction<W, H> = dyn Fn(&mut Interpreter<W>, &mut H);
 
 /// A table of boxed instructions.
 pub type CustomInstructionTable<IT> = [IT; 256];
 
 pub trait CustomInstruction {
-    type Wire: InterpreterWire;
+    type Wire: InterpreterTypes;
     type Host;
 
-    fn exec(&self, interpreter: &mut NewInterpreter<Self::Wire>, host: &mut Self::Host);
+    fn exec(&self, interpreter: &mut Interpreter<Self::Wire>, host: &mut Self::Host);
 
     fn from_base(instruction: Instruction<Self::Wire, Self::Host>) -> Self;
 }
@@ -31,15 +31,18 @@ pub trait CustomInstruction {
 /// Either a plain, static instruction table, or a boxed, dynamic instruction table.
 ///
 /// Note that `Plain` variant is about 10-20% faster in Interpreter execution.
-pub enum InstructionTables<W: InterpreterWire, H: ?Sized, CI: CustomInstruction<Host = H, Wire = W>>
-{
+pub enum InstructionTables<
+    W: InterpreterTypes,
+    H: ?Sized,
+    CI: CustomInstruction<Host = H, Wire = W>,
+> {
     Plain(InstructionTable<W, H>),
     Custom(CustomInstructionTable<CI>),
 }
 
 impl<WIRE, H, CI> InstructionTables<WIRE, H, CI>
 where
-    WIRE: InterpreterWire,
+    WIRE: InterpreterTypes,
     H: Host + ?Sized,
     CI: CustomInstruction<Host = H, Wire = WIRE>,
 {
@@ -137,7 +140,7 @@ where
 
 /// Make instruction table.
 #[inline]
-pub const fn make_instruction_table<WIRE: InterpreterWire, H: Host + ?Sized>(
+pub const fn make_instruction_table<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) -> InstructionTable<WIRE, H> {
     const {
         let mut tables: InstructionTable<WIRE, H> = [control::unknown; 256];
@@ -157,7 +160,7 @@ pub fn make_custom_instruction_table<W, H, FN, CI: CustomInstruction<Wire = W, H
     mut f: FN,
 ) -> CustomInstructionTable<CI>
 where
-    W: InterpreterWire,
+    W: InterpreterTypes,
     H: Host + ?Sized,
     FN: FnMut(Instruction<W, H>) -> CI,
 {
@@ -171,7 +174,7 @@ where
 //     instruction: &mut impl CustomInstruction<Wire = W, Host = H>,
 //     f: F,
 // ) where
-//     W: InterpreterWire,
+//     W: InterpreterTypes,
 //     H: Host + ?Sized,
 //     F: Fn(&DynInstruction<W, H>, &mut W, &mut H),
 // {

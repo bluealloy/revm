@@ -1,14 +1,14 @@
 use crate::{
     gas,
-    interpreter::NewInterpreter,
-    interpreter_wiring::{InterpreterWire, LoopControl, MemoryTrait, RuntimeFlag, StackTrait},
+    interpreter::Interpreter,
+    interpreter_wiring::{InterpreterTypes, LoopControl, MemoryTrait, RuntimeFlag, StackTrait},
     Host,
 };
 use core::cmp::max;
 use primitives::U256;
 
-pub fn mload<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -22,8 +22,8 @@ pub fn mload<WIRE: InterpreterWire, H: Host + ?Sized>(
         .into();
 }
 
-pub fn mstore<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn mstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -35,8 +35,8 @@ pub fn mstore<WIRE: InterpreterWire, H: Host + ?Sized>(
     interpreter.memory.set(offset, &value.to_be_bytes::<32>());
 }
 
-pub fn mstore8<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn mstore8<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
@@ -46,8 +46,8 @@ pub fn mstore8<WIRE: InterpreterWire, H: Host + ?Sized>(
     interpreter.memory.set(offset, &[value.byte(0)]);
 }
 
-pub fn msize<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn msize<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
@@ -56,8 +56,8 @@ pub fn msize<WIRE: InterpreterWire, H: Host + ?Sized>(
 }
 
 // EIP-5656: MCOPY - Memory copying instruction
-pub fn mcopy<WIRE: InterpreterWire, H: Host + ?Sized>(
-    interpreter: &mut NewInterpreter<WIRE>,
+pub fn mcopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
     check!(interpreter, CANCUN);
