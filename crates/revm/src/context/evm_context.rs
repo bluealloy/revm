@@ -101,7 +101,11 @@ where
         address: &Address,
         input_data: &Bytes,
         gas: Gas,
+        is_ext_delegate: bool,
     ) -> EVMResultGeneric<Option<InterpreterResult>, EvmWiringT> {
+        if is_ext_delegate {
+            return Ok(None);
+        }
         let Some(outcome) =
             self.precompiles
                 .call(address, input_data, gas.limit(), &mut self.inner)
@@ -199,7 +203,14 @@ where
             _ => {}
         };
 
-        if let Some(result) = self.call_precompile(&inputs.bytecode_address, &inputs.input, gas)? {
+        let is_ext_delegate = inputs.scheme.is_ext_delegate_call();
+
+        if let Some(result) = self.call_precompile(
+            &inputs.bytecode_address,
+            &inputs.input,
+            gas,
+            is_ext_delegate,
+        )? {
             if matches!(result.result, return_ok!()) {
                 self.journaled_state.checkpoint_commit();
             } else {
@@ -220,9 +231,7 @@ where
             let mut bytecode = account.info.code.clone().unwrap_or_default();
 
             // ExtDelegateCall is not allowed to call non-EOF contracts.
-            if inputs.scheme.is_ext_delegate_call()
-                && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES)
-            {
+            if is_ext_delegate && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES) {
                 return return_result(InstructionResult::InvalidExtDelegateCallTarget);
             }
 
