@@ -81,7 +81,7 @@ impl<DB: Database> StateBuilder<DB> {
     }
 
     /// With boxed version of database.
-    pub fn with_database_boxed<Error>(
+    pub fn with_database_boxed<Error: core::error::Error>(
         self,
         database: DBBox<'_, Error>,
     ) -> StateBuilder<DBBox<'_, Error>> {

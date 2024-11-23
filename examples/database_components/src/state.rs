@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 #[auto_impl(&mut, Box)]
 pub trait State {
-    type Error;
+    type Error: core::error::Error + 'static;
 
     /// Get basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -24,7 +24,7 @@ pub trait State {
 
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait StateRef {
-    type Error;
+    type Error: core::error::Error + 'static;
 
     /// Get basic account information.
     fn basic(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;

@@ -52,7 +52,7 @@ impl<E> EmptyDBTyped<E> {
     }
 }
 
-impl<E> Database for EmptyDBTyped<E> {
+impl<E: core::error::Error> Database for EmptyDBTyped<E> {
     type Error = E;
 
     #[inline]
@@ -76,7 +76,7 @@ impl<E> Database for EmptyDBTyped<E> {
     }
 }
 
-impl<E> DatabaseRef for EmptyDBTyped<E> {
+impl<E: core::error::Error> DatabaseRef for EmptyDBTyped<E> {
     type Error = E;
 
     #[inline]

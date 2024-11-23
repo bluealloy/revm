@@ -34,7 +34,7 @@ serde = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 # asyncdb
-tokio = { version = "1.40", optional = true }
+tokio = { version = "1.40", optional = true, features = ["rt", "rt-multi-thread"] }
 
 
 [dev-dependencies]
