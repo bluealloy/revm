@@ -4,7 +4,7 @@ use super::{
 };
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use inspector::{InspectorContext, InspectorEthFrame, InspectorMainEvm, StepPrintInspector};
+use inspector::{inspectors::TracerEip3155, InspectorContext, InspectorEthFrame, InspectorMainEvm};
 use revm::{
     bytecode::Bytecode,
     context::{block::BlockEnv, tx::TxEnv},
@@ -28,7 +28,7 @@ use statetest_types::{SpecName, Test, TestSuite};
 use std::{
     convert::Infallible,
     fmt::Debug,
-    io::{stderr, stdout},
+    io::stdout,
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
@@ -152,12 +152,12 @@ fn check_evm_execution(
     expected_output: Option<&Bytes>,
     test_name: &str,
     exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
-    evm: &MainEvm<&mut State<EmptyDB>>,
+    db: &mut State<EmptyDB>,
+    spec: SpecId,
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
-    let state_root =
-        state_merkle_trie_root(evm.context.journaled_state.database.cache.trie_account());
+    let state_root = state_merkle_trie_root(db.cache.trie_account());
 
     let print_json_output = |error: Option<String>| {
         if print_json_outcome {
@@ -177,7 +177,7 @@ fn check_evm_execution(
                     Err(e) => e.to_string(),
                 },
                 "postLogsHash": logs_root,
-                "fork": evm.context.cfg.spec().into(),
+                "fork": spec,
                 "test": test_name,
                 "d": test.indexes.data,
                 "g": test.indexes.gas,
@@ -441,7 +441,6 @@ pub fn execute_test_suite(
 
                 // do the deed
                 let (e, exec_result) = if trace {
-                    //todo!();
                     let mut evm = InspectorMainEvm {
                         context: InspectorContext {
                             inner: Context {
@@ -457,7 +456,7 @@ pub fn execute_test_suite(
                                 spec: cfg.spec().into(),
                                 error: Ok(()),
                             },
-                            inspector: StepPrintInspector::new(),
+                            inspector: TracerEip3155::new(Box::new(stdout())),
                             frame_input_stack: Vec::new(),
                         },
                         handler: EthHandler::new(
@@ -483,7 +482,22 @@ pub fn execute_test_suite(
                         r.result
                     });
 
-                    todo!("TODO");
+                    let spec = cfg.spec().into();
+                    let db = evm.context.inner.journaled_state.database;
+                    // dump state and traces if test failed
+                    let output = check_evm_execution(
+                        &test,
+                        unit.out.as_ref(),
+                        &name,
+                        &res,
+                        db,
+                        spec,
+                        print_json_outcome,
+                    );
+                    let Err(e) = output else {
+                        continue;
+                    };
+                    (e, res)
                 } else {
                     let timer = Instant::now();
                     let res = evm.transact();
@@ -494,13 +508,16 @@ pub fn execute_test_suite(
 
                     *elapsed.lock().unwrap() += timer.elapsed();
 
+                    let spec = cfg.spec().into();
+                    let db = evm.context.journaled_state.database;
                     // dump state and traces if test failed
                     let output = check_evm_execution(
                         &test,
                         unit.out.as_ref(),
                         &name,
                         &res,
-                        &evm,
+                        db,
+                        spec,
                         print_json_outcome,
                     );
                     let Err(e) = output else {
@@ -526,26 +543,55 @@ pub fn execute_test_suite(
 
                 let path = path.display();
                 println!("\nTraces:");
-                // let mut evm = Evm::<TraceEvmWiring>::builder()
-                //     .with_db(&mut state)
-                //     .with_spec_id(spec_id)
-                //     .with_env(env.clone())
-                //     .reset_handler_with_external_context::<EthereumWiring<_, TracerEip3155>>()
-                //     .with_external_context(TracerEip3155::new(Box::new(stdout())).without_summary())
-                //     .with_spec_id(spec_id)
-                //     .append_handler_register(inspector_handle_register)
-                //     .build();
-                // let _ = evm.transact_commit();
+                let mut evm = InspectorMainEvm {
+                    context: InspectorContext {
+                        inner: Context {
+                            block: block.clone(),
+                            tx: tx.clone(),
+                            cfg: cfg.clone(),
+                            journaled_state: JournaledState::new(
+                                cfg.spec().into(),
+                                &mut state,
+                                Default::default(),
+                            ),
+                            chain: (),
+                            spec: cfg.spec().into(),
+                            error: Ok(()),
+                        },
+                        inspector: TracerEip3155::new(Box::new(stdout())),
+                        frame_input_stack: Vec::new(),
+                    },
+                    handler:
+                        EthHandler::new(
+                            EthValidation::new(),
+                            EthPreExecution::new(),
+                            EthExecution::<
+                                _,
+                                _,
+                                InspectorEthFrame<_, _, EthPrecompileProvider<_, _>>,
+                            >::new(),
+                            EthPostExecution::new(),
+                        ),
+                    _error: std::marker::PhantomData,
+                };
+
+                let res = evm.transact();
+                let _ = res.map(|r| {
+                    evm.context.inner.journaled_state.database.commit(r.state);
+                    r.result
+                });
 
                 println!("\nExecution result: {exec_result:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);
                 println!("\nState before: {cache_state:#?}");
                 println!(
                     "\nState after: {:#?}",
-                    evm.context.journaled_state.database.cache
+                    evm.context.inner.journaled_state.database.cache
                 );
                 println!("\nSpecification: {spec_id:?}");
-                //println!("\nEnvironment: {env:#?}");
+                println!("\nTx: {tx:#?}");
+                println!("Block: {block:#?}");
+                println!("Cfg: {cfg:#?}");
                 println!("\nTest name: {name:?} (index: {index}, path: {path}) failed:\n{e}");
 
                 return Err(e);

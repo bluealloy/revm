@@ -27,7 +27,7 @@ pub trait JournaledState {
         from: &Address,
         to: &Address,
         balance: U256,
-    ) -> Result<Option<()>, <Self::Database as Database>::Error>;
+    ) -> Result<Option<TransferError>, <Self::Database as Database>::Error>;
 
     fn inc_account_nonce(
         &mut self,
@@ -74,12 +74,23 @@ pub trait JournaledState {
         address: Address,
         balance: U256,
         spec_id: SpecId,
-    ) -> Option<JournalCheckpoint>;
+    ) -> Result<JournalCheckpoint, TransferError>;
 
     /// Does cleanup and returns modified state.
     ///
     /// This resets the [JournaledState] to its initial state.
     fn finalize(&mut self) -> Result<Self::FinalOutput, <Self::Database as Database>::Error>;
+}
+
+/// Transfer and creation result.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum TransferError {
+    /// Caller does not have enough funds
+    OutOfFunds,
+    /// Overflow in target account.
+    OverflowPayment,
+    /// Create collision.
+    CreateCollision,
 }
 
 /// SubRoutine checkpoint that will help us to go back from this

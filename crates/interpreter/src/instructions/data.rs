@@ -74,7 +74,7 @@ pub fn data_copy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let mem_offset = as_usize_or_fail!(interpreter, mem_offset);
     resize_memory!(interpreter, mem_offset, size);
 
-    gas_or_fail!(interpreter, cost_per_word(size as u64, VERYLOW));
+    gas_or_fail!(interpreter, cost_per_word(size, VERYLOW));
 
     let offset = as_usize_saturated!(offset);
     let data = interpreter.bytecode.data();

@@ -534,8 +534,23 @@ where
     type Host = HOST;
 
     fn exec(&self, interpreter: &mut Interpreter<Self::Wire>, host: &mut Self::Host) {
+        // SAFETY: as the PC was already incremented we need to subtract 1 to preserve the
+        // old Inspector behavior.
+        interpreter.bytecode.relative_jump(-1);
+
+        // Call step.
         host.step(interpreter);
+        if interpreter.control.instruction_result() != InstructionResult::Continue {
+            return;
+        }
+
+        // Reset PC to previous value.
+        interpreter.bytecode.relative_jump(1);
+
+        // Execute instruction.
         (self.instruction)(interpreter, host);
+
+        // Call step_end.
         host.step_end(interpreter);
     }
 
@@ -752,15 +767,11 @@ where
             .init(ctx, frame_input)
             .map(|frame| frame.map_frame(|eth_frame| Self { eth_frame }));
 
-        match &mut ret {
-            Ok(FrameOrResultGen::Result(res)) => {
-                ctx.frame_end(res);
-            }
-            Ok(FrameOrResultGen::Frame(frame)) => {
-                ctx.initialize_interp(&mut frame.eth_frame.interpreter);
-            }
-            _ => (),
+        if let Ok(FrameOrResultGen::Frame(frame)) = &mut ret {
+            ctx.initialize_interp(&mut frame.eth_frame.interpreter);
         }
+
+        // TODO handle last frame_end.
 
         ret
     }

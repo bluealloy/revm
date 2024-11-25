@@ -148,7 +148,6 @@ impl Gas {
 /// It contains the current memory length and its memory expansion cost.
 ///
 /// It allows us to split gas accounting from memory structure.
-
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MemoryGas {
@@ -172,9 +171,10 @@ impl MemoryGas {
             return None;
         }
         self.length = new_len;
-        let mut cost = crate::gas::calc::memory_gas_for_len(new_len);
+        let mut cost = crate::gas::calc::memory_gas(new_len);
         core::mem::swap(&mut self.expansion_cost, &mut cost);
         // safe to subtract because we know that new_len > length
-        Some(cost - self.expansion_cost)
+        // notice the swap above.
+        Some(self.expansion_cost - cost)
     }
 }

@@ -1,5 +1,6 @@
 use crate::{
     gas::{self, warm_cold_cost, warm_cold_cost_with_delegation, CALL_STIPEND},
+    instructions::utility::IntoAddress,
     interpreter::Interpreter,
     interpreter_wiring::{
         InputsTrait, InterpreterTypes, LoopControl, MemoryTrait, RuntimeFlag, StackTrait,
@@ -15,7 +16,7 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     popn!([address], interpreter);
-    let address = address.to_be_bytes().into();
+    let address = address.into_address();
     let Some(balance) = host.balance(address) else {
         interpreter
             .control
@@ -60,7 +61,7 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     popn!([address], interpreter);
-    let address = address.to_be_bytes().into();
+    let address = address.into_address();
     let Some(code) = host.code(address) else {
         interpreter
             .control
@@ -87,7 +88,7 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(interpreter, CONSTANTINOPLE);
     popn!([address], interpreter);
-    let address = address.to_be_bytes().into();
+    let address = address.into_address();
     let Some(code_hash) = host.code_hash(address) else {
         interpreter
             .control
@@ -111,7 +112,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     popn!([address, memory_offset, code_offset, len_u256], interpreter);
-    let address = address.to_be_bytes().into();
+    let address = address.into_address();
     let Some(code) = host.code(address) else {
         interpreter
             .control
@@ -123,7 +124,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let (code, load) = code.into_components();
     gas_or_fail!(
         interpreter,
-        gas::extcodecopy_cost(interpreter.runtime_flag.spec_id(), len as u64, load)
+        gas::extcodecopy_cost(interpreter.runtime_flag.spec_id(), len, load)
     );
     if len == 0 {
         return;
@@ -284,7 +285,7 @@ pub fn selfdestruct<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     require_non_staticcall!(interpreter);
     popn!([target], interpreter);
-    let target = target.to_be_bytes().into();
+    let target = target.into_address();
     let Some(res) = host.selfdestruct(interpreter.input.target_address(), target) else {
         interpreter
             .control

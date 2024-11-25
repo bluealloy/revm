@@ -20,7 +20,7 @@ pub use inspector::*;
 pub mod inspectors {
     // #[cfg(feature = "std")]
     // pub use super::customprinter::CustomPrintTracer;
-    // #[cfg(all(feature = "std", feature = "serde-json"))]
+    #[cfg(all(feature = "std", feature = "serde-json"))]
     pub use super::eip3155::TracerEip3155;
     pub use super::gas::GasInspector;
     pub use super::noop::NoOpInspector;

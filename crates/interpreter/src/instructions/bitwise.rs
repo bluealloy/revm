@@ -13,9 +13,7 @@ pub fn lt<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    let Some(([op1], op2)) = interpreter.stack.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
     *op2 = U256::from(op1 < *op2);
 }
 
@@ -24,9 +22,8 @@ pub fn gt<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    let Some(([op1], op2)) = interpreter.stack.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
+
     *op2 = U256::from(op1 > *op2);
 }
 
@@ -35,9 +32,8 @@ pub fn slt<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    let Some(([op1], op2)) = interpreter.stack.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
+
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Less);
 }
 
@@ -46,9 +42,8 @@ pub fn sgt<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    let Some(([op1], op2)) = interpreter.stack.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
+
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Greater);
 }
 
@@ -57,9 +52,8 @@ pub fn eq<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    let Some(([op1], op2)) = interpreter.stack.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
+
     *op2 = U256::from(op1 == *op2);
 }
 
@@ -86,9 +80,8 @@ pub fn bitor<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    let Some(([op1], op2)) = interpreter.stack.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
+
     *op2 = op1 | *op2;
 }
 
@@ -97,9 +90,8 @@ pub fn bitxor<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    let Some(([op1], op2)) = interpreter.stack.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
+
     *op2 = op1 ^ *op2;
 }
 
@@ -108,9 +100,8 @@ pub fn not<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    let Some(op1) = interpreter.stack.top() else {
-        return;
-    };
+    popn_top!([], op1, interpreter);
+
     *op1 = !*op1;
 }
 
@@ -119,9 +110,7 @@ pub fn byte<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    let Some(([op1], op2)) = interpreter.stack.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
 
     let o1 = as_usize_saturated!(op1);
     *op2 = if o1 < 32 {
@@ -139,9 +128,8 @@ pub fn shl<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
-    let Some(([op1], op2)) = interpreter.stack.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
+
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {
         *op2 << shift
@@ -157,9 +145,8 @@ pub fn shr<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
-    let Some(([op1], op2)) = interpreter.stack.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
+
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {
         *op2 >> shift
@@ -175,9 +162,7 @@ pub fn sar<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
-    let Some(([op1], op2)) = interpreter.stack.popn_top() else {
-        return;
-    };
+    popn_top!([op1], op2, interpreter);
 
     let shift = as_usize_saturated!(op1);
     *op2 = if shift < 256 {

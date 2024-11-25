@@ -12,9 +12,7 @@ pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    let Some(top) = interpreter.stack.top() else {
-        return;
-    };
+    popn_top!([], top, interpreter);
     let offset = as_usize_or_fail!(interpreter, top);
     resize_memory!(interpreter, offset, 32);
     *top = U256::try_from_be_slice(interpreter.memory.slice_len(offset, 32).as_ref())
@@ -27,9 +25,7 @@ pub fn mstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    let Some([offset, value]) = interpreter.stack.popn() else {
-        return;
-    };
+    popn!([offset, value], interpreter);
     let offset = as_usize_or_fail!(interpreter, offset);
     resize_memory!(interpreter, offset, 32);
     interpreter.memory.set(offset, &value.to_be_bytes::<32>());
@@ -61,14 +57,12 @@ pub fn mcopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     check!(interpreter, CANCUN);
-    let Some([dst, src, len]) = interpreter.stack.popn() else {
-        return;
-    };
+    popn!([dst, src, len], interpreter);
 
     // into usize or fail
     let len = as_usize_or_fail!(interpreter, len);
     // deduce gas
-    gas_or_fail!(interpreter, gas::copy_cost_verylow(len as u64));
+    gas_or_fail!(interpreter, gas::copy_cost_verylow(len));
     if len == 0 {
         return;
     }

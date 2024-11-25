@@ -1,9 +1,10 @@
 use bytecode::Bytecode;
 use context_interface::journaled_state::{
     AccountLoad, Eip7702CodeLoad, JournalCheckpoint, JournaledState as JournaledStateTrait,
+    TransferError,
 };
 use database_interface::Database;
-use interpreter::{InstructionResult, SStoreResult, SelfDestructResult, StateLoad};
+use interpreter::{SStoreResult, SelfDestructResult, StateLoad};
 use primitives::{
     hash_map::Entry, Address, HashMap, HashSet, Log, B256, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
@@ -79,9 +80,9 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
         from: &Address,
         to: &Address,
         balance: U256,
-    ) -> Result<Option<()>, DB::Error> {
+    ) -> Result<Option<TransferError>, DB::Error> {
         // TODO handle instruction result
-        self.transfer(from, to, balance).map(|i| i.map(|_| ()))
+        self.transfer(from, to, balance)
     }
 
     fn touch_account(&mut self, address: Address) {
@@ -137,10 +138,9 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
         address: Address,
         balance: U256,
         spec_id: SpecId,
-    ) -> Option<JournalCheckpoint> {
+    ) -> Result<JournalCheckpoint, TransferError> {
         // ignore error.
         self.create_account_checkpoint(caller, address, balance, spec_id)
-            .ok()
     }
 
     fn finalize(&mut self) -> Result<Self::FinalOutput, <Self::Database as Database>::Error> {
@@ -294,7 +294,14 @@ impl<DB: Database> JournaledState<DB> {
         from: &Address,
         to: &Address,
         balance: U256,
-    ) -> Result<Option<InstructionResult>, DB::Error> {
+    ) -> Result<Option<TransferError>, DB::Error> {
+        if balance.is_zero() {
+            self.load_account(*to)?;
+            let _ = self.load_account(*to)?;
+            let to_account = self.state.get_mut(to).unwrap();
+            Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
+            return Ok(None);
+        }
         // load accounts
         self.load_account(*from)?;
         self.load_account(*to)?;
@@ -305,7 +312,8 @@ impl<DB: Database> JournaledState<DB> {
         let from_balance = &mut from_account.info.balance;
 
         let Some(from_balance_incr) = from_balance.checked_sub(balance) else {
-            return Ok(Some(InstructionResult::OutOfFunds));
+            println!("out of funds");
+            return Ok(Some(TransferError::OutOfFunds));
         };
         *from_balance = from_balance_incr;
 
@@ -314,7 +322,9 @@ impl<DB: Database> JournaledState<DB> {
         Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
         let to_balance = &mut to_account.info.balance;
         let Some(to_balance_decr) = to_balance.checked_add(balance) else {
-            return Ok(Some(InstructionResult::OverflowPayment));
+            println!("overflow payment");
+
+            return Ok(Some(TransferError::OverflowPayment));
         };
         *to_balance = to_balance_decr;
         // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
@@ -350,59 +360,73 @@ impl<DB: Database> JournaledState<DB> {
     pub fn create_account_checkpoint(
         &mut self,
         caller: Address,
-        address: Address,
+        target_address: Address,
         balance: U256,
         spec_id: SpecId,
-    ) -> Result<JournalCheckpoint, InstructionResult> {
+    ) -> Result<JournalCheckpoint, TransferError> {
+        // Fetch balance of caller. Caller is already warm loaded.
+        let caller_acc = self.state.get_mut(&caller).unwrap();
+        // Check if caller has enough balance to send to the created contract.
+        if caller_acc.info.balance < balance {
+            return Err(TransferError::OutOfFunds);
+        }
         // Enter subroutine
         let checkpoint = self.checkpoint();
 
+        // Fetch balance of caller.
+        let caller_acc = self.state.get_mut(&caller).unwrap();
+        // Check if caller has enough balance to send to the created contract.
+        if caller_acc.info.balance < balance {
+            self.checkpoint_revert(checkpoint);
+            return Err(TransferError::OutOfFunds);
+        }
+        caller_acc.info.balance -= balance;
+
         // Newly created account is present, as we just loaded it.
-        let account = self.state.get_mut(&address).unwrap();
+        let target_acc = self.state.get_mut(&target_address).unwrap();
         let last_journal = self.journal.last_mut().unwrap();
 
         // New account can be created if:
         // Bytecode is not empty.
         // Nonce is not zero
         // Account is not precompile.
-        if account.info.code_hash != KECCAK_EMPTY || account.info.nonce != 0 {
+        if target_acc.info.code_hash != KECCAK_EMPTY || target_acc.info.nonce != 0 {
             self.checkpoint_revert(checkpoint);
-            return Err(InstructionResult::CreateCollision);
+            return Err(TransferError::CreateCollision);
         }
 
         // set account status to created.
-        account.mark_created();
+        target_acc.mark_created();
 
         // this entry will revert set nonce.
-        last_journal.push(JournalEntry::AccountCreated { address });
-        account.info.code = None;
-
-        // touch account. This is important as for pre SpuriousDragon account could be
-        // saved even empty.
-        Self::touch_account(last_journal, &address, account);
-
-        // Add balance to created account, as we already have target here.
-        let Some(new_balance) = account.info.balance.checked_add(balance) else {
-            self.checkpoint_revert(checkpoint);
-            return Err(InstructionResult::OverflowPayment);
-        };
-        account.info.balance = new_balance;
-
+        last_journal.push(JournalEntry::AccountCreated {
+            address: target_address,
+        });
+        target_acc.info.code = None;
         // EIP-161: State trie clearing (invariant-preserving alternative)
         if spec_id.is_enabled_in(SPURIOUS_DRAGON) {
             // nonce is going to be reset to zero in AccountCreated journal entry.
-            account.info.nonce = 1;
+            target_acc.info.nonce = 1;
         }
 
-        // Sub balance from caller
-        let caller_account = self.state.get_mut(&caller).unwrap();
-        // Balance is already checked in `create_inner`, so it is safe to just subtract.
-        caller_account.info.balance -= balance;
+        // touch account. This is important as for pre SpuriousDragon account could be
+        // saved even empty.
+        Self::touch_account(last_journal, &target_address, target_acc);
+
+        // Add balance to created account, as we already have target here.
+        let Some(new_balance) = target_acc.info.balance.checked_add(balance) else {
+            self.checkpoint_revert(checkpoint);
+            return Err(TransferError::OverflowPayment);
+        };
+        target_acc.info.balance = new_balance;
+
+        // safe to decrement for the caller as balance check is already done.
+        self.state.get_mut(&caller).unwrap().info.balance -= balance;
 
         // add journal entry of transferred balance
         last_journal.push(JournalEntry::BalanceTransfer {
             from: caller,
-            to: address,
+            to: target_address,
             balance,
         });
 

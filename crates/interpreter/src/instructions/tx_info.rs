@@ -14,7 +14,6 @@ pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(interpreter, gas::BASE);
     let basefee = *host.block().basefee();
     push!(interpreter, host.tx().effective_gas_price(basefee));
-    push!(interpreter, U256::ZERO)
 }
 
 pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(

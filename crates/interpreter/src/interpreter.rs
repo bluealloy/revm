@@ -189,6 +189,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         // Return next action if it is some.
         let action = self.control.take_next_action();
         if action.is_some() {
+            println!("action: {:?}", action);
             return action;
         }
         // If not, return action without output as it is a halt.

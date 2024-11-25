@@ -8,7 +8,7 @@ use revm::interpreter::{
 
 /// Helper [Inspector] that keeps track of gas.
 #[allow(dead_code)]
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug)]
 pub struct GasInspector<CTX, INTR> {
     gas_remaining: u64,
     last_gas_cost: u64,
@@ -22,6 +22,14 @@ impl<CTX, INTR> GasInspector<CTX, INTR> {
 
     pub fn last_gas_cost(&self) -> u64 {
         self.last_gas_cost
+    }
+
+    pub fn new() -> Self {
+        Self {
+            gas_remaining: 0,
+            last_gas_cost: 0,
+            _phantom: core::marker::PhantomData,
+        }
     }
 }
 

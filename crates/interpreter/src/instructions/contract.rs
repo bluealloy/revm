@@ -31,9 +31,7 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(interpreter, EOF_CREATE_GAS);
     let initcontainer_index = interpreter.bytecode.read_u8();
 
-    let Some([value, salt, data_offset, data_size]) = interpreter.stack.popn() else {
-        return;
-    };
+    popn!([value, salt, data_offset, data_size], interpreter);
 
     let container = interpreter
         .bytecode
@@ -60,10 +58,7 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
 
     // deduct gas for hash that is needed to calculate address.
-    gas_or_fail!(
-        interpreter,
-        cost_per_word(container.len() as u64, KECCAK256WORD)
-    );
+    gas_or_fail!(interpreter, cost_per_word(container.len(), KECCAK256WORD));
 
     let created_address = interpreter
         .input
@@ -96,9 +91,7 @@ pub fn return_contract<H: Host + ?Sized>(
 ) {
     require_init_eof!(interpreter);
     let deploy_container_index = interpreter.bytecode.read_u8();
-    let Some([aux_data_offset, aux_data_size]) = interpreter.stack.popn() else {
-        return;
-    };
+    popn!([aux_data_offset, aux_data_size], interpreter);
     let aux_data_size = as_usize_or_fail!(interpreter, aux_data_size);
     let container = interpreter
         .bytecode
@@ -161,8 +154,7 @@ pub fn return_contract<H: Host + ?Sized>(
 }
 
 pub fn extcall_input(interpreter: &mut Interpreter<impl InterpreterTypes>) -> Option<Bytes> {
-    let [input_offset, input_size] = interpreter.stack.popn()?;
-
+    popn!([input_offset, input_size], interpreter, None);
     let return_memory_offset = resize_memory(interpreter, input_offset, input_size)?;
 
     if return_memory_offset.is_empty() {
@@ -227,7 +219,8 @@ pub fn extcall_gas_calc<WIRE: InterpreterTypes, H: Host + ?Sized>(
 pub fn pop_extcall_target_address(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
 ) -> Option<Address> {
-    let target_address = B256::from(interpreter.stack.pop()?);
+    popn!([target_address], interpreter, None);
+    let target_address = B256::from(target_address);
     // Check if target is left padded with zeroes.
     if target_address[..12].iter().any(|i| *i != 0) {
         interpreter
@@ -255,9 +248,7 @@ pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    let Some(value) = interpreter.stack.pop() else {
-        return;
-    };
+    popn!([value], interpreter);
     let has_transfer = !value.is_zero();
     if interpreter.runtime_flag.is_static() && has_transfer {
         interpreter
@@ -375,9 +366,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         check!(interpreter, PETERSBURG);
     }
 
-    let Some([value, code_offset, len]) = interpreter.stack.popn() else {
-        return;
-    };
+    popn!([value, code_offset, len], interpreter);
     let len = as_usize_or_fail!(interpreter, len);
 
     let mut code = Bytes::new();
@@ -396,7 +385,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
                     .set_instruction_result(InstructionResult::CreateInitCodeSizeLimit);
                 return;
             }
-            gas!(interpreter, gas::initcode_cost(len as u64));
+            gas!(interpreter, gas::initcode_cost(len));
         }
 
         let code_offset = as_usize_or_fail!(interpreter, code_offset);
@@ -406,9 +395,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
 
     // EIP-1014: Skinny CREATE2
     let scheme = if IS_CREATE2 {
-        let Some(salt) = interpreter.stack.pop() else {
-            return;
-        };
+        popn!([salt], interpreter);
         // SAFETY: len is reasonable in size as gas for it is already deducted.
         gas_or_fail!(interpreter, gas::create2_cost(len.try_into().unwrap()));
         CreateScheme::Create2 { salt }
@@ -466,6 +453,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
+    println!("local gas limit: {}", local_gas_limit);
     let Some(mut gas_limit) =
         calc_call_gas(interpreter, account_load, has_transfer, local_gas_limit)
     else {
@@ -501,9 +489,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
-    let Some([local_gas_limit, to, value]) = interpreter.stack.popn() else {
-        return;
-    };
+    popn!([local_gas_limit, to, value], interpreter);
     let to = Address::from_word(B256::from(to));
     // max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
@@ -556,9 +542,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     check!(interpreter, HOMESTEAD);
-    let Some([local_gas_limit, to]) = interpreter.stack.popn() else {
-        return;
-    };
+    popn!([local_gas_limit, to], interpreter);
     let to = Address::from_word(B256::from(to));
     // max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
@@ -604,9 +588,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     check!(interpreter, BYZANTIUM);
-    let Some([local_gas_limit, to]) = interpreter.stack.popn() else {
-        return;
-    };
+    popn!([local_gas_limit, to], interpreter);
     let to = Address::from_word(B256::from(to));
     // max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);

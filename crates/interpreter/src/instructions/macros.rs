@@ -131,15 +131,15 @@ macro_rules! resize_memory {
         $crate::resize_memory!($interpreter, $offset, $len, ())
     };
     ($interpreter:expr, $offset:expr, $len:expr, $ret:expr) => {
-        let new_size = $offset.saturating_add($len);
+        let new_size = $crate::interpreter::num_words($offset.saturating_add($len));
         if !$interpreter.control.gas().record_memory_expansion(new_size) {
-            // TODO move this inside gas. Make a Gas trait.
             $interpreter
                 .control
                 .set_instruction_result($crate::InstructionResult::OutOfGas);
             return $ret;
         }
-        if !$interpreter.memory.resize(new_size) {
+        // Safety: new_size is limited by gas so it will not overflow if it is multipled by 32.
+        if !$interpreter.memory.resize(new_size * 32) {
             return $ret;
         }
     };

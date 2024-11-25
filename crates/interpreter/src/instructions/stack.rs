@@ -15,7 +15,7 @@ pub fn pop<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     gas!(interpreter, gas::BASE);
     // can ignore return. as relative N jump is safe operation.
-    let _ = interpreter.stack.popn::<1>();
+    popn!([_i], interpreter);
 }
 
 /// EIP-3855: PUSH0 instruction
@@ -40,7 +40,6 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
     popn_top!([], top, interpreter);
 
     let imm = interpreter.bytecode.read_slice(N);
-    println!("imm: {:?}", imm);
     cast_slice_to_u256(imm, top);
 
     // can ignore return. as relative N jump is safe operation

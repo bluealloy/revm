@@ -16,7 +16,7 @@ pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     popn!([offset, len_ptr], interpreter);
     let len = as_usize_or_fail!(interpreter, len_ptr);
-    gas_or_fail!(interpreter, gas::keccak256_cost(len as u64));
+    gas_or_fail!(interpreter, gas::keccak256_cost(len));
     let hash = if len == 0 {
         KECCAK_EMPTY
     } else {
@@ -61,9 +61,7 @@ pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
-    let Some([memory_offset, code_offset, len]) = interpreter.stack.popn() else {
-        return;
-    };
+    popn!([memory_offset, code_offset, len], interpreter);
     let len = as_usize_or_fail!(interpreter, len);
     let Some(memory_offset) = memory_resize(interpreter, memory_offset, len) else {
         return;
@@ -85,9 +83,7 @@ pub fn calldataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     gas!(interpreter, gas::VERYLOW);
     //pop_top!(interpreter, offset_ptr);
-    let Some(offset_ptr) = interpreter.stack.pop() else {
-        return;
-    };
+    popn_top!([], offset_ptr, interpreter);
     let mut word = B256::ZERO;
     let offset = as_usize_saturated!(offset_ptr);
     let input = interpreter.input.input();
@@ -101,7 +97,7 @@ pub fn calldataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
         debug_assert!(count <= 32 && offset + count <= input_len);
         unsafe { ptr::copy_nonoverlapping(input.as_ptr().add(offset), word.as_mut_ptr(), count) };
     }
-    push!(interpreter, offset_ptr);
+    *offset_ptr = word.into();
 }
 
 pub fn calldatasize<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -228,7 +224,7 @@ pub fn memory_resize(
     len: usize,
 ) -> Option<usize> {
     // safe to cast usize to u64
-    gas_or_fail!(interpreter, gas::copy_cost_verylow(len as u64), None);
+    gas_or_fail!(interpreter, gas::copy_cost_verylow(len), None);
     if len == 0 {
         return None;
     }

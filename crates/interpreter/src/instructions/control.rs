@@ -202,9 +202,7 @@ fn return_inner(
 ) {
     // zero gas cost
     // gas!(interpreter, gas::ZERO)
-    let Some([offset, len]) = interpreter.stack.popn() else {
-        return;
-    };
+    popn!([offset, len], interpreter);
     let len = as_usize_or_fail!(interpreter, len);
     // important: offset must be ignored if len is zeros
     let mut output = Bytes::default();

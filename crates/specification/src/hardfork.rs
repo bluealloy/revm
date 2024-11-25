@@ -1,5 +1,6 @@
 #![allow(non_camel_case_types)]
 
+pub use std::string::{String, ToString};
 pub use SpecId::*;
 
 /// Specification IDs and their activation block.
@@ -132,6 +133,12 @@ impl From<SpecId> for &'static str {
             SpecId::PRAGUE_EOF => id::PRAGUE_EOF,
             SpecId::LATEST => id::LATEST,
         }
+    }
+}
+
+impl ToString for SpecId {
+    fn to_string(&self) -> String {
+        <&'static str>::from(*self).into()
     }
 }
 

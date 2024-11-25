@@ -152,27 +152,18 @@ where
         let checkpoint = ctx.journal().checkpoint();
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
-        match inputs.value {
-            // if transfer value is zero, load account and force the touch.
-            CallValue::Transfer(value) if value.is_zero() => {
-                ctx.journal().load_account(inputs.target_address)?;
-                ctx.journal().touch_account(inputs.target_address);
+        if let CallValue::Transfer(value) = inputs.value {
+            // Transfer value from caller to called account
+            // Target will get touched even if balance transferred is zero.
+            if let Some(i) =
+                ctx.journal()
+                    .transfer(&inputs.caller, &inputs.target_address, value)?
+            {
+                ctx.journal().checkpoint_revert(checkpoint);
+                return return_result(i.into());
             }
-            CallValue::Transfer(value) => {
-                // Transfer value from caller to called account. As value get transferred
-                // target gets touched.
-                if let Some(_) =
-                    ctx.journal()
-                        .transfer(&inputs.caller, &inputs.target_address, value)?
-                {
-                    ctx.journal().checkpoint_revert(checkpoint);
-                    // TODO this is hardcoded value, we need to resolve conflict in Journal trait.
-                    return return_result(InstructionResult::CreateCollision);
-                }
-            }
-            _ => {}
-        };
-        // TODO
+        }
+
         if let Some(result) = precompile.run(
             ctx,
             &inputs.bytecode_address,
@@ -282,17 +273,6 @@ where
             return return_error(InstructionResult::CreateInitCodeStartingEF00);
         }
 
-        // Fetch balance of caller.
-        let caller_balance = ctx
-            .journal()
-            .load_account(inputs.caller)?
-            .map(|a| a.info.balance);
-
-        // Check if caller has enough balance to send to the created contract.
-        if caller_balance.data < inputs.value {
-            return return_error(InstructionResult::OutOfFunds);
-        }
-
         // Increase nonce of caller and check if it overflows
         let old_nonce;
         if let Some(nonce) = ctx.journal().inc_account_nonce(inputs.caller)? {
@@ -322,13 +302,14 @@ where
         ctx.journal().load_account(created_address)?;
 
         // create account, transfer funds and make the journal checkpoint.
-        let Some(checkpoint) = ctx.journal().create_account_checkpoint(
+        let checkpoint = match ctx.journal().create_account_checkpoint(
             inputs.caller,
             created_address,
             inputs.value,
             spec,
-        ) else {
-            return return_error(InstructionResult::CreateCollision);
+        ) {
+            Ok(checkpoint) => checkpoint,
+            Err(e) => return return_error(e.into()),
         };
 
         let bytecode = Bytecode::new_legacy(inputs.init_code.clone()).into_analyzed();
@@ -415,17 +396,6 @@ where
             return return_error(InstructionResult::CallTooDeep);
         }
 
-        // Fetch balance of caller.
-        let caller_balance = ctx
-            .journal()
-            .load_account(inputs.caller)?
-            .map(|a| a.info.balance);
-
-        // Check if caller has enough balance to send to the created contract.
-        if caller_balance.data < inputs.value {
-            return return_error(InstructionResult::OutOfFunds);
-        }
-
         // Increase nonce of caller and check if it overflows
         let Some(nonce) = ctx.journal().inc_account_nonce(inputs.caller)? else {
             // can't happen on mainnet.
@@ -445,13 +415,14 @@ where
         ctx.journal().load_account(created_address)?;
 
         // create account, transfer funds and make the journal checkpoint.
-        let Some(checkpoint) = ctx.journal().create_account_checkpoint(
+        let checkpoint = match ctx.journal().create_account_checkpoint(
             inputs.caller,
             created_address,
             inputs.value,
             spec,
-        ) else {
-            return return_error(InstructionResult::CreateCollision);
+        ) {
+            Ok(checkpoint) => checkpoint,
+            Err(e) => return return_error(e.into()),
         };
 
         let interpreter_input = InputsImpl {
@@ -632,6 +603,7 @@ where
         // Insert result to the top frame.
         match result {
             FrameResult::Call(outcome) => {
+                println!("Call outcome {:?}", outcome);
                 let out_gas = outcome.gas();
                 let ins_result = *outcome.instruction_result();
                 let returned_len = outcome.result.output.len();
@@ -696,7 +668,7 @@ where
                 };
                 interpreter.stack.push(item);
 
-                assert_eq!(
+                assert_ne!(
                     instruction_result,
                     InstructionResult::FatalExternalError,
                     "Fatal external error in insert_eofcreate_outcome"

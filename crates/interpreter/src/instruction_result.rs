@@ -1,4 +1,7 @@
-use context_interface::result::{HaltReason, HaltReasonTrait, OutOfGasError, SuccessReason};
+use context_interface::{
+    journaled_state::TransferError,
+    result::{HaltReason, HaltReasonTrait, OutOfGasError, SuccessReason},
+};
 use core::fmt::Debug;
 
 #[repr(u8)]
@@ -95,6 +98,16 @@ pub enum InstructionResult {
     EofAuxDataTooSmall,
     /// `EXT*CALL` target address needs to be padded with 0s.
     InvalidEXTCALLTarget,
+}
+
+impl From<TransferError> for InstructionResult {
+    fn from(e: TransferError) -> Self {
+        match e {
+            TransferError::OutOfFunds => InstructionResult::OutOfFunds,
+            TransferError::OverflowPayment => InstructionResult::OverflowPayment,
+            TransferError::CreateCollision => InstructionResult::CreateCollision,
+        }
+    }
 }
 
 impl InstructionResult {}
