@@ -185,14 +185,13 @@ impl<DBError, TransactionValidationErrorT> EVMError<DBError, TransactionValidati
     }
 }
 
-#[cfg(feature = "std")]
-impl<DBError, TransactionValidationErrorT> std::error::Error
+impl<DBError, TransactionValidationErrorT> core::error::Error
     for EVMError<DBError, TransactionValidationErrorT>
 where
-    DBError: std::error::Error + 'static,
-    TransactionValidationErrorT: std::error::Error + 'static,
+    DBError: core::error::Error + 'static,
+    TransactionValidationErrorT: core::error::Error + 'static,
 {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
         match self {
             Self::Transaction(e) => Some(e),
             Self::Header(e) => Some(e),

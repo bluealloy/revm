@@ -180,7 +180,7 @@ pub const fn sload_cost(spec_id: SpecId, is_cold: bool) -> u64 {
         }
     } else if spec_id.is_enabled_in(SpecId::ISTANBUL) {
         // EIP-1884: Repricing for trie-size-dependent opcodes
-        INSTANBUL_SLOAD_GAS
+        ISTANBUL_SLOAD_GAS
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         200
@@ -202,7 +202,7 @@ pub fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, is_cold: bool) -> u64 {
         gas_cost
     } else if spec_id.is_enabled_in(SpecId::ISTANBUL) {
         // Istanbul logic
-        istanbul_sstore_cost::<INSTANBUL_SLOAD_GAS, SSTORE_RESET>(vals)
+        istanbul_sstore_cost::<ISTANBUL_SLOAD_GAS, SSTORE_RESET>(vals)
     } else {
         // Frontier logic
         frontier_sstore_cost(vals)
