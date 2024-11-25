@@ -115,7 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.1](https://github.com/bluealloy/revm/compare/revme-v0.2.0...revme-v0.2.1) - 2024-02-07
 
 ### Added
-- tweeks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
+- tweaks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
 - *(revme)* make it runnable by goevmlab ([#990](https://github.com/bluealloy/revm/pull/990))
 - EvmBuilder and External Contexts ([#888](https://github.com/bluealloy/revm/pull/888))
 - Loop call stack ([#851](https://github.com/bluealloy/revm/pull/851))
