@@ -2865,6 +2865,7 @@ dependencies = [
  "paste",
  "plain_hasher",
  "revm",
+ "rwasm",
  "serde",
  "serde_json",
  "structopt",
@@ -3075,7 +3076,7 @@ dependencies = [
 [[package]]
 name = "rwasm"
 version = "0.30.0"
-source = "git+https://github.com/fluentlabs-xyz/rwasm?branch=devel#4196dee18c5f1ed4b9e3e1e7bd210ad016aeeb0b"
+source = "git+https://github.com/fluentlabs-xyz/rwasm?branch=devel#7f1f71385d6cd0e2a879b10a2d8e9924902867c4"
 dependencies = [
  "byteorder",
  "downcast-rs",

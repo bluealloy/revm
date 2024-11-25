@@ -560,7 +560,7 @@ pub fn execute_test_suite(
                     .insert(EVM_CODE_HASH_SLOT, U256::from_le_bytes(evm_code_hash.0));
                 // set account info bytecode to the proxy loader
                 acc_info.code_hash = proxy_bytecode_hash;
-                acc_info.code = Some(Bytecode::new_raw(proxy_bytecode.clone()));
+                acc_info.code = Some(Bytecode::new_legacy(proxy_bytecode.clone()));
                 // put EVM preimage inside
                 let preimage_address = Address::from_slice(&evm_code_hash.0[12..]);
                 cache_state2.insert_account(

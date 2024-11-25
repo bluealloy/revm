@@ -29,7 +29,7 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     pub registers: Vec<HandleRegisters<'a, EXT, DB>>,
     /// Validity handles.
     pub validation: ValidationHandler<'a, EXT, DB>,
-    /// Pre execution handle.
+    /// Pre-execution handle.
     pub pre_execution: PreExecutionHandler<'a, EXT, DB>,
     /// Post Execution handle.
     pub post_execution: PostExecutionHandler<'a, EXT, DB>,
@@ -92,7 +92,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Creates handler with variable spec id, inside it will call `mainnet::<SPEC>` for
-    /// appropriate spec.
+    /// the appropriate spec.
     pub fn mainnet_with_spec(spec_id: SpecId) -> Self {
         spec_to_generic!(spec_id, Self::mainnet::<SPEC>())
     }
@@ -132,12 +132,12 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
         self.instruction_table = table;
     }
 
-    /// Returns reference to pre execution handler.
+    /// Returns reference to pre-execution handler.
     pub fn pre_execution(&self) -> &PreExecutionHandler<'a, EXT, DB> {
         &self.pre_execution
     }
 
-    /// Returns reference to pre execution handler.
+    /// Returns reference to pre-execution handler.
     pub fn post_execution(&self) -> &PostExecutionHandler<'a, EXT, DB> {
         &self.post_execution
     }

@@ -654,7 +654,7 @@ impl JournaledState {
             is_empty,
             load: Eip7702CodeLoad::new_not_delegated((), account.is_cold),
         };
-        // load delegate code if account is EIP-7702
+        // load delegate code if an account is EIP-7702
         if let Some(Bytecode::Eip7702(code)) = &account.info.code {
             let address = code.address();
             let delegate_account = self.load_account(address, db)?;

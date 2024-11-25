@@ -170,10 +170,16 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmSdkAdapter<'a, API,
             .load_account(address)
             .map_err(|_| panic!("database error"))
             .unwrap();
+        // println!(
+        //     "writing preimage: address={}, hash={}, found_hash={}",
+        //     address, hash, account.info.code_hash
+        // );
         if account.info.code_hash == hash {
-            ctx.evm
-                .journaled_state
-                .set_code_with_hash(address, Bytecode::new_raw(preimage), hash);
+            ctx.evm.journaled_state.set_code_with_hash(
+                address,
+                Bytecode::new_raw(preimage.clone()),
+                hash,
+            );
             return;
         }
         // calculate preimage address
@@ -202,14 +208,6 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmSdkAdapter<'a, API,
             Bytecode::new_raw(preimage),
             hash,
         );
-        // // remember code hash
-        // ctx.sstore(
-        //     PRECOMPILE_EVM,
-        //     U256::from_le_bytes(address.into_word().0),
-        //     U256::from_le_bytes(hash.0),
-        // )
-        // .map_err(|_| panic!("database error"))
-        // .unwrap();
     }
 
     fn preimage(&self, address: &Address, hash: &B256) -> Option<Bytes> {
@@ -219,6 +217,10 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmSdkAdapter<'a, API,
             .load_code(*address)
             .map_err(|_| panic!("database error"))
             .unwrap();
+        // println!(
+        //     "loading preimage: address={}, hash={}, found_hash={}",
+        //     address, hash, account.info.code_hash
+        // );
         if account.info.code_hash == *hash {
             return account.info.code.as_ref().map(|v| v.original_bytes());
         }

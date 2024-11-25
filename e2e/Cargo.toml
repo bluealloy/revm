@@ -25,6 +25,8 @@ revm = { package = "revm", path = "../crates/revm", default-features = false, fe
     "e2e",
 ] }
 
+rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm", branch = "devel", default-features = false, features = ["print-trace"] }
+
 hash-db = "=0.15"
 hex = "0.4"
 hashbrown = "0.14"
@@ -47,7 +49,7 @@ paste = { version = "1.0", default-features = false }
 
 [features]
 default = [
-    #    "debug-print",
+    "debug-print",
 ]
 e2e = [
     "revm/e2e",

@@ -204,7 +204,7 @@ impl<DB: Database> EvmContext<DB> {
             return return_result(InstructionResult::CallTooDeep);
         }
 
-        // Make account warm and loaded
+        // Make an account warm and loaded
         let _ = self
             .inner
             .journaled_state
