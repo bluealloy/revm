@@ -136,12 +136,26 @@ impl Gas {
     /// Record memory expansion
     #[inline]
     #[must_use = "internally uses record_cost that flags out of gas error"]
-    pub fn record_memory_expansion(&mut self, new_len: usize) -> bool {
+    pub fn record_memory_expansion(&mut self, new_len: usize) -> MemoryExtensionResult {
         let Some(additional_cost) = self.memory.record_new_len(new_len) else {
-            return true;
+            return MemoryExtensionResult::Same;
         };
-        self.record_cost(additional_cost)
+
+        if !self.record_cost(additional_cost) {
+            return MemoryExtensionResult::OutOfGas;
+        }
+
+        MemoryExtensionResult::Extended
     }
+}
+
+pub enum MemoryExtensionResult {
+    /// Memory was extended.
+    Extended,
+    /// Memory size stayed the same.
+    Same,
+    /// Not enough gas to extend memory.s
+    OutOfGas,
 }
 
 /// Utility struct that speeds up calculation of memory expansion
@@ -152,7 +166,7 @@ impl Gas {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MemoryGas {
     /// Current memory length
-    pub length: usize,
+    pub words_num: usize,
     /// Current memory expansion cost
     pub expansion_cost: u64,
 }
@@ -160,18 +174,18 @@ pub struct MemoryGas {
 impl MemoryGas {
     pub const fn new() -> Self {
         Self {
-            length: 0,
+            words_num: 0,
             expansion_cost: 0,
         }
     }
 
     #[inline]
-    pub fn record_new_len(&mut self, new_len: usize) -> Option<u64> {
-        if new_len <= self.length {
+    pub fn record_new_len(&mut self, new_num: usize) -> Option<u64> {
+        if new_num <= self.words_num {
             return None;
         }
-        self.length = new_len;
-        let mut cost = crate::gas::calc::memory_gas(new_len);
+        self.words_num = new_num;
+        let mut cost = crate::gas::calc::memory_gas(new_num);
         core::mem::swap(&mut self.expansion_cost, &mut cost);
         // safe to subtract because we know that new_len > length
         // notice the swap above.

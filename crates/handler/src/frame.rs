@@ -273,6 +273,17 @@ where
             return return_error(InstructionResult::CreateInitCodeStartingEF00);
         }
 
+        // Fetch balance of caller.
+        let caller_balance = ctx
+            .journal()
+            .load_account(inputs.caller)?
+            .map(|a| a.info.balance);
+
+        // Check if caller has enough balance to send to the created contract.
+        if caller_balance.data < inputs.value {
+            return return_error(InstructionResult::OutOfFunds);
+        }
+
         // Increase nonce of caller and check if it overflows
         let old_nonce;
         if let Some(nonce) = ctx.journal().inc_account_nonce(inputs.caller)? {
@@ -394,6 +405,17 @@ where
         // Check depth
         if depth > CALL_STACK_LIMIT as usize {
             return return_error(InstructionResult::CallTooDeep);
+        }
+
+        // Fetch balance of caller.
+        let caller_balance = ctx
+            .journal()
+            .load_account(inputs.caller)?
+            .map(|a| a.info.balance);
+
+        // Check if caller has enough balance to send to the created contract.
+        if caller_balance.data < inputs.value {
+            return return_error(InstructionResult::OutOfFunds);
         }
 
         // Increase nonce of caller and check if it overflows
@@ -603,7 +625,6 @@ where
         // Insert result to the top frame.
         match result {
             FrameResult::Call(outcome) => {
-                println!("Call outcome {:?}", outcome);
                 let out_gas = outcome.gas();
                 let ins_result = *outcome.instruction_result();
                 let returned_len = outcome.result.output.len();
@@ -634,7 +655,8 @@ where
                         }
                     }
                 };
-                interpreter.stack.push(item);
+                // Safe to push without stack limit check
+                let _ = interpreter.stack.push(item);
 
                 // return unspend gas.
                 if ins_result.is_ok_or_revert() {
@@ -661,27 +683,26 @@ where
                     buffer.clear();
                 };
 
-                let item = if instruction_result == InstructionResult::ReturnContract {
-                    outcome.address.expect("EOF Address").into_word().into()
-                } else {
-                    U256::ZERO
-                };
-                interpreter.stack.push(item);
-
                 assert_ne!(
                     instruction_result,
                     InstructionResult::FatalExternalError,
                     "Fatal external error in insert_eofcreate_outcome"
                 );
 
-                let gas = interpreter.control.gas();
+                let this_gas = interpreter.control.gas();
                 if instruction_result.is_ok_or_revert() {
-                    gas.erase_cost(outcome.gas().remaining());
+                    this_gas.erase_cost(outcome.gas().remaining());
                 }
 
-                if instruction_result.is_ok() {
-                    gas.record_refund(outcome.gas().refunded());
-                }
+                let stack_item = if instruction_result.is_ok() {
+                    this_gas.record_refund(outcome.gas().refunded());
+                    outcome.address.unwrap_or_default().into_word().into()
+                } else {
+                    U256::ZERO
+                };
+
+                // Safe to push without stack limit check
+                let _ = interpreter.stack.push(stack_item);
             }
             FrameResult::EOFCreate(outcome) => {
                 let instruction_result = *outcome.instruction_result();
@@ -700,24 +721,20 @@ where
                     "Fatal external error in insert_eofcreate_outcome"
                 );
 
+                let this_gas = interpreter.control.gas();
                 if instruction_result.is_ok_or_revert() {
-                    interpreter
-                        .control
-                        .gas()
-                        .erase_cost(outcome.gas().remaining());
+                    this_gas.erase_cost(outcome.gas().remaining());
                 }
 
-                if instruction_result.is_ok() {
-                    interpreter
-                        .control
-                        .gas()
-                        .record_refund(outcome.gas().refunded());
-                    interpreter
-                        .stack
-                        .push(outcome.address.expect("EOF Address").into_word().into());
+                let stack_item = if instruction_result.is_ok() {
+                    this_gas.record_refund(outcome.gas().refunded());
+                    outcome.address.expect("EOF Address").into_word().into()
                 } else {
-                    interpreter.stack.push(U256::ZERO);
-                }
+                    U256::ZERO
+                };
+
+                // Safe to push without stack limit check
+                let _ = interpreter.stack.push(stack_item);
             }
         }
 

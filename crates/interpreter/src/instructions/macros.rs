@@ -131,17 +131,23 @@ macro_rules! resize_memory {
         $crate::resize_memory!($interpreter, $offset, $len, ())
     };
     ($interpreter:expr, $offset:expr, $len:expr, $ret:expr) => {
-        let new_size = $crate::interpreter::num_words($offset.saturating_add($len));
-        if !$interpreter.control.gas().record_memory_expansion(new_size) {
-            $interpreter
-                .control
-                .set_instruction_result($crate::InstructionResult::OutOfGas);
-            return $ret;
-        }
-        // Safety: new_size is limited by gas so it will not overflow if it is multipled by 32.
-        if !$interpreter.memory.resize(new_size * 32) {
-            return $ret;
-        }
+        let words_num = $crate::interpreter::num_words($offset.saturating_add($len));
+        match $interpreter
+            .control
+            .gas()
+            .record_memory_expansion(words_num)
+        {
+            $crate::gas::MemoryExtensionResult::Extended => {
+                $interpreter.memory.resize(words_num * 32);
+            }
+            $crate::gas::MemoryExtensionResult::OutOfGas => {
+                $interpreter
+                    .control
+                    .set_instruction_result($crate::InstructionResult::OutOfGas);
+                return $ret;
+            }
+            $crate::gas::MemoryExtensionResult::Same => (), // no action
+        };
     };
 }
 

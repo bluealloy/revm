@@ -84,6 +84,7 @@ where
 
     fn deduct_caller(&self, ctx: &mut Self::Context) -> Result<(), Self::Error> {
         let basefee = *ctx.block().basefee();
+        let blob_price = U256::from(ctx.block().blob_gasprice().unwrap_or_default());
         let effective_gas_price = ctx.tx().effective_gas_price(basefee);
         // Subtract gas costs from the caller's account.
         // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
@@ -92,11 +93,8 @@ where
 
         // EIP-4844
         if ctx.tx().tx_type().into() == TransactionType::Eip4844 {
-            let tx = ctx.tx().eip4844();
-            let blob_gas = U256::from(tx.total_blob_gas());
-            let max_blob_fee = U256::from(tx.max_fee_per_blob_gas());
-            let blob_gas_cost = max_blob_fee.saturating_mul(blob_gas);
-            gas_cost = gas_cost.saturating_add(blob_gas_cost);
+            let blob_gas = U256::from(ctx.tx().eip4844().total_blob_gas());
+            gas_cost = gas_cost.saturating_add(blob_price.saturating_mul(blob_gas));
         }
 
         let is_call = ctx.tx().kind().is_call();
@@ -104,7 +102,6 @@ where
 
         // load caller's account.
         let caller_account = ctx.journal().load_account(caller)?.data;
-
         // set new caller account balance.
         caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
 

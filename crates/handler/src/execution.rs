@@ -7,8 +7,8 @@ use context_interface::{
 use handler_interface::{ExecutionHandler, Frame as FrameTrait, FrameOrResultGen};
 use interpreter::{
     interpreter::{EthInstructionProvider, EthInterpreter},
-    return_ok, return_revert, CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme,
-    EOFCreateInputs, EOFCreateKind, FrameInput, Gas,
+    CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, EOFCreateKind,
+    FrameInput, Gas,
 };
 use primitives::TxKind;
 use specification::hardfork::SpecId;
@@ -109,16 +109,14 @@ where
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
         *gas = Gas::new_spent(context.tx().common_fields().gas_limit());
 
-        match instruction_result {
-            return_ok!() => {
-                gas.erase_cost(remaining);
-                gas.record_refund(refunded);
-            }
-            return_revert!() => {
-                gas.erase_cost(remaining);
-            }
-            _ => {}
+        if instruction_result.is_ok_or_revert() {
+            gas.erase_cost(remaining);
         }
+
+        if instruction_result.is_ok() {
+            gas.record_refund(refunded);
+        }
+
         Ok(frame_result.into())
     }
 }

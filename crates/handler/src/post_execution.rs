@@ -77,9 +77,9 @@ where
         // return balance of not spend gas.
         let caller_account = ctx.journal().load_account(caller)?;
 
-        caller_account.data.info.balance = caller_account.data.info.balance.saturating_add(
-            effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64),
-        );
+        let reimbursed = effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64);
+        caller_account.data.info.balance =
+            caller_account.data.info.balance.saturating_add(reimbursed);
 
         Ok(())
     }

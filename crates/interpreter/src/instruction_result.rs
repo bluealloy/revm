@@ -91,7 +91,7 @@ pub enum InstructionResult {
     /// Legacy contract is calling opcode that is enabled only in EOF.
     EOFOpcodeDisabledInLegacy,
     /// Stack overflow in EOF subroutine function calls.
-    SubRoutineStackImplOverflow,
+    SubRoutineStackOverflow,
     /// Aux data overflow, new aux data is larger than `u16` max size.
     EofAuxDataOverflow,
     /// Aux data is smaller then already present data size.
@@ -154,7 +154,7 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::CallTooDeep => Self::CallTooDeep,
             HaltReason::EofAuxDataOverflow => Self::EofAuxDataOverflow,
             HaltReason::EofAuxDataTooSmall => Self::EofAuxDataTooSmall,
-            HaltReason::SubRoutineStackImplOverflow => Self::SubRoutineStackImplOverflow,
+            HaltReason::SubRoutineStackOverflow => Self::SubRoutineStackOverflow,
             HaltReason::InvalidEXTCALLTarget => Self::InvalidEXTCALLTarget,
         }
     }
@@ -211,7 +211,7 @@ macro_rules! return_error {
             | $crate::InstructionResult::FatalExternalError
             | $crate::InstructionResult::ReturnContractInNotInitEOF
             | $crate::InstructionResult::EOFOpcodeDisabledInLegacy
-            | $crate::InstructionResult::SubRoutineStackImplOverflow
+            | $crate::InstructionResult::SubRoutineStackOverflow
             | $crate::InstructionResult::EofAuxDataTooSmall
             | $crate::InstructionResult::EofAuxDataOverflow
             | $crate::InstructionResult::InvalidEXTCALLTarget
@@ -376,8 +376,8 @@ impl<HaltReasonT: HaltReasonTrait> From<InstructionResult> for SuccessOrHalt<Hal
             InstructionResult::EOFOpcodeDisabledInLegacy => {
                 Self::Halt(HaltReason::OpcodeNotFound.into())
             }
-            InstructionResult::SubRoutineStackImplOverflow => {
-                Self::Halt(HaltReason::SubRoutineStackImplOverflow.into())
+            InstructionResult::SubRoutineStackOverflow => {
+                Self::Halt(HaltReason::SubRoutineStackOverflow.into())
             }
             InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
             InstructionResult::EofAuxDataOverflow => {

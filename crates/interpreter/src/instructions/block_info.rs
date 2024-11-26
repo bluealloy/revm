@@ -5,7 +5,7 @@ use crate::{
     interpreter_wiring::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
     Host,
 };
-use context_interface::Block;
+use context_interface::{Block, Cfg};
 use primitives::U256;
 use specification::hardfork::SpecId::*;
 
@@ -16,7 +16,7 @@ pub fn chainid<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(interpreter, ISTANBUL);
     gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(host.cfg().chain_id));
+    push!(interpreter, U256::from(host.cfg().chain_id()));
 }
 
 pub fn coinbase<WIRE: InterpreterTypes, H: Host + ?Sized>(

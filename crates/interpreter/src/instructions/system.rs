@@ -14,8 +14,8 @@ pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
-    popn!([offset, len_ptr], interpreter);
-    let len = as_usize_or_fail!(interpreter, len_ptr);
+    popn_top!([offset], top, interpreter);
+    let len = as_usize_or_fail!(interpreter, top);
     gas_or_fail!(interpreter, gas::keccak256_cost(len));
     let hash = if len == 0 {
         KECCAK_EMPTY
@@ -24,7 +24,7 @@ pub fn keccak256<WIRE: InterpreterTypes, H: Host + ?Sized>(
         resize_memory!(interpreter, from, len);
         primitives::keccak256(interpreter.memory.slice_len(from, len).as_ref())
     };
-    push!(interpreter, hash.into());
+    *top = hash.into();
 }
 
 pub fn address<WIRE: InterpreterTypes, H: Host + ?Sized>(

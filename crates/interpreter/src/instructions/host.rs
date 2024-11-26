@@ -15,8 +15,8 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
-    popn!([address], interpreter);
-    let address = address.into_address();
+    popn_top!([], top, interpreter);
+    let address = top.into_address();
     let Some(balance) = host.balance(address) else {
         interpreter
             .control
@@ -37,7 +37,7 @@ pub fn balance<WIRE: InterpreterTypes, H: Host + ?Sized>(
             20
         }
     );
-    let _ = interpreter.stack.push(balance.data);
+    *top = balance.data;
 }
 
 /// EIP-1884: Repricing for trie-size-dependent opcodes
@@ -60,8 +60,8 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
     interpreter: &mut Interpreter<WIRE>,
     host: &mut H,
 ) {
-    popn!([address], interpreter);
-    let address = address.into_address();
+    popn_top!([], top, interpreter);
+    let address = top.into_address();
     let Some(code) = host.code(address) else {
         interpreter
             .control
@@ -78,7 +78,7 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
         gas!(interpreter, 20);
     }
 
-    push!(interpreter, U256::from(code.len()));
+    *top = U256::from(code.len());
 }
 
 /// EIP-1052: EXTCODEHASH opcode
@@ -87,8 +87,8 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     check!(interpreter, CONSTANTINOPLE);
-    popn!([address], interpreter);
-    let address = address.into_address();
+    popn_top!([], top, interpreter);
+    let address = top.into_address();
     let Some(code_hash) = host.code_hash(address) else {
         interpreter
             .control
@@ -104,7 +104,7 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     } else {
         gas!(interpreter, 400);
     }
-    push!(interpreter, code_hash.into());
+    *top = code_hash.into();
 }
 
 pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(

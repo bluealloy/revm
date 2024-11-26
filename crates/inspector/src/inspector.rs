@@ -5,7 +5,7 @@ use auto_impl::auto_impl;
 use derive_where::derive_where;
 use revm::{
     bytecode::opcode::OpCode,
-    context::{block::BlockEnv, tx::TxEnv},
+    context::{block::BlockEnv, tx::TxEnv, Cfg},
     context_interface::{
         journaled_state::{AccountLoad, Eip7702CodeLoad},
         result::EVMError,
@@ -38,6 +38,7 @@ use revm::{
 pub trait Inspector {
     type Context;
     type InterpreterTypes: InterpreterTypes;
+
     /// Called before the interpreter is initialized.
     ///
     /// If `interp.instruction_result` is set to anything other than [revm::interpreter::InstructionResult::Continue] then the execution of the interpreter
@@ -289,11 +290,12 @@ pub struct InspectorContext<
     pub frame_input_stack: Vec<FrameInput>,
 }
 
-impl<INSP: GetInspector, BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> Host
-    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
+impl<INSP: GetInspector, BLOCK: Block, TX: Transaction, CFG: Cfg, DB: Database, CHAIN> Host
+    for InspectorContext<INSP, BLOCK, TX, CFG, DB, CHAIN>
 {
     type BLOCK = BLOCK;
     type TX = TX;
+    type CFG = CFG;
 
     fn tx(&self) -> &Self::TX {
         &self.inner.tx
@@ -303,7 +305,7 @@ impl<INSP: GetInspector, BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAI
         &self.inner.block
     }
 
-    fn cfg(&self) -> &CfgEnv {
+    fn cfg(&self) -> &Self::CFG {
         &self.inner.cfg
     }
 
@@ -362,10 +364,10 @@ impl<INSP: GetInspector, BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAI
     }
 }
 
-impl<INSP, BLOCK, TX, DB: Database, SPEC, CHAIN> CfgGetter
-    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
+impl<INSP, BLOCK, TX, DB: Database, CFG: Cfg, CHAIN> CfgGetter
+    for InspectorContext<INSP, BLOCK, TX, CFG, DB, CHAIN>
 {
-    type Cfg = CfgEnv;
+    type Cfg = CFG;
 
     fn cfg(&self) -> &Self::Cfg {
         &self.inner.cfg
@@ -793,7 +795,7 @@ where
     }
 }
 
-pub type InspCtxType<INSP, DB> = InspectorContext<INSP, BlockEnv, TxEnv, SpecId, DB, ()>;
+pub type InspCtxType<INSP, DB> = InspectorContext<INSP, BlockEnv, TxEnv, CfgEnv, DB, ()>;
 
 pub type InspectorMainEvm<DB, INSP> = Evm<
     Error<DB>,

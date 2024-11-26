@@ -128,10 +128,9 @@ pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .sub_routine
         .push(interpreter.bytecode.pc() + 2, idx))
     {
-        // TODO: check if this is correct error.
         interpreter
             .control
-            .set_instruction_result(InstructionResult::StackOverflow);
+            .set_instruction_result(InstructionResult::SubRoutineStackOverflow);
         return;
     };
     let pc = interpreter
@@ -208,17 +207,7 @@ fn return_inner(
     let mut output = Bytes::default();
     if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
-        let new_mem_len = offset.saturating_add(len);
-        if !interpreter
-            .control
-            .gas()
-            .record_memory_expansion(new_mem_len)
-        {
-            return;
-        }
-        interpreter.memory.resize(new_mem_len);
         resize_memory!(interpreter, offset, len);
-
         output = interpreter.memory.slice_len(offset, len).to_vec().into()
     }
 

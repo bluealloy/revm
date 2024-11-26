@@ -3,7 +3,7 @@ use bytecode::{Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 use context_interface::{
     journaled_state::{AccountLoad, Eip7702CodeLoad},
     result::EVMError,
-    Block, BlockGetter, CfgEnv, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
+    Block, BlockGetter, Cfg, CfgEnv, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
     Transaction, TransactionGetter,
 };
 use database_interface::{Database, EmptyDB};
@@ -13,35 +13,33 @@ use primitives::{Address, Bytes, HashSet, Log, B256, BLOCK_HASH_HISTORY, U256};
 use specification::hardfork::SpecId;
 
 /// EVM context contains data that EVM needs for execution.
-#[derive_where(Clone, Debug; BLOCK, SPEC, CHAIN, TX, DB, <DB as Database>::Error)]
-pub struct Context<BLOCK = BlockEnv, TX = TxEnv, SPEC = SpecId, DB: Database = EmptyDB, CHAIN = ()>
-{
+#[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, <DB as Database>::Error)]
+pub struct Context<BLOCK = BlockEnv, TX = TxEnv, CFG = CfgEnv, DB: Database = EmptyDB, CHAIN = ()> {
     /// Transaction information.
     pub tx: TX,
     /// Block information.
     pub block: BLOCK,
     /// Configurations.
-    pub cfg: CfgEnv,
+    pub cfg: CFG,
     /// EVM State with journaling support and database.
     pub journaled_state: JournaledState<DB>,
     /// Inner context.
     pub chain: CHAIN,
-    /// TODO include it inside CfgEnv.
-    pub spec: SPEC,
     /// Error that happened during execution.
     pub error: Result<(), <DB as Database>::Error>,
 }
 
-impl<BLOCK: Block + Default, TX: Transaction + Default, SPEC, DB: Database, CHAIN: Default>
-    Context<BLOCK, TX, SPEC, DB, CHAIN>
+impl<BLOCK: Block + Default, TX: Transaction + Default, DB: Database, CHAIN: Default>
+    Context<BLOCK, TX, CfgEnv, DB, CHAIN>
 {
-    pub fn new(db: DB, spec: SPEC) -> Self {
+    pub fn new(db: DB, spec: SpecId) -> Self {
+        let mut cfg = CfgEnv::default();
+        cfg.spec = spec;
         Self {
             tx: TX::default(),
             block: BLOCK::default(),
-            cfg: CfgEnv::default(),
+            cfg,
             journaled_state: JournaledState::new(SpecId::LATEST, db, HashSet::default()),
-            spec,
             chain: Default::default(),
             error: Ok(()),
         }
@@ -144,11 +142,12 @@ impl<BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> Context<BLOCK, TX
     }
 }
 
-impl<BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> Host
-    for Context<BLOCK, TX, SPEC, DB, CHAIN>
+impl<BLOCK: Block, TX: Transaction, CFG: Cfg, DB: Database, CHAIN> Host
+    for Context<BLOCK, TX, CFG, DB, CHAIN>
 {
     type BLOCK = BLOCK;
     type TX = TX;
+    type CFG = CFG;
 
     fn tx(&self) -> &Self::TX {
         &self.tx
@@ -158,7 +157,7 @@ impl<BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> Host
         &self.block
     }
 
-    fn cfg(&self) -> &CfgEnv {
+    fn cfg(&self) -> &Self::CFG {
         &self.cfg
     }
 
@@ -254,8 +253,8 @@ impl<BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> Host
     }
 }
 
-impl<BLOCK, TX, DB: Database, SPEC, CHAIN> CfgGetter for Context<BLOCK, TX, SPEC, DB, CHAIN> {
-    type Cfg = CfgEnv;
+impl<BLOCK, TX, DB: Database, CFG: Cfg, CHAIN> CfgGetter for Context<BLOCK, TX, CFG, DB, CHAIN> {
+    type Cfg = CFG;
 
     fn cfg(&self) -> &Self::Cfg {
         &self.cfg

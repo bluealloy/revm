@@ -12,10 +12,10 @@ use crate::{
         ReturnData, RuntimeFlag, StackTrait,
     },
     CallInputs, CallScheme, CallValue, CreateInputs, EOFCreateInputs, Host, InstructionResult,
-    InterpreterAction, InterpreterResult, MAX_INITCODE_SIZE,
+    InterpreterAction, InterpreterResult,
 };
 use bytecode::eof::{Eof, EofHeader};
-use context_interface::CreateScheme;
+use context_interface::{Cfg, CreateScheme};
 use core::cmp::max;
 use primitives::{keccak256, Address, Bytes, B256, U256};
 use specification::hardfork::{BerlinSpec, Spec, SpecId::*};
@@ -374,11 +374,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         // EIP-3860: Limit and meter initcode
         if interpreter.runtime_flag.spec_id().is_enabled_in(SHANGHAI) {
             // Limit is set as double of max contract bytecode size
-            let max_initcode_size = host
-                .cfg()
-                .limit_contract_code_size
-                .map(|limit| limit.saturating_mul(2))
-                .unwrap_or(MAX_INITCODE_SIZE);
+            let max_initcode_size = host.cfg().max_code_size().saturating_mul(2);
             if len > max_initcode_size {
                 interpreter
                     .control
@@ -453,7 +449,6 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
-    println!("local gas limit: {}", local_gas_limit);
     let Some(mut gas_limit) =
         calc_call_gas(interpreter, account_load, has_transfer, local_gas_limit)
     else {

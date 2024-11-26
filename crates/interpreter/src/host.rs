@@ -3,7 +3,7 @@ pub use dummy::DummyHost;
 
 use context_interface::{
     journaled_state::{AccountLoad, Eip7702CodeLoad},
-    Block, CfgEnv, Transaction,
+    Block, Cfg, Transaction,
 };
 use primitives::{Address, Bytes, Log, B256, U256};
 
@@ -15,6 +15,7 @@ pub trait Host {
     /// Chain specification.
     type BLOCK: Block;
     type TX: Transaction;
+    type CFG: Cfg;
 
     /// Returns a reference to the environment.
     fn tx(&self) -> &Self::TX;
@@ -23,7 +24,7 @@ pub trait Host {
     fn block(&self) -> &Self::BLOCK;
 
     /// TODO make it generic in future
-    fn cfg(&self) -> &CfgEnv;
+    fn cfg(&self) -> &Self::CFG;
 
     /// Load an account code.
     fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad>;

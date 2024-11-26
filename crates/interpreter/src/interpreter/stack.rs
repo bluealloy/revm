@@ -126,6 +126,7 @@ impl Stack {
     /// Removes the topmost element from the stack and returns it, or `StackUnderflow` if it is
     /// empty.
     #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn pop(&mut self) -> Result<U256, InstructionResult> {
         self.data.pop().ok_or(InstructionResult::StackUnderflow)
     }
@@ -136,6 +137,7 @@ impl Stack {
     ///
     /// The caller is responsible for checking the length of the stack.
     #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn pop_unsafe(&mut self) -> U256 {
         self.data.pop().unwrap_unchecked()
     }
@@ -146,12 +148,14 @@ impl Stack {
     ///
     /// The caller is responsible for checking the length of the stack.
     #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn top_unsafe(&mut self) -> &mut U256 {
         let len = self.data.len();
         self.data.get_unchecked_mut(len - 1)
     }
 
     #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn popn<const N: usize>(&mut self) -> [U256; N] {
         if N == 0 {
             return [U256::ZERO; N];
@@ -164,93 +168,11 @@ impl Stack {
     }
 
     #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn popn_top<const POPN: usize>(&mut self) -> ([U256; POPN], &mut U256) {
         let result = self.popn::<POPN>();
         let top = self.top_unsafe();
         (result, top)
-    }
-
-    /// Pop the topmost value, returning the value and the new topmost value.
-    ///
-    /// # Safety
-    ///
-    /// The caller is responsible for checking the length of the stack.
-    #[inline]
-    pub unsafe fn pop_top_unsafe(&mut self) -> (U256, &mut U256) {
-        let pop = self.pop_unsafe();
-        let top = self.top_unsafe();
-        (pop, top)
-    }
-
-    /// Pops 2 values from the stack.
-    ///
-    /// # Safety
-    ///
-    /// The caller is responsible for checking the length of the stack.
-    #[inline]
-    pub unsafe fn pop2_unsafe(&mut self) -> (U256, U256) {
-        let pop1 = self.pop_unsafe();
-        let pop2 = self.pop_unsafe();
-        (pop1, pop2)
-    }
-
-    /// Pops 2 values from the stack and returns them, in addition to the new topmost value.
-    ///
-    /// # Safety
-    ///
-    /// The caller is responsible for checking the length of the stack.
-    #[inline]
-    pub unsafe fn pop2_top_unsafe(&mut self) -> (U256, U256, &mut U256) {
-        let pop1 = self.pop_unsafe();
-        let pop2 = self.pop_unsafe();
-        let top = self.top_unsafe();
-
-        (pop1, pop2, top)
-    }
-
-    /// Pops 3 values from the stack.
-    ///
-    /// # Safety
-    ///
-    /// The caller is responsible for checking the length of the stack.
-    #[inline]
-    pub unsafe fn pop3_unsafe(&mut self) -> (U256, U256, U256) {
-        let pop1 = self.pop_unsafe();
-        let pop2 = self.pop_unsafe();
-        let pop3 = self.pop_unsafe();
-
-        (pop1, pop2, pop3)
-    }
-
-    /// Pops 4 values from the stack.
-    ///
-    /// # Safety
-    ///
-    /// The caller is responsible for checking the length of the stack.
-    #[inline]
-    pub unsafe fn pop4_unsafe(&mut self) -> (U256, U256, U256, U256) {
-        let pop1 = self.pop_unsafe();
-        let pop2 = self.pop_unsafe();
-        let pop3 = self.pop_unsafe();
-        let pop4 = self.pop_unsafe();
-
-        (pop1, pop2, pop3, pop4)
-    }
-
-    /// Pops 5 values from the stack.
-    ///
-    /// # Safety
-    ///
-    /// The caller is responsible for checking the length of the stack.
-    #[inline]
-    pub unsafe fn pop5_unsafe(&mut self) -> (U256, U256, U256, U256, U256) {
-        let pop1 = self.pop_unsafe();
-        let pop2 = self.pop_unsafe();
-        let pop3 = self.pop_unsafe();
-        let pop4 = self.pop_unsafe();
-        let pop5 = self.pop_unsafe();
-
-        (pop1, pop2, pop3, pop4, pop5)
     }
 
     /// Push a new value onto the stack.
@@ -258,6 +180,8 @@ impl Stack {
     /// If it will exceed the stack limit, returns false and leaves the stack
     /// unchanged.
     #[inline]
+    #[must_use]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn push(&mut self, value: U256) -> bool {
         // Allows the compiler to optimize out the `Vec::push` capacity check.
         assume!(self.data.capacity() == STACK_LIMIT);
@@ -286,6 +210,7 @@ impl Stack {
     ///
     /// Panics if `n` is 0.
     #[inline]
+    #[must_use]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn dup(&mut self, n: usize) -> bool {
         assume!(n > 0, "attempted to dup 0");

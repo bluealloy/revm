@@ -15,9 +15,7 @@ pub fn mload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     popn_top!([], top, interpreter);
     let offset = as_usize_or_fail!(interpreter, top);
     resize_memory!(interpreter, offset, 32);
-    *top = U256::try_from_be_slice(interpreter.memory.slice_len(offset, 32).as_ref())
-        .unwrap()
-        .into();
+    *top = U256::try_from_be_slice(interpreter.memory.slice_len(offset, 32).as_ref()).unwrap()
 }
 
 pub fn mstore<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -47,7 +45,6 @@ pub fn msize<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    // result can be ignored.
     push!(interpreter, U256::from(interpreter.memory.size()));
 }
 

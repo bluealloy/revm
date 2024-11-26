@@ -348,13 +348,13 @@ pub fn execute_test_suite(
             }
 
             // Enable EOF in Prague tests.
-            let spec_id = if spec_name == SpecName::Prague {
+            cfg.spec = if spec_name == SpecName::Prague {
                 SpecId::PRAGUE_EOF
             } else {
                 spec_name.to_spec_id()
             };
 
-            if spec_id.is_enabled_in(SpecId::MERGE) && block.prevrandao.is_none() {
+            if cfg.spec.is_enabled_in(SpecId::MERGE) && block.prevrandao.is_none() {
                 // if spec is merge and prevrandao is not set, set it to default
                 block.prevrandao = Some(B256::default());
             }
@@ -410,12 +410,11 @@ pub fn execute_test_suite(
                 tx.transact_to = to;
 
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
+                cache.set_state_clear_flag(SpecId::enabled(cfg.spec, SpecId::SPURIOUS_DRAGON));
                 let mut state = database::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-
                 let mut evm = MainEvm {
                     context: Context {
                         block: block.clone(),
@@ -427,7 +426,6 @@ pub fn execute_test_suite(
                             Default::default(),
                         ),
                         chain: (),
-                        spec: cfg.spec().into(),
                         error: Ok(()),
                     },
                     handler: EthHandler::new(
@@ -453,7 +451,6 @@ pub fn execute_test_suite(
                                     Default::default(),
                                 ),
                                 chain: (),
-                                spec: cfg.spec().into(),
                                 error: Ok(()),
                             },
                             inspector: TracerEip3155::new(Box::new(stdout())),
@@ -535,7 +532,7 @@ pub fn execute_test_suite(
 
                 // re build to run with tracing
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(spec_id, SpecId::SPURIOUS_DRAGON));
+                cache.set_state_clear_flag(SpecId::enabled(cfg.spec, SpecId::SPURIOUS_DRAGON));
                 let mut state = database::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
@@ -543,6 +540,7 @@ pub fn execute_test_suite(
 
                 let path = path.display();
                 println!("\nTraces:");
+
                 let mut evm = InspectorMainEvm {
                     context: InspectorContext {
                         inner: Context {
@@ -555,7 +553,6 @@ pub fn execute_test_suite(
                                 Default::default(),
                             ),
                             chain: (),
-                            spec: cfg.spec().into(),
                             error: Ok(()),
                         },
                         inspector: TracerEip3155::new(Box::new(stdout())),
@@ -588,7 +585,7 @@ pub fn execute_test_suite(
                     "\nState after: {:#?}",
                     evm.context.inner.journaled_state.database.cache
                 );
-                println!("\nSpecification: {spec_id:?}");
+                println!("\nSpecification: {:?}", cfg.spec);
                 println!("\nTx: {tx:#?}");
                 println!("Block: {block:#?}");
                 println!("Cfg: {cfg:#?}");

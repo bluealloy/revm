@@ -312,7 +312,6 @@ impl<DB: Database> JournaledState<DB> {
         let from_balance = &mut from_account.info.balance;
 
         let Some(from_balance_incr) = from_balance.checked_sub(balance) else {
-            println!("out of funds");
             return Ok(Some(TransferError::OutOfFunds));
         };
         *from_balance = from_balance_incr;
@@ -365,11 +364,11 @@ impl<DB: Database> JournaledState<DB> {
         spec_id: SpecId,
     ) -> Result<JournalCheckpoint, TransferError> {
         // Fetch balance of caller. Caller is already warm loaded.
-        let caller_acc = self.state.get_mut(&caller).unwrap();
-        // Check if caller has enough balance to send to the created contract.
-        if caller_acc.info.balance < balance {
-            return Err(TransferError::OutOfFunds);
-        }
+        // let caller_acc = self.state.get_mut(&caller).unwrap();
+        // // Check if caller has enough balance to send to the created contract.
+        // if caller_acc.info.balance < balance {
+        //     return Err(TransferError::OutOfFunds);
+        // }
         // Enter subroutine
         let checkpoint = self.checkpoint();
 
@@ -380,7 +379,6 @@ impl<DB: Database> JournaledState<DB> {
             self.checkpoint_revert(checkpoint);
             return Err(TransferError::OutOfFunds);
         }
-        caller_acc.info.balance -= balance;
 
         // Newly created account is present, as we just loaded it.
         let target_acc = self.state.get_mut(&target_address).unwrap();

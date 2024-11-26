@@ -1,8 +1,8 @@
-use context::{block::BlockEnv, tx::TxEnv, Context};
+use context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context};
 use context_interface::{
     journaled_state::JournaledState,
     result::{EVMError, HaltReason, InvalidHeader, InvalidTransaction, ResultAndState},
-    BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
+    Block, BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
     JournalStateGetterDBError, Transaction, TransactionGetter,
 };
 use database_interface::Database;
@@ -14,7 +14,6 @@ use handler_interface::{
 use interpreter::Host;
 use precompile::PrecompileErrors;
 use primitives::Log;
-use specification::hardfork::SpecId;
 use state::EvmState;
 use std::vec::Vec;
 
@@ -29,10 +28,19 @@ pub struct Evm<ERROR, CTX = Context, HANDLER = EthHandler<CTX, ERROR>> {
 pub type Error<DB> = EVMError<<DB as Database>::Error, InvalidTransaction>;
 
 /// Mainnet Contexts.
-pub type EthContext<DB> = Context<BlockEnv, TxEnv, SpecId, DB, ()>;
+pub type EthContext<DB> = Context<BlockEnv, TxEnv, CfgEnv, DB, ()>;
 
 /// Mainnet EVM type.
 pub type MainEvm<DB> = Evm<Error<DB>, EthContext<DB>>;
+
+pub trait EvmRunner {
+    type TX: Transaction;
+    type BLOCK: Block;
+
+    fn set_block(&mut self, block: Self::BLOCK);
+
+    fn transact(&mut self, tx: &Self::TX);
+}
 
 impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC>
     Evm<ERROR, CTX, EthHandler<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC>>
@@ -161,8 +169,6 @@ where
         };
 
         let mut exec_result = exec.last_frame_result(ctx, frame_result)?;
-
-        //self.handler.set_instruction_table(instructions);
 
         let post_exec = self.handler.post_execution();
         // calculate final refund and add EIP-7702 refund to gas.

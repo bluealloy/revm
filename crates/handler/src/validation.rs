@@ -319,10 +319,9 @@ where
 
     if tx_type == TransactionType::Eip4844 {
         let tx = ctx.tx().eip4844();
-        // if the tx is not a blob tx, this will be None, so we add zero
         let data_fee = tx.calc_max_data_fee();
         balance_check = balance_check
-            .checked_add(U256::from(data_fee))
+            .checked_add(data_fee)
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
     }
 
