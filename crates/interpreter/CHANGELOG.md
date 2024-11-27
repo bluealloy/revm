@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - add DATACOPY to OpCode::modifies_memory ([#1639](https://github.com/bluealloy/revm/pull/1639))
-- *(EOF)* returning to non-returning jumpf, enable valition error ([#1664](https://github.com/bluealloy/revm/pull/1664))
+- *(EOF)* returning to non-returning jumpf, enable validation error ([#1664](https://github.com/bluealloy/revm/pull/1664))
 - *(EOF)* Validate code access in stack ([#1659](https://github.com/bluealloy/revm/pull/1659))
 - *(eof)* deny static context in EOFCREATE ([#1644](https://github.com/bluealloy/revm/pull/1644))
 
@@ -92,7 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *(EOF)* set CallOrCreate result in EOFCREATE ([#1535](https://github.com/bluealloy/revm/pull/1535))
 - *(EOF)* target needed for EOFCREATE created address ([#1536](https://github.com/bluealloy/revm/pull/1536))
 - *(EOF)* ext*call return values ([#1515](https://github.com/bluealloy/revm/pull/1515))
-- *(EOF)* Remove redundunt ext call gas cost ([#1513](https://github.com/bluealloy/revm/pull/1513))
+- *(EOF)* Remove redundant ext call gas cost ([#1513](https://github.com/bluealloy/revm/pull/1513))
 - *(EOF)* add DATACOPY copy gas ([#1510](https://github.com/bluealloy/revm/pull/1510))
 - *(EOF)* extstaticcall make static ([#1508](https://github.com/bluealloy/revm/pull/1508))
 - *(EOF)* jumpf gas was changes ([#1507](https://github.com/bluealloy/revm/pull/1507))
@@ -233,7 +233,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Iterpreter will not be called in recursive calls but would return Action ( CALL/CREATE) that will be executed by the main loop.
 
 ### Added
-- tweeks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
+- tweaks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
 - add `BytecodeLocked::original_bytecode` ([#1037](https://github.com/bluealloy/revm/pull/1037))
 - *(op)* Ecotone hardfork ([#1009](https://github.com/bluealloy/revm/pull/1009))
 - EvmBuilder and External Contexts ([#888](https://github.com/bluealloy/revm/pull/888))
