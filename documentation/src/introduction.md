@@ -15,7 +15,7 @@ The project has 4 main crates that are used to build revm. These are:
 
 There are two binaries both of which are used for testing. To install them run `cargo install --path bins/<binary-name>`. The binaries are:
 
-- `revme`: A CLI binary, used for running state test json. Currently it is used to run [ethereum tests](https://github.com/ethereum/tests) to check if revm is compliant. For example if you have the eth tests cloned into a directory called eth tests and the EIP tests in the following directories you can run 
+- `revme`: A CLI binary, used for running state test json. Currently it is used to run [ethereum tests](https://github.com/ethereum/tests) to check if revm is compliant. For example if you have the eth-tests cloned into a directory called eth-tests and the EIP tests in the following directories you can run 
 ```bash
 cargo run --profile ethtests -p revme -- \
     statetest \
