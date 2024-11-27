@@ -85,6 +85,7 @@ where
 {
     pub fn new(
         data: FrameData,
+        depth: usize,
         interpreter: Interpreter<IW>,
         checkpoint: JournalCheckpoint,
         precompiles: PRECOMP,
@@ -94,7 +95,7 @@ where
         Self {
             _phantom: core::marker::PhantomData,
             data,
-            depth: 0,
+            depth,
             interpreter,
             checkpoint,
             precompiles,
@@ -222,6 +223,7 @@ where
                 FrameData::Call(CallFrame {
                     return_memory_range: inputs.return_memory_offset.clone(),
                 }),
+                depth,
                 Interpreter::new(
                     memory.clone(),
                     bytecode,
@@ -334,6 +336,7 @@ where
 
         Ok(FrameOrResultGen::Frame(Self::new(
             FrameData::Create(CreateFrame { created_address }),
+            depth,
             Interpreter::new(
                 memory.clone(),
                 bytecode,
@@ -456,6 +459,7 @@ where
 
         Ok(FrameOrResultGen::Frame(Self::new(
             FrameData::Create(CreateFrame { created_address }),
+            depth,
             Interpreter::new(
                 memory.clone(),
                 Bytecode::Eof(Arc::new(initcode)),
@@ -831,7 +835,6 @@ pub fn return_eofcreate<Journal: JournaledState>(
         return;
     }
 
-    // commit changes reduces depth by -1.
     journal.checkpoint_commit();
 
     // decode bytecode has a performance hit, but it has reasonable restrains.
