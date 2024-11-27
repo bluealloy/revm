@@ -31,7 +31,7 @@ mod failing_tests {
         // fn revert_in_create_in_init_paris("tests/GeneralStateTests/stRevertTest/RevertInCreateInInit_Paris.json");
         // fn st_e_i_p3860_limitmeterinitcode_create_init_code_size_limit("tests/GeneralStateTests/Shanghai/stEIP3860-limitmeterinitcode/createInitCodeSizeLimit.json");
         // fn st_e_i_p3855_push0_push0("tests/GeneralStateTests/Shanghai/stEIP3855-push0/push0.json");
-        fn st_e_i_p3855_push0_push0_gas("tests/GeneralStateTests/Shanghai/stEIP3855-push0/push0Gas.json");
+        // fn st_e_i_p3855_push0_push0_gas("tests/GeneralStateTests/Shanghai/stEIP3855-push0/push0Gas.json");
     }
 }
 

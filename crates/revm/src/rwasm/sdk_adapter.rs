@@ -19,6 +19,7 @@ use fluentbase_sdk::{
     NativeAPI,
     SovereignAPI,
     SovereignContextReader,
+    WriteStorageResult,
     F254,
 };
 use revm_interpreter::{Gas, InstructionResult, StateLoad};
@@ -262,14 +263,25 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmSdkAdapter<'a, API,
         preimage_account.info.code.as_ref().map(|v| v.len() as u32)
     }
 
-    fn write_storage(&self, address: Address, slot: U256, value: U256) -> IsColdAccess {
+    fn write_storage(
+        &self,
+        address: Address,
+        slot: U256,
+        value: U256,
+    ) -> (WriteStorageResult, IsColdAccess) {
         let mut ctx = self.inner.borrow_mut();
         let result = ctx
             .evm
             .sstore(address, slot, value)
             .map_err(|_| panic!("failed to update storage slot"))
             .unwrap();
-        result.is_cold
+        (
+            WriteStorageResult {
+                original_value: result.original_value,
+                present_value: result.present_value,
+            },
+            result.is_cold,
+        )
     }
 
     fn storage(&self, address: &Address, slot: &U256) -> (U256, IsColdAccess) {
@@ -291,6 +303,7 @@ impl<'a, API: NativeAPI, DB: Database> SovereignAPI for RwasmSdkAdapter<'a, API,
 
     fn committed_storage(&self, address: &Address, slot: &U256) -> (U256, IsColdAccess) {
         let mut ctx = self.inner.borrow_mut();
+        // TODO: "we need to check newly created account here and return zero"
         let value = ctx
             .evm
             .db
