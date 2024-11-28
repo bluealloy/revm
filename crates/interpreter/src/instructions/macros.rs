@@ -58,19 +58,6 @@ macro_rules! require_eof {
     };
 }
 
-/// Error if not init eof call.
-#[macro_export]
-macro_rules! require_init_eof {
-    ($interpreter:expr) => {
-        if !$interpreter.runtime_flag.is_eof_init() {
-            $interpreter
-                .control
-                .set_instruction_result($crate::InstructionResult::ReturnContractInNotInitEOF);
-            return;
-        }
-    };
-}
-
 /// Check if the `SPEC` is enabled, and fail the instruction if it is not.
 #[macro_export]
 macro_rules! check {

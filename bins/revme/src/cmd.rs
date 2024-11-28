@@ -1,5 +1,5 @@
 // pub mod bench;
-// pub mod bytecode;
+pub mod bytecode;
 // pub mod eofvalidation;
 // pub mod evmrunner;
 pub mod statetest;
@@ -16,8 +16,8 @@ pub enum MainCmd {
     // EofValidation(eofvalidation::Cmd),
     // /// Run arbitrary EVM bytecode.
     // Evm(evmrunner::Cmd),
-    // /// Print the structure of an EVM bytecode.
-    // Bytecode(bytecode::Cmd),
+    /// Print the structure of an EVM bytecode.
+    Bytecode(bytecode::Cmd),
     // /// Run bench from specified list.
     // Bench(bench::Cmd),
 }
@@ -43,14 +43,13 @@ impl MainCmd {
             Self::Statetest(cmd) => cmd.run().map_err(Into::into),
             // Self::EofValidation(cmd) => cmd.run().map_err(Into::into),
             // Self::Evm(cmd) => cmd.run().map_err(Into::into),
-            // Self::Bytecode(cmd) => {
-            //     cmd.run();
-            //     Ok(())
-            // }
-            // Self::Bench(cmd) => {
-            //     cmd.run();
-            //     Ok(())
-            // }
+            Self::Bytecode(cmd) => {
+                cmd.run();
+                Ok(())
+            } // Self::Bench(cmd) => {
+              //     cmd.run();
+              //     Ok(())
+              // }
         }
     }
 }

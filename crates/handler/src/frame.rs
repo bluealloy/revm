@@ -458,14 +458,14 @@ where
         };
 
         Ok(FrameOrResultGen::Frame(Self::new(
-            FrameData::Create(CreateFrame { created_address }),
+            FrameData::EOFCreate(EOFCreateFrame { created_address }),
             depth,
             Interpreter::new(
                 memory.clone(),
                 Bytecode::Eof(Arc::new(initcode)),
                 interpreter_input,
                 false,
-                false,
+                true,
                 spec,
                 inputs.gas_limit,
             ),
@@ -719,7 +719,7 @@ where
                     interpreter.return_data.buffer_mut().clear();
                 };
 
-                assert_eq!(
+                assert_ne!(
                     instruction_result,
                     InstructionResult::FatalExternalError,
                     "Fatal external error in insert_eofcreate_outcome"

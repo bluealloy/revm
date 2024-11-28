@@ -773,7 +773,7 @@ where
             ctx.initialize_interp(&mut frame.eth_frame.interpreter);
         }
 
-        // TODO handle last frame_end.
+        // TODO handle last frame_end. MAKE a separate function for `last_return_result`.
 
         ret
     }

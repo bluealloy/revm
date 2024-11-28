@@ -40,9 +40,10 @@ use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 
 #[derive(Debug, Error)]
-#[error("Test {name} failed: {kind}")]
+#[error("Path: {path}\nName: {name}\nError: {kind}")]
 pub struct TestError {
     pub name: String,
+    pub path: String,
     pub kind: TestErrorKind,
 }
 
@@ -151,6 +152,7 @@ fn check_evm_execution(
     test: &Test,
     expected_output: Option<&Bytes>,
     test_name: &str,
+    test_path: &str,
     exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
     db: &mut State<EmptyDB>,
     spec: SpecId,
@@ -210,6 +212,7 @@ fn check_evm_execution(
                     print_json_output(Some(kind.to_string()));
                     return Err(TestError {
                         name: test_name.to_string(),
+                        path: test_path.to_string(),
                         kind,
                     });
                 }
@@ -225,6 +228,7 @@ fn check_evm_execution(
             print_json_output(Some(kind.to_string()));
             return Err(TestError {
                 name: test_name.to_string(),
+                path: test_path.to_string(),
                 kind,
             });
         }
@@ -238,6 +242,7 @@ fn check_evm_execution(
         print_json_output(Some(kind.to_string()));
         return Err(TestError {
             name: test_name.to_string(),
+            path: test_path.to_string(),
             kind,
         });
     }
@@ -250,6 +255,7 @@ fn check_evm_execution(
         print_json_output(Some(kind.to_string()));
         return Err(TestError {
             name: test_name.to_string(),
+            path: test_path.to_string(),
             kind,
         });
     }
@@ -270,8 +276,10 @@ pub fn execute_test_suite(
     }
 
     let s = std::fs::read_to_string(path).unwrap();
+    let path = path.to_string_lossy().into_owned();
     let suite: TestSuite = serde_json::from_str(&s).map_err(|e| TestError {
-        name: path.to_string_lossy().into_owned(),
+        name: "Uknown".to_string(),
+        path: path.clone(),
         kind: e.into(),
     })?;
 
@@ -325,6 +333,7 @@ pub fn execute_test_suite(
         } else {
             recover_address(unit.transaction.secret_key.as_slice()).ok_or_else(|| TestError {
                 name: name.clone(),
+                path: path.clone(),
                 kind: TestErrorKind::UnknownPrivateKey(unit.transaction.secret_key),
             })?
         };
@@ -486,6 +495,7 @@ pub fn execute_test_suite(
                         &test,
                         unit.out.as_ref(),
                         &name,
+                        &path,
                         &res,
                         db,
                         spec,
@@ -512,6 +522,7 @@ pub fn execute_test_suite(
                         &test,
                         unit.out.as_ref(),
                         &name,
+                        &path,
                         &res,
                         db,
                         spec,
@@ -538,7 +549,6 @@ pub fn execute_test_suite(
                     .with_bundle_update()
                     .build();
 
-                let path = path.display();
                 println!("\nTraces:");
 
                 let mut evm = InspectorMainEvm {
@@ -589,7 +599,7 @@ pub fn execute_test_suite(
                 println!("\nTx: {tx:#?}");
                 println!("Block: {block:#?}");
                 println!("Cfg: {cfg:#?}");
-                println!("\nTest name: {name:?} (index: {index}, path: {path}) failed:\n{e}");
+                println!("\nTest name: {name:?} (index: {index}, path: {path:?}) failed:\n{e}");
 
                 return Err(e);
             }
@@ -675,6 +685,7 @@ pub fn run(
             Ok(Err(e)) => thread_errors.push(e),
             Err(_) => thread_errors.push(TestError {
                 name: format!("thread {i} panicked"),
+                path: "".to_string(),
                 kind: TestErrorKind::Panic,
             }),
         }

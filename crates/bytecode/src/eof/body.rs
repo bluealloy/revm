@@ -117,7 +117,7 @@ impl EofBody {
         }
 
         // extract code section
-        let mut start = header_len + header.types_size as usize;
+        let start = header_len + header.types_size as usize;
         let mut code_end = 0;
         for size in header.code_sizes.iter().map(|x| *x as usize) {
             code_end += size;
@@ -126,6 +126,7 @@ impl EofBody {
         body.code = input.slice(start..start + header.sum_code_sizes);
 
         // extract container section
+        let mut start = start + header.sum_code_sizes;
         for size in header.container_sizes.iter().map(|x| *x as usize) {
             body.container_section
                 .push(input.slice(start..start + size));

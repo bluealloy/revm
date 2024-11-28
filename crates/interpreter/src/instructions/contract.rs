@@ -89,7 +89,12 @@ pub fn return_contract<H: Host + ?Sized>(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
     _host: &mut H,
 ) {
-    require_init_eof!(interpreter);
+    if !interpreter.runtime_flag.is_eof_init() {
+        interpreter
+            .control
+            .set_instruction_result(InstructionResult::ReturnContractInNotInitEOF);
+        return;
+    }
     let deploy_container_index = interpreter.bytecode.read_u8();
     popn!([aux_data_offset, aux_data_size], interpreter);
     let aux_data_size = as_usize_or_fail!(interpreter, aux_data_size);

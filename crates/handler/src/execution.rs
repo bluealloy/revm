@@ -89,10 +89,6 @@ where
                 }
             }
         };
-        // First frame has dummy data and it is used to create shared context.
-        //EthFrame::new()
-        //let shared_memory = Rc::new(RefCell::new(SharedMemory::new()));
-        //EthFrame::init_with_context(0, init_frame, spec_id, shared_memory, context)
         FRAME::init_first(context, init_frame)
     }
 
