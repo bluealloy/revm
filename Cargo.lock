@@ -1379,6 +1379,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-block-traces"
+version = "0.0.0"
+dependencies = [
+ "alloy-eips",
+ "alloy-provider",
+ "anyhow",
+ "indicatif",
+ "revm",
+ "revm-database",
+ "revm-inspector",
+ "tokio",
+]
+
+[[package]]
 name = "eyre"
 version = "0.6.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"

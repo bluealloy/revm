@@ -26,7 +26,7 @@ members = [
     # "crates/optimism",
 
     # examples
-    # "examples/block_traces",
+    "examples/block_traces",
     # "examples/contract_deployment",
     # "examples/database_components",
     # "examples/database_ref",

@@ -325,7 +325,7 @@ where
             Err(e) => return return_error(e.into()),
         };
 
-        let bytecode = Bytecode::new_legacy(inputs.init_code.clone()).into_analyzed();
+        let bytecode = Bytecode::new_legacy(inputs.init_code.clone());
 
         let interpreter_input = InputsImpl {
             target_address: created_address,
@@ -792,7 +792,7 @@ pub fn return_create<Journal: JournaledState>(
     journal.checkpoint_commit();
 
     // Do analysis of bytecode straight away.
-    let bytecode = Bytecode::new_legacy(interpreter_result.output.clone()).into_analyzed();
+    let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
 
     // set code
     journal.set_code(address, bytecode);

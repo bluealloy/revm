@@ -21,7 +21,7 @@ use revm::{
     interpreter::{
         instructions::host::{log, selfdestruct},
         interpreter::{EthInterpreter, InstructionProvider},
-        interpreter_wiring::{Jumps, LoopControl, MemoryTrait},
+        interpreter_wiring::{Jumps, LoopControl},
         table::{self, CustomInstruction},
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
         Instruction, InstructionResult, Interpreter, InterpreterTypes, SStoreResult,
@@ -195,65 +195,6 @@ pub trait Inspector {
     }
 }
 
-pub struct StepPrintInspector<CTX> {
-    _phantom: core::marker::PhantomData<CTX>,
-}
-
-impl<CTX> Default for StepPrintInspector<CTX> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<CTX> StepPrintInspector<CTX> {
-    pub fn new() -> Self {
-        Self {
-            _phantom: core::marker::PhantomData,
-        }
-    }
-}
-
-impl<CTX> Inspector for StepPrintInspector<CTX> {
-    type Context = CTX;
-    type InterpreterTypes = EthInterpreter;
-
-    /// Called on each step of the interpreter.
-    ///
-    /// Information about the current execution, including the memory, stack and more is available
-    /// on `interp` (see [Interpreter]).
-    ///
-    /// # Example
-    ///
-    /// To get the current opcode, use `interp.current_opcode()`.
-    #[inline]
-    fn step(
-        &mut self,
-        interp: &mut Interpreter<Self::InterpreterTypes>,
-        _context: &mut Self::Context,
-    ) {
-        let opcode = interp.bytecode.opcode();
-        let name = OpCode::name_by_op(opcode);
-
-        let gas_remaining = 0; //self.gas_inspector.gas_remaining();
-
-        let memory_size = interp.memory.size();
-
-        println!(
-            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
-            0,
-            interp.bytecode.pc(),
-            gas_remaining,
-            gas_remaining,
-            name,
-            opcode,
-            0, //interp.gas.refunded(),
-            0, //interp.gas.refunded(),
-            interp.stack.data(),
-            memory_size,
-        );
-    }
-}
-
 /// Provides access to an `Inspector` instance.
 pub trait GetInspector {
     type Inspector: Inspector;
@@ -294,6 +235,18 @@ pub struct InspectorContext<
     pub inner: Context<BLOCK, TX, SPEC, DB, CHAIN>,
     pub inspector: INSP,
     pub frame_input_stack: Vec<FrameInput>,
+}
+
+impl<INSP, BLOCK: Block, TX: Transaction, CFG: Cfg, DB: Database, CHAIN>
+    InspectorContext<INSP, BLOCK, TX, CFG, DB, CHAIN>
+{
+    pub fn new(inner: Context<BLOCK, TX, CFG, DB, CHAIN>, inspector: INSP) -> Self {
+        Self {
+            inner,
+            inspector,
+            frame_input_stack: Vec::new(),
+        }
+    }
 }
 
 impl<INSP: GetInspector, BLOCK: Block, TX: Transaction, CFG: Cfg, DB: Database, CHAIN> Host
@@ -367,16 +320,6 @@ impl<INSP: GetInspector, BLOCK: Block, TX: Transaction, CFG: Cfg, DB: Database, 
         target: Address,
     ) -> Option<StateLoad<SelfDestructResult>> {
         self.inner.selfdestruct(address, target)
-    }
-}
-
-impl<INSP, BLOCK, TX, DB: Database, CFG: Cfg, CHAIN> CfgGetter
-    for InspectorContext<INSP, BLOCK, TX, CFG, DB, CHAIN>
-{
-    type Cfg = CFG;
-
-    fn cfg(&self) -> &Self::Cfg {
-        &self.inner.cfg
     }
 }
 
@@ -467,6 +410,16 @@ where
         self.inspector
             .get_inspector()
             .selfdestruct(contract, target, value)
+    }
+}
+
+impl<INSP, BLOCK, TX, DB: Database, CFG: Cfg, CHAIN> CfgGetter
+    for InspectorContext<INSP, BLOCK, TX, CFG, DB, CHAIN>
+{
+    type Cfg = CFG;
+
+    fn cfg(&self) -> &Self::Cfg {
+        &self.inner.cfg
     }
 }
 

@@ -261,7 +261,7 @@ pub fn execute_test_suite(
     let s = std::fs::read_to_string(path).unwrap();
     let path = path.to_string_lossy().into_owned();
     let suite: TestSuite = serde_json::from_str(&s).map_err(|e| TestError {
-        name: "Uknown".to_string(),
+        name: "Unknown".to_string(),
         path: path.clone(),
         kind: e.into(),
     })?;
@@ -271,7 +271,7 @@ pub fn execute_test_suite(
         let mut cache_state = database::CacheState::new(false);
         for (address, info) in unit.pre {
             let code_hash = keccak256(&info.code);
-            let bytecode = Bytecode::new_raw(info.code).into_analyzed();
+            let bytecode = Bytecode::new_raw(info.code);
             let acc_info = revm::state::AccountInfo {
                 balance: info.balance,
                 code_hash,

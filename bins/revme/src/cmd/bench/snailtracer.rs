@@ -7,7 +7,7 @@ use revm::{
 };
 
 pub fn simple_example() {
-    let bytecode = Bytecode::new_raw(CONTRACT_DATA.clone()).into_analyzed();
+    let bytecode = Bytecode::new_raw(CONTRACT_DATA.clone());
 
     let context = Context::default()
         .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
