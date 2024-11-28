@@ -25,14 +25,15 @@ impl ExtBytecode {
 }
 
 impl Jumps for ExtBytecode {
+    #[inline]
     fn relative_jump(&mut self, offset: isize) {
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(offset) };
     }
-
+    #[inline]
     fn absolute_jump(&mut self, offset: usize) {
         self.instruction_pointer = unsafe { self.base.bytecode().as_ptr().add(offset) };
     }
-
+    #[inline]
     fn is_valid_legacy_jump(&mut self, offset: usize) -> bool {
         self.base
             .legacy_jump_table()
@@ -45,7 +46,7 @@ impl Jumps for ExtBytecode {
         // SAFETY: `instruction_pointer` always point to bytecode.
         unsafe { *self.instruction_pointer }
     }
-
+    #[inline]
     fn pc(&self) -> usize {
         // SAFETY: `instruction_pointer` should be at an offset from the start of the bytecode.
         // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
@@ -57,26 +58,32 @@ impl Jumps for ExtBytecode {
 }
 
 impl Immediates for ExtBytecode {
+    #[inline]
     fn read_i16(&self) -> i16 {
         unsafe { read_i16(self.instruction_pointer) }
     }
 
+    #[inline]
     fn read_u16(&self) -> u16 {
         unsafe { read_u16(self.instruction_pointer) }
     }
 
+    #[inline]
     fn read_i8(&self) -> i8 {
         unsafe { core::mem::transmute(*self.instruction_pointer) }
     }
 
+    #[inline]
     fn read_u8(&self) -> u8 {
         unsafe { *self.instruction_pointer }
     }
 
+    #[inline]
     fn read_slice(&self, len: usize) -> &[u8] {
         unsafe { core::slice::from_raw_parts(self.instruction_pointer, len) }
     }
 
+    #[inline]
     fn read_offset_i16(&self, offset: isize) -> i16 {
         unsafe {
             read_i16(
@@ -86,6 +93,8 @@ impl Immediates for ExtBytecode {
             )
         }
     }
+
+    #[inline]
     fn read_offset_u16(&self, offset: isize) -> u16 {
         unsafe {
             read_u16(

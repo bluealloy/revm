@@ -31,6 +31,6 @@ impl JumpTable {
     /// Check if `pc` is a valid jump destination.
     #[inline]
     pub fn is_valid(&self, pc: usize) -> bool {
-        pc < self.0.len() && self.0[pc]
+        pc < self.0.len() && unsafe { *self.0.get_unchecked(pc) }
     }
 }
