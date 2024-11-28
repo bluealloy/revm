@@ -36,8 +36,8 @@ pub enum InstructionTables<
     H: ?Sized,
     CI: CustomInstruction<Host = H, Wire = W>,
 > {
-    Plain(InstructionTable<W, H>),
-    Custom(CustomInstructionTable<CI>),
+    Plain(Box<InstructionTable<W, H>>),
+    Custom(Box<CustomInstructionTable<CI>>),
 }
 
 impl<WIRE, H, CI> InstructionTables<WIRE, H, CI>
@@ -83,7 +83,7 @@ where
         let Self::Plain(table) = self else {
             unreachable!()
         };
-        *self = Self::Custom(make_custom_instruction_table(table, f));
+        *self = Self::Custom(Box::new(make_custom_instruction_table(table, f)));
         let Self::Custom(boxed) = self else {
             unreachable!()
         };

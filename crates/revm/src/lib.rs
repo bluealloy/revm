@@ -21,6 +21,7 @@ pub use state;
 // Modules.
 
 mod evm;
+pub mod exec;
 
 // Export items.
 
@@ -28,3 +29,4 @@ pub use context::journaled_state::{JournalEntry, JournaledState};
 pub use context::Context;
 pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
 pub use evm::{Error, EthContext, Evm, MainEvm};
+pub use exec::EvmExec;

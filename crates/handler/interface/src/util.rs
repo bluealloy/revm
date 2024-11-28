@@ -1,3 +1,5 @@
+use crate::Frame;
+
 pub enum FrameOrResultGen<Frame, Result> {
     Frame(Frame),
     Result(Result),
@@ -18,3 +20,5 @@ impl<F, R> FrameOrResultGen<F, R> {
         }
     }
 }
+
+pub type FrameOrFrameResult<FRAME> = FrameOrResultGen<FRAME, <FRAME as Frame>::FrameResult>;

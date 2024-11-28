@@ -154,6 +154,11 @@ impl Stack {
         self.data.get_unchecked_mut(len - 1)
     }
 
+    /// Pops `N` values from the stack.
+    ///
+    /// # Safety
+    ///
+    /// The caller is responsible for checking the length of the stack.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn popn<const N: usize>(&mut self) -> [U256; N] {
@@ -167,6 +172,11 @@ impl Stack {
         result
     }
 
+    /// Pops `N` values from the stack and returns the top of the stack.
+    ///
+    /// # Safety
+    ///
+    /// The caller is responsible for checking the length of the stack.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn popn_top<const POPN: usize>(&mut self) -> ([U256; POPN], &mut U256) {
@@ -439,7 +449,7 @@ mod tests {
         // Test cloning a partially filled stack
         let mut partial_stack = Stack::new();
         for i in 0..10 {
-            assert_eq!(partial_stack.push(U256::from(i)), true);
+            assert!(partial_stack.push(U256::from(i)));
         }
         let mut cloned_partial = partial_stack.clone();
         assert_eq!(partial_stack, cloned_partial);
@@ -447,7 +457,7 @@ mod tests {
         assert_eq!(cloned_partial.data().capacity(), STACK_LIMIT);
 
         // Test that modifying the clone doesn't affect the original
-        assert_eq!(cloned_partial.push(U256::from(100)), true);
+        assert!(cloned_partial.push(U256::from(100)));
         assert_ne!(partial_stack, cloned_partial);
         assert_eq!(partial_stack.len(), 10);
         assert_eq!(cloned_partial.len(), 11);
@@ -455,7 +465,7 @@ mod tests {
         // Test cloning a full stack
         let mut full_stack = Stack::new();
         for i in 0..STACK_LIMIT {
-            assert_eq!(full_stack.push(U256::from(i)), true);
+            assert!(full_stack.push(U256::from(i)));
         }
         let mut cloned_full = full_stack.clone();
         assert_eq!(full_stack, cloned_full);

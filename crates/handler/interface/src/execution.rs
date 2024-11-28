@@ -1,3 +1,4 @@
+use crate::util::FrameOrFrameResult;
 pub use crate::{Frame, FrameOrResultGen};
 pub use std::{vec, vec::Vec};
 
@@ -12,7 +13,7 @@ pub trait ExecutionHandler {
         &mut self,
         context: &mut Self::Context,
         gas_limit: u64,
-    ) -> Result<FrameOrResultGen<Self::Frame, <Self::Frame as Frame>::FrameResult>, Self::Error>;
+    ) -> Result<FrameOrFrameResult<Self::Frame>, Self::Error>;
 
     /// Execute create.
     fn last_frame_result(

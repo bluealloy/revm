@@ -211,7 +211,7 @@ fn return_inner(
         output = interpreter.memory.slice_len(offset, len).to_vec().into()
     }
 
-    let gas = interpreter.control.gas().clone();
+    let gas = *interpreter.control.gas();
     interpreter.control.set_next_action(
         InterpreterAction::Return {
             result: InterpreterResult {

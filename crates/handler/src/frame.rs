@@ -651,12 +651,10 @@ where
                             return_revert!() => U256::from(1),
                             _ => U256::from(2),
                         }
+                    } else if ins_result.is_ok() {
+                        U256::from(1)
                     } else {
-                        if ins_result.is_ok() {
-                            U256::from(1)
-                        } else {
-                            U256::ZERO
-                        }
+                        U256::ZERO
                     }
                 };
                 // Safe to push without stack limit check

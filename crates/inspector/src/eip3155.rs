@@ -197,7 +197,7 @@ pub trait CloneStack {
 
 impl CloneStack for Stack {
     fn clone_from(&self) -> Vec<U256> {
-        self.data().iter().map(|b| b.clone()).collect()
+        self.data().to_vec()
     }
 }
 

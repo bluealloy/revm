@@ -66,8 +66,7 @@ where
 
     fn validate_initial_tx_gas(&self, ctx: &Self::Context) -> Result<u64, Self::Error> {
         let spec = ctx.cfg().spec().into();
-        validate_initial_tx_gas::<&Self::Context, InvalidTransaction>(&ctx, spec)
-            .map_err(Into::into)
+        validate_initial_tx_gas::<&Self::Context, InvalidTransaction>(ctx, spec).map_err(Into::into)
     }
 }
 
@@ -327,16 +326,12 @@ where
 
     // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
     // Transfer will be done inside `*_inner` functions.
-    if balance_check > account.info.balance {
-        if !ctx.cfg().is_balance_check_disabled() {
-            return Err(InvalidTransaction::LackOfFundForMaxFee {
-                fee: Box::new(balance_check),
-                balance: Box::new(account.info.balance),
-            }
-            .into());
+    if balance_check > account.info.balance && !ctx.cfg().is_balance_check_disabled() {
+        return Err(InvalidTransaction::LackOfFundForMaxFee {
+            fee: Box::new(balance_check),
+            balance: Box::new(account.info.balance),
         }
-        // TODO wiring Add transaction cost to balance to ensure execution doesn't fail.
-        // else { account.info.balance = account.info.balance.saturating_add(balance_check)};
+        .into());
     }
 
     Ok(())

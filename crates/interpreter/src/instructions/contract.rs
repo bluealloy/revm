@@ -145,7 +145,7 @@ pub fn return_contract<H: Host + ?Sized>(
     let output: Bytes = output.into();
 
     let result = InstructionResult::ReturnContract;
-    let gas = interpreter.control.gas().clone();
+    let gas = *interpreter.control.gas();
     interpreter.control.set_next_action(
         crate::InterpreterAction::Return {
             result: InterpreterResult {
@@ -398,7 +398,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     let scheme = if IS_CREATE2 {
         popn!([salt], interpreter);
         // SAFETY: len is reasonable in size as gas for it is already deducted.
-        gas_or_fail!(interpreter, gas::create2_cost(len.try_into().unwrap()));
+        gas_or_fail!(interpreter, gas::create2_cost(len));
         CreateScheme::Create2 { salt }
     } else {
         gas!(interpreter, gas::CREATE);

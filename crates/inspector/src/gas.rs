@@ -15,6 +15,12 @@ pub struct GasInspector<CTX, INTR> {
     _phantom: core::marker::PhantomData<(CTX, INTR)>,
 }
 
+impl<CTX, INTR> Default for GasInspector<CTX, INTR> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<CTX, INTR> GasInspector<CTX, INTR> {
     pub fn gas_remaining(&self) -> u64 {
         self.gas_remaining

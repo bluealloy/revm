@@ -26,36 +26,10 @@ all = "warn"
 primitives.workspace = true
 interpreter.workspace = true
 
-
-# Optional
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "rc",
-], optional = true }
-
 [dev-dependencies]
 database.workspace = true
 
 [features]
 default = ["std"]
-std = ["serde?/std"]
-serde = ["dep:serde", "primitives/serde"]
-serde-json = ["serde"]
-
-# Enable additional features for development
-# They add functions to Cfg trait.
-dev = [
-    "memory_limit",
-    "optional_balance_check",
-    "optional_block_gas_limit",
-    "optional_eip3607",
-    "optional_gas_refund",
-    "optional_no_base_fee",
-
-]
-memory_limit = []
-optional_balance_check = []
-optional_block_gas_limit = []
-optional_eip3607 = []
-optional_gas_refund = []
-optional_no_base_fee = []
+std = []
+serde = ["std", "primitives/serde", "interpreter/serde"]

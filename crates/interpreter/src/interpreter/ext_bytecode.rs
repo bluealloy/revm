@@ -101,15 +101,13 @@ impl EofCodeInfo for ExtBytecode {
     fn code_section_info(&self, idx: usize) -> Option<&TypesSection> {
         self.base
             .eof()
-            .map(|eof| eof.body.types_section.get(idx))
-            .flatten()
+            .and_then(|eof| eof.body.types_section.get(idx))
     }
 
     fn code_section_pc(&self, idx: usize) -> Option<usize> {
         self.base
             .eof()
-            .map(|eof| eof.body.eof_code_section_start(idx))
-            .flatten()
+            .and_then(|eof| eof.body.eof_code_section_start(idx))
     }
 }
 
@@ -131,8 +129,7 @@ impl EofContainer for ExtBytecode {
     fn eof_container(&self, index: usize) -> Option<&Bytes> {
         self.base
             .eof()
-            .map(|eof| eof.body.container_section.get(index))
-            .flatten()
+            .and_then(|eof| eof.body.container_section.get(index))
     }
 }
 

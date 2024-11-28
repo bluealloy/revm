@@ -136,9 +136,9 @@ impl From<SpecId> for &'static str {
     }
 }
 
-impl ToString for SpecId {
-    fn to_string(&self) -> String {
-        <&'static str>::from(*self).into()
+impl core::fmt::Display for SpecId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", <&'static str>::from(*self))
     }
 }
 

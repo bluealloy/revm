@@ -4,7 +4,7 @@ use context_interface::{
     result::InvalidTransaction, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalStateGetter,
     JournalStateGetterDBError, Transaction, TransactionGetter,
 };
-use handler_interface::{ExecutionHandler, Frame as FrameTrait, FrameOrResultGen};
+use handler_interface::{util::FrameOrFrameResult, ExecutionHandler, Frame as FrameTrait};
 use interpreter::{
     interpreter::{EthInstructionProvider, EthInterpreter},
     CallInputs, CallScheme, CallValue, CreateInputs, CreateScheme, EOFCreateInputs, EOFCreateKind,
@@ -49,8 +49,7 @@ where
         &mut self,
         context: &mut Self::Context,
         gas_limit: u64,
-    ) -> Result<FrameOrResultGen<Self::Frame, <Self::Frame as FrameTrait>::FrameResult>, Self::Error>
-    {
+    ) -> Result<FrameOrFrameResult<Self::Frame>, Self::Error> {
         // Make new frame action.
         let spec = context.cfg().spec().into();
         let tx = context.tx();
@@ -113,7 +112,7 @@ where
             gas.record_refund(refunded);
         }
 
-        Ok(frame_result.into())
+        Ok(frame_result)
     }
 }
 

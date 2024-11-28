@@ -197,7 +197,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
                 result: self.control.instruction_result(),
                 // return empty bytecode
                 output: Bytes::new(),
-                gas: self.control.gas().clone(),
+                gas: *self.control.gas(),
             },
         }
     }

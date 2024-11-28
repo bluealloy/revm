@@ -2,7 +2,7 @@ use context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context};
 use context_interface::{
     journaled_state::JournaledState,
     result::{EVMError, HaltReason, InvalidHeader, InvalidTransaction, ResultAndState},
-    Block, BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
+    BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
     JournalStateGetterDBError, Transaction, TransactionGetter,
 };
 use database_interface::Database;
@@ -32,15 +32,6 @@ pub type EthContext<DB> = Context<BlockEnv, TxEnv, CfgEnv, DB, ()>;
 
 /// Mainnet EVM type.
 pub type MainEvm<DB> = Evm<Error<DB>, EthContext<DB>>;
-
-pub trait EvmRunner {
-    type TX: Transaction;
-    type BLOCK: Block;
-
-    fn set_block(&mut self, block: Self::BLOCK);
-
-    fn transact(&mut self, tx: &Self::TX);
-}
 
 impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC>
     Evm<ERROR, CTX, EthHandler<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC>>

@@ -30,7 +30,6 @@ database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
 bytecode.workspace = true
-database = { workspace = true, optional = true }
 context.workspace = true
 context-interface.workspace = true
 handler.workspace = true
@@ -73,7 +72,7 @@ arbitrary = ["primitives/arbitrary"]
 asm-keccak = ["primitives/asm-keccak"]
 portable = ["precompile/portable"]
 
-test-utils = ["database"]
+test-utils = []
 
 dev = [
     "memory_limit",

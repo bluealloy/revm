@@ -199,6 +199,12 @@ pub struct StepPrintInspector<CTX> {
     _phantom: core::marker::PhantomData<CTX>,
 }
 
+impl<CTX> Default for StepPrintInspector<CTX> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<CTX> StepPrintInspector<CTX> {
     pub fn new() -> Self {
         Self {
@@ -557,9 +563,7 @@ where
     }
 
     fn from_base(instruction: Instruction<Self::Wire, Self::Host>) -> Self {
-        Self {
-            instruction: instruction,
-        }
+        Self { instruction }
     }
 }
 
@@ -615,14 +619,18 @@ where
             unsafe { MaybeUninit::uninit().assume_init() };
 
         for (i, element) in table.iter_mut().enumerate() {
-            let foo = InspectorInstruction {
+            let function = InspectorInstruction {
                 instruction: main_table[i],
             };
-            *element = MaybeUninit::new(foo);
+            *element = MaybeUninit::new(function);
         }
 
-        let mut table =
-            unsafe { core::mem::transmute::<_, [InspectorInstruction<WIRE, HOST>; 256]>(table) };
+        let mut table = unsafe {
+            core::mem::transmute::<
+                [MaybeUninit<InspectorInstruction<WIRE, HOST>>; 256],
+                [InspectorInstruction<WIRE, HOST>; 256],
+            >(table)
+        };
 
         // inspector log wrapper
 

@@ -166,7 +166,7 @@ pub fn apply_eip7702_auth_list<
         };
 
         // 2. Verify the chain id is either 0 or the chain's current ID.
-        if !(authorization.chain_id == 0) && authorization.chain_id != chain_id {
+        if authorization.chain_id != 0 && authorization.chain_id != chain_id {
             continue;
         }
 

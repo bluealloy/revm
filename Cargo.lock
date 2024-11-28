@@ -2952,7 +2952,6 @@ dependencies = [
  "revm-database",
  "revm-interpreter",
  "revm-primitives",
- "serde",
 ]
 
 [[package]]

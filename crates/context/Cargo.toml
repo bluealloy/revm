@@ -30,7 +30,6 @@ database-interface.workspace = true
 state.workspace = true
 specification.workspace = true
 bytecode.workspace = true
-database = { workspace = true, optional = true }
 
 # misc
 derive-where.workspace = true

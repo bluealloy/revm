@@ -83,6 +83,10 @@ pub trait EofContainer {
 pub trait SubRoutineStack {
     fn len(&self) -> usize;
 
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     fn routine_idx(&self) -> usize;
 
     /// Sets new code section without touching subroutine stack.
@@ -101,6 +105,11 @@ pub trait SubRoutineStack {
 pub trait StackTrait {
     /// Returns stack length.
     fn len(&self) -> usize;
+
+    /// Returns `true` if stack is empty.
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 
     /// Pushes values to the stack
     /// Return `true` if push was successful, `false` if stack overflow.
