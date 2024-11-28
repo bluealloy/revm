@@ -321,8 +321,6 @@ impl<DB: Database> JournaledState<DB> {
         Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
         let to_balance = &mut to_account.info.balance;
         let Some(to_balance_decr) = to_balance.checked_add(balance) else {
-            println!("overflow payment");
-
             return Ok(Some(TransferError::OverflowPayment));
         };
         *to_balance = to_balance_decr;

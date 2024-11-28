@@ -3,7 +3,7 @@ cfg_if::cfg_if! {
     if #[cfg(feature = "c-kzg")] {
         use c_kzg::{Bytes32, Bytes48, KzgProof};
     } else if #[cfg(feature = "kzg-rs")] {
-        use kzg_rs::{Bytes32, Bytes48, KzgProof, KzgSettings};
+        use kzg_rs::{Bytes32, Bytes48, KzgProof};
     }
 }
 use primitives::{hex_literal::hex, Bytes};
