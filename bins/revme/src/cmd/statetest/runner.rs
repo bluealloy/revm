@@ -152,12 +152,11 @@ fn check_evm_execution(
     test: &Test,
     expected_output: Option<&Bytes>,
     test_name: &str,
-    test_path: &str,
     exec_result: &Result<ExecutionResult<HaltReason>, EVMError<Infallible, InvalidTransaction>>,
     db: &mut State<EmptyDB>,
     spec: SpecId,
     print_json_outcome: bool,
-) -> Result<(), TestError> {
+) -> Result<(), TestErrorKind> {
     let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
     let state_root = state_merkle_trie_root(db.cache.trie_account());
 
@@ -210,11 +209,7 @@ fn check_evm_execution(
                         got_output: result.output().cloned(),
                     };
                     print_json_output(Some(kind.to_string()));
-                    return Err(TestError {
-                        name: test_name.to_string(),
-                        path: test_path.to_string(),
-                        kind,
-                    });
+                    return Err(kind);
                 }
             }
         }
@@ -226,11 +221,7 @@ fn check_evm_execution(
                 got_exception: exec_result.clone().err().map(|e| e.to_string()),
             };
             print_json_output(Some(kind.to_string()));
-            return Err(TestError {
-                name: test_name.to_string(),
-                path: test_path.to_string(),
-                kind,
-            });
+            return Err(kind);
         }
     }
 
@@ -240,11 +231,7 @@ fn check_evm_execution(
             expected: test.logs,
         };
         print_json_output(Some(kind.to_string()));
-        return Err(TestError {
-            name: test_name.to_string(),
-            path: test_path.to_string(),
-            kind,
-        });
+        return Err(kind);
     }
 
     if state_root != test.hash {
@@ -253,11 +240,7 @@ fn check_evm_execution(
             expected: test.hash,
         };
         print_json_output(Some(kind.to_string()));
-        return Err(TestError {
-            name: test_name.to_string(),
-            path: test_path.to_string(),
-            kind,
-        });
+        return Err(kind);
     }
 
     print_json_output(None);
@@ -475,7 +458,7 @@ pub fn execute_test_suite(
                             >::new(),
                             EthPostExecution::new(),
                         ),
-                        _error: std::marker::PhantomData,
+                        _error: core::marker::PhantomData,
                     };
 
                     // let timer = Instant::now();
@@ -495,7 +478,6 @@ pub fn execute_test_suite(
                         &test,
                         unit.out.as_ref(),
                         &name,
-                        &path,
                         &res,
                         db,
                         spec,
@@ -522,7 +504,6 @@ pub fn execute_test_suite(
                         &test,
                         unit.out.as_ref(),
                         &name,
-                        &path,
                         &res,
                         db,
                         spec,
@@ -538,7 +519,11 @@ pub fn execute_test_suite(
                 // if we are already in trace mode, just return error
                 static FAILED: AtomicBool = AtomicBool::new(false);
                 if trace || FAILED.swap(true, Ordering::SeqCst) {
-                    return Err(e);
+                    return Err(TestError {
+                        name: name.clone(),
+                        path: path.clone(),
+                        kind: e,
+                    });
                 }
 
                 // re build to run with tracing
@@ -579,7 +564,7 @@ pub fn execute_test_suite(
                             >::new(),
                             EthPostExecution::new(),
                         ),
-                    _error: std::marker::PhantomData,
+                    _error: core::marker::PhantomData,
                 };
 
                 let res = evm.transact();
@@ -601,7 +586,11 @@ pub fn execute_test_suite(
                 println!("Cfg: {cfg:#?}");
                 println!("\nTest name: {name:?} (index: {index}, path: {path:?}) failed:\n{e}");
 
-                return Err(e);
+                return Err(TestError {
+                    path: path.clone(),
+                    name: name.clone(),
+                    kind: e,
+                });
             }
         }
     }

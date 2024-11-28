@@ -463,7 +463,7 @@ mod tests {
         assert_eq!(cloned_full.data().capacity(), STACK_LIMIT);
 
         // Test push to the full original or cloned stack should return StackOverflow
-        assert_eq!(full_stack.push(U256::from(100)), false);
-        assert_eq!(cloned_full.push(U256::from(100)), false);
+        assert!(!full_stack.push(U256::from(100)));
+        assert!(!cloned_full.push(U256::from(100)));
     }
 }

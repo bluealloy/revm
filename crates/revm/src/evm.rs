@@ -21,7 +21,7 @@ use std::vec::Vec;
 pub struct Evm<ERROR, CTX = Context, HANDLER = EthHandler<CTX, ERROR>> {
     pub context: CTX,
     pub handler: HANDLER,
-    pub _error: std::marker::PhantomData<fn() -> ERROR>,
+    pub _error: core::marker::PhantomData<fn() -> ERROR>,
 }
 
 /// Mainnet Error.
