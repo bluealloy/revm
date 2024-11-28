@@ -64,6 +64,18 @@ pub struct EthHandler<
     _phantom: core::marker::PhantomData<fn() -> (CTX, ERROR)>,
 }
 
+impl<CTX, ERROR> Default for EthHandler<CTX, ERROR> {
+    fn default() -> Self {
+        Self {
+            validation: EthValidation::new(),
+            pre_execution: EthPreExecution::new(),
+            execution: EthExecution::new(),
+            post_execution: EthPostExecution::new(),
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
 impl<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC>
     EthHandler<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC>
 {

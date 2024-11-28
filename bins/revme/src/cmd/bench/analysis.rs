@@ -1,8 +1,9 @@
-use database::{BenchmarkDB, EthereumBenchmarkWiring};
+use database::BenchmarkDB;
 use revm::{
     bytecode::Bytecode,
+    handler::EthHandler,
     primitives::{address, bytes, hex, Bytes, TxKind},
-    Evm,
+    Context, MainEvm,
 };
 use std::time::Instant;
 
@@ -13,17 +14,16 @@ pub fn run() {
     let bytecode_analysed = Bytecode::new_raw(contract_data).into_analyzed();
 
     // BenchmarkDB is dummy state that implements Database trait.
-    let mut evm = Evm::<EthereumBenchmarkWiring>::builder()
-        .modify_tx_env(|tx| {
+    let context = Context::default()
+        .with_db(BenchmarkDB::new_bytecode(bytecode_raw))
+        .modify_tx_chained(|tx| {
             // execution globals block hash/gas_limit/coinbase/timestamp..
             tx.caller = address!("1000000000000000000000000000000000000000");
             tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
             //evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
             tx.data = bytes!("8035F0CE");
-        })
-        .with_db(BenchmarkDB::new_bytecode(bytecode_raw))
-        .with_default_ext_ctx()
-        .build();
+        });
+    let mut evm = MainEvm::new(context, EthHandler::default());
 
     // Just to warm up the processor.
     for _ in 0..10000 {
@@ -36,11 +36,8 @@ pub fn run() {
     }
     println!("Raw elapsed time: {:?}", timer.elapsed());
 
-    let mut evm = evm
-        .modify()
-        .with_db(BenchmarkDB::new_bytecode(bytecode_analysed))
-        .with_default_ext_ctx()
-        .build();
+    evm.context
+        .modify_db(|db| *db = BenchmarkDB::new_bytecode(bytecode_analysed));
 
     let timer = Instant::now();
     for _ in 0..30000 {

@@ -24,6 +24,16 @@ pub struct Evm<ERROR, CTX = Context, HANDLER = EthHandler<CTX, ERROR>> {
     pub _error: core::marker::PhantomData<fn() -> ERROR>,
 }
 
+impl<ERROR, CTX, HANDLER> Evm<ERROR, CTX, HANDLER> {
+    pub fn new(context: CTX, handler: HANDLER) -> Self {
+        Self {
+            context,
+            handler,
+            _error: core::marker::PhantomData,
+        }
+    }
+}
+
 /// Mainnet Error.
 pub type Error<DB> = EVMError<<DB as Database>::Error, InvalidTransaction>;
 

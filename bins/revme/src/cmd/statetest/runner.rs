@@ -408,24 +408,12 @@ pub fn execute_test_suite(
                     .with_bundle_update()
                     .build();
                 let mut evm = MainEvm {
-                    context: Context {
-                        block: block.clone(),
-                        tx: tx.clone(),
-                        cfg: cfg.clone(),
-                        journaled_state: JournaledState::new(
-                            cfg.spec().into(),
-                            &mut state,
-                            Default::default(),
-                        ),
-                        chain: (),
-                        error: Ok(()),
-                    },
-                    handler: EthHandler::new(
-                        EthValidation::new(),
-                        EthPreExecution::new(),
-                        EthExecution::new(),
-                        EthPostExecution::new(),
-                    ),
+                    context: Context::default()
+                        .with_block(block.clone())
+                        .with_tx(tx.clone())
+                        .with_cfg(cfg.clone())
+                        .with_db(&mut state),
+                    handler: EthHandler::default(),
                     _error: core::marker::PhantomData,
                 };
 
@@ -433,18 +421,11 @@ pub fn execute_test_suite(
                 let (e, exec_result) = if trace {
                     let mut evm = InspectorMainEvm {
                         context: InspectorContext {
-                            inner: Context {
-                                block: block.clone(),
-                                tx: tx.clone(),
-                                cfg: cfg.clone(),
-                                journaled_state: JournaledState::new(
-                                    cfg.spec().into(),
-                                    &mut state,
-                                    Default::default(),
-                                ),
-                                chain: (),
-                                error: Ok(()),
-                            },
+                            inner: Context::default()
+                                .with_block(block.clone())
+                                .with_tx(tx.clone())
+                                .with_cfg(cfg.clone())
+                                .with_db(&mut state),
                             inspector: TracerEip3155::new(Box::new(stdout())),
                             frame_input_stack: Vec::new(),
                         },
@@ -542,11 +523,7 @@ pub fn execute_test_suite(
                             block: block.clone(),
                             tx: tx.clone(),
                             cfg: cfg.clone(),
-                            journaled_state: JournaledState::new(
-                                cfg.spec().into(),
-                                &mut state,
-                                Default::default(),
-                            ),
+                            journaled_state: JournaledState::new(cfg.spec().into(), &mut state),
                             chain: (),
                             error: Ok(()),
                         },

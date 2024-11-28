@@ -10,14 +10,12 @@ use alloy_sol_macro::sol;
 use alloy_sol_types::SolCall;
 use database::CacheDB;
 use revm::{
+    context_interface::result::{ExecutionResult, Output},
     database_interface::EmptyDB,
+    handler::EthHandler,
     primitives::{address, hex, keccak256, Address, Bytes, TxKind, B256, U256},
     state::{AccountInfo, Bytecode},
-    context_interface::{
-        result::{ExecutionResult, Output},
-        EthereumWiring,
-    },
-    Evm,
+    Context, MainEvm,
 };
 
 use std::fs::File;
@@ -32,8 +30,6 @@ sol! {
     }
 }
 
-type EthereumCacheDbWiring = EthereumWiring<CacheDB<EmptyDB>, ()>;
-
 pub fn run() {
     let (seed, iterations) = try_init_env_vars().expect("Failed to parse env vars");
 
@@ -41,15 +37,12 @@ pub fn run() {
 
     let db = init_db();
 
-    let mut evm = Evm::<EthereumCacheDbWiring>::builder()
-        .modify_tx_env(|tx| {
-            tx.caller = address!("1000000000000000000000000000000000000000");
-            tx.transact_to = TxKind::Call(BURNTPIX_MAIN_ADDRESS);
-            tx.data = run_call_data.clone().into();
-        })
-        .with_db(db)
-        .with_default_ext_ctx()
-        .build();
+    let context = Context::default().with_db(db).modify_tx_chained(|tx| {
+        tx.caller = address!("1000000000000000000000000000000000000000");
+        tx.transact_to = TxKind::Call(BURNTPIX_MAIN_ADDRESS);
+        tx.data = run_call_data.clone().into();
+    });
+    let mut evm = MainEvm::new(context, EthHandler::default());
 
     let started = Instant::now();
     let tx_result = evm.transact().unwrap().result;

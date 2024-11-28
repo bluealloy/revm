@@ -1,4 +1,4 @@
-use crate::{block::BlockEnv, journaled_state::JournaledState, tx::TxEnv};
+use crate::{block::BlockEnv, journaled_state::JournaledState as JournaledStateImpl, tx::TxEnv};
 use bytecode::{Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 use context_interface::{
     journaled_state::{AccountLoad, Eip7702CodeLoad},
@@ -9,7 +9,7 @@ use context_interface::{
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
 use interpreter::{as_u64_saturated, Host, SStoreResult, SelfDestructResult, StateLoad};
-use primitives::{Address, Bytes, HashSet, Log, B256, BLOCK_HASH_HISTORY, U256};
+use primitives::{Address, Bytes, Log, B256, BLOCK_HASH_HISTORY, U256};
 use specification::hardfork::SpecId;
 
 /// EVM context contains data that EVM needs for execution.
@@ -22,11 +22,17 @@ pub struct Context<BLOCK = BlockEnv, TX = TxEnv, CFG = CfgEnv, DB: Database = Em
     /// Configurations.
     pub cfg: CFG,
     /// EVM State with journaling support and database.
-    pub journaled_state: JournaledState<DB>,
+    pub journaled_state: JournaledStateImpl<DB>,
     /// Inner context.
     pub chain: CHAIN,
     /// Error that happened during execution.
     pub error: Result<(), <DB as Database>::Error>,
+}
+
+impl Default for Context {
+    fn default() -> Self {
+        Self::new(EmptyDB::new(), SpecId::LATEST)
+    }
 }
 
 impl<BLOCK: Block + Default, TX: Transaction + Default, DB: Database, CHAIN: Default>
@@ -39,13 +45,19 @@ impl<BLOCK: Block + Default, TX: Transaction + Default, DB: Database, CHAIN: Def
             tx: TX::default(),
             block: BLOCK::default(),
             cfg,
-            journaled_state: JournaledState::new(SpecId::LATEST, db, HashSet::default()),
+            journaled_state: JournaledStateImpl::new(SpecId::LATEST, db),
             chain: Default::default(),
             error: Ok(()),
         }
     }
 }
-impl<BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> Context<BLOCK, TX, SPEC, DB, CHAIN> {
+impl<BLOCK, TX, CFG, DB, CHAIN> Context<BLOCK, TX, CFG, DB, CHAIN>
+where
+    BLOCK: Block,
+    TX: Transaction,
+    CFG: Cfg,
+    DB: Database,
+{
     /// Return account code bytes and if address is cold loaded.
     ///
     /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
@@ -91,6 +103,167 @@ impl<BLOCK: Block, TX: Transaction, SPEC, DB: Database, CHAIN> Context<BLOCK, TX
             code.original_bytes(),
             a.is_cold,
         ))
+    }
+
+    /// Create a new context with a new database type.
+    pub fn with_db<ODB: Database>(self, db: ODB) -> Context<BLOCK, TX, CFG, ODB, CHAIN> {
+        let spec = self.cfg.spec().into();
+        Context {
+            tx: self.tx,
+            block: self.block,
+            cfg: self.cfg,
+            journaled_state: JournaledStateImpl::new(spec, db),
+            chain: self.chain,
+            error: Ok(()),
+        }
+    }
+
+    /// Create a new context with a new block type.
+    pub fn with_block<OB: Block>(self, block: OB) -> Context<OB, TX, CFG, DB, CHAIN> {
+        Context {
+            tx: self.tx,
+            block,
+            cfg: self.cfg,
+            journaled_state: self.journaled_state,
+            chain: self.chain,
+            error: Ok(()),
+        }
+    }
+
+    /// Create a new context with a new transaction type.
+    pub fn with_tx<OTX: Transaction>(self, tx: OTX) -> Context<BLOCK, OTX, CFG, DB, CHAIN> {
+        Context {
+            tx,
+            block: self.block,
+            cfg: self.cfg,
+            journaled_state: self.journaled_state,
+            chain: self.chain,
+            error: Ok(()),
+        }
+    }
+
+    /// Create a new context with a new chain type.
+    pub fn with_chain<OC>(self, chain: OC) -> Context<BLOCK, TX, CFG, DB, OC> {
+        Context {
+            tx: self.tx,
+            block: self.block,
+            cfg: self.cfg,
+            journaled_state: self.journaled_state,
+            chain,
+            error: Ok(()),
+        }
+    }
+
+    /// Create a new context with a new chain type.
+    pub fn with_cfg<OCFG: Cfg>(mut self, cfg: OCFG) -> Context<BLOCK, TX, OCFG, DB, CHAIN> {
+        self.journaled_state.set_spec_id(cfg.spec().into());
+        Context {
+            tx: self.tx,
+            block: self.block,
+            cfg,
+            journaled_state: self.journaled_state,
+            chain: self.chain,
+            error: Ok(()),
+        }
+    }
+
+    /// Modify the context configuration.
+    pub fn modify_cfg_chained<F>(mut self, f: F) -> Self
+    where
+        F: FnOnce(&mut CFG),
+    {
+        f(&mut self.cfg);
+        self.journaled_state.set_spec_id(self.cfg.spec().into());
+        self
+    }
+
+    /// Modify the context block.
+    pub fn modify_block_chained<F>(mut self, f: F) -> Self
+    where
+        F: FnOnce(&mut BLOCK),
+    {
+        self.modify_block(f);
+        self
+    }
+
+    /// Modify the context transaction.
+    pub fn modify_tx_chained<F>(mut self, f: F) -> Self
+    where
+        F: FnOnce(&mut TX),
+    {
+        self.modify_tx(f);
+        self
+    }
+
+    /// Modify the context chain.
+    pub fn modify_chain_chained<F>(mut self, f: F) -> Self
+    where
+        F: FnOnce(&mut CHAIN),
+    {
+        self.modify_chain(f);
+        self
+    }
+
+    /// Modify the context database.
+    pub fn modify_db_chained<F>(mut self, f: F) -> Self
+    where
+        F: FnOnce(&mut DB),
+    {
+        self.modify_db(f);
+        self
+    }
+
+    /// Modify the context journal.
+    pub fn modify_journal_chained<F>(mut self, f: F) -> Self
+    where
+        F: FnOnce(&mut JournaledStateImpl<DB>),
+    {
+        self.modify_journal(f);
+        self
+    }
+
+    /// Modify the context block.
+    pub fn modify_block<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut BLOCK),
+    {
+        f(&mut self.block);
+    }
+
+    pub fn modify_tx<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut TX),
+    {
+        f(&mut self.tx);
+    }
+
+    pub fn modify_cfg<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut CFG),
+    {
+        f(&mut self.cfg);
+        self.journaled_state.set_spec_id(self.cfg.spec().into());
+    }
+
+    pub fn modify_chain<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut CHAIN),
+    {
+        f(&mut self.chain);
+    }
+
+    pub fn modify_db<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut DB),
+    {
+        f(&mut self.journaled_state.database);
+    }
+
+    pub fn modify_journal<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut JournaledStateImpl<DB>),
+    {
+        f(&mut self.journaled_state);
     }
 
     /// Get code hash of address.
@@ -264,7 +437,7 @@ impl<BLOCK, TX, DB: Database, CFG: Cfg, CHAIN> CfgGetter for Context<BLOCK, TX, 
 impl<BLOCK, TX, SPEC, DB: Database, CHAIN> JournalStateGetter
     for Context<BLOCK, TX, SPEC, DB, CHAIN>
 {
-    type Journal = JournaledState<DB>;
+    type Journal = JournaledStateImpl<DB>;
 
     fn journal(&mut self) -> &mut Self::Journal {
         &mut self.journaled_state

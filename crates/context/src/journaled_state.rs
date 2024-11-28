@@ -176,11 +176,7 @@ impl<DB: Database> JournaledState<DB> {
     ///
     /// This function will journal state after Spurious Dragon fork.
     /// And will not take into account if account is not existing or empty.
-    pub fn new(
-        spec: SpecId,
-        database: DB,
-        warm_preloaded_addresses: HashSet<Address>,
-    ) -> JournaledState<DB> {
+    pub fn new(spec: SpecId, database: DB) -> JournaledState<DB> {
         Self {
             database,
             state: HashMap::default(),
@@ -189,7 +185,7 @@ impl<DB: Database> JournaledState<DB> {
             journal: vec![vec![]],
             depth: 0,
             spec,
-            warm_preloaded_addresses,
+            warm_preloaded_addresses: HashSet::default(),
         }
     }
 

@@ -16,9 +16,16 @@ use specification::{eip4844, hardfork::SpecId};
 use state::Account;
 use std::boxed::Box;
 
-#[derive(Default)]
 pub struct EthValidation<CTX, ERROR> {
-    pub _phantom: core::marker::PhantomData<(CTX, ERROR)>,
+    pub _phantom: core::marker::PhantomData<fn() -> (CTX, ERROR)>,
+}
+
+impl<CTX, ERROR> Default for EthValidation<CTX, ERROR> {
+    fn default() -> Self {
+        Self {
+            _phantom: core::marker::PhantomData,
+        }
+    }
 }
 
 impl<CTX, ERROR> EthValidation<CTX, ERROR> {
