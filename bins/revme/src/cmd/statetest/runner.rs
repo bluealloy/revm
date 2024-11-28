@@ -443,7 +443,7 @@ pub fn execute_test_suite(
                         EthExecution::new(),
                         EthPostExecution::new(),
                     ),
-                    _error: std::marker::PhantomData,
+                    _error: core::marker::PhantomData,
                 };
 
                 // do the deed
