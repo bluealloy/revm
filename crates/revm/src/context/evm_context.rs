@@ -364,7 +364,7 @@ impl<DB: Database> EvmContext<DB> {
             }
         };
 
-        let bytecode = Bytecode::new_legacy(inputs.init_code.clone());
+        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
 
         let contract = Contract::new(
             Bytes::new(),

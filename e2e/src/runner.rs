@@ -3,7 +3,7 @@ use super::{
     models::{SpecName, Test, TestSuite},
     utils::recover_address,
 };
-use fluentbase_core::blended::{create_rwasm_proxy_bytecode, ENABLE_EVM_PROXY_CONTRACT};
+use fluentbase_core::blended::{create_delegate_proxy_bytecode, ENABLE_EVM_PROXY_CONTRACT};
 use fluentbase_genesis::{
     devnet_genesis_from_file,
     GENESIS_KECCAK_HASH_SLOT,
@@ -487,7 +487,7 @@ pub fn execute_test_suite(
 
     let devnet_genesis = devnet_genesis_from_file();
     let (proxy_bytecode, proxy_bytecode_hash) = if ENABLE_EVM_PROXY_CONTRACT {
-        let proxy_bytecode = create_rwasm_proxy_bytecode(PRECOMPILE_EVM);
+        let proxy_bytecode = create_delegate_proxy_bytecode(PRECOMPILE_EVM);
         let code_hash = B256::from(poseidon_hash(proxy_bytecode.as_ref()));
         (proxy_bytecode, code_hash)
     } else {
@@ -560,7 +560,7 @@ pub fn execute_test_suite(
                     .insert(EVM_CODE_HASH_SLOT, U256::from_le_bytes(evm_code_hash.0));
                 // set account info bytecode to the proxy loader
                 acc_info.code_hash = proxy_bytecode_hash;
-                acc_info.code = Some(Bytecode::new_legacy(proxy_bytecode.clone()));
+                acc_info.code = Some(Bytecode::new_raw(proxy_bytecode.clone()));
                 // put EVM preimage inside
                 let preimage_address = Address::from_slice(&evm_code_hash.0[12..]);
                 cache_state2.insert_account(
