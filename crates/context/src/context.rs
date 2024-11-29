@@ -1,8 +1,10 @@
 use crate::{block::BlockEnv, journaled_state::JournaledState as JournaledStateImpl, tx::TxEnv};
 use bytecode::{Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 use context_interface::{
+    block::BlockSetter,
     journaled_state::{AccountLoad, Eip7702CodeLoad},
     result::EVMError,
+    transaction::TransactionSetter,
     Block, BlockGetter, Cfg, CfgEnv, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
     Transaction, TransactionGetter,
 };
@@ -471,6 +473,15 @@ impl<BLOCK, TX: Transaction, SPEC, DB: Database, CHAIN> TransactionGetter
         &self.tx
     }
 }
+
+impl<BLOCK, TX: Transaction, SPEC, DB: Database, CHAIN> TransactionSetter
+    for Context<BLOCK, TX, SPEC, DB, CHAIN>
+{
+    fn set_tx(&mut self, tx: <Self as TransactionGetter>::Transaction) {
+        self.tx = tx;
+    }
+}
+
 impl<BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockGetter
     for Context<BLOCK, TX, SPEC, DB, CHAIN>
 {
@@ -478,5 +489,13 @@ impl<BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockGetter
 
     fn block(&self) -> &Self::Block {
         &self.block
+    }
+}
+
+impl<BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockSetter
+    for Context<BLOCK, TX, SPEC, DB, CHAIN>
+{
+    fn set_block(&mut self, block: <Self as BlockGetter>::Block) {
+        self.block = block;
     }
 }

@@ -98,18 +98,18 @@ impl Bytecode {
     ///
     /// Returns an error on incorrect Bytecode format.
     #[inline]
-    pub fn new_raw_checked(bytecode: Bytes) -> Result<Self, BytecodeDecodeError> {
-        let prefix = bytecode.get(..2);
+    pub fn new_raw_checked(bytes: Bytes) -> Result<Self, BytecodeDecodeError> {
+        let prefix = bytes.get(..2);
         match prefix {
             Some(prefix) if prefix == &EOF_MAGIC_BYTES => {
-                let eof = Eof::decode(bytecode)?;
+                let eof = Eof::decode(bytes)?;
                 Ok(Self::Eof(Arc::new(eof)))
             }
             Some(prefix) if prefix == &EIP7702_MAGIC_BYTES => {
-                let eip7702 = Eip7702Bytecode::new_raw(bytecode)?;
+                let eip7702 = Eip7702Bytecode::new_raw(bytes)?;
                 Ok(Self::Eip7702(eip7702))
             }
-            _ => Ok(Self::new_legacy(bytecode.into())),
+            _ => Ok(Self::new_legacy(bytes)),
         }
     }
 

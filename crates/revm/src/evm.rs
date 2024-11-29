@@ -1,11 +1,15 @@
 use context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context};
 use context_interface::{
+    block::BlockSetter,
     journaled_state::JournaledState,
-    result::{EVMError, HaltReason, InvalidHeader, InvalidTransaction, ResultAndState},
+    result::{
+        EVMError, ExecutionResult, HaltReason, InvalidHeader, InvalidTransaction, ResultAndState,
+    },
+    transaction::TransactionSetter,
     BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
     JournalStateGetterDBError, Transaction, TransactionGetter,
 };
-use database_interface::Database;
+use database_interface::{Database, DatabaseCommit};
 use handler::{EthHandler, FrameResult};
 use handler_interface::{
     ExecutionHandler, Frame, FrameOrResultGen, Handler, PostExecutionHandler, PreExecutionHandler,
@@ -16,6 +20,8 @@ use precompile::PrecompileErrors;
 use primitives::Log;
 use state::EvmState;
 use std::vec::Vec;
+
+use crate::{exec::EvmCommit, EvmExec};
 
 /// Main EVM structure
 pub struct Evm<ERROR, CTX = Context, HANDLER = EthHandler<CTX, ERROR>> {
@@ -31,6 +37,106 @@ impl<ERROR, CTX, HANDLER> Evm<ERROR, CTX, HANDLER> {
             handler,
             _error: core::marker::PhantomData,
         }
+    }
+}
+
+impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC> EvmCommit
+    for Evm<ERROR, CTX, EthHandler<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC>>
+where
+    CTX: TransactionSetter
+        + BlockSetter
+        + JournalStateGetter
+        + CfgGetter
+        + DatabaseGetter<Database: Database + DatabaseCommit>
+        + ErrorGetter<Error = ERROR>
+        + JournalStateGetter<
+            Journal: JournaledState<
+                FinalOutput = (EvmState, Vec<Log>),
+                Database = <CTX as DatabaseGetter>::Database,
+            >,
+        > + Host,
+    ERROR: From<InvalidTransaction>
+        + From<InvalidHeader>
+        + From<JournalStateGetterDBError<CTX>>
+        + From<PrecompileErrors>,
+    VAL: ValidationHandler<Context = CTX, Error = ERROR>,
+    PREEXEC: PreExecutionHandler<Context = CTX, Error = ERROR>,
+    EXEC: ExecutionHandler<
+        Context = CTX,
+        Error = ERROR,
+        ExecResult = FrameResult,
+        Frame: Frame<FrameResult = FrameResult>,
+    >,
+    POSTEXEC: PostExecutionHandler<
+        Context = CTX,
+        Error = ERROR,
+        ExecResult = FrameResult,
+        // TODO make output generics
+        Output = ResultAndState<HaltReason>,
+    >,
+{
+    type CommitOutput = Result<ExecutionResult<HaltReason>, ERROR>;
+
+    fn exec_commit(&mut self) -> Self::CommitOutput {
+        let res = self.transact();
+        res.map(|r| {
+            self.context.db().commit(r.state);
+            r.result
+        })
+    }
+}
+
+impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC> EvmExec
+    for Evm<ERROR, CTX, EthHandler<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC>>
+where
+    CTX: TransactionSetter
+        + BlockSetter
+        + JournalStateGetter
+        + CfgGetter
+        + DatabaseGetter
+        + ErrorGetter<Error = ERROR>
+        + JournalStateGetter<
+            Journal: JournaledState<
+                FinalOutput = (EvmState, Vec<Log>),
+                Database = <CTX as DatabaseGetter>::Database,
+            >,
+        > + Host,
+    ERROR: From<InvalidTransaction>
+        + From<InvalidHeader>
+        + From<JournalStateGetterDBError<CTX>>
+        + From<PrecompileErrors>,
+    VAL: ValidationHandler<Context = CTX, Error = ERROR>,
+    PREEXEC: PreExecutionHandler<Context = CTX, Error = ERROR>,
+    EXEC: ExecutionHandler<
+        Context = CTX,
+        Error = ERROR,
+        ExecResult = FrameResult,
+        Frame: Frame<FrameResult = FrameResult>,
+    >,
+    POSTEXEC: PostExecutionHandler<
+        Context = CTX,
+        Error = ERROR,
+        ExecResult = FrameResult,
+        // TODO make output generics
+        Output = ResultAndState<HaltReason>,
+    >,
+{
+    type Transaction = <CTX as TransactionGetter>::Transaction;
+
+    type Block = <CTX as BlockGetter>::Block;
+
+    type Output = Result<ResultAndState<HaltReason>, ERROR>;
+
+    fn set_block(&mut self, block: Self::Block) {
+        self.context.set_block(block);
+    }
+
+    fn set_tx(&mut self, tx: Self::Transaction) {
+        self.context.set_tx(tx);
+    }
+
+    fn exec(&mut self) -> Self::Output {
+        self.transact()
     }
 }
 

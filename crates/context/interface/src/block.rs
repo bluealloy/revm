@@ -74,3 +74,7 @@ pub trait BlockGetter {
 
     fn block(&self) -> &Self::Block;
 }
+
+pub trait BlockSetter: BlockGetter {
+    fn set_block(&mut self, block: <Self as BlockGetter>::Block);
+}

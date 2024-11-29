@@ -13,7 +13,7 @@ use revm::{
         EthValidation,
     },
     primitives::{TxKind, U256},
-    Context, DatabaseCommit,
+    Context, EvmCommit,
 };
 use std::io::BufWriter;
 use std::io::Write;
@@ -158,11 +158,7 @@ async fn main() -> anyhow::Result<()> {
         // Inspect and commit the transaction to the EVM
         evm.context.inspector.set_writer(Box::new(writer));
 
-        let res = evm.transact();
-        let res = res.map(|r| {
-            evm.context.inner.journaled_state.database.commit(r.state);
-            r.result
-        });
+        let res = evm.exec_commit();
 
         if let Err(error) = res {
             println!("Got error: {:?}", error);

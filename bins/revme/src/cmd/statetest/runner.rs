@@ -286,7 +286,6 @@ pub fn execute_test_suite(
         let mut tx = TxEnv::default();
         // for mainnet
         cfg.chain_id = 1;
-        // env.cfg.spec_id is set down the road
 
         // block env
         block.number = unit.env.current_number;

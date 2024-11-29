@@ -7,8 +7,10 @@ use revm::{
     bytecode::opcode::OpCode,
     context::{block::BlockEnv, tx::TxEnv, Cfg},
     context_interface::{
+        block::BlockSetter,
         journaled_state::{AccountLoad, Eip7702CodeLoad},
         result::EVMError,
+        transaction::TransactionSetter,
         Block, BlockGetter, CfgEnv, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
         JournalStateGetterDBError, Transaction, TransactionGetter,
     },
@@ -462,6 +464,15 @@ impl<INSP, BLOCK, TX: Transaction, SPEC, DB: Database, CHAIN> TransactionGetter
         &self.inner.tx
     }
 }
+
+impl<INSP, BLOCK, TX: Transaction, SPEC, DB: Database, CHAIN> TransactionSetter
+    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
+{
+    fn set_tx(&mut self, tx: <Self as TransactionGetter>::Transaction) {
+        self.inner.tx = tx;
+    }
+}
+
 impl<INSP, BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockGetter
     for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
 {
@@ -469,6 +480,14 @@ impl<INSP, BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockGetter
 
     fn block(&self) -> &Self::Block {
         &self.inner.block
+    }
+}
+
+impl<INSP, BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockSetter
+    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
+{
+    fn set_block(&mut self, block: <Self as BlockGetter>::Block) {
+        self.inner.block = block;
     }
 }
 

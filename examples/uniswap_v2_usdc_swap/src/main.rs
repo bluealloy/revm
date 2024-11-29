@@ -9,14 +9,12 @@ use anyhow::{anyhow, Result};
 use database::{AlloyDB, CacheDB};
 use reqwest::Client;
 use revm::{
+    context_interface::result::{ExecutionResult, Output},
     database_interface::WrapDatabaseAsync,
+    handler::EthHandler,
     primitives::{address, keccak256, Address, Bytes, TxKind, U256},
     state::AccountInfo,
-    context_interface::{
-        result::{ExecutionResult, Output},
-        EthereumWiring,
-    },
-    Evm,
+    Context, EvmCommit, EvmExec, MainEvm,
 };
 use std::ops::Div;
 
@@ -99,19 +97,20 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
 
     let encoded = balanceOfCall { account: address }.abi_encode();
 
-    let mut evm = Evm::<EthereumWiring<&mut AlloyCacheDB, ()>>::builder()
-        .with_db(alloy_db)
-        .with_default_ext_ctx()
-        .modify_tx_env(|tx| {
-            // 0x1 because calling USDC proxy from zero address fails
-            tx.caller = address!("0000000000000000000000000000000000000001");
-            tx.transact_to = TxKind::Call(token);
-            tx.data = encoded.into();
-            tx.value = U256::from(0);
-        })
-        .build();
+    let mut evm = MainEvm::new(
+        Context::default()
+            .with_db(alloy_db)
+            .modify_tx_chained(|tx| {
+                // 0x1 because calling USDC proxy from zero address fails
+                tx.caller = address!("0000000000000000000000000000000000000001");
+                tx.transact_to = TxKind::Call(token);
+                tx.data = encoded.into();
+                tx.value = U256::from(0);
+            }),
+        EthHandler::default(),
+    );
 
-    let ref_tx = evm.transact().unwrap();
+    let ref_tx = evm.exec().unwrap();
     let result = ref_tx.result;
 
     let value = match result {
@@ -145,16 +144,17 @@ async fn get_amount_out(
     }
     .abi_encode();
 
-    let mut evm = Evm::<EthereumWiring<&mut AlloyCacheDB, ()>>::builder()
-        .with_db(cache_db)
-        .with_default_ext_ctx()
-        .modify_tx_env(|tx| {
-            tx.caller = address!("0000000000000000000000000000000000000000");
-            tx.transact_to = TxKind::Call(uniswap_v2_router);
-            tx.data = encoded.into();
-            tx.value = U256::from(0);
-        })
-        .build();
+    let mut evm = MainEvm::new(
+        Context::default()
+            .with_db(cache_db)
+            .modify_tx_chained(|tx| {
+                tx.caller = address!("0000000000000000000000000000000000000000");
+                tx.transact_to = TxKind::Call(uniswap_v2_router);
+                tx.data = encoded.into();
+                tx.value = U256::from(0);
+            }),
+        EthHandler::default(),
+    );
 
     let ref_tx = evm.transact().unwrap();
     let result = ref_tx.result;
@@ -179,16 +179,17 @@ fn get_reserves(pair_address: Address, cache_db: &mut AlloyCacheDB) -> Result<(U
 
     let encoded = getReservesCall {}.abi_encode();
 
-    let mut evm = Evm::<EthereumWiring<&mut AlloyCacheDB, ()>>::builder()
-        .with_db(cache_db)
-        .with_default_ext_ctx()
-        .modify_tx_env(|tx| {
-            tx.caller = address!("0000000000000000000000000000000000000000");
-            tx.transact_to = TxKind::Call(pair_address);
-            tx.data = encoded.into();
-            tx.value = U256::from(0);
-        })
-        .build();
+    let mut evm = MainEvm::new(
+        Context::default()
+            .with_db(cache_db)
+            .modify_tx_chained(|tx| {
+                tx.caller = address!("0000000000000000000000000000000000000000");
+                tx.transact_to = TxKind::Call(pair_address);
+                tx.data = encoded.into();
+                tx.value = U256::from(0);
+            }),
+        EthHandler::default(),
+    );
 
     let ref_tx = evm.transact().unwrap();
     let result = ref_tx.result;
@@ -229,19 +230,20 @@ fn swap(
     }
     .abi_encode();
 
-    let mut evm = Evm::<EthereumWiring<&mut AlloyCacheDB, ()>>::builder()
-        .with_db(cache_db)
-        .with_default_ext_ctx()
-        .modify_tx_env(|tx| {
-            tx.caller = from;
-            tx.transact_to = TxKind::Call(pool_address);
-            tx.data = encoded.into();
-            tx.value = U256::from(0);
-            tx.nonce = 1;
-        })
-        .build();
+    let mut evm = MainEvm::new(
+        Context::default()
+            .with_db(cache_db)
+            .modify_tx_chained(|tx| {
+                tx.caller = from;
+                tx.transact_to = TxKind::Call(pool_address);
+                tx.data = encoded.into();
+                tx.value = U256::from(0);
+                tx.nonce = 1;
+            }),
+        EthHandler::default(),
+    );
 
-    let ref_tx = evm.transact_commit().unwrap();
+    let ref_tx = evm.exec_commit().unwrap();
 
     match ref_tx {
         ExecutionResult::Success { .. } => {}
@@ -264,18 +266,19 @@ fn transfer(
 
     let encoded = transferCall { to, amount }.abi_encode();
 
-    let mut evm = Evm::<EthereumWiring<&mut AlloyCacheDB, ()>>::builder()
-        .with_db(cache_db)
-        .with_default_ext_ctx()
-        .modify_tx_env(|tx| {
-            tx.caller = from;
-            tx.transact_to = TxKind::Call(token);
-            tx.data = encoded.into();
-            tx.value = U256::from(0);
-        })
-        .build();
+    let mut evm = MainEvm::new(
+        Context::default()
+            .with_db(cache_db)
+            .modify_tx_chained(|tx| {
+                tx.caller = from;
+                tx.transact_to = TxKind::Call(token);
+                tx.data = encoded.into();
+                tx.value = U256::from(0);
+            }),
+        EthHandler::default(),
+    );
 
-    let ref_tx = evm.transact_commit().unwrap();
+    let ref_tx = evm.exec_commit().unwrap();
     let success: bool = match ref_tx {
         ExecutionResult::Success {
             output: Output::Call(value),

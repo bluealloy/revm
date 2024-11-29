@@ -27,11 +27,10 @@ members = [
 
     # examples
     "examples/block_traces",
-    # "examples/contract_deployment",
-    # "examples/database_components",
-    # "examples/database_ref",
-    # "examples/uniswap_get_reserves",
-    # "examples/uniswap_v2_usdc_swap",
+    "examples/contract_deployment",
+    "examples/database_components",
+    "examples/uniswap_get_reserves",
+    "examples/uniswap_v2_usdc_swap",
     #"examples/custom_opcodes",
 ]
 resolver = "2"

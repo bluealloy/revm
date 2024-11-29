@@ -156,3 +156,7 @@ pub trait TransactionGetter {
 
     fn tx(&self) -> &Self::Transaction;
 }
+
+pub trait TransactionSetter: TransactionGetter {
+    fn set_tx(&mut self, tx: <Self as TransactionGetter>::Transaction);
+}
