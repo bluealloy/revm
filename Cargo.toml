@@ -25,6 +25,7 @@ members = [
 
     # examples
     "examples/block_traces",
+    "examples/abi_contract_deployment",
     "examples/contract_deployment",
     "examples/database_components",
     "examples/database_ref",
