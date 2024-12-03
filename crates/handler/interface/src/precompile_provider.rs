@@ -5,11 +5,11 @@ pub trait PrecompileProvider: Clone {
     type Context;
     type Error;
 
-    fn new(ctx: &mut Self::Context) -> Self;
+    fn new(context: &mut Self::Context) -> Self;
 
     fn run(
         &mut self,
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,

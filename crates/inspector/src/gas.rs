@@ -193,7 +193,7 @@ impl<CTX, INTR: InterpreterTypes> Inspector for GasInspector<CTX, INTR> {
 
 //         let mut evm = Evm::<EthereumWiring<BenchmarkDB, StackInspector>>::builder()
 //             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
-//             .with_default_ext_ctx()
+//             .with_default_ext_context()
 //             .modify_tx_env(|tx| {
 //                 *tx = <TestEvmWiring as PrimitiveEvmWiring>::Transaction::default();
 

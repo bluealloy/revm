@@ -1,8 +1,5 @@
 [workspace]
 members = [
-    # binary 
-    "bins/revme",
-
     # libraries
     "crates/revm",
     "crates/primitives",
@@ -19,11 +16,15 @@ members = [
     "crates/handler/interface",
     "crates/handler",
 
+    # binary 
+    "bins/revme",
+
+    # variants
+    "crates/optimism",
+
     # utility
     "crates/statetest-types",
 
-    # variants
-    # "crates/optimism",
 
     # examples
     "examples/block_traces",

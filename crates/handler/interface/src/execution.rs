@@ -19,7 +19,7 @@ pub trait ExecutionHandler {
     fn last_frame_result(
         &self,
         context: &mut Self::Context,
-        frame: <Self::Frame as Frame>::FrameResult,
+        frame_result: <Self::Frame as Frame>::FrameResult,
     ) -> Result<Self::ExecResult, Self::Error>;
 
     fn run(

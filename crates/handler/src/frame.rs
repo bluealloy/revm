@@ -26,41 +26,6 @@ use state::Bytecode;
 use std::borrow::ToOwned;
 use std::{rc::Rc, sync::Arc};
 
-/*
-EVM
-    context:
-        TX
-        BLOCK
-        JOURNAL
-        CFG
-    handler:
-        VAL
-        PRE
-        POST
-        EXEC:
-            FRAME
-                Data: CALL/CREATE/EOFCREATE
-                INTERPRETER
-                INSTRUCTION
-                PRECOMPILE
-
-
-EthFrame<CTX,IW,PR<CTX>,IP<IW,CTX> {
-
-}
-*/
-
-/*
-
-EXEC -> FRAME makes sense
-
-FRAME needs to have
-Interpreter<WIRE>
-InnerContext<PRECOMPILES,INSTRUCTIONS, MEMORY>
-
-
-*/
-
 pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, PRECOMPILE, INSTRUCTIONS> {
     _phantom: core::marker::PhantomData<fn() -> (CTX, ERROR)>,
     data: FrameData,
@@ -108,18 +73,14 @@ where
 impl<CTX, ERROR, PRECOMPILE, INSTRUCTION>
     EthFrame<CTX, ERROR, EthInterpreter<()>, PRECOMPILE, INSTRUCTION>
 where
-    CTX: TransactionGetter
-        + ErrorGetter<Error = ERROR>
-        + BlockGetter
-        + JournalStateGetter
-        + CfgGetter,
+    CTX: EthFrameContext<ERROR>,
+    ERROR: EthFrameError<CTX>,
     PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR>,
-    ERROR: From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>,
 {
     /// Make call frame
     #[inline]
     pub fn make_call_frame(
-        ctx: &mut CTX,
+        context: &mut CTX,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
         inputs: &CallInputs,
@@ -145,43 +106,46 @@ where
         }
 
         // Make account warm and loaded
-        let _ = ctx
+        let _ = context
             .journal()
             .load_account_delegated(inputs.bytecode_address)?;
 
         // Create subroutine checkpoint
-        let checkpoint = ctx.journal().checkpoint();
+        let checkpoint = context.journal().checkpoint();
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         if let CallValue::Transfer(value) = inputs.value {
             // Transfer value from caller to called account
             // Target will get touched even if balance transferred is zero.
             if let Some(i) =
-                ctx.journal()
+                context
+                    .journal()
                     .transfer(&inputs.caller, &inputs.target_address, value)?
             {
-                ctx.journal().checkpoint_revert(checkpoint);
+                context.journal().checkpoint_revert(checkpoint);
                 return return_result(i.into());
             }
         }
 
         if let Some(result) = precompile.run(
-            ctx,
+            context,
             &inputs.bytecode_address,
             &inputs.input,
             inputs.gas_limit,
         )? {
             if result.result.is_ok() {
-                ctx.journal().checkpoint_commit();
+                context.journal().checkpoint_commit();
             } else {
-                ctx.journal().checkpoint_revert(checkpoint);
+                context.journal().checkpoint_revert(checkpoint);
             }
             Ok(FrameOrResultGen::Result(FrameResult::Call(CallOutcome {
                 result,
                 memory_offset: inputs.return_memory_offset.clone(),
             })))
         } else {
-            let account = ctx.journal().load_account_code(inputs.bytecode_address)?;
+            let account = context
+                .journal()
+                .load_account_code(inputs.bytecode_address)?;
 
             // TODO Request from foundry to get bytecode hash.
             let _code_hash = account.info.code_hash();
@@ -195,12 +159,12 @@ where
             }
 
             if bytecode.is_empty() {
-                ctx.journal().checkpoint_commit();
+                context.journal().checkpoint_commit();
                 return return_result(InstructionResult::Stop);
             }
 
             if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-                bytecode = ctx
+                bytecode = context
                     .journal()
                     .load_account_code(eip7702_bytecode.delegated_address)?
                     .info
@@ -230,7 +194,7 @@ where
                     interpreter_input,
                     inputs.is_static,
                     false,
-                    ctx.cfg().spec().into(),
+                    context.cfg().spec().into(),
                     inputs.gas_limit,
                 ),
                 checkpoint,
@@ -244,14 +208,14 @@ where
     /// Make create frame.
     #[inline]
     pub fn make_create_frame(
-        ctx: &mut CTX,
+        context: &mut CTX,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
         inputs: &CreateInputs,
         precompile: PRECOMPILE,
         instructions: INSTRUCTION,
     ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
-        let spec = ctx.cfg().spec().into();
+        let spec = context.cfg().spec().into();
         let return_error = |e| {
             Ok(FrameOrResultGen::Result(FrameResult::Create(
                 CreateOutcome {
@@ -276,7 +240,7 @@ where
         }
 
         // Fetch balance of caller.
-        let caller_balance = ctx
+        let caller_balance = context
             .journal()
             .load_account(inputs.caller)?
             .map(|a| a.info.balance);
@@ -288,7 +252,7 @@ where
 
         // Increase nonce of caller and check if it overflows
         let old_nonce;
-        if let Some(nonce) = ctx.journal().inc_account_nonce(inputs.caller)? {
+        if let Some(nonce) = context.journal().inc_account_nonce(inputs.caller)? {
             old_nonce = nonce - 1;
         } else {
             return return_error(InstructionResult::Return);
@@ -312,10 +276,10 @@ where
         // }
 
         // warm load account.
-        ctx.journal().load_account(created_address)?;
+        context.journal().load_account(created_address)?;
 
         // create account, transfer funds and make the journal checkpoint.
-        let checkpoint = match ctx.journal().create_account_checkpoint(
+        let checkpoint = match context.journal().create_account_checkpoint(
             inputs.caller,
             created_address,
             inputs.value,
@@ -356,14 +320,14 @@ where
     /// Make create frame.
     #[inline]
     pub fn make_eofcreate_frame(
-        ctx: &mut CTX,
+        context: &mut CTX,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
         inputs: &EOFCreateInputs,
         precompile: PRECOMPILE,
         instructions: INSTRUCTION,
     ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
-        let spec = ctx.cfg().spec().into();
+        let spec = context.cfg().spec().into();
         let return_error = |e| {
             Ok(FrameOrResultGen::Result(FrameResult::EOFCreate(
                 CreateOutcome {
@@ -387,18 +351,18 @@ where
                 // decode eof and init code.
                 // TODO handle inc_nonce handling more gracefully.
                 let Ok((eof, input)) = Eof::decode_dangling(initdata.clone()) else {
-                    ctx.journal().inc_account_nonce(inputs.caller)?;
+                    context.journal().inc_account_nonce(inputs.caller)?;
                     return return_error(InstructionResult::InvalidEOFInitCode);
                 };
 
                 if eof.validate().is_err() {
                     // TODO (EOF) new error type.
-                    ctx.journal().inc_account_nonce(inputs.caller)?;
+                    context.journal().inc_account_nonce(inputs.caller)?;
                     return return_error(InstructionResult::InvalidEOFInitCode);
                 }
 
                 // Use nonce from tx to calculate address.
-                let tx = ctx.tx().common_fields();
+                let tx = context.tx().common_fields();
                 let create_address = tx.caller().create(tx.nonce());
 
                 (input, eof, Some(create_address))
@@ -411,7 +375,7 @@ where
         }
 
         // Fetch balance of caller.
-        let caller_balance = ctx
+        let caller_balance = context
             .journal()
             .load_account(inputs.caller)?
             .map(|a| a.info.balance);
@@ -422,7 +386,7 @@ where
         }
 
         // Increase nonce of caller and check if it overflows
-        let Some(nonce) = ctx.journal().inc_account_nonce(inputs.caller)? else {
+        let Some(nonce) = context.journal().inc_account_nonce(inputs.caller)? else {
             // can't happen on mainnet.
             return return_error(InstructionResult::Return);
         };
@@ -437,10 +401,10 @@ where
         // }
 
         // Load account so it needs to be marked as warm for access list.
-        ctx.journal().load_account(created_address)?;
+        context.journal().load_account(created_address)?;
 
         // create account, transfer funds and make the journal checkpoint.
-        let checkpoint = match ctx.journal().create_account_checkpoint(
+        let checkpoint = match context.journal().create_account_checkpoint(
             inputs.caller,
             created_address,
             inputs.value,
@@ -482,18 +446,23 @@ where
         memory: Rc<RefCell<SharedMemory>>,
         precompile: PRECOMPILE,
         instructions: INSTRUCTION,
-        ctx: &mut CTX,
+        context: &mut CTX,
     ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
         match frame_init {
             FrameInput::Call(inputs) => {
-                Self::make_call_frame(ctx, depth, memory, &inputs, precompile, instructions)
+                Self::make_call_frame(context, depth, memory, &inputs, precompile, instructions)
             }
             FrameInput::Create(inputs) => {
-                Self::make_create_frame(ctx, depth, memory, &inputs, precompile, instructions)
+                Self::make_create_frame(context, depth, memory, &inputs, precompile, instructions)
             }
-            FrameInput::EOFCreate(inputs) => {
-                Self::make_eofcreate_frame(ctx, depth, memory, &inputs, precompile, instructions)
-            }
+            FrameInput::EOFCreate(inputs) => Self::make_eofcreate_frame(
+                context,
+                depth,
+                memory,
+                &inputs,
+                precompile,
+                instructions,
+            ),
         }
     }
 }
@@ -501,13 +470,8 @@ where
 impl<CTX, ERROR, PRECOMPILE, INSTRUCTION> Frame
     for EthFrame<CTX, ERROR, EthInterpreter<()>, PRECOMPILE, INSTRUCTION>
 where
-    CTX: TransactionGetter
-        + ErrorGetter<Error = ERROR>
-        + BlockGetter
-        + JournalStateGetter
-        + CfgGetter
-        + Host,
-    ERROR: From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>,
+    CTX: EthFrameContext<ERROR>,
+    ERROR: EthFrameError<CTX>,
     PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR>,
     INSTRUCTION: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
 {
@@ -517,25 +481,25 @@ where
     type FrameResult = FrameResult;
 
     fn init_first(
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
         let memory = Rc::new(RefCell::new(SharedMemory::new()));
-        let precompiles = PRECOMPILE::new(ctx);
-        let instructions = INSTRUCTION::new(ctx);
+        let precompiles = PRECOMPILE::new(context);
+        let instructions = INSTRUCTION::new(context);
 
         // load precompiles addresses as warm.
         for address in precompiles.warm_addresses() {
-            ctx.journal().warm_account(address);
+            context.journal().warm_account(address);
         }
 
         memory.borrow_mut().new_context();
-        Self::init_with_context(0, frame_input, memory, precompiles, instructions, ctx)
+        Self::init_with_context(0, frame_input, memory, precompiles, instructions, context)
     }
 
     fn init(
         &self,
-        ctx: &mut CTX,
+        context: &mut CTX,
         frame_init: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
         self.memory.borrow_mut().new_context();
@@ -545,19 +509,19 @@ where
             self.memory.clone(),
             self.precompiles.clone(),
             self.instructions.clone(),
-            ctx,
+            context,
         )
     }
 
     fn run(
         &mut self,
         //instructions: &InstructionTables<'_, Context<EvmWiringT>>,
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
     ) -> Result<FrameOrResultGen<Self::FrameInit, Self::FrameResult>, Self::Error> {
-        let spec = ctx.cfg().spec().into();
+        let spec = context.cfg().spec().into();
 
         // run interpreter
-        let next_action = self.interpreter.run(self.instructions.table(), ctx);
+        let next_action = self.interpreter.run(self.instructions.table(), context);
 
         let mut interpreter_result = match next_action {
             InterpreterAction::NewFrame(new_frame) => {
@@ -573,9 +537,9 @@ where
                 // return_call
                 // revert changes or not.
                 if interpreter_result.result.is_ok() {
-                    ctx.journal().checkpoint_commit();
+                    context.journal().checkpoint_commit();
                 } else {
-                    ctx.journal().checkpoint_revert(self.checkpoint);
+                    context.journal().checkpoint_revert(self.checkpoint);
                 }
                 FrameOrResultGen::Result(FrameResult::Call(CallOutcome::new(
                     interpreter_result,
@@ -583,9 +547,9 @@ where
                 )))
             }
             FrameData::Create(frame) => {
-                let max_code_size = ctx.cfg().max_code_size();
+                let max_code_size = context.cfg().max_code_size();
                 return_create(
-                    ctx.journal(),
+                    context.journal(),
                     self.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
@@ -599,9 +563,9 @@ where
                 )))
             }
             FrameData::EOFCreate(frame) => {
-                let max_code_size = ctx.cfg().max_code_size();
+                let max_code_size = context.cfg().max_code_size();
                 return_eofcreate(
-                    ctx.journal(),
+                    context.journal(),
                     self.checkpoint,
                     &mut interpreter_result,
                     frame.created_address,
@@ -620,11 +584,11 @@ where
 
     fn return_result(
         &mut self,
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         result: Self::FrameResult,
     ) -> Result<(), Self::Error> {
         self.memory.borrow_mut().free_context();
-        ctx.take_error()?;
+        context.take_error()?;
 
         // Insert result to the top frame.
         match result {
@@ -840,4 +804,31 @@ pub fn return_eofcreate<Journal: JournaledState>(
 
     // eof bytecode is going to be hashed.
     journal.set_code(address, Bytecode::Eof(Arc::new(bytecode)));
+}
+
+pub trait EthFrameContext<ERROR>:
+    TransactionGetter + Host + ErrorGetter<Error = ERROR> + BlockGetter + JournalStateGetter + CfgGetter
+{
+}
+
+impl<
+        ERROR,
+        CTX: TransactionGetter
+            + ErrorGetter<Error = ERROR>
+            + BlockGetter
+            + JournalStateGetter
+            + CfgGetter
+            + Host,
+    > EthFrameContext<ERROR> for CTX
+{
+}
+
+pub trait EthFrameError<CTX: JournalStateGetter>:
+    From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>
+{
+}
+
+impl<CTX: JournalStateGetter, T: From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>>
+    EthFrameError<CTX> for T
+{
 }

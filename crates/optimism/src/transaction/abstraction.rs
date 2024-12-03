@@ -1,9 +1,13 @@
 use super::deposit::{DepositTransaction, TxDeposit};
 use crate::OpTransactionError;
 use revm::{
+    context::TxEnv,
+    context_interface::{
+        transaction::{CommonTxFields, Transaction, TransactionType},
+        TransactionGetter,
+    },
     primitives::Bytes,
-    transaction::{CommonTxFields, Transaction, TransactionType},
-    context_interface::default::TxEnv,
+    Context, Database,
 };
 
 pub trait OpTxTrait: Transaction {
@@ -13,6 +17,31 @@ pub trait OpTxTrait: Transaction {
 
     fn enveloped_tx(&self) -> Option<&Bytes>;
 }
+
+pub trait OpTxGetter: TransactionGetter {
+    type OpTransaction: OpTxTrait;
+
+    fn op_tx(&self) -> &Self::OpTransaction;
+}
+
+impl<BLOCK, TX: Transaction, DB: Database, CFG, CHAIN> OpTxGetter
+    for Context<BLOCK, OpTransaction<TX>, CFG, DB, CHAIN>
+{
+    type OpTransaction = OpTransaction<TX>;
+
+    fn op_tx(&self) -> &Self::OpTransaction {
+        &self.tx
+    }
+}
+
+/*
+
+Context<OP_CHAIN>
+
+TX =
+
+
+*/
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

@@ -401,7 +401,7 @@ pub fn execute_test_suite(
                 tx.transact_to = to;
 
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(cfg.spec, SpecId::SPURIOUS_DRAGON));
+                cache.set_state_clear_flag(cfg.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
                 let mut state = database::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
@@ -508,7 +508,7 @@ pub fn execute_test_suite(
 
                 // re build to run with tracing
                 let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(cfg.spec, SpecId::SPURIOUS_DRAGON));
+                cache.set_state_clear_flag(cfg.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
                 let mut state = database::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()

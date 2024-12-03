@@ -27,8 +27,8 @@ where
     type Context = CTX;
     type Error = ERROR;
 
-    fn new(ctx: &mut Self::Context) -> Self {
-        let spec = ctx.cfg().spec().into();
+    fn new(context: &mut Self::Context) -> Self {
+        let spec = context.cfg().spec().into();
         Self {
             precompiles: Precompiles::new(PrecompileSpecId::from_spec_id(spec)),
             _phantom: core::marker::PhantomData,
@@ -37,7 +37,7 @@ where
 
     fn run(
         &mut self,
-        _ctx: &mut Self::Context,
+        _context: &mut Self::Context,
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,

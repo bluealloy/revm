@@ -360,20 +360,20 @@ where
 
     fn frame_start(&mut self, frame_input: &mut FrameInput) -> Option<FrameResult> {
         let insp = self.inspector.get_inspector();
-        let ctx = &mut self.inner;
+        let context = &mut self.inner;
         match frame_input {
             FrameInput::Call(i) => {
-                if let Some(output) = insp.call(ctx, i) {
+                if let Some(output) = insp.call(context, i) {
                     return Some(FrameResult::Call(output));
                 }
             }
             FrameInput::Create(i) => {
-                if let Some(output) = insp.create(ctx, i) {
+                if let Some(output) = insp.create(context, i) {
                     return Some(FrameResult::Create(output));
                 }
             }
             FrameInput::EOFCreate(i) => {
-                if let Some(output) = insp.eofcreate(ctx, i) {
+                if let Some(output) = insp.eofcreate(context, i) {
                     return Some(FrameResult::EOFCreate(output));
                 }
             }
@@ -384,26 +384,26 @@ where
 
     fn frame_end(&mut self, frame_output: &mut FrameResult) {
         let insp = self.inspector.get_inspector();
-        let ctx = &mut self.inner;
+        let context = &mut self.inner;
         let frame_input = self.frame_input_stack.pop().expect("Frame pushed");
         match frame_output {
             FrameResult::Call(outcome) => {
                 let FrameInput::Call(i) = frame_input else {
                     panic!("FrameInput::Call expected");
                 };
-                insp.call_end(ctx, &i, outcome);
+                insp.call_end(context, &i, outcome);
             }
             FrameResult::Create(outcome) => {
                 let FrameInput::Create(i) = frame_input else {
                     panic!("FrameInput::Create expected");
                 };
-                insp.create_end(ctx, &i, outcome);
+                insp.create_end(context, &i, outcome);
             }
             FrameResult::EOFCreate(outcome) => {
                 let FrameInput::EOFCreate(i) = frame_input else {
                     panic!("FrameInput::EofCreate expected");
                 };
-                insp.eofcreate_end(ctx, &i, outcome);
+                insp.eofcreate_end(context, &i, outcome);
             }
         }
     }
@@ -585,7 +585,7 @@ where
     type WIRE = WIRE;
     type Host = HOST;
 
-    fn new(_ctx: &mut Self::Host) -> Self {
+    fn new(_context: &mut Self::Host) -> Self {
         let main_table = table::make_instruction_table::<WIRE, HOST>();
         let mut table: [MaybeUninit<InspectorInstruction<WIRE, HOST>>; 256] =
             unsafe { MaybeUninit::uninit().assume_init() };
@@ -608,61 +608,61 @@ where
 
         fn inspector_log<CTX: Host + JournalExtGetter + InspectorCtx>(
             interpreter: &mut Interpreter<<CTX as InspectorCtx>::IT>,
-            ctx: &mut CTX,
+            context: &mut CTX,
             prev: Instruction<<CTX as InspectorCtx>::IT, CTX>,
         ) {
-            prev(interpreter, ctx);
+            prev(interpreter, context);
 
             if interpreter.control.instruction_result() == InstructionResult::Continue {
-                let last_log = ctx.journal_ext().logs().last().unwrap().clone();
-                ctx.inspector_log(interpreter, &last_log);
+                let last_log = context.journal_ext().logs().last().unwrap().clone();
+                context.inspector_log(interpreter, &last_log);
             }
         }
 
         /* LOG and Selfdestruct instructions */
         table[OpCode::LOG0.as_usize()] = InspectorInstruction {
-            instruction: |interp, ctx| {
-                inspector_log(interp, ctx, log::<0, HOST>);
+            instruction: |interp, context| {
+                inspector_log(interp, context, log::<0, HOST>);
             },
         };
         table[OpCode::LOG1.as_usize()] = InspectorInstruction {
-            instruction: |interp, ctx| {
-                inspector_log(interp, ctx, log::<1, HOST>);
+            instruction: |interp, context| {
+                inspector_log(interp, context, log::<1, HOST>);
             },
         };
         table[OpCode::LOG2.as_usize()] = InspectorInstruction {
-            instruction: |interp, ctx| {
-                inspector_log(interp, ctx, log::<2, HOST>);
+            instruction: |interp, context| {
+                inspector_log(interp, context, log::<2, HOST>);
             },
         };
         table[OpCode::LOG3.as_usize()] = InspectorInstruction {
-            instruction: |interp, ctx| {
-                inspector_log(interp, ctx, log::<3, HOST>);
+            instruction: |interp, context| {
+                inspector_log(interp, context, log::<3, HOST>);
             },
         };
         table[OpCode::LOG4.as_usize()] = InspectorInstruction {
-            instruction: |interp, ctx| {
-                inspector_log(interp, ctx, log::<4, HOST>);
+            instruction: |interp, context| {
+                inspector_log(interp, context, log::<4, HOST>);
             },
         };
 
         table[OpCode::SELFDESTRUCT.as_usize()] = InspectorInstruction {
-            instruction: |interp, ctx| {
-                selfdestruct::<Self::WIRE, HOST>(interp, ctx);
+            instruction: |interp, context| {
+                selfdestruct::<Self::WIRE, HOST>(interp, context);
                 if interp.control.instruction_result() == InstructionResult::SelfDestruct {
-                    match ctx.journal_ext().last_journal().last() {
+                    match context.journal_ext().last_journal().last() {
                         Some(JournalEntry::AccountDestroyed {
                             address,
                             target,
                             had_balance,
                             ..
                         }) => {
-                            ctx.inspector_selfdestruct(*address, *target, *had_balance);
+                            context.inspector_selfdestruct(*address, *target, *had_balance);
                         }
                         Some(JournalEntry::BalanceTransfer {
                             from, to, balance, ..
                         }) => {
-                            ctx.inspector_selfdestruct(*from, *to, *balance);
+                            context.inspector_selfdestruct(*from, *to, *balance);
                         }
                         _ => {}
                     }
@@ -714,21 +714,21 @@ where
     type FrameResult = FrameResult;
 
     fn init_first(
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         mut frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
-        if let Some(output) = ctx.frame_start(&mut frame_input) {
+        if let Some(output) = context.frame_start(&mut frame_input) {
             return Ok(FrameOrResultGen::Result(output));
         }
-        let mut ret = EthFrame::init_first(ctx, frame_input)
+        let mut ret = EthFrame::init_first(context, frame_input)
             .map(|frame| frame.map_frame(|eth_frame| Self { eth_frame }));
 
         match &mut ret {
             Ok(FrameOrResultGen::Result(res)) => {
-                ctx.frame_end(res);
+                context.frame_end(res);
             }
             Ok(FrameOrResultGen::Frame(frame)) => {
-                ctx.initialize_interp(&mut frame.eth_frame.interpreter);
+                context.initialize_interp(&mut frame.eth_frame.interpreter);
             }
             _ => (),
         }
@@ -738,19 +738,19 @@ where
 
     fn init(
         &self,
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         mut frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
-        if let Some(output) = ctx.frame_start(&mut frame_input) {
+        if let Some(output) = context.frame_start(&mut frame_input) {
             return Ok(FrameOrResultGen::Result(output));
         }
         let mut ret = self
             .eth_frame
-            .init(ctx, frame_input)
+            .init(context, frame_input)
             .map(|frame| frame.map_frame(|eth_frame| Self { eth_frame }));
 
         if let Ok(FrameOrResultGen::Frame(frame)) = &mut ret {
-            ctx.initialize_interp(&mut frame.eth_frame.interpreter);
+            context.initialize_interp(&mut frame.eth_frame.interpreter);
         }
 
         // TODO handle last frame_end. MAKE a separate function for `last_return_result`.
@@ -767,11 +767,11 @@ where
 
     fn return_result(
         &mut self,
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         mut result: Self::FrameResult,
     ) -> Result<(), Self::Error> {
-        ctx.frame_end(&mut result);
-        self.eth_frame.return_result(ctx, result)
+        context.frame_end(&mut result);
+        self.eth_frame.return_result(context, result)
     }
 }
 

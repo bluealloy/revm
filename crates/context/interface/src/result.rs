@@ -163,6 +163,16 @@ impl<DBError: DBErrorMarker, TX> From<DBError> for EVMError<DBError, TX> {
     }
 }
 
+pub trait FromStringError {
+    fn from_string(value: String) -> Self;
+}
+
+impl<DB, TX> FromStringError for EVMError<DB, TX> {
+    fn from_string(value: String) -> Self {
+        Self::Custom(value)
+    }
+}
+
 impl<DB, TXERROR: From<InvalidTransaction>> From<InvalidTransaction> for EVMError<DB, TXERROR> {
     fn from(value: InvalidTransaction) -> Self {
         Self::Transaction(value.into())

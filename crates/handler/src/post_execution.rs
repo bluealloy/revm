@@ -36,12 +36,8 @@ impl<CTX, ERROR, HALTREASON> EthPostExecution<CTX, ERROR, HALTREASON> {
 
 impl<CTX, ERROR, HALTREASON> PostExecutionHandler for EthPostExecution<CTX, ERROR, HALTREASON>
 where
-    CTX: TransactionGetter
-        + ErrorGetter<Error = ERROR>
-        + BlockGetter
-        + JournalStateGetter<Journal: JournaledState<FinalOutput = (EvmState, Vec<Log>)>>
-        + CfgGetter,
-    ERROR: From<JournalStateGetterDBError<CTX>>,
+    CTX: EthPostExecutionContext<ERROR>,
+    ERROR: EthPostExecutionError<CTX>,
     HALTREASON: HaltReasonTrait,
 {
     type Context = CTX;
@@ -51,7 +47,7 @@ where
 
     fn refund(
         &self,
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         exec_result: &mut Self::ExecResult,
         eip7702_refund: i64,
     ) {
@@ -61,21 +57,21 @@ where
         // Calculate gas refund for transaction.
         // If spec is set to london, it will decrease the maximum refund amount to 5th part of
         // gas spend. (Before london it was 2th part of gas spend)
-        gas.set_final_refund(ctx.cfg().spec().into().is_enabled_in(SpecId::LONDON));
+        gas.set_final_refund(context.cfg().spec().into().is_enabled_in(SpecId::LONDON));
     }
 
     fn reimburse_caller(
         &self,
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         exec_result: &mut Self::ExecResult,
     ) -> Result<(), Self::Error> {
-        let basefee = *ctx.block().basefee();
-        let caller = ctx.tx().common_fields().caller();
-        let effective_gas_price = ctx.tx().effective_gas_price(basefee);
+        let basefee = *context.block().basefee();
+        let caller = context.tx().common_fields().caller();
+        let effective_gas_price = context.tx().effective_gas_price(basefee);
         let gas = exec_result.gas();
 
         // return balance of not spend gas.
-        let caller_account = ctx.journal().load_account(caller)?;
+        let caller_account = context.journal().load_account(caller)?;
 
         let reimbursed = effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64);
         caller_account.data.info.balance =
@@ -86,11 +82,11 @@ where
 
     fn reward_beneficiary(
         &self,
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         exec_result: &mut Self::ExecResult,
     ) -> Result<(), Self::Error> {
-        let block = ctx.block();
-        let tx = ctx.tx();
+        let block = context.block();
+        let tx = context.tx();
         let beneficiary = *block.beneficiary();
         let basefee = *block.basefee();
         let effective_gas_price = tx.effective_gas_price(basefee);
@@ -98,13 +94,13 @@ where
 
         // transfer fee to coinbase/beneficiary.
         // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
-        let coinbase_gas_price = if ctx.cfg().spec().into().is_enabled_in(SpecId::LONDON) {
+        let coinbase_gas_price = if context.cfg().spec().into().is_enabled_in(SpecId::LONDON) {
             effective_gas_price.saturating_sub(basefee)
         } else {
             effective_gas_price
         };
 
-        let coinbase_account = ctx.journal().load_account(beneficiary)?;
+        let coinbase_account = context.journal().load_account(beneficiary)?;
 
         coinbase_account.data.mark_touch();
         coinbase_account.data.info.balance =
@@ -165,4 +161,37 @@ where
         // let _ = context.evm.take_error();
         context.journal().clear();
     }
+}
+
+/// Trait for post execution context.
+///
+/// TODO Generalize FinalOutput.
+pub trait EthPostExecutionContext<ERROR>:
+    TransactionGetter
+    + ErrorGetter<Error = ERROR>
+    + BlockGetter
+    + JournalStateGetter<Journal: JournaledState<FinalOutput = (EvmState, Vec<Log>)>>
+    + CfgGetter
+{
+}
+
+impl<
+        ERROR,
+        CTX: TransactionGetter
+            + ErrorGetter<Error = ERROR>
+            + BlockGetter
+            + JournalStateGetter<Journal: JournaledState<FinalOutput = (EvmState, Vec<Log>)>>
+            + CfgGetter,
+    > EthPostExecutionContext<ERROR> for CTX
+{
+}
+
+pub trait EthPostExecutionError<CTX: JournalStateGetter>:
+    From<JournalStateGetterDBError<CTX>>
+{
+}
+
+impl<CTX: JournalStateGetter, ERROR: From<JournalStateGetterDBError<CTX>>>
+    EthPostExecutionError<CTX> for ERROR
+{
 }

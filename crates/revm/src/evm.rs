@@ -249,19 +249,19 @@ where
         &mut self,
         initial_gas_spend: u64,
     ) -> Result<ResultAndState<HaltReason>, ERROR> {
-        let ctx = &mut self.context;
+        let context = &mut self.context;
         let pre_exec = self.handler.pre_execution();
 
         // load access list and beneficiary if needed.
-        pre_exec.load_accounts(ctx)?;
+        pre_exec.load_accounts(context)?;
 
         // deduce caller balance with its limit.
-        pre_exec.deduct_caller(ctx)?;
+        pre_exec.deduct_caller(context)?;
 
-        let gas_limit = ctx.tx().common_fields().gas_limit() - initial_gas_spend;
+        let gas_limit = context.tx().common_fields().gas_limit() - initial_gas_spend;
 
         // apply EIP-7702 auth list.
-        let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(ctx)? as i64;
+        let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(context)? as i64;
 
         // start execution
 
@@ -269,23 +269,23 @@ where
         let exec = self.handler.execution();
 
         // create first frame action
-        let first_frame = exec.init_first_frame(ctx, gas_limit)?;
+        let first_frame = exec.init_first_frame(context, gas_limit)?;
         let frame_result = match first_frame {
-            FrameOrResultGen::Frame(frame) => exec.run(ctx, frame)?,
+            FrameOrResultGen::Frame(frame) => exec.run(context, frame)?,
             FrameOrResultGen::Result(result) => result,
         };
 
-        let mut exec_result = exec.last_frame_result(ctx, frame_result)?;
+        let mut exec_result = exec.last_frame_result(context, frame_result)?;
 
         let post_exec = self.handler.post_execution();
         // calculate final refund and add EIP-7702 refund to gas.
-        post_exec.refund(ctx, &mut exec_result, eip7702_gas_refund);
+        post_exec.refund(context, &mut exec_result, eip7702_gas_refund);
         // Reimburse the caller
-        post_exec.reimburse_caller(ctx, &mut exec_result)?;
+        post_exec.reimburse_caller(context, &mut exec_result)?;
         // Reward beneficiary
-        post_exec.reward_beneficiary(ctx, &mut exec_result)?;
+        post_exec.reward_beneficiary(context, &mut exec_result)?;
         // Returns output of transaction.
-        post_exec.output(ctx, exec_result)
+        post_exec.output(context, exec_result)
     }
 }
 
@@ -427,7 +427,7 @@ mod tests {
         let mut evm = Evm::<EthereumWiring<BenchmarkDB, ()>>::builder()
             .with_spec_id(SpecId::PRAGUE)
             .with_db(BenchmarkDB::new_bytecode(bytecode))
-            .with_default_ext_ctx()
+            .with_default_ext_context()
             .modify_tx_env(|tx| {
                 tx.tx_type = TransactionType::Eip7702;
                 tx.gas_limit = 100_000;

@@ -5,12 +5,12 @@ use primitives::{TxKind, U256};
 use specification::{constants::MAX_CODE_SIZE, hardfork::SpecId};
 
 pub trait Cfg {
-    //type Spec;
+    type Spec: Into<SpecId>;
 
     fn chain_id(&self) -> u64;
 
     // TODO Make SpecId a associated type but for faster development we use impl Into.
-    fn spec(&self) -> impl Into<SpecId>;
+    fn spec(&self) -> Self::Spec;
 
     fn max_code_size(&self) -> usize;
 
@@ -42,12 +42,12 @@ pub enum AnalysisKind {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
-pub struct CfgEnv {
+pub struct CfgEnv<SPEC: Into<SpecId> = SpecId> {
     /// Chain ID of the EVM, it will be compared to the transaction's Chain ID.
     /// Chain ID is introduced EIP-155
     pub chain_id: u64,
     /// Specification for EVM represent the hardfork.
-    pub spec: SpecId,
+    pub spec: SPEC,
     /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
     /// By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
@@ -92,12 +92,14 @@ impl CfgEnv {
     }
 }
 
-impl Cfg for CfgEnv {
+impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
+    type Spec = SPEC;
+
     fn chain_id(&self) -> u64 {
         self.chain_id
     }
 
-    fn spec(&self) -> impl Into<SpecId> {
+    fn spec(&self) -> Self::Spec {
         self.spec
     }
 

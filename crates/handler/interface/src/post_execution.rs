@@ -7,7 +7,7 @@ pub trait PostExecutionHandler {
     /// Calculate final refund
     fn refund(
         &self,
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         exec_result: &mut Self::ExecResult,
         eip7702_refund: i64,
     );
@@ -15,14 +15,14 @@ pub trait PostExecutionHandler {
     /// Reimburse the caller with balance it didn't spent.
     fn reimburse_caller(
         &self,
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         exec_result: &mut Self::ExecResult,
     ) -> Result<(), Self::Error>;
 
     /// Reward beneficiary with transaction rewards.
     fn reward_beneficiary(
         &self,
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         exec_result: &mut Self::ExecResult,
     ) -> Result<(), Self::Error>;
 

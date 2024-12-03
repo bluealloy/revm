@@ -42,38 +42,41 @@ impl<CTX, ERROR> EthValidation<CTX, ERROR> {
 
 impl<CTX, ERROR> ValidationHandler for EthValidation<CTX, ERROR>
 where
-    CTX: TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter,
+    CTX: EthValidationContext,
     ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>,
 {
     type Context = CTX;
     type Error = ERROR;
 
-    fn validate_env(&self, ctx: &Self::Context) -> Result<(), Self::Error> {
-        let spec = ctx.cfg().spec().into();
+    fn validate_env(&self, context: &Self::Context) -> Result<(), Self::Error> {
+        let spec = context.cfg().spec().into();
         // `prevrandao` is required for the merge
-        if spec.is_enabled_in(SpecId::MERGE) && ctx.block().prevrandao().is_none() {
+        if spec.is_enabled_in(SpecId::MERGE) && context.block().prevrandao().is_none() {
             return Err(InvalidHeader::PrevrandaoNotSet.into());
         }
         // `excess_blob_gas` is required for Cancun
-        if spec.is_enabled_in(SpecId::CANCUN) && ctx.block().blob_excess_gas_and_price().is_none() {
+        if spec.is_enabled_in(SpecId::CANCUN)
+            && context.block().blob_excess_gas_and_price().is_none()
+        {
             return Err(InvalidHeader::ExcessBlobGasNotSet.into());
         }
-        validate_tx_env::<&Self::Context, InvalidTransaction>(ctx, spec).map_err(Into::into)
+        validate_tx_env::<&Self::Context, InvalidTransaction>(context, spec).map_err(Into::into)
     }
 
-    fn validate_tx_against_state(&self, ctx: &mut Self::Context) -> Result<(), Self::Error> {
-        let tx_caller = ctx.tx().common_fields().caller();
+    fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
+        let tx_caller = context.tx().common_fields().caller();
 
         // load acc
-        let account = &mut ctx.journal().load_account_code(tx_caller)?;
+        let account = &mut context.journal().load_account_code(tx_caller)?;
         let account = account.data.clone();
 
-        validate_tx_against_account::<CTX, ERROR>(&account, ctx)
+        validate_tx_against_account::<CTX, ERROR>(&account, context)
     }
 
-    fn validate_initial_tx_gas(&self, ctx: &Self::Context) -> Result<u64, Self::Error> {
-        let spec = ctx.cfg().spec().into();
-        validate_initial_tx_gas::<&Self::Context, InvalidTransaction>(ctx, spec).map_err(Into::into)
+    fn validate_initial_tx_gas(&self, context: &Self::Context) -> Result<u64, Self::Error> {
+        let spec = context.cfg().spec().into();
+        validate_initial_tx_gas::<&Self::Context, InvalidTransaction>(context, spec)
+            .map_err(Into::into)
     }
 }
 
@@ -138,29 +141,29 @@ pub fn validate_eip4844_tx(
 
 /// Validate transaction against block and configuration for mainnet.
 pub fn validate_tx_env<CTX: TransactionGetter + BlockGetter + CfgGetter, Error>(
-    ctx: CTX,
+    context: CTX,
     spec_id: SpecId,
 ) -> Result<(), Error>
 where
     Error: From<InvalidTransaction>,
 {
     // Check if the transaction's chain id is correct
-    let common_field = ctx.tx().common_fields();
-    let tx_type = ctx.tx().tx_type().into();
+    let common_field = context.tx().common_fields();
+    let tx_type = context.tx().tx_type().into();
 
-    let base_fee = if ctx.cfg().is_base_fee_check_disabled() {
+    let base_fee = if context.cfg().is_base_fee_check_disabled() {
         None
     } else {
-        Some(*ctx.block().basefee())
+        Some(*context.block().basefee())
     };
 
     match tx_type {
         TransactionType::Legacy => {
-            let tx = ctx.tx().legacy();
+            let tx = context.tx().legacy();
             // check chain_id only if it is present in the legacy transaction.
             // EIP-155: Simple replay attack protection
             if let Some(chain_id) = tx.chain_id() {
-                if chain_id != ctx.cfg().chain_id() {
+                if chain_id != context.cfg().chain_id() {
                     return Err(InvalidTransaction::InvalidChainId.into());
                 }
             }
@@ -176,9 +179,9 @@ where
             if !spec_id.is_enabled_in(SpecId::BERLIN) {
                 return Err(InvalidTransaction::Eip2930NotSupported.into());
             }
-            let tx = ctx.tx().eip2930();
+            let tx = context.tx().eip2930();
 
-            if ctx.cfg().chain_id() != tx.chain_id() {
+            if context.cfg().chain_id() != tx.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId.into());
             }
 
@@ -193,9 +196,9 @@ where
             if !spec_id.is_enabled_in(SpecId::LONDON) {
                 return Err(InvalidTransaction::Eip1559NotSupported.into());
             }
-            let tx = ctx.tx().eip1559();
+            let tx = context.tx().eip1559();
 
-            if ctx.cfg().chain_id() != tx.chain_id() {
+            if context.cfg().chain_id() != tx.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId.into());
             }
 
@@ -209,9 +212,9 @@ where
             if !spec_id.is_enabled_in(SpecId::CANCUN) {
                 return Err(InvalidTransaction::Eip4844NotSupported.into());
             }
-            let tx = ctx.tx().eip4844();
+            let tx = context.tx().eip4844();
 
-            if ctx.cfg().chain_id() != tx.chain_id() {
+            if context.cfg().chain_id() != tx.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId.into());
             }
 
@@ -224,7 +227,7 @@ where
             validate_eip4844_tx(
                 tx.blob_versioned_hashes(),
                 tx.max_fee_per_blob_gas(),
-                ctx.block().blob_gasprice().unwrap_or_default(),
+                context.block().blob_gasprice().unwrap_or_default(),
             )?;
         }
         TransactionType::Eip7702 => {
@@ -232,9 +235,9 @@ where
             if !spec_id.is_enabled_in(SpecId::PRAGUE) {
                 return Err(InvalidTransaction::Eip7702NotSupported.into());
             }
-            let tx = ctx.tx().eip7702();
+            let tx = context.tx().eip7702();
 
-            if ctx.cfg().chain_id() != tx.chain_id() {
+            if context.cfg().chain_id() != tx.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId.into());
             }
 
@@ -263,16 +266,16 @@ where
     };
 
     // Check if gas_limit is more than block_gas_limit
-    if !ctx.cfg().is_block_gas_limit_disabled()
-        && U256::from(common_field.gas_limit()) > *ctx.block().gas_limit()
+    if !context.cfg().is_block_gas_limit_disabled()
+        && U256::from(common_field.gas_limit()) > *context.block().gas_limit()
     {
         return Err(InvalidTransaction::CallerGasLimitMoreThanBlock.into());
     }
 
     // EIP-3860: Limit and meter initcode
-    if spec_id.is_enabled_in(SpecId::SHANGHAI) && ctx.tx().kind().is_create() {
-        let max_initcode_size = ctx.cfg().max_code_size().saturating_mul(2);
-        if ctx.tx().common_fields().input().len() > max_initcode_size {
+    if spec_id.is_enabled_in(SpecId::SHANGHAI) && context.tx().kind().is_create() {
+        let max_initcode_size = context.cfg().max_code_size().saturating_mul(2);
+        if context.tx().common_fields().input().len() > max_initcode_size {
             return Err(InvalidTransaction::CreateInitCodeSizeLimit.into());
         }
     }
@@ -284,16 +287,16 @@ where
 #[inline]
 pub fn validate_tx_against_account<CTX: TransactionGetter + CfgGetter, ERROR>(
     account: &Account,
-    ctx: &CTX,
+    context: &CTX,
 ) -> Result<(), ERROR>
 where
     ERROR: From<InvalidTransaction>,
 {
-    let tx_type = ctx.tx().tx_type().into();
+    let tx_type = context.tx().tx_type().into();
     // EIP-3607: Reject transactions from senders with deployed code
     // This EIP is introduced after london but there was no collision in past
     // so we can leave it enabled always
-    if !ctx.cfg().is_eip3607_disabled() {
+    if !context.cfg().is_eip3607_disabled() {
         let bytecode = &account.info.code.as_ref().unwrap();
         // allow EOAs whose code is a valid delegation designation,
         // i.e. 0xef0100 || address, to continue to originate transactions.
@@ -303,8 +306,8 @@ where
     }
 
     // Check that the transaction's nonce is correct
-    if !ctx.cfg().is_nonce_check_disabled() {
-        let tx = ctx.tx().common_fields().nonce();
+    if !context.cfg().is_nonce_check_disabled() {
+        let tx = context.tx().common_fields().nonce();
         let state = account.info.nonce;
         match tx.cmp(&state) {
             Ordering::Greater => {
@@ -318,13 +321,13 @@ where
     }
 
     // gas_limit * max_fee + value
-    let mut balance_check = U256::from(ctx.tx().common_fields().gas_limit())
-        .checked_mul(U256::from(ctx.tx().max_fee()))
-        .and_then(|gas_cost| gas_cost.checked_add(ctx.tx().common_fields().value()))
+    let mut balance_check = U256::from(context.tx().common_fields().gas_limit())
+        .checked_mul(U256::from(context.tx().max_fee()))
+        .and_then(|gas_cost| gas_cost.checked_add(context.tx().common_fields().value()))
         .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
     if tx_type == TransactionType::Eip4844 {
-        let tx = ctx.tx().eip4844();
+        let tx = context.tx().eip4844();
         let data_fee = tx.calc_max_data_fee();
         balance_check = balance_check
             .checked_add(data_fee)
@@ -333,7 +336,7 @@ where
 
     // Check if account has enough balance for `gas_limit * max_fee`` and value transfer.
     // Transfer will be done inside `*_inner` functions.
-    if balance_check > account.info.balance && !ctx.cfg().is_balance_check_disabled() {
+    if balance_check > account.info.balance && !context.cfg().is_balance_check_disabled() {
         return Err(InvalidTransaction::LackOfFundForMaxFee {
             fee: Box::new(balance_check),
             balance: Box::new(account.info.balance),
@@ -378,4 +381,28 @@ where
         return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
     }
     Ok(initial_gas_spend)
+}
+
+/// Helper trait that summarizes ValidationHandler requirements from Context.
+pub trait EthValidationContext:
+    TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter
+{
+}
+
+impl<T: TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter> EthValidationContext
+    for T
+{
+}
+
+/// Helper trait that summarizes all possible requirements by EthValidation.
+pub trait EthValidationError<CTX: JournalStateGetter>:
+    From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>
+{
+}
+
+impl<
+        CTX: JournalStateGetter,
+        T: From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>,
+    > EthValidationError<CTX> for T
+{
 }

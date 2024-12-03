@@ -31,12 +31,8 @@ pub struct EthExecution<
 
 impl<CTX, ERROR, FRAME> ExecutionHandler for EthExecution<CTX, ERROR, FRAME>
 where
-    CTX: TransactionGetter
-        + ErrorGetter<Error = ERROR>
-        + BlockGetter
-        + JournalStateGetter
-        + CfgGetter,
-    ERROR: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
+    CTX: EthExecutionContext<ERROR>,
+    ERROR: EthExecutionError<CTX>,
     FRAME:
         FrameTrait<Context = CTX, Error = ERROR, FrameInit = FrameInput, FrameResult = FrameResult>,
 {
@@ -128,6 +124,34 @@ impl<CTX, ERROR, FRAME> EthExecution<CTX, ERROR, FRAME> {
     }
 }
 
+pub trait EthExecutionContext<ERROR>:
+    TransactionGetter + ErrorGetter<Error = ERROR> + BlockGetter + JournalStateGetter + CfgGetter
+{
+}
+
+impl<
+        ERROR,
+        T: TransactionGetter
+            + ErrorGetter<Error = ERROR>
+            + BlockGetter
+            + JournalStateGetter
+            + CfgGetter,
+    > EthExecutionContext<ERROR> for T
+{
+}
+
+pub trait EthExecutionError<CTX: JournalStateGetter>:
+    From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>
+{
+}
+
+impl<
+        CTX: JournalStateGetter,
+        T: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
+    > EthExecutionError<CTX> for T
+{
+}
+
 // #[cfg(test)]
 // mod tests {
 //     use super::*;
@@ -142,8 +166,8 @@ impl<CTX, ERROR, FRAME> EthExecution<CTX, ERROR, FRAME> {
 //         let mut env = Envcontext_interface::<DefaultEthereumWiring>::default();
 //         env.tx.gas_limit = 100;
 
-//         let mut ctx = Context::default();
-//         ctx.evm.inner.env = Box::new(env);
+//         let mut context = Context::default();
+//         context.evm.inner.env = Box::new(env);
 //         let mut first_frame = FrameResult::Call(CallOutcome::new(
 //             InterpreterResult {
 //                 result: instruction_result,
@@ -152,8 +176,8 @@ impl<CTX, ERROR, FRAME> EthExecution<CTX, ERROR, FRAME> {
 //             },
 //             0..0,
 //         ));
-//         last_frame_return::<DefaultEthereumWiring, CancunSpec>(&mut ctx, &mut first_frame).unwrap();
-//         refund::<DefaultEthereumWiring, CancunSpec>(&mut ctx, first_frame.gas_mut(), 0);
+//         last_frame_return::<DefaultEthereumWiring, CancunSpec>(&mut context, &mut first_frame).unwrap();
+//         refund::<DefaultEthereumWiring, CancunSpec>(&mut context, first_frame.gas_mut(), 0);
 //         *first_frame.gas()
 //     }
 

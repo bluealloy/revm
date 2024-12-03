@@ -18,7 +18,7 @@ use bytecode::eof::{Eof, EofHeader};
 use context_interface::{Cfg, CreateScheme};
 use core::cmp::max;
 use primitives::{keccak256, Address, Bytes, B256, U256};
-use specification::hardfork::{BerlinSpec, Spec, SpecId::*};
+use specification::hardfork::SpecId;
 use std::boxed::Box;
 
 /// EOF Create instruction
@@ -186,8 +186,13 @@ pub fn extcall_gas_calc<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .set_instruction_result(InstructionResult::FatalExternalError);
         return None;
     };
-    // account_load.is_empty will be accounted if there is transfer value.
-    let call_cost = gas::call_cost(BerlinSpec::SPEC_ID, transfers_value, account_load);
+    // account_load.is_empty will be accounted if there is transfer value
+    // Berlin can be hardcoded as extcall came after berlin.
+    let call_cost = gas::call_cost(
+        interpreter.runtime_flag.spec_id(),
+        transfers_value,
+        account_load,
+    );
     gas!(interpreter, call_cost, None);
 
     // 7. Calculate the gas available to callee as caller’s
@@ -377,7 +382,11 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     let mut code = Bytes::new();
     if len != 0 {
         // EIP-3860: Limit and meter initcode
-        if interpreter.runtime_flag.spec_id().is_enabled_in(SHANGHAI) {
+        if interpreter
+            .runtime_flag
+            .spec_id()
+            .is_enabled_in(SpecId::SHANGHAI)
+        {
             // Limit is set as double of max contract bytecode size
             let max_initcode_size = host.cfg().max_code_size().saturating_mul(2);
             if len > max_initcode_size {
@@ -408,7 +417,11 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     let mut gas_limit = interpreter.control.gas().remaining();
 
     // EIP-150: Gas cost changes for IO-heavy operations
-    if interpreter.runtime_flag.spec_id().is_enabled_in(TANGERINE) {
+    if interpreter
+        .runtime_flag
+        .spec_id()
+        .is_enabled_in(SpecId::TANGERINE)
+    {
         // take remaining gas and deduce l64 part of it.
         gas_limit -= gas_limit / 64
     }

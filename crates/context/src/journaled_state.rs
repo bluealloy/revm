@@ -553,7 +553,7 @@ impl<DB: Database> JournaledState<DB> {
     /// Reverts all changes to state until given checkpoint.
     #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
-        let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
+        let is_spurious_dragon_enabled = self.spec.is_enabled_in(SPURIOUS_DRAGON);
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
         self.depth -= 1;
@@ -611,7 +611,7 @@ impl<DB: Database> JournaledState<DB> {
         let acc = self.state.get_mut(&address).unwrap();
         let balance = acc.info.balance;
         let previously_destroyed = acc.is_selfdestructed();
-        let is_cancun_enabled = SpecId::enabled(self.spec, CANCUN);
+        let is_cancun_enabled = self.spec.is_enabled_in(CANCUN);
 
         // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
         let journal_entry = if acc.is_created() || !is_cancun_enabled {

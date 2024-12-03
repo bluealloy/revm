@@ -8,13 +8,13 @@ pub trait Frame: Sized {
     type Error;
 
     fn init_first(
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error>;
 
     fn init(
         &self,
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error>;
 
@@ -25,7 +25,7 @@ pub trait Frame: Sized {
 
     fn return_result(
         &mut self,
-        ctx: &mut Self::Context,
+        context: &mut Self::Context,
         result: Self::FrameResult,
     ) -> Result<(), Self::Error>;
 }
