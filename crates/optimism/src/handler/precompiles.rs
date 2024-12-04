@@ -5,6 +5,7 @@ use revm::{
     context::Cfg, context_interface::CfgGetter, handler::EthPrecompileProvider,
     handler_interface::PrecompileProvider, specification::hardfork::SpecId,
 };
+use std::boxed::Box;
 
 pub struct OpPrecompileProvider<CTX, ERROR> {
     precompile_provider: EthPrecompileProvider<CTX, ERROR>,
