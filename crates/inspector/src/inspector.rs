@@ -1,7 +1,5 @@
-use core::mem::MaybeUninit;
-use std::rc::Rc;
-
 use auto_impl::auto_impl;
+use core::mem::MaybeUninit;
 use derive_where::derive_where;
 use revm::{
     bytecode::opcode::OpCode,
@@ -34,6 +32,7 @@ use revm::{
     specification::hardfork::SpecId,
     Context, Error, Evm, JournalEntry, JournaledState,
 };
+use std::{rc::Rc, vec::Vec};
 
 /// EVM [Interpreter] callbacks.
 #[auto_impl(&mut, Box)]
