@@ -34,6 +34,7 @@ pub use primitives;
 use cfg_if::cfg_if;
 use core::hash::Hash;
 use once_cell::race::OnceBox;
+use specification::hardfork::SpecId;
 use std::{boxed::Box, vec::Vec};
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
@@ -274,6 +275,12 @@ pub enum PrecompileSpecId {
     CANCUN,
     PRAGUE,
     LATEST,
+}
+
+impl From<SpecId> for PrecompileSpecId {
+    fn from(spec_id: SpecId) -> Self {
+        Self::from_spec_id(spec_id)
+    }
 }
 
 impl PrecompileSpecId {

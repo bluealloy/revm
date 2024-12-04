@@ -1,3 +1,4 @@
+use crate::{exec::EvmCommit, EvmExec};
 use context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context};
 use context_interface::{
     block::BlockSetter,
@@ -20,8 +21,6 @@ use precompile::PrecompileErrors;
 use primitives::Log;
 use state::EvmState;
 use std::vec::Vec;
-
-use crate::{exec::EvmCommit, EvmExec};
 
 /// Main EVM structure
 pub struct Evm<ERROR, CTX = Context, HANDLER = EthHandler<CTX, ERROR>> {

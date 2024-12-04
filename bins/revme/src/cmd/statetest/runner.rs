@@ -451,7 +451,7 @@ pub fn execute_test_suite(
                         r.result
                     });
 
-                    let spec = cfg.spec().into();
+                    let spec = cfg.spec();
                     let db = evm.context.inner.journaled_state.database;
                     // dump state and traces if test failed
                     let output = check_evm_execution(
@@ -477,7 +477,7 @@ pub fn execute_test_suite(
 
                     *elapsed.lock().unwrap() += timer.elapsed();
 
-                    let spec = cfg.spec().into();
+                    let spec = cfg.spec();
                     let db = evm.context.journaled_state.database;
                     // dump state and traces if test failed
                     let output = check_evm_execution(
@@ -522,7 +522,7 @@ pub fn execute_test_suite(
                             block: block.clone(),
                             tx: tx.clone(),
                             cfg: cfg.clone(),
-                            journaled_state: JournaledState::new(cfg.spec().into(), &mut state),
+                            journaled_state: JournaledState::new(cfg.spec(), &mut state),
                             chain: (),
                             error: Ok(()),
                         },

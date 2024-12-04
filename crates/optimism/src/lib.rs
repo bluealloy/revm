@@ -6,8 +6,9 @@
 extern crate alloc as std;
 
 pub mod bn128;
+pub mod evm;
 pub mod fast_lz;
-pub mod handler_register;
+pub mod handler;
 pub mod l1block;
 pub mod result;
 pub mod spec;

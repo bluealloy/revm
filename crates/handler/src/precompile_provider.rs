@@ -6,8 +6,8 @@ use precompile::{PrecompileSpecId, Precompiles};
 use primitives::{Address, Bytes};
 
 pub struct EthPrecompileProvider<CTX, ERROR> {
-    precompiles: &'static Precompiles,
-    _phantom: core::marker::PhantomData<(CTX, ERROR)>,
+    pub precompiles: &'static Precompiles,
+    pub _phantom: core::marker::PhantomData<(CTX, ERROR)>,
 }
 
 impl<CTX, ERROR> Clone for EthPrecompileProvider<CTX, ERROR> {

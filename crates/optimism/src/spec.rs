@@ -1,6 +1,4 @@
-use core::ops::Deref;
-
-use revm::{context::CfgEnv, specification::hardfork::SpecId};
+use revm::specification::hardfork::SpecId;
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Hash)]
@@ -79,6 +77,16 @@ impl From<OpSpecId> for &'static str {
     }
 }
 
+/// String identifiers for Optimism hardforks.
+pub mod name {
+    pub const BEDROCK: &str = "Bedrock";
+    pub const REGOLITH: &str = "Regolith";
+    pub const CANYON: &str = "Canyon";
+    pub const ECOTONE: &str = "Ecotone";
+    pub const FJORD: &str = "Fjord";
+    pub const GRANITE: &str = "Granite";
+}
+
 impl OpSpec {
     /// Returns `true` if the given specification ID is enabled in this spec.
     #[inline]
@@ -100,16 +108,6 @@ impl OpSpec {
     }
 }
 
-/// String identifiers for Optimism hardforks.
-pub mod name {
-    pub const BEDROCK: &str = "Bedrock";
-    pub const REGOLITH: &str = "Regolith";
-    pub const CANYON: &str = "Canyon";
-    pub const ECOTONE: &str = "Ecotone";
-    pub const FJORD: &str = "Fjord";
-    pub const GRANITE: &str = "Granite";
-}
-
 impl From<&str> for OpSpec {
     fn from(name: &str) -> Self {
         let eth = SpecId::from(name);
@@ -129,23 +127,6 @@ impl From<OpSpec> for &'static str {
             OpSpec::Eth(eth) => eth.into(),
             OpSpec::Op(op) => op.into(),
         }
-    }
-}
-
-pub trait OpCfgSpec {
-    fn op_spec(&self) -> OpSpec;
-}
-
-pub struct OpCfg {
-    base: CfgEnv,
-    spec: OpSpec,
-}
-
-impl Deref for OpCfg {
-    type Target = CfgEnv;
-
-    fn deref(&self) -> &Self::Target {
-        &self.base
     }
 }
 

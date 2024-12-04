@@ -1,5 +1,7 @@
 //! Handler related to Optimism chain
 
+pub mod precompiles;
+
 use crate::{
     transaction::{
         abstraction::OpTxGetter, deposit::DepositTransaction, OpTransactionType, OpTxTrait,
@@ -8,6 +10,7 @@ use crate::{
     BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
 };
 use core::ops::Mul;
+use precompiles::OpPrecompileProvider;
 use revm::{
     context_interface::{
         result::{ExecutionResult, FromStringError, InvalidTransaction, ResultAndState},
@@ -16,8 +19,8 @@ use revm::{
     },
     handler::{
         EthExecution, EthExecutionContext, EthExecutionError, EthFrame, EthFrameContext,
-        EthFrameError, EthPostExecution, EthPostExecutionContext, EthPostExecutionError,
-        EthPreExecution, EthPreExecutionContext, EthPreExecutionError, EthPrecompileProvider,
+        EthFrameError, EthHandler, EthPostExecution, EthPostExecutionContext,
+        EthPostExecutionError, EthPreExecution, EthPreExecutionContext, EthPreExecutionError,
         EthValidation, EthValidationContext, EthValidationError, FrameResult,
     },
     handler_interface::{
@@ -26,7 +29,7 @@ use revm::{
     },
     interpreter::{
         interpreter::{EthInstructionProvider, EthInterpreter},
-        Gas,
+        FrameInput, Gas,
     },
     primitives::{hash_map::HashMap, U256},
     specification::hardfork::SpecId,
@@ -34,11 +37,20 @@ use revm::{
     Database,
 };
 
-pub struct OpValidationHandler<CTX, ERROR> {
+pub type OpHandler<
+    CTX,
+    ERROR,
+    VAL = OpValidation<CTX, ERROR>,
+    PREEXEC = OpPreExecution<CTX, ERROR>,
+    EXEC = OpExecution<CTX, ERROR>,
+    POSTEXEC = OpPostExecution<CTX, ERROR>,
+> = EthHandler<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC>;
+
+pub struct OpValidation<CTX, ERROR> {
     pub eth: EthValidation<CTX, ERROR>,
 }
 
-impl<CTX, ERROR> ValidationHandler for OpValidationHandler<CTX, ERROR>
+impl<CTX, ERROR> ValidationHandler for OpValidation<CTX, ERROR>
 where
     CTX: EthValidationContext + OpTxGetter,
     // Have Cfg with OpSpec
@@ -98,7 +110,7 @@ where
 
     fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
         // the L1-cost fee is only computed for Optimism non-deposit transactions.
-        let spec = context.cfg().spec().into();
+        let spec = context.cfg().spec();
         if context.tx().tx_type() != OpTransactionType::Deposit {
             let l1_block_info: crate::L1BlockInfo =
                 super::L1BlockInfo::try_fetch(context.db(), spec)?;
@@ -161,26 +173,31 @@ where
     }
 }
 
-pub struct OpExecution<CTX, ERROR> {
-    pub eth: EthExecution<CTX, ERROR>,
+pub struct OpExecution<
+    CTX,
+    ERROR,
+    FRAME = EthFrame<
+        CTX,
+        ERROR,
+        EthInterpreter<()>,
+        OpPrecompileProvider<CTX, ERROR>,
+        EthInstructionProvider<EthInterpreter<()>, CTX>,
+    >,
+> {
+    pub eth: EthExecution<CTX, ERROR, FRAME>,
 }
 
-impl<CTX, ERROR> ExecutionHandler for OpExecution<CTX, ERROR>
+impl<CTX, ERROR, FRAME> ExecutionHandler for OpExecution<CTX, ERROR, FRAME>
 where
     CTX: EthExecutionContext<ERROR> + EthFrameContext<ERROR> + OpTxGetter,
     ERROR: EthExecutionError<CTX> + EthFrameError<CTX>,
     <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
     <CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
+    FRAME: Frame<Context = CTX, Error = ERROR, FrameInit = FrameInput, FrameResult = FrameResult>,
 {
     type Context = CTX;
     type Error = ERROR;
-    type Frame = EthFrame<
-        CTX,
-        ERROR,
-        EthInterpreter<()>,
-        EthPrecompileProvider<CTX, ERROR>,
-        EthInstructionProvider<EthInterpreter, CTX>,
-    >;
+    type Frame = FRAME;
     type ExecResult = FrameResult;
 
     fn init_first_frame(
@@ -438,29 +455,6 @@ where
         })
     }
 }
-
-// /// Load precompiles for Optimism chain.
-// #[inline]
-// pub fn load_precompiles<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
-// ) -> ContextPrecompiles<EvmWiringT> {
-//     let mut precompiles = ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID));
-
-//     if SPEC::optimism_enabled(OptimismSpecId::FJORD) {
-//         precompiles.extend([
-//             // EIP-7212: secp256r1 P256verify
-//             secp256r1::P256VERIFY,
-//         ])
-//     }
-
-//     if SPEC::optimism_enabled(OptimismSpecId::GRANITE) {
-//         precompiles.extend([
-//             // Restrict bn256Pairing input size
-//             crate::bn128::pair::GRANITE,
-//         ])
-//     }
-
-//     precompiles
-// }
 
 // /// Optimism end handle changes output if the transaction is a deposit transaction.
 // /// Deposit transaction can't be reverted and is always successful.
