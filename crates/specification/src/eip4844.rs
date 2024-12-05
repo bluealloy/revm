@@ -1,4 +1,4 @@
-/// === EIP-4844 constants ===
+//  === EIP-4844 constants ===
 
 /// Gas consumption of a single data blob (== blob byte size).
 pub const GAS_PER_BLOB: u64 = 1 << 17;

@@ -24,7 +24,7 @@ all = "warn"
 [dependencies]
 # revm
 primitives.workspace = true
-wiring.workspace = true
+context-interface.workspace = true
 specification.workspace = true
 
 # static precompile sets.
@@ -67,7 +67,6 @@ p256 = { version = "0.13.2", optional = true, default-features = false, features
 
 # utils
 cfg-if = { version = "1.0", default-features = false }
-dyn-clone = "1.0"
 
 [dev-dependencies]
 criterion = "0.5"
@@ -98,11 +97,11 @@ secp256r1 = ["dep:p256"]
 # These libraries may not work on all no_std platforms as they depend on C.
 
 # Enables the KZG point evaluation precompile.
-c-kzg = ["dep:c-kzg", "wiring/c-kzg"]
+c-kzg = ["dep:c-kzg"]
 # `kzg-rs` is not audited but useful for `no_std` environment, use it with causing and default to `c-kzg` if possible.
-kzg-rs = ["dep:kzg-rs", "wiring/kzg-rs"]
+kzg-rs = ["dep:kzg-rs"]
 
-portable = ["c-kzg", "c-kzg?/portable"]
+portable = ["c-kzg"]
 
 # Use `secp256k1` as a faster alternative to `k256`.
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.

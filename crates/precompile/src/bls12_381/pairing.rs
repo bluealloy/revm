@@ -3,15 +3,14 @@ use super::{
     g2::{extract_g2_input, G2_INPUT_ITEM_LENGTH},
 };
 use crate::{
-    u64_to_address, Precompile, PrecompileError, PrecompileOutput, PrecompileResult,
-    PrecompileWithAddress,
+    u64_to_address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
 use blst::{blst_final_exp, blst_fp12, blst_fp12_is_one, blst_fp12_mul, blst_miller_loop};
 use primitives::{Bytes, B256};
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_PAIRING precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(pairing));
+    PrecompileWithAddress(u64_to_address(ADDRESS), pairing);
 /// BLS12_PAIRING precompile address.
 pub const ADDRESS: u64 = 0x11;
 

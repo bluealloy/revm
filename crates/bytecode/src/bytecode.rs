@@ -11,8 +11,6 @@ use std::sync::Arc;
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Bytecode {
-    /// No analysis has been performed.
-    LegacyRaw(LegacyRawBytecode),
     /// The bytecode has been analyzed for valid jump destinations.
     LegacyAnalyzed(LegacyAnalyzedBytecode),
     /// Ethereum Object Format
@@ -77,7 +75,7 @@ impl Bytecode {
     /// Creates a new legacy [`Bytecode`].
     #[inline]
     pub fn new_legacy(raw: Bytes) -> Self {
-        Self::LegacyRaw(raw.into())
+        Self::LegacyAnalyzed(LegacyRawBytecode(raw).into_analyzed())
     }
 
     /// Creates a new raw [`Bytecode`].
@@ -100,33 +98,19 @@ impl Bytecode {
     ///
     /// Returns an error on incorrect Bytecode format.
     #[inline]
-    pub fn new_raw_checked(bytecode: Bytes) -> Result<Self, BytecodeDecodeError> {
-        let prefix = bytecode.get(..2);
+    pub fn new_raw_checked(bytes: Bytes) -> Result<Self, BytecodeDecodeError> {
+        let prefix = bytes.get(..2);
         match prefix {
             Some(prefix) if prefix == &EOF_MAGIC_BYTES => {
-                let eof = Eof::decode(bytecode)?;
+                let eof = Eof::decode(bytes)?;
                 Ok(Self::Eof(Arc::new(eof)))
             }
             Some(prefix) if prefix == &EIP7702_MAGIC_BYTES => {
-                let eip7702 = Eip7702Bytecode::new_raw(bytecode)?;
+                let eip7702 = Eip7702Bytecode::new_raw(bytes)?;
                 Ok(Self::Eip7702(eip7702))
             }
-            _ => Ok(Self::LegacyRaw(bytecode.into())),
+            _ => Ok(Self::new_legacy(bytes)),
         }
-    }
-
-    /// Perform bytecode analysis.
-    ///
-    /// The analysis finds and caches valid jump destinations for later execution as an optimization step.
-    ///
-    /// If the bytecode is already analyzed, it is returned as-is.
-    #[inline]
-    pub fn into_analyzed(self) -> Bytecode {
-        let Bytecode::LegacyRaw(bytecode) = self else {
-            return self;
-        };
-
-        Bytecode::LegacyAnalyzed(bytecode.into_analyzed())
     }
 
     /// Create new checked bytecode.
@@ -149,23 +133,14 @@ impl Bytecode {
 
     /// Returns a reference to the bytecode.
     ///
-    /// In case of EOF this will be the first code section.
+    /// In case of EOF this will be the all code sections.
     #[inline]
     pub fn bytecode(&self) -> &Bytes {
         match self {
-            Self::LegacyRaw(bytes) => bytes,
             Self::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
-            Self::Eof(eof) => eof
-                .body
-                .code(0)
-                .expect("Valid EOF has at least one code section"),
+            Self::Eof(eof) => &eof.body.code,
             Self::Eip7702(code) => code.raw(),
         }
-    }
-
-    /// Returns false if bytecode can't be executed in Interpreter.
-    pub fn is_execution_ready(&self) -> bool {
-        !matches!(self, Self::LegacyRaw(_))
     }
 
     /// Returns bytes
@@ -190,7 +165,6 @@ impl Bytecode {
     #[inline]
     pub fn original_bytes(&self) -> Bytes {
         match self {
-            Self::LegacyRaw(bytes) => bytes.0.clone(),
             Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
             Self::Eof(eof) => eof.raw().clone(),
             Self::Eip7702(eip7702) => eip7702.raw().clone(),
@@ -201,7 +175,6 @@ impl Bytecode {
     #[inline]
     pub fn original_byte_slice(&self) -> &[u8] {
         match self {
-            Self::LegacyRaw(bytes) => bytes,
             Self::LegacyAnalyzed(analyzed) => analyzed.original_byte_slice(),
             Self::Eof(eof) => eof.raw(),
             Self::Eip7702(eip7702) => eip7702.raw(),

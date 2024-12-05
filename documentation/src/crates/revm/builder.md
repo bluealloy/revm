@@ -127,7 +127,7 @@ impl ContextStatefulPrecompile<EvmContext<EmptyDB>, ()> for CustomPrecompile {
         _input: &Bytes,
         _gas_limit: u64,
         _context: &mut EvmContext<EmptyDB>,
-        _extctx: &mut (),
+        _extcontext: &mut (),
     ) -> PrecompileResult {
         Ok((10, Bytes::new()))
     }

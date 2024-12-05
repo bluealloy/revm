@@ -3,7 +3,6 @@ use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
 use primitives::{hash_map::Entry, Address, HashMap, Log, B256, KECCAK_EMPTY, U256};
 use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
-use wiring::EthereumWiring;
 
 /// A [Database] implementation that stores all state changes in memory.
 pub type InMemoryDB = CacheDB<EmptyDB>;
@@ -353,9 +352,6 @@ impl AccountState {
         matches!(self, AccountState::StorageCleared)
     }
 }
-
-/// Ethereum benchmark wiring
-pub type EthereumBenchmarkWiring = EthereumWiring<BenchmarkDB, ()>;
 
 /// Custom benchmarking DB that only has account info for the zero address.
 ///

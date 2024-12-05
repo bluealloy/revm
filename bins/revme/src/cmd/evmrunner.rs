@@ -1,11 +1,11 @@
 use clap::Parser;
 use database::BenchmarkDB;
-use inspector::{inspector_handle_register, inspectors::TracerEip3155};
+use inspector::{inspector_handler, inspectors::TracerEip3155, InspectorContext, InspectorMainEvm};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
+    handler::EthHandler,
     primitives::{address, hex, Address, TxKind},
-    wiring::EthereumWiring,
-    Database, Evm,
+    Context, Database, MainEvm,
 };
 use std::io::Error as IoError;
 use std::path::PathBuf;
@@ -81,16 +81,15 @@ impl Cmd {
 
         // BenchmarkDB is dummy state that implements Database trait.
         // the bytecode is deployed at zero address.
-        let mut evm = Evm::<EthereumWiring<BenchmarkDB, TracerEip3155>>::builder()
-            .with_db(db)
-            .modify_tx_env(|tx| {
-                // execution globals block hash/gas_limit/coinbase/timestamp..
+        let mut evm = MainEvm::new(
+            Context::builder().with_db(db).modify_tx_chained(|tx| {
                 tx.caller = CALLER;
                 tx.transact_to = TxKind::Call(Address::ZERO);
                 tx.data = input;
                 tx.nonce = nonce;
-            })
-            .build();
+            }),
+            EthHandler::default(),
+        );
 
         if self.bench {
             // Microbenchmark
@@ -104,11 +103,10 @@ impl Cmd {
         }
 
         let out = if self.trace {
-            let mut evm = evm
-                .modify()
-                .with_external_context(TracerEip3155::new(Box::new(std::io::stdout())))
-                .append_handler_register(inspector_handle_register)
-                .build();
+            let mut evm = InspectorMainEvm::new(
+                InspectorContext::new(evm.context, TracerEip3155::new(Box::new(std::io::stdout()))),
+                inspector_handler(),
+            );
 
             evm.transact().map_err(|_| Errors::EVMError)?
         } else {

@@ -1,10 +1,5 @@
 [workspace]
-resolver = "2"
-default-members = ["crates/revm"]
 members = [
-    # binary 
-    "bins/revme",
-
     # libraries
     "crates/revm",
     "crates/primitives",
@@ -15,23 +10,32 @@ members = [
     "crates/database/interface",
     "crates/bytecode",
     "crates/state",
-    "crates/wiring",
-    "crates/wiring/transaction",
     "crates/specification",
-    "crates/statetest-types",
+    "crates/context",
+    "crates/context/interface",
+    "crates/handler/interface",
+    "crates/handler",
+
+    # binary 
+    "bins/revme",
 
     # variants
     "crates/optimism",
+
+    # utility
+    "crates/statetest-types",
+
 
     # examples
     "examples/block_traces",
     "examples/contract_deployment",
     "examples/database_components",
-    "examples/database_ref",
     "examples/uniswap_get_reserves",
     "examples/uniswap_v2_usdc_swap",
     #"examples/custom_opcodes",
 ]
+resolver = "2"
+default-members = ["crates/revm"]
 
 [workspace.dependencies]
 # revm
@@ -42,12 +46,19 @@ database = { path = "crates/database", package = "revm-database", version = "1.0
 database-interface = { path = "crates/database/interface", package = "revm-database-interface", version = "1.0.0", default-features = false }
 specification = { path = "crates/specification", package = "revm-specification", version = "1.0.0", default-features = false }
 state = { path = "crates/state", package = "revm-state", version = "1.0.0", default-features = false }
-wiring = { path = "crates/wiring", package = "revm-wiring", version = "1.0.0", default-features = false }
-transaction = { path = "crates/wiring/transaction", package = "revm-transaction", version = "1.0.0", default-features = false }
 interpreter = { path = "crates/interpreter", package = "revm-interpreter", version = "10.0.1", default-features = false }
 inspector = { path = "crates/inspector", package = "revm-inspector", version = "1.0.0", default-features = false }
 precompile = { path = "crates/precompile", package = "revm-precompile", version = "11.0.1", default-features = false }
 statetest-types = { path = "crates/statetest-types", package = "revm-statetest-types", version = "1.0.0", default-features = false }
+context = { path = "crates/context", package = "revm-context", version = "1.0.0", default-features = false }
+context-interface = { path = "crates/context/interface", package = "revm-context-interface", version = "1.0.0", default-features = false }
+handler = { path = "crates/handler", package = "revm-handler", version = "1.0.0", default-features = false }
+handler-interface = { path = "crates/handler/interface", package = "revm-handler-interface", version = "1.0.0", default-features = false }
+
+# mics
+cfg-if = { version = "1.0", default-features = false }
+auto_impl = { version = "1.2.0" }
+derive-where = { version = "1.2.7", default-features = false }
 
 [workspace.package]
 license = "MIT"

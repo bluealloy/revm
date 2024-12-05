@@ -1,33 +1,47 @@
 //! Utility macros to help implementing opcode instruction functions.
 
+/// `const` Option `?`.
+#[macro_export]
+macro_rules! tri {
+    ($e:expr) => {
+        match $e {
+            Some(v) => v,
+            None => return None,
+        }
+    };
+}
+
 /// Fails the instruction if the current call is static.
 #[macro_export]
 macro_rules! require_non_staticcall {
-    ($interp:expr) => {
-        if $interp.is_static {
-            $interp.instruction_result = $crate::InstructionResult::StateChangeDuringStaticCall;
+    ($interpreter:expr) => {
+        if $interpreter.runtime_flag.is_static() {
+            $interpreter
+                .control
+                .set_instruction_result($crate::InstructionResult::StateChangeDuringStaticCall);
             return;
         }
     };
+}
+
+#[macro_export]
+macro_rules! otry {
+    ($expression: expr) => {{
+        let Some(value) = $expression else {
+            return;
+        };
+        value
+    }};
 }
 
 /// Error if the current call is executing EOF.
 #[macro_export]
 macro_rules! require_eof {
-    ($interp:expr) => {
-        if !$interp.is_eof {
-            $interp.instruction_result = $crate::InstructionResult::EOFOpcodeDisabledInLegacy;
-            return;
-        }
-    };
-}
-
-/// Error if not init eof call.
-#[macro_export]
-macro_rules! require_init_eof {
-    ($interp:expr) => {
-        if !$interp.is_eof_init {
-            $interp.instruction_result = $crate::InstructionResult::ReturnContractInNotInitEOF;
+    ($interpreter:expr) => {
+        if !$interpreter.runtime_flag.is_eof() {
+            $interpreter
+                .control
+                .set_instruction_result($crate::InstructionResult::EOFOpcodeDisabledInLegacy);
             return;
         }
     };
@@ -36,12 +50,15 @@ macro_rules! require_init_eof {
 /// Check if the `SPEC` is enabled, and fail the instruction if it is not.
 #[macro_export]
 macro_rules! check {
-    ($interp:expr, $min:ident) => {
-        if const {
-            !<SPEC as specification::hardfork::Spec>::SPEC_ID
-                .is_enabled_in(specification::hardfork::SpecId::$min)
-        } {
-            $interp.instruction_result = $crate::InstructionResult::NotActivated;
+    ($interpreter:expr, $min:ident) => {
+        if !$interpreter
+            .runtime_flag
+            .spec_id()
+            .is_enabled_in(specification::hardfork::SpecId::$min)
+        {
+            $interpreter
+                .control
+                .set_instruction_result($crate::InstructionResult::NotActivated);
             return;
         }
     };
@@ -50,232 +67,93 @@ macro_rules! check {
 /// Records a `gas` cost and fails the instruction if it would exceed the available gas.
 #[macro_export]
 macro_rules! gas {
-    ($interp:expr, $gas:expr) => {
-        $crate::gas!($interp, $gas, ())
+    ($interpreter:expr, $gas:expr) => {
+        $crate::gas!($interpreter, $gas, ())
     };
-    ($interp:expr, $gas:expr, $ret:expr) => {
-        if !$interp.gas.record_cost($gas) {
-            $interp.instruction_result = $crate::InstructionResult::OutOfGas;
+    ($interpreter:expr, $gas:expr, $ret:expr) => {
+        if !$interpreter.control.gas().record_cost($gas) {
+            $interpreter
+                .control
+                .set_instruction_result($crate::InstructionResult::OutOfGas);
             return $ret;
         }
-    };
-}
-
-/// Records a `gas` refund.
-#[macro_export]
-macro_rules! refund {
-    ($interp:expr, $gas:expr) => {
-        $interp.gas.record_refund($gas)
     };
 }
 
 /// Same as [`gas!`], but with `gas` as an option.
 #[macro_export]
 macro_rules! gas_or_fail {
-    ($interp:expr, $gas:expr) => {
-        $crate::gas_or_fail!($interp, $gas, ())
+    ($interpreter:expr, $gas:expr) => {
+        $crate::gas_or_fail!($interpreter, $gas, ())
     };
-    ($interp:expr, $gas:expr, $ret:expr) => {
+    ($interpreter:expr, $gas:expr, $ret:expr) => {
         match $gas {
-            Some(gas_used) => $crate::gas!($interp, gas_used, $ret),
+            Some(gas_used) => $crate::gas!($interpreter, gas_used, $ret),
             None => {
-                $interp.instruction_result = $crate::InstructionResult::OutOfGas;
+                $interpreter
+                    .control
+                    .set_instruction_result($crate::InstructionResult::OutOfGas);
                 return $ret;
             }
         }
     };
 }
 
-/// Resizes the interpreter memory if necessary. Fails the instruction if the memory or gas limit
+/// Resizes the interpreterreter memory if necessary. Fails the instruction if the memory or gas limit
 /// is exceeded.
 #[macro_export]
 macro_rules! resize_memory {
-    ($interp:expr, $offset:expr, $len:expr) => {
-        $crate::resize_memory!($interp, $offset, $len, ())
+    ($interpreter:expr, $offset:expr, $len:expr) => {
+        $crate::resize_memory!($interpreter, $offset, $len, ())
     };
-    ($interp:expr, $offset:expr, $len:expr, $ret:expr) => {
-        let new_size = $offset.saturating_add($len);
-        if new_size > $interp.shared_memory.len() {
-            #[cfg(feature = "memory_limit")]
-            if $interp.shared_memory.limit_reached(new_size) {
-                $interp.instruction_result = $crate::InstructionResult::MemoryLimitOOG;
+    ($interpreter:expr, $offset:expr, $len:expr, $ret:expr) => {
+        let words_num = $crate::interpreter::num_words($offset.saturating_add($len));
+        match $interpreter
+            .control
+            .gas()
+            .record_memory_expansion(words_num)
+        {
+            $crate::gas::MemoryExtensionResult::Extended => {
+                $interpreter.memory.resize(words_num * 32);
+            }
+            $crate::gas::MemoryExtensionResult::OutOfGas => {
+                $interpreter
+                    .control
+                    .set_instruction_result($crate::InstructionResult::OutOfGas);
                 return $ret;
             }
-
-            // Note: we can't use `Interpreter` directly here because of potential double-borrows.
-            if !$crate::interpreter::resize_memory(
-                &mut $interp.shared_memory,
-                &mut $interp.gas,
-                new_size,
-            ) {
-                $interp.instruction_result = $crate::InstructionResult::MemoryOOG;
-                return $ret;
-            }
-        }
+            $crate::gas::MemoryExtensionResult::Same => (), // no action
+        };
     };
 }
 
-/// Pops `Address` values from the stack. Fails the instruction if the stack is too small.
-#[macro_export]
-macro_rules! pop_address {
-    ($interp:expr, $x1:ident) => {
-        $crate::pop_address_ret!($interp, $x1, ())
-    };
-    ($interp:expr, $x1:ident, $x2:ident) => {
-        $crate::pop_address_ret!($interp, $x1, $x2, ())
+macro_rules! popn {
+    ([ $($x:ident),* ],$interpreterreter:expr $(,$ret:expr)? ) => {
+        let Some([$( $x ),*]) = $interpreterreter.stack.popn() else {
+            $interpreterreter.control.set_instruction_result($crate::InstructionResult::StackUnderflow);
+            return $($ret)?;
+        };
     };
 }
 
-/// Pop `Address` values from the stack, returns `ret` on stack underflow.
-#[macro_export]
-macro_rules! pop_address_ret {
-    ($interp:expr, $x1:ident, $ret:expr) => {
-        if $interp.stack.len() < 1 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return $ret;
-        }
-        // SAFETY: Length is checked above.
-        let $x1 = ::primitives::Address::from_word(::primitives::B256::from(unsafe {
-            $interp.stack.pop_unsafe()
-        }));
+macro_rules! popn_top {
+    ([ $($x:ident),* ], $top:ident, $interpreterreter:expr $(,$ret:expr)? ) => {
+        let Some(([$( $x ),*], $top)) = $interpreterreter.stack.popn_top() else {
+            $interpreterreter.control.set_instruction_result($crate::InstructionResult::StackUnderflow);
+            return $($ret)?;
+        };
     };
-    ($interp:expr, $x1:ident, $x2:ident, $ret:expr) => {
-        if $interp.stack.len() < 2 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return $ret;
-        }
-        // SAFETY: Length is checked above.
-        let $x1 = ::primitives::Address::from_word(::primitives::B256::from(unsafe {
-            $interp.stack.pop_unsafe()
-        }));
-        let $x2 = ::primitives::Address::from_word(::primitives::B256::from(unsafe {
-            $interp.stack.pop_unsafe()
-        }));
-    };
-}
-
-/// Pops `U256` values from the stack. Fails the instruction if the stack is too small.
-#[macro_export]
-macro_rules! pop {
-    ($interp:expr, $x1:ident) => {
-        $crate::pop_ret!($interp, $x1, ())
-    };
-    ($interp:expr, $x1:ident, $x2:ident) => {
-        $crate::pop_ret!($interp, $x1, $x2, ())
-    };
-    ($interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
-        $crate::pop_ret!($interp, $x1, $x2, $x3, ())
-    };
-    ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
-        $crate::pop_ret!($interp, $x1, $x2, $x3, $x4, ())
-    };
-    ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $x5:ident) => {
-        $crate::pop_ret!($interp, $x1, $x2, $x3, $x4, $x5, ())
-    };
-}
-
-/// Pops `U256` values from the stack, and returns `ret`.
-/// Fails the instruction if the stack is too small.
-#[macro_export]
-macro_rules! pop_ret {
-    ($interp:expr, $x1:ident, $ret:expr) => {
-        if $interp.stack.len() < 1 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return $ret;
-        }
-        // SAFETY: Length is checked above.
-        let $x1 = unsafe { $interp.stack.pop_unsafe() };
-    };
-    ($interp:expr, $x1:ident, $x2:ident, $ret:expr) => {
-        if $interp.stack.len() < 2 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return $ret;
-        }
-        // SAFETY: Length is checked above.
-        let ($x1, $x2) = unsafe { $interp.stack.pop2_unsafe() };
-    };
-    ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $ret:expr) => {
-        if $interp.stack.len() < 3 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return $ret;
-        }
-        // SAFETY: Length is checked above.
-        let ($x1, $x2, $x3) = unsafe { $interp.stack.pop3_unsafe() };
-    };
-    ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $ret:expr) => {
-        if $interp.stack.len() < 4 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return $ret;
-        }
-        // SAFETY: Length is checked above.
-        let ($x1, $x2, $x3, $x4) = unsafe { $interp.stack.pop4_unsafe() };
-    };
-    ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident, $x5:ident, $ret:expr) => {
-        if $interp.stack.len() < 5 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return $ret;
-        }
-        // SAFETY: Length is checked above.
-        let ($x1, $x2, $x3, $x4, $x5) = unsafe { $interp.stack.pop5_unsafe() };
-    };
-}
-
-/// Pops `U256` values from the stack, and returns a reference to the top of the stack.
-/// Fails the instruction if the stack is too small.
-#[macro_export]
-macro_rules! pop_top {
-    ($interp:expr, $x1:ident) => {
-        if $interp.stack.len() < 1 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return;
-        }
-        // SAFETY: Length is checked above.
-        let $x1 = unsafe { $interp.stack.top_unsafe() };
-    };
-    ($interp:expr, $x1:ident, $x2:ident) => {
-        if $interp.stack.len() < 2 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return;
-        }
-        // SAFETY: Length is checked above.
-        let ($x1, $x2) = unsafe { $interp.stack.pop_top_unsafe() };
-    };
-    ($interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
-        if $interp.stack.len() < 3 {
-            $interp.instruction_result = $crate::InstructionResult::StackUnderflow;
-            return;
-        }
-        // SAFETY: Length is checked above.
-        let ($x1, $x2, $x3) = unsafe { $interp.stack.pop2_top_unsafe() };
-    };
-}
-
-/// Pushes `B256` values onto the stack. Fails the instruction if the stack is full.
-#[macro_export]
-macro_rules! push_b256 {
-    ($interp:expr, $($x:expr),* $(,)?) => ($(
-        match $interp.stack.push_b256($x) {
-            Ok(()) => {},
-            Err(e) => {
-                $interp.instruction_result = e;
-                return;
-            },
-        }
-    )*)
 }
 
 /// Pushes a `B256` value onto the stack. Fails the instruction if the stack is full.
 #[macro_export]
 macro_rules! push {
-    ($interp:expr, $($x:expr),* $(,)?) => ($(
-        match $interp.stack.push($x) {
-            Ok(()) => {},
-            Err(e) => {
-                $interp.instruction_result = e;
-                return;
-            }
+    ($interpreter:expr, $x:expr $(,$ret:item)?) => (
+        if !($interpreter.stack.push($x)) {
+            $interpreter.control.set_instruction_result($crate::InstructionResult::StackOverflow);
+            return $($ret)?;
         }
-    )*)
+    )
 }
 
 /// Converts a `U256` value to a `u64`, saturating to `MAX` if the value is too large.
@@ -315,11 +193,11 @@ macro_rules! as_isize_saturated {
 /// Converts a `U256` value to a `usize`, failing the instruction if the value is too large.
 #[macro_export]
 macro_rules! as_usize_or_fail {
-    ($interp:expr, $v:expr) => {
-        $crate::as_usize_or_fail_ret!($interp, $v, ())
+    ($interpreter:expr, $v:expr) => {
+        $crate::as_usize_or_fail_ret!($interpreter, $v, ())
     };
-    ($interp:expr, $v:expr, $reason:expr) => {
-        $crate::as_usize_or_fail_ret!($interp, $v, $reason, ())
+    ($interpreter:expr, $v:expr, $reason:expr) => {
+        $crate::as_usize_or_fail_ret!($interpreter, $v, $reason, ())
     };
 }
 
@@ -327,20 +205,20 @@ macro_rules! as_usize_or_fail {
 /// failing the instruction if the value is too large.
 #[macro_export]
 macro_rules! as_usize_or_fail_ret {
-    ($interp:expr, $v:expr, $ret:expr) => {
+    ($interpreter:expr, $v:expr, $ret:expr) => {
         $crate::as_usize_or_fail_ret!(
-            $interp,
+            $interpreter,
             $v,
             $crate::InstructionResult::InvalidOperandOOG,
             $ret
         )
     };
 
-    ($interp:expr, $v:expr, $reason:expr, $ret:expr) => {
+    ($interpreter:expr, $v:expr, $reason:expr, $ret:expr) => {
         match $v.as_limbs() {
             x => {
                 if (x[0] > usize::MAX as u64) | (x[1] != 0) | (x[2] != 0) | (x[3] != 0) {
-                    $interp.instruction_result = $reason;
+                    $interpreter.control.set_instruction_result($reason);
                     return $ret;
                 }
                 x[0] as usize
