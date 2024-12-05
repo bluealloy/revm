@@ -49,7 +49,7 @@ fn main() -> anyhow::Result<()> {
     let param = 0x42;
     let bytecode: Bytes = [INIT_CODE, RET, RUNTIME_BYTECODE, &[param]].concat().into();
     let mut evm = MainEvm::new(
-        Context::default()
+        Context::builder()
             .modify_tx_chained(|tx| {
                 tx.transact_to = TxKind::Create;
                 tx.data = bytecode.clone();

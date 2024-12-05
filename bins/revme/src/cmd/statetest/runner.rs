@@ -4,7 +4,7 @@ use super::{
 };
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use inspector::{inspectors::TracerEip3155, InspectorContext, InspectorEthFrame, InspectorMainEvm};
+use inspector::{inspector_handler, inspectors::TracerEip3155, InspectorContext, InspectorMainEvm};
 use revm::{
     bytecode::Bytecode,
     context::{block::BlockEnv, tx::TxEnv},
@@ -14,13 +14,10 @@ use revm::{
         Cfg, CfgEnv,
     },
     database_interface::EmptyDB,
-    handler::{
-        EthExecution, EthHandler, EthPostExecution, EthPreExecution, EthPrecompileProvider,
-        EthValidation,
-    },
+    handler::EthHandler,
     primitives::{keccak256, Bytes, TxKind, B256},
     specification::{eip7702::AuthorizationList, hardfork::SpecId},
-    Context, DatabaseCommit, JournaledState, MainEvm,
+    Context, DatabaseCommit, MainEvm,
 };
 use serde_json::json;
 use statetest_types::{SpecName, Test, TestSuite};
@@ -406,40 +403,28 @@ pub fn execute_test_suite(
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let mut evm = MainEvm {
-                    context: Context::default()
-                        .with_block(block.clone())
-                        .with_tx(tx.clone())
-                        .with_cfg(cfg.clone())
+                let mut evm = MainEvm::new(
+                    Context::builder()
+                        .with_block(&block)
+                        .with_tx(&tx)
+                        .with_cfg(&cfg)
                         .with_db(&mut state),
-                    handler: EthHandler::default(),
-                    _error: core::marker::PhantomData,
-                };
+                    EthHandler::default(),
+                );
 
                 // do the deed
                 let (e, exec_result) = if trace {
-                    let mut evm = InspectorMainEvm {
-                        context: InspectorContext {
-                            inner: Context::default()
-                                .with_block(block.clone())
-                                .with_tx(tx.clone())
-                                .with_cfg(cfg.clone())
+                    let mut evm = InspectorMainEvm::new(
+                        InspectorContext::new(
+                            Context::builder()
+                                .with_block(&block)
+                                .with_tx(&tx)
+                                .with_cfg(&cfg)
                                 .with_db(&mut state),
-                            inspector: TracerEip3155::new(Box::new(stdout())),
-                            frame_input_stack: Vec::new(),
-                        },
-                        handler: EthHandler::new(
-                            EthValidation::new(),
-                            EthPreExecution::new(),
-                            EthExecution::<
-                                _,
-                                _,
-                                InspectorEthFrame<_, _, EthPrecompileProvider<_, _>>,
-                            >::new(),
-                            EthPostExecution::new(),
+                            TracerEip3155::new(Box::new(stdout())),
                         ),
-                        _error: core::marker::PhantomData,
-                    };
+                        inspector_handler(),
+                    );
 
                     // let timer = Instant::now();
                     // let res = evm.transact_commit();
@@ -516,32 +501,17 @@ pub fn execute_test_suite(
 
                 println!("\nTraces:");
 
-                let mut evm = InspectorMainEvm {
-                    context: InspectorContext {
-                        inner: Context {
-                            block: block.clone(),
-                            tx: tx.clone(),
-                            cfg: cfg.clone(),
-                            journaled_state: JournaledState::new(cfg.spec(), &mut state),
-                            chain: (),
-                            error: Ok(()),
-                        },
-                        inspector: TracerEip3155::new(Box::new(stdout())),
-                        frame_input_stack: Vec::new(),
-                    },
-                    handler:
-                        EthHandler::new(
-                            EthValidation::new(),
-                            EthPreExecution::new(),
-                            EthExecution::<
-                                _,
-                                _,
-                                InspectorEthFrame<_, _, EthPrecompileProvider<_, _>>,
-                            >::new(),
-                            EthPostExecution::new(),
-                        ),
-                    _error: core::marker::PhantomData,
-                };
+                let mut evm = InspectorMainEvm::new(
+                    InspectorContext::new(
+                        Context::builder()
+                            .with_db(&mut state)
+                            .with_block(&block)
+                            .with_tx(&tx)
+                            .with_cfg(&cfg),
+                        TracerEip3155::new(Box::new(stdout())),
+                    ),
+                    inspector_handler(),
+                );
 
                 let res = evm.transact();
                 let _ = res.map(|r| {

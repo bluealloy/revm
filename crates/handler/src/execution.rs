@@ -166,7 +166,7 @@ impl<
 //         let mut env = Envcontext_interface::<DefaultEthereumWiring>::default();
 //         env.tx.gas_limit = 100;
 
-//         let mut context = Context::default();
+//         let mut context = Context::builder();
 //         context.evm.inner.env = Box::new(env);
 //         let mut first_frame = FrameResult::Call(CallOutcome::new(
 //             InterpreterResult {

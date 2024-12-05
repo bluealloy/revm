@@ -37,6 +37,12 @@ impl Default for Context {
     }
 }
 
+impl Context {
+    pub fn builder() -> Self {
+        Self::new(EmptyDB::new(), SpecId::LATEST)
+    }
+}
+
 impl<BLOCK: Block + Default, TX: Transaction + Default, DB: Database, CHAIN: Default>
     Context<BLOCK, TX, CfgEnv, DB, CHAIN>
 {

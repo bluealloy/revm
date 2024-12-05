@@ -1,7 +1,7 @@
 pub mod bench;
 pub mod bytecode;
 pub mod eofvalidation;
-//pub mod evmrunner;
+pub mod evmrunner;
 pub mod statetest;
 
 use clap::Parser;

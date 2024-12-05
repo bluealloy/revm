@@ -98,7 +98,7 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
     let encoded = balanceOfCall { account: address }.abi_encode();
 
     let mut evm = MainEvm::new(
-        Context::default()
+        Context::builder()
             .with_db(alloy_db)
             .modify_tx_chained(|tx| {
                 // 0x1 because calling USDC proxy from zero address fails
@@ -145,7 +145,7 @@ async fn get_amount_out(
     .abi_encode();
 
     let mut evm = MainEvm::new(
-        Context::default()
+        Context::builder()
             .with_db(cache_db)
             .modify_tx_chained(|tx| {
                 tx.caller = address!("0000000000000000000000000000000000000000");
@@ -180,7 +180,7 @@ fn get_reserves(pair_address: Address, cache_db: &mut AlloyCacheDB) -> Result<(U
     let encoded = getReservesCall {}.abi_encode();
 
     let mut evm = MainEvm::new(
-        Context::default()
+        Context::builder()
             .with_db(cache_db)
             .modify_tx_chained(|tx| {
                 tx.caller = address!("0000000000000000000000000000000000000000");
@@ -231,7 +231,7 @@ fn swap(
     .abi_encode();
 
     let mut evm = MainEvm::new(
-        Context::default()
+        Context::builder()
             .with_db(cache_db)
             .modify_tx_chained(|tx| {
                 tx.caller = from;
@@ -267,7 +267,7 @@ fn transfer(
     let encoded = transferCall { to, amount }.abi_encode();
 
     let mut evm = MainEvm::new(
-        Context::default()
+        Context::builder()
             .with_db(cache_db)
             .modify_tx_chained(|tx| {
                 tx.caller = from;

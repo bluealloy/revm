@@ -4,6 +4,7 @@ use core::hash::Hash;
 use primitives::{TxKind, U256};
 use specification::{constants::MAX_CODE_SIZE, hardfork::SpecId};
 
+#[auto_impl(&, &mut, Box, Arc)]
 pub trait Cfg {
     type Spec: Into<SpecId>;
 

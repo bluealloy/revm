@@ -14,7 +14,7 @@ pub fn run() {
     let bytecode_analysed = Bytecode::new_raw(contract_data);
 
     // BenchmarkDB is dummy state that implements Database trait.
-    let context = Context::default()
+    let context = Context::builder()
         .with_db(BenchmarkDB::new_bytecode(bytecode_raw))
         .modify_tx_chained(|tx| {
             // execution globals block hash/gas_limit/coinbase/timestamp..

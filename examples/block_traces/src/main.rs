@@ -75,7 +75,7 @@ async fn main() -> anyhow::Result<()> {
     let mut state = StateBuilder::new_with_database(cache_db).build();
     let mut evm = InspectorMainEvm::new(
         InspectorContext::new(
-            Context::default()
+            Context::builder()
                 .with_db(&mut state)
                 .modify_block_chained(|b| {
                     b.number = U256::from(block.header.number);

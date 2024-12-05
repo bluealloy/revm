@@ -14,8 +14,8 @@ use revm::{
     },
     database_interface::{Database, EmptyDB},
     handler::{
-        EthExecution, EthFrame, EthHandler, EthPreExecution, EthPrecompileProvider, EthValidation,
-        FrameResult,
+        EthExecution, EthFrame, EthHandler, EthPostExecution, EthPreExecution,
+        EthPrecompileProvider, EthValidation, FrameResult,
     },
     handler_interface::{Frame, FrameOrResultGen, PrecompileProvider},
     interpreter::{
@@ -774,24 +774,41 @@ where
     }
 }
 
-pub type InspCtxType<INSP, DB> = InspectorContext<INSP, BlockEnv, TxEnv, CfgEnv, DB, ()>;
+pub type InspCtxType<INSP, DB, BLOCK = BlockEnv, TX = TxEnv, CFG = CfgEnv> =
+    InspectorContext<INSP, BLOCK, TX, CFG, DB, ()>;
 
-pub type InspectorMainEvm<DB, INSP> = Evm<
+pub type InspectorMainEvm<DB, INSP, BLOCK = BlockEnv, TX = TxEnv, CFG = CfgEnv> = Evm<
     Error<DB>,
-    InspCtxType<INSP, DB>,
+    InspCtxType<INSP, DB, BLOCK, TX, CFG>,
     EthHandler<
-        InspCtxType<INSP, DB>,
+        InspCtxType<INSP, DB, BLOCK, TX, CFG>,
         Error<DB>,
-        EthValidation<InspCtxType<INSP, DB>, Error<DB>>,
-        EthPreExecution<InspCtxType<INSP, DB>, Error<DB>>,
-        EthExecution<
-            InspCtxType<INSP, DB>,
-            Error<DB>,
-            InspectorEthFrame<
-                InspCtxType<INSP, DB>,
-                Error<DB>,
-                EthPrecompileProvider<InspCtxType<INSP, DB>, Error<DB>>,
-            >,
-        >,
+        EthValidation<InspCtxType<INSP, DB, BLOCK, TX, CFG>, Error<DB>>,
+        EthPreExecution<InspCtxType<INSP, DB, BLOCK, TX, CFG>, Error<DB>>,
+        InspectorEthExecution<InspCtxType<INSP, DB, BLOCK, TX, CFG>, Error<DB>>,
     >,
+>;
+
+/// Function to create Inspector Handler.
+pub fn inspector_handler<CTX: Host, ERROR, PRECOMPILE>() -> InspectorHandler<CTX, ERROR, PRECOMPILE>
+{
+    EthHandler::new(
+        EthValidation::new(),
+        EthPreExecution::new(),
+        EthExecution::<_, _, InspectorEthFrame<_, _, PRECOMPILE>>::new(),
+        EthPostExecution::new(),
+    )
+}
+
+/// Composed type for Inspector Execution handler.
+pub type InspectorEthExecution<CTX, ERROR, PRECOMPILE = EthPrecompileProvider<CTX, ERROR>> =
+    EthExecution<CTX, ERROR, InspectorEthFrame<CTX, ERROR, PRECOMPILE>>;
+
+/// Composed type for Inspector Handler.
+pub type InspectorHandler<CTX, ERROR, PRECOMPILE> = EthHandler<
+    CTX,
+    ERROR,
+    EthValidation<CTX, ERROR>,
+    EthPreExecution<CTX, ERROR>,
+    InspectorEthExecution<CTX, ERROR, PRECOMPILE>,
 >;

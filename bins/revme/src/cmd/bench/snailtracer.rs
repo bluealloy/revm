@@ -9,7 +9,7 @@ use revm::{
 pub fn simple_example() {
     let bytecode = Bytecode::new_raw(CONTRACT_DATA.clone());
 
-    let context = Context::default()
+    let context = Context::builder()
         .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
         .modify_tx_chained(|tx| {
             // execution globals block hash/gas_limit/coinbase/timestamp..

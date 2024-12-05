@@ -143,10 +143,11 @@ where
 pub type Error<DB> = EVMError<<DB as Database>::Error, InvalidTransaction>;
 
 /// Mainnet Contexts.
-pub type EthContext<DB> = Context<BlockEnv, TxEnv, CfgEnv, DB, ()>;
+pub type EthContext<DB, BLOCK = BlockEnv, TX = TxEnv, CFG = CfgEnv> =
+    Context<BLOCK, TX, CFG, DB, ()>;
 
 /// Mainnet EVM type.
-pub type MainEvm<DB> = Evm<Error<DB>, EthContext<DB>>;
+pub type MainEvm<DB, BLOCK, TX, CFG> = Evm<Error<DB>, EthContext<DB, BLOCK, TX, CFG>>;
 
 impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC>
     Evm<ERROR, CTX, EthHandler<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC>>

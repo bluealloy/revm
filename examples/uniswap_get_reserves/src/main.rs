@@ -72,7 +72,7 @@ async fn main() -> anyhow::Result<()> {
 
     // initialise an empty (default) EVM
     let mut evm = MainEvm::new(
-        Context::default()
+        Context::builder()
             .with_db(cache_db)
             .modify_tx_chained(|tx| {
                 // fill in missing bits of env struct

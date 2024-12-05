@@ -37,7 +37,7 @@ pub fn run() {
 
     let db = init_db();
 
-    let context = Context::default().with_db(db).modify_tx_chained(|tx| {
+    let context = Context::builder().with_db(db).modify_tx_chained(|tx| {
         tx.caller = address!("1000000000000000000000000000000000000000");
         tx.transact_to = TxKind::Call(BURNTPIX_MAIN_ADDRESS);
         tx.data = run_call_data.clone().into();

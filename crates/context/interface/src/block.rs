@@ -5,7 +5,8 @@ pub use blob::{calc_blob_gasprice, calc_excess_blob_gas, BlobExcessGasAndPrice};
 use auto_impl::auto_impl;
 use primitives::{Address, B256, U256};
 
-/// Trait for retrieving block information required for execution.
+/// Trait for retrieving block information required for execution.\
+#[auto_impl(&, &mut, Box, Arc)]
 pub trait Block {
     /// The number of ancestor blocks of this block (block height).
     fn number(&self) -> &U256;

@@ -284,7 +284,7 @@ impl From<SpecId> for PrecompileSpecId {
 }
 
 impl PrecompileSpecId {
-    /// Returns the appropriate precompile Spec for the primitive [SpecId]
+    /// Returns the appropriate precompile Spec for the primitive [SpecId].
     pub const fn from_spec_id(spec_id: specification::hardfork::SpecId) -> Self {
         use specification::hardfork::SpecId::*;
         match spec_id {

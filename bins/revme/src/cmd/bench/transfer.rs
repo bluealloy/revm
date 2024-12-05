@@ -8,7 +8,7 @@ use revm::{
 use std::time::Duration;
 
 pub fn run() {
-    let context = Context::default()
+    let context = Context::builder()
         .with_db(BenchmarkDB::new_bytecode(Bytecode::new()))
         .modify_tx_chained(|tx| {
             // execution globals block hash/gas_limit/coinbase/timestamp..
