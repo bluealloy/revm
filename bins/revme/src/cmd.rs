@@ -14,8 +14,8 @@ pub enum MainCmd {
     Statetest(statetest::Cmd),
     /// Execute eof validation tests.
     EofValidation(eofvalidation::Cmd),
-    // /// Run arbitrary EVM bytecode.
-    // Evm(evmrunner::Cmd),
+    /// Run arbitrary EVM bytecode.
+    Evm(evmrunner::Cmd),
     /// Print the structure of an EVM bytecode.
     Bytecode(bytecode::Cmd),
     /// Run bench from specified list.
@@ -26,8 +26,8 @@ pub enum MainCmd {
 pub enum Error {
     #[error(transparent)]
     Statetest(#[from] statetest::Error),
-    // #[error(transparent)]
-    // EvmRunnerErrors(#[from] evmrunner::Errors),
+    #[error(transparent)]
+    EvmRunnerErrors(#[from] evmrunner::Errors),
     #[error("Eof validation failed: {:?}/{total_tests}", total_tests-failed_test)]
     EofValidation {
         failed_test: usize,
@@ -42,7 +42,7 @@ impl MainCmd {
         match self {
             Self::Statetest(cmd) => cmd.run().map_err(Into::into),
             Self::EofValidation(cmd) => cmd.run().map_err(Into::into),
-            // Self::Evm(cmd) => cmd.run().map_err(Into::into),
+            Self::Evm(cmd) => cmd.run().map_err(Into::into),
             Self::Bytecode(cmd) => {
                 cmd.run();
                 Ok(())
