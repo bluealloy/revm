@@ -176,6 +176,7 @@ where
     }
 
     /// Modify the context configuration.
+    #[must_use]
     pub fn modify_cfg_chained<F>(mut self, f: F) -> Self
     where
         F: FnOnce(&mut CFG),
@@ -186,6 +187,7 @@ where
     }
 
     /// Modify the context block.
+    #[must_use]
     pub fn modify_block_chained<F>(mut self, f: F) -> Self
     where
         F: FnOnce(&mut BLOCK),
@@ -195,6 +197,7 @@ where
     }
 
     /// Modify the context transaction.
+    #[must_use]
     pub fn modify_tx_chained<F>(mut self, f: F) -> Self
     where
         F: FnOnce(&mut TX),
@@ -204,6 +207,7 @@ where
     }
 
     /// Modify the context chain.
+    #[must_use]
     pub fn modify_chain_chained<F>(mut self, f: F) -> Self
     where
         F: FnOnce(&mut CHAIN),
@@ -213,6 +217,7 @@ where
     }
 
     /// Modify the context database.
+    #[must_use]
     pub fn modify_db_chained<F>(mut self, f: F) -> Self
     where
         F: FnOnce(&mut DB),
@@ -222,6 +227,7 @@ where
     }
 
     /// Modify the context journal.
+    #[must_use]
     pub fn modify_journal_chained<F>(mut self, f: F) -> Self
     where
         F: FnOnce(&mut JournaledStateImpl<DB>),
