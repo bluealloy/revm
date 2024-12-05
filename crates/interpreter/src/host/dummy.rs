@@ -26,7 +26,7 @@ where
     BLOCK: Block,
     TX: Transaction,
 {
-    /// Create a new dummy host with the given [`Env`].
+    /// Create a new dummy host with the given [`Transaction`] and [`Block`].
     #[inline]
     pub fn new(tx: TX, block: BLOCK) -> Self {
         Self {

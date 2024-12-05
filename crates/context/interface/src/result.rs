@@ -396,7 +396,7 @@ impl fmt::Display for InvalidTransaction {
     }
 }
 
-/// Errors related to misconfiguration of a [`crate::default::block::BlockEnv`].
+/// Errors related to misconfiguration of a [`crate::Block`].
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidHeader {

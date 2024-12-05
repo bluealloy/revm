@@ -63,7 +63,7 @@ pub trait MemoryTrait {
 
     /// Memory slice len
     ///
-    /// Uses [`MemoryTrait::mem_slice`] internally.
+    /// Uses [`MemoryTrait::slice`] internally.
     fn slice_len(&self, offset: usize, len: usize) -> impl Deref<Target = [u8]> + '_ {
         self.slice(offset..offset + len)
     }

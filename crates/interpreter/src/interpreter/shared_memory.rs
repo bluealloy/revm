@@ -23,7 +23,7 @@ pub struct SharedMemory {
     checkpoints: Vec<usize>,
     /// Invariant: equals `self.checkpoints.last()`
     last_checkpoint: usize,
-    /// Memory limit. See [`CfgEnv`](context_interface::default::CfgEnv).
+    /// Memory limit. See [`Cfg`](context_interface::Cfg).
     #[cfg(feature = "memory_limit")]
     memory_limit: u64,
 }
