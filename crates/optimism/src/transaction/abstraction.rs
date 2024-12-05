@@ -34,15 +34,6 @@ impl<BLOCK, TX: Transaction, DB: Database, CFG, CHAIN> OpTxGetter
     }
 }
 
-/*
-
-Context<OP_CHAIN>
-
-TX =
-
-
-*/
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OpTransactionType {

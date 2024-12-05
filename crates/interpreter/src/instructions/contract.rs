@@ -7,7 +7,7 @@ use crate::{
     instructions::utility::IntoAddress,
     interpreter::Interpreter,
     interpreter_action::FrameInput,
-    interpreter_wiring::{
+    interpreter_types::{
         EofContainer, Immediates, InputsTrait, InterpreterTypes, Jumps, LoopControl, MemoryTrait,
         ReturnData, RuntimeFlag, StackTrait,
     },

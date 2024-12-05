@@ -2,7 +2,7 @@ use crate::{
     gas,
     instructions::utility::IntoU256,
     interpreter::Interpreter,
-    interpreter_wiring::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
+    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
     Host,
 };
 use context_interface::{Block, Cfg};

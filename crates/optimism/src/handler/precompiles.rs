@@ -61,6 +61,7 @@ where
     type Context = CTX;
     type Error = ERROR;
 
+    #[inline]
     fn new(context: &mut Self::Context) -> Self {
         let spec = context.cfg().spec();
         match spec {
@@ -96,6 +97,7 @@ where
         }
     }
 
+    #[inline]
     fn run(
         &mut self,
         context: &mut Self::Context,
@@ -107,7 +109,13 @@ where
             .run(context, address, bytes, gas_limit)
     }
 
+    #[inline]
     fn warm_addresses(&self) -> impl Iterator<Item = precompile::Address> {
         self.precompile_provider.warm_addresses()
+    }
+
+    #[inline]
+    fn contains(&self, address: &precompile::Address) -> bool {
+        self.precompile_provider.contains(address)
     }
 }

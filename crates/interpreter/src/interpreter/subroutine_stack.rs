@@ -1,6 +1,6 @@
 use std::vec::Vec;
 
-use crate::interpreter_wiring::SubRoutineStack;
+use crate::interpreter_types::SubRoutineStack;
 
 /// Function return frame.
 /// Needed information for returning from a function.

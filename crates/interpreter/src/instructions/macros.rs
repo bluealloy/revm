@@ -11,17 +11,6 @@ macro_rules! tri {
     };
 }
 
-/// Modified Option tri `?` operator with unit type (ut) `()` returning.
-#[macro_export]
-macro_rules! triut {
-    ($e:expr) => {
-        match $e {
-            Some(v) => v,
-            None => return,
-        }
-    };
-}
-
 /// Fails the instruction if the current call is static.
 #[macro_export]
 macro_rules! require_non_staticcall {

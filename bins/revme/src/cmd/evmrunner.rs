@@ -108,12 +108,6 @@ impl Cmd {
                 inspector_handler(),
             );
 
-            //  evm
-            //     .modify()
-            //     .with_external_context(TracerEip3155::new(Box::new(std::io::stdout())))
-            //     .append_handler_register(inspector_handle_register)
-            //     .build();
-
             evm.transact().map_err(|_| Errors::EVMError)?
         } else {
             let out = evm.transact().map_err(|_| Errors::EVMError)?;

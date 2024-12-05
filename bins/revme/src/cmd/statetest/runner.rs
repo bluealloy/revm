@@ -17,7 +17,7 @@ use revm::{
     handler::EthHandler,
     primitives::{keccak256, Bytes, TxKind, B256},
     specification::{eip7702::AuthorizationList, hardfork::SpecId},
-    Context, DatabaseCommit, MainEvm,
+    Context, DatabaseCommit, EvmCommit, MainEvm,
 };
 use serde_json::json;
 use statetest_types::{SpecName, Test, TestSuite};
@@ -426,15 +426,9 @@ pub fn execute_test_suite(
                         inspector_handler(),
                     );
 
-                    // let timer = Instant::now();
-                    // let res = evm.transact_commit();
-                    // *elapsed.lock().unwrap() += timer.elapsed();
-
-                    let res = evm.transact();
-                    let res = res.map(|r| {
-                        evm.context.inner.journaled_state.database.commit(r.state);
-                        r.result
-                    });
+                    let timer = Instant::now();
+                    let res = evm.exec_commit();
+                    *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
                     let db = evm.context.inner.journaled_state.database;
@@ -454,12 +448,7 @@ pub fn execute_test_suite(
                     (e, res)
                 } else {
                     let timer = Instant::now();
-                    let res = evm.transact();
-                    let res = res.map(|r| {
-                        evm.context.journaled_state.database.commit(r.state);
-                        r.result
-                    });
-
+                    let res = evm.exec_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();

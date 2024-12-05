@@ -1,7 +1,7 @@
 use crate::{
     gas,
     interpreter::Interpreter,
-    interpreter_wiring::{InterpreterTypes, LoopControl, MemoryTrait, RuntimeFlag, StackTrait},
+    interpreter_types::{InterpreterTypes, LoopControl, MemoryTrait, RuntimeFlag, StackTrait},
     Host,
 };
 use core::cmp::max;

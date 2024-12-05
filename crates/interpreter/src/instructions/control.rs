@@ -1,7 +1,7 @@
 use crate::{
     gas,
     interpreter::Interpreter,
-    interpreter_wiring::{
+    interpreter_types::{
         EofCodeInfo, Immediates, InterpreterTypes, Jumps, LoopControl, MemoryTrait, RuntimeFlag,
         StackTrait, SubRoutineStack,
     },

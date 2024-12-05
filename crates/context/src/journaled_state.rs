@@ -357,12 +357,6 @@ impl<DB: Database> JournaledState<DB> {
         balance: U256,
         spec_id: SpecId,
     ) -> Result<JournalCheckpoint, TransferError> {
-        // Fetch balance of caller. Caller is already warm loaded.
-        // let caller_acc = self.state.get_mut(&caller).unwrap();
-        // // Check if caller has enough balance to send to the created contract.
-        // if caller_acc.info.balance < balance {
-        //     return Err(TransferError::OutOfFunds);
-        // }
         // Enter subroutine
         let checkpoint = self.checkpoint();
 

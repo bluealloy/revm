@@ -5,8 +5,6 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc as std;
 
-// #[cfg(feature = "std")]
-// pub mod customprinter;
 #[cfg(all(feature = "std", feature = "serde-json"))]
 mod eip3155;
 mod gas;
@@ -17,8 +15,6 @@ pub use inspector::*;
 
 /// [Inspector] implementations.
 pub mod inspectors {
-    // #[cfg(feature = "std")]
-    // pub use super::customprinter::CustomPrintTracer;
     #[cfg(all(feature = "std", feature = "serde-json"))]
     pub use super::eip3155::TracerEip3155;
     pub use super::gas::GasInspector;

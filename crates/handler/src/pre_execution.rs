@@ -118,13 +118,6 @@ where
     }
 }
 
-// /// Main precompile load
-// /// TODO Include this inside Wire.
-// #[inline]
-// pub fn load_precompiles<EvmWiringT: EvmWiring, SPEC: Spec>() -> ContextPrecompiles<EvmWiringT> {
-//     ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
-// }
-
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
 #[inline]
 pub fn apply_eip7702_auth_list<

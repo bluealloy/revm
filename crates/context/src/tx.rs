@@ -1,9 +1,3 @@
-use core::fmt::Debug;
-use primitives::{Address, Bytes, TxKind, B256, U256};
-use specification::eip2930::AccessList;
-use specification::eip7702::AuthorizationList;
-use std::vec::Vec;
-
 use context_interface::{
     result::InvalidTransaction,
     transaction::{
@@ -12,6 +6,11 @@ use context_interface::{
     },
     Transaction,
 };
+use core::fmt::Debug;
+use primitives::{Address, Bytes, TxKind, B256, U256};
+use specification::eip2930::AccessList;
+use specification::eip7702::AuthorizationList;
+use std::vec::Vec;
 
 /// The transaction environment.
 #[derive(Clone, Debug, PartialEq, Eq)]

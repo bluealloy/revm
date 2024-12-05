@@ -10,7 +10,7 @@ use handler_interface::{Frame, FrameOrResultGen, PrecompileProvider};
 use interpreter::{
     gas,
     interpreter::{EthInterpreter, InstructionProvider},
-    interpreter_wiring::{LoopControl, ReturnData, RuntimeFlag},
+    interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
     return_ok, return_revert, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome,
     CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, Host, InputsImpl,
     InstructionResult, Interpreter, InterpreterAction, InterpreterResult, InterpreterTypes,
@@ -173,8 +173,6 @@ where
                     .unwrap_or_default();
             }
 
-            //let contract =
-            //    Contract::new_with_context(inputs.input.clone(), bytecode, Some(code_hash), inputs);
             // Create interpreter and executes call and push new CallStackFrame.
             let interpreter_input = InputsImpl {
                 target_address: inputs.target_address,
@@ -271,9 +269,9 @@ where
 
         // created address is not allowed to be a precompile.
         // TODO add precompile check
-        // if self.precompiles.contains(&created_address) {
-        //     return return_error(InstructionResult::CreateCollision);
-        // }
+        if precompile.contains(&created_address) {
+            return return_error(InstructionResult::CreateCollision);
+        }
 
         // warm load account.
         context.journal().load_account(created_address)?;
@@ -395,10 +393,9 @@ where
         let created_address = created_address.unwrap_or_else(|| inputs.caller.create(old_nonce));
 
         // created address is not allowed to be a precompile.
-        // TODO check precompile
-        // if self.precompiles.contains(&created_address) {
-        //     return return_error(InstructionResult::CreateCollision);
-        // }
+        if precompile.contains(&created_address) {
+            return return_error(InstructionResult::CreateCollision);
+        }
 
         // Load account so it needs to be marked as warm for access list.
         context.journal().load_account(created_address)?;
@@ -515,7 +512,6 @@ where
 
     fn run(
         &mut self,
-        //instructions: &InstructionTables<'_, Context<EvmWiringT>>,
         context: &mut Self::Context,
     ) -> Result<FrameOrResultGen<Self::FrameInit, Self::FrameResult>, Self::Error> {
         let spec = context.cfg().spec().into();

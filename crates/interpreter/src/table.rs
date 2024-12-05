@@ -3,7 +3,7 @@
 use crate::{
     instructions::{control, instruction},
     interpreter::Interpreter,
-    interpreter_wiring::InterpreterTypes,
+    interpreter_types::InterpreterTypes,
     Host,
 };
 use std::boxed::Box;
@@ -109,34 +109,6 @@ where
     pub fn replace_boxed(&mut self, opcode: u8, instruction: CI) -> CI {
         core::mem::replace(self.get_custom(opcode), instruction)
     }
-
-    // /// Updates a single instruction in the table at the specified index with `f`.
-    // TODO
-    // #[inline]
-    // pub fn update_custom<F>(&mut self, opcode: u8, custom: CI)
-    // where
-    //     F: Fn(&DynInstruction<W, H>, &mut Interpreter, &mut H),
-    // {
-    //     update_boxed_instruction(self.get_boxed(opcode), f)
-    // }
-
-    // /// Updates every instruction in the table by calling `f`.
-    // TODO
-    // #[inline]
-    // pub fn update_all<F>(&mut self, f: F)
-    // where
-    //     F: Fn(&DynInstruction<I, H>, &mut Interpreter, &mut H) + Copy + 'a,
-    // {
-    //     // Don't go through `to_boxed` to avoid allocating the plain table twice.
-    //     match self {
-    //         Self::Plain(_) => {
-    //             self.to_boxed_with(|prev| Box::new(move |i, h| f(&prev, i, h)));
-    //         }
-    //         Self::Boxed(boxed) => boxed
-    //             .iter_mut()
-    //             .for_each(|instruction| update_boxed_instruction(instruction, f)),
-    //     }
-    // }
 }
 
 /// Make instruction table.

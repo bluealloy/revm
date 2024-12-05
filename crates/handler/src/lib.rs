@@ -50,7 +50,6 @@ use handler_interface::{
 };
 use interpreter::Host;
 
-/// TODO Halt needs to be generalized.
 #[derive(Default)]
 pub struct EthHandler<
     CTX,

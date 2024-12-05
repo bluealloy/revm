@@ -21,7 +21,7 @@ use revm::{
     interpreter::{
         instructions::host::{log, selfdestruct},
         interpreter::{EthInterpreter, InstructionProvider},
-        interpreter_wiring::{Jumps, LoopControl},
+        interpreter_types::{Jumps, LoopControl},
         table::{self, CustomInstruction},
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
         Instruction, InstructionResult, Interpreter, InterpreterTypes, SStoreResult,

@@ -2,7 +2,7 @@ use crate::{
     gas::{self, warm_cold_cost, warm_cold_cost_with_delegation, CALL_STIPEND},
     instructions::utility::IntoAddress,
     interpreter::Interpreter,
-    interpreter_wiring::{
+    interpreter_types::{
         InputsTrait, InterpreterTypes, LoopControl, MemoryTrait, RuntimeFlag, StackTrait,
     },
     Host, InstructionResult,

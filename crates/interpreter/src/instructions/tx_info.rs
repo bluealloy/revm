@@ -1,7 +1,7 @@
 use crate::{
     gas,
     interpreter::Interpreter,
-    interpreter_wiring::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
+    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
     Host,
 };
 use context_interface::{transaction::Eip4844Tx, Block, Transaction, TransactionType};

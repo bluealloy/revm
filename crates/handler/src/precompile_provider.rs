@@ -74,4 +74,8 @@ where
     fn warm_addresses(&self) -> impl Iterator<Item = Address> {
         self.precompiles.addresses().cloned()
     }
+
+    fn contains(&self, address: &Address) -> bool {
+        self.precompiles.contains(address)
+    }
 }

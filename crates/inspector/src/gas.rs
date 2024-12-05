@@ -2,7 +2,7 @@
 
 use crate::Inspector;
 use revm::interpreter::{
-    interpreter_wiring::LoopControl, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
+    interpreter_types::LoopControl, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
     Interpreter, InterpreterTypes,
 };
 

@@ -10,7 +10,7 @@ mod stack;
 mod subroutine_stack;
 
 use crate::{
-    interpreter_wiring::*, table::CustomInstruction, Gas, Host, Instruction, InstructionResult,
+    interpreter_types::*, table::CustomInstruction, Gas, Host, Instruction, InstructionResult,
     InterpreterAction,
 };
 use bytecode::Bytecode;

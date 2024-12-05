@@ -1,4 +1,4 @@
-use crate::interpreter_wiring::InputsTrait;
+use crate::interpreter_types::InputsTrait;
 use primitives::{Address, Bytes, U256};
 
 pub struct InputsImpl {

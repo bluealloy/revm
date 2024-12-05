@@ -634,7 +634,7 @@ Github Changelog:
 * 0194b37 - (t) fix bug introduced in last commit (13 hours ago) <rakita>
 * 7b00f32 - Cleanup imports (#348) (14 hours ago) <rakita>
 * c14d7ea - fix: enable the examples to run with the current revm (#347) (16 hours ago) <flyq>
-* 329fd94 - Wrap all calls to interpreter.control.gas().erase_cost with checks if USE_GAS is enabled (#346) (2 days ago) <christn>
+* 329fd94 - Wrap all calls to interpreter.gas.erase_cost with checks if USE_GAS is enabled (#346) (2 days ago) <christn>
 * 72355f4 - improvement: add logs & return value to revert (#343) (3 days ago) <Wodann>
 * 142a1c9 - expose hashbrown::HashMap in primitives (#345) (3 days ago) <Andy Thomson>
 * ba393d7 - fix: disable balance check (#342) (4 days ago) <Wodann>

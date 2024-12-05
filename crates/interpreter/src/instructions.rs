@@ -16,7 +16,7 @@ pub mod system;
 pub mod tx_info;
 pub mod utility;
 
-use crate::{interpreter_wiring::InterpreterTypes, Host};
+use crate::{interpreter_types::InterpreterTypes, Host};
 
 /// Returns the instruction function for the given opcode and spec.
 pub const fn instruction<WIRE: InterpreterTypes, H: Host + ?Sized>(

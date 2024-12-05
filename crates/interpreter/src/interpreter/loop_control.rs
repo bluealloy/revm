@@ -1,4 +1,4 @@
-use crate::interpreter_wiring::LoopControl as LoopControlTrait;
+use crate::interpreter_types::LoopControl as LoopControlTrait;
 use crate::{Gas, InstructionResult, InterpreterAction};
 
 pub struct LoopControl {

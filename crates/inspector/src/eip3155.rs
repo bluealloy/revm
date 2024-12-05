@@ -5,7 +5,7 @@ use revm::{
     context::Cfg,
     context_interface::{CfgGetter, JournalStateGetter, Transaction, TransactionGetter},
     interpreter::{
-        interpreter_wiring::{Jumps, LoopControl, MemoryTrait, StackTrait},
+        interpreter_types::{Jumps, LoopControl, MemoryTrait, StackTrait},
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
         InterpreterResult, InterpreterTypes, Stack,
     },

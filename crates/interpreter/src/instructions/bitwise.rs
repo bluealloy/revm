@@ -2,7 +2,7 @@ use super::i256::i256_cmp;
 use crate::{
     gas,
     interpreter::Interpreter,
-    interpreter_wiring::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
+    interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
     Host,
 };
 use core::cmp::Ordering;

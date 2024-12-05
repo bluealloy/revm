@@ -23,7 +23,7 @@ mod instruction_result;
 pub mod instructions;
 pub mod interpreter;
 pub mod interpreter_action;
-pub mod interpreter_wiring;
+pub mod interpreter_types;
 pub mod table;
 
 // Reexport primary types.
@@ -39,6 +39,6 @@ pub use interpreter_action::{
     CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome, EOFCreateInputs,
     EOFCreateKind, FrameInput, InterpreterAction,
 };
-pub use interpreter_wiring::InterpreterTypes;
+pub use interpreter_types::InterpreterTypes;
 pub use specification::constants::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 pub use table::Instruction;
