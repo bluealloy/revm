@@ -5,14 +5,12 @@ edition = "2021"
 resolver = "2"
 
 [dependencies]
-#fluentbase-types = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 #fluentbase-core = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 #fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 #fluentbase-poseidon = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
 #fluentbase-genesis = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-types = { path = "../../crates/types", default-features = false }
 fluentbase-core = { path = "../../crates/core", default-features = false }
-fluentbase-sdk = { path = "../../crates/sdk", default-features = false }
+fluentbase-sdk = { path = "../../crates/sdk" }
 fluentbase-poseidon = { path = "../../crates/poseidon", default-features = false }
 fluentbase-genesis = { path = "../../crates/genesis", default-features = false }
 

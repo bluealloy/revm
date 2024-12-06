@@ -14,8 +14,6 @@ use crate::{
         SpecId,
         TransactTo,
         TxEnv,
-        TxKind,
-        EOF_MAGIC_BYTES,
         U256,
     },
     rwasm::sdk_adapter::RwasmSdkAdapter,
@@ -23,14 +21,12 @@ use crate::{
     ContextWithHandlerCfg,
     Database,
     DatabaseCommit,
-    FrameOrResult,
     FrameResult,
     Handler,
 };
 use core::fmt;
 use fluentbase_core::blended::BlendedRuntime;
 use fluentbase_sdk::runtime::TestingContext;
-use revm_interpreter::EOFCreateInputs;
 
 pub mod context_reader;
 pub mod sdk_adapter;
