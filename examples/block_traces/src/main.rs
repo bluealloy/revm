@@ -128,7 +128,7 @@ async fn main() -> anyhow::Result<()> {
         evm.context.inner.modify_tx(|etx| {
             etx.caller = tx.from;
             etx.gas_limit = tx.gas_limit();
-            etx.gas_price = U256::from(
+            etx.gas_price = U256::from(tx.gas_price().unwrap_or(tx.inner.max_fee_per_gas()));
                 tx.gas_price()
                     .unwrap_or(tx.inner.max_fee_per_gas()),
             );
