@@ -74,9 +74,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test different ext*code operations on a set-code address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L896",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L946",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_ext_code_on_set_code[fork_Prague-state_test-EMPTY_ACCOUNT-balance_1]": {
@@ -144,7 +144,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xe043c6cb7ff40623c047553a4f65c800b1766797db21751c9258e30c20bfd760",
+                    "hash": "0xb8796e8c6bd5d3eadc6f05ee819bc1177d9cb151a65bdac21003e6955aa60ab5",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c101808007839896809400000000000000000000000000000000000010008080c0f85cf85a80948a0a19589531694250d570040a0c4b74576919b88001a02fdae69e3d7a08e437baa33b7d32781ea30f6cd671e38d700e0089ccb0be9f9da0204aea5f46d068028a6bea3d71ec0fdb995634117e1ea369277f2b2fecd2a02480a08a0511053c2dbb89f41b8ccaf55131fce2a5066c50fcef0e2bf8230b4cef1637a03c5d7086236d9ea02189e965dbdcd881bcbb5dc90ba90339966dba2decbb25b1",
                     "indexes": {
@@ -156,13 +156,13 @@
             ]
         },
         "_info": {
-            "hash": "0x689842ded279cdcb86a325f6b99c0a1971a36b8612b7280e7bde8ad33e79823c",
+            "hash": "0x186144298e3e7719c792dab3d9842052fe4947bc46d1e534d7f32ecd9da6dbbf",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test different ext*code operations on a set-code address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L896",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L946",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_ext_code_on_set_code[fork_Prague-state_test-EOA-balance_0]": {
@@ -246,9 +246,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test different ext*code operations on a set-code address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L896",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L946",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_ext_code_on_set_code[fork_Prague-state_test-EOA-balance_1]": {
@@ -322,7 +322,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x604e81e567c2cf5595cfdde5e4fb4f471a04090ef9dcba0e3d1ff03f67e734ac",
+                    "hash": "0x4502ca2eaffac4e46426e8bff5babde70f4b7b7ad9cf726366b723e810515778",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c101808007839896809400000000000000000000000000000000000010008080c0f85cf85a80948a0a19589531694250d570040a0c4b74576919b88001a02fdae69e3d7a08e437baa33b7d32781ea30f6cd671e38d700e0089ccb0be9f9da0204aea5f46d068028a6bea3d71ec0fdb995634117e1ea369277f2b2fecd2a02480a08a0511053c2dbb89f41b8ccaf55131fce2a5066c50fcef0e2bf8230b4cef1637a03c5d7086236d9ea02189e965dbdcd881bcbb5dc90ba90339966dba2decbb25b1",
                     "indexes": {
@@ -334,13 +334,13 @@
             ]
         },
         "_info": {
-            "hash": "0x369a4c1acdfba377f814f856e5240096596292465e94927d816caa0d287e648e",
+            "hash": "0xb2de7f0b11c21826223a6539cffe0e39d3faf1b8b6f23d06d50ce5605fbd4e12",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test different ext*code operations on a set-code address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L896",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L946",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_ext_code_on_set_code[fork_Prague-state_test-EOA_WITH_SET_CODE-balance_0]": {
@@ -424,9 +424,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test different ext*code operations on a set-code address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L896",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L946",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_ext_code_on_set_code[fork_Prague-state_test-EOA_WITH_SET_CODE-balance_1]": {
@@ -500,7 +500,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x58d99e889159e0d549406765e8e88fa55dfae2787fb4d6cdcf82992c5cf9b75c",
+                    "hash": "0xa35210d395daaca048e1efa39ff46373da1a944b9078cb42247f1e21f4f22359",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c101808007839896809400000000000000000000000000000000000010008080c0f85cf85a80946389e7f33ce3b1e94e4325ef02829cd12297ef718001a06b6a89be238b6d2537b0aeffc3e00f8ec6efbcfd34d19afbf575f0c60ed58a39a0748bde6522bbd4c356c65e1d58eeb8c6eb4ed3ff1e769ac4802f2488e0685b0801a0f62c3023c58eb4cc076b744a441ef607d1142b2fe436a17e363b683d282bcae8a02b17666aac2e61226054a76f828dd0b191383a53d4951609e890cbf2d8d57c98",
                     "indexes": {
@@ -512,13 +512,13 @@
             ]
         },
         "_info": {
-            "hash": "0x5b0042b7a2ae560c95cc3f689d2711156a8e42d9a2af7bcb15361d15a4da6650",
+            "hash": "0xe27dbb6de3bb7933754b689ab7cb4d68b39a4fb108d5eda737b5860f115e47d7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test different ext*code operations on a set-code address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L896",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L946",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_ext_code_on_set_code[fork_Prague-state_test-CONTRACT-balance_0]": {
@@ -602,9 +602,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test different ext*code operations on a set-code address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L896",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L946",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_ext_code_on_set_code[fork_Prague-state_test-CONTRACT-balance_1]": {
@@ -678,7 +678,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x4434e96056a78071d935b93c388d3707aac94e1433dbe6d47ecb29bf3bda93ff",
+                    "hash": "0x5ce0e5cdd4f0a2bbc88b57924e68de821d8117add34095f3b1edcbea8c679b1b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c101808007839896809400000000000000000000000000000000000010008080c0f85cf85a809400000000000000000000000000000000000011008080a0b9aa41c03112c204ce0257f6ab5598fdea72a1e1b56e2ba14e04461cac84a721a03f55161908aa55840b3444b501a9535617323c71aaf43a5664d7180fee8ec2dc80a0956f1f1a4ec538f7e363d3990816fb06a5985e9503e60f1ceaa28c38b78a3471a035a11afb6374ec5d1990a5daf95c15c85f497d528a3b5a5a98a7443d20b7e719",
                     "indexes": {
@@ -690,13 +690,13 @@
             ]
         },
         "_info": {
-            "hash": "0x3e51a8dd05cdff3854c7674bd423adf1063b30b7514b46e0616a4818abcd1c9f",
+            "hash": "0xe18c66ee4be3189824714e1a6fded428c8845a9610ce3ee3cfe29bbd3aea1b19",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test different ext*code operations on a set-code address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L896",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L946",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     }
 }

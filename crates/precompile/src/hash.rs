@@ -11,9 +11,12 @@ pub const RIPEMD160: PrecompileWithAddress = PrecompileWithAddress(
     Precompile::Standard(ripemd160_run),
 );
 
-/// See: <https://ethereum.github.io/yellowpaper/paper.pdf>
-/// See: <https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions>
-/// See: <https://etherscan.io/address/0000000000000000000000000000000000000002>
+/// Computes the SHA-256 hash of the input data.
+///
+/// This function follows specifications defined in the following references:
+/// - [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf)
+/// - [Solidity Documentation on Mathematical and Cryptographic Functions](https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions)
+/// - [Address 0x02](https://etherscan.io/address/0000000000000000000000000000000000000002)
 pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let cost = calc_linear_cost_u32(input.len(), 60, 12);
     if cost > gas_limit {
@@ -24,9 +27,12 @@ pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 }
 
-/// See: <https://ethereum.github.io/yellowpaper/paper.pdf>
-/// See: <https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions>
-/// See: <https://etherscan.io/address/0000000000000000000000000000000000000003>
+/// Computes the RIPEMD-160 hash of the input data.
+///
+/// This function follows specifications defined in the following references:
+/// - [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf)
+/// - [Solidity Documentation on Mathematical and Cryptographic Functions](https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions)
+/// - [Address 03](https://etherscan.io/address/0000000000000000000000000000000000000003)
 pub fn ripemd160_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let gas_used = calc_linear_cost_u32(input.len(), 600, 120);
     if gas_used > gas_limit {

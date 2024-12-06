@@ -39,7 +39,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> ValidationHandler<'a, EXT, DB> {
     }
 }
 
-impl<'a, EXT, DB: Database> ValidationHandler<'a, EXT, DB> {
+impl<EXT, DB: Database> ValidationHandler<'_, EXT, DB> {
     /// Validate env.
     pub fn env(&self, env: &Env) -> Result<(), EVMError<DB::Error>> {
         (self.env)(env)

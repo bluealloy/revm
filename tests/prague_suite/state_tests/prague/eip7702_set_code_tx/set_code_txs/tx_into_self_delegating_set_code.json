@@ -67,10 +67,10 @@
             "hash": "0x0d9e7d6ff5097cb568592941cb6be223a765cb833ab279954bfcc33632becc8a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
-            "description": "Test function documentation:\n\n    Test a transaction that has entry-point into a set-code address that delegates to itself.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L721",
+            "description": "Test function documentation:\n\n    Test a transaction that has entry-point into a set-code account that delegates to itself.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L758",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     }
 }

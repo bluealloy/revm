@@ -203,10 +203,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             .handler
             .validation()
             .initial_tx_gas(&self.context.evm.env)
-            .map_err(|e| {
-                self.clear();
-                e
-            })?;
+            .inspect_err(|_e| self.clear())?;
         let output = self.transact_preverified_inner(initial_gas_spend);
         let output = self.handler.post_execution().end(&mut self.context, output);
         self.clear();
@@ -232,10 +229,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// This function will validate the transaction.
     #[inline]
     pub fn transact(&mut self) -> EVMResult<DB::Error> {
-        let initial_gas_spend = self.preverify_transaction_inner().map_err(|e| {
-            self.clear();
-            e
-        })?;
+        let initial_gas_spend = self
+            .preverify_transaction_inner()
+            .inspect_err(|_e| self.clear())?;
 
         let output = self.transact_preverified_inner(initial_gas_spend);
         let output = self.handler.post_execution().end(&mut self.context, output);
@@ -356,7 +352,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             )?,
             TxKind::Create => {
                 // if first byte of data is magic 0xEF00, then it is EOFCreate.
-                if spec_id.is_enabled_in(SpecId::PRAGUE_EOF)
+                if spec_id.is_enabled_in(SpecId::OSAKA)
                     && ctx.env().tx.data.starts_with(&EOF_MAGIC_BYTES)
                 {
                     exec.eofcreate(
@@ -420,30 +416,31 @@ mod tests {
     use crate::{
         db::BenchmarkDB,
         interpreter::opcode::{PUSH1, SSTORE},
-        primitives::{address, Authorization, Bytecode, RecoveredAuthorization, Signature, U256},
+        primitives::{
+            address, Authorization, Bytecode, RecoveredAuthority, RecoveredAuthorization, U256,
+        },
     };
 
     #[test]
     fn sanity_eip7702_tx() {
-        let delegate = address!("0000000000000000000000000000000000000000");
         let caller = address!("0000000000000000000000000000000000000001");
+        let delegate = address!("0000000000000000000000000000000000000002");
         let auth = address!("0000000000000000000000000000000000000100");
 
         let bytecode = Bytecode::new_legacy([PUSH1, 0x01, PUSH1, 0x01, SSTORE].into());
 
         let mut evm = Evm::builder()
             .with_spec_id(SpecId::PRAGUE)
-            .with_db(BenchmarkDB::new_bytecode(bytecode))
+            .with_db(BenchmarkDB::new_bytecode(bytecode).with_target(delegate))
             .modify_tx_env(|tx| {
                 tx.authorization_list = Some(
                     vec![RecoveredAuthorization::new_unchecked(
                         Authorization {
-                            chain_id: U256::from(1),
+                            chain_id: 1,
                             address: delegate,
                             nonce: 0,
-                        }
-                        .into_signed(Signature::test_signature()),
-                        Some(auth),
+                        },
+                        RecoveredAuthority::Valid(auth),
                     )]
                     .into(),
                 );

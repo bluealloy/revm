@@ -74,7 +74,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> PostExecutionHandler<'a, EXT, DB> {
     }
 }
 
-impl<'a, EXT, DB: Database> PostExecutionHandler<'a, EXT, DB> {
+impl<EXT, DB: Database> PostExecutionHandler<'_, EXT, DB> {
     /// Calculate final refund
     pub fn refund(&self, context: &mut Context<EXT, DB>, gas: &mut Gas, eip7702_refund: i64) {
         (self.refund)(context, gas, eip7702_refund)

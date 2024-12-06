@@ -41,7 +41,7 @@ use once_cell::race::OnceBox;
 use std::{boxed::Box, vec::Vec};
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
-    (len as u64 + 32 - 1) / 32 * word + base
+    (len as u64).div_ceil(32) * word + base
 }
 
 #[derive(Clone, Default, Debug)]
@@ -292,12 +292,12 @@ impl PrecompileSpecId {
             ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
             BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
             CANCUN => Self::CANCUN,
-            PRAGUE | PRAGUE_EOF => Self::PRAGUE,
+            PRAGUE | OSAKA => Self::PRAGUE,
             LATEST => Self::LATEST,
             #[cfg(feature = "optimism")]
             BEDROCK | REGOLITH | CANYON => Self::BERLIN,
             #[cfg(feature = "optimism")]
-            ECOTONE | FJORD | GRANITE => Self::CANCUN,
+            ECOTONE | FJORD | GRANITE | HOLOCENE => Self::CANCUN,
         }
     }
 }

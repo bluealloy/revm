@@ -1,6 +1,6 @@
 mod test_suite;
 
-pub use test_suite::{PragueTestResult, TestResult, TestSuite, TestUnit, TestVector};
+pub use test_suite::{TestResult, TestSuite, TestUnit, TestVector};
 
 use crate::{cmd::Error, dir_utils::find_all_json_tests};
 use revm::interpreter::analysis::{validate_raw_eof_inner, CodeType, EofError};
@@ -81,13 +81,19 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
                 } else {
                     Some(CodeType::ReturnOrStop)
                 };
+                // In future this can be generalized to cover multiple forks, Not just Osaka.
+                let Some(test_result) = test_vector.results.get("Osaka") else {
+                    // if test does not have a result that we can compare to, we skip it
+                    println!("Test without result: {} - {}", name, vector_name);
+                    continue;
+                };
                 let res = validate_raw_eof_inner(test_vector.code.clone(), kind);
-                if res.is_ok() != test_vector.results.prague.result {
+                if test_result.result != res.is_ok() {
                     println!(
                         "\nTest failed: {} - {}\nresult:{:?}\nrevm err_result:{:#?}\nbytes:{:?}\n",
                         name,
                         vector_name,
-                        test_vector.results.prague,
+                        test_result.result,
                         res.as_ref().err(),
                         test_vector.code
                     );

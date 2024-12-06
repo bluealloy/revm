@@ -73,10 +73,10 @@
             "hash": "0x4d60841f645092f61f7989111dee479f0ae2ddb675484e1175dc20a0f41c22de",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
-            "description": "Test function documentation:\n\n    Test a transaction that has entry-point into a set-code address that delegates to itself.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L797",
+            "description": "Test function documentation:\n\n    Test call into a set-code account that delegates to itself.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L835",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_call_into_self_delegating_set_code[fork_Prague-call_opcode_DELEGATECALL-evm_code_type_LEGACY-state_test]": {
@@ -153,10 +153,10 @@
             "hash": "0x1f981ce40a5cb7e7b165c59dac7907af55109bd1a1cd0ec370e1bf9db8804e14",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
-            "description": "Test function documentation:\n\n    Test a transaction that has entry-point into a set-code address that delegates to itself.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L797",
+            "description": "Test function documentation:\n\n    Test call into a set-code account that delegates to itself.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L835",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_call_into_self_delegating_set_code[fork_Prague-call_opcode_CALL-evm_code_type_LEGACY-state_test]": {
@@ -233,10 +233,10 @@
             "hash": "0x86ee42780a76f82fee37cb7649ff23e1b678c1418c8fa4cd2f8f867116a23dae",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
-            "description": "Test function documentation:\n\n    Test a transaction that has entry-point into a set-code address that delegates to itself.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L797",
+            "description": "Test function documentation:\n\n    Test call into a set-code account that delegates to itself.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L835",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_call_into_self_delegating_set_code[fork_Prague-call_opcode_CALLCODE-evm_code_type_LEGACY-state_test]": {
@@ -313,10 +313,10 @@
             "hash": "0xa2993decf4d9f9b86f2a9b6b85c7083dd5381c45829714376dc60aae1d3035f8",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
-            "description": "Test function documentation:\n\n    Test a transaction that has entry-point into a set-code address that delegates to itself.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L797",
+            "description": "Test function documentation:\n\n    Test call into a set-code account that delegates to itself.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L835",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     }
 }

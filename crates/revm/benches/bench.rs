@@ -82,7 +82,7 @@ fn transfer(c: &mut Criterion) {
 }
 
 fn bench_transact<EXT>(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<'_, EXT, BenchmarkDB>) {
-    let state = match evm.context.evm.db.0 {
+    let state = match evm.context.evm.db.bytecode {
         Bytecode::LegacyRaw(_) => "raw",
         Bytecode::LegacyAnalyzed(_) => "analysed",
         Bytecode::Eof(_) => "eof",
@@ -96,7 +96,7 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<'static, (), B
     g.bench_function("eval", |b| {
         let contract = Contract {
             input: evm.context.evm.env.tx.data.clone(),
-            bytecode: to_analysed(evm.context.evm.db.0.clone()),
+            bytecode: to_analysed(evm.context.evm.db.bytecode.clone()),
             ..Default::default()
         };
         let mut shared_memory = SharedMemory::new();

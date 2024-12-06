@@ -74,9 +74,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing self-destruct opcode in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L381",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L416",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destruct[fork_Prague-state_test-balance_0-external_sendall_recipient_True]": {
@@ -154,9 +154,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing self-destruct opcode in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L381",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L416",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destruct[fork_Prague-state_test-balance_1-external_sendall_recipient_False]": {
@@ -224,7 +224,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xb7d473a1d1b60c24deb12e4eb0c0b3a6619ae54199f9e2281d2b6877921540a9",
+                    "hash": "0x7c2d89789c3780e29e1ab8293f690022b5cbbc499cf0069d65df404fbe429ed7",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078398968094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e80a0d54dc4f661196bd7204844d9296d5954675313504601c0bba8644bfaa844ecb6a068542663f1a2f8d71ed317617c53a35754b002306300abed1f0e31b547787187",
                     "indexes": {
@@ -236,13 +236,13 @@
             ]
         },
         "_info": {
-            "hash": "0xe3272d63e99b2888d3cd88c914b142d1f4712b367dabc2c8d8bebf78cd9f701f",
+            "hash": "0x7a313c8493c749505e37502cb383234d3187e238dfcd29c1c26bc811f74caaf9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing self-destruct opcode in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L381",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L416",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_self_destruct[fork_Prague-state_test-balance_1-external_sendall_recipient_True]": {
@@ -310,7 +310,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x91749229613eeb50b61285ee187f4058f68dab0286d3398bb3feaa41db90069e",
+                    "hash": "0xcd9c7da309f329e076464e58dafb6daf5a65879e0ce9d15439892beb85ac0bbb",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078398968094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e01a06a957286513b52c67b086a729f8295aac37308a48b96c8f13db8443f90824791a01509f4db5f574d40178e3b146d24b3757fb5ce3520efb029823ba9b4fbb38fd5",
                     "indexes": {
@@ -322,13 +322,13 @@
             ]
         },
         "_info": {
-            "hash": "0x4e8bd96246ba8ce86e7dfa83128a4175f0105607e9f255ae3332e7d53e0ec5b1",
+            "hash": "0x5180216246b126d5dc46aaf1c75aa9e187aaec510f41c2b5514004c63e93d64e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing self-destruct opcode in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L381",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L416",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     }
 }

@@ -74,9 +74,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_single_signer-check_delegated_account_first_False]": {
@@ -154,9 +154,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_chain_specific_authorization_single_signer-check_delegated_account_first_True]": {
@@ -234,9 +234,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_chain_specific_authorization_single_signer-check_delegated_account_first_False]": {
@@ -314,9 +314,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_valid_authorizations_single_signer-check_delegated_account_first_True]": {
@@ -387,7 +387,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xaaca7aeb133160995f6caeb453dd09acbc4ee3cfb8a067b3164509d00afff2ae",
+                    "hash": "0xd1b95cdc9575e0c0c3fa2fd5af0cab36809162d76802dd94639888da3e4e2292",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f9011d01808007830f42409400000000000000000000000000000000000010008080c0f8b8f85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8001a05a8cac98fd240d8ef83c22db4a061ffa0facb1801245283cc05fc809d8b92837a01c3162fe11d91bc24d4fa00fb19ca34531e0eacdf8142c804be44058d5b8244ff85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180a06cacf1ec5bb4f5c1c84ae564222cbf2ce124add0a2707287860881692263fca4a00315456b6df53b696a97f927e9a4624014dafe0031cc88979754ca4be33140eb80a0a1bb3e50c4572c96e1387bcf47bba5eba8688833d66b7aebcc2418aacddf59e8a04e859792bab1a149a913f2db83dbbded9204ae3a71535dec830d29b874f97d9a",
                     "indexes": {
@@ -399,13 +399,13 @@
             ]
         },
         "_info": {
-            "hash": "0x67193be968e4eece025ecf96b261f11703169dcbdab9bb82a8aea390ad571434",
+            "hash": "0x7d5bdd52a56419fbbd6704479c1a7e29cf83fcdc3e9295635cfa259eb5785bd5",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_valid_authorizations_single_signer-check_delegated_account_first_False]": {
@@ -476,7 +476,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xa82b4e07d518c6e2ed31888ff23defd0f770d87eda3779e718415783476d3a26",
+                    "hash": "0xb017f2bd5e3dfe0f9ed691c928bd6e09a96d6f88ceec5c94566e9884c7c2f38f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f9011d01808007830f42409400000000000000000000000000000000000010008080c0f8b8f85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8001a05a8cac98fd240d8ef83c22db4a061ffa0facb1801245283cc05fc809d8b92837a01c3162fe11d91bc24d4fa00fb19ca34531e0eacdf8142c804be44058d5b8244ff85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180a06cacf1ec5bb4f5c1c84ae564222cbf2ce124add0a2707287860881692263fca4a00315456b6df53b696a97f927e9a4624014dafe0031cc88979754ca4be33140eb80a0a1bb3e50c4572c96e1387bcf47bba5eba8688833d66b7aebcc2418aacddf59e8a04e859792bab1a149a913f2db83dbbded9204ae3a71535dec830d29b874f97d9a",
                     "indexes": {
@@ -488,13 +488,13 @@
             ]
         },
         "_info": {
-            "hash": "0xd13ba17cbcb4654e4345649b6126450cca4e255eaecaf375487954edd6668c23",
+            "hash": "0x27118586861cd2f9dfed970b86f24673ab9c77c2a39fa984a7a0db919aac8c61",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_invalid_nonce_authorization_single_signer-check_delegated_account_first_True]": {
@@ -572,9 +572,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_invalid_nonce_authorization_single_signer-check_delegated_account_first_False]": {
@@ -652,9 +652,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_invalid_authorization_invalid_chain_id_single_signer-check_delegated_account_first_True]": {
@@ -732,9 +732,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_invalid_authorization_invalid_chain_id_single_signer-check_delegated_account_first_False]": {
@@ -812,9 +812,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_invalid_nonce_authorizations_single_signer-check_delegated_account_first_True]": {
@@ -901,9 +901,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_invalid_nonce_authorizations_single_signer-check_delegated_account_first_False]": {
@@ -990,9 +990,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_invalid_nonce_authorizations_multiple_signers-check_delegated_account_first_True]": {
@@ -1079,9 +1079,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_invalid_nonce_authorizations_multiple_signers-check_delegated_account_first_False]": {
@@ -1168,9 +1168,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_invalid_chain_id_authorizations_single_signer-check_delegated_account_first_True]": {
@@ -1257,9 +1257,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_invalid_chain_id_authorizations_single_signer-check_delegated_account_first_False]": {
@@ -1346,9 +1346,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_valid_authorizations_multiple_signers-check_delegated_account_first_True]": {
@@ -1435,9 +1435,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_valid_authorizations_multiple_signers-check_delegated_account_first_False]": {
@@ -1524,9 +1524,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-first_valid_then_single_repeated_nonce_authorization-check_delegated_account_first_True]": {
@@ -1613,9 +1613,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-first_valid_then_single_repeated_nonce_authorization-check_delegated_account_first_False]": {
@@ -1702,9 +1702,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-first_valid_then_single_repeated_nonce_authorizations_multiple_signers-check_delegated_account_first_True]": {
@@ -1809,9 +1809,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-first_valid_then_single_repeated_nonce_authorizations_multiple_signers-check_delegated_account_first_False]": {
@@ -1916,9 +1916,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_to_eoa-check_delegated_account_first_True]": {
@@ -2002,9 +2002,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_to_eoa-check_delegated_account_first_False]": {
@@ -2088,9 +2088,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_to_contract-check_delegated_account_first_True]": {
@@ -2174,9 +2174,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_to_contract-check_delegated_account_first_False]": {
@@ -2260,9 +2260,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_with_authority_in_access_list-check_delegated_account_first_True]": {
@@ -2347,9 +2347,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_with_authority_in_access_list-check_delegated_account_first_False]": {
@@ -2434,9 +2434,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_with_set_code_address_in_access_list-check_delegated_account_first_True]": {
@@ -2521,9 +2521,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_with_set_code_address_in_access_list-check_delegated_account_first_False]": {
@@ -2608,9 +2608,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_with_authority_and_set_code_address_in_access_list-check_delegated_account_first_True]": {
@@ -2701,9 +2701,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_with_authority_and_set_code_address_in_access_list-check_delegated_account_first_False]": {
@@ -2794,9 +2794,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_eoa_authority-check_delegated_account_first_True]": {
@@ -2864,7 +2864,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x37521dcf450cfed6496cce18a3bf6a2acc4d5d0b010e2b017e9b3439a23e6114",
+                    "hash": "0x23cc7b68e146762bf72c6522bf6a873f5f681721ceb157149af21fdb82e73c6a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c101808007830f42409400000000000000000000000000000000000010008080c0f85cf85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8001a05a8cac98fd240d8ef83c22db4a061ffa0facb1801245283cc05fc809d8b92837a01c3162fe11d91bc24d4fa00fb19ca34531e0eacdf8142c804be44058d5b8244f80a0861feb1545900cdc4a4f5c755ca6bfedfe2c9f56fdcb0a2130a7b097694d7fe6a01024f8d1e9aa372f5b978f32bc47b460c992201ae033c48f8e1b858dcd5feab3",
                     "indexes": {
@@ -2876,13 +2876,13 @@
             ]
         },
         "_info": {
-            "hash": "0x7706c9231e5aae6541383036ec4a4468c947f860d911a45e72072ac177c762c8",
+            "hash": "0x1be754019840ad9a0f2bd3f00b6cf4507e0eb08b243f7b37f6a1c0ecbe89f222",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_eoa_authority-check_delegated_account_first_False]": {
@@ -2950,7 +2950,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x24a435cbb0215b986a9af644f64be2232ba85e7edb22a3a6cf86168007e159e3",
+                    "hash": "0x4302d03e5347e9e03330209688792c9a225bb4e9a005a9029b541bac2412aa30",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c101808007830f42409400000000000000000000000000000000000010008080c0f85cf85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8001a05a8cac98fd240d8ef83c22db4a061ffa0facb1801245283cc05fc809d8b92837a01c3162fe11d91bc24d4fa00fb19ca34531e0eacdf8142c804be44058d5b8244f80a0861feb1545900cdc4a4f5c755ca6bfedfe2c9f56fdcb0a2130a7b097694d7fe6a01024f8d1e9aa372f5b978f32bc47b460c992201ae033c48f8e1b858dcd5feab3",
                     "indexes": {
@@ -2962,13 +2962,13 @@
             ]
         },
         "_info": {
-            "hash": "0x550ba03d7079932e65f369df28e03fcec201c2a3609a67d96bec6ad056a6c3e4",
+            "hash": "0x985f53b9e5ec04edf962b5efa3c01e5bf13e6376752e32d386af3a7cba5db1d0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_re_authorization_eoa_authority-check_delegated_account_first_True]": {
@@ -3036,7 +3036,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x74f85714dbb0d1eb379b94d1d4585dcf54a3cb8daac7b59cdcf75ed7e07b17ad",
+                    "hash": "0x6baa5a9d023ed231700ee26191e14103ef31d2dfa7b6165f596f391306881a53",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c101808007830f42409400000000000000000000000000000000000010008080c0f85cf85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180a06cacf1ec5bb4f5c1c84ae564222cbf2ce124add0a2707287860881692263fca4a00315456b6df53b696a97f927e9a4624014dafe0031cc88979754ca4be33140eb01a0307e15f78e8854c683b5728f40fb3d84d8f911d48bc1ce9de02342e2df059519a04c9fd405fb0a68030320dedd7524d9c3e59a2f8f8c5595ab6ea44c9b48cf6d5b",
                     "indexes": {
@@ -3048,13 +3048,13 @@
             ]
         },
         "_info": {
-            "hash": "0x6cd8edaecd3e23c13522ac9dfc71195044a8cdab2f35b857c88bc8a93b5b2e20",
+            "hash": "0xe59874822e0ad87f6c2f40f45d9a75e18e834c2cd634a099a65bf40d9884565a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_re_authorization_eoa_authority-check_delegated_account_first_False]": {
@@ -3122,7 +3122,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x0bccf41668b9058fea992fe09950ced74c647399602f8dedfc0146fdf55e0f64",
+                    "hash": "0x8ed09f5bc409e60561eb862e879ca072503352d36b43587674a9c5cf33e34e00",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c101808007830f42409400000000000000000000000000000000000010008080c0f85cf85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180a06cacf1ec5bb4f5c1c84ae564222cbf2ce124add0a2707287860881692263fca4a00315456b6df53b696a97f927e9a4624014dafe0031cc88979754ca4be33140eb01a0307e15f78e8854c683b5728f40fb3d84d8f911d48bc1ce9de02342e2df059519a04c9fd405fb0a68030320dedd7524d9c3e59a2f8f8c5595ab6ea44c9b48cf6d5b",
                     "indexes": {
@@ -3134,13 +3134,13 @@
             ]
         },
         "_info": {
-            "hash": "0x639187472fb39c118b4e6d0e27c08684a519a7eec852a06b04f36cf5cd1e4192",
+            "hash": "0xd982e37c2d99094626b1c6e715ac36cc61d607513e14e46c65059830a783a5ed",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_valid_authorizations_eoa_authority-check_delegated_account_first_True]": {
@@ -3233,9 +3233,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_valid_authorizations_eoa_authority-check_delegated_account_first_False]": {
@@ -3328,9 +3328,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_eoa_self_sponsored_authority-check_delegated_account_first_True]": {
@@ -3392,7 +3392,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x45a8192943c7068075fe1b532107356ff33c439b8fa5f7fbec5829c72ddf2822",
+                    "hash": "0xa0c63032a3a6493ea0ff986eed20a755d94997962d6406dac80881db923fb31c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c101808007830f42409400000000000000000000000000000000000010008080c0f85cf85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0101a05dc970375527771146e0d4d3f938cab2b3d26a8eeac635d6e98ffc783e5fdab9a0670def30129ad98b77e5ca9a58e62f770c5faf5eb4d3ae469ab1125530d1494d01a0e2b9fb2f256ac24a1be88da6f4a59573395e5560c6d82eded35bad13505b2965a04db2d2e1ee7b0fac44cf85a658359eefd5e3b569a70f2a0470dd311fef99b012",
                     "indexes": {
@@ -3404,13 +3404,13 @@
             ]
         },
         "_info": {
-            "hash": "0x07afd39927e8471ee40701ec927e3e47e8a464c0d48d9edd0d82033b9f59ad46",
+            "hash": "0x4aa3b891bacd7be43d151e14413bcd5e6ecff6846352545206c68e1af5976da4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_eoa_self_sponsored_authority-check_delegated_account_first_False]": {
@@ -3472,7 +3472,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xeea1b1cb7af5cb31d64e34ab0927d9bbe57f3ffb336056713ed215941949f1cb",
+                    "hash": "0x3423d868538c33bc5a4d8903479808b7750ea8b563085df12e36b7e2ee2da6ed",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c101808007830f42409400000000000000000000000000000000000010008080c0f85cf85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0101a05dc970375527771146e0d4d3f938cab2b3d26a8eeac635d6e98ffc783e5fdab9a0670def30129ad98b77e5ca9a58e62f770c5faf5eb4d3ae469ab1125530d1494d01a0e2b9fb2f256ac24a1be88da6f4a59573395e5560c6d82eded35bad13505b2965a04db2d2e1ee7b0fac44cf85a658359eefd5e3b569a70f2a0470dd311fef99b012",
                     "indexes": {
@@ -3484,13 +3484,13 @@
             ]
         },
         "_info": {
-            "hash": "0x17569cd25ea5a82469fde9201229130be0a2a7c54eb1e43108a47c3327cd5b19",
+            "hash": "0xe88419b5e94c7009c1f32f0ea95361866642fd466991ae4b3407e78e0e3654fd",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_valid_authorizations_eoa_self_sponsored_authority-check_delegated_account_first_True]": {
@@ -3577,9 +3577,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_valid_authorizations_eoa_self_sponsored_authority-check_delegated_account_first_False]": {
@@ -3666,9 +3666,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_invalid_contract_authority-check_delegated_account_first_True]": {
@@ -3752,9 +3752,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-single_valid_authorization_invalid_contract_authority-check_delegated_account_first_False]": {
@@ -3838,9 +3838,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_authorizations_empty_account_then_contract_authority-check_delegated_account_first_True]": {
@@ -3933,9 +3933,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_authorizations_empty_account_then_contract_authority-check_delegated_account_first_False]": {
@@ -4028,9 +4028,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_authorizations_eoa_then_contract_authority-check_delegated_account_first_True]": {
@@ -4113,7 +4113,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x0c7502ff26079d15c5e04cabf0893f162262f0767985a11a4135d786ce47945d",
+                    "hash": "0xb55bc174181d7f22fd968593ed6daed9e1101bed65e0ff3193fc0b377050fa87",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f9011d01808007830f42409400000000000000000000000000000000000010008080c0f8b8f85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8001a05a8cac98fd240d8ef83c22db4a061ffa0facb1801245283cc05fc809d8b92837a01c3162fe11d91bc24d4fa00fb19ca34531e0eacdf8142c804be44058d5b8244ff85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8001a00345c56a25c9b20388d46c6313e904c2bc902157d4b64b0f3093b79f58211b59a02a6501b16e91d253e98399cda003f8abbbaf1e67c8fa4764f899a5057210f1b380a0cdab417e1a4d3e16e5bd7b457876d405eeecb19dfb4d795282be12747e7e217fa0646dfab826175a109abbcfa648229060412af0e4849547eed72fbd1a1d924290",
                     "indexes": {
@@ -4125,13 +4125,13 @@
             ]
         },
         "_info": {
-            "hash": "0x77c4bdd959065d85b316a6759c827ab4e61ac746c35d2829f13e03ea6cf27ea6",
+            "hash": "0xf9cd5d7ac3f00f3578e99577c5dfd1fbc9a56cebed608309be5ee28333a63f90",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_authorizations_eoa_then_contract_authority-check_delegated_account_first_False]": {
@@ -4214,7 +4214,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xf2407c17215351f33c4d5454ebf47162e476ec3a8940d3afeabf12fe3b9c2749",
+                    "hash": "0xc84f666af39c294be5bc167be3a748a801648d5f6d75e75561b52ae971eacd21",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f9011d01808007830f42409400000000000000000000000000000000000010008080c0f8b8f85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8001a05a8cac98fd240d8ef83c22db4a061ffa0facb1801245283cc05fc809d8b92837a01c3162fe11d91bc24d4fa00fb19ca34531e0eacdf8142c804be44058d5b8244ff85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8001a00345c56a25c9b20388d46c6313e904c2bc902157d4b64b0f3093b79f58211b59a02a6501b16e91d253e98399cda003f8abbbaf1e67c8fa4764f899a5057210f1b380a0cdab417e1a4d3e16e5bd7b457876d405eeecb19dfb4d795282be12747e7e217fa0646dfab826175a109abbcfa648229060412af0e4849547eed72fbd1a1d924290",
                     "indexes": {
@@ -4226,13 +4226,13 @@
             ]
         },
         "_info": {
-            "hash": "0x0144c6f31a6523a0dd34b942507fa6529e290d668b06c5f625fc9f19f97cbea5",
+            "hash": "0x72706064106f70553e9b7bb86a18b98ca0ef7d57cd6a4e415f59d8a324ebe0b0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_authorizations_eoa_self_sponsored_then_contract_authority-check_delegated_account_first_True]": {
@@ -4309,7 +4309,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x07f6d19b2fdf9cd42d9f01fde593e9ed24ab09bc9c4997c7f5ff215240fdc14e",
+                    "hash": "0x3c4c233c3307fe99d1abb5d57d9f42c0d014566915a726bddead6e4e501b637c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f9011d01808007830f42409400000000000000000000000000000000000010008080c0f8b8f85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0101a05dc970375527771146e0d4d3f938cab2b3d26a8eeac635d6e98ffc783e5fdab9a0670def30129ad98b77e5ca9a58e62f770c5faf5eb4d3ae469ab1125530d1494df85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8001a05a8cac98fd240d8ef83c22db4a061ffa0facb1801245283cc05fc809d8b92837a01c3162fe11d91bc24d4fa00fb19ca34531e0eacdf8142c804be44058d5b8244f01a0db3797020cabbe50166f925c2223d85248eb38fba4b0a2dcf33f615e411ddebea0609b99e4bdda46dcc382d4afbefc1219b43dfb6fb5dd5f5d5d2ef6d409c76114",
                     "indexes": {
@@ -4321,13 +4321,13 @@
             ]
         },
         "_info": {
-            "hash": "0xcf772999456bff281171237d83d206f73a14f13e38009de000e93dc867ce1c24",
+            "hash": "0xa06fa3c1775b534fc8aade73f4c709c2f9de147c223ea43d6b612c00069d29f4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-multiple_authorizations_eoa_self_sponsored_then_contract_authority-check_delegated_account_first_False]": {
@@ -4404,7 +4404,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x8047603e0139508c8307d2e8f569dc17d702b2fd49f1feb6983204066cd7b7fd",
+                    "hash": "0x36fbfe360d11d3267403e123ffb982934b0c61fa9e4c904d1d9e4c737d61626b",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f9011d01808007830f42409400000000000000000000000000000000000010008080c0f8b8f85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0101a05dc970375527771146e0d4d3f938cab2b3d26a8eeac635d6e98ffc783e5fdab9a0670def30129ad98b77e5ca9a58e62f770c5faf5eb4d3ae469ab1125530d1494df85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8001a05a8cac98fd240d8ef83c22db4a061ffa0facb1801245283cc05fc809d8b92837a01c3162fe11d91bc24d4fa00fb19ca34531e0eacdf8142c804be44058d5b8244f01a0db3797020cabbe50166f925c2223d85248eb38fba4b0a2dcf33f615e411ddebea0609b99e4bdda46dcc382d4afbefc1219b43dfb6fb5dd5f5d5d2ef6d409c76114",
                     "indexes": {
@@ -4416,13 +4416,13 @@
             ]
         },
         "_info": {
-            "hash": "0xd9a942d728161315592e8b48fef1b583b8b80a18d81cf64901dc77110e7b3d9b",
+            "hash": "0xf11bfae98e4dbf378ff32acc05f68b2b0e96f10b7e769b4946fc9f90faa2e798",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-pre_authorized_eoa_authority_no_re_authorization-check_delegated_account_first_True]": {
@@ -4494,9 +4494,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-pre_authorized_eoa_authority_no_re_authorization-check_delegated_account_first_False]": {
@@ -4568,9 +4568,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-pre_authorized_eoa_authority_no_re_authorization_self_sponsored-check_delegated_account_first_True]": {
@@ -4636,9 +4636,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_gas.py::test_account_warming[fork_Prague-state_test-pre_authorized_eoa_authority_no_re_authorization_self_sponsored-check_delegated_account_first_False]": {
@@ -4704,9 +4704,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_gas.py#L781",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_gas.py#L783",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     }
 }

@@ -73,7 +73,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x11cb86d992eb9fec8834a6d308b8ad01eb0e55e2e714783f3c75eaf7977b133a",
+                    "hash": "0x5e3565889861208b72277c5b0ad2c8fe764aeb495e8a7506cad1abbb2609f322",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f9011d01808007839896809400000000000000000000000000000000000010008080c0f8b8f85a80948a0a19589531694250d570040a0c4b74576919b88001a02fdae69e3d7a08e437baa33b7d32781ea30f6cd671e38d700e0089ccb0be9f9da0204aea5f46d068028a6bea3d71ec0fdb995634117e1ea369277f2b2fecd2a024f85a8094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8001a00c2ee9c1e1059b691b29ee396914a961a0e380c6c21c63a57a23412df3892aa5a0478c980f27d508ffa8ec6aa3f61a5819c7d85c948924d5885d1518b1a98c0cb180a0ab2fee55cd264f28fa4fa16ee7050c5c2de990a514ee22b9a1045e4faa38c357a0259fdc32ef7e3674989ed68d7ed78cdf3b2976b864543773398b9e8648489866",
                     "indexes": {
@@ -85,13 +85,13 @@
             ]
         },
         "_info": {
-            "hash": "0xb3d8480cefa572452bb08a6f27e58f19b075f345365299b0a453799a2d77238a",
+            "hash": "0xb0b5013369ea07b97fe071f13bf212f079fcbcdc237bc3969b5295411daf9c21",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test different ext*code operations on a set-code address that references another delegated\n    address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1207",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1327",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     }
 }

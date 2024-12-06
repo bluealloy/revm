@@ -15,7 +15,7 @@ use crate::{
     Context, ContextPrecompiles, FrameResult,
 };
 use core::ops::Mul;
-use revm_precompile::{secp256r1, PrecompileSpecId};
+use revm_precompile::PrecompileSpecId;
 use std::string::ToString;
 use std::sync::Arc;
 
@@ -163,23 +163,13 @@ pub fn refund<SPEC: Spec, EXT, DB: Database>(
 /// Load precompiles for Optimism chain.
 #[inline]
 pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> ContextPrecompiles<DB> {
-    let mut precompiles = ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID));
-
-    if SPEC::enabled(SpecId::FJORD) {
-        precompiles.extend([
-            // EIP-7212: secp256r1 P256verify
-            secp256r1::P256VERIFY,
-        ])
-    }
-
     if SPEC::enabled(SpecId::GRANITE) {
-        precompiles.extend([
-            // Restrict bn256Pairing input size
-            optimism::bn128::pair::GRANITE,
-        ])
+        ContextPrecompiles::from_static_precompiles(optimism::precompile::granite())
+    } else if SPEC::enabled(SpecId::FJORD) {
+        ContextPrecompiles::from_static_precompiles(optimism::precompile::fjord())
+    } else {
+        ContextPrecompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
     }
-
-    precompiles
 }
 
 /// Load account (make them warm) and l1 data from database.
@@ -369,7 +359,7 @@ pub fn end<SPEC: Spec, EXT, DB: Database>(
                 acc.mark_touch();
                 acc
             };
-            let state = HashMap::from([(caller, account)]);
+            let state = HashMap::from_iter([(caller, account)]);
 
             // The gas used of a failed deposit post-regolith is the gas
             // limit of the transaction. pre-regolith, it is the gas limit

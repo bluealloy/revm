@@ -4,6 +4,7 @@ mod bn128;
 mod fast_lz;
 mod handler_register;
 mod l1block;
+mod precompile;
 
 pub use handler_register::{
     deduct_caller, end, last_frame_return, load_accounts, load_precompiles,

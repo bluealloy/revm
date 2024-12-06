@@ -123,15 +123,6 @@ fn skip_test(path: &Path) -> bool {
         | "static_Call50000_sha256.json"
         | "loopMul.json"
         | "CALLBlake2f_MaxRounds.json"
-
-        // evmone statetest
-        | "initcode_transaction_before_prague.json"
-        | "invalid_tx_non_existing_sender.json"
-        | "tx_non_existing_sender.json"
-        | "block_apply_withdrawal.json"
-        | "block_apply_ommers_reward.json"
-        | "known_block_hash.json"
-        | "eip7516_blob_base_fee.json"
     )
 }
 
@@ -330,10 +321,11 @@ pub fn execute_test_suite(
             // Constantinople was immediately extended by Petersburg.
             // There isn't any production Constantinople transaction
             // so we don't support it and skip right to Petersburg.
-            if spec_name == SpecName::Constantinople || spec_name == SpecName::Osaka {
+            if spec_name == SpecName::Constantinople {
                 continue;
             }
 
+            // Enable EOF in Prague tests.
             let spec_id = spec_name.to_spec_id();
 
             if spec_id.is_enabled_in(SpecId::MERGE) && env.block.prevrandao.is_none() {

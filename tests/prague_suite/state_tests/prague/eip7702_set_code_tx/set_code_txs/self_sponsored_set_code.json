@@ -58,7 +58,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x13167238b3608059a0a0bf0a9842e9e00c3205b98fc75f71e5ff582ddbf23b2e",
+                    "hash": "0xde2dc54cf8052c475079f863e3c5a4a313f995ec70a3c91614f8970ae8303e17",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078398968094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590280a036a9506913cdfc177c404e49598872dca1ddc14d1b6342134f1b8c09cd63fc58a06de3d53d2d7159047a0f8b0c3175e033c541f6071ffa7fda2a80225429071f15",
                     "indexes": {
@@ -70,13 +70,13 @@
             ]
         },
         "_info": {
-            "hash": "0x8bbf1a8db1a1bf3ad3ecc5a897addbda07360be4602a3d36237cb90175668af9",
+            "hash": "0xa56e34bc50c219149e6fcff8785c721fdc89fff1e77f50cf06160a012617ce23",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a self-sponsored set-code transaction.\n\n    The transaction is sent to the sender, and the sender is the signer of the only authorization\n    tuple in the authorization list.\n\n    The authorization tuple has a nonce of 1 because the self-sponsored transaction increases the\n    nonce of the sender from zero to one first.\n\n    The expected nonce at the end of the transaction is 2.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L63",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_self_sponsored_set_code[fork_Prague-state_test-stop-tx_value_1]": {
@@ -138,7 +138,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xbab66857c6d1f6441acb6d19a82552e56c0aaa82e0aed58d47a18db2ca1de7f9",
+                    "hash": "0xda9e62a41ee44a77d151ff6e9878e9323ae27e358e3e2325ade9504a2af85c77",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078398968094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590201a0234b0f324388f83d13660f63eebc1d11be8f9931a45be19daff0a2ffa81da168a0296b5cfd1a8b572ae21ea2ffd33896fae861cb56af06cc5aa84db811b6e14b73",
                     "indexes": {
@@ -150,13 +150,13 @@
             ]
         },
         "_info": {
-            "hash": "0x7ae22d1414c26c460661d6630c97c26d4d3c0a06e077753bc3baa30b4135c014",
+            "hash": "0x61c3de765c5e1b4a418faa13b2bbb0735c4f090adc0e1dabac2c71f7205fc8b3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a self-sponsored set-code transaction.\n\n    The transaction is sent to the sender, and the sender is the signer of the only authorization\n    tuple in the authorization list.\n\n    The authorization tuple has a nonce of 1 because the self-sponsored transaction increases the\n    nonce of the sender from zero to one first.\n\n    The expected nonce at the end of the transaction is 2.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L63",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_self_sponsored_set_code[fork_Prague-state_test-return-tx_value_0]": {
@@ -218,7 +218,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x9f3554cc0151322dd01eaef8070d1bd4c4bf10d3bfe3fe0c68d61c75e0e06de0",
+                    "hash": "0x2fad55deedfa805e0af9f28219d650d8e19b26e19522b3cff0e19f10a04bf6d2",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078398968094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590280a036a9506913cdfc177c404e49598872dca1ddc14d1b6342134f1b8c09cd63fc58a06de3d53d2d7159047a0f8b0c3175e033c541f6071ffa7fda2a80225429071f15",
                     "indexes": {
@@ -230,13 +230,13 @@
             ]
         },
         "_info": {
-            "hash": "0xa2fdeb03f7df55bf9ee5eb9e36aee06b547e07eb4708f7e99ff4e546f04f1027",
+            "hash": "0x864b63c881ddf11800ff9147544977f5bc68084f10dc90687af38d3f118065d7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a self-sponsored set-code transaction.\n\n    The transaction is sent to the sender, and the sender is the signer of the only authorization\n    tuple in the authorization list.\n\n    The authorization tuple has a nonce of 1 because the self-sponsored transaction increases the\n    nonce of the sender from zero to one first.\n\n    The expected nonce at the end of the transaction is 2.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L63",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_self_sponsored_set_code[fork_Prague-state_test-return-tx_value_1]": {
@@ -298,7 +298,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x1f0fdb1f34c692f464c6f98f808b1f69e5e8d7f3b21841705e07b9ded05fa48b",
+                    "hash": "0x92424b20775c49cc7fbfa809143a03c9e9953a03ea074dc85b225c41e5d11d1e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078398968094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590201a0234b0f324388f83d13660f63eebc1d11be8f9931a45be19daff0a2ffa81da168a0296b5cfd1a8b572ae21ea2ffd33896fae861cb56af06cc5aa84db811b6e14b73",
                     "indexes": {
@@ -310,13 +310,13 @@
             ]
         },
         "_info": {
-            "hash": "0x290e73505852e1d2f4e88b80212f60bb78820b0c148bafb716f35548a588bd39",
+            "hash": "0x83386760760950911915d967de09d222058ed5f439a99bd468e0b1c051890f1d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a self-sponsored set-code transaction.\n\n    The transaction is sent to the sender, and the sender is the signer of the only authorization\n    tuple in the authorization list.\n\n    The authorization tuple has a nonce of 1 because the self-sponsored transaction increases the\n    nonce of the sender from zero to one first.\n\n    The expected nonce at the end of the transaction is 2.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L63",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_self_sponsored_set_code[fork_Prague-state_test-revert-tx_value_0]": {
@@ -378,7 +378,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x7dc28146ef794351c16b59c614cf52100c6297511ec75c56bdec1c69183da792",
+                    "hash": "0x00e6c5cadd5ab86227291765a0cb030cbfdb8ea6fd2555f1be7dbab99c55572f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078398968094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590280a036a9506913cdfc177c404e49598872dca1ddc14d1b6342134f1b8c09cd63fc58a06de3d53d2d7159047a0f8b0c3175e033c541f6071ffa7fda2a80225429071f15",
                     "indexes": {
@@ -390,13 +390,13 @@
             ]
         },
         "_info": {
-            "hash": "0xec4c68e4fbde2627f0a413b89789569325df6963a09e1d111a85cdf36140083c",
+            "hash": "0x5812b06a25331d477ffc75a90c08d4b1289828c0a7fd04787a509a275ecd10e2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a self-sponsored set-code transaction.\n\n    The transaction is sent to the sender, and the sender is the signer of the only authorization\n    tuple in the authorization list.\n\n    The authorization tuple has a nonce of 1 because the self-sponsored transaction increases the\n    nonce of the sender from zero to one first.\n\n    The expected nonce at the end of the transaction is 2.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L63",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_self_sponsored_set_code[fork_Prague-state_test-revert-tx_value_1]": {
@@ -458,7 +458,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x7dc28146ef794351c16b59c614cf52100c6297511ec75c56bdec1c69183da792",
+                    "hash": "0x00e6c5cadd5ab86227291765a0cb030cbfdb8ea6fd2555f1be7dbab99c55572f",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078398968094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590201a0234b0f324388f83d13660f63eebc1d11be8f9931a45be19daff0a2ffa81da168a0296b5cfd1a8b572ae21ea2ffd33896fae861cb56af06cc5aa84db811b6e14b73",
                     "indexes": {
@@ -470,13 +470,13 @@
             ]
         },
         "_info": {
-            "hash": "0x70cacd5188c99f404d1a3c3b4644fbdaa9c7ced30db6926d16ffbb5746d98b89",
+            "hash": "0x35d6489cb7712d1bfbe2f9414d657971120ce494bf27e7a9f8d4afee3b138235",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a self-sponsored set-code transaction.\n\n    The transaction is sent to the sender, and the sender is the signer of the only authorization\n    tuple in the authorization list.\n\n    The authorization tuple has a nonce of 1 because the self-sponsored transaction increases the\n    nonce of the sender from zero to one first.\n\n    The expected nonce at the end of the transaction is 2.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L63",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_self_sponsored_set_code[fork_Prague-state_test-invalid-tx_value_0]": {
@@ -538,7 +538,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x210a38a4694753ad9fd4ed3b711c83345faa9cf07de7b058847ba28174271511",
+                    "hash": "0x0edcb3d982966b9dc3ac460478a3009236655557f92fba0a48c5f52e3e11a590",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078398968094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590280a036a9506913cdfc177c404e49598872dca1ddc14d1b6342134f1b8c09cd63fc58a06de3d53d2d7159047a0f8b0c3175e033c541f6071ffa7fda2a80225429071f15",
                     "indexes": {
@@ -550,13 +550,13 @@
             ]
         },
         "_info": {
-            "hash": "0x01078d725ab7939ca46faf195da37829e881165e2d11375213ca6d8c4dee0b98",
+            "hash": "0xda78d270d4d287c110771b08a9afc698025299e4fe9cb0c46d7e413f29ef8ff2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a self-sponsored set-code transaction.\n\n    The transaction is sent to the sender, and the sender is the signer of the only authorization\n    tuple in the authorization list.\n\n    The authorization tuple has a nonce of 1 because the self-sponsored transaction increases the\n    nonce of the sender from zero to one first.\n\n    The expected nonce at the end of the transaction is 2.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L63",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_self_sponsored_set_code[fork_Prague-state_test-invalid-tx_value_1]": {
@@ -618,7 +618,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x210a38a4694753ad9fd4ed3b711c83345faa9cf07de7b058847ba28174271511",
+                    "hash": "0x0edcb3d982966b9dc3ac460478a3009236655557f92fba0a48c5f52e3e11a590",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078398968094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590201a0234b0f324388f83d13660f63eebc1d11be8f9931a45be19daff0a2ffa81da168a0296b5cfd1a8b572ae21ea2ffd33896fae861cb56af06cc5aa84db811b6e14b73",
                     "indexes": {
@@ -630,13 +630,13 @@
             ]
         },
         "_info": {
-            "hash": "0x42317a0d88b0219e9f8197c75a0fa91872c6721dadec6b7633dc0b5c009bb8e6",
+            "hash": "0xc3dea80cb4f5fd3046c48600c85fa628794badbcd33a810182f41ebc076ffafa",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a self-sponsored set-code transaction.\n\n    The transaction is sent to the sender, and the sender is the signer of the only authorization\n    tuple in the authorization list.\n\n    The authorization tuple has a nonce of 1 because the self-sponsored transaction increases the\n    nonce of the sender from zero to one first.\n\n    The expected nonce at the end of the transaction is 2.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L63",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_self_sponsored_set_code[fork_Prague-state_test-out-of-gas-tx_value_0]": {
@@ -698,7 +698,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x1d06bc7b0fda03bbe3dd66a690e6cbe2aed2e899b07ebee1db567b7133a0dd24",
+                    "hash": "0x74e859fe72cda7024af00bfe8f6822a6ab9e3febad9b0fb10b4cd49913e1751e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078398968094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590280a036a9506913cdfc177c404e49598872dca1ddc14d1b6342134f1b8c09cd63fc58a06de3d53d2d7159047a0f8b0c3175e033c541f6071ffa7fda2a80225429071f15",
                     "indexes": {
@@ -710,13 +710,13 @@
             ]
         },
         "_info": {
-            "hash": "0xa3089976b01adf863d8be194c4a2e64ff1f3658f660778bbfc33a844058338a4",
+            "hash": "0xd462d395709231ddca31a96ab1a5237006fb897fbcafefd60d5065a4f1166bc5",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a self-sponsored set-code transaction.\n\n    The transaction is sent to the sender, and the sender is the signer of the only authorization\n    tuple in the authorization list.\n\n    The authorization tuple has a nonce of 1 because the self-sponsored transaction increases the\n    nonce of the sender from zero to one first.\n\n    The expected nonce at the end of the transaction is 2.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L63",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_self_sponsored_set_code[fork_Prague-state_test-out-of-gas-tx_value_1]": {
@@ -778,7 +778,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x1d06bc7b0fda03bbe3dd66a690e6cbe2aed2e899b07ebee1db567b7133a0dd24",
+                    "hash": "0x74e859fe72cda7024af00bfe8f6822a6ab9e3febad9b0fb10b4cd49913e1751e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078398968094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590201a0234b0f324388f83d13660f63eebc1d11be8f9931a45be19daff0a2ffa81da168a0296b5cfd1a8b572ae21ea2ffd33896fae861cb56af06cc5aa84db811b6e14b73",
                     "indexes": {
@@ -790,13 +790,13 @@
             ]
         },
         "_info": {
-            "hash": "0x6e93f8b5dfeda754529fa492971428165db1ada6349de9877d1e7355a397ea19",
+            "hash": "0x3bc108d55805ffecbd1f6b205c6c18108f011926d820c3719ad80fb63517850d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a self-sponsored set-code transaction.\n\n    The transaction is sent to the sender, and the sender is the signer of the only authorization\n    tuple in the authorization list.\n\n    The authorization tuple has a nonce of 1 because the self-sponsored transaction increases the\n    nonce of the sender from zero to one first.\n\n    The expected nonce at the end of the transaction is 2.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L63",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     }
 }

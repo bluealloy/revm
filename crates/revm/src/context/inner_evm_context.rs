@@ -52,7 +52,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     pub fn new(db: DB) -> Self {
         Self {
             env: Box::default(),
-            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
+            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::default()),
             db,
             error: Ok(()),
             #[cfg(feature = "optimism")]
@@ -65,7 +65,7 @@ impl<DB: Database> InnerEvmContext<DB> {
     pub fn new_with_env(db: DB, env: Box<Env>) -> Self {
         Self {
             env,
-            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
+            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::default()),
             db,
             error: Ok(()),
             #[cfg(feature = "optimism")]

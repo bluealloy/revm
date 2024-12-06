@@ -8,7 +8,7 @@ use crate::{
         db::Database,
         eip7702, Account, Bytecode, EVMError, Env, Spec,
         SpecId::{CANCUN, PRAGUE, SHANGHAI},
-        TxKind, BLOCKHASH_STORAGE_ADDRESS, U256,
+        TxKind, BLOCKHASH_STORAGE_ADDRESS, KECCAK_EMPTY, U256,
     },
     Context, ContextPrecompiles,
 };
@@ -114,28 +114,32 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
 
     let mut refunded_accounts = 0;
     for authorization in authorization_list.recovered_iter() {
-        // 1. recover authority and authorized addresses.
-        // authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]
+        // 1. Verify the chain id is either 0 or the chain's current ID.
+        let chain_id = authorization.chain_id();
+        if chain_id != 0 && chain_id != context.evm.inner.env.cfg.chain_id {
+            continue;
+        }
+
+        // 2. Verify the `nonce` is less than `2**64 - 1`.
+        if authorization.nonce() == u64::MAX {
+            continue;
+        }
+
+        // recover authority and authorized addresses.
+        // 3. `authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]`
         let Some(authority) = authorization.authority() else {
             continue;
         };
 
-        // 2. Verify the chain id is either 0 or the chain's current ID.
-        if !authorization.chain_id().is_zero()
-            && authorization.chain_id() != U256::from(context.evm.inner.env.cfg.chain_id)
-        {
-            continue;
-        }
-
         // warm authority account and check nonce.
-        // 3. Add authority to accessed_addresses (as defined in EIP-2929.)
+        // 4. Add `authority` to `accessed_addresses` (as defined in [EIP-2929](./eip-2929.md).)
         let mut authority_acc = context
             .evm
             .inner
             .journaled_state
             .load_code(authority, &mut context.evm.inner.db)?;
 
-        // 4. Verify the code of authority is either empty or already delegated.
+        // 5. Verify the code of `authority` is either empty or already delegated.
         if let Some(bytecode) = &authority_acc.info.code {
             // if it is not empty and it is not eip7702
             if !bytecode.is_empty() && !bytecode.is_eip7702() {
@@ -143,22 +147,29 @@ pub fn apply_eip7702_auth_list<SPEC: Spec, EXT, DB: Database>(
             }
         }
 
-        // 5. Verify the nonce of authority is equal to nonce.
+        // 6. Verify the nonce of `authority` is equal to `nonce`. In case `authority` does not exist in the trie, verify that `nonce` is equal to `0`.
         if authorization.nonce() != authority_acc.info.nonce {
             continue;
         }
 
-        // 6. Refund the sender PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST gas if authority exists in the trie.
+        // 7. Add `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` gas to the global refund counter if `authority` exists in the trie.
         if !authority_acc.is_empty() {
             refunded_accounts += 1;
         }
 
-        // 7. Set the code of authority to be 0xef0100 || address. This is a delegation designation.
-        let bytecode = Bytecode::new_eip7702(authorization.address);
-        authority_acc.info.code_hash = bytecode.hash_slow();
+        // 8. Set the code of `authority` to be `0xef0100 || address`. This is a delegation designation.
+        //  * As a special case, if `address` is `0x0000000000000000000000000000000000000000` do not write the designation. Clear the accounts code and reset the account's code hash to the empty hash `0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470`.
+        let (bytecode, hash) = if authorization.address.is_zero() {
+            (Bytecode::default(), KECCAK_EMPTY)
+        } else {
+            let bytecode = Bytecode::new_eip7702(authorization.address);
+            let hash = bytecode.hash_slow();
+            (bytecode, hash)
+        };
+        authority_acc.info.code_hash = hash;
         authority_acc.info.code = Some(bytecode);
 
-        // 8. Increase the nonce of authority by one.
+        // 9. Increase the nonce of `authority` by one.
         authority_acc.info.nonce = authority_acc.info.nonce.saturating_add(1);
         authority_acc.mark_touch();
     }

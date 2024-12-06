@@ -74,9 +74,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-stop-tx_value_0-one_wei_balance_authority]": {
@@ -144,7 +144,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x6aa94250a92f1487526a734dd4170b49e2d6b686a0217269630f69834c35ffd7",
+                    "hash": "0x404f3308941348318aa94e030cdbbd5a2c4f063597b794cf0b07b7105603d25d",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e01a0d61673cd58ffa5fc605c3215aa4647fa3afbea1d1f577e08402442992526d980a0063068ca818025c7b8493d0623cb70ef3a2ba4b3e2ae0af1146d1c9b065c0aff",
                     "indexes": {
@@ -156,13 +156,13 @@
             ]
         },
         "_info": {
-            "hash": "0x5c0ebb9800cdabaa8e7273422a719ef1af71ec8d7532127616d5030294c2ccb7",
+            "hash": "0xebe8823763ea0e88fc689d55d01d348c8ace391fee47a10e58d3f329a6a81294",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-stop-tx_value_0-self_sponsored_tx]": {
@@ -224,7 +224,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x13167238b3608059a0a0bf0a9842e9e00c3205b98fc75f71e5ff582ddbf23b2e",
+                    "hash": "0xde2dc54cf8052c475079f863e3c5a4a313f995ec70a3c91614f8970ae8303e17",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590201a0c0ffa5770a7fd85f7c04f60e8ec9fb3722703958563c6c0e5beaff5430eb2353a05cb0b1c6fb735433bc81b6dff7a51486c876a4e023e2deeda2f150dafa63460c",
                     "indexes": {
@@ -236,13 +236,13 @@
             ]
         },
         "_info": {
-            "hash": "0xad67fb801624bc7a033170c4cb717a4ba19d249b978ca10a332a20bd35189f5c",
+            "hash": "0x87c42fa71c14ac7e3d2908884d498ab9ef3e757ebd15ae0dde919d20e8e15e9b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-stop-tx_value_1-zero_balance_authority]": {
@@ -320,9 +320,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-stop-tx_value_1-one_wei_balance_authority]": {
@@ -390,7 +390,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xcdb8979342e41f381375eeaeec1de514ef190e49734179910a827b6a08ae3762",
+                    "hash": "0xc4d4d0ec12a0418dac6ad2ac90b348791e7930daf454e43bcc3dd5831c45bd5a",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e01a0e121a5663704557ca8d88dec0b5022ccfd22795adc5347c9f73344278da4262aa05da0917a08658e549810db5c148be752163f2266bd1e0c433ac898e900165d54",
                     "indexes": {
@@ -402,13 +402,13 @@
             ]
         },
         "_info": {
-            "hash": "0xb05b84222e96e13a7a6075b2d052eb9da0d21149e4be9f2f93a23f696ecd46b4",
+            "hash": "0x0c7adab718965a98a2c7cc2f5b88d5d365e16f0011116d3ef632c013fdff1615",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-stop-tx_value_1-self_sponsored_tx]": {
@@ -470,7 +470,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xbab66857c6d1f6441acb6d19a82552e56c0aaa82e0aed58d47a18db2ca1de7f9",
+                    "hash": "0xda9e62a41ee44a77d151ff6e9878e9323ae27e358e3e2325ade9504a2af85c77",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590280a04e2ea8abd3b53b7115f06d237d2180463502fc8e421b59a79e24f2ccdf2c6f20a046c7239ac595753d40451ee47290271022bcf5b262d0e608f981efc69d345fbc",
                     "indexes": {
@@ -482,13 +482,13 @@
             ]
         },
         "_info": {
-            "hash": "0x77a86034a509b8cd0c37fd5bb4d8e4eff9cad525684acb8ef39f904402ee1778",
+            "hash": "0x55889bf7ba934c2af8103268a2182c0a8a8f346f87c3648ae305673bf83dfd09",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-return-tx_value_0-zero_balance_authority]": {
@@ -566,9 +566,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-return-tx_value_0-one_wei_balance_authority]": {
@@ -636,7 +636,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x892cce8fe1c6fbf054823486b1e2c239f33fdce81c64ddc18ff40c4b615ed816",
+                    "hash": "0x04e50df337cd0fa015fc11e467f3b78f3da6922027d10f3a8c52901d96c0ffc1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e01a0d61673cd58ffa5fc605c3215aa4647fa3afbea1d1f577e08402442992526d980a0063068ca818025c7b8493d0623cb70ef3a2ba4b3e2ae0af1146d1c9b065c0aff",
                     "indexes": {
@@ -648,13 +648,13 @@
             ]
         },
         "_info": {
-            "hash": "0x7c3157354f3d619e03e892b25c1f1f5ea9d88894be40abd69cb72d64126ff44c",
+            "hash": "0x980642736f3cac31c03ccf055db0eda8823bdeb64ce9470697e10c5ce1cb8736",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-return-tx_value_0-self_sponsored_tx]": {
@@ -716,7 +716,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x9f3554cc0151322dd01eaef8070d1bd4c4bf10d3bfe3fe0c68d61c75e0e06de0",
+                    "hash": "0x2fad55deedfa805e0af9f28219d650d8e19b26e19522b3cff0e19f10a04bf6d2",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590201a0c0ffa5770a7fd85f7c04f60e8ec9fb3722703958563c6c0e5beaff5430eb2353a05cb0b1c6fb735433bc81b6dff7a51486c876a4e023e2deeda2f150dafa63460c",
                     "indexes": {
@@ -728,13 +728,13 @@
             ]
         },
         "_info": {
-            "hash": "0x6c12cc438c54ce1b3bea81d8e767a737a8bf684844d845eec09837f06001244b",
+            "hash": "0x8ebea3e2f2890ae4499811894637171e4b947031978d0fd8000cd824fe315196",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-return-tx_value_1-zero_balance_authority]": {
@@ -812,9 +812,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-return-tx_value_1-one_wei_balance_authority]": {
@@ -882,7 +882,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xcffa1bcd609b700e5279837430b3b52aea9d42c478e2e29e8912e81b4657e6a9",
+                    "hash": "0x3a16e69acd939a06d0c9865b8fe0dc1e67139168c3c3dee3f548ae4e97af2640",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e01a0e121a5663704557ca8d88dec0b5022ccfd22795adc5347c9f73344278da4262aa05da0917a08658e549810db5c148be752163f2266bd1e0c433ac898e900165d54",
                     "indexes": {
@@ -894,13 +894,13 @@
             ]
         },
         "_info": {
-            "hash": "0xdd91d7eea13477b9a3bd0194aa9cba4de3c0e0f4ed6a672f62f306f69f37830c",
+            "hash": "0x3bd724f18aa35133c1400527dd473a618e4797ceb32fd976ee7637ee7cda099d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-return-tx_value_1-self_sponsored_tx]": {
@@ -962,7 +962,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x1f0fdb1f34c692f464c6f98f808b1f69e5e8d7f3b21841705e07b9ded05fa48b",
+                    "hash": "0x92424b20775c49cc7fbfa809143a03c9e9953a03ea074dc85b225c41e5d11d1e",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590280a04e2ea8abd3b53b7115f06d237d2180463502fc8e421b59a79e24f2ccdf2c6f20a046c7239ac595753d40451ee47290271022bcf5b262d0e608f981efc69d345fbc",
                     "indexes": {
@@ -974,13 +974,13 @@
             ]
         },
         "_info": {
-            "hash": "0x92b13d2c9491e8e26b10d8faa1a4101c5f19001801eb55792df271963f78f34c",
+            "hash": "0x52330e658fbde2c95d3417ee3885c899808b242a9d94bf934db273e8c4a4e83b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-revert-tx_value_0-zero_balance_authority]": {
@@ -1058,9 +1058,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-revert-tx_value_0-one_wei_balance_authority]": {
@@ -1128,7 +1128,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xc0e2b55ce8aac652a25661ab3898483d0af75e335b32fdca87d0b906f71d054d",
+                    "hash": "0x0cf11f0a12a47176b76c4d8aa15c1b98708e11cf71891ecce35ce991dcca1bf9",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e01a0d61673cd58ffa5fc605c3215aa4647fa3afbea1d1f577e08402442992526d980a0063068ca818025c7b8493d0623cb70ef3a2ba4b3e2ae0af1146d1c9b065c0aff",
                     "indexes": {
@@ -1140,13 +1140,13 @@
             ]
         },
         "_info": {
-            "hash": "0x9513b6d9b5b423561e024b3858d82c2b526313124d3c575ebeaee8a87681ef3d",
+            "hash": "0x3cd676910f099ae919c9dc621d4fdece7ac44b76a8033a0804299a92556acc68",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-revert-tx_value_0-self_sponsored_tx]": {
@@ -1208,7 +1208,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x5d2e2250f81bbf69fa86c503c8c1e00ad71fb69fe9b8bbcbefca713bd5e5ef22",
+                    "hash": "0x75a04b36e0562b5b0414b09476e75561bd1cb9dcc1a0867a9af020886df6ef82",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590201a0c0ffa5770a7fd85f7c04f60e8ec9fb3722703958563c6c0e5beaff5430eb2353a05cb0b1c6fb735433bc81b6dff7a51486c876a4e023e2deeda2f150dafa63460c",
                     "indexes": {
@@ -1220,13 +1220,13 @@
             ]
         },
         "_info": {
-            "hash": "0x8cba8979e8855e08110e56f16c7e7dd3a15cc974248206f20011894838589758",
+            "hash": "0xd2b16f8550d530a7c76f5d91ca581d60f29f5f28d739e07d895a5dd4e4857ec2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-revert-tx_value_1-zero_balance_authority]": {
@@ -1304,9 +1304,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-revert-tx_value_1-one_wei_balance_authority]": {
@@ -1374,7 +1374,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xd792f9d6fd5b75ceab2385d0f3f61bf0f1611edf534885e9389194cfb297d2e9",
+                    "hash": "0xcd4113f45c6f13006e1c92737b2485ce2773fb4c44410c45ebbdd16d16c215ad",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e01a0e121a5663704557ca8d88dec0b5022ccfd22795adc5347c9f73344278da4262aa05da0917a08658e549810db5c148be752163f2266bd1e0c433ac898e900165d54",
                     "indexes": {
@@ -1386,13 +1386,13 @@
             ]
         },
         "_info": {
-            "hash": "0x6c6e5c5fa4035a9ad026068ae3a68831510a29023a2d82faf3419fafbee355d6",
+            "hash": "0x7c2dc034f009c4ead157e3fa6433344213c2e949e6e3d0b20a14c6fca640aec2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-revert-tx_value_1-self_sponsored_tx]": {
@@ -1454,7 +1454,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x0f36e3e2f558c12392f44343644f6729f39321f5ee23a2af260be9e68b1e8150",
+                    "hash": "0x81fae9d9ede9bce2db83aa38e34b1669d091406676d3573502ef85725c212853",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590280a04e2ea8abd3b53b7115f06d237d2180463502fc8e421b59a79e24f2ccdf2c6f20a046c7239ac595753d40451ee47290271022bcf5b262d0e608f981efc69d345fbc",
                     "indexes": {
@@ -1466,13 +1466,13 @@
             ]
         },
         "_info": {
-            "hash": "0x1b90aae897226027485fcfab6ea581733a8054c1e5057e75e32bfabed21bdae2",
+            "hash": "0x08e04966666bd3c770a328c490137132d9af17c9b898e680a71c9a2d8558cbd7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-invalid-tx_value_0-zero_balance_authority]": {
@@ -1550,9 +1550,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-invalid-tx_value_0-one_wei_balance_authority]": {
@@ -1620,7 +1620,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x337b7094fd5e43889b5dfe2f0314025c5cdbee71b1e4e9fc5ef18cf610564814",
+                    "hash": "0x35f0e3508a21cdf344f61b91233944924945c6745287c2eda797a6bea3bc1cd1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e01a0d61673cd58ffa5fc605c3215aa4647fa3afbea1d1f577e08402442992526d980a0063068ca818025c7b8493d0623cb70ef3a2ba4b3e2ae0af1146d1c9b065c0aff",
                     "indexes": {
@@ -1632,13 +1632,13 @@
             ]
         },
         "_info": {
-            "hash": "0xda247348d0171d273ec095defca31352704c9dcc2d3d7762239d8f8c6a2a22da",
+            "hash": "0xa80e65cbb0280159e90f775fb050d0a89b9b6cf0c8d13a91af2eae5f535fefaf",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-invalid-tx_value_0-self_sponsored_tx]": {
@@ -1700,7 +1700,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xa75e24bc1e8a70d82051f92ef92412157786e5d656f2a953b81723e9deae4977",
+                    "hash": "0xf606e520ac34b0e14925d5448cf6037fb2342f82bee4784da7af8d1844b2922c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590201a0c0ffa5770a7fd85f7c04f60e8ec9fb3722703958563c6c0e5beaff5430eb2353a05cb0b1c6fb735433bc81b6dff7a51486c876a4e023e2deeda2f150dafa63460c",
                     "indexes": {
@@ -1712,13 +1712,13 @@
             ]
         },
         "_info": {
-            "hash": "0x07cb1714d90df6e7031f4ce7c5a272ebf17ec4d4bf8508f4d38ed0116023fe3b",
+            "hash": "0xa23d1440baf7364fe8736d973a30a030e19eb56f2029d64b5137c9d744adf962",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-invalid-tx_value_1-zero_balance_authority]": {
@@ -1796,9 +1796,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-invalid-tx_value_1-one_wei_balance_authority]": {
@@ -1866,7 +1866,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x337b7094fd5e43889b5dfe2f0314025c5cdbee71b1e4e9fc5ef18cf610564814",
+                    "hash": "0x35f0e3508a21cdf344f61b91233944924945c6745287c2eda797a6bea3bc1cd1",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e01a0e121a5663704557ca8d88dec0b5022ccfd22795adc5347c9f73344278da4262aa05da0917a08658e549810db5c148be752163f2266bd1e0c433ac898e900165d54",
                     "indexes": {
@@ -1878,13 +1878,13 @@
             ]
         },
         "_info": {
-            "hash": "0xf9b82a0fbe495fcfdc6ed36b2d8fc5792573f33d8ff504e3f354c704bbdc678b",
+            "hash": "0x49f5f27c2777e2ba28e0148253f638a186e451ba9e70f7f63a46deb4dafe8a07",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-invalid-tx_value_1-self_sponsored_tx]": {
@@ -1946,7 +1946,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xa75e24bc1e8a70d82051f92ef92412157786e5d656f2a953b81723e9deae4977",
+                    "hash": "0xf606e520ac34b0e14925d5448cf6037fb2342f82bee4784da7af8d1844b2922c",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590280a04e2ea8abd3b53b7115f06d237d2180463502fc8e421b59a79e24f2ccdf2c6f20a046c7239ac595753d40451ee47290271022bcf5b262d0e608f981efc69d345fbc",
                     "indexes": {
@@ -1958,13 +1958,13 @@
             ]
         },
         "_info": {
-            "hash": "0x9ebbd878ee626073bec2cd9ccb902f6c7b19998c082249bfb08087b5bb787cf2",
+            "hash": "0xfe6f0f2fbc0e6bc3ba0d5072da97d51dbf26fda238a0f9210a72d23ead6aebfe",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-out-of-gas-tx_value_0-zero_balance_authority]": {
@@ -2042,9 +2042,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-out-of-gas-tx_value_0-one_wei_balance_authority]": {
@@ -2112,7 +2112,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xf706c0c54cd4eee9396e3708c1e3c2747b679eafb60e1005cd8946ab762215df",
+                    "hash": "0x90e2a40dff46ac2c1a951c75d111d26e5cdc46ec1188bad7764d50138c14b1d4",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e01a0d61673cd58ffa5fc605c3215aa4647fa3afbea1d1f577e08402442992526d980a0063068ca818025c7b8493d0623cb70ef3a2ba4b3e2ae0af1146d1c9b065c0aff",
                     "indexes": {
@@ -2124,13 +2124,13 @@
             ]
         },
         "_info": {
-            "hash": "0xcc50f9eae3dddee48bae8e6bec0838e988b7320189b6b3fba8b4ef90e13da397",
+            "hash": "0x4dd81d8b44264f927aba6b4396888c6d8567bdd6363fb2cff428828cfd0591d3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-out-of-gas-tx_value_0-self_sponsored_tx]": {
@@ -2192,7 +2192,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x71d8c39a1fa35d093bb94a4c9c6beb70d59c67dcb10eac863b3f84a4f8bf865a",
+                    "hash": "0xec4e80bdef0e40f2a3418a82743de6853537303187174169c4d9737d6cc06801",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b8080c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590201a0c0ffa5770a7fd85f7c04f60e8ec9fb3722703958563c6c0e5beaff5430eb2353a05cb0b1c6fb735433bc81b6dff7a51486c876a4e023e2deeda2f150dafa63460c",
                     "indexes": {
@@ -2204,13 +2204,13 @@
             ]
         },
         "_info": {
-            "hash": "0x790f48c421a53392038a7006a93987b9b2b4339eac7a18d08fa6aa008cd3d071",
+            "hash": "0x420ad16e772b3bea71540070bfba92eea27e89e5d68163ff4ff52b695523bcb8",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-out-of-gas-tx_value_1-zero_balance_authority]": {
@@ -2288,9 +2288,9 @@
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-out-of-gas-tx_value_1-one_wei_balance_authority]": {
@@ -2358,7 +2358,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0xf706c0c54cd4eee9396e3708c1e3c2747b679eafb60e1005cd8946ab762215df",
+                    "hash": "0x90e2a40dff46ac2c1a951c75d111d26e5cdc46ec1188bad7764d50138c14b1d4",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010008080a0dbcff17ff6c249f13b334fa86bcbaa1afd9f566ca9b06e4ea5fab9bdde9a9202a05c34c9d8af5b20e4a425fc1daf2d9d484576857eaf1629145b4686bac733868e01a0e121a5663704557ca8d88dec0b5022ccfd22795adc5347c9f73344278da4262aa05da0917a08658e549810db5c148be752163f2266bd1e0c433ac898e900165d54",
                     "indexes": {
@@ -2370,13 +2370,13 @@
             ]
         },
         "_info": {
-            "hash": "0x8c8efcdba02c6542dc6681a551cb5995f0f2ae79e167087d6ed3ba1a29ef90e5",
+            "hash": "0xe3c03c6e3f6827d5f3859cbde9dd03a7435e0d7bc0ffb969c21f4dff0bf0533d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     },
     "tests/prague/eip7702_set_code_tx/test_set_code_txs.py::test_set_code_to_sstore[fork_Prague-state_test-out-of-gas-tx_value_1-self_sponsored_tx]": {
@@ -2438,7 +2438,7 @@
         "post": {
             "Prague": [
                 {
-                    "hash": "0x71d8c39a1fa35d093bb94a4c9c6beb70d59c67dcb10eac863b3f84a4f8bf865a",
+                    "hash": "0xec4e80bdef0e40f2a3418a82743de6853537303187174169c4d9737d6cc06801",
                     "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
                     "txbytes": "0x04f8c1018080078307a12094a94f5374fce5edbc8e2a8697c15331677e6ebf0b0180c0f85cf85a809400000000000000000000000000000000000010000101a0e074be204a558063cc3b2663e24e82272a436cececd74a3d6c7f46cd51934f2fa01dba64504e6de332f9b00fba50b9cd8b70fc19823a85e33217431a0825e5590280a04e2ea8abd3b53b7115f06d237d2180463502fc8e421b59a79e24f2ccdf2c6f20a046c7239ac595753d40451ee47290271022bcf5b262d0e608f981efc69d345fbc",
                     "indexes": {
@@ -2450,13 +2450,13 @@
             ]
         },
         "_info": {
-            "hash": "0x205127f5e9284a80c8cd799d1fd6b99722a16bc2182f12aa83905de5877d654c",
+            "hash": "0x49b5f90071feb0abfc9eb4c64abc413456d94e884945be3245995af90786e1dc",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereumjs t8n v1",
             "description": "Test function documentation:\n\n    Test the executing a simple SSTORE in a set-code transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-3@v1.4.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L133",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-4@v1.0.1/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L137",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
-            "reference-spec-version": "a6bf54ffc1506ed00f8234731684ccfe935ec9a3"
+            "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
         }
     }
 }

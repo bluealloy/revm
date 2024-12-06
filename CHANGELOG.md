@@ -1,15 +1,86 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v50 tag
+date 06.11.2024
+Maintenance release. Bump alloy-primitives deps, few utilities.
+
+* `revme`: 2.0.0 -> 2.1.0
+* `revm`: 17.1.0 -> 18.0.0
+* `revm-interpreter`: 13.0.0 -> 14.0.0
+* `revm-primitives`: 13.0.0 -> 14.0.0
+* `revm-precompile`: 14.0.0 -> 15.0.0
+
+# v49 tag
+date 23.10.2024
+Maintenance release. Bump alloydb deps.
+
+* `revm`: 17.0.0 -> 17.1.0 (✓ API compatible changes)
+
+# v48 tag
+date 23.10.2024
+Maintenance release. Bug fix for EIP-7702.
+
+* `revm`: 16.0.0 -> 17.0.0 (✓ API compatible changes)
+* `revm-primitives`: 12.0.0 -> 13.0.0 (✓ API compatible changes)
+* `revme`: 1.0.0 -> 2.0.0
+* `revm-interpreter`: 12.0.0 -> 13.0.0
+* `revm-precompile`: 13.0.0 -> 14.0.0
+
+# v47 tag
+date: 17.10.2024
+Maintenance release. bumping new alloy-eip7702
+
+* `revme`: 0.11.0 -> 1.0.0
+* `revm`: 15.0.0 -> 16.0.0 
+* `revm-primitives`: 11.0.0 -> 12.0.0
+* `revm-precompile`: 12.0.0 -> 13.0.0
+* `revm-interpreter`: 11.0.0 -> 12.0.0
+
+# v46 tag
+date: 17.10.2024
+Maintenance release. EIP-7702 newest changes, alloy-primitives bump.
+
+* `revme`: 0.10.3 -> 0.11.0
+* `revm`: 14.0.3 -> 15.0.0 
+* `revm-primitives`: 10.0.0 -> 11.0.0
+* `revm-precompile`: 11.0.3 -> 12.0.0
+* `revm-interpreter`: 10.0.3 -> 11.0.0
+
+# v45 tag
+date: 26.09.2024
+
+Maintenance release.
+
+* `revme`: 0.10.2 -> 0.10.3 
+* `revm`: 14.0.2 -> 14.0.3 
+* `revm-primitives`: 9.0.2 -> 10.0.0
+* `revm-interpreter`: 10.0.2 -> 10.0.3
+* `revm-precompile`: 11.0.2 -> 11.0.3
+
+# v44 tag
+date: 18.09.2024
+
+Small maintenance release.
+Code can be found in release/v44 branch.
+Fixes bug with Inspector selfdestruct not called every time, and enabled PRAGUE_EOF in statetest for PRAGUE tests.
+
+* `revme`: 0.10.1 -> 0.10.2
+* `revm`: 14.0.1 -> 14.0.2
+* `revm-interpreter`: 10.0.1 -> 10.0.2
+* `revm-primitives`: 9.0.1 -> 9.0.2
+* `revm-precompile`: 11.0.1 -> 11.0.2
+* `revm-test`: 0.1.0
+
 # v43 tag
 date: 30.08.2024
 
 Logo change and doc fix.
 
-* revm: 14.0.0 -> 14.0.1
-* revm-interpreter: 10.0.0 -> 10.0.1
-* revm-primitives: 9.0.0 -> 9.0.1
-* revm-precompile: 11.0.0 -> 11.0.1
-* revme: 0.10.0 -> 0.10.1
+* `revm`: 14.0.0 -> 14.0.1
+* `revm-interpreter`: 10.0.0 -> 10.0.1
+* `revm-primitives`: 9.0.0 -> 9.0.1
+* `revm-precompile`: 11.0.0 -> 11.0.1
+* `revme`: 0.10.0 -> 0.10.1
 
 # v42 tag
 date: 29.08.2024
@@ -17,11 +88,11 @@ date: 29.08.2024
 new EIP-7702 implemented. Passing all EOF and EIP-7702 tests.
 Preparation for devnet-3.
 
-* revme: 0.9.0 -> 0.10.0
-* revm: 13.0.0 -> 14.0.0
-* revm-interpreter: 9.0.0 -> 10.0.0
-* revm-primitives: 8.0.0 -> 9.0.0
-* revm-precompile: 10.0.0 -> 11.0.0
+* `revme`: 0.9.0 -> 0.10.0
+* `revm`: 13.0.0 -> 14.0.0
+* `revm-interpreter`: 9.0.0 -> 10.0.0
+* `revm-primitives`: 8.0.0 -> 9.0.0
+* `revm-precompile`: 10.0.0 -> 11.0.0
 
 # v41 tag
 date: 08.08.2024

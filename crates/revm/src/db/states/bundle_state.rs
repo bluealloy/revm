@@ -55,15 +55,15 @@ impl OriginalValuesKnown {
 impl Default for BundleBuilder {
     fn default() -> Self {
         BundleBuilder {
-            states: HashSet::new(),
-            state_original: HashMap::new(),
-            state_present: HashMap::new(),
-            state_storage: HashMap::new(),
+            states: HashSet::default(),
+            state_original: HashMap::default(),
+            state_present: HashMap::default(),
+            state_storage: HashMap::default(),
             reverts: BTreeSet::new(),
             revert_range: 0..=0,
-            revert_account: HashMap::new(),
-            revert_storage: HashMap::new(),
-            contracts: HashMap::new(),
+            revert_account: HashMap::default(),
+            revert_storage: HashMap::default(),
+            contracts: HashMap::default(),
         }
     }
 }
@@ -583,19 +583,20 @@ impl BundleState {
         self.reverts.push(reverts);
     }
 
-    /// Consume the bundle state and return plain state.
-    pub fn into_plain_state(self, is_value_known: OriginalValuesKnown) -> StateChangeset {
+    /// Generate a [`StateChangeset`] from the bundle state without consuming
+    /// it.
+    pub fn to_plain_state(&self, is_value_known: OriginalValuesKnown) -> StateChangeset {
         // pessimistically pre-allocate assuming _all_ accounts changed.
         let state_len = self.state.len();
         let mut accounts = Vec::with_capacity(state_len);
         let mut storage = Vec::with_capacity(state_len);
 
-        for (address, account) in self.state {
+        for (address, account) in self.state.iter() {
             // append account info if it is changed.
             let was_destroyed = account.was_destroyed();
             if is_value_known.is_not_known() || account.is_info_changed() {
-                let info = account.info.map(AccountInfo::without_code);
-                accounts.push((address, info));
+                let info = account.info.as_ref().map(AccountInfo::copy_without_code);
+                accounts.push((*address, info));
             }
 
             // append storage changes
@@ -604,7 +605,7 @@ impl BundleState {
             // database so we can check if plain state was wiped or not.
             let mut account_storage_changed = Vec::with_capacity(account.storage.len());
 
-            for (key, slot) in account.storage {
+            for (key, slot) in account.storage.iter().map(|(k, v)| (*k, *v)) {
                 // If storage was destroyed that means that storage was wiped.
                 // In that case we need to check if present storage value is different then ZERO.
                 let destroyed_and_not_zero = was_destroyed && !slot.present_value.is_zero();
@@ -624,17 +625,19 @@ impl BundleState {
             if !account_storage_changed.is_empty() || was_destroyed {
                 // append storage changes to account.
                 storage.push(PlainStorageChangeset {
-                    address,
+                    address: *address,
                     wipe_storage: was_destroyed,
                     storage: account_storage_changed,
                 });
             }
         }
+
         let contracts = self
             .contracts
-            .into_iter()
+            .iter()
             // remove empty bytecodes
-            .filter(|(b, _)| *b != KECCAK_EMPTY)
+            .filter(|(b, _)| **b != KECCAK_EMPTY)
+            .map(|(b, code)| (*b, code.clone()))
             .collect::<Vec<_>>();
         StateChangeset {
             accounts,
@@ -643,14 +646,32 @@ impl BundleState {
         }
     }
 
-    /// Consume the bundle state and split it into reverts and plain state.
-    pub fn into_plain_state_and_reverts(
-        mut self,
+    /// Convert the bundle state into a [`StateChangeset`].
+    #[deprecated = "Use `to_plain_state` instead"]
+    pub fn into_plain_state(self, is_value_known: OriginalValuesKnown) -> StateChangeset {
+        self.to_plain_state(is_value_known)
+    }
+
+    /// Generate a [`StateChangeset`] and [`PlainStateReverts`] from the bundle
+    /// state.
+    pub fn to_plain_state_and_reverts(
+        &self,
         is_value_known: OriginalValuesKnown,
     ) -> (StateChangeset, PlainStateReverts) {
-        let reverts = self.take_all_reverts();
-        let plain_state = self.into_plain_state(is_value_known);
-        (plain_state, reverts.into_plain_state_reverts())
+        (
+            self.to_plain_state(is_value_known),
+            self.reverts.to_plain_state_reverts(),
+        )
+    }
+
+    /// Consume the bundle state and split it into a [`StateChangeset`] and a
+    /// [`PlainStateReverts`].
+    #[deprecated = "Use `to_plain_state_and_reverts` instead"]
+    pub fn into_plain_state_and_reverts(
+        self,
+        is_value_known: OriginalValuesKnown,
+    ) -> (StateChangeset, PlainStateReverts) {
+        self.to_plain_state_and_reverts(is_value_known)
     }
 
     /// Extend the bundle with other state
@@ -782,7 +803,7 @@ impl BundleState {
                         let mut account = BundleAccount::new(
                             None,
                             None,
-                            HashMap::new(),
+                            HashMap::default(),
                             AccountStatus::LoadedNotExisting,
                         );
                         if !account.revert(revert_account) {
@@ -897,7 +918,7 @@ mod tests {
                         code_hash: KECCAK_EMPTY,
                         code: None,
                     }),
-                    HashMap::from([
+                    HashMap::from_iter([
                         (slot1(), (U256::from(0), U256::from(10))),
                         (slot2(), (U256::from(0), U256::from(15))),
                     ]),
@@ -911,7 +932,7 @@ mod tests {
                         code_hash: KECCAK_EMPTY,
                         code: None,
                     }),
-                    HashMap::from([]),
+                    HashMap::default(),
                 ),
             ],
             vec![vec![
@@ -939,7 +960,7 @@ mod tests {
                     code_hash: KECCAK_EMPTY,
                     code: None,
                 }),
-                HashMap::from([(slot1(), (U256::from(0), U256::from(15)))]),
+                HashMap::from_iter([(slot1(), (U256::from(0), U256::from(15)))]),
             )],
             vec![vec![(
                 account1(),
@@ -969,7 +990,7 @@ mod tests {
             )
             .state_storage(
                 account1(),
-                HashMap::from([(slot1(), (U256::from(0), U256::from(10)))]),
+                HashMap::from_iter([(slot1(), (U256::from(0), U256::from(10)))]),
             )
             .state_address(account2())
             .state_present_account_info(
@@ -1002,7 +1023,7 @@ mod tests {
             )
             .state_storage(
                 account1(),
-                HashMap::from([(slot1(), (U256::from(0), U256::from(15)))]),
+                HashMap::from_iter([(slot1(), (U256::from(0), U256::from(15)))]),
             )
             .revert_address(0, account1())
             .revert_account_info(
@@ -1132,7 +1153,7 @@ mod tests {
             Some(&BundleAccount::new(
                 None,
                 Some(AccountInfo::default()),
-                HashMap::new(),
+                HashMap::default(),
                 AccountStatus::Changed
             ))
         );
@@ -1267,7 +1288,7 @@ mod tests {
         assert!(builder.get_state_storage_mut().is_empty());
         builder
             .get_state_storage_mut()
-            .insert(account1(), HashMap::new());
+            .insert(account1(), HashMap::default());
         assert!(builder.get_state_storage_mut().contains_key(&account1()));
 
         // Test get_reverts_mut
