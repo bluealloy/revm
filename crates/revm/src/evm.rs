@@ -1,3 +1,5 @@
+use revm_interpreter::gas::InitialAndFloorGas;
+
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
@@ -195,12 +197,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// This function will not validate the transaction.
     #[inline]
     pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
-        let initial_gas_spend = self
+        let init_and_floor_gas = self
             .handler
             .validation()
             .initial_tx_gas(&self.context.evm.env)
             .inspect_err(|_e| self.clear())?;
-        let output = self.transact_preverified_inner(initial_gas_spend);
+        let output = self.transact_preverified_inner(init_and_floor_gas);
         let output = self.handler.post_execution().end(&mut self.context, output);
         self.clear();
         output
@@ -208,7 +210,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
     /// Pre verify transaction inner.
     #[inline]
-    fn preverify_transaction_inner(&mut self) -> Result<u64, EVMError<DB::Error>> {
+    fn preverify_transaction_inner(&mut self) -> Result<InitialAndFloorGas, EVMError<DB::Error>> {
         self.handler.validation().env(&self.context.evm.env)?;
         let initial_gas_spend = self
             .handler
@@ -225,11 +227,11 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// This function will validate the transaction.
     #[inline]
     pub fn transact(&mut self) -> EVMResult<DB::Error> {
-        let initial_gas_spend = self
+        let init_and_floor_gas = self
             .preverify_transaction_inner()
             .inspect_err(|_e| self.clear())?;
 
-        let output = self.transact_preverified_inner(initial_gas_spend);
+        let output = self.transact_preverified_inner(init_and_floor_gas);
         let output = self.handler.post_execution().end(&mut self.context, output);
         self.clear();
         output
@@ -319,7 +321,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// Transact pre-verified transaction.
-    fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
+    fn transact_preverified_inner(&mut self, gas: InitialAndFloorGas) -> EVMResult<DB::Error> {
         let spec_id = self.spec_id();
         let ctx = &mut self.context;
         let pre_exec = self.handler.pre_execution();
@@ -334,7 +336,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         // deduce caller balance with its limit.
         pre_exec.deduct_caller(ctx)?;
 
-        let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
+        let gas_limit = ctx.evm.env.tx.gas_limit - gas.initial_gas;
 
         // apply EIP-7702 auth list.
         let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(ctx)? as i64;
@@ -377,6 +379,13 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         self.handler
             .execution()
             .last_frame_return(ctx, &mut result)?;
+
+        // EIP-7623: Increase calldata cost
+        // spend at least a gas_floor amount of gas.
+        let gas_result = result.gas_mut();
+        if gas_result.spent() < gas.floor_gas {
+            let _ = gas_result.record_cost(gas.floor_gas - gas_result.spent());
+        }
 
         let post_exec = self.handler.post_execution();
         // calculate final refund and add EIP-7702 refund to gas.

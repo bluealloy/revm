@@ -46,7 +46,7 @@ mod secp256k1 {
     use revm_primitives::{alloy_primitives::B512, keccak256, B256};
     use secp256k1::{
         ecdsa::{RecoverableSignature, RecoveryId},
-        Message, Secp256k1,
+        Message, SECP256K1,
     };
 
     // Silence the unused crate dependency warning.
@@ -56,9 +56,8 @@ mod secp256k1 {
         let recid = RecoveryId::from_i32(recid as i32).expect("recovery ID is valid");
         let sig = RecoverableSignature::from_compact(sig.as_slice(), recid)?;
 
-        let secp = Secp256k1::new();
         let msg = Message::from_digest(msg.0);
-        let public = secp.recover_ecdsa(&msg, &sig)?;
+        let public = SECP256K1.recover_ecdsa(&msg, &sig)?;
 
         let mut hash = keccak256(&public.serialize_uncompressed()[1..]);
         hash[..12].fill(0);

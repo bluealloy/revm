@@ -1,6 +1,7 @@
-use revm_interpreter::gas;
+use revm_interpreter::gas::{self, InitialAndFloorGas};
 
 use crate::{
+    handler::SpecId,
     primitives::{db::Database, EVMError, Env, InvalidTransaction, Spec},
     Context,
 };
@@ -38,7 +39,7 @@ pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
 /// Validate initial transaction gas.
 pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
     env: &Env,
-) -> Result<u64, EVMError<DB::Error>> {
+) -> Result<InitialAndFloorGas, EVMError<DB::Error>> {
     let input = &env.tx.data;
     let is_create = env.tx.transact_to.is_create();
     let access_list = &env.tx.access_list;
@@ -49,7 +50,7 @@ pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
         .map(|l| l.len() as u64)
         .unwrap_or_default();
 
-    let initial_gas_spend = gas::validate_initial_tx_gas(
+    let gas = gas::calculate_initial_tx_gas(
         SPEC::SPEC_ID,
         input,
         is_create,
@@ -58,8 +59,14 @@ pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
     );
 
     // Additional check to see if limit is big enough to cover initial gas.
-    if initial_gas_spend > env.tx.gas_limit {
+    if gas.initial_gas > env.tx.gas_limit {
         return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
     }
-    Ok(initial_gas_spend)
+
+    // EIP-7623
+    if SPEC::SPEC_ID.is_enabled_in(SpecId::PRAGUE) && gas.floor_gas > env.tx.gas_limit {
+        return Err(InvalidTransaction::GasFloorMoreThanGasLimit.into());
+    };
+
+    Ok(gas)
 }

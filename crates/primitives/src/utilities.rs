@@ -1,6 +1,4 @@
-use crate::{
-    b256, B256, BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK,
-};
+use crate::{b256, B256, BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE};
 pub use alloy_primitives::keccak256;
 
 /// The Keccak-256 hash of the empty string `""`.
@@ -11,9 +9,16 @@ pub const KECCAK_EMPTY: B256 =
 ///
 /// See also [the EIP-4844 helpers]<https://eips.ethereum.org/EIPS/eip-4844#helpers>
 /// (`calc_excess_blob_gas`).
+///
+/// EIP-7742: Uncouple blob count between CL and EL
+/// Removes hardcoded constants and uses the `target_blob_gas_per_block` from the parent header.
 #[inline]
-pub fn calc_excess_blob_gas(parent_excess_blob_gas: u64, parent_blob_gas_used: u64) -> u64 {
-    (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(TARGET_BLOB_GAS_PER_BLOCK)
+pub fn calc_excess_blob_gas(
+    parent_excess_blob_gas: u64,
+    parent_blob_gas_used: u64,
+    parent_target_blob_gas_per_block: u64,
+) -> u64 {
+    (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(parent_target_blob_gas_per_block)
 }
 
 /// Calculates the blob gas price from the header's excess blob gas field.
@@ -62,7 +67,7 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::GAS_PER_BLOB;
+    use crate::{GAS_PER_BLOB, TARGET_BLOB_GAS_PER_BLOCK};
 
     // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L27
     #[test]
@@ -113,7 +118,8 @@ mod tests {
                 0,
             ),
         ] {
-            let actual = calc_excess_blob_gas(excess, blobs * GAS_PER_BLOB);
+            let actual =
+                calc_excess_blob_gas(excess, blobs * GAS_PER_BLOB, TARGET_BLOB_GAS_PER_BLOCK);
             assert_eq!(actual, expected, "test: {t:?}");
         }
     }
