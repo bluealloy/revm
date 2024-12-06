@@ -3,9 +3,9 @@ pub mod handler_cfg;
 pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
-    calc_blob_gasprice, AccessListItem, Account, Address, AuthorizationList, Bytes, InvalidHeader,
-    InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE,
-    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
+    calc_blob_gasprice, calc_excess_blob_gas, AccessListItem, Account, Address, AuthorizationList,
+    Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB,
+    MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
 use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
@@ -175,14 +175,25 @@ impl Env {
                 }
             }
 
-            // ensure the total blob gas spent is at most equal to the limit
-            // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
-            let num_blobs = self.tx.blob_hashes.len();
-            if num_blobs > MAX_BLOB_NUMBER_PER_BLOCK as usize {
-                return Err(InvalidTransaction::TooManyBlobs {
-                    have: num_blobs,
-                    max: MAX_BLOB_NUMBER_PER_BLOCK as usize,
-                });
+            // EIP-7742: Uncouple blob count between CL and EL
+            // Max number of blobs are not a header field but it is set by CL on block building.
+            let max_blob_num_per_block = if SPEC::enabled(SpecId::PRAGUE) {
+                self.block.max_blobs_per_block
+            } else {
+                Some(MAX_BLOB_NUMBER_PER_BLOCK)
+            };
+
+            if let Some(max_blob_num_per_block) = max_blob_num_per_block {
+                let max_blob_num_per_block = max_blob_num_per_block as usize;
+                let num_blobs = self.tx.blob_hashes.len();
+                // ensure the total blob gas spent is at most equal to the limit
+                // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
+                if num_blobs > max_blob_num_per_block {
+                    return Err(InvalidTransaction::TooManyBlobs {
+                        have: num_blobs,
+                        max: max_blob_num_per_block,
+                    });
+                }
             }
         } else {
             // if max_fee_per_blob_gas is not set, then blob_hashes must be empty
@@ -480,6 +491,7 @@ impl BlockEnv {
     pub fn set_blob_excess_gas_and_price(&mut self, excess_blob_gas: u64) {
         self.blob_excess_gas_and_price = Some(BlobExcessGasAndPrice::new(excess_blob_gas));
     }
+
     /// See [EIP-4844] and [`crate::calc_blob_gasprice`].
     ///
     /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
@@ -665,6 +677,22 @@ impl BlobExcessGasAndPrice {
             excess_blob_gas,
             blob_gasprice,
         }
+    }
+
+    /// Calculate this block excess gas and price from the parent excess gas and gas used
+    /// and the target blob gas per block.
+    ///
+    /// This fields will be used to calculate `excess_blob_gas` with [`calc_excess_blob_gas`].
+    pub fn from_parent_and_target(
+        parent_excess_blob_gas: u64,
+        parent_blob_gas_used: u64,
+        target_blob_gas_per_block: u64,
+    ) -> Self {
+        Self::new(calc_excess_blob_gas(
+            parent_excess_blob_gas,
+            parent_blob_gas_used,
+            target_blob_gas_per_block,
+        ))
     }
 }
 

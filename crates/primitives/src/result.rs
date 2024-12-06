@@ -298,7 +298,7 @@ pub enum InvalidTransaction {
     /// Blob transaction can't be a create transaction.
     /// `to` must be present
     BlobCreateTransaction,
-    /// Transaction has more then [`crate::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
+    /// Transaction has more then `max_blob_num_per_block` blobs.
     TooManyBlobs {
         max: usize,
         have: usize,
@@ -410,6 +410,8 @@ pub enum InvalidHeader {
     PrevrandaoNotSet,
     /// `excess_blob_gas` is not set for Cancun and above.
     ExcessBlobGasNotSet,
+    /// `target_blobs_per_block` is not set for Prague and above.
+    TargetBlobNotSet,
 }
 
 #[cfg(feature = "std")]
@@ -420,6 +422,7 @@ impl fmt::Display for InvalidHeader {
         match self {
             Self::PrevrandaoNotSet => write!(f, "`prevrandao` not set"),
             Self::ExcessBlobGasNotSet => write!(f, "`excess_blob_gas` not set"),
+            Self::TargetBlobNotSet => write!(f, "`target_blobs_per_block` not set"),
         }
     }
 }

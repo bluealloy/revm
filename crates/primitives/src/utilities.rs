@@ -11,9 +11,16 @@ pub const KECCAK_EMPTY: B256 =
 ///
 /// See also [the EIP-4844 helpers]<https://eips.ethereum.org/EIPS/eip-4844#helpers>
 /// (`calc_excess_blob_gas`).
+///
+/// EIP-7742: Uncouple blob count between CL and EL
+/// Removes hardcoded constants and uses the `target_blob_gas_per_block` from the header.
 #[inline]
-pub fn calc_excess_blob_gas(parent_excess_blob_gas: u64, parent_blob_gas_used: u64) -> u64 {
-    (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(TARGET_BLOB_GAS_PER_BLOCK)
+pub fn calc_excess_blob_gas(
+    parent_excess_blob_gas: u64,
+    parent_blob_gas_used: u64,
+    target_blob_gas_per_block: u64,
+) -> u64 {
+    (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(target_blob_gas_per_block)
 }
 
 /// Calculates the blob gas price from the header's excess blob gas field.
@@ -113,7 +120,8 @@ mod tests {
                 0,
             ),
         ] {
-            let actual = calc_excess_blob_gas(excess, blobs * GAS_PER_BLOB);
+            let actual =
+                calc_excess_blob_gas(excess, blobs * GAS_PER_BLOB, TARGET_BLOB_GAS_PER_BLOCK);
             assert_eq!(actual, expected, "test: {t:?}");
         }
     }
