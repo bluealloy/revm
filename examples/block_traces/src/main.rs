@@ -129,9 +129,6 @@ async fn main() -> anyhow::Result<()> {
             etx.caller = tx.from;
             etx.gas_limit = tx.gas_limit();
             etx.gas_price = U256::from(tx.gas_price().unwrap_or(tx.inner.max_fee_per_gas()));
-                tx.gas_price()
-                    .unwrap_or(tx.inner.max_fee_per_gas()),
-            );
             etx.value = tx.value();
             etx.data = tx.input().to_owned();
             etx.gas_priority_fee = tx.max_priority_fee_per_gas().map(U256::from);
