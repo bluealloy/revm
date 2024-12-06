@@ -361,6 +361,16 @@ pub const fn memory_gas(num_words: u64) -> u64 {
         .saturating_add(num_words.saturating_mul(num_words) / 512)
 }
 
+/// Init and floor gas from transaction
+#[derive(Clone, Copy, Debug, Default)]
+pub struct InitialAndFloorGas {
+    /// Initial gas for transaction.
+    pub initial_gas: u64,
+    /// If transaction is a Call and Prague is enabled
+    /// floor_gas is at least amount of gas that is going to be spent.
+    pub floor_gas: u64,
+}
+
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
 ///
@@ -374,21 +384,21 @@ pub fn calculate_initial_tx_gas(
     is_create: bool,
     access_list: &[AccessListItem],
     authorization_list_num: u64,
-) -> (u64, u64) {
-    let mut initial_gas = 0;
+) -> InitialAndFloorGas {
+    let mut gas = InitialAndFloorGas::default();
 
     let tokens_in_calldata = get_tokens_in_calldata(input, spec_id.is_enabled_in(SpecId::ISTANBUL));
-    initial_gas += tokens_in_calldata * STANDARD_TOKEN_COST;
+    gas.initial_gas += tokens_in_calldata * STANDARD_TOKEN_COST;
 
     // get number of access list account and storages.
     if spec_id.is_enabled_in(SpecId::BERLIN) {
         let accessed_slots: usize = access_list.iter().map(|item| item.storage_keys.len()).sum();
-        initial_gas += access_list.len() as u64 * ACCESS_LIST_ADDRESS;
-        initial_gas += accessed_slots as u64 * ACCESS_LIST_STORAGE_KEY;
+        gas.initial_gas += access_list.len() as u64 * ACCESS_LIST_ADDRESS;
+        gas.initial_gas += accessed_slots as u64 * ACCESS_LIST_STORAGE_KEY;
     }
 
     // base stipend
-    initial_gas += if is_create {
+    gas.initial_gas += if is_create {
         if spec_id.is_enabled_in(SpecId::HOMESTEAD) {
             // EIP-2: Homestead Hard-fork Changes
             53000
@@ -402,15 +412,18 @@ pub fn calculate_initial_tx_gas(
     // EIP-3860: Limit and meter initcode
     // Init code stipend for bytecode analysis
     if spec_id.is_enabled_in(SpecId::SHANGHAI) && is_create {
-        initial_gas += initcode_cost(input.len() as u64)
+        gas.initial_gas += initcode_cost(input.len() as u64)
     }
 
     // EIP-7702
     if spec_id.is_enabled_in(SpecId::PRAGUE) {
-        initial_gas += authorization_list_num * eip7702::PER_EMPTY_ACCOUNT_COST;
+        gas.initial_gas += authorization_list_num * eip7702::PER_EMPTY_ACCOUNT_COST;
+
+        // Calculate gas floor for EIP-7623
+        gas.floor_gas = calc_tx_floor_cost(tokens_in_calldata);
     }
 
-    (initial_gas, tokens_in_calldata)
+    gas
 }
 
 /// Retrieve the total number of tokens in calldata.
