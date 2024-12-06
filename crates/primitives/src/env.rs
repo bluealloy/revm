@@ -174,27 +174,6 @@ impl Env {
                     return Err(InvalidTransaction::BlobVersionNotSupported);
                 }
             }
-
-            // EIP-7742: Uncouple blob count between CL and EL
-            // Max number of blobs are not a header field but it is set by CL on block building.
-            let max_blob_num_per_block = if SPEC::enabled(SpecId::PRAGUE) {
-                self.block.max_blobs_per_block
-            } else {
-                Some(MAX_BLOB_NUMBER_PER_BLOCK)
-            };
-
-            if let Some(max_blob_num_per_block) = max_blob_num_per_block {
-                let max_blob_num_per_block = max_blob_num_per_block as usize;
-                let num_blobs = self.tx.blob_hashes.len();
-                // ensure the total blob gas spent is at most equal to the limit
-                // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
-                if num_blobs > max_blob_num_per_block {
-                    return Err(InvalidTransaction::TooManyBlobs {
-                        have: num_blobs,
-                        max: max_blob_num_per_block,
-                    });
-                }
-            }
         } else {
             // if max_fee_per_blob_gas is not set, then blob_hashes must be empty
             if !self.tx.blob_hashes.is_empty() {
