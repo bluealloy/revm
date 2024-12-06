@@ -11,7 +11,7 @@ use revm::{
     interpreter::analysis::to_analysed,
     primitives::{
         calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, ExecutionResult,
-        SpecId, TxKind, B256,
+        SpecId, TxKind, B256, TARGET_BLOB_GAS_PER_BLOCK,
     },
     Evm, State,
 };
@@ -294,6 +294,10 @@ pub fn execute_test_suite(
                 .set_blob_excess_gas_and_price(calc_excess_blob_gas(
                     parent_blob_gas_used.to(),
                     parent_excess_blob_gas.to(),
+                    unit.env
+                        .parent_target_blobs_per_block
+                        .map(|i| i.to())
+                        .unwrap_or(TARGET_BLOB_GAS_PER_BLOCK),
                 ));
         }
 

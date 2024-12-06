@@ -303,7 +303,7 @@ pub enum InvalidTransaction {
     /// Blob transaction can't be a create transaction.
     /// `to` must be present
     BlobCreateTransaction,
-    /// Transaction has more then [`crate::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
+    /// Transaction has more then `max_blob_num_per_block` blobs.
     TooManyBlobs {
         max: usize,
         have: usize,
