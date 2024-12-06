@@ -1,8 +1,8 @@
-use core::fmt::Debug;
-use wiring::{
-    result::{HaltReason, OutOfGasError, SuccessReason},
-    HaltReasonTrait,
+use context_interface::{
+    journaled_state::TransferError,
+    result::{HaltReason, HaltReasonTrait, OutOfGasError, SuccessReason},
 };
+use core::fmt::Debug;
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -91,7 +91,7 @@ pub enum InstructionResult {
     /// Legacy contract is calling opcode that is enabled only in EOF.
     EOFOpcodeDisabledInLegacy,
     /// Stack overflow in EOF subroutine function calls.
-    EOFFunctionStackOverflow,
+    SubRoutineStackOverflow,
     /// Aux data overflow, new aux data is larger than `u16` max size.
     EofAuxDataOverflow,
     /// Aux data is smaller then already present data size.
@@ -99,6 +99,18 @@ pub enum InstructionResult {
     /// `EXT*CALL` target address needs to be padded with 0s.
     InvalidEXTCALLTarget,
 }
+
+impl From<TransferError> for InstructionResult {
+    fn from(e: TransferError) -> Self {
+        match e {
+            TransferError::OutOfFunds => InstructionResult::OutOfFunds,
+            TransferError::OverflowPayment => InstructionResult::OverflowPayment,
+            TransferError::CreateCollision => InstructionResult::CreateCollision,
+        }
+    }
+}
+
+impl InstructionResult {}
 
 impl From<SuccessReason> for InstructionResult {
     fn from(value: SuccessReason) -> Self {
@@ -142,7 +154,7 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::CallTooDeep => Self::CallTooDeep,
             HaltReason::EofAuxDataOverflow => Self::EofAuxDataOverflow,
             HaltReason::EofAuxDataTooSmall => Self::EofAuxDataTooSmall,
-            HaltReason::EOFFunctionStackOverflow => Self::EOFFunctionStackOverflow,
+            HaltReason::SubRoutineStackOverflow => Self::SubRoutineStackOverflow,
             HaltReason::InvalidEXTCALLTarget => Self::InvalidEXTCALLTarget,
         }
     }
@@ -199,7 +211,7 @@ macro_rules! return_error {
             | $crate::InstructionResult::FatalExternalError
             | $crate::InstructionResult::ReturnContractInNotInitEOF
             | $crate::InstructionResult::EOFOpcodeDisabledInLegacy
-            | $crate::InstructionResult::EOFFunctionStackOverflow
+            | $crate::InstructionResult::SubRoutineStackOverflow
             | $crate::InstructionResult::EofAuxDataTooSmall
             | $crate::InstructionResult::EofAuxDataOverflow
             | $crate::InstructionResult::InvalidEXTCALLTarget
@@ -211,6 +223,16 @@ impl InstructionResult {
     #[inline]
     pub const fn is_ok(self) -> bool {
         matches!(self, crate::return_ok!())
+    }
+
+    #[inline]
+    pub const fn is_ok_or_revert(self) -> bool {
+        matches!(self, crate::return_ok!() | crate::return_revert!())
+    }
+
+    #[inline]
+    pub const fn is_continue(self) -> bool {
+        matches!(self, InstructionResult::Continue)
     }
 
     /// Returns whether the result is a revert.
@@ -286,6 +308,12 @@ impl<HaltReasonT: HaltReasonTrait> SuccessOrHalt<HaltReasonT> {
     }
 }
 
+impl<HALT: HaltReasonTrait> From<HaltReason> for SuccessOrHalt<HALT> {
+    fn from(reason: HaltReason) -> Self {
+        SuccessOrHalt::Halt(reason.into())
+    }
+}
+
 impl<HaltReasonT: HaltReasonTrait> From<InstructionResult> for SuccessOrHalt<HaltReasonT> {
     fn from(result: InstructionResult) -> Self {
         match result {
@@ -348,8 +376,8 @@ impl<HaltReasonT: HaltReasonTrait> From<InstructionResult> for SuccessOrHalt<Hal
             InstructionResult::EOFOpcodeDisabledInLegacy => {
                 Self::Halt(HaltReason::OpcodeNotFound.into())
             }
-            InstructionResult::EOFFunctionStackOverflow => {
-                Self::Halt(HaltReason::EOFFunctionStackOverflow.into())
+            InstructionResult::SubRoutineStackOverflow => {
+                Self::Halt(HaltReason::SubRoutineStackOverflow.into())
             }
             InstructionResult::ReturnContract => Self::Success(SuccessReason::EofReturnContract),
             InstructionResult::EofAuxDataOverflow => {

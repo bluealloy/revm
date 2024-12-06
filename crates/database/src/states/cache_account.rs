@@ -282,12 +282,11 @@ impl CacheAccount {
         storage: StorageWithOriginalValues,
     ) -> TransitionAccount {
         let previous_status = self.status;
-        let previous_info = self.account.as_ref().map(|a| a.info.clone());
-        let mut this_storage = self
-            .account
-            .take()
-            .map(|acc| acc.storage)
-            .unwrap_or_default();
+        let (previous_info, mut this_storage) = if let Some(account) = self.account.take() {
+            (Some(account.info), account.storage)
+        } else {
+            (None, Default::default())
+        };
 
         this_storage.extend(storage.iter().map(|(k, s)| (*k, s.present_value)));
         let changed_account = PlainAccount {

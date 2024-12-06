@@ -1,5 +1,5 @@
 use super::{cache::CacheState, state::DBBox, BundleState, State, TransitionState};
-use database_interface::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
+use database_interface::{DBErrorMarker, Database, DatabaseRef, EmptyDB, WrapDatabaseRef};
 use primitives::B256;
 use std::collections::BTreeMap;
 
@@ -81,7 +81,7 @@ impl<DB: Database> StateBuilder<DB> {
     }
 
     /// With boxed version of database.
-    pub fn with_database_boxed<Error>(
+    pub fn with_database_boxed<Error: DBErrorMarker>(
         self,
         database: DBBox<'_, Error>,
     ) -> StateBuilder<DBBox<'_, Error>> {

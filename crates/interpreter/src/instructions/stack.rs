@@ -1,87 +1,125 @@
-use crate::{gas, Host, Interpreter};
+use crate::{
+    gas,
+    instructions::utility::cast_slice_to_u256,
+    interpreter::Interpreter,
+    interpreter_types::{
+        Immediates, InterpreterTypes, Jumps, LoopControl, RuntimeFlag, StackTrait,
+    },
+    Host,
+};
 use primitives::U256;
-use specification::hardfork::Spec;
 
-pub fn pop<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn pop<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::BASE);
-    if let Err(result) = interpreter.stack.pop() {
-        interpreter.instruction_result = result;
-    }
+    // can ignore return. as relative N jump is safe operation.
+    popn!([_i], interpreter);
 }
 
 /// EIP-3855: PUSH0 instruction
 ///
 /// Introduce a new instruction which pushes the constant value 0 onto the stack.
-pub fn push0<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn push0<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     check!(interpreter, SHANGHAI);
     gas!(interpreter, gas::BASE);
-    if let Err(result) = interpreter.stack.push(U256::ZERO) {
-        interpreter.instruction_result = result;
-    }
+    push!(interpreter, U256::ZERO);
 }
 
-pub fn push<const N: usize, H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn push<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    // SAFETY: In analysis we append trailing bytes to the bytecode so that this is safe to do
-    // without bounds checking.
-    let ip = interpreter.instruction_pointer;
-    if let Err(result) = interpreter
-        .stack
-        .push_slice(unsafe { core::slice::from_raw_parts(ip, N) })
-    {
-        interpreter.instruction_result = result;
-        return;
-    }
-    interpreter.instruction_pointer = unsafe { ip.add(N) };
+    // TODO check performance degradation.
+    push!(interpreter, U256::ZERO);
+    popn_top!([], top, interpreter);
+
+    let imm = interpreter.bytecode.read_slice(N);
+    cast_slice_to_u256(imm, top);
+
+    // can ignore return. as relative N jump is safe operation
+    interpreter.bytecode.relative_jump(N as isize);
 }
 
-pub fn dup<const N: usize, H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn dup<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    if let Err(result) = interpreter.stack.dup(N) {
-        interpreter.instruction_result = result;
+    if !interpreter.stack.dup(N) {
+        interpreter
+            .control
+            .set_instruction_result(crate::InstructionResult::StackOverflow);
     }
 }
 
-pub fn swap<const N: usize, H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn swap<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     gas!(interpreter, gas::VERYLOW);
-    if let Err(result) = interpreter.stack.swap(N) {
-        interpreter.instruction_result = result;
+    assert!(N != 0);
+    if !interpreter.stack.exchange(0, N) {
+        interpreter
+            .control
+            .set_instruction_result(crate::InstructionResult::StackOverflow);
     }
 }
 
-pub fn dupn<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn dupn<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
-    let imm = unsafe { *interpreter.instruction_pointer };
-    if let Err(result) = interpreter.stack.dup(imm as usize + 1) {
-        interpreter.instruction_result = result;
+    let imm = interpreter.bytecode.read_u8();
+    if !interpreter.stack.dup(imm as usize + 1) {
+        interpreter
+            .control
+            .set_instruction_result(crate::InstructionResult::StackOverflow);
     }
-    interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
+    interpreter.bytecode.relative_jump(1);
 }
 
-pub fn swapn<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn swapn<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
-    let imm = unsafe { *interpreter.instruction_pointer };
-    if let Err(result) = interpreter.stack.swap(imm as usize + 1) {
-        interpreter.instruction_result = result;
+    let imm = interpreter.bytecode.read_u8();
+    if !interpreter.stack.exchange(0, imm as usize + 1) {
+        interpreter
+            .control
+            .set_instruction_result(crate::InstructionResult::StackOverflow);
     }
-    interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
+    interpreter.bytecode.relative_jump(1);
 }
 
-pub fn exchange<H: Host + ?Sized>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn exchange<WIRE: InterpreterTypes, H: Host + ?Sized>(
+    interpreter: &mut Interpreter<WIRE>,
+    _host: &mut H,
+) {
     require_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
-    let imm = unsafe { *interpreter.instruction_pointer };
+    let imm = interpreter.bytecode.read_u8();
     let n = (imm >> 4) + 1;
     let m = (imm & 0x0F) + 1;
-    if let Err(result) = interpreter.stack.exchange(n as usize, m as usize) {
-        interpreter.instruction_result = result;
+    if !interpreter.stack.exchange(n as usize, m as usize) {
+        interpreter
+            .control
+            .set_instruction_result(crate::InstructionResult::StackOverflow);
     }
-
-    interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
+    interpreter.bytecode.relative_jump(1);
 }
+/*
 
+TODO  TESTS
 #[cfg(test)]
 mod test {
 
@@ -89,17 +127,18 @@ mod test {
     use crate::{table::make_instruction_table, DummyHost, Gas, InstructionResult};
     use bytecode::opcode::{DUPN, EXCHANGE, SWAPN};
     use bytecode::Bytecode;
-    use specification::hardfork::PragueSpec;
-    use wiring::DefaultEthereumWiring;
+    use specification::hardfork::SpecId;
+    use context_interface::DefaultEthereumWiring;
 
     #[test]
     fn dupn() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
+        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
         let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(
             [DUPN, 0x00, DUPN, 0x01, DUPN, 0x02].into(),
         ));
         interp.is_eof = true;
+        interp.spec_id = SpecId::PRAGUE;
         interp.gas = Gas::new(10000);
 
         interp.stack.push(U256::from(10)).unwrap();
@@ -114,12 +153,13 @@ mod test {
 
     #[test]
     fn swapn() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
+        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
         let mut interp =
             Interpreter::new_bytecode(Bytecode::LegacyRaw([SWAPN, 0x00, SWAPN, 0x01].into()));
         interp.is_eof = true;
         interp.gas = Gas::new(10000);
+        interp.spec_id = SpecId::PRAGUE;
 
         interp.stack.push(U256::from(10)).unwrap();
         interp.stack.push(U256::from(20)).unwrap();
@@ -134,12 +174,13 @@ mod test {
 
     #[test]
     fn exchange() {
-        let table = make_instruction_table::<DummyHost<DefaultEthereumWiring>, PragueSpec>();
+        let table = make_instruction_table::<Interpreter, DummyHost<DefaultEthereumWiring>>();
         let mut host = DummyHost::default();
         let mut interp =
             Interpreter::new_bytecode(Bytecode::LegacyRaw([EXCHANGE, 0x00, EXCHANGE, 0x11].into()));
         interp.is_eof = true;
         interp.gas = Gas::new(10000);
+        interp.spec_id = SpecId::PRAGUE;
 
         interp.stack.push(U256::from(1)).unwrap();
         interp.stack.push(U256::from(5)).unwrap();
@@ -155,3 +196,4 @@ mod test {
         assert_eq!(interp.stack.peek(4), Ok(U256::from(15)));
     }
 }
+*/

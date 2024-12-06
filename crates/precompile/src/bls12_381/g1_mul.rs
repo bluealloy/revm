@@ -3,13 +3,13 @@ use super::{
     utils::{extract_scalar_input, NBITS},
 };
 use crate::{u64_to_address, PrecompileWithAddress};
-use crate::{Precompile, PrecompileError, PrecompileOutput, PrecompileResult};
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{blst_p1, blst_p1_affine, blst_p1_from_affine, blst_p1_mult, blst_p1_to_affine};
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MUL precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(g1_mul));
+    PrecompileWithAddress(u64_to_address(ADDRESS), g1_mul);
 /// BLS12_G1MUL precompile address.
 pub const ADDRESS: u64 = 0x0c;
 /// Base gas fee for BLS12-381 g1_mul operation.

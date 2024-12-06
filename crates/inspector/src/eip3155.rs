@@ -2,25 +2,30 @@ use crate::{inspectors::GasInspector, Inspector};
 use derive_where::derive_where;
 use revm::{
     bytecode::opcode::OpCode,
+    context::Cfg,
+    context_interface::{CfgGetter, JournalStateGetter, Transaction, TransactionGetter},
     interpreter::{
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
+        interpreter_types::{Jumps, LoopControl, MemoryTrait, StackTrait},
+        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
+        InterpreterResult, InterpreterTypes, Stack,
     },
     primitives::{hex, HashMap, B256, U256},
-    wiring::Transaction,
-    EvmContext, EvmWiring,
 };
 use serde::Serialize;
 use std::io::Write;
 
 /// [EIP-3155](https://eips.ethereum.org/EIPS/eip-3155) tracer [Inspector].
-#[derive_where(Debug)]
-pub struct TracerEip3155 {
+#[derive_where(Debug; CTX, INTR)]
+pub struct TracerEip3155<CTX, INTR> {
     #[derive_where(skip)]
     output: Box<dyn Write>,
-    gas_inspector: GasInspector,
+    gas_inspector: GasInspector<CTX, INTR>,
 
     /// Print summary of the execution.
     print_summary: bool,
+
+    /// depth
+    depth: usize,
 
     stack: Vec<U256>,
     pc: usize,
@@ -99,7 +104,11 @@ struct Summary {
     fork: Option<String>,
 }
 
-impl TracerEip3155 {
+impl<CTX, INTR> TracerEip3155<CTX, INTR>
+where
+    CTX: CfgGetter + TransactionGetter,
+    INTR:,
+{
     /// Sets the writer to use for the output.
     pub fn set_writer(&mut self, writer: Box<dyn Write>) {
         self.output = writer;
@@ -119,7 +128,7 @@ impl TracerEip3155 {
             skip,
             ..
         } = self;
-        *gas_inspector = GasInspector::default();
+        *gas_inspector = GasInspector::new();
         stack.clear();
         *pc = 0;
         *opcode = 0;
@@ -128,15 +137,14 @@ impl TracerEip3155 {
         *mem_size = 0;
         *skip = false;
     }
-}
 
-impl TracerEip3155 {
     pub fn new(output: Box<dyn Write>) -> Self {
         Self {
             output,
-            gas_inspector: GasInspector::default(),
+            gas_inspector: GasInspector::new(),
             print_summary: true,
             include_memory: false,
+            depth: 0,
             stack: Default::default(),
             memory: Default::default(),
             pc: 0,
@@ -166,54 +174,63 @@ impl TracerEip3155 {
         self.output.flush()
     }
 
-    fn print_summary<EvmWiringT: EvmWiring>(
-        &mut self,
-        result: &InterpreterResult,
-        context: &mut EvmContext<EvmWiringT>,
-    ) {
+    fn print_summary(&mut self, result: &InterpreterResult, context: &mut CTX) {
         if self.print_summary {
-            let spec_name: &str = context.spec_id().into();
+            let spec = context.cfg().spec().into();
+            let gas_limit = context.tx().common_fields().gas_limit();
             let value = Summary {
                 state_root: B256::ZERO.to_string(),
                 output: result.output.to_string(),
-                gas_used: hex_number(
-                    context.inner.env().tx.common_fields().gas_limit()
-                        - self.gas_inspector.gas_remaining(),
-                ),
+                gas_used: hex_number(gas_limit - self.gas_inspector.gas_remaining()),
                 pass: result.is_ok(),
                 time: None,
-                fork: Some(spec_name.to_string()),
+                fork: Some(spec.to_string()),
             };
             let _ = self.write_value(&value);
         }
     }
 }
 
-impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for TracerEip3155 {
-    fn initialize_interp(
-        &mut self,
-        interp: &mut Interpreter,
-        context: &mut EvmContext<EvmWiringT>,
-    ) {
+pub trait CloneStack {
+    fn clone_from(&self) -> Vec<U256>;
+}
+
+impl CloneStack for Stack {
+    fn clone_from(&self) -> Vec<U256> {
+        self.data().to_vec()
+    }
+}
+
+impl<CTX, INTR> Inspector for TracerEip3155<CTX, INTR>
+where
+    CTX: CfgGetter + TransactionGetter + JournalStateGetter,
+    INTR: InterpreterTypes<Stack: StackTrait + CloneStack>,
+{
+    type Context = CTX;
+    type InterpreterTypes = INTR;
+
+    fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         self.gas_inspector.initialize_interp(interp, context);
     }
 
-    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>) {
+    fn step(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         self.gas_inspector.step(interp, context);
-        self.stack.clone_from(interp.stack.data());
+        self.stack = interp.stack.clone_from();
         self.memory = if self.include_memory {
-            Some(hex::encode_prefixed(interp.shared_memory.context_memory()))
+            Some(hex::encode_prefixed(
+                interp.memory.slice(0..usize::MAX).as_ref(),
+            ))
         } else {
             None
         };
-        self.pc = interp.program_counter();
-        self.opcode = interp.current_opcode();
-        self.mem_size = interp.shared_memory.len();
-        self.gas = interp.gas.remaining();
-        self.refunded = interp.gas.refunded();
+        self.pc = interp.bytecode.pc();
+        self.opcode = interp.bytecode.opcode();
+        self.mem_size = interp.memory.size();
+        self.gas = interp.control.gas().remaining();
+        self.refunded = interp.control.gas().refunded();
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<EvmWiringT>) {
+    fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         self.gas_inspector.step_end(interp, context);
         if self.skip {
             self.skip = false;
@@ -226,14 +243,14 @@ impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for TracerEip3155 {
             gas: hex_number(self.gas),
             gas_cost: hex_number(self.gas_inspector.last_gas_cost()),
             stack: self.stack.iter().map(hex_number_u256).collect(),
-            depth: context.journaled_state.depth(),
+            depth: self.depth as u64,
             return_data: "0x".to_string(),
             refund: hex_number(self.refunded as u64),
             mem_size: self.mem_size.to_string(),
 
             op_name: OpCode::new(self.opcode).map(|i| i.as_str()),
-            error: if !interp.instruction_result.is_ok() {
-                Some(format!("{:?}", interp.instruction_result))
+            error: if !interp.control.instruction_result().is_ok() {
+                Some(format!("{:?}", interp.control.instruction_result()))
             } else {
                 None
             },
@@ -244,39 +261,55 @@ impl<EvmWiringT: EvmWiring> Inspector<EvmWiringT> for TracerEip3155 {
         let _ = self.write_value(&value);
     }
 
-    fn call_end(
-        &mut self,
-        context: &mut EvmContext<EvmWiringT>,
-        inputs: &CallInputs,
-        outcome: CallOutcome,
-    ) -> CallOutcome {
-        let outcome = self.gas_inspector.call_end(context, inputs, outcome);
+    fn call(&mut self, _: &mut Self::Context, _: &mut CallInputs) -> Option<CallOutcome> {
+        self.depth += 1;
+        None
+    }
 
-        if context.journaled_state.depth() == 0 {
+    fn create(&mut self, _: &mut Self::Context, _: &mut CreateInputs) -> Option<CreateOutcome> {
+        self.depth += 1;
+        None
+    }
+
+    fn eofcreate(
+        &mut self,
+        _: &mut Self::Context,
+        _: &mut EOFCreateInputs,
+    ) -> Option<CreateOutcome> {
+        self.depth += 1;
+        None
+    }
+
+    fn call_end(&mut self, context: &mut CTX, inputs: &CallInputs, outcome: &mut CallOutcome) {
+        self.gas_inspector.call_end(context, inputs, outcome);
+        self.depth -= 1;
+
+        if self.depth == 0 {
             self.print_summary(&outcome.result, context);
             // clear the state if we are at the top level
             self.clear();
         }
-
-        outcome
     }
 
     fn create_end(
         &mut self,
-        context: &mut EvmContext<EvmWiringT>,
+        context: &mut CTX,
         inputs: &CreateInputs,
-        outcome: CreateOutcome,
-    ) -> CreateOutcome {
-        let outcome = self.gas_inspector.create_end(context, inputs, outcome);
+        outcome: &mut CreateOutcome,
+    ) {
+        self.gas_inspector.create_end(context, inputs, outcome);
+        self.depth -= 1;
 
-        if context.journaled_state.depth() == 0 {
+        if self.depth == 0 {
             self.print_summary(&outcome.result, context);
 
             // clear the state if we are at the top level
             self.clear();
         }
+    }
 
-        outcome
+    fn eofcreate_end(&mut self, _: &mut Self::Context, _: &EOFCreateInputs, _: &mut CreateOutcome) {
+        self.depth -= 1;
     }
 }
 

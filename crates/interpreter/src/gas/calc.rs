@@ -1,18 +1,11 @@
 use super::constants::*;
-use crate::{num_words, AccountLoad, Eip7702CodeLoad, SStoreResult, SelfDestructResult, StateLoad};
+use crate::{num_words, tri, SStoreResult, SelfDestructResult, StateLoad};
+use context_interface::{
+    journaled_state::{AccountLoad, Eip7702CodeLoad},
+    transaction::AccessListTrait,
+};
 use primitives::U256;
 use specification::{eip7702, hardfork::SpecId};
-use transaction::AccessListTrait;
-
-/// `const` Option `?`.
-macro_rules! tri {
-    ($e:expr) => {
-        match $e {
-            Some(v) => v,
-            None => return None,
-        }
-    };
-}
 
 /// `SSTORE` opcode refund calculation.
 #[allow(clippy::collapsible_else_if)]
@@ -68,7 +61,7 @@ pub fn sstore_refund(spec_id: SpecId, vals: &SStoreResult) -> i64 {
 
 /// `CREATE2` opcode cost calculation.
 #[inline]
-pub const fn create2_cost(len: u64) -> Option<u64> {
+pub const fn create2_cost(len: usize) -> Option<u64> {
     CREATE.checked_add(tri!(cost_per_word(len, KECCAK256WORD)))
 }
 
@@ -116,13 +109,17 @@ pub fn exp_cost(spec_id: SpecId, power: U256) -> Option<u64> {
 
 /// `*COPY` opcodes cost calculation.
 #[inline]
-pub const fn copy_cost_verylow(len: u64) -> Option<u64> {
+pub const fn copy_cost_verylow(len: usize) -> Option<u64> {
     copy_cost(VERYLOW, len)
 }
 
 /// `EXTCODECOPY` opcode cost calculation.
 #[inline]
-pub const fn extcodecopy_cost(spec_id: SpecId, len: u64, load: Eip7702CodeLoad<()>) -> Option<u64> {
+pub const fn extcodecopy_cost(
+    spec_id: SpecId,
+    len: usize,
+    load: Eip7702CodeLoad<()>,
+) -> Option<u64> {
     let base_gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
         warm_cold_cost_with_delegation(load)
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
@@ -134,7 +131,7 @@ pub const fn extcodecopy_cost(spec_id: SpecId, len: u64, load: Eip7702CodeLoad<(
 }
 
 #[inline]
-pub const fn copy_cost(base_cost: u64, len: u64) -> Option<u64> {
+pub const fn copy_cost(base_cost: u64, len: usize) -> Option<u64> {
     base_cost.checked_add(tri!(cost_per_word(len, COPY)))
 }
 
@@ -146,14 +143,14 @@ pub const fn log_cost(n: u8, len: u64) -> Option<u64> {
 
 /// `KECCAK256` opcode cost calculation.
 #[inline]
-pub const fn keccak256_cost(len: u64) -> Option<u64> {
+pub const fn keccak256_cost(len: usize) -> Option<u64> {
     KECCAK256.checked_add(tri!(cost_per_word(len, KECCAK256WORD)))
 }
 
 /// Calculate the cost of buffer per word.
 #[inline]
-pub const fn cost_per_word(len: u64, multiple: u64) -> Option<u64> {
-    multiple.checked_mul(num_words(len))
+pub const fn cost_per_word(len: usize, multiple: u64) -> Option<u64> {
+    multiple.checked_mul(num_words(len) as u64)
 }
 
 /// EIP-3860: Limit and meter initcode
@@ -162,7 +159,7 @@ pub const fn cost_per_word(len: u64, multiple: u64) -> Option<u64> {
 ///
 /// This cannot overflow as the initcode length is assumed to be checked.
 #[inline]
-pub const fn initcode_cost(len: u64) -> u64 {
+pub const fn initcode_cost(len: usize) -> u64 {
     let Some(cost) = cost_per_word(len, INITCODE_WORD_COST) else {
         panic!("initcode cost overflow")
     };
@@ -180,7 +177,7 @@ pub const fn sload_cost(spec_id: SpecId, is_cold: bool) -> u64 {
         }
     } else if spec_id.is_enabled_in(SpecId::ISTANBUL) {
         // EIP-1884: Repricing for trie-size-dependent opcodes
-        INSTANBUL_SLOAD_GAS
+        ISTANBUL_SLOAD_GAS
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         200
@@ -202,7 +199,7 @@ pub fn sstore_cost(spec_id: SpecId, vals: &SStoreResult, is_cold: bool) -> u64 {
         gas_cost
     } else if spec_id.is_enabled_in(SpecId::ISTANBUL) {
         // Istanbul logic
-        istanbul_sstore_cost::<INSTANBUL_SLOAD_GAS, SSTORE_RESET>(vals)
+        istanbul_sstore_cost::<ISTANBUL_SLOAD_GAS, SSTORE_RESET>(vals)
     } else {
         // Frontier logic
         frontier_sstore_cost(vals)
@@ -342,15 +339,10 @@ pub const fn warm_cold_cost_with_delegation(load: Eip7702CodeLoad<()>) -> u64 {
     gas
 }
 
-/// Memory expansion cost calculation for a given memory length.
-#[inline]
-pub const fn memory_gas_for_len(len: usize) -> u64 {
-    memory_gas(crate::interpreter::num_words(len as u64))
-}
-
 /// Memory expansion cost calculation for a given number of words.
 #[inline]
-pub const fn memory_gas(num_words: u64) -> u64 {
+pub const fn memory_gas(num_words: usize) -> u64 {
+    let num_words = num_words as u64;
     MEMORY
         .saturating_mul(num_words)
         .saturating_add(num_words.saturating_mul(num_words) / 512)
@@ -401,7 +393,7 @@ pub fn validate_initial_tx_gas<AccessListT: AccessListTrait>(
     // EIP-3860: Limit and meter initcode
     // Init code stipend for bytecode analysis
     if spec_id.is_enabled_in(SpecId::SHANGHAI) && is_create {
-        initial_gas += initcode_cost(input.len() as u64)
+        initial_gas += initcode_cost(input.len())
     }
 
     // EIP-7702

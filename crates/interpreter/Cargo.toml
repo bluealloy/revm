@@ -26,11 +26,7 @@ all = "warn"
 bytecode.workspace = true
 primitives.workspace = true
 specification.workspace = true
-wiring.workspace = true
-transaction.workspace = true
-
-# mics
-derive-where = { version = "1.2.7", default-features = false }
+context-interface.workspace = true
 
 # optional
 serde = { version = "1.0", default-features = false, features = [
@@ -46,8 +42,14 @@ bincode = "1.3"
 
 [features]
 default = ["std"]
-std = ["serde?/std", "primitives/std", "wiring/std"]
+std = ["serde?/std", "primitives/std", "context-interface/std"]
 hashbrown = ["primitives/hashbrown"]
-serde = ["dep:serde", "primitives/serde", "bytecode/serde", "wiring/serde"]
+serde = [
+    "dep:serde",
+    "primitives/serde",
+    "bytecode/serde",
+    "context-interface/serde",
+]
 arbitrary = ["std", "primitives/arbitrary"]
-memory_limit = ["wiring/memory_limit"]
+# TODO Should be set from Context or from crate that consumes this PR.
+memory_limit = []

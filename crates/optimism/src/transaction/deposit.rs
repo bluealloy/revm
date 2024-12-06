@@ -1,6 +1,6 @@
 use revm::{
+    context_interface::transaction::CommonTxFields,
     primitives::{Address, Bytes, TxKind, B256, U256},
-    transaction::CommonTxFields,
 };
 
 pub trait DepositTransaction: CommonTxFields {

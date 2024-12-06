@@ -7,9 +7,20 @@ use alloy_provider::{
     Network, Provider,
 };
 use alloy_transport::{Transport, TransportError};
-use database_interface::async_db::DatabaseAsyncRef;
+use database_interface::{async_db::DatabaseAsyncRef, DBErrorMarker};
 use primitives::{Address, B256, U256};
 use state::{AccountInfo, Bytecode};
+
+#[derive(Debug)]
+pub struct DBTransportError(pub TransportError);
+
+impl DBErrorMarker for DBTransportError {}
+
+impl From<TransportError> for DBTransportError {
+    fn from(e: TransportError) -> Self {
+        Self(e)
+    }
+}
 
 /// An alloy-powered REVM [database_interface::Database].
 ///
@@ -20,7 +31,7 @@ pub struct AlloyDB<T: Transport + Clone, N: Network, P: Provider<T, N>> {
     provider: P,
     /// The block number on which the queries will be based on.
     block_number: BlockId,
-    _marker: std::marker::PhantomData<fn() -> (T, N)>,
+    _marker: core::marker::PhantomData<fn() -> (T, N)>,
 }
 
 impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
@@ -29,7 +40,7 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
         Self {
             provider,
             block_number,
-            _marker: std::marker::PhantomData,
+            _marker: core::marker::PhantomData,
         }
     }
 
@@ -40,7 +51,7 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
 }
 
 impl<T: Transport + Clone, N: Network, P: Provider<T, N>> DatabaseAsyncRef for AlloyDB<T, N, P> {
-    type Error = TransportError;
+    type Error = DBTransportError;
 
     async fn basic_async_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         let nonce = self
@@ -82,10 +93,11 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> DatabaseAsyncRef for A
     }
 
     async fn storage_async_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
-        self.provider
+        Ok(self
+            .provider
             .get_storage_at(address, index)
             .block_id(self.block_number)
-            .await
+            .await?)
     }
 }
 

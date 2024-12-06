@@ -28,7 +28,7 @@ pub const BLOCKHASH: u64 = 20;
 pub const CODEDEPOSIT: u64 = 200;
 
 /// EIP-1884: Repricing for trie-size-dependent opcodes
-pub const INSTANBUL_SLOAD_GAS: u64 = 800;
+pub const ISTANBUL_SLOAD_GAS: u64 = 800;
 pub const SSTORE_SET: u64 = 20000;
 pub const SSTORE_RESET: u64 = 5000;
 pub const REFUND_SSTORE_CLEARS: i64 = 15000;
