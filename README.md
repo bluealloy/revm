@@ -110,9 +110,6 @@ cargo run -p example-uniswap-v2-usdc-swap
 # Generate block traces 
 cargo run -p example-block-traces
 
-# Run database components example
-cargo run -p example-database-components
-
 # Run database reference example
 cargo run -p example-database-ref
 ```
