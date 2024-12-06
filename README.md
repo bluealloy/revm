@@ -120,7 +120,6 @@ cargo run -p example-database-ref
 All examples can be found in the `examples/` directory. Each example demonstrates different aspects of revm:
 - `block_traces`: Generating execution traces for entire blocks
 - `contract_deployment`: Deploying and interacting with smart contracts
-- `database_components`: Working with different database implementations
 - `database_ref`: Using database references for state access
 - `uniswap_get_reserves`: Reading state from Uniswap contracts
 - `uniswap_v2_usdc_swap`: Executing swaps on Uniswap V2
