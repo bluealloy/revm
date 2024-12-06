@@ -4,8 +4,8 @@ pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
     calc_blob_gasprice, calc_excess_blob_gas, AccessListItem, Account, Address, AuthorizationList,
-    Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB,
-    MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
+    Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, MAX_CODE_SIZE,
+    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
 use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
@@ -661,7 +661,7 @@ impl BlobExcessGasAndPrice {
     /// Calculate this block excess gas and price from the parent excess gas and gas used
     /// and the target blob gas per block.
     ///
-    /// This fields will be used to calculate `excess_blob_gas` with [`calc_excess_blob_gas`].
+    /// This fields will be used to calculate `excess_blob_gas` with [`calc_excess_blob_gas`] func.
     pub fn from_parent_and_target(
         parent_excess_blob_gas: u64,
         parent_blob_gas_used: u64,
