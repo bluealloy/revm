@@ -11,14 +11,14 @@ pub const KECCAK_EMPTY: B256 =
 /// (`calc_excess_blob_gas`).
 ///
 /// EIP-7742: Uncouple blob count between CL and EL
-/// Removes hardcoded constants and uses the `target_blob_gas_per_block` from the header.
+/// Removes hardcoded constants and uses the `target_blob_gas_per_block` from the parent header.
 #[inline]
 pub fn calc_excess_blob_gas(
     parent_excess_blob_gas: u64,
     parent_blob_gas_used: u64,
-    target_blob_gas_per_block: u64,
+    parent_target_blob_gas_per_block: u64,
 ) -> u64 {
-    (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(target_blob_gas_per_block)
+    (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(parent_target_blob_gas_per_block)
 }
 
 /// Calculates the blob gas price from the header's excess blob gas field.

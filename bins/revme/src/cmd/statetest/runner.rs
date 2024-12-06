@@ -295,7 +295,7 @@ pub fn execute_test_suite(
                     parent_blob_gas_used.to(),
                     parent_excess_blob_gas.to(),
                     unit.env
-                        .target_blobs_per_block
+                        .parent_target_blobs_per_block
                         .map(|i| i.to())
                         .unwrap_or(TARGET_BLOB_GAS_PER_BLOCK),
                 ));
