@@ -1,5 +1,5 @@
 use crate::{
-    gas::{self, warm_cold_cost, warm_cold_cost_with_delegation},
+    gas::{self, warm_cold_cost},
     interpreter::Interpreter,
     primitives::{Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
     Host, InstructionResult,
@@ -46,9 +46,8 @@ pub fn extcodesize<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-    let (code, load) = code.into_components();
     if SPEC::enabled(BERLIN) {
-        gas!(interpreter, warm_cold_cost_with_delegation(load));
+        gas!(interpreter, warm_cold_cost(code.is_cold));
     } else if SPEC::enabled(TANGERINE) {
         gas!(interpreter, 700);
     } else {
@@ -66,15 +65,14 @@ pub fn extcodehash<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-    let (code_hash, load) = code_hash.into_components();
     if SPEC::enabled(BERLIN) {
-        gas!(interpreter, warm_cold_cost_with_delegation(load))
+        gas!(interpreter, warm_cold_cost(code_hash.is_cold))
     } else if SPEC::enabled(ISTANBUL) {
         gas!(interpreter, 700);
     } else {
         gas!(interpreter, 400);
     }
-    push_b256!(interpreter, code_hash);
+    push_b256!(interpreter, *code_hash);
 }
 
 pub fn extcodecopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
@@ -87,10 +85,9 @@ pub fn extcodecopy<H: Host + ?Sized, SPEC: Spec>(interpreter: &mut Interpreter, 
     };
 
     let len = as_usize_or_fail!(interpreter, len_u256);
-    let (code, load) = code.into_components();
     gas_or_fail!(
         interpreter,
-        gas::extcodecopy_cost(SPEC::SPEC_ID, len as u64, load)
+        gas::extcodecopy_cost(SPEC::SPEC_ID, len as u64, code.is_cold)
     );
     if len == 0 {
         return;
