@@ -467,8 +467,9 @@ pub struct BlockEnv {
 impl BlockEnv {
     /// Takes `blob_excess_gas` saves it inside env
     /// and calculates `blob_fee` with [`BlobExcessGasAndPrice`].
-    pub fn set_blob_excess_gas_and_price(&mut self, excess_blob_gas: u64) {
-        self.blob_excess_gas_and_price = Some(BlobExcessGasAndPrice::new(excess_blob_gas));
+    pub fn set_blob_excess_gas_and_price(&mut self, excess_blob_gas: u64, is_prague: bool) {
+        self.blob_excess_gas_and_price =
+            Some(BlobExcessGasAndPrice::new(excess_blob_gas, is_prague));
     }
 
     /// See [EIP-4844] and [`crate::calc_blob_gasprice`].
@@ -512,7 +513,7 @@ impl Default for BlockEnv {
             basefee: U256::ZERO,
             difficulty: U256::ZERO,
             prevrandao: Some(B256::ZERO),
-            blob_excess_gas_and_price: Some(BlobExcessGasAndPrice::new(0)),
+            blob_excess_gas_and_price: Some(BlobExcessGasAndPrice::new(0, true)),
         }
     }
 }
@@ -650,8 +651,8 @@ pub struct BlobExcessGasAndPrice {
 
 impl BlobExcessGasAndPrice {
     /// Creates a new instance by calculating the blob gas price with [`calc_blob_gasprice`].
-    pub fn new(excess_blob_gas: u64) -> Self {
-        let blob_gasprice = calc_blob_gasprice(excess_blob_gas);
+    pub fn new(excess_blob_gas: u64, is_prague: bool) -> Self {
+        let blob_gasprice = calc_blob_gasprice(excess_blob_gas, is_prague);
         Self {
             excess_blob_gas,
             blob_gasprice,
@@ -665,13 +666,17 @@ impl BlobExcessGasAndPrice {
     pub fn from_parent_and_target(
         parent_excess_blob_gas: u64,
         parent_blob_gas_used: u64,
-        target_blob_gas_per_block: u64,
+        parent_target_blob_gas_per_block: u64,
+        is_prague: bool,
     ) -> Self {
-        Self::new(calc_excess_blob_gas(
-            parent_excess_blob_gas,
-            parent_blob_gas_used,
-            target_blob_gas_per_block,
-        ))
+        Self::new(
+            calc_excess_blob_gas(
+                parent_excess_blob_gas,
+                parent_blob_gas_used,
+                parent_target_blob_gas_per_block,
+            ),
+            is_prague,
+        )
     }
 }
 
