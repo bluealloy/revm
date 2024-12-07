@@ -27,7 +27,7 @@ pub static EOF_MAGIC_BYTES: Bytes = bytes!("ef00");
 /// EVM Object Format (EOF) container.
 ///
 /// It consists of a header, body and the raw original bytes.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eof {
     pub header: EofHeader,
