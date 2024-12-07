@@ -8,7 +8,7 @@ pub use context_precompiles::{
 };
 pub use evm_context::EvmContext;
 pub use inner_evm_context::InnerEvmContext;
-use revm_interpreter::{as_u64_saturated, Eip7702CodeLoad, StateLoad};
+use revm_interpreter::{as_u64_saturated, StateLoad};
 
 use crate::{
     db::{Database, EmptyDB},
@@ -145,14 +145,14 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
             .ok()
     }
 
-    fn code(&mut self, address: Address) -> Option<Eip7702CodeLoad<Bytes>> {
+    fn code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
         self.evm
             .code(address)
             .map_err(|e| self.evm.error = Err(e))
             .ok()
     }
 
-    fn code_hash(&mut self, address: Address) -> Option<Eip7702CodeLoad<B256>> {
+    fn code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
         self.evm
             .code_hash(address)
             .map_err(|e| self.evm.error = Err(e))
