@@ -305,7 +305,6 @@ pub enum InvalidTransaction {
     BlobCreateTransaction,
     /// Transaction has more then `max_blob_num_per_block` blobs.
     TooManyBlobs {
-        max: usize,
         have: usize,
     },
     /// Blob transaction contains a versioned hash with an incorrect version
@@ -394,8 +393,8 @@ impl fmt::Display for InvalidTransaction {
             }
             Self::EmptyBlobs => write!(f, "empty blobs"),
             Self::BlobCreateTransaction => write!(f, "blob create transaction"),
-            Self::TooManyBlobs { max, have } => {
-                write!(f, "too many blobs, have {have}, max {max}")
+            Self::TooManyBlobs { have } => {
+                write!(f, "too many blobs, have {have}")
             }
             Self::BlobVersionNotSupported => write!(f, "blob version not supported"),
             Self::EofCrateShouldHaveToAddress => write!(f, "EOF crate should have `to` address"),

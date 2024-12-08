@@ -4,8 +4,8 @@ pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
     calc_blob_gasprice, calc_excess_blob_gas, AccessListItem, Account, Address, AuthorizationList,
-    Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, MAX_CODE_SIZE,
-    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
+    Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB,
+    MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
 use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
@@ -172,6 +172,15 @@ impl Env {
             for blob in self.tx.blob_hashes.iter() {
                 if blob[0] != VERSIONED_HASH_VERSION_KZG {
                     return Err(InvalidTransaction::BlobVersionNotSupported);
+                }
+            }
+
+            // ensure the total blob gas spent is at most equal to the limit
+            // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
+            if SPEC::SPEC_ID == SpecId::CANCUN {
+                let num_blobs = self.tx.blob_hashes.len();
+                if num_blobs > MAX_BLOB_NUMBER_PER_BLOCK as usize {
+                    return Err(InvalidTransaction::TooManyBlobs { have: num_blobs });
                 }
             }
         } else {
