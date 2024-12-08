@@ -39,8 +39,9 @@ const ERC20_TRANSFER_SIGNATURE: [u8; 4] = [0xa9, 0x05, 0x9c, 0xbb]; // keccak256
 
 
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub enum Erc20PreExecutionError {
+    #[default]
    Whatever
 }
 
@@ -58,7 +59,7 @@ impl From<InvalidTransaction> for Erc20PreExecutionError {
 
 
 
-
+#[derive(Default)]
 struct Erc20PreExecution {
     inner: EthPreExecution<Context, Erc20PreExecutionError>
 }
@@ -66,7 +67,7 @@ struct Erc20PreExecution {
 impl Erc20PreExecution {
      fn new() -> Self {
         Self {
-            inner: EthPreExecution::new()
+            inner: EthPreExecution::default()
         }
     }
 }
@@ -103,32 +104,37 @@ impl PreExecutionHandler for Erc20PreExecution {
 
         // Get the balance slot for the caller
         let caller = context.tx().common_fields().caller();
-        let balance_slot: U256 = keccak256((caller, U256::from(3)).abi_encode()).into();
 
-        let token_account = context.journal().load_account(TOKEN)?.data;
-
-        let storage_value  = token_account.storage.get(&balance_slot).expect("Balance slot not found").present_value();
-
-        if storage_value < gas_cost {
-            return Err(Erc20PreExecutionError::Whatever);
-        }
-
-        // Subtract the gas cost from the caller's balance
-        let new_balance = storage_value.saturating_sub(gas_cost);
-
-        token_account.storage.insert(balance_slot, EvmStorageSlot::new_changed(storage_value, new_balance));
-
-        // We could add the gas cost to the treasury's balance
-        let treasury_account = context.journal().load_account(TREASURY)?.data;
-        let treasury_balance_slot: U256 = keccak256((TREASURY, U256::from(3)).abi_encode()).into();
-        let treasury_balance = treasury_account.storage.get(&treasury_balance_slot).expect("Treasury balance slot not found").present_value();
-        let new_treasury_balance = treasury_balance.saturating_add(gas_cost);
-        treasury_account.storage.insert(treasury_balance_slot, EvmStorageSlot::new_changed(treasury_balance, new_treasury_balance));
+        token_operation(context, caller, caller, gas_cost)?;
 
         Ok(())
     }
 }
 
+
+
+fn token_operation(context: &mut Context, sender: Address, recipient: Address, amount: U256) -> Result<(), Erc20PreExecutionError> {
+    let token_account = context.journal().load_account(TOKEN)?.data;
+   
+    let sender_balance_slot: U256 = keccak256((sender, U256::from(3)).abi_encode()).into();
+    let sender_balance = token_account.storage.get(&sender_balance_slot).expect("Balance slot not found").present_value();
+
+   
+    if sender_balance < amount {
+        return Err(Erc20PreExecutionError::Whatever);
+    }
+    // Subtract the amount from the sender's balance
+    let sender_new_balance = sender_balance.saturating_sub(amount);
+    token_account.storage.insert(sender_balance_slot, EvmStorageSlot::new_changed(sender_balance, sender_new_balance));
+
+    // Add the amount to the recipient's balance
+    let recipient_balance_slot: U256 = keccak256((recipient, U256::from(3)).abi_encode()).into();
+    let recipient_balance = token_account.storage.get(&recipient_balance_slot).expect("To balance slot not found").present_value();
+    let recipient_new_balance = recipient_balance.saturating_add(amount);
+    token_account.storage.insert(recipient_balance_slot, EvmStorageSlot::new_changed(recipient_balance, recipient_new_balance));
+
+    Ok(())
+}
 
 
 fn main() {
