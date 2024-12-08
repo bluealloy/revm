@@ -1,4 +1,7 @@
-use crate::{b256, B256, BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE};
+use crate::{
+    b256, B256, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, BLOB_BASE_FEE_UPDATE_FRACTION_ELECTRA,
+    MIN_BLOB_GASPRICE,
+};
 pub use alloy_primitives::keccak256;
 
 /// The Keccak-256 hash of the empty string `""`.
@@ -26,11 +29,15 @@ pub fn calc_excess_blob_gas(
 /// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers)
 /// (`get_blob_gasprice`).
 #[inline]
-pub fn calc_blob_gasprice(excess_blob_gas: u64) -> u128 {
+pub fn calc_blob_gasprice(excess_blob_gas: u64, is_prague: bool) -> u128 {
     fake_exponential(
         MIN_BLOB_GASPRICE,
         excess_blob_gas,
-        BLOB_GASPRICE_UPDATE_FRACTION,
+        if is_prague {
+            BLOB_BASE_FEE_UPDATE_FRACTION_ELECTRA
+        } else {
+            BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN
+        },
     )
 }
 
@@ -132,18 +139,18 @@ mod tests {
             (2314057, 1),
             (2314058, 2),
             (10 * 1024 * 1024, 23),
-            // calc_blob_gasprice approximates `e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)` using Taylor expansion
+            // calc_blob_gasprice approximates `e ** (excess_blob_gas / BLOB_BASE_FEE_UPDATE_FRACTION)` using Taylor expansion
             //
             // to roughly find where boundaries will be hit:
-            // 2 ** bits = e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)
-            // excess_blob_gas = ln(2 ** bits) * BLOB_GASPRICE_UPDATE_FRACTION
+            // 2 ** bits = e ** (excess_blob_gas / BLOB_BASE_FEE_UPDATE_FRACTION)
+            // excess_blob_gas = ln(2 ** bits) * BLOB_BASE_FEE_UPDATE_FRACTION
             (148099578, 18446739238971471609), // output is just below the overflow
             (148099579, 18446744762204311910), // output is just after the overflow
             (161087488, 902580055246494526580),
         ];
 
         for &(excess, expected) in blob_fee_vectors {
-            let actual = calc_blob_gasprice(excess);
+            let actual = calc_blob_gasprice(excess, false);
             assert_eq!(actual, expected, "test: {excess}");
         }
     }
@@ -167,7 +174,7 @@ mod tests {
             (1, 5, 2, 11),   // approximate 12.18
             (2, 5, 2, 23),   // approximate 24.36
             (1, 50000000, 2225652, 5709098764),
-            (1, 380928, BLOB_GASPRICE_UPDATE_FRACTION, 1),
+            (1, 380928, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, 1),
         ] {
             let actual = fake_exponential(factor, numerator, denominator);
             assert_eq!(actual, expected, "test: {t:?}");

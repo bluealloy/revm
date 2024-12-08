@@ -282,24 +282,6 @@ pub fn execute_test_suite(
         env.block.difficulty = unit.env.current_difficulty;
         // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
         env.block.prevrandao = unit.env.current_random;
-        // EIP-4844
-        if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
-            env.block
-                .set_blob_excess_gas_and_price(current_excess_blob_gas.to());
-        } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
-            unit.env.parent_blob_gas_used,
-            unit.env.parent_excess_blob_gas,
-        ) {
-            env.block
-                .set_blob_excess_gas_and_price(calc_excess_blob_gas(
-                    parent_blob_gas_used.to(),
-                    parent_excess_blob_gas.to(),
-                    unit.env
-                        .parent_target_blobs_per_block
-                        .map(|i| i.to())
-                        .unwrap_or(TARGET_BLOB_GAS_PER_BLOCK),
-                ));
-        }
 
         // tx env
         env.tx.caller = if let Some(address) = unit.transaction.sender {
@@ -331,6 +313,29 @@ pub fn execute_test_suite(
 
             // Enable EOF in Prague tests.
             let spec_id = spec_name.to_spec_id();
+
+            // EIP-4844
+            if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
+                env.block.set_blob_excess_gas_and_price(
+                    current_excess_blob_gas.to(),
+                    spec_id.is_enabled_in(SpecId::PRAGUE),
+                );
+            } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
+                unit.env.parent_blob_gas_used,
+                unit.env.parent_excess_blob_gas,
+            ) {
+                env.block.set_blob_excess_gas_and_price(
+                    calc_excess_blob_gas(
+                        parent_blob_gas_used.to(),
+                        parent_excess_blob_gas.to(),
+                        unit.env
+                            .parent_target_blobs_per_block
+                            .map(|i| i.to())
+                            .unwrap_or(TARGET_BLOB_GAS_PER_BLOCK),
+                    ),
+                    spec_id.is_enabled_in(SpecId::PRAGUE),
+                );
+            }
 
             if spec_id.is_enabled_in(SpecId::MERGE) && env.block.prevrandao.is_none() {
                 // if spec is merge and prevrandao is not set, set it to default
