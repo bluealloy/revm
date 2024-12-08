@@ -141,7 +141,16 @@ fn token_operation(context: &mut Context, sender: Address, recipient: Address, a
 
 #[derive(Default)]
 struct Erc20PostExecution {
-    inner: EthPostExecution<Context, Erc20PreExecutionError, Erc20HaltReason>
+    inner: EthPostExecution<Context, Erc20PostExecutionError, Erc20HaltReason>
+}
+
+
+impl Erc20PostExecution {
+    fn new() -> Self {
+        Self {
+            inner: EthPostExecution::default()
+        }
+    }
 }
 
 #[derive(Default, Eq, PartialEq, Debug, Clone)]
@@ -156,19 +165,17 @@ impl From<HaltReason> for Erc20HaltReason {
     }
 }
 
-impl Erc20PostExecution {
-    fn new() -> Self {
-        Self {
-            inner: EthPostExecution::default()
-        }
-    }
+#[derive(Default)]
+pub enum Erc20PostExecutionError{
+    #[default]
+    Whatever
 }
 
 
 
 impl PostExecutionHandler for Erc20PostExecution {
     type Context = Context;
-    type Error = Erc20PreExecutionError;
+    type Error = Erc20PostExecutionError;
     type ExecResult = FrameResult;
     type Output = ResultAndState<Erc20HaltReason>;
 
@@ -184,7 +191,7 @@ impl PostExecutionHandler for Erc20PostExecution {
         let gas = exec_result.gas();
 
         let reimbursement = effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64);
-        token_operation(context, TREASURY, caller, reimbursement)?;
+        token_operation(context, TREASURY, caller, reimbursement).unwrap();
 
 
         Ok(())
@@ -205,13 +212,13 @@ impl PostExecutionHandler for Erc20PostExecution {
         };
 
         let reward = coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64);
-        token_operation(context, TREASURY, *beneficiary, reward)?;
+        token_operation(context, TREASURY, *beneficiary, reward).unwrap();
      
         Ok(())
     }
 
     fn output(&self, _: &mut Self::Context, _: Self::ExecResult) -> Result<Self::Output, Self::Error> {
-       Err(Erc20PreExecutionError::Whatever)
+       Err(Erc20PostExecutionError::Whatever)
     }   
 
     fn clear(&self, _: &mut Self::Context) {
