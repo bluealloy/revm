@@ -9,6 +9,7 @@ license.workspace = true
 repository.workspace = true
 readme.workspace = true
 
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
@@ -24,6 +25,7 @@ all = "warn"
 [dependencies]
 revm.workspace = true
 database = { workspace = true, features = ["std", "alloydb"] }
+specification.workspace = true
 
 # alloy dependencies
 alloy-sol-types = { version = "0.8.2", default-features = false, features = ["std"] }

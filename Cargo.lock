@@ -1690,6 +1690,7 @@ dependencies = [
  "reqwest",
  "revm",
  "revm-database",
+ "revm-specification",
  "tokio",
 ]
 

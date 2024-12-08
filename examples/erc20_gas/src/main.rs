@@ -1,6 +1,6 @@
 use std::convert::Infallible;
 
-use revm::{primitives::{address, keccak256, Address, U256}, state::EvmStorageSlot};
+use revm::{context::Cfg, context_interface::result::{ExecutionResult, HaltReason, HaltReasonTrait, Output, ResultAndState, SuccessReason}, handler::{EthPostExecution, FrameResult}, handler_interface::PostExecutionHandler, primitives::{address, keccak256, Address, U256}, state::EvmStorageSlot};
 use alloy_provider::{network::Ethereum, RootProvider};
 use alloy_transport_http::Http;
 use database::{AlloyDB, CacheDB};
@@ -15,6 +15,7 @@ use revm::{
     Context, Database,
 };
 use alloy_sol_types::{sol, SolValue};
+use specification::hardfork::SpecId;
 
 
 sol! {
@@ -105,7 +106,7 @@ impl PreExecutionHandler for Erc20PreExecution {
         // Get the balance slot for the caller
         let caller = context.tx().common_fields().caller();
 
-        token_operation(context, caller, caller, gas_cost)?;
+        token_operation(context, caller, TREASURY, gas_cost)?;
 
         Ok(())
     }
@@ -135,6 +136,82 @@ fn token_operation(context: &mut Context, sender: Address, recipient: Address, a
 
     Ok(())
 }
+
+
+
+#[derive(Default)]
+struct Erc20PostExecution {
+    inner: EthPostExecution<Context, Erc20PreExecutionError, Erc20HaltReason>
+}
+
+#[derive(Default, Eq, PartialEq, Debug, Clone)]
+pub enum Erc20HaltReason {
+    #[default]
+    Whatever
+}
+
+impl From<HaltReason> for Erc20HaltReason {
+    fn from(_: HaltReason) -> Self {
+        Self::Whatever
+    }
+}
+
+
+
+impl PostExecutionHandler for Erc20PostExecution {
+    type Context = Context;
+    type Error = Erc20PreExecutionError;
+    type ExecResult = FrameResult;
+    type Output = ResultAndState<Erc20HaltReason>;
+
+
+    // These trait functions do not return anything
+    fn refund(&self, _: &mut Self::Context, _: &mut Self::ExecResult, _: i64) {
+        // Do nothing
+    }
+
+    fn reimburse_caller(&self, context: &mut Self::Context, exec_result: &mut Self::ExecResult) -> Result<(), Self::Error> {
+        let basefee = context.block.basefee();
+        let caller = context.tx().common_fields().caller();
+        let effective_gas_price = context.tx().effective_gas_price(*basefee);
+        let gas = exec_result.gas();
+
+        let reimbursement = effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64);
+        token_operation(context, TREASURY, caller, reimbursement)?;
+
+
+        Ok(())
+
+    }
+
+    fn reward_beneficiary(&self, context: &mut Self::Context, exec_result: &mut Self::ExecResult) -> Result<(), Self::Error> {
+        let tx = context.tx();
+        let beneficiary = context.block.beneficiary();
+        let basefee = context.block.basefee();
+        let effective_gas_price = tx.effective_gas_price(*basefee);
+        let gas = exec_result.gas();
+
+        let coinbase_gas_price = if context.cfg.spec().is_enabled_in(SpecId::LONDON) {
+            effective_gas_price.saturating_sub(*basefee)
+        } else {
+            effective_gas_price
+        };
+
+        let reward = coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64);
+        token_operation(context, TREASURY, *beneficiary, reward)?;
+     
+        Ok(())
+    }
+
+    fn output(&self, _: &mut Self::Context, _: Self::ExecResult) -> Result<Self::Output, Self::Error> {
+       Err(Erc20PreExecutionError::Whatever)
+    }   
+
+    fn clear(&self, _: &mut Self::Context) {
+        // Do nothing
+    }
+}
+
 
 
 fn main() {
