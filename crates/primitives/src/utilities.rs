@@ -1,5 +1,5 @@
 use crate::{
-    b256, B256, BLOB_BASE_FEE_UPDATE_FRACTION, BLOB_BASE_FEE_UPDATE_FRACTION_ELECTRA,
+    b256, B256, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, BLOB_BASE_FEE_UPDATE_FRACTION_ELECTRA,
     MIN_BLOB_GASPRICE,
 };
 pub use alloy_primitives::keccak256;
@@ -36,7 +36,7 @@ pub fn calc_blob_gasprice(excess_blob_gas: u64, is_prague: bool) -> u128 {
         if is_prague {
             BLOB_BASE_FEE_UPDATE_FRACTION_ELECTRA
         } else {
-            BLOB_BASE_FEE_UPDATE_FRACTION
+            BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN
         },
     )
 }
@@ -174,7 +174,7 @@ mod tests {
             (1, 5, 2, 11),   // approximate 12.18
             (2, 5, 2, 23),   // approximate 24.36
             (1, 50000000, 2225652, 5709098764),
-            (1, 380928, BLOB_BASE_FEE_UPDATE_FRACTION, 1),
+            (1, 380928, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, 1),
         ] {
             let actual = fake_exponential(factor, numerator, denominator);
             assert_eq!(actual, expected, "test: {t:?}");

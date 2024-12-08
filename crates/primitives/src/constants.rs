@@ -56,7 +56,7 @@ pub const TARGET_BLOB_GAS_PER_BLOCK: u64 = TARGET_BLOB_NUMBER_PER_BLOCK * GAS_PE
 pub const MIN_BLOB_GASPRICE: u64 = 1;
 
 /// Controls the maximum rate of change for blob gas price.
-pub const BLOB_BASE_FEE_UPDATE_FRACTION: u64 = 3338477;
+pub const BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN: u64 = 3338477;
 
 /// Controls the maximum rate of change for blob gas price (Electra).
 /// EIP-7691: Blob throughput increase
