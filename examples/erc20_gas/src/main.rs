@@ -156,6 +156,14 @@ impl From<HaltReason> for Erc20HaltReason {
     }
 }
 
+impl Erc20PostExecution {
+    fn new() -> Self {
+        Self {
+            inner: EthPostExecution::default()
+        }
+    }
+}
+
 
 
 impl PostExecutionHandler for Erc20PostExecution {
@@ -165,9 +173,8 @@ impl PostExecutionHandler for Erc20PostExecution {
     type Output = ResultAndState<Erc20HaltReason>;
 
 
-    // These trait functions do not return anything
-    fn refund(&self, _: &mut Self::Context, _: &mut Self::ExecResult, _: i64) {
-        // Do nothing
+    fn refund(&self, context: &mut Self::Context, exec_result: &mut Self::ExecResult, eip7702_refund: i64) {
+        self.inner.refund(context, exec_result, eip7702_refund)
     }
 
     fn reimburse_caller(&self, context: &mut Self::Context, exec_result: &mut Self::ExecResult) -> Result<(), Self::Error> {
