@@ -4,7 +4,7 @@ use super::{
     optimism_spec_to_generic, OptimismContext, OptimismHaltReason, OptimismInvalidTransaction,
     OptimismSpec, OptimismSpecId, OptimismTransaction, OptimismWiring,
 };
-use crate::{BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT};
+use crate::{l1block::OPERATOR_FEE_RECIPIENT, BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT};
 use core::ops::Mul;
 use revm::{
     database_interface::Database,
@@ -389,17 +389,14 @@ pub fn reward_beneficiary<EvmWiringT: OptimismWiring, SPEC: OptimismSpec>(
             .mul(U256::from(gas.spent() - gas.refunded() as u64));
 
         // Send the operator fee of the transaction to the coinbase.
-        let beneficiary = *context.evm.env.block.coinbase();
-
-        // Don't need to `mark_touch` as it's already been done in `reward_beneficiary`.
-        let coinbase_account = context
+        let operator_fee_vault_account = context
             .evm
             .inner
             .journaled_state
-            .load_account(beneficiary, &mut context.evm.inner.db)
+            .load_account(OPERATOR_FEE_RECIPIENT, &mut context.evm.inner.db)
             .map_err(EVMError::Database)?;
 
-        coinbase_account.data.info.balance = coinbase_account
+        operator_fee_vault_account.data.info.balance = operator_fee_vault_account
             .data
             .info
             .balance

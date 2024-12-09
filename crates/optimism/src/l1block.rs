@@ -17,10 +17,10 @@ const BASE_FEE_SCALAR_OFFSET: usize = 16;
 /// The two 4-byte Ecotone fee scalar values are packed into the same storage slot as the 8-byte sequence number.
 /// Byte offset within the storage slot of the 4-byte blobBaseFeeScalar attribute.
 const BLOB_BASE_FEE_SCALAR_OFFSET: usize = 20;
-/// The two 8-byte Holocene operator fee scalar values are similarly packed. Byte offset within
+/// The two 8-byte Isthmus operator fee scalar values are similarly packed. Byte offset within
 /// the storage slot of the 8-byte operatorFeeScalar attribute.
 const OPERATOR_FEE_SCALAR_OFFSET: usize = 4;
-/// The two 8-byte Holocene operator fee scalar values are similarly packed. Byte offset within
+/// The two 8-byte Isthmus operator fee scalar values are similarly packed. Byte offset within
 /// the storage slot of the 8-byte operatorFeeConstant attribute.
 const OPERATOR_FEE_CONSTANT_OFFSET: usize = 8;
 
@@ -40,6 +40,10 @@ const ECOTONE_L1_BLOB_BASE_FEE_SLOT: U256 = U256::from_limbs([7u64, 0, 0, 0]);
 /// offsets [BASE_FEE_SCALAR_OFFSET] and [BLOB_BASE_FEE_SCALAR_OFFSET] respectively.
 const ECOTONE_L1_FEE_SCALARS_SLOT: U256 = U256::from_limbs([3u64, 0, 0, 0]);
 
+/// This storage slot stores the 32-bit operatorFeeScalar and operatorFeeConstant attributes at
+/// offsets [OPERATOR_FEE_SCALAR_OFFSET] and [OPERATOR_FEE_CONSTANT_OFFSET] respectively.
+const OPERATOR_FEE_SCALARS_SLOT: U256 = U256::from_limbs([8u64, 0, 0, 0]);
+
 /// An empty 64-bit set of scalar values.
 const EMPTY_SCALARS: [u8; 8] = [0u8; 8];
 
@@ -48,6 +52,9 @@ pub const L1_FEE_RECIPIENT: Address = address!("42000000000000000000000000000000
 
 /// The address of the base fee recipient.
 pub const BASE_FEE_RECIPIENT: Address = address!("4200000000000000000000000000000000000019");
+
+/// The address of the operator fee recipient.
+pub const OPERATOR_FEE_RECIPIENT: Address = address!("420000000000000000000000000000000000001B");
 
 /// The address of the L1Block contract.
 pub const L1_BLOCK_CONTRACT: Address = address!("4200000000000000000000000000000000000015");
@@ -75,9 +82,9 @@ pub struct L1BlockInfo {
     pub l1_blob_base_fee: Option<U256>,
     /// The current L1 blob base fee scalar. None if Ecotone is not activated.
     pub l1_blob_base_fee_scalar: Option<U256>,
-    /// The current L1 blob base fee. None if Holocene is not activated, except if `empty_scalars` is `true`.
+    /// The current L1 blob base fee. None if Isthmus is not activated, except if `empty_scalars` is `true`.
     pub operator_fee_scalar: Option<U256>,
-    /// The current L1 blob base fee scalar. None if Holocene is not activated.
+    /// The current L1 blob base fee scalar. None if Isthmus is not activated.
     pub operator_fee_constant: Option<U256>,
     /// True if Ecotone is activated, but the L1 fee scalars have not yet been set.
     pub(crate) empty_ecotone_scalars: bool,
@@ -131,8 +138,8 @@ impl L1BlockInfo {
                 .then(|| db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT))
                 .transpose()?;
 
-            // Pre-holocene L1 block info
-            if !spec_id.is_enabled_in(OptimismSpecId::HOLOCENE) {
+            // Pre-isthmus L1 block info
+            if !spec_id.is_enabled_in(OptimismSpecId::ISTHMUS) {
                 Ok(L1BlockInfo {
                     l1_base_fee,
                     l1_base_fee_scalar,
@@ -143,17 +150,23 @@ impl L1BlockInfo {
                     ..Default::default()
                 })
             } else {
-                // Post-holocene L1 block info
+                let operator_fee_scalars = db
+                    .storage(L1_BLOCK_CONTRACT, OPERATOR_FEE_SCALARS_SLOT)?
+                    .to_be_bytes::<32>();
+
+                // Post-isthmus L1 block info
                 // The `operator_fee_scalar` is stored as a big endian u32 at
                 // OPERATOR_FEE_SCALAR_OFFSET.
                 let operator_fee_scalar = U256::from_be_slice(
-                    l1_fee_scalars[OPERATOR_FEE_SCALAR_OFFSET..OPERATOR_FEE_SCALAR_OFFSET + 4]
+                    operator_fee_scalars
+                        [OPERATOR_FEE_SCALAR_OFFSET..OPERATOR_FEE_SCALAR_OFFSET + 4]
                         .as_ref(),
                 );
                 // The `operator_fee_constant` is stored as a big endian u64 at
                 // OPERATOR_FEE_CONSTANT_OFFSET.
                 let operator_fee_constant = U256::from_be_slice(
-                    l1_fee_scalars[OPERATOR_FEE_CONSTANT_OFFSET..OPERATOR_FEE_CONSTANT_OFFSET + 8]
+                    operator_fee_scalars
+                        [OPERATOR_FEE_CONSTANT_OFFSET..OPERATOR_FEE_CONSTANT_OFFSET + 8]
                         .as_ref(),
                 );
                 Ok(L1BlockInfo {
@@ -204,17 +217,17 @@ impl L1BlockInfo {
 
     /// Calculate the operator fee for executing this transaction.
     ///
-    /// Introduced in holocene. Prior to holocene, the operator fee is always zero.
+    /// Introduced in isthmus. Prior to isthmus, the operator fee is always zero.
     pub fn operator_fee_charge(&self, gas_limit: U256, spec_id: OptimismSpecId) -> U256 {
-        if !spec_id.is_enabled_in(OptimismSpecId::HOLOCENE) {
+        if !spec_id.is_enabled_in(OptimismSpecId::ISTHMUS) {
             return U256::ZERO;
         }
         let operator_fee_scalar = self
             .operator_fee_scalar
-            .expect("Missing operator fee scalar for holocene L1 Block");
+            .expect("Missing operator fee scalar for isthmus L1 Block");
         let operator_fee_constant = self
             .operator_fee_constant
-            .expect("Missing operator fee constant for holocene L1 Block");
+            .expect("Missing operator fee constant for isthmus L1 Block");
 
         let product = gas_limit.saturating_mul(operator_fee_scalar)
             / (U256::from(OPERATOR_FEE_SCALAR_DECIMAL));
@@ -224,15 +237,15 @@ impl L1BlockInfo {
 
     /// Calculate the operator fee for executing this transaction.
     ///
-    /// Introduced in holocene. Prior to holocene, the operator fee is always zero.
+    /// Introduced in isthmus. Prior to isthmus, the operator fee is always zero.
     pub fn operator_fee_refund(&self, gas: &Gas, spec_id: OptimismSpecId) -> U256 {
-        if !spec_id.is_enabled_in(OptimismSpecId::HOLOCENE) {
+        if !spec_id.is_enabled_in(OptimismSpecId::ISTHMUS) {
             return U256::ZERO;
         }
 
         let operator_fee_scalar = self
             .operator_fee_scalar
-            .expect("Missing operator fee scalar for holocene L1 Block");
+            .expect("Missing operator fee scalar for isthmus L1 Block");
 
         // We're computing the difference between two operator fees, so no need to include the
         // constant.
