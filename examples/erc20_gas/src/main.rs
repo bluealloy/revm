@@ -1,18 +1,20 @@
-use std::convert::Infallible;
+use std::cmp::Ordering;
 
-use revm::{context::Cfg, context_interface::result::{ExecutionResult, HaltReason, HaltReasonTrait, Output, ResultAndState, SuccessReason}, handler::{EthPostExecution, FrameResult}, handler_interface::PostExecutionHandler, primitives::{address, keccak256, Address, U256}, state::EvmStorageSlot};
+use revm::{context::Cfg, context_interface::result::{ HaltReason, ResultAndState}, handler::{ EthValidation, FrameResult}, handler_interface::{PostExecutionHandler, ValidationHandler}, primitives::{address, keccak256, Address, U256}, state::EvmStorageSlot};
 use alloy_provider::{network::Ethereum, RootProvider};
 use alloy_transport_http::Http;
 use database::{AlloyDB, CacheDB};
 use reqwest::Client;
 use revm::{
     context_interface::{
-        result::InvalidTransaction, transaction::Eip4844Tx, Block, JournalStateGetter, JournalStateGetterDBError, Transaction, TransactionGetter, TransactionType
+        result::{EVMError, InvalidTransaction},
+        transaction::Eip4844Tx,
+        Block, JournalStateGetter, JournalStateGetterDBError, Transaction, TransactionGetter, TransactionType
     },
     database_interface::WrapDatabaseAsync,
-    handler::{EthPreExecution, EthPreExecutionContext, EthPreExecutionError},
+    handler::{EthPreExecution, EthPostExecution},
     handler_interface::PreExecutionHandler,
-    Context, Database,
+    Context,
 };
 use alloy_sol_types::{sol, SolValue};
 use specification::hardfork::SpecId;
@@ -40,42 +42,26 @@ const ERC20_TRANSFER_SIGNATURE: [u8; 4] = [0xa9, 0x05, 0x9c, 0xbb]; // keccak256
 
 
 
-#[derive(Debug, Default)]
-pub enum Erc20PreExecutionError {
-    #[default]
-   Whatever
-}
-
-impl From<Infallible> for Erc20PreExecutionError {
-    fn from(_: Infallible) -> Self {
-        Self::Whatever
-    }
-}
-
-impl From<InvalidTransaction> for Erc20PreExecutionError {
-    fn from(_: InvalidTransaction) -> Self {
-        Self::Whatever
-    }
-}
+type Erc20Error = EVMError<JournalStateGetterDBError<Context>, InvalidTransaction>;
 
 
 
-#[derive(Default)]
+
 struct Erc20PreExecution {
-    inner: EthPreExecution<Context, Erc20PreExecutionError>
+    inner: EthPreExecution<Context, Erc20Error>
 }
 
 impl Erc20PreExecution {
      fn new() -> Self {
         Self {
-            inner: EthPreExecution::default()
+            inner: EthPreExecution::new()
         }
     }
 }
 
 impl PreExecutionHandler for Erc20PreExecution {
     type Context = Context;
-    type Error = Erc20PreExecutionError;
+    type Error = Erc20Error;
 
     fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
         self.inner.load_accounts(context)
@@ -114,7 +100,7 @@ impl PreExecutionHandler for Erc20PreExecution {
 
 
 
-fn token_operation(context: &mut Context, sender: Address, recipient: Address, amount: U256) -> Result<(), Erc20PreExecutionError> {
+fn token_operation(context: &mut Context, sender: Address, recipient: Address, amount: U256) -> Result<(), Erc20Error> {
     let token_account = context.journal().load_account(TOKEN)?.data;
    
     let sender_balance_slot: U256 = keccak256((sender, U256::from(3)).abi_encode()).into();
@@ -122,7 +108,7 @@ fn token_operation(context: &mut Context, sender: Address, recipient: Address, a
 
    
     if sender_balance < amount {
-        return Err(Erc20PreExecutionError::Whatever);
+        return Err(EVMError::Transaction(InvalidTransaction::MaxFeePerBlobGasNotSupported));
     }
     // Subtract the amount from the sender's balance
     let sender_new_balance = sender_balance.saturating_sub(amount);
@@ -139,45 +125,26 @@ fn token_operation(context: &mut Context, sender: Address, recipient: Address, a
 
 
 
-#[derive(Default)]
 struct Erc20PostExecution {
-    inner: EthPostExecution<Context, Erc20PostExecutionError, Erc20HaltReason>
+    inner: EthPostExecution<Context, Erc20Error, HaltReason>
 }
 
 
 impl Erc20PostExecution {
     fn new() -> Self {
         Self {
-            inner: EthPostExecution::default()
+            inner: EthPostExecution::new()
         }
     }
-}
-
-#[derive(Default, Eq, PartialEq, Debug, Clone)]
-pub enum Erc20HaltReason {
-    #[default]
-    Whatever
-}
-
-impl From<HaltReason> for Erc20HaltReason {
-    fn from(_: HaltReason) -> Self {
-        Self::Whatever
-    }
-}
-
-#[derive(Default)]
-pub enum Erc20PostExecutionError{
-    #[default]
-    Whatever
 }
 
 
 
 impl PostExecutionHandler for Erc20PostExecution {
     type Context = Context;
-    type Error = Erc20PostExecutionError;
+    type Error = Erc20Error;
     type ExecResult = FrameResult;
-    type Output = ResultAndState<Erc20HaltReason>;
+    type Output = ResultAndState<HaltReason>;
 
 
     fn refund(&self, context: &mut Self::Context, exec_result: &mut Self::ExecResult, eip7702_refund: i64) {
@@ -217,15 +184,87 @@ impl PostExecutionHandler for Erc20PostExecution {
         Ok(())
     }
 
-    fn output(&self, _: &mut Self::Context, _: Self::ExecResult) -> Result<Self::Output, Self::Error> {
-       Err(Erc20PostExecutionError::Whatever)
-    }   
+    fn output(&self, context: &mut Self::Context, result: Self::ExecResult) -> Result<Self::Output, Self::Error> {
+       self.inner.output(context, result)
+    }
 
-    fn clear(&self, _: &mut Self::Context) {
-        // Do nothing
+    fn clear(&self, context: &mut Self::Context) {
+       self.inner.clear(context)
     }
 }
 
+
+struct Erc20Validation {
+    inner: EthValidation<Context, Erc20Error>
+}
+
+
+impl Erc20Validation {
+    fn new() -> Self {
+        Self {
+            inner: EthValidation::new()
+        }
+    }
+}
+
+
+impl ValidationHandler for Erc20Validation {
+    type Context = Context;
+    type Error = Erc20Error;
+
+
+    fn validate_env(&self, context: &Self::Context) -> Result<(), Self::Error> {
+        self.inner.validate_env(context)
+    }
+
+    fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
+        let caller = context.tx().common_fields().caller();
+        let caller_nonce = context.journal().load_account(caller)?.data.info.nonce;
+        let token_account = context.journal().load_account(TOKEN)?.data.clone();
+        
+        if !context.cfg.is_nonce_check_disabled() {
+            let tx_nonce = context.tx().common_fields().nonce();
+            let state_nonce = caller_nonce;
+            match tx_nonce.cmp(&state_nonce) {
+                Ordering::Less => return Err(EVMError::Transaction(InvalidTransaction::NonceTooLow { tx: tx_nonce, state: state_nonce }.into())),
+                Ordering::Greater => return Err(EVMError::Transaction(InvalidTransaction::NonceTooHigh { tx: tx_nonce, state: state_nonce }.into())),
+               _ => (),
+            }
+        }
+
+        // gas_limit * max_fee + value
+        let mut balance_check = U256::from(context.tx().common_fields().gas_limit())
+            .checked_mul(U256::from(context.tx().max_fee()))
+            .and_then(|gas_cost| gas_cost.checked_add(context.tx().common_fields().value()))
+            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+
+        if context.tx().tx_type() == TransactionType::Eip4844 {
+            let tx = context.tx().eip4844();
+            let data_fee = tx.calc_max_data_fee();
+            balance_check = balance_check
+                .checked_add(data_fee)
+                .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+        }   
+
+        // Get the account balance from token slot
+        let account_balance_slot: U256 = keccak256((caller, U256::from(3)).abi_encode()).into();
+        let account_balance = token_account.storage.get(&account_balance_slot).expect("Balance slot not found").present_value();
+
+        if account_balance < balance_check && !context.cfg.is_balance_check_disabled() {
+            return Err(InvalidTransaction::LackOfFundForMaxFee {
+                fee: Box::new(balance_check),
+                balance: Box::new(account_balance),
+            }
+            .into());
+        };
+     
+        Ok(())
+    }
+
+    fn validate_initial_tx_gas(&self, context: &Self::Context) -> Result<u64, Self::Error> {
+        self.inner.validate_initial_tx_gas(context)
+    }   
+}
 
 
 fn main() {
