@@ -337,7 +337,7 @@ pub fn execute_test_suite(
 
             // Enable EOF in Prague tests.
             cfg.spec = if spec_name == SpecName::Prague {
-                SpecId::PRAGUE_EOF
+                SpecId::OSAKA
             } else {
                 spec_name.to_spec_id()
             };

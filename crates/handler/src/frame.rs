@@ -20,7 +20,7 @@ use precompile::PrecompileErrors;
 use primitives::{keccak256, Address, Bytes, B256, U256};
 use specification::{
     constants::CALL_STACK_LIMIT,
-    hardfork::SpecId::{self, HOMESTEAD, LONDON, PRAGUE_EOF, SPURIOUS_DRAGON},
+    hardfork::SpecId::{self, HOMESTEAD, LONDON, OSAKA, SPURIOUS_DRAGON},
 };
 use state::Bytecode;
 use std::borrow::ToOwned;
@@ -233,7 +233,7 @@ where
         }
 
         // Prague EOF
-        if spec.is_enabled_in(PRAGUE_EOF) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
+        if spec.is_enabled_in(OSAKA) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
             return return_error(InstructionResult::CreateInitCodeStartingEF00);
         }
 
