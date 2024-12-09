@@ -7,30 +7,24 @@ use reqwest::{Client, Url};
 use revm::{
     context::Cfg,
     context_interface::{
-        result::{EVMError, HaltReason, InvalidTransaction, ResultAndState},
+        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, Output, ResultAndState},
         transaction::Eip4844Tx,
         Block, JournalStateGetter, JournalStateGetterDBError, Transaction, TransactionGetter, TransactionType,
     },
     database_interface::WrapDatabaseAsync,
-    handler::{EthPostExecution, EthPreExecution, EthValidation, FrameResult},
+    handler::{EthHandler, EthPostExecution, EthPreExecution, EthValidation, FrameResult},
     handler_interface::{PostExecutionHandler, PreExecutionHandler, ValidationHandler},
-    primitives::{address, keccak256, Address, Bytes, U256},
+    primitives::{address, keccak256, Address, Bytes, TxKind, U256},
     state::{AccountInfo, EvmStorageSlot},
-    Context,
+    Context, MainEvm,
 };
 use database::{AlloyDB, BlockId, CacheDB};
 use specification::hardfork::SpecId;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
+use revm::EvmExec;
+use alloy_sol_types::SolCall;
+use revm::EvmCommit;
 
-sol! {
-    interface IERC20 {
-        function transfer(address to, uint256 amount) external returns (bool);
-        function balanceOf(address owner) external view returns (uint256);
-        function allowance(address owner, address spender) external view returns (uint256);
-        function approve(address spender, uint256 amount) external returns (bool);
-        function transferFrom(address from, address to, uint256 amount) external returns (bool);
-    }
-}
 
 
 
@@ -268,6 +262,83 @@ impl ValidationHandler for Erc20Validation {
     }   
 }
 
+fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> Result<U256> {
+    sol! {
+        function balanceOf(address account) public returns (uint256);
+    }
+
+    let encoded = balanceOfCall { account: address }.abi_encode();
+
+    let mut evm = MainEvm::new(
+        Context::builder()
+            .with_db(alloy_db)
+            .modify_tx_chained(|tx| {
+                // 0x1 because calling USDC proxy from zero address fails
+                tx.caller = address!("0000000000000000000000000000000000000001");
+                tx.transact_to = TxKind::Call(token);
+                tx.data = encoded.into();
+                tx.value = U256::from(0);
+            }),
+        EthHandler::default(),
+    );
+
+    let ref_tx = evm.exec().unwrap();
+    let result = ref_tx.result;
+
+    let value = match result {
+        ExecutionResult::Success {
+            output: Output::Call(value),
+            ..
+        } => value,
+        result => return Err(anyhow!("'balanceOf' execution failed: {result:?}")),
+    };
+
+    let balance = <U256>::abi_decode(&value, false)?;
+
+    Ok(balance)
+}
+
+fn transfer(
+    from: Address,
+    to: Address,
+    amount: U256,
+    token: Address,
+    cache_db: &mut AlloyCacheDB,
+) -> Result<()> {
+    sol! {
+        function transfer(address to, uint amount) external returns (bool);
+    }
+
+    let encoded = transferCall { to, amount }.abi_encode();
+
+    let mut evm = MainEvm::new(
+        Context::builder()
+            .with_db(cache_db)
+            .modify_tx_chained(|tx| {
+                tx.caller = from;
+                tx.transact_to = TxKind::Call(token);
+                tx.data = encoded.into();
+                tx.value = U256::from(0);
+            }),
+        EthHandler::default(),
+    );
+
+    let ref_tx = evm.exec_commit().unwrap();
+    let success: bool = match ref_tx {
+        ExecutionResult::Success {
+            output: Output::Call(value),
+            ..
+        } => <bool>::abi_decode(&value, false)?,
+        result => return Err(anyhow!("'transfer' execution failed: {result:?}")),
+    };
+
+    if !success {
+        return Err(anyhow!("'transfer' failed"));
+    }
+
+    Ok(())
+}
+
 
 
 #[tokio::main]
@@ -300,14 +371,15 @@ async fn main() -> Result<()> {
         code: None,
     });
 
-//     let balance_before = balance_of(usdc, account, &mut cache_db).unwrap();
-//     // Transfer 100 tokens from account to account_to
-//     transfer(account, account_to, hundred_tokens, usdc, &mut cache_db)?;
+    let balance_before = balance_of(usdc, account, &mut cache_db).unwrap();
 
-//     let balance_after = balance_of(usdc, account, &mut cache_db)?;
+    // Transfer 100 tokens from account to account_to
+    transfer(account, account_to, hundred_tokens, usdc, &mut cache_db)?;
 
-//     println!("Balance before: {balance_before}");
-//   println!("Balance after: {balance_after}");
+    let balance_after = balance_of(usdc, account, &mut cache_db)?;
+
+    println!("Balance before: {balance_before}");
+    println!("Balance after: {balance_after}");
 
 
     Ok(())
