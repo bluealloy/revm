@@ -90,7 +90,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-pub fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> Result<U256> {
+fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> Result<U256> {
     sol! {
         function balanceOf(address account) public returns (uint256);
     }
