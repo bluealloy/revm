@@ -91,9 +91,7 @@ where
             )) => Self::new(Precompiles::new(spec.into_eth_spec().into())),
             OpSpec::Op(OpSpecId::FJORD) => Self::new(fjord()),
             OpSpec::Op(OpSpecId::GRANITE)
-            | OpSpec::Eth(SpecId::PRAGUE | SpecId::PRAGUE_EOF | SpecId::LATEST) => {
-                Self::new(granite())
-            }
+            | OpSpec::Eth(SpecId::PRAGUE | SpecId::OSAKA | SpecId::LATEST) => Self::new(granite()),
         }
     }
 

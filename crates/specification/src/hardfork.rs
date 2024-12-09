@@ -29,7 +29,7 @@ pub enum SpecId {
     SHANGHAI,         // Shanghai               17034870 (Timestamp: 1681338455)
     CANCUN,           // Cancun                 19426587 (Timestamp: 1710338135)
     PRAGUE,           // Prague                 TBD
-    PRAGUE_EOF,       // Prague+EOF             TBD
+    OSAKA,            // Osaka                  TBD
     #[default]
     LATEST = u8::MAX,
 }
@@ -69,7 +69,7 @@ pub mod name {
     pub const SHANGHAI: &str = "Shanghai";
     pub const CANCUN: &str = "Cancun";
     pub const PRAGUE: &str = "Prague";
-    pub const PRAGUE_EOF: &str = "PragueEOF";
+    pub const OSAKA: &str = "PragueEOF";
     pub const LATEST: &str = "Latest";
 }
 
@@ -95,7 +95,7 @@ impl From<&str> for SpecId {
             name::SHANGHAI => Self::SHANGHAI,
             name::CANCUN => Self::CANCUN,
             name::PRAGUE => Self::PRAGUE,
-            name::PRAGUE_EOF => Self::PRAGUE_EOF,
+            name::OSAKA => Self::OSAKA,
             name::LATEST => Self::LATEST,
             _ => Self::LATEST,
         }
@@ -124,7 +124,7 @@ impl From<SpecId> for &'static str {
             SpecId::SHANGHAI => name::SHANGHAI,
             SpecId::CANCUN => name::CANCUN,
             SpecId::PRAGUE => name::PRAGUE,
-            SpecId::PRAGUE_EOF => name::PRAGUE_EOF,
+            SpecId::OSAKA => name::OSAKA,
             SpecId::LATEST => name::LATEST,
         }
     }
