@@ -1,24 +1,26 @@
-use std::cmp::Ordering;
 
-use revm::{context::Cfg, context_interface::result::{ HaltReason, ResultAndState}, handler::{ EthValidation, FrameResult}, handler_interface::{PostExecutionHandler, ValidationHandler}, primitives::{address, keccak256, Address, U256}, state::EvmStorageSlot};
-use alloy_provider::{network::Ethereum, RootProvider};
+use std::cmp::Ordering;
+use alloy_provider::{network::Ethereum, ProviderBuilder, RootProvider};
+use alloy_sol_types::{sol, SolValue};
 use alloy_transport_http::Http;
-use database::{AlloyDB, CacheDB};
-use reqwest::Client;
+use reqwest::{Client, Url};
 use revm::{
+    context::Cfg,
     context_interface::{
-        result::{EVMError, InvalidTransaction},
+        result::{EVMError, HaltReason, InvalidTransaction, ResultAndState},
         transaction::Eip4844Tx,
-        Block, JournalStateGetter, JournalStateGetterDBError, Transaction, TransactionGetter, TransactionType
+        Block, JournalStateGetter, JournalStateGetterDBError, Transaction, TransactionGetter, TransactionType,
     },
     database_interface::WrapDatabaseAsync,
-    handler::{EthPreExecution, EthPostExecution},
-    handler_interface::PreExecutionHandler,
+    handler::{EthPostExecution, EthPreExecution, EthValidation, FrameResult},
+    handler_interface::{PostExecutionHandler, PreExecutionHandler, ValidationHandler},
+    primitives::{address, keccak256, Address, Bytes, U256},
+    state::{AccountInfo, EvmStorageSlot},
     Context,
 };
-use alloy_sol_types::{sol, SolValue};
+use database::{AlloyDB, BlockId, CacheDB};
 use specification::hardfork::SpecId;
-
+use anyhow::Result;
 
 sol! {
     interface IERC20 {
@@ -267,6 +269,49 @@ impl ValidationHandler for Erc20Validation {
 }
 
 
-fn main() {
-    println!("Hello, world!");
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    // Set up the HTTP transport which is consumed by the RPC client.
+    let rpc_url: Url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
+
+    let client = ProviderBuilder::new().on_http(rpc_url);
+
+    let alloy = WrapDatabaseAsync::new(AlloyDB::new(client, BlockId::latest())).unwrap();
+    let mut cache_db = CacheDB::new(alloy);
+
+    // Random empty account: From
+    let account = address!("18B06aaF27d44B756FCF16Ca20C1f183EB49111f");
+    // Random empty account: To
+    let account_to = address!("0x21a4B6F62E51e59274b6Be1705c7c68781B87C77");
+
+    let usdc = address!("a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48");
+
+    // USDC has 6 decimals
+    let hundred_tokens = U256::from(100_000_000_000_000_000u128);
+
+    let balance_slot = keccak256((account, U256::from(3)).abi_encode()).into();
+
+    cache_db.insert_account_storage(usdc, balance_slot, hundred_tokens);
+    cache_db.insert_account_info(account, AccountInfo {
+        nonce: 0,
+        balance: hundred_tokens,
+        code_hash: keccak256(Bytes::new()),
+        code: None,
+    });
+
+//     let balance_before = balance_of(usdc, account, &mut cache_db).unwrap();
+//     // Transfer 100 tokens from account to account_to
+//     transfer(account, account_to, hundred_tokens, usdc, &mut cache_db)?;
+
+//     let balance_after = balance_of(usdc, account, &mut cache_db)?;
+
+//     println!("Balance before: {balance_before}");
+//   println!("Balance after: {balance_after}");
+
+
+    Ok(())
 }
+
+
+

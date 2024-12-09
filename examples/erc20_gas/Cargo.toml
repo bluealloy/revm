@@ -27,17 +27,19 @@ revm.workspace = true
 database = { workspace = true, features = ["std", "alloydb"] }
 specification.workspace = true
 
-# alloy dependencies
-alloy-sol-types = { version = "0.8.2", default-features = false, features = ["std"] }
-alloy-primitives = "0.6"
-alloy-eips = "0.4.2"
-alloy-transport-http = "0.4.2"
-alloy-provider = "0.4.2"
+
+# tokio
+tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
+
+# alloy
+alloy-sol-types = { version = "0.8.2", default-features = false, features = [
+    "std",
+] }
+alloy-eips = "0.6"
+alloy-transport-http = "0.6"
+alloy-provider = "0.6"
 reqwest = { version = "0.12" }
 anyhow = "1.0.89"
-
-# async runtime
-tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
 
 
 
