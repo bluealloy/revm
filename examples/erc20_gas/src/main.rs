@@ -1,265 +1,123 @@
-
-use std::cmp::Ordering;
 use alloy_provider::{network::Ethereum, ProviderBuilder, RootProvider};
-use alloy_sol_types::{sol, SolValue};
+use alloy_sol_types::{sol, SolCall, SolValue};
 use alloy_transport_http::Http;
+use anyhow::{anyhow, Result};
+use database::{AlloyDB, BlockId, CacheDB};
 use reqwest::{Client, Url};
 use revm::{
-    context::Cfg,
     context_interface::{
-        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, Output, ResultAndState},
-        transaction::Eip4844Tx,
-        Block, JournalStateGetter, JournalStateGetterDBError, Transaction, TransactionGetter, TransactionType,
+        result::{EVMError, ExecutionResult, InvalidTransaction, Output},
+        JournalStateGetter,
     },
     database_interface::WrapDatabaseAsync,
-    handler::{EthHandler, EthPostExecution, EthPreExecution, EthValidation, FrameResult},
-    handler_interface::{PostExecutionHandler, PreExecutionHandler, ValidationHandler},
+    handler::EthHandler,
     primitives::{address, keccak256, Address, Bytes, TxKind, U256},
     state::{AccountInfo, EvmStorageSlot},
-    Context, MainEvm,
+    Context, EvmCommit, EvmExec, MainEvm,
 };
-use database::{AlloyDB, BlockId, CacheDB};
-use specification::hardfork::SpecId;
-use anyhow::{anyhow, Result};
-use revm::EvmExec;
-use alloy_sol_types::SolCall;
-use revm::EvmCommit;
 
+mod error;
+mod handlers;
 
-
+use error::Erc20Error;
+use handlers::{Erc20PostExecution, Erc20PreExecution, Erc20Validation};
 
 type AlloyCacheDB =
     CacheDB<WrapDatabaseAsync<AlloyDB<Http<Client>, Ethereum, RootProvider<Http<Client>>>>>;
 
 // Constants
-const TOKEN: Address = address!("1234567890123456789012345678901234567890");
-const TREASURY: Address = address!("0000000000000000000000000000000000000001");
-const ERC20_TRANSFER_SIGNATURE: [u8; 4] = [0xa9, 0x05, 0x9c, 0xbb]; // keccak256("transfer(address,uint256)")[:4]
+pub const TOKEN: Address = address!("1234567890123456789012345678901234567890");
+pub const TREASURY: Address = address!("0000000000000000000000000000000000000001");
 
+#[tokio::main]
+async fn main() -> Result<()> {
+    // Set up the HTTP transport which is consumed by the RPC client.
+    let rpc_url: Url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
 
+    let client = ProviderBuilder::new().on_http(rpc_url);
 
-type Erc20Error = EVMError<JournalStateGetterDBError<Context>, InvalidTransaction>;
+    let alloy = WrapDatabaseAsync::new(AlloyDB::new(client, BlockId::latest())).unwrap();
+    let mut cache_db = CacheDB::new(alloy);
 
+    // Random empty account: From
+    let account = address!("18B06aaF27d44B756FCF16Ca20C1f183EB49111f");
+    // Random empty account: To
+    let account_to = address!("0x21a4B6F62E51e59274b6Be1705c7c68781B87C77");
 
+    let usdc = address!("a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48");
 
+    // USDC has 6 decimals
+    let hundred_tokens = U256::from(100_000_000_000_000_000u128);
 
-struct Erc20PreExecution {
-    inner: EthPreExecution<Context, Erc20Error>
-}
+    let balance_slot = keccak256((account, U256::from(3)).abi_encode()).into();
 
-impl Erc20PreExecution {
-     fn new() -> Self {
-        Self {
-            inner: EthPreExecution::new()
-        }
-    }
-}
+    cache_db.insert_account_storage(usdc, balance_slot, hundred_tokens);
+    cache_db.insert_account_info(
+        account,
+        AccountInfo {
+            nonce: 0,
+            balance: hundred_tokens,
+            code_hash: keccak256(Bytes::new()),
+            code: None,
+        },
+    );
 
-impl PreExecutionHandler for Erc20PreExecution {
-    type Context = Context;
-    type Error = Erc20Error;
+    let balance_before = balance_of(usdc, account, &mut cache_db).unwrap();
 
-    fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        self.inner.load_accounts(context)
-    }
+    // Transfer 100 tokens from account to account_to
+    // Magic happens here with custom handlers
+    transfer(account, account_to, hundred_tokens, usdc, &mut cache_db)?;
 
-    fn apply_eip7702_auth_list(&self, context: &mut Self::Context) -> Result<u64, Self::Error> {
-        self.inner.apply_eip7702_auth_list(context)
-    }
+    let balance_after = balance_of(usdc, account, &mut cache_db)?;
 
-    fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        let basefee = context.block.basefee();
-        let blob_price = U256::from(context.block.blob_gasprice().unwrap_or_default());
-        let effective_gas_price = context.tx().effective_gas_price(*basefee);
-        
-        // Subtract gas costs from the caller's account.
-        // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
-
-        let mut gas_cost = U256::from(context.tx().common_fields().gas_limit())
-            .saturating_mul(effective_gas_price);
-
-    
-         // EIP-4844
-         if context.tx().tx_type() == TransactionType::Eip4844 {
-            let blob_gas = U256::from(context.tx().eip4844().total_blob_gas());
-            gas_cost = gas_cost.saturating_add(blob_price.saturating_mul(blob_gas));
-        }
-
-        // Get the balance slot for the caller
-        let caller = context.tx().common_fields().caller();
-
-        token_operation(context, caller, TREASURY, gas_cost)?;
-
-        Ok(())
-    }
-}
-
-
-
-fn token_operation(context: &mut Context, sender: Address, recipient: Address, amount: U256) -> Result<(), Erc20Error> {
-    let token_account = context.journal().load_account(TOKEN)?.data;
-   
-    let sender_balance_slot: U256 = keccak256((sender, U256::from(3)).abi_encode()).into();
-    let sender_balance = token_account.storage.get(&sender_balance_slot).expect("Balance slot not found").present_value();
-
-   
-    if sender_balance < amount {
-        return Err(EVMError::Transaction(InvalidTransaction::MaxFeePerBlobGasNotSupported));
-    }
-    // Subtract the amount from the sender's balance
-    let sender_new_balance = sender_balance.saturating_sub(amount);
-    token_account.storage.insert(sender_balance_slot, EvmStorageSlot::new_changed(sender_balance, sender_new_balance));
-
-    // Add the amount to the recipient's balance
-    let recipient_balance_slot: U256 = keccak256((recipient, U256::from(3)).abi_encode()).into();
-    let recipient_balance = token_account.storage.get(&recipient_balance_slot).expect("To balance slot not found").present_value();
-    let recipient_new_balance = recipient_balance.saturating_add(amount);
-    token_account.storage.insert(recipient_balance_slot, EvmStorageSlot::new_changed(recipient_balance, recipient_new_balance));
+    println!("Balance before: {balance_before}");
+    println!("Balance after: {balance_after}");
 
     Ok(())
 }
 
+/// Helpers
+pub fn token_operation(
+    context: &mut Context,
+    sender: Address,
+    recipient: Address,
+    amount: U256,
+) -> Result<(), Erc20Error> {
+    let token_account = context.journal().load_account(TOKEN)?.data;
 
+    let sender_balance_slot: U256 = keccak256((sender, U256::from(3)).abi_encode()).into();
+    let sender_balance = token_account
+        .storage
+        .get(&sender_balance_slot)
+        .expect("Balance slot not found")
+        .present_value();
 
-struct Erc20PostExecution {
-    inner: EthPostExecution<Context, Erc20Error, HaltReason>
-}
-
-
-impl Erc20PostExecution {
-    fn new() -> Self {
-        Self {
-            inner: EthPostExecution::new()
-        }
+    if sender_balance < amount {
+        return Err(EVMError::Transaction(
+            InvalidTransaction::MaxFeePerBlobGasNotSupported,
+        ));
     }
-}
+    // Subtract the amount from the sender's balance
+    let sender_new_balance = sender_balance.saturating_sub(amount);
+    token_account.storage.insert(
+        sender_balance_slot,
+        EvmStorageSlot::new_changed(sender_balance, sender_new_balance),
+    );
 
+    // Add the amount to the recipient's balance
+    let recipient_balance_slot: U256 = keccak256((recipient, U256::from(3)).abi_encode()).into();
+    let recipient_balance = token_account
+        .storage
+        .get(&recipient_balance_slot)
+        .expect("To balance slot not found")
+        .present_value();
+    let recipient_new_balance = recipient_balance.saturating_add(amount);
+    token_account.storage.insert(
+        recipient_balance_slot,
+        EvmStorageSlot::new_changed(recipient_balance, recipient_new_balance),
+    );
 
-
-impl PostExecutionHandler for Erc20PostExecution {
-    type Context = Context;
-    type Error = Erc20Error;
-    type ExecResult = FrameResult;
-    type Output = ResultAndState<HaltReason>;
-
-
-    fn refund(&self, context: &mut Self::Context, exec_result: &mut Self::ExecResult, eip7702_refund: i64) {
-        self.inner.refund(context, exec_result, eip7702_refund)
-    }
-
-    fn reimburse_caller(&self, context: &mut Self::Context, exec_result: &mut Self::ExecResult) -> Result<(), Self::Error> {
-        let basefee = context.block.basefee();
-        let caller = context.tx().common_fields().caller();
-        let effective_gas_price = context.tx().effective_gas_price(*basefee);
-        let gas = exec_result.gas();
-
-        let reimbursement = effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64);
-        token_operation(context, TREASURY, caller, reimbursement).unwrap();
-
-
-        Ok(())
-
-    }
-
-    fn reward_beneficiary(&self, context: &mut Self::Context, exec_result: &mut Self::ExecResult) -> Result<(), Self::Error> {
-        let tx = context.tx();
-        let beneficiary = context.block.beneficiary();
-        let basefee = context.block.basefee();
-        let effective_gas_price = tx.effective_gas_price(*basefee);
-        let gas = exec_result.gas();
-
-        let coinbase_gas_price = if context.cfg.spec().is_enabled_in(SpecId::LONDON) {
-            effective_gas_price.saturating_sub(*basefee)
-        } else {
-            effective_gas_price
-        };
-
-        let reward = coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64);
-        token_operation(context, TREASURY, *beneficiary, reward).unwrap();
-     
-        Ok(())
-    }
-
-    fn output(&self, context: &mut Self::Context, result: Self::ExecResult) -> Result<Self::Output, Self::Error> {
-       self.inner.output(context, result)
-    }
-
-    fn clear(&self, context: &mut Self::Context) {
-       self.inner.clear(context)
-    }
-}
-
-
-struct Erc20Validation {
-    inner: EthValidation<Context, Erc20Error>
-}
-
-
-impl Erc20Validation {
-    fn new() -> Self {
-        Self {
-            inner: EthValidation::new()
-        }
-    }
-}
-
-
-impl ValidationHandler for Erc20Validation {
-    type Context = Context;
-    type Error = Erc20Error;
-
-
-    fn validate_env(&self, context: &Self::Context) -> Result<(), Self::Error> {
-        self.inner.validate_env(context)
-    }
-
-    fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        let caller = context.tx().common_fields().caller();
-        let caller_nonce = context.journal().load_account(caller)?.data.info.nonce;
-        let token_account = context.journal().load_account(TOKEN)?.data.clone();
-        
-        if !context.cfg.is_nonce_check_disabled() {
-            let tx_nonce = context.tx().common_fields().nonce();
-            let state_nonce = caller_nonce;
-            match tx_nonce.cmp(&state_nonce) {
-                Ordering::Less => return Err(EVMError::Transaction(InvalidTransaction::NonceTooLow { tx: tx_nonce, state: state_nonce }.into())),
-                Ordering::Greater => return Err(EVMError::Transaction(InvalidTransaction::NonceTooHigh { tx: tx_nonce, state: state_nonce }.into())),
-               _ => (),
-            }
-        }
-
-        // gas_limit * max_fee + value
-        let mut balance_check = U256::from(context.tx().common_fields().gas_limit())
-            .checked_mul(U256::from(context.tx().max_fee()))
-            .and_then(|gas_cost| gas_cost.checked_add(context.tx().common_fields().value()))
-            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
-
-        if context.tx().tx_type() == TransactionType::Eip4844 {
-            let tx = context.tx().eip4844();
-            let data_fee = tx.calc_max_data_fee();
-            balance_check = balance_check
-                .checked_add(data_fee)
-                .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
-        }   
-
-        // Get the account balance from token slot
-        let account_balance_slot: U256 = keccak256((caller, U256::from(3)).abi_encode()).into();
-        let account_balance = token_account.storage.get(&account_balance_slot).expect("Balance slot not found").present_value();
-
-        if account_balance < balance_check && !context.cfg.is_balance_check_disabled() {
-            return Err(InvalidTransaction::LackOfFundForMaxFee {
-                fee: Box::new(balance_check),
-                balance: Box::new(account_balance),
-            }
-            .into());
-        };
-     
-        Ok(())
-    }
-
-    fn validate_initial_tx_gas(&self, context: &Self::Context) -> Result<u64, Self::Error> {
-        self.inner.validate_initial_tx_gas(context)
-    }   
+    Ok(())
 }
 
 fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> Result<U256> {
@@ -338,52 +196,3 @@ fn transfer(
 
     Ok(())
 }
-
-
-
-#[tokio::main]
-async fn main() -> Result<()> {
-    // Set up the HTTP transport which is consumed by the RPC client.
-    let rpc_url: Url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
-
-    let client = ProviderBuilder::new().on_http(rpc_url);
-
-    let alloy = WrapDatabaseAsync::new(AlloyDB::new(client, BlockId::latest())).unwrap();
-    let mut cache_db = CacheDB::new(alloy);
-
-    // Random empty account: From
-    let account = address!("18B06aaF27d44B756FCF16Ca20C1f183EB49111f");
-    // Random empty account: To
-    let account_to = address!("0x21a4B6F62E51e59274b6Be1705c7c68781B87C77");
-
-    let usdc = address!("a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48");
-
-    // USDC has 6 decimals
-    let hundred_tokens = U256::from(100_000_000_000_000_000u128);
-
-    let balance_slot = keccak256((account, U256::from(3)).abi_encode()).into();
-
-    cache_db.insert_account_storage(usdc, balance_slot, hundred_tokens);
-    cache_db.insert_account_info(account, AccountInfo {
-        nonce: 0,
-        balance: hundred_tokens,
-        code_hash: keccak256(Bytes::new()),
-        code: None,
-    });
-
-    let balance_before = balance_of(usdc, account, &mut cache_db).unwrap();
-
-    // Transfer 100 tokens from account to account_to
-    transfer(account, account_to, hundred_tokens, usdc, &mut cache_db)?;
-
-    let balance_after = balance_of(usdc, account, &mut cache_db)?;
-
-    println!("Balance before: {balance_before}");
-    println!("Balance after: {balance_after}");
-
-
-    Ok(())
-}
-
-
-
