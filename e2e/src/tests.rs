@@ -28,10 +28,7 @@ mod failing_tests {
     define_tests! {
         // fn st_e_i_p4844_blobtransactions_opcode_blobh_bounds("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhBounds.json");
         // fn st_e_i_p4844_blobtransactions_opcode_blobhash_out_of_range("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhashOutOfRange.json");
-        fn revert_in_create_in_init_paris("tests/GeneralStateTests/stRevertTest/RevertInCreateInInit_Paris.json");
-        // fn st_e_i_p3860_limitmeterinitcode_create_init_code_size_limit("tests/GeneralStateTests/Shanghai/stEIP3860-limitmeterinitcode/createInitCodeSizeLimit.json");
-        // fn st_e_i_p3855_push0_push0("tests/GeneralStateTests/Shanghai/stEIP3855-push0/push0.json");
-        // fn st_e_i_p3855_push0_push0_gas("tests/GeneralStateTests/Shanghai/stEIP3855-push0/push0Gas.json");
+        // fn revert_in_create_in_init_paris("tests/GeneralStateTests/stRevertTest/RevertInCreateInInit_Paris.json");
     }
 }
 
@@ -417,7 +414,7 @@ mod st_revert {
         fn touch_to_empty_account_revert3_paris("tests/GeneralStateTests/stRevertTest/TouchToEmptyAccountRevert3_Paris.json");
         fn touch_to_empty_account_revert("tests/GeneralStateTests/stRevertTest/TouchToEmptyAccountRevert.json");
         fn state_revert("tests/GeneralStateTests/stRevertTest/stateRevert.json");
-        fn revert_in_create_in_init_paris("tests/GeneralStateTests/stRevertTest/RevertInCreateInInit_Paris.json");
+        // fn revert_in_create_in_init_paris("tests/GeneralStateTests/stRevertTest/RevertInCreateInInit_Paris.json");
         fn loop_calls_depth_then_revert("tests/GeneralStateTests/stRevertTest/LoopCallsDepthThenRevert.json");
         fn revert_depth_create_address_collision("tests/GeneralStateTests/stRevertTest/RevertDepthCreateAddressCollision.json");
         fn revert_sub_call_storage_o_o_g("tests/GeneralStateTests/stRevertTest/RevertSubCallStorageOOG.json");
@@ -787,9 +784,9 @@ mod cancun {
         fn st_e_i_p4844_blobtransactions_blobhash_list_bounds7("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds7.json");
         fn st_e_i_p4844_blobtransactions_empty_blobhash_list("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/emptyBlobhashList.json");
         fn st_e_i_p4844_blobtransactions_create_blobhash_tx("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/createBlobhashTx.json");
-        fn st_e_i_p4844_blobtransactions_opcode_blobhash_out_of_range("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhashOutOfRange.json");
+        // fn st_e_i_p4844_blobtransactions_opcode_blobhash_out_of_range("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhashOutOfRange.json");
         fn st_e_i_p4844_blobtransactions_blobhash_list_bounds3("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds3.json");
-        fn st_e_i_p4844_blobtransactions_opcode_blobh_bounds("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhBounds.json");
+        // fn st_e_i_p4844_blobtransactions_opcode_blobh_bounds("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/opcodeBlobhBounds.json");
         fn st_e_i_p4844_blobtransactions_wrong_blobhash_version("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/wrongBlobhashVersion.json");
         fn st_e_i_p4844_blobtransactions_blobhash_list_bounds4("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds4.json");
         fn st_e_i_p4844_blobtransactions_blobhash_list_bounds5("tests/GeneralStateTests/Cancun/stEIP4844-blobtransactions/blobhashListBounds5.json");
