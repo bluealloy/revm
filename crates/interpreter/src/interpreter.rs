@@ -295,11 +295,8 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     fn test_interpreter_serde() {
-        type EXT = ();
-        type MG = SharedMemory;
-
         let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00, 0x60, 0x00, 0x01][..]));
-        let interpreter = Interpreter::<EthInterpreter<EXT, MG>>::new(
+        let interpreter = Interpreter::<EthInterpreter>::new(
             Rc::new(RefCell::new(SharedMemory::new())),
             bytecode,
             InputsImpl {
@@ -316,8 +313,7 @@ mod tests {
 
         let serialized = bincode::serialize(&interpreter).unwrap();
 
-        let deserialized: Interpreter<EthInterpreter<EXT, MG>> =
-            bincode::deserialize(&serialized).unwrap();
+        let deserialized: Interpreter<EthInterpreter> = bincode::deserialize(&serialized).unwrap();
 
         assert_eq!(
             interpreter.bytecode.pc(),
