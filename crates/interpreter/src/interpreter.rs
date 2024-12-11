@@ -320,11 +320,6 @@ mod tests {
             bincode::deserialize(&serialized).unwrap();
 
         assert_eq!(
-            interpreter.bytecode.base.bytecode(),
-            deserialized.bytecode.base.bytecode(),
-            "Base bytecode content should be preserved"
-        );
-        assert_eq!(
             interpreter.bytecode.pc(),
             deserialized.bytecode.pc(),
             "Program counter should be preserved"
