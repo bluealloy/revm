@@ -295,7 +295,6 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     fn test_interpreter_serde() {
-
         type EXT = ();
         type MG = SharedMemory;
 
@@ -320,7 +319,15 @@ mod tests {
         let deserialized: Interpreter<EthInterpreter<EXT, MG>> =
             bincode::deserialize(&serialized).unwrap();
 
-        assert_eq!(interpreter.bytecode.pc(), deserialized.bytecode.pc());
-        assert_eq!(interpreter.stack.len(), deserialized.stack.len());
+        assert_eq!(
+            interpreter.bytecode.base.bytecode(),
+            deserialized.bytecode.base.bytecode(),
+            "Base bytecode content should be preserved"
+        );
+        assert_eq!(
+            interpreter.bytecode.pc(),
+            deserialized.bytecode.pc(),
+            "Program counter should be preserved"
+        );
     }
 }
