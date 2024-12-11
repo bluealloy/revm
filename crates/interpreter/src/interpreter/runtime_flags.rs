@@ -1,7 +1,10 @@
 use specification::hardfork::SpecId;
 
 use super::RuntimeFlag;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct RuntimeFlags {
     pub is_static: bool,
     pub is_eof_init: bool,
