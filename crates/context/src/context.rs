@@ -1,4 +1,6 @@
-use crate::{cfg::CfgEnv,block::BlockEnv, journaled_state::JournaledState as JournaledStateImpl, tx::TxEnv};
+use crate::{
+    block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState as JournaledStateImpl, tx::TxEnv,
+};
 use bytecode::{Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 use context_interface::{
     block::BlockSetter,
@@ -50,7 +52,10 @@ impl<BLOCK: Block + Default, TX: Transaction + Default, DB: Database, CHAIN: Def
         Self {
             tx: TX::default(),
             block: BLOCK::default(),
-            cfg: CfgEnv { spec, ..Default::default() },
+            cfg: CfgEnv {
+                spec,
+                ..Default::default()
+            },
             journaled_state: JournaledStateImpl::new(SpecId::LATEST, db),
             chain: Default::default(),
             error: Ok(()),

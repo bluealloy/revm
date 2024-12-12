@@ -3,7 +3,7 @@ use core::mem::MaybeUninit;
 use derive_where::derive_where;
 use revm::{
     bytecode::opcode::OpCode,
-    context::{block::BlockEnv, tx::TxEnv, Cfg, cfg::CfgEnv},
+    context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv, Cfg},
     context_interface::{
         block::BlockSetter,
         journaled_state::{AccountLoad, Eip7702CodeLoad},
