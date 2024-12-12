@@ -7,11 +7,11 @@ use indicatif::{ProgressBar, ProgressDrawTarget};
 use inspector::{inspector_handler, inspectors::TracerEip3155, InspectorContext, InspectorMainEvm};
 use revm::{
     bytecode::Bytecode,
-    context::{block::BlockEnv, tx::TxEnv},
+    context::{block::BlockEnv, tx::TxEnv, cfg::CfgEnv},
     context_interface::{
         block::calc_excess_blob_gas,
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
-        Cfg, CfgEnv,
+        Cfg,
     },
     database_interface::EmptyDB,
     handler::EthHandler,
