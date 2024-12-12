@@ -1,6 +1,5 @@
-use crate::interpreter::Jumps;
-
 use super::ExtBytecode;
+use crate::interpreter::Jumps;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[derive(Serialize, Deserialize)]
@@ -33,6 +32,10 @@ impl<'de> Deserialize<'de> for ExtBytecode {
         } = ExtBytecodeSerde::deserialize(deserializer)?;
 
         let mut bytecode = Self::new(base);
+
+        if program_counter >= bytecode.base.bytecode().len() {
+            panic!("serde pc: {program_counter} is less than bytecode len");
+        }
         bytecode.absolute_jump(program_counter);
         Ok(bytecode)
     }
