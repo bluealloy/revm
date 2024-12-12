@@ -1,4 +1,0 @@
-[features]
-# Minimal features needed for the interface
-default = ["std"]
-std = [] 
