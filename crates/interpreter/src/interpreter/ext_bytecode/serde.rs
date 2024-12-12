@@ -34,7 +34,7 @@ impl<'de> Deserialize<'de> for ExtBytecode {
         let mut bytecode = Self::new(base);
 
         if program_counter >= bytecode.base.bytecode().len() {
-            panic!("serde pc: {program_counter} is less than bytecode len");
+            panic!("serde pc: {program_counter} is greater than or equal to bytecode len");
         }
         bytecode.absolute_jump(program_counter);
         Ok(bytecode)
