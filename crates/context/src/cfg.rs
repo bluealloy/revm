@@ -18,7 +18,7 @@ pub struct CfgEnv<SPEC: Into<SpecId> = SpecId> {
     pub limit_contract_code_size: Option<usize>,
     /// Skips the nonce validation against the account's nonce.
     pub disable_nonce_check: bool,
-    /// A hard memory limit in bytes beyond which [crate::result::OutOfGasError::Memory] cannot be resized.
+    /// A hard memory limit in bytes beyond which [context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
     /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
     /// a sane value to prevent memory allocation panics. Defaults to `2^32 - 1` bytes per
