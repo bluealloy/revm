@@ -1,27 +1,24 @@
-use crate::error::Erc20Error;
 use crate::keccak256;
 use crate::TOKEN;
 use alloy_sol_types::SolValue;
+use revm::context_interface::JournaledState;
 use revm::context_interface::{Transaction, TransactionGetter};
+use revm::handler::EthValidationContext;
+use revm::handler::EthValidationError;
 use revm::{
     context::Cfg,
-    context_interface::{
-        result::{EVMError, InvalidTransaction},
-        transaction::Eip4844Tx,
-        JournalStateGetter, TransactionType,
-    },
+    context_interface::{result::InvalidTransaction, transaction::Eip4844Tx, TransactionType},
     handler::EthValidation,
     handler_interface::ValidationHandler,
     primitives::U256,
-    Context,
 };
 use std::cmp::Ordering;
 
-pub struct Erc20Validation {
-    inner: EthValidation<Context, Erc20Error>,
+pub struct Erc20Validation<CTX, ERROR> {
+    inner: EthValidation<CTX, ERROR>,
 }
 
-impl Erc20Validation {
+impl<CTX, ERROR> Erc20Validation<CTX, ERROR> {
     pub fn new() -> Self {
         Self {
             inner: EthValidation::new(),
@@ -29,9 +26,13 @@ impl Erc20Validation {
     }
 }
 
-impl ValidationHandler for Erc20Validation {
-    type Context = Context;
-    type Error = Erc20Error;
+impl<CTX, ERROR> ValidationHandler for Erc20Validation<CTX, ERROR>
+where
+    CTX: EthValidationContext,
+    ERROR: EthValidationError<CTX>,
+{
+    type Context = CTX;
+    type Error = ERROR;
 
     fn validate_env(&self, context: &Self::Context) -> Result<(), Self::Error> {
         self.inner.validate_env(context)
@@ -42,27 +43,21 @@ impl ValidationHandler for Erc20Validation {
         let caller_nonce = context.journal().load_account(caller)?.data.info.nonce;
         let token_account = context.journal().load_account(TOKEN)?.data.clone();
 
-        if !context.cfg.is_nonce_check_disabled() {
+        if !context.cfg().is_nonce_check_disabled() {
             let tx_nonce = context.tx().common_fields().nonce();
             let state_nonce = caller_nonce;
             match tx_nonce.cmp(&state_nonce) {
                 Ordering::Less => {
-                    return Err(EVMError::Transaction(
-                        InvalidTransaction::NonceTooLow {
-                            tx: tx_nonce,
-                            state: state_nonce,
-                        }
-                        .into(),
-                    ))
+                    return Err(ERROR::from(InvalidTransaction::NonceTooLow {
+                        tx: tx_nonce,
+                        state: state_nonce,
+                    }))
                 }
                 Ordering::Greater => {
-                    return Err(EVMError::Transaction(
-                        InvalidTransaction::NonceTooHigh {
-                            tx: tx_nonce,
-                            state: state_nonce,
-                        }
-                        .into(),
-                    ))
+                    return Err(ERROR::from(InvalidTransaction::NonceTooHigh {
+                        tx: tx_nonce,
+                        state: state_nonce,
+                    }))
                 }
                 _ => (),
             }
@@ -73,7 +68,7 @@ impl ValidationHandler for Erc20Validation {
             .and_then(|gas_cost| gas_cost.checked_add(context.tx().common_fields().value()))
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
-        if context.tx().tx_type() == TransactionType::Eip4844 {
+        if context.tx().tx_type().into() == TransactionType::Eip4844 {
             let tx = context.tx().eip4844();
             let data_fee = tx.calc_max_data_fee();
             balance_check = balance_check
@@ -88,7 +83,7 @@ impl ValidationHandler for Erc20Validation {
             .expect("Balance slot not found")
             .present_value();
 
-        if account_balance < balance_check && !context.cfg.is_balance_check_disabled() {
+        if account_balance < balance_check && !context.cfg().is_balance_check_disabled() {
             return Err(InvalidTransaction::LackOfFundForMaxFee {
                 fee: Box::new(balance_check),
                 balance: Box::new(account_balance),
