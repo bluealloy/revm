@@ -18,7 +18,7 @@ use revm::{
 };
 
 mod handlers;
-use handlers::{Erc20Evm, Erc20Handler, Erc20PostExecution, Erc20PreExecution, Erc20Validation};
+use handlers::{CustomEvm, CustomHandler, Erc20PostExecution, Erc20PreExecution, Erc20Validation};
 
 type AlloyCacheDB =
     CacheDB<WrapDatabaseAsync<AlloyDB<Http<Client>, Ethereum, RootProvider<Http<Client>>>>>;
@@ -142,7 +142,7 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
                 tx.data = encoded.into();
                 tx.value = U256::from(0);
             }),
-        Erc20Handler::default(),
+        CustomHandler::default(),
     );
 
     let ref_tx = evm.exec_commit().unwrap();
@@ -172,7 +172,7 @@ fn transfer(
 
     let encoded = transferCall { to, amount }.abi_encode();
 
-    let mut evm = Erc20Evm::new(
+    let mut evm = CustomEvm::new(
         Context::builder()
             .with_db(cache_db)
             .modify_tx_chained(|tx| {
@@ -181,7 +181,7 @@ fn transfer(
                 tx.data = encoded.into();
                 tx.value = U256::from(0);
             }),
-        Erc20Handler::new(
+        CustomHandler::new(
             Erc20Validation::new(),
             Erc20PreExecution::new(),
             EthExecution::new(),
