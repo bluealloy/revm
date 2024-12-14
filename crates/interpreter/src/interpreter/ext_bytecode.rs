@@ -7,6 +7,9 @@ use primitives::Bytes;
 
 use super::{EofCodeInfo, EofContainer, EofData, Immediates, Jumps, LegacyBytecode};
 
+#[cfg(feature = "serde")]
+mod serde;
+
 #[derive(Debug)]
 pub struct ExtBytecode {
     base: Bytecode,
