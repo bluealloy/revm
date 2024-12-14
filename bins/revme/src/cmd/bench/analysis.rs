@@ -2,7 +2,7 @@ use database::BenchmarkDB;
 use revm::{
     bytecode::Bytecode,
     handler::EthHandler,
-    primitives::{address, bytes, hex, Bytes, TxKind},
+    primitives::{address, bytes, Bytes, TxKind},
     Context, MainEvm,
 };
 use std::time::Instant;

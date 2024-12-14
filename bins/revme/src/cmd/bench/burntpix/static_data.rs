@@ -1,4 +1,4 @@
-use revm::primitives::{address, bytes, fixed_bytes, Address, Bytes, FixedBytes};
+use revm::primitives::{address, fixed_bytes, Address, Bytes, FixedBytes};
 
 pub const BURNTPIX_MAIN_ADDRESS: Address = address!("49206861766520746f6f206d7563682074696d65");
 pub const BURNTPIX_ADDRESS_ONE: Address = address!("0a743ba7304efcc9e384ece9be7631e2470e401e");
