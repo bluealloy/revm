@@ -2970,6 +2970,7 @@ dependencies = [
 name = "revm-context"
 version = "1.0.0"
 dependencies = [
+ "cfg-if",
  "derive-where",
  "revm-bytecode",
  "revm-context-interface",
@@ -2987,7 +2988,6 @@ name = "revm-context-interface"
 version = "1.0.0"
 dependencies = [
  "auto_impl",
- "cfg-if",
  "revm-database",
  "revm-database-interface",
  "revm-primitives",

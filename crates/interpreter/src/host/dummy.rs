@@ -1,5 +1,5 @@
 use crate::{Host, SStoreResult, SelfDestructResult};
-use context_interface::{Block, Cfg, CfgEnv, Transaction};
+use context_interface::{Block, Cfg, Transaction};
 use primitives::{hash_map::Entry, Address, Bytes, HashMap, Log, B256, KECCAK_EMPTY, U256};
 use std::vec::Vec;
 
@@ -21,10 +21,11 @@ where
     pub log: Vec<Log>,
 }
 
-impl<BLOCK, TX> DummyHost<BLOCK, TX, CfgEnv>
+impl<BLOCK, TX, CFG> DummyHost<BLOCK, TX, CFG>
 where
     BLOCK: Block,
     TX: Transaction,
+    CFG: Cfg + Default,
 {
     /// Create a new dummy host with the given [`Transaction`] and [`Block`].
     #[inline]
@@ -32,7 +33,7 @@ where
         Self {
             tx,
             block,
-            cfg: CfgEnv::default(),
+            cfg: CFG::default(),
             storage: HashMap::default(),
             transient_storage: HashMap::default(),
             log: Vec::new(),

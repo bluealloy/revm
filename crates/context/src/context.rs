@@ -1,11 +1,13 @@
-use crate::{block::BlockEnv, journaled_state::JournaledState as JournaledStateImpl, tx::TxEnv};
+use crate::{
+    block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState as JournaledStateImpl, tx::TxEnv,
+};
 use bytecode::{Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 use context_interface::{
     block::BlockSetter,
     journaled_state::{AccountLoad, Eip7702CodeLoad},
     result::EVMError,
     transaction::TransactionSetter,
-    Block, BlockGetter, Cfg, CfgEnv, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
+    Block, BlockGetter, Cfg, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
     Transaction, TransactionGetter,
 };
 use database_interface::{Database, EmptyDB};
@@ -47,12 +49,13 @@ impl<BLOCK: Block + Default, TX: Transaction + Default, DB: Database, CHAIN: Def
     Context<BLOCK, TX, CfgEnv, DB, CHAIN>
 {
     pub fn new(db: DB, spec: SpecId) -> Self {
-        let mut cfg = CfgEnv::default();
-        cfg.spec = spec;
         Self {
             tx: TX::default(),
             block: BLOCK::default(),
-            cfg,
+            cfg: CfgEnv {
+                spec,
+                ..Default::default()
+            },
             journaled_state: JournaledStateImpl::new(SpecId::LATEST, db),
             chain: Default::default(),
             error: Ok(()),
