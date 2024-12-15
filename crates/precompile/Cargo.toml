@@ -31,6 +31,10 @@ specification.workspace = true
 once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
 
 # ecRecover
+rust_secp256k1 = { version = "0.22", package = "secp256k1", default-features = false, features = [
+    "alloc",
+    "recovery",
+]}
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
 secp256k1 = { version = ">=0.28, <=0.29", default-features = false, features = [
     "alloc",
