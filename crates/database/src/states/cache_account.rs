@@ -31,7 +31,7 @@ impl From<BundleAccount> for CacheAccount {
 }
 
 impl CacheAccount {
-    /// Create new account that is loaded from database.
+    /// Creates new account that is loaded from database.
     pub fn new_loaded(info: AccountInfo, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
@@ -39,7 +39,7 @@ impl CacheAccount {
         }
     }
 
-    /// Create new account that is loaded empty from database.
+    /// Creates new account that is loaded empty from database.
     pub fn new_loaded_empty_eip161(storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount::new_empty_with_storage(storage)),
@@ -55,7 +55,7 @@ impl CacheAccount {
         }
     }
 
-    /// Create new account that is newly created
+    /// Creates new account that is newly created.
     pub fn new_newly_created(info: AccountInfo, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
@@ -63,7 +63,7 @@ impl CacheAccount {
         }
     }
 
-    /// Create account that is destroyed.
+    /// Creates account that is destroyed.
     pub fn new_destroyed() -> Self {
         Self {
             account: None,
@@ -71,7 +71,7 @@ impl CacheAccount {
         }
     }
 
-    /// Create changed account
+    /// Creates changed account.
     pub fn new_changed(info: AccountInfo, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
@@ -79,7 +79,7 @@ impl CacheAccount {
         }
     }
 
-    /// Return true if account is some
+    /// Returns true if account is some.
     pub fn is_some(&self) -> bool {
         matches!(
             self.status,
@@ -91,19 +91,19 @@ impl CacheAccount {
         )
     }
 
-    /// Return storage slot if it exist.
+    /// Returns storage slot if it exist.
     pub fn storage_slot(&self, slot: U256) -> Option<U256> {
         self.account
             .as_ref()
             .and_then(|a| a.storage.get(&slot).cloned())
     }
 
-    /// Fetch account info if it exist.
+    /// Fetches account info if it exist.
     pub fn account_info(&self) -> Option<AccountInfo> {
         self.account.as_ref().map(|a| a.info.clone())
     }
 
-    /// Dissolve account into components.
+    /// Dissolves account into components.
     pub fn into_components(self) -> (Option<(AccountInfo, PlainStorage)>, AccountStatus) {
         (self.account.map(|a| a.into_components()), self.status)
     }
@@ -168,9 +168,9 @@ impl CacheAccount {
         }
     }
 
-    /// Consume self and make account as destroyed.
+    /// Consumes self and make account as destroyed.
     ///
-    /// Set account as None and set status to Destroyer or DestroyedAgain.
+    /// Sets account as None and set status to Destroyer or DestroyedAgain.
     pub fn selfdestruct(&mut self) -> Option<TransitionAccount> {
         // Account should be None after selfdestruct so we can take it.
         let previous_info = self.account.take().map(|a| a.info);

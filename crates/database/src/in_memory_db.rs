@@ -39,7 +39,7 @@ impl<ExtDB: Default> Default for CacheDB<ExtDB> {
 }
 
 impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
-    /// Flatten a nested cache by applying the outer cache to the inner cache.
+    /// Flattens a nested cache by applying the outer cache to the inner cache.
     ///
     /// The behavior is as follows:
     /// - Accounts are overridden with outer accounts
@@ -62,14 +62,14 @@ impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
         inner
     }
 
-    /// Discard the outer cache and return the inner cache.
+    /// Discards the outer cache and return the inner cache.
     pub fn discard_outer(self) -> CacheDB<ExtDb> {
         self.db
     }
 }
 
 impl<ExtDB> CacheDB<ExtDB> {
-    /// Create a new cache with the given external database.
+    /// Creates a new cache with the given external database.
     pub fn new(db: ExtDB) -> Self {
         let mut contracts = HashMap::default();
         contracts.insert(KECCAK_EMPTY, Bytecode::default());
@@ -104,13 +104,13 @@ impl<ExtDB> CacheDB<ExtDB> {
         }
     }
 
-    /// Insert account info but not override storage
+    /// Inserts account info but not override storage
     pub fn insert_account_info(&mut self, address: Address, mut info: AccountInfo) {
         self.insert_contract(&mut info);
         self.accounts.entry(address).or_default().info = info;
     }
 
-    /// Wrap the cache in a [CacheDB], creating a nested cache.
+    /// Wraps the cache in a [CacheDB], creating a nested cache.
     pub fn nest(self) -> CacheDB<Self> {
         CacheDB::new(self)
     }
@@ -135,7 +135,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         }
     }
 
-    /// insert account storage without overriding account info
+    /// Inserts account storage without overriding account info
     pub fn insert_account_storage(
         &mut self,
         address: Address,
@@ -147,7 +147,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         Ok(())
     }
 
-    /// replace account storage without overriding account info
+    /// Replaces account storage without overriding account info
     pub fn replace_account_storage(
         &mut self,
         address: Address,
@@ -329,7 +329,7 @@ pub struct DbAccount {
     pub info: AccountInfo,
     /// If account is selfdestructed or newly created, storage will be cleared.
     pub account_state: AccountState,
-    /// storage slots
+    /// Storage slots
     pub storage: HashMap<U256, U256>,
 }
 

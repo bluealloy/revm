@@ -27,7 +27,7 @@ pub struct CallInputs {
     pub caller: Address,
     /// Call value.
     ///
-    /// Note: This value may not necessarily be transferred from caller to callee, see [`CallValue`].
+    /// **Note**: This value may not necessarily be transferred from caller to callee, see [`CallValue`].
     ///
     /// Previously `transfer.value` or `context.apparent_value`.
     pub value: CallValue,
@@ -82,7 +82,7 @@ impl CallInputs {
 
     /// Returns the call value, regardless of the transfer value type.
     ///
-    /// Note: This value may not necessarily be transferred from caller to callee, see [`CallValue`].
+    /// **Note**: This value may not necessarily be transferred from caller to callee, see [`CallValue`].
     #[inline]
     pub const fn call_value(&self) -> U256 {
         self.value.get()

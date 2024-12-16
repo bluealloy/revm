@@ -57,7 +57,7 @@ pub(super) fn check_canonical_fp2(
 
 /// Extracts a G2 point in Affine format from a 256 byte slice representation.
 ///
-/// Note: This function will perform a G2 subgroup check if `subgroup_check` is set to `true`.
+/// **Note**: This function will perform a G2 subgroup check if `subgroup_check` is set to `true`.
 pub(super) fn extract_g2_input(
     input: &[u8],
     subgroup_check: bool,

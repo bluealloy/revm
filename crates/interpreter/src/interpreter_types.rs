@@ -67,10 +67,9 @@ pub trait MemoryTrait {
         self.slice(offset..offset + len)
     }
 
-    /// Resize memory to new size.
+    /// Resizes memory to new size.
     ///
     /// # Note
-    ///
     /// It checks memory limits.
     fn resize(&mut self, new_size: usize) -> bool;
 }
@@ -110,11 +109,11 @@ pub trait StackTrait {
         self.len() == 0
     }
 
-    /// Pushes values to the stack
+    /// Pushes values to the stack.
+    ///
     /// Return `true` if push was successful, `false` if stack overflow.
     ///
     /// # Note
-    ///
     /// Error is internally set in interpreter.
     #[must_use]
     fn push(&mut self, value: U256) -> bool;

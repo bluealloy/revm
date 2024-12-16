@@ -6,20 +6,22 @@ use primitives::{Address, HashMap, B256};
 use state::{Account, AccountInfo, EvmState};
 use std::vec::Vec;
 
-/// Cache state contains both modified and original values.
+/// Cache state contains both modified and original values
 ///
+/// # Note
 /// Cache state is main state that revm uses to access state.
+///
 /// It loads all accounts from database and applies revm output to it.
 ///
 /// It generates transitions that is used to build BundleState.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CacheState {
-    /// Block state account with account state.
+    /// Block state account with account state
     pub accounts: HashMap<Address, CacheAccount>,
-    /// Created contracts.
+    /// Created contracts
     // TODO : Add bytecode counter for number of bytecodes added/removed.
     pub contracts: HashMap<B256, Bytecode>,
-    /// Has EIP-161 state clear enabled (Spurious Dragon hardfork).
+    /// Has EIP-161 state clear enabled (Spurious Dragon hardfork)
     pub has_state_clear: bool,
 }
 
@@ -30,7 +32,7 @@ impl Default for CacheState {
 }
 
 impl CacheState {
-    /// New default state.
+    /// Creates a new default state.
     pub fn new(has_state_clear: bool) -> Self {
         Self {
             accounts: HashMap::default(),
@@ -39,7 +41,7 @@ impl CacheState {
         }
     }
 
-    /// Set state clear flag. EIP-161.
+    /// Sets state clear flag. EIP-161.
     pub fn set_state_clear_flag(&mut self, has_state_clear: bool) {
         self.has_state_clear = has_state_clear;
     }
@@ -56,13 +58,13 @@ impl CacheState {
         })
     }
 
-    /// Insert not existing account.
+    /// Inserts not existing account.
     pub fn insert_not_existing(&mut self, address: Address) {
         self.accounts
             .insert(address, CacheAccount::new_loaded_not_existing());
     }
 
-    /// Insert Loaded (Or LoadedEmptyEip161 if account is empty) account.
+    /// Inserts Loaded (Or LoadedEmptyEip161 if account is empty) account.
     pub fn insert_account(&mut self, address: Address, info: AccountInfo) {
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, HashMap::default())
@@ -87,7 +89,7 @@ impl CacheState {
         self.accounts.insert(address, account);
     }
 
-    /// Apply output of revm execution and create account transitions that are used to build BundleState.
+    /// Applies output of revm execution and create account transitions that are used to build BundleState.
     pub fn apply_evm_state(&mut self, evm_state: EvmState) -> Vec<(Address, TransitionAccount)> {
         let mut transitions = Vec::with_capacity(evm_state.len());
         for (address, account) in evm_state {
@@ -98,7 +100,8 @@ impl CacheState {
         transitions
     }
 
-    /// Apply updated account state to the cached account.
+    /// Applies updated account state to the cached account.
+    ///
     /// Returns account transition if applicable.
     fn apply_account_state(
         &mut self,

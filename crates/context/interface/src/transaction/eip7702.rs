@@ -12,7 +12,6 @@ pub trait Eip7702Tx: Eip1559Tx {
     /// Returns length of the authorization list.
     ///
     /// # Note
-    ///
     /// Transaction is considered invalid if list is empty.
     fn authorization_list_len(&self) -> usize;
 
@@ -28,10 +27,9 @@ pub trait Eip7702Tx: Eip1559Tx {
 /// Authorization trait.
 #[auto_impl(&, Arc)]
 pub trait Authorization: Clone {
-    /// Authority address.
+    /// Authority address
     ///
     /// # Note
-    ///
     /// Authority signature can be invalid, so this method returns None if the authority
     /// could not be recovered.
     ///
@@ -45,7 +43,6 @@ pub trait Authorization: Clone {
     /// Returns the nonce.
     ///
     /// # Note
-    ///
     /// If nonce is not same as the nonce of the signer account,
     /// the authorization is skipped.
     fn nonce(&self) -> u64;
@@ -78,7 +75,6 @@ impl Authorization for RecoveredAuthorization {
     /// Returns the nonce.
     ///
     /// # Note
-    ///
     /// If nonce is not same as the nonce of the signer account,
     /// authorization is skipped and considered invalidated.
     fn nonce(&self) -> u64 {

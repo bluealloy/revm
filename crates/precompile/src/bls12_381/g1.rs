@@ -40,7 +40,7 @@ pub(super) fn decode_and_check_g1(
 
 /// Extracts a G1 point in Affine format from a 128 byte slice representation.
 ///
-/// Note: This function will perform a G1 subgroup check if `subgroup_check` is set to `true`.
+/// **Note**: This function will perform a G1 subgroup check if `subgroup_check` is set to `true`.
 pub(super) fn extract_g1_input(
     input: &[u8],
     subgroup_check: bool,

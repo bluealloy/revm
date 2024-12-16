@@ -11,6 +11,7 @@ use state::AccountInfo;
 /// Status is needed as to know from what state we are applying the TransitionAccount.
 ///
 /// Original account info is needed to know if there was a change.
+///
 /// Same thing for storage with original value.
 ///
 /// On selfdestruct storage original value is ignored.
@@ -46,6 +47,7 @@ impl BundleAccount {
     }
 
     /// The approximate size of changes needed to store this account.
+    ///
     /// `1 + storage_len`
     pub fn size_hint(&self) -> usize {
         1 + self.storage.len()
@@ -127,7 +129,9 @@ impl BundleAccount {
     }
 
     /// Update to new state and generate AccountRevert that if applied to new state will
-    /// revert it to previous state. If no revert is present, update is noop.
+    /// revert it to previous state.
+    ///
+    /// If no revert is present, update is noop.
     pub fn update_and_create_revert(
         &mut self,
         transition: TransitionAccount,
