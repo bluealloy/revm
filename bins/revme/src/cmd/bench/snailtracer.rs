@@ -1,10 +1,11 @@
 use database::BenchmarkDB;
+use inspector::{inspector_handler, inspectors::TracerEip3155, InspectorContext, InspectorMainEvm};
 use revm::{
     bytecode::Bytecode,
-    handler::EthHandler,
     primitives::{address, bytes, Bytes, TxKind},
     Context, MainEvm,
 };
+use std::io::stderr;
 
 pub fn simple_example() {
     let bytecode = Bytecode::new_raw(CONTRACT_DATA.clone());
@@ -16,9 +17,13 @@ pub fn simple_example() {
             tx.caller = address!("1000000000000000000000000000000000000000");
             tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
             tx.data = bytes!("30627b7c");
+            tx.gas_limit = 30_000_000;
         });
-    let mut evm = MainEvm::new(context, EthHandler::default());
-
+    let mut evm = InspectorMainEvm::new(
+        InspectorContext::new(context, TracerEip3155::new(Box::new(stderr()))),
+        inspector_handler(),
+    );
+    println!("run");
     let _ = evm.transact().unwrap();
 }
 
