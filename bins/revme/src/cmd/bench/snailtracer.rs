@@ -4,7 +4,7 @@ use revm::{
     bytecode::Bytecode,
     handler::EthHandler,
     primitives::{address, bytes, Bytes, TxKind},
-    Context, MainEvm, MainEvm,
+    Context, MainEvm,
 };
 use std::io::stderr;
 
