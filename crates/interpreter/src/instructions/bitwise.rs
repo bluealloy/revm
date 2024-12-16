@@ -174,9 +174,8 @@ pub fn sar<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
 }
 
+// TODO : Tests
 /*
-TODO TESTS
-
 #[cfg(test)]
 mod tests {
     use crate::instructions::bitwise::{byte, sar, shl, shr};

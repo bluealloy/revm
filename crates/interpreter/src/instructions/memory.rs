@@ -56,9 +56,9 @@ pub fn mcopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     check!(interpreter, CANCUN);
     popn!([dst, src, len], interpreter);
 
-    // into usize or fail
+    // Into usize or fail
     let len = as_usize_or_fail!(interpreter, len);
-    // deduce gas
+    // Deduce gas
     gas_or_fail!(interpreter, gas::copy_cost_verylow(len));
     if len == 0 {
         return;
@@ -66,8 +66,8 @@ pub fn mcopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     let dst = as_usize_or_fail!(interpreter, dst);
     let src = as_usize_or_fail!(interpreter, src);
-    // resize memory
+    // Resize memory
     resize_memory!(interpreter, max(dst, src), len);
-    // copy memory in place
+    // Copy memory in place
     interpreter.memory.copy(dst, src, len);
 }

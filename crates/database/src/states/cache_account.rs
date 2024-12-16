@@ -172,7 +172,7 @@ impl CacheAccount {
     ///
     /// Set account as None and set status to Destroyer or DestroyedAgain.
     pub fn selfdestruct(&mut self) -> Option<TransitionAccount> {
-        // account should be None after selfdestruct so we can take it.
+        // Account should be None after selfdestruct so we can take it.
         let previous_info = self.account.take().map(|a| a.info);
         let previous_status = self.status;
 
@@ -225,7 +225,7 @@ impl CacheAccount {
     /// Increment balance by `balance` amount. Assume that balance will not
     /// overflow or be zero.
     ///
-    /// Note: only if balance is zero we would return None as no transition would be made.
+    /// Note: Only if balance is zero we would return None as no transition would be made.
     pub fn increment_balance(&mut self, balance: u128) -> Option<TransitionAccount> {
         if balance == 0 {
             return None;

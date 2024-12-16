@@ -70,7 +70,7 @@ where
         let effective_gas_price = context.tx().effective_gas_price(basefee);
         let gas = exec_result.gas();
 
-        // return balance of not spend gas.
+        // Return balance of not spend gas.
         let caller_account = context.journal().load_account(caller)?;
 
         let reimbursed = effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64);
@@ -92,7 +92,7 @@ where
         let effective_gas_price = tx.effective_gas_price(basefee);
         let gas = exec_result.gas();
 
-        // transfer fee to coinbase/beneficiary.
+        // Transfer fee to coinbase/beneficiary.
         // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
         let coinbase_gas_price = if context.cfg().spec().into().is_enabled_in(SpecId::LONDON) {
             effective_gas_price.saturating_sub(basefee)
@@ -118,13 +118,13 @@ where
     ) -> Result<Self::Output, Self::Error> {
         context.take_error()?;
 
-        // used gas with refund calculated.
+        // Used gas with refund calculated.
         let gas_refunded = result.gas().refunded() as u64;
         let final_gas_used = result.gas().spent() - gas_refunded;
         let output = result.output();
         let instruction_result = result.into_interpreter_result();
 
-        // reset journal and return present state.
+        // Reset journal and return present state.
         let (state, logs) = context.journal().finalize()?;
 
         let result = match SuccessOrHalt::<HALTREASON>::from(instruction_result.result) {
@@ -156,8 +156,8 @@ where
     }
 
     fn clear(&self, context: &mut Self::Context) {
-        // clear error and journaled state.
-        // TODO check effects of removal of take_error
+        // Clear error and journaled state.
+        // TODO : Check effects of removal of take_error
         // let _ = context.evm.take_error();
         context.journal().clear();
     }
@@ -165,7 +165,7 @@ where
 
 /// Trait for post execution context.
 ///
-/// TODO Generalize FinalOutput.
+// TODO : Generalize FinalOutput.
 pub trait EthPostExecutionContext<ERROR>:
     TransactionGetter
     + ErrorGetter<Error = ERROR>

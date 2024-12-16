@@ -16,7 +16,7 @@ pub fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         return Err(PrecompileError::Blake2WrongLength.into());
     }
 
-    // rounds 4 bytes
+    // Rounds 4 bytes
     let rounds = u32::from_be_bytes(input[..4].try_into().unwrap()) as usize;
     let gas_used = rounds as u64 * F_ROUND;
     if gas_used > gas_limit {

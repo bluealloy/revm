@@ -38,7 +38,7 @@ pub struct Eof {
 impl Default for Eof {
     fn default() -> Self {
         let body = EofBody {
-            // types section with zero inputs, zero outputs and zero max stack size.
+            // Types section with zero inputs, zero outputs and zero max stack size.
             types_section: vec![TypesSection::default()],
             code_section: vec![1],
             // One code section with a STOP byte.

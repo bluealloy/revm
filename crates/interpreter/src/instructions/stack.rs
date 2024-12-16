@@ -14,7 +14,7 @@ pub fn pop<WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    // can ignore return. as relative N jump is safe operation.
+    // Can ignore return. as relative N jump is safe operation.
     popn!([_i], interpreter);
 }
 
@@ -35,14 +35,14 @@ pub fn push<const N: usize, WIRE: InterpreterTypes, H: Host + ?Sized>(
     _host: &mut H,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    // TODO check performance degradation.
+    // TODO : Check performance degradation.
     push!(interpreter, U256::ZERO);
     popn_top!([], top, interpreter);
 
     let imm = interpreter.bytecode.read_slice(N);
     cast_slice_to_u256(imm, top);
 
-    // can ignore return. as relative N jump is safe operation
+    // Can ignore return. as relative N jump is safe operation
     interpreter.bytecode.relative_jump(N as isize);
 }
 
@@ -117,9 +117,9 @@ pub fn exchange<WIRE: InterpreterTypes, H: Host + ?Sized>(
     }
     interpreter.bytecode.relative_jump(1);
 }
-/*
 
-TODO  TESTS
+// TODO : Tests
+/*
 #[cfg(test)]
 mod test {
 

@@ -17,7 +17,7 @@ pub struct CacheState {
     /// Block state account with account state.
     pub accounts: HashMap<Address, CacheAccount>,
     /// Created contracts.
-    // TODO add bytecode counter for number of bytecodes added/removed.
+    // TODO : Add bytecode counter for number of bytecodes added/removed.
     pub contracts: HashMap<B256, Bytecode>,
     /// Has EIP-161 state clear enabled (Spurious Dragon hardfork).
     pub has_state_clear: bool,
@@ -105,7 +105,7 @@ impl CacheState {
         address: Address,
         account: Account,
     ) -> Option<TransitionAccount> {
-        // not touched account are never changed.
+        // Not touched account are never changed.
         if !account.is_touched() {
             return None;
         }
@@ -124,7 +124,7 @@ impl CacheState {
         let is_created = account.is_created();
         let is_empty = account.is_empty();
 
-        // transform evm storage to storage with previous value.
+        // Transform evm storage to storage with previous value.
         let changed_storage = account
             .storage
             .into_iter()
@@ -132,7 +132,7 @@ impl CacheState {
             .map(|(key, slot)| (key, slot.into()))
             .collect();
 
-        // Note: it can happen that created contract get selfdestructed in same block
+        // Note: It can happen that created contract get selfdestructed in same block
         // that is why is_created is checked after selfdestructed
         //
         // Note: Create2 opcode (Petersburg) was after state clear EIP (Spurious Dragon)
@@ -150,10 +150,10 @@ impl CacheState {
         // EIP-161 state clear
         if is_empty {
             if self.has_state_clear {
-                // touch empty account.
+                // Touch empty account.
                 this_account.touch_empty_eip161()
             } else {
-                // if account is empty and state clear is not enabled we should save
+                // If account is empty and state clear is not enabled we should save
                 // empty account.
                 this_account.touch_create_pre_eip161(changed_storage)
             }

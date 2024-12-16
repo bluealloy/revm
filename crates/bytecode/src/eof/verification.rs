@@ -40,7 +40,7 @@ pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
 
 #[inline]
 pub fn validate_eof_inner(eof: &Eof, first_code_type: Option<CodeType>) -> Result<(), EofError> {
-    // data needs to be filled first first container.
+    // Data needs to be filled first first container.
     if !eof.body.is_data_filled {
         return Err(EofError::Validation(EofValidationError::DataNotFilled));
     }
@@ -82,18 +82,18 @@ pub fn validate_eof_codes(
     }
 
     if eof.body.code_section.is_empty() {
-        // no code sections. This should be already checked in decode.
+        // No code sections. This should be already checked in decode.
         return Err(EofValidationError::NoCodeSections);
     }
 
-    // the first code section must have a type signature
+    // The first code section must have a type signature
     // (0, 0x80, max_stack_height) (0 inputs non-returning function)
     let first_types = &eof.body.types_section[0];
     if first_types.inputs != 0 || !first_types.is_non_returning() {
         return Err(EofValidationError::InvalidTypesSection);
     }
 
-    // tracking access of code and sub containers.
+    // Tracking access of code and sub containers.
     let mut tracker: AccessTracker = AccessTracker::new(
         this_code_type,
         eof.body.code_section.len(),
@@ -101,7 +101,7 @@ pub fn validate_eof_codes(
     );
 
     while let Some(index) = tracker.processing_stack.pop() {
-        // assume index is correct.
+        // Assume `index` is correct.
         let code = eof.body.code(index).unwrap();
         validate_eof_code(
             &code,
@@ -113,11 +113,11 @@ pub fn validate_eof_codes(
         )?;
     }
 
-    // iterate over accessed codes and check if all are accessed.
+    // Iterate over accessed codes and check if all are accessed.
     if !tracker.codes.into_iter().all(identity) {
         return Err(EofValidationError::CodeSectionNotAccessed);
     }
-    // iterate over all accessed subcontainers and check if all are accessed.
+    // Iterate over all accessed subcontainers and check if all are accessed.
     if !tracker.subcontainers.iter().all(|i| i.is_some()) {
         return Err(EofValidationError::SubContainerNotAccessed);
     }
@@ -439,7 +439,7 @@ pub fn validate_eof_code(
         }
     }
 
-    // all bytes that are intermediate.
+    // All bytes that are intermediate.
     let mut jumps = vec![InstructionInfo::default(); code.len()];
     let mut is_after_termination = false;
 
@@ -455,7 +455,7 @@ pub fn validate_eof_code(
         let opcode = &OPCODE_INFO[op as usize];
 
         let Some(opcode) = opcode else {
-            // err unknown opcode.
+            // Err unknown opcode.
             return Err(EofValidationError::UnknownOpcode);
         };
 
@@ -466,7 +466,7 @@ pub fn validate_eof_code(
 
         let this_instruction = &mut jumps[i];
 
-        // update biggest/smallest values for next instruction only if it is not after termination.
+        // Update biggest/smallest values for next instruction only if it is not after termination.
         if !is_after_termination {
             this_instruction.smallest = core::cmp::min(this_instruction.smallest, next_smallest);
             this_instruction.biggest = core::cmp::max(this_instruction.biggest, next_biggest);
@@ -476,30 +476,30 @@ pub fn validate_eof_code(
 
         // Opcodes after termination should be accessed by forward jumps.
         if is_after_termination && !this_instruction.is_jumpdest {
-            // opcode after termination was not accessed.
+            // Opcode after termination was not accessed.
             return Err(EofValidationError::InstructionNotForwardAccessed);
         }
         is_after_termination = opcode.is_terminating();
 
-        // mark immediate as non-jumpable. RJUMPV is special case covered later.
+        // Mark immediate as non-jumpable. RJUMPV is special case covered later.
         if opcode.immediate_size() != 0 {
-            // check if the opcode immediate are within the bounds of the code
+            // Check if the opcode immediate are within the bounds of the code
             if i + opcode.immediate_size() as usize >= code.len() {
                 // Malfunctional code
                 return Err(EofValidationError::MissingImmediateBytes);
             }
 
-            // mark immediate bytes as non-jumpable.
+            // Mark immediate bytes as non-jumpable.
             for imm in 1..opcode.immediate_size() as usize + 1 {
-                // SAFETY: immediate size is checked above.
+                // SAFETY: Immediate size is checked above.
                 jumps[i + imm].mark_as_immediate()?;
             }
         }
         // IO diff used to generate next instruction smallest/biggest value.
         let mut stack_io_diff = opcode.io_diff() as i32;
-        // how many stack items are required for this opcode.
+        // How many stack items are required for this opcode.
         let mut stack_requirement = opcode.inputs() as i32;
-        // additional immediate bytes for RJUMPV, it has dynamic vtable.
+        // Additional immediate bytes for RJUMPV, it has dynamic vtable.
         let mut rjumpv_additional_immediates = 0;
         // If opcodes is RJUMP, RJUMPI or RJUMPV then this will have absolute jumpdest.
         let mut absolute_jumpdest = vec![];
@@ -510,10 +510,10 @@ pub fn validate_eof_code(
                 // RJUMP is considered a terminating opcode.
             }
             opcode::RJUMPV => {
-                // code length for RJUMPV is checked with immediate size.
+                // Code length for RJUMPV is checked with immediate size.
                 let max_index = code[i + 1] as usize;
                 let len = max_index + 1;
-                // and max_index+1 is to get size of vtable as index starts from 0.
+                // And max_index+1 is to get size of vtable as index starts from 0.
                 rjumpv_additional_immediates = len * 2;
 
                 // +1 is for max_index byte
@@ -524,7 +524,7 @@ pub fn validate_eof_code(
 
                 // Mark vtable as immediate, max_index was already marked.
                 for imm in 0..rjumpv_additional_immediates {
-                    // SAFETY: immediate size is checked above.
+                    // SAFETY: Immediate size is checked above.
                     jumps[i + 2 + imm].mark_as_immediate()?;
                 }
 
@@ -539,7 +539,7 @@ pub fn validate_eof_code(
             opcode::CALLF => {
                 let section_i: usize = unsafe { read_u16(code.as_ptr().add(i + 1)) } as usize;
                 let Some(target_types) = types.get(section_i) else {
-                    // code section out of bounds.
+                    // Code section out of bounds.
                     return Err(EofValidationError::CodeSectionOutOfBounds);
                 };
 
@@ -547,32 +547,32 @@ pub fn validate_eof_code(
                 if target_types.is_non_returning() {
                     return Err(EofValidationError::CALLFNonReturningFunction);
                 }
-                // stack input for this opcode is the input of the called code.
+                // Stack input for this opcode is the input of the called code.
                 stack_requirement = target_types.inputs as i32;
-                // stack diff depends on input/output of the called code.
+                // Stack diff depends on input/output of the called code.
                 stack_io_diff = target_types.io_diff();
-                // mark called code as accessed.
+                // Mark called code as accessed.
                 tracker.access_code(section_i);
 
-                // we decrement by `types.inputs` as they are considered as send
+                // We decrement by `types.inputs` as they are considered as send
                 // to the called code and included in types.max_stack_size.
                 if this_instruction.biggest - stack_requirement + target_types.max_stack_size as i32
                     > STACK_LIMIT as i32
                 {
-                    // if stack max items + called code max stack size
+                    // If stack max items + called code max stack size
                     return Err(EofValidationError::StackOverflow);
                 }
             }
             opcode::JUMPF => {
                 let target_index = unsafe { read_u16(code.as_ptr().add(i + 1)) } as usize;
-                // targeted code needs to have zero outputs (be non returning).
+                // Targeted code needs to have zero outputs (be non returning).
                 let Some(target_types) = types.get(target_index) else {
-                    // code section out of bounds.
+                    // Code section out of bounds.
                     return Err(EofValidationError::CodeSectionOutOfBounds);
                 };
 
-                // we decrement types.inputs as they are considered send to the called code.
-                // and included in types.max_stack_size.
+                // We decrement types.inputs as they are considered send to the called code.
+                // And included in types.max_stack_size.
                 if this_instruction.biggest - target_types.inputs as i32
                     + target_types.max_stack_size as i32
                     > STACK_LIMIT as i32
@@ -583,11 +583,11 @@ pub fn validate_eof_code(
                 tracker.access_code(target_index);
 
                 if target_types.is_non_returning() {
-                    // if it is not returning
+                    // If it is not returning
                     stack_requirement = target_types.inputs as i32;
                 } else {
                     is_returning = true;
-                    // check if target code produces enough outputs.
+                    // Check if target code produces enough outputs.
                     if this_types.outputs < target_types.outputs {
                         return Err(EofValidationError::JUMPFEnoughOutputs);
                     }
@@ -600,7 +600,7 @@ pub fn validate_eof_code(
                         return Err(EofValidationError::JUMPFStackHigherThanOutputs);
                     }
 
-                    // if this instruction max + target_types max is more then stack limit.
+                    // If this instruction max + target_types max is more then stack limit.
                     if this_instruction.biggest + stack_requirement > STACK_LIMIT as i32 {
                         return Err(EofValidationError::StackOverflow);
                     }
@@ -609,7 +609,7 @@ pub fn validate_eof_code(
             opcode::EOFCREATE => {
                 let index = code[i + 1] as usize;
                 if index >= num_of_containers {
-                    // code section out of bounds.
+                    // Code section out of bounds.
                     return Err(EofValidationError::EOFCREATEInvalidIndex);
                 }
                 tracker.set_subcontainer_type(index, CodeType::ReturnContract)?;
@@ -617,8 +617,8 @@ pub fn validate_eof_code(
             opcode::RETURNCONTRACT => {
                 let index = code[i + 1] as usize;
                 if index >= num_of_containers {
-                    // code section out of bounds.
-                    // TODO custom error
+                    // Code section out of bounds.
+                    // TODO : Custom error
                     return Err(EofValidationError::EOFCREATEInvalidIndex);
                 }
                 if *tracker
@@ -626,7 +626,7 @@ pub fn validate_eof_code(
                     .get_or_insert(CodeType::ReturnContract)
                     != CodeType::ReturnContract
                 {
-                    // TODO make custom error
+                    // TODO : Make custom error
                     return Err(EofValidationError::SubContainerCalledInTwoModes);
                 }
                 tracker.set_subcontainer_type(index, CodeType::ReturnOrStop)?;
@@ -643,13 +643,13 @@ pub fn validate_eof_code(
             opcode::DATALOADN => {
                 let index = unsafe { read_u16(code.as_ptr().add(i + 1)) } as isize;
                 if data_size < 32 || index > data_size as isize - 32 {
-                    // data load out of bounds.
+                    // Data load out of bounds.
                     return Err(EofValidationError::DataLoadOutOfBounds);
                 }
             }
             opcode::RETF => {
                 stack_requirement = this_types.outputs as i32;
-                // mark section as returning.
+                // Mark section as returning.
                 is_returning = true;
 
                 if this_instruction.biggest > stack_requirement {
@@ -670,26 +670,26 @@ pub fn validate_eof_code(
             }
             _ => {}
         }
-        // check if stack requirement is more than smallest stack items.
+        // Check if stack requirement is more than smallest stack items.
         if stack_requirement > this_instruction.smallest {
-            // opcode requirement is more than smallest stack items.
+            // Opcode requirement is more than smallest stack items.
             return Err(EofValidationError::StackUnderflow);
         }
 
         next_smallest = this_instruction.smallest + stack_io_diff;
         next_biggest = this_instruction.biggest + stack_io_diff;
 
-        // check if jumpdest are correct and mark forward jumps.
+        // Check if jumpdest are correct and mark forward jumps.
         for absolute_jump in absolute_jumpdest {
             if absolute_jump < 0 {
-                // jump out of bounds.
+                // Jump out of bounds.
                 return Err(EofValidationError::JumpUnderflow);
             }
             if absolute_jump >= code.len() as isize {
-                // jump to out of bounds
+                // Jump to out of bounds
                 return Err(EofValidationError::JumpOverflow);
             }
-            // fine to cast as bounds are checked.
+            // Fine to cast as bounds are checked.
             let absolute_jump = absolute_jump as usize;
 
             let target_jump = &mut jumps[absolute_jump];
@@ -698,50 +698,50 @@ pub fn validate_eof_code(
                 return Err(EofValidationError::BackwardJumpToImmediateBytes);
             }
 
-            // needed to mark forward jumps. It does not do anything for backward jumps.
+            // Needed to mark forward jumps. It does not do anything for backward jumps.
             target_jump.is_jumpdest = true;
 
             if absolute_jump <= i {
-                // backward jumps should have same smallest and biggest stack items.
+                // Backward jumps should have same smallest and biggest stack items.
                 if target_jump.biggest != next_biggest {
-                    // wrong jumpdest.
+                    // Wrong jumpdest.
                     return Err(EofValidationError::BackwardJumpBiggestNumMismatch);
                 }
                 if target_jump.smallest != next_smallest {
-                    // wrong jumpdest.
+                    // Wrong jumpdest.
                     return Err(EofValidationError::BackwardJumpSmallestNumMismatch);
                 }
             } else {
-                // forward jumps can make min even smallest size
-                // while biggest num is needed to check stack overflow
+                // Forward jumps can make min even smallest size
+                // While biggest num is needed to check stack overflow
                 target_jump.smallest = core::cmp::min(target_jump.smallest, next_smallest);
                 target_jump.biggest = core::cmp::max(target_jump.biggest, next_biggest);
             }
         }
 
-        // additional immediate are from RJUMPV vtable.
+        // Additional immediate are from RJUMPV vtable.
         i += 1 + opcode.immediate_size() as usize + rjumpv_additional_immediates;
     }
 
-    // error if section is returning but marked as non-returning.
+    // Error if section is returning but marked as non-returning.
     if is_returning == this_types.is_non_returning() {
-        // wrong termination.
+        // Wrong termination.
         return Err(EofValidationError::NonReturningSectionIsReturning);
     }
 
-    // last opcode should be terminating
+    // Last opcode should be terminating
     if !is_after_termination {
-        // wrong termination.
+        // Wrong termination.
         return Err(EofValidationError::LastInstructionNotTerminating);
     }
-    // TODO integrate max so we dont need to iterate again
+    // TODO : Integrate max so we dont need to iterate again
     let mut max_stack_requirement = 0;
     for opcode in jumps {
         max_stack_requirement = core::cmp::max(opcode.biggest, max_stack_requirement);
     }
 
     if max_stack_requirement != types[this_types_index].max_stack_size as i32 {
-        // stack overflow
+        // Stack overflow
         return Err(EofValidationError::MaxStackMismatch);
     }
 

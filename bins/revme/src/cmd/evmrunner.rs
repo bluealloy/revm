@@ -59,7 +59,7 @@ impl Cmd {
         const CALLER: Address = address!("0000000000000000000000000000000000000001");
 
         let bytecode_str: Cow<'_, str> = if let Some(path) = &self.path {
-            // check if path exists.
+            // Check if path exists.
             if !path.exists() {
                 return Err(Errors::PathNotExists);
             }
@@ -80,7 +80,7 @@ impl Cmd {
         let nonce = db.basic(CALLER).unwrap().map_or(0, |account| account.nonce);
 
         // BenchmarkDB is dummy state that implements Database trait.
-        // the bytecode is deployed at zero address.
+        // The bytecode is deployed at zero address.
         let mut evm = MainEvm::new(
             Context::builder().with_db(db).modify_tx_chained(|tx| {
                 tx.caller = CALLER;

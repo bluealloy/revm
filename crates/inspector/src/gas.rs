@@ -185,12 +185,12 @@ impl GasInspector {
 //             .append_handler_register(inspector_handle_register)
 //             .build();
 
-//         // run evm.
+//         // Run evm.
 //         evm.transact().unwrap();
 
 //         let inspector = evm.into_context().external;
 
-//         // starting from 100gas
+//         // Starting from 100gas
 //         let steps = vec![
 //             // push1 -3
 //             (0, 97),

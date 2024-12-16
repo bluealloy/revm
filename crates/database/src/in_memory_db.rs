@@ -28,7 +28,7 @@ pub struct CacheDB<ExtDB> {
     pub block_hashes: HashMap<U256, B256>,
     /// The underlying database ([DatabaseRef]) that is used to load data.
     ///
-    /// Note: this is read-only, data is never written to this database.
+    /// Note: This is read-only, data is never written to this database.
     pub db: ExtDB,
 }
 
@@ -221,7 +221,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
         match self.contracts.entry(code_hash) {
             Entry::Occupied(entry) => Ok(entry.get().clone()),
             Entry::Vacant(entry) => {
-                // if you return code bytes when basic fn is called this function is not needed.
+                // If you return code bytes when basic fn is called this function is not needed.
                 Ok(entry.insert(self.db.code_by_hash_ref(code_hash)?).clone())
             }
         }
@@ -251,7 +251,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                 }
             }
             Entry::Vacant(acc_entry) => {
-                // acc needs to be loaded for us to access slots.
+                // Acc needs to be loaded for us to access slots.
                 let info = self.db.basic_ref(address)?;
                 let (account, value) = if info.is_some() {
                     let value = self.db.storage_ref(address, index)?;

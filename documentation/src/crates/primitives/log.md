@@ -1,6 +1,6 @@
 # Log
 
-> NOTE: This module's types have been replaced by [`alloy_primitives`](https://github.com/alloy-rs/core)'s `Log` and `LogData`.
+> Note: This module's types have been replaced by [`alloy_primitives`](https://github.com/alloy-rs/core)'s `Log` and `LogData`.
 
 This piece of Rust code defines a structure called Log which represents an Ethereum log entry. These logs are integral parts of the Ethereum network and are typically produced by smart contracts during execution. Each Log has three components:
 

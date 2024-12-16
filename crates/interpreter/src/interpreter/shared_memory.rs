@@ -158,7 +158,7 @@ impl SharedMemory {
     pub fn free_context(&mut self) {
         if let Some(old_checkpoint) = self.checkpoints.pop() {
             self.last_checkpoint = self.checkpoints.last().cloned().unwrap_or_default();
-            // SAFETY: buffer length is less than or equal `old_checkpoint`
+            // SAFETY: `buffer` length is less than or equal `old_checkpoint`
             unsafe { self.buffer.set_len(old_checkpoint) };
         }
     }
@@ -307,7 +307,7 @@ impl SharedMemory {
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         if data_offset >= data.len() {
-            // nullify all memory slots
+            // Nullify all memory slots
             self.slice_mut(memory_offset, len).fill(0);
             return;
         }
@@ -318,7 +318,7 @@ impl SharedMemory {
         self.slice_mut(memory_offset, data_len)
             .copy_from_slice(data);
 
-        // nullify rest of memory slots
+        // Nullify rest of memory slots
         // SAFETY: Memory is assumed to be valid, and it is commented where this assumption is made.
         self.slice_mut(memory_offset + data_len, len - data_len)
             .fill(0);
@@ -338,7 +338,7 @@ impl SharedMemory {
     /// Returns a reference to the memory of the current context, the active memory.
     #[inline]
     pub fn context_memory(&self) -> &[u8] {
-        // SAFETY: access bounded by buffer length
+        // SAFETY: Access bounded by buffer length
         unsafe {
             self.buffer
                 .get_unchecked(self.last_checkpoint..self.buffer.len())
@@ -349,7 +349,7 @@ impl SharedMemory {
     #[inline]
     pub fn context_memory_mut(&mut self) -> &mut [u8] {
         let buf_len = self.buffer.len();
-        // SAFETY: access bounded by buffer length
+        // SAFETY: Access bounded by buffer length
         unsafe { self.buffer.get_unchecked_mut(self.last_checkpoint..buf_len) }
     }
 }
@@ -405,7 +405,7 @@ mod tests {
         assert_eq!(shared_memory.last_checkpoint, 96);
         assert_eq!(shared_memory.len(), 0);
 
-        // free contexts
+        // Free contexts
         shared_memory.free_context();
         assert_eq!(shared_memory.buffer.len(), 96);
         assert_eq!(shared_memory.checkpoints.len(), 2);
