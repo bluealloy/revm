@@ -79,7 +79,7 @@ serde_json = "1.0"
 serde_derive = "1.0"
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable", "blst", "libsecp256k1"]
+default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
 std = [
     "primitives/std",
     "k256/std",
