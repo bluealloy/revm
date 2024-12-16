@@ -1,9 +1,10 @@
 use database::BenchmarkDB;
-use inspector::{inspector_handler, inspectors::TracerEip3155, InspectorContext, InspectorMainEvm};
+use inspector::inspectors::TracerEip3155;
 use revm::{
     bytecode::Bytecode,
+    handler::EthHandler,
     primitives::{address, bytes, Bytes, TxKind},
-    Context, MainEvm,
+    Context, MainEvm, MainEvm,
 };
 use std::io::stderr;
 
@@ -19,11 +20,7 @@ pub fn simple_example() {
             tx.data = bytes!("30627b7c");
             tx.gas_limit = 30_000_000;
         });
-    let mut evm = InspectorMainEvm::new(
-        InspectorContext::new(context, TracerEip3155::new(Box::new(stderr()))),
-        inspector_handler(),
-    );
-    println!("run");
+    let mut evm = MainEvm::new(context, EthHandler::default());
     let _ = evm.transact().unwrap();
 }
 
@@ -31,7 +28,8 @@ pub fn run() {
     println!("Running snailtracer example!");
     let start = std::time::Instant::now();
     simple_example();
-    println!("elapsed: {:?}", start.elapsed());
+    let elapsed = start.elapsed();
+    println!("elapsed: {:?}", elapsed);
 }
 
 const CONTRACT_DATA: Bytes = Bytes::from_static(include_str!("snailtracer.hex").as_bytes());
