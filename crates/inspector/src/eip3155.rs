@@ -19,7 +19,7 @@ use std::io::Write;
 pub struct TracerEip3155<CTX, INTR> {
     #[derive_where(skip)]
     output: Box<dyn Write>,
-    gas_inspector: GasInspector<CTX, INTR>,
+    gas_inspector: GasInspector,
 
     /// Print summary of the execution.
     print_summary: bool,
@@ -36,6 +36,7 @@ pub struct TracerEip3155<CTX, INTR> {
     skip: bool,
     include_memory: bool,
     memory: Option<String>,
+    _phantom: std::marker::PhantomData<(CTX, INTR)>,
 }
 
 // # Output
@@ -153,6 +154,7 @@ where
             refunded: 0,
             mem_size: 0,
             skip: false,
+            _phantom: Default::default(),
         }
     }
 
@@ -209,12 +211,12 @@ where
     type Context = CTX;
     type InterpreterTypes = INTR;
 
-    fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
-        self.gas_inspector.initialize_interp(interp, context);
+    fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {
+        self.gas_inspector.initialize_interp(interp.control.gas());
     }
 
-    fn step(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
-        self.gas_inspector.step(interp, context);
+    fn step(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {
+        self.gas_inspector.step(interp.control.gas());
         self.stack = interp.stack.clone_from();
         self.memory = if self.include_memory {
             Some(hex::encode_prefixed(
@@ -230,8 +232,8 @@ where
         self.refunded = interp.control.gas().refunded();
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
-        self.gas_inspector.step_end(interp, context);
+    fn step_end(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {
+        self.gas_inspector.step_end(interp.control.gas());
         if self.skip {
             self.skip = false;
             return;
@@ -280,8 +282,8 @@ where
         None
     }
 
-    fn call_end(&mut self, context: &mut CTX, inputs: &CallInputs, outcome: &mut CallOutcome) {
-        self.gas_inspector.call_end(context, inputs, outcome);
+    fn call_end(&mut self, context: &mut CTX, _: &CallInputs, outcome: &mut CallOutcome) {
+        self.gas_inspector.call_end(outcome);
         self.depth -= 1;
 
         if self.depth == 0 {
@@ -291,13 +293,8 @@ where
         }
     }
 
-    fn create_end(
-        &mut self,
-        context: &mut CTX,
-        inputs: &CreateInputs,
-        outcome: &mut CreateOutcome,
-    ) {
-        self.gas_inspector.create_end(context, inputs, outcome);
+    fn create_end(&mut self, context: &mut CTX, _: &CreateInputs, outcome: &mut CreateOutcome) {
+        self.gas_inspector.create_end(outcome);
         self.depth -= 1;
 
         if self.depth == 0 {

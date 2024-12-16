@@ -1,27 +1,23 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
 
-use crate::Inspector;
-use revm::interpreter::{
-    interpreter_types::LoopControl, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
-    Interpreter, InterpreterTypes,
+use revm::interpreter::{ CallOutcome, CreateOutcome, Gas,
 };
 
 /// Helper [Inspector] that keeps track of gas.
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
-pub struct GasInspector<CTX, INTR> {
+pub struct GasInspector {
     gas_remaining: u64,
     last_gas_cost: u64,
-    _phantom: core::marker::PhantomData<(CTX, INTR)>,
 }
 
-impl<CTX, INTR> Default for GasInspector<CTX, INTR> {
+impl Default for GasInspector {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<CTX, INTR> GasInspector<CTX, INTR> {
+impl GasInspector {
     pub fn gas_remaining(&self) -> u64 {
         self.gas_remaining
     }
@@ -34,41 +30,30 @@ impl<CTX, INTR> GasInspector<CTX, INTR> {
         Self {
             gas_remaining: 0,
             last_gas_cost: 0,
-            _phantom: core::marker::PhantomData,
         }
     }
 }
 
-impl<CTX, INTR: InterpreterTypes> Inspector for GasInspector<CTX, INTR> {
-    type Context = CTX;
-    type InterpreterTypes = INTR;
-
+impl GasInspector {
     #[inline]
-    fn initialize_interp(
-        &mut self,
-        interp: &mut Interpreter<Self::InterpreterTypes>,
-        _: &mut Self::Context,
-    ) {
-        self.gas_remaining = interp.control.gas().limit();
+    pub fn initialize_interp(&mut self, gas: &Gas) {
+        self.gas_remaining = gas.limit();
     }
 
     #[inline]
-    fn step(&mut self, interp: &mut Interpreter<Self::InterpreterTypes>, _: &mut Self::Context) {
-        self.gas_remaining = interp.control.gas().remaining();
+    pub fn step(&mut self, gas: &Gas) {
+        self.gas_remaining = gas.remaining();
     }
+
     #[inline]
-    fn step_end(
-        &mut self,
-        interp: &mut Interpreter<Self::InterpreterTypes>,
-        _: &mut Self::Context,
-    ) {
-        let remaining = interp.control.gas().remaining();
+    pub fn step_end(&mut self, gas: &mut Gas) {
+        let remaining = gas.remaining();
         self.last_gas_cost = self.gas_remaining.saturating_sub(remaining);
         self.gas_remaining = remaining;
     }
 
     #[inline]
-    fn call_end(&mut self, _: &mut Self::Context, _: &CallInputs, outcome: &mut CallOutcome) {
+    pub fn call_end(&mut self, outcome: &mut CallOutcome) {
         if outcome.result.result.is_error() {
             outcome.result.gas.spend_all();
             self.gas_remaining = 0;
@@ -76,7 +61,7 @@ impl<CTX, INTR: InterpreterTypes> Inspector for GasInspector<CTX, INTR> {
     }
 
     #[inline]
-    fn create_end(&mut self, _: &mut Self::Context, _: &CreateInputs, outcome: &mut CreateOutcome) {
+    pub fn create_end(&mut self, outcome: &mut CreateOutcome) {
         if outcome.result.result.is_error() {
             outcome.result.gas.spend_all();
             self.gas_remaining = 0;
