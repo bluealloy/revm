@@ -29,4 +29,4 @@ pub fn run() {
     println!("elapsed: {:?}", elapsed);
 }
 
-const BYTES: &'static str = include_str!("snailtracer.hex");
+const BYTES: &str = include_str!("snailtracer.hex");

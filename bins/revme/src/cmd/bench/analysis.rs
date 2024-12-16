@@ -7,7 +7,7 @@ use revm::{
 };
 use std::time::Instant;
 
-const BYTES: &'static str = include_str!("analysis.hex");
+const BYTES: &str = include_str!("analysis.hex");
 
 pub fn run() {
     let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
