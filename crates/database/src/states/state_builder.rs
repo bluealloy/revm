@@ -59,7 +59,7 @@ impl<DB: Database> StateBuilder<DB> {
 
     /// Set the database.
     pub fn with_database<ODB: Database>(self, database: ODB) -> StateBuilder<ODB> {
-        // cast to the different database,
+        // Cast to the different database.
         // Note that we return different type depending of the database NewDBError.
         StateBuilder {
             with_state_clear: self.with_state_clear,

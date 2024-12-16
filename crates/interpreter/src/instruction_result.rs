@@ -370,7 +370,7 @@ impl<HaltReasonT: HaltReasonTrait> From<InstructionResult> for SuccessOrHalt<Hal
             InstructionResult::CreateInitCodeSizeLimit => {
                 Self::Halt(HaltReason::CreateInitCodeSizeLimit.into())
             }
-            // TODO (EOF) add proper Revert subtype.
+            // TODO : (EOF) Add proper Revert subtype.
             InstructionResult::InvalidEOFInitCode => Self::Revert,
             InstructionResult::FatalExternalError => Self::FatalExternalError,
             InstructionResult::EOFOpcodeDisabledInLegacy => {

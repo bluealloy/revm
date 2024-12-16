@@ -52,13 +52,13 @@ impl Reverts {
     pub fn to_plain_state_reverts(&self) -> PlainStateReverts {
         let mut state_reverts = PlainStateReverts::with_capacity(self.0.len());
         for reverts in &self.0 {
-            // pessimistically pre-allocate assuming _all_ accounts changed.
+            // Pessimistically pre-allocate assuming _all_ accounts changed.
             let mut accounts = Vec::with_capacity(reverts.len());
             let mut storage = Vec::with_capacity(reverts.len());
             for (address, revert_account) in reverts {
                 match &revert_account.account {
                     AccountInfoRevert::RevertTo(acc) => {
-                        // cloning is cheap, because account info has 3 small
+                        // Cloning is cheap, because account info has 3 small
                         // fields and a Bytes
                         accounts.push((*address, Some(acc.clone())))
                     }
@@ -212,7 +212,7 @@ impl AccountRevert {
         let previous_storage = storage
             .iter_mut()
             .map(|(key, value)| {
-                // take previous value and set ZERO as storage got destroyed.
+                // Take previous value and set ZERO as storage got destroyed.
                 (*key, RevertToSlot::Some(value.present_value))
             })
             .collect();

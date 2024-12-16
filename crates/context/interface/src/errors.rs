@@ -1,4 +1,4 @@
-/// TODO change name of the trait
+// TODO : Change the name of the trait
 pub trait ErrorGetter {
     type Error;
 

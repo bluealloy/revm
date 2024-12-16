@@ -10,7 +10,7 @@ use crate::{
 use primitives::{Address, Bytes, Log, B256, U256};
 
 /// EVM context host.
-/// TODO move to context-interface
+// TODO : Move to context-interface
 pub trait Host {
     /// Chain specification.
     type BLOCK: Block;
@@ -23,8 +23,8 @@ pub trait Host {
     /// Returns a mutable reference to the environment.
     fn block(&self) -> &Self::BLOCK;
 
-    /// TODO make it generic in future
-    fn cfg(&self) -> &Self::CFG;
+    // TODO : Make it generic in future
+    fn cfg(&self) -> &CfgEnv;
 
     /// Load an account code.
     fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad>;

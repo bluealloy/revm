@@ -67,7 +67,7 @@ pub trait Journal {
 
     fn touch_account(&mut self, address: Address);
 
-    /// TODO instruction result is not known
+    // TODO : Instruction result is not known
     fn transfer(
         &mut self,
         from: &Address,
@@ -153,7 +153,7 @@ pub struct JournalCheckpoint {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StateLoad<T> {
-    /// returned data
+    /// Returned data
     pub data: T,
     /// True if account is cold loaded.
     pub is_cold: bool,
@@ -220,7 +220,7 @@ impl DerefMut for AccountLoad {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eip7702CodeLoad<T> {
-    /// returned data
+    /// Returned data
     pub state_load: StateLoad<T>,
     /// True if account has delegate code and delegated account is cold loaded.
     pub is_delegate_account_cold: Option<bool>,

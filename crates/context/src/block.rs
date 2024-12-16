@@ -28,7 +28,7 @@ pub struct BlockEnv {
     ///
     /// Replaces `difficulty` after the Paris (AKA the merge) upgrade with [EIP-4399].
     ///
-    /// NOTE: `prevrandao` can be found in a block in place of `mix_hash`.
+    /// Note: `prevrandao` can be found in a block in place of `mix_hash`.
     ///
     /// [EIP-4399]: https://eips.ethereum.org/EIPS/eip-4399
     pub prevrandao: Option<B256>,

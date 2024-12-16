@@ -84,7 +84,7 @@ impl<DB: Database> State<DB> {
         &mut self,
         balances: impl IntoIterator<Item = (Address, u128)>,
     ) -> Result<(), DB::Error> {
-        // make transition and update cache state
+        // Make transition and update cache state
         let mut transitions = Vec::new();
         for (address, balance) in balances {
             if balance == 0 {
@@ -98,7 +98,7 @@ impl<DB: Database> State<DB> {
                     .expect("Balance is not zero"),
             ))
         }
-        // append transition
+        // Append transition
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
         }
@@ -112,7 +112,7 @@ impl<DB: Database> State<DB> {
         &mut self,
         addresses: impl IntoIterator<Item = Address>,
     ) -> Result<Vec<u128>, DB::Error> {
-        // make transition and update cache state
+        // Make transition and update cache state
         let mut transitions = Vec::new();
         let mut balances = Vec::new();
         for address in addresses {
@@ -121,7 +121,7 @@ impl<DB: Database> State<DB> {
             balances.push(balance);
             transitions.push((address, transition))
         }
-        // append transition
+        // Append transition
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
         }
@@ -153,7 +153,7 @@ impl<DB: Database> State<DB> {
 
     /// Apply evm transitions to transition state.
     pub fn apply_transition(&mut self, transitions: Vec<(Address, TransitionAccount)>) {
-        // add transition to transition state.
+        // Add transition to transition state.
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
         }
@@ -177,14 +177,14 @@ impl<DB: Database> State<DB> {
         match self.cache.accounts.entry(address) {
             hash_map::Entry::Vacant(entry) => {
                 if self.use_preloaded_bundle {
-                    // load account from bundle state
+                    // Load account from bundle state
                     if let Some(account) =
                         self.bundle_state.account(&address).cloned().map(Into::into)
                     {
                         return Ok(entry.insert(account));
                     }
                 }
-                // if not found in bundle, load it from database
+                // If not found in bundle, load it from database
                 let info = self.database.basic(address)?;
                 let account = match info {
                     None => CacheAccount::new_loaded_not_existing(),
@@ -199,7 +199,7 @@ impl<DB: Database> State<DB> {
         }
     }
 
-    // TODO make cache aware of transitions dropping by having global transition counter.
+    // TODO : Make cache aware of transitions dropping by having global transition counter.
     /// Takes the [`BundleState`] changeset from the [`State`], replacing it
     /// with an empty one.
     ///
@@ -231,7 +231,7 @@ impl<DB: Database> Database for State<DB> {
                         return Ok(code.clone());
                     }
                 }
-                // if not found in bundle ask database
+                // If not found in bundle ask database
                 let code = self.database.code_by_hash(code_hash)?;
                 entry.insert(code.clone());
                 Ok(code)
@@ -244,7 +244,7 @@ impl<DB: Database> Database for State<DB> {
         // Account is guaranteed to be loaded.
         // Note that storage from bundle is already loaded with account.
         if let Some(account) = self.cache.accounts.get_mut(&address) {
-            // account will always be some, but if it is not, U256::ZERO will be returned.
+            // Account will always be some, but if it is not, U256::ZERO will be returned.
             let is_storage_known = account.status.is_storage_known();
             Ok(account
                 .account
@@ -252,7 +252,7 @@ impl<DB: Database> Database for State<DB> {
                 .map(|account| match account.storage.entry(index) {
                     hash_map::Entry::Occupied(entry) => Ok(*entry.get()),
                     hash_map::Entry::Vacant(entry) => {
-                        // if account was destroyed or account is newly built
+                        // If account was destroyed or account is newly built
                         // we return zero and don't ask database.
                         let value = if is_storage_known {
                             U256::ZERO
@@ -276,7 +276,7 @@ impl<DB: Database> Database for State<DB> {
             btree_map::Entry::Vacant(entry) => {
                 let ret = *entry.insert(self.database.block_hash(number)?);
 
-                // prune all hashes that are older then BLOCK_HASH_HISTORY
+                // Prune all hashes that are older then BLOCK_HASH_HISTORY
                 let last_block = number.saturating_sub(BLOCK_HASH_HISTORY);
                 while let Some(entry) = self.block_hashes.first_entry() {
                     if *entry.key() < last_block {

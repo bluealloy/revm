@@ -252,7 +252,7 @@ impl OpCodeInfo {
     pub const fn name(&self) -> &'static str {
         // SAFETY: `self.name_*` can only be initialized with a valid `&'static str`.
         unsafe {
-            // TODO: Use `str::from_raw_parts` when it's stable.
+            // TODO : Use `str::from_raw_parts` when it's stable.
             let slice = core::slice::from_raw_parts(self.name_ptr.as_ptr(), self.name_len as usize);
             core::str::from_utf8_unchecked(slice)
         }

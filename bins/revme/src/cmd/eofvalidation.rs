@@ -19,7 +19,7 @@ pub struct Cmd {
 impl Cmd {
     /// Run statetest command.
     pub fn run(&self) -> Result<(), Error> {
-        // check if path exists.
+        // Check if path exists.
         for path in &self.paths {
             if !path.exists() {
                 return Err(Error::Custom("The specified path does not exist"));
@@ -31,7 +31,7 @@ impl Cmd {
 }
 
 fn skip_test(name: &str) -> bool {
-    // embedded containers rules changed
+    // Embedded containers rules changed
     if name.starts_with("EOF1_embedded_container") {
         return true;
     }
@@ -39,7 +39,7 @@ fn skip_test(name: &str) -> bool {
         name,
         "EOF1_undefined_opcodes_186"
         | ""
-        // truncated data is only allowed in embedded containers
+        // Truncated data is only allowed in embedded containers
         | "validInvalid_48"
         | "validInvalid_1"
         | "EOF1_truncated_section_3"

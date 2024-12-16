@@ -54,7 +54,7 @@ pub struct JournaledState<DB> {
 
 impl<DB: Database> Journal for JournaledState<DB> {
     type Database = DB;
-    // TODO make a struck here.
+    // TODO : Make a struck here.
     type FinalOutput = (EvmState, Vec<Log>);
 
     fn new(database: DB) -> JournaledState<DB> {
@@ -135,7 +135,7 @@ impl<DB: Database> Journal for JournaledState<DB> {
         to: &Address,
         balance: U256,
     ) -> Result<Option<TransferError>, DB::Error> {
-        // TODO handle instruction result
+        // TODO : Handle instruction result
         self.transfer(from, to, balance)
     }
 
@@ -195,7 +195,7 @@ impl<DB: Database> Journal for JournaledState<DB> {
         balance: U256,
         spec_id: SpecId,
     ) -> Result<JournalCheckpoint, TransferError> {
-        // ignore error.
+        // Ignore error.
         self.create_account_checkpoint(caller, address, balance, spec_id)
     }
 
@@ -623,7 +623,7 @@ impl<DB: Database> JournaledState<DB> {
     /// Performances selfdestruct action.
     /// Transfers balance from address to target. Check if target exist/is_cold
     ///
-    /// Note: balance will be lost if address and target are the same BUT when
+    /// Note: Balance will be lost if address and target are the same BUT when
     /// current spec enables Cancun, this happens only when the account associated to address
     /// is created in the same tx
     ///

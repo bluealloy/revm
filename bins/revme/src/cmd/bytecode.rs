@@ -64,12 +64,12 @@ impl Cmd {
             return;
         }
 
-        // else run command in loop.
+        // Else run command in loop.
         loop {
             let mut input = String::new();
             io::stdin().read_line(&mut input).expect("Input Error");
             if input.len() == 1 {
-                // just a newline, so exit
+                // Just a newline, so exit
                 return;
             }
             let Some(bytes) = trim_decode(&input) else {

@@ -87,14 +87,14 @@ where
     ///
     /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
     ///
-    /// TODO move this in Journaled state
+    // TODO : Move this in Journaled state
     #[inline]
     pub fn code(
         &mut self,
         address: Address,
     ) -> Result<Eip7702CodeLoad<Bytes>, <DB as Database>::Error> {
-        let a = self.journaled_state.load_account_code(address)?;
-        // SAFETY: safe to unwrap as load_code will insert code if it is empty.
+        let a = self.journaled_state.load_code(address)?;
+        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = a.info.code.as_ref().unwrap();
         if code.is_eof() {
             return Ok(Eip7702CodeLoad::new_not_delegated(
@@ -109,7 +109,7 @@ where
 
             let delegated_account = self.journaled_state.load_account_code(address)?;
 
-            // SAFETY: safe to unwrap as load_code will insert code if it is empty.
+            // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
             let delegated_code = delegated_account.info.code.as_ref().unwrap();
 
             let bytes = if delegated_code.is_eof() {
@@ -328,7 +328,7 @@ where
     /// In case of EOF account it will return `EOF_MAGIC_HASH`
     /// (the hash of `0xEF00`).
     ///
-    /// TODO move this in Journaled state
+    // TODO : Move this in Journaled state
     #[inline]
     pub fn code_hash(
         &mut self,
@@ -338,7 +338,7 @@ where
         if acc.is_empty() {
             return Ok(Eip7702CodeLoad::new_not_delegated(B256::ZERO, acc.is_cold));
         }
-        // SAFETY: safe to unwrap as load_code will insert code if it is empty.
+        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = acc.info.code.as_ref().unwrap();
 
         // If bytecode is EIP-7702 then we need to load the delegated account.

@@ -2,7 +2,8 @@ use super::Eip1559Tx;
 use auto_impl::auto_impl;
 use primitives::Address;
 
-/// EIP-7702 transaction, TODO set Trait for AuthorizationList.
+/// EIP-7702 transaction
+// TODO : Set Trait for AuthorizationList.
 #[auto_impl(&, Box, Arc, Rc)]
 pub trait Eip7702Tx: Eip1559Tx {
     /// Destination address of the call.
@@ -59,7 +60,7 @@ pub trait Authorization: Clone {
     fn is_invalid(&self) -> bool;
 }
 
-// TODO move to default context
+// TODO : Move to default context
 use specification::eip7702::RecoveredAuthorization;
 
 impl Authorization for RecoveredAuthorization {
@@ -70,7 +71,7 @@ impl Authorization for RecoveredAuthorization {
 
     /// Returns authorization the chain id.
     fn chain_id(&self) -> u64 {
-        // TODO chain_id is set as u64 in newest EIP-7702 spec
+        // TODO : `chain_id` is set as u64 in newest EIP-7702 spec
         self.inner().chain_id().try_into().unwrap()
     }
 

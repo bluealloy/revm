@@ -44,10 +44,10 @@ where
 
     fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
         let spec = context.cfg().spec().into();
-        // set journaling state flag.
+        // Set journaling state flag.
         context.journal().set_spec_id(spec);
 
-        // load coinbase
+        // Load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
         if spec.is_enabled_in(SpecId::SHANGHAI) {
             let coinbase = *context.block().beneficiary();
@@ -101,18 +101,18 @@ where
         let is_call = context.tx().kind().is_call();
         let caller = context.tx().common_fields().caller();
 
-        // load caller's account.
+        // Load caller's account.
         let caller_account = context.journal().load_account(caller)?.data;
-        // set new caller account balance.
+        // Set new caller account balance.
         caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
 
-        // bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
+        // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
         if is_call {
             // Nonce is already checked
             caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
         }
 
-        // touch account so we know it is changed.
+        // Touch account so we know it is changed.
         caller_account.mark_touch();
         Ok(())
     }
@@ -126,7 +126,7 @@ pub fn apply_eip7702_auth_list<
 >(
     context: &mut CTX,
 ) -> Result<u64, ERROR> {
-    // return if there is no auth list.
+    // Return if there is no auth list.
     let tx = context.tx();
     if tx.tx_type().into() != TransactionType::Eip7702 {
         return Ok(0);
@@ -153,7 +153,7 @@ pub fn apply_eip7702_auth_list<
 
     let mut refunded_accounts = 0;
     for authorization in authorization_list {
-        // 1. recover authority and authorized addresses.
+        // 1. Recover authority and authorized addresses.
         // authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]
         let Some(authority) = authorization.authority else {
             continue;
@@ -164,13 +164,13 @@ pub fn apply_eip7702_auth_list<
             continue;
         }
 
-        // warm authority account and check nonce.
+        // Warm authority account and check nonce.
         // 3. Add authority to accessed_addresses (as defined in EIP-2929.)
         let mut authority_acc = context.journal().load_account_code(authority)?;
 
         // 4. Verify the code of authority is either empty or already delegated.
         if let Some(bytecode) = &authority_acc.info.code {
-            // if it is not empty and it is not eip7702
+            // If it is not empty and it is not eip7702
             if !bytecode.is_empty() && !bytecode.is_eip7702() {
                 continue;
             }

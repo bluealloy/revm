@@ -10,7 +10,7 @@ pub trait Cfg {
 
     fn chain_id(&self) -> u64;
 
-    // TODO Make SpecId a associated type but for faster development we use impl Into.
+    // TODO : Make SpecId a associated type but for faster development we use impl Into.
     fn spec(&self) -> Self::Spec;
 
     fn max_code_size(&self) -> usize;

@@ -34,7 +34,7 @@ impl EofBody {
 
     /// Creates an EOF container from this body.
     pub fn into_eof(self) -> Eof {
-        // TODO add bounds checks.
+        // TODO : Add bounds checks.
         let mut prev_value = 0;
         let header = EofHeader {
             types_size: self.types_section.len() as u16 * 4,
@@ -70,7 +70,7 @@ impl EofBody {
     ///
     /// First code section starts at 0.
     pub fn eof_code_section_start(&self, idx: usize) -> Option<usize> {
-        // starting code section start with 0.
+        // Starting code section start with 0.
         if idx == 0 {
             return Some(0);
         }
@@ -116,7 +116,7 @@ impl EofBody {
             body.types_section.push(types_section);
         }
 
-        // extract code section
+        // Extract code section
         let start = header_len + header.types_size as usize;
         let mut code_end = 0;
         for size in header.code_sizes.iter().map(|x| *x as usize) {
@@ -125,7 +125,7 @@ impl EofBody {
         }
         body.code = input.slice(start..start + header.sum_code_sizes);
 
-        // extract container section
+        // Extract container section
         let mut start = start + header.sum_code_sizes;
         for size in header.container_sizes.iter().map(|x| *x as usize) {
             body.container_section
