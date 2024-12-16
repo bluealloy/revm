@@ -1,12 +1,10 @@
 use database::BenchmarkDB;
-use inspector::inspectors::TracerEip3155;
 use revm::{
     bytecode::Bytecode,
     handler::EthHandler,
     primitives::{address, bytes, Bytes, TxKind},
     Context, MainEvm,
 };
-use std::io::stderr;
 
 pub fn simple_example() {
     let bytecode = Bytecode::new_raw(CONTRACT_DATA.clone());
