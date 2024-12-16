@@ -2,20 +2,19 @@ use database::BenchmarkDB;
 use revm::{
     bytecode::Bytecode,
     handler::EthHandler,
-    primitives::{address, bytes, Bytes, TxKind},
+    primitives::{address, bytes, hex, Bytes, TxKind},
     Context, MainEvm,
 };
 use std::time::Instant;
 
-const CONTRACT_DATA: Bytes = Bytes::from_static(include_str!("analysis.hex").as_bytes());
+const BYTES: &'static str = include_str!("analysis.hex");
 
 pub fn run() {
-    let bytecode_raw = Bytecode::new_raw(CONTRACT_DATA.clone());
-    let bytecode_analysed = Bytecode::new_raw(CONTRACT_DATA);
+    let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
 
     // BenchmarkDB is dummy state that implements Database trait.
     let context = Context::builder()
-        .with_db(BenchmarkDB::new_bytecode(bytecode_raw))
+        .with_db(BenchmarkDB::new_bytecode(bytecode))
         .modify_tx_chained(|tx| {
             // execution globals block hash/gas_limit/coinbase/timestamp..
             tx.caller = address!("1000000000000000000000000000000000000000");
@@ -34,14 +33,6 @@ pub fn run() {
     for _ in 0..30000 {
         let _ = evm.transact().unwrap();
     }
-    println!("Raw elapsed time: {:?}", timer.elapsed());
-
-    evm.context
-        .modify_db(|db| *db = BenchmarkDB::new_bytecode(bytecode_analysed));
-
-    let timer = Instant::now();
-    for _ in 0..30000 {
-        let _ = evm.transact().unwrap();
-    }
-    println!("Analyzed elapsed time: {:?}", timer.elapsed());
+    let time = timer.elapsed();
+    println!("Elapsed time: {:?}", time);
 }

@@ -2,13 +2,11 @@ use database::BenchmarkDB;
 use revm::{
     bytecode::Bytecode,
     handler::EthHandler,
-    primitives::{address, bytes, Bytes, TxKind},
+    primitives::{address, bytes, hex, Bytes, TxKind},
     Context, MainEvm,
 };
 
-pub fn simple_example() {
-    let bytecode = Bytecode::new_raw(CONTRACT_DATA.clone());
-
+pub fn simple_example(bytecode: Bytecode) {
     let context = Context::builder()
         .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
         .modify_tx_chained(|tx| {
@@ -24,10 +22,11 @@ pub fn simple_example() {
 
 pub fn run() {
     println!("Running snailtracer example!");
+    let bytecode = Bytecode::new_raw(Bytes::from(hex::decode(BYTES).unwrap()));
     let start = std::time::Instant::now();
-    simple_example();
+    simple_example(bytecode);
     let elapsed = start.elapsed();
     println!("elapsed: {:?}", elapsed);
 }
 
-const CONTRACT_DATA: Bytes = Bytes::from_static(include_str!("snailtracer.hex").as_bytes());
+const BYTES: &'static str = include_str!("snailtracer.hex");
