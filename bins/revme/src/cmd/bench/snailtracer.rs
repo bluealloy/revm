@@ -16,7 +16,7 @@ pub fn simple_example() {
             tx.caller = address!("1000000000000000000000000000000000000000");
             tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
             tx.data = bytes!("30627b7c");
-            tx.gas_limit = 30_000_000;
+            tx.gas_limit = 1_000_000_000;
         });
     let mut evm = MainEvm::new(context, EthHandler::default());
     let _ = evm.transact().unwrap();
