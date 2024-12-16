@@ -9,63 +9,71 @@ pub const ECRECOVER: PrecompileWithAddress =
 
 pub use self::secp256k1::ecrecover;
 
-#[cfg(not(feature = "secp256k1"))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
-    use k256::ecdsa::{Error, RecoveryId, Signature, VerifyingKey};
     use primitives::{alloy_primitives::B512, keccak256, B256};
 
-    pub fn ecrecover(sig: &B512, mut recid: u8, msg: &B256) -> Result<B256, Error> {
-        // parse signature
-        let mut sig = Signature::from_slice(sig.as_slice())?;
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "secp256k1")] {
+            use secp256k1::{
+                ecdsa::{RecoverableSignature, RecoveryId},
+                Message, SECP256K1,
+            };
 
-        // normalize signature and flip recovery id if needed.
-        if let Some(sig_normalized) = sig.normalize_s() {
-            sig = sig_normalized;
-            recid ^= 1;
+            // Silence the unused crate dependency warning.
+            use k256 as _;
+            
+            pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, secp256k1::Error> {
+                let recid = RecoveryId::from_i32(recid as i32).expect("recovery ID is valid");
+                let sig = RecoverableSignature::from_compact(sig.as_slice(), recid)?;
+
+                let msg = Message::from_digest(msg.0);
+                let public = SECP256K1.recover_ecdsa(&msg, &sig)?;
+
+                let mut hash = keccak256(&public.serialize_uncompressed()[1..]);
+                hash[..12].fill(0);
+                Ok(hash)
+            }
+        } else if #[cfg(feature = "libsecp256k1")] {
+            pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, libsecp256k1::Error> {
+                let recid = libsecp256k1::RecoveryId::parse(recid)?;
+                let sig = RecoverableSignature::from_compact(sig.as_slice(), recid)?;
+
+                let msg = libsecp256k1::Message::parse(msg.as_ref());
+                let public = libsecp256k1::recover(&msg, &sig, &recid)?;
+
+                let mut hash = keccak256(&public.serialize_uncompressed()[1..]);
+                hash[..12].fill(0);
+                Ok(hash)
+            }
+        } else {
+            use k256::ecdsa::{Error, RecoveryId, Signature, VerifyingKey};
+
+            pub fn ecrecover(sig: &B512, mut recid: u8, msg: &B256) -> Result<B256, Error> {
+                // parse signature
+                let mut sig = Signature::from_slice(sig.as_slice())?;
+
+                // normalize signature and flip recovery id if needed.
+                if let Some(sig_normalized) = sig.normalize_s() {
+                    sig = sig_normalized;
+                    recid ^= 1;
+                }
+                let recid = RecoveryId::from_byte(recid).expect("recovery ID is valid");
+
+                // recover key
+                let recovered_key = VerifyingKey::recover_from_prehash(&msg[..], &sig, recid)?;
+                // hash it
+                let mut hash = keccak256(
+                    &recovered_key
+                        .to_encoded_point(/* compress = */ false)
+                        .as_bytes()[1..],
+                );
+
+                // truncate to 20 bytes
+                hash[..12].fill(0);
+                Ok(hash)
+            }
         }
-        let recid = RecoveryId::from_byte(recid).expect("recovery ID is valid");
-
-        // recover key
-        let recovered_key = VerifyingKey::recover_from_prehash(&msg[..], &sig, recid)?;
-        // hash it
-        let mut hash = keccak256(
-            &recovered_key
-                .to_encoded_point(/* compress = */ false)
-                .as_bytes()[1..],
-        );
-
-        // truncate to 20 bytes
-        hash[..12].fill(0);
-        Ok(hash)
-    }
-}
-
-#[cfg(feature = "secp256k1")]
-#[allow(clippy::module_inception)]
-mod secp256k1 {
-    use primitives::{alloy_primitives::B512, keccak256, B256};
-    use rust_secp256k1::{
-        ecdsa::{RecoverableSignature, RecoveryId},
-        Message, Secp256k1,
-    };
-
-    // Silence the unused crate dependency warning.
-    use k256 as _;
-    use secp256k1 as _;
-
-    pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, rust_secp256k1::Error> {
-        let engine = Secp256k1::new();
-
-        let recid = RecoveryId::from_i32(recid as i32).expect("recovery ID is valid");
-        let sig = RecoverableSignature::from_compact(sig.as_slice(), recid)?;
-
-        let msg = Message::from_slice(msg.as_ref())?;
-        let public = engine.recover_ecdsa(&msg, &sig)?;
-
-        let mut hash = keccak256(&public.serialize_uncompressed()[1..]);
-        hash[..12].fill(0);
-        Ok(hash)
     }
 }
 
