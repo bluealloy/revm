@@ -124,4 +124,8 @@ impl Host for DummyHost {
     ) -> Option<StateLoad<SelfDestructResult>> {
         Some(StateLoad::default())
     }
+
+    fn last_gas_consumed(&self) -> u64 {
+        0
+    }
 }

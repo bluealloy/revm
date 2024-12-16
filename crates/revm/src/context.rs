@@ -202,4 +202,8 @@ impl<EXT, DB: Database> Host for Context<EXT, DB> {
             .map_err(|e| self.evm.error = Err(e))
             .ok()
     }
+
+    fn last_gas_consumed(&self) -> u64 {
+        0
+    }
 }

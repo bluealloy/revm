@@ -55,6 +55,8 @@ pub trait Host {
         address: Address,
         target: Address,
     ) -> Option<StateLoad<SelfDestructResult>>;
+
+    fn last_gas_consumed(&self) -> u64;
 }
 
 /// Represents the result of an `sstore` operation.
