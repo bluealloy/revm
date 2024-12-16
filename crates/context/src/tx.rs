@@ -83,7 +83,7 @@ impl Default for TxEnv {
         Self {
             tx_type: TransactionType::Legacy,
             caller: Address::default(),
-            gas_limit: u64::MAX,
+            gas_limit: 30_000_000,
             gas_price: U256::ZERO,
             transact_to: TxKind::Call(Address::default()),
             value: U256::ZERO,
