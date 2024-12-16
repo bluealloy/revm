@@ -427,8 +427,9 @@ pub enum SuccessReason {
     EofReturnContract,
 }
 
-/// Indicates that the EVM has experienced an exceptional halt. This causes execution to
-/// immediately end with all gas being consumed.
+/// Indicates that the EVM has experienced an exceptional halt.
+///
+/// This causes execution to immediately end with all gas being consumed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum HaltReason {

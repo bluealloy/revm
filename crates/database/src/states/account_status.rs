@@ -198,15 +198,15 @@ impl AccountStatus {
     /// Transition to other state while preserving invariance of this state.
     ///
     /// It this account was Destroyed and other account is not:
-    /// we should mark extended account as destroyed too.
-    /// and as other account had some changes, extended account
-    /// should be marked as DestroyedChanged.
+    /// - We should mark extended account as destroyed too.
+    /// - And as other account had some changes, extended account
+    ///   should be marked as DestroyedChanged.
     ///
     /// If both account are not destroyed and if this account is in memory:
-    /// this means that extended account is in memory too.
+    /// - This means that extended account is in memory too.
     ///
     /// Otherwise, if both are destroyed or other is destroyed:
-    /// set other status to extended account.
+    /// -  Sets other status to extended account.
     pub fn transition(&mut self, other: Self) {
         *self = match (self.was_destroyed(), other.was_destroyed()) {
             (true, false) => Self::DestroyedChanged,

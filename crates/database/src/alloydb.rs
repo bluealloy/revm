@@ -35,7 +35,7 @@ pub struct AlloyDB<T: Transport + Clone, N: Network, P: Provider<T, N>> {
 }
 
 impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
-    /// Create a new AlloyDB instance, with a [Provider] and a block.
+    /// Creates a new AlloyDB instance, with a [Provider] and a block.
     pub fn new(provider: P, block_number: BlockId) -> Self {
         Self {
             provider,
@@ -44,7 +44,7 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
         }
     }
 
-    /// Set the block number on which the queries will be based on.
+    /// Sets the block number on which the queries will be based on.
     pub fn set_block_number(&mut self, block_number: BlockId) {
         self.block_number = block_number;
     }
