@@ -1,8 +1,7 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
-
 use revm::interpreter::{CallOutcome, CreateOutcome, Gas};
 
-/// Helper [Inspector] that keeps track of gas.
+/// Helper that keeps track of gas.
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
 pub struct GasInspector {
