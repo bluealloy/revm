@@ -112,7 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - avoid cloning precompiles ([#1486](https://github.com/bluealloy/revm/pull/1486))
 - add setters to `BundleBuilder` with `&mut self` ([#1527](https://github.com/bluealloy/revm/pull/1527))
 - pluralize EOFCreateInput ([#1523](https://github.com/bluealloy/revm/pull/1523))
-- added simular to used-by ([#1521](https://github.com/bluealloy/revm/pull/1521))
+- added similar to used-by ([#1521](https://github.com/bluealloy/revm/pull/1521))
 - Removed .clone() in ExecutionHandler::call, and reusing output buffer in Interpreter ([#1512](https://github.com/bluealloy/revm/pull/1512))
 - remove old deprecated items ([#1489](https://github.com/bluealloy/revm/pull/1489))
 - *(deps)* bump rstest from 0.19.0 to 0.21.0 ([#1482](https://github.com/bluealloy/revm/pull/1482))
@@ -904,5 +904,5 @@ Published v0.2.0, first initial version of code. London supported and all eth st
     * inspector: is what i wanted, full control on insides of EVM so that we can control it and modify it. will probably needs to add some small tweaks to interface but nothing major.
     * subroutines: Feels okay but it needs more scrutiny just to be sure that all corner cases are covered.
     * Test that are failing (~20) are mostly related to EIP-158: State clearing. For EIP-158 I will time to do it properly.
-    * There is probably benefit of replaing HashMap hasher with something simpler, but this is research for another time.
+    * There is probably benefit of replacing HashMap hasher with something simpler, but this is research for another time.
 ## Project structure:
