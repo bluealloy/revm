@@ -62,6 +62,7 @@ impl<BLOCK: Block + Default, TX: Transaction + Default, DB: Database, CHAIN: Def
         }
     }
 }
+
 impl<BLOCK, TX, CFG, DB, CHAIN> Context<BLOCK, TX, CFG, DB, CHAIN>
 where
     BLOCK: Block,
