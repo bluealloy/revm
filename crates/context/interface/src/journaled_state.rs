@@ -3,6 +3,7 @@ use database_interface::{Database, DatabaseGetter};
 use primitives::{Address, B256, U256};
 use specification::hardfork::SpecId;
 use state::{Account, Bytecode};
+use std::boxed::Box;
 
 pub trait JournaledState {
     type Database: Database;
