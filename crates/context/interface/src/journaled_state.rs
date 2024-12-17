@@ -1,9 +1,9 @@
-use auto_impl::auto_impl;
 use core::ops::{Deref, DerefMut};
-use database_interface::Database;
+use database_interface::{Database, DatabaseGetter};
 use primitives::{Address, B256, U256};
 use specification::hardfork::SpecId;
 use state::{Account, Bytecode};
+use std::boxed::Box;
 
 pub trait JournaledState {
     type Database: Database;
@@ -240,9 +240,24 @@ impl<T> Eip7702CodeLoad<T> {
 pub type JournalStateGetterDBError<CTX> =
     <<<CTX as JournalStateGetter>::Journal as JournaledState>::Database as Database>::Error;
 
-#[auto_impl(&mut, Box)]
-pub trait JournalStateGetter {
-    type Journal: JournaledState;
+pub trait JournalStateGetter: DatabaseGetter {
+    type Journal: JournaledState<Database = <Self as DatabaseGetter>::Database>;
 
     fn journal(&mut self) -> &mut Self::Journal;
+}
+
+impl<T: JournalStateGetter> JournalStateGetter for &mut T {
+    type Journal = T::Journal;
+
+    fn journal(&mut self) -> &mut Self::Journal {
+        T::journal(*self)
+    }
+}
+
+impl<T: JournalStateGetter> JournalStateGetter for Box<T> {
+    type Journal = T::Journal;
+
+    fn journal(&mut self) -> &mut Self::Journal {
+        T::journal(self.as_mut())
+    }
 }
