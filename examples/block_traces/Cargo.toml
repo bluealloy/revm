@@ -30,8 +30,9 @@ inspector = { workspace = true, features = ["std", "serde-json"] }
 tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
 
 # alloy
-alloy-eips = "0.4.2"
-alloy-provider = "0.4.2"
+alloy-eips = "0.6"
+alloy-provider = "0.6"
+alloy-consensus = "0.6"
 
 # progress bar
 indicatif = "0.17"

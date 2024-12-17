@@ -3,7 +3,6 @@ use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
 use primitives::{hash_map::Entry, Address, HashMap, Log, B256, KECCAK_EMPTY, U256};
 use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
-use wiring::EthereumWiring;
 
 /// A [Database] implementation that stores all state changes in memory.
 pub type InMemoryDB = CacheDB<EmptyDB>;
@@ -39,7 +38,38 @@ impl<ExtDB: Default> Default for CacheDB<ExtDB> {
     }
 }
 
+impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
+    /// Flatten a nested cache by applying the outer cache to the inner cache.
+    ///
+    /// The behavior is as follows:
+    /// - Accounts are overridden with outer accounts
+    /// - Contracts are overridden with outer contracts
+    /// - Logs are appended
+    /// - Block hashes are overridden with outer block hashes
+    pub fn flatten(self) -> CacheDB<ExtDb> {
+        let CacheDB {
+            accounts,
+            contracts,
+            logs,
+            block_hashes,
+            db: mut inner,
+        } = self;
+
+        inner.accounts.extend(accounts);
+        inner.contracts.extend(contracts);
+        inner.logs.extend(logs);
+        inner.block_hashes.extend(block_hashes);
+        inner
+    }
+
+    /// Discard the outer cache and return the inner cache.
+    pub fn discard_outer(self) -> CacheDB<ExtDb> {
+        self.db
+    }
+}
+
 impl<ExtDB> CacheDB<ExtDB> {
+    /// Create a new cache with the given external database.
     pub fn new(db: ExtDB) -> Self {
         let mut contracts = HashMap::default();
         contracts.insert(KECCAK_EMPTY, Bytecode::default());
@@ -78,6 +108,11 @@ impl<ExtDB> CacheDB<ExtDB> {
     pub fn insert_account_info(&mut self, address: Address, mut info: AccountInfo) {
         self.insert_contract(&mut info);
         self.accounts.entry(address).or_default().info = info;
+    }
+
+    /// Wrap the cache in a [CacheDB], creating a nested cache.
+    pub fn nest(self) -> CacheDB<Self> {
+        CacheDB::new(self)
     }
 }
 
@@ -353,9 +388,6 @@ impl AccountState {
         matches!(self, AccountState::StorageCleared)
     }
 }
-
-/// Ethereum benchmark wiring
-pub type EthereumBenchmarkWiring = EthereumWiring<BenchmarkDB, ()>;
 
 /// Custom benchmarking DB that only has account info for the zero address.
 ///

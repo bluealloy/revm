@@ -40,7 +40,7 @@ impl Account {
     /// Check if account is empty and check if empty state before spurious dragon hardfork.
     #[inline]
     pub fn state_clear_aware_is_empty(&self, spec: SpecId) -> bool {
-        if SpecId::enabled(spec, SpecId::SPURIOUS_DRAGON) {
+        if SpecId::is_enabled_in(spec, SpecId::SPURIOUS_DRAGON) {
             self.is_empty()
         } else {
             let loaded_not_existing = self.is_loaded_as_not_existing();

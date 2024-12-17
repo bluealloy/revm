@@ -22,14 +22,43 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
+# revm
+interpreter.workspace = true
+context-interface.workspace = true
+primitives.workspace = true
+database-interface.workspace = true
+state.workspace = true
+specification.workspace = true
+bytecode.workspace = true
+
+# misc
+derive-where.workspace = true
+cfg-if.workspace = true
+
 # Optional
 serde = { version = "1.0", default-features = false, features = [
     "derive",
     "rc",
 ], optional = true }
 
+[dev-dependencies]
+database.workspace = true
+
 [features]
+# Implementation-specific features
 default = ["std"]
-std = ["serde?/std"]
-serde = ["dep:serde"]
-serde-json = ["serde"]
+std = []
+dev = [
+    "memory_limit",
+    "optional_balance_check",
+    "optional_block_gas_limit",
+    "optional_eip3607",
+    "optional_gas_refund",
+    "optional_no_base_fee",
+]
+memory_limit = []
+optional_balance_check = []
+optional_block_gas_limit = []
+optional_eip3607 = []
+optional_gas_refund = []
+optional_no_base_fee = []

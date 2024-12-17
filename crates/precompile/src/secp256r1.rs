@@ -7,8 +7,7 @@
 //! P256 elliptic curve. The [`P256VERIFY`] const represents the implementation of this precompile,
 //! with the address that it is currently deployed at.
 use crate::{
-    u64_to_address, Precompile, PrecompileError, PrecompileOutput, PrecompileResult,
-    PrecompileWithAddress,
+    u64_to_address, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
 use p256::ecdsa::{signature::hazmat::PrehashVerifier, Signature, VerifyingKey};
 use primitives::{Bytes, B256};
@@ -23,7 +22,7 @@ pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
 
 /// [EIP-7212](https://eips.ethereum.org/EIPS/eip-7212#specification) secp256r1 precompile.
 pub const P256VERIFY: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(0x100), Precompile::Standard(p256_verify));
+    PrecompileWithAddress(u64_to_address(0x100), p256_verify);
 
 /// secp256r1 precompile logic. It takes the input bytes sent to the precompile
 /// and the gas limit. The output represents the result of verifying the

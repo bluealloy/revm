@@ -17,30 +17,28 @@ use serde_json as _;
 #[cfg(test)]
 use walkdir as _;
 
-mod function_stack;
 pub mod gas;
 mod host;
 mod instruction_result;
 pub mod instructions;
 pub mod interpreter;
 pub mod interpreter_action;
+pub mod interpreter_types;
 pub mod table;
 
 // Reexport primary types.
-pub use function_stack::{FunctionReturnFrame, FunctionStack};
+pub use context_interface::CreateScheme;
 pub use gas::Gas;
-pub use host::{
-    AccountLoad, DummyHost, Eip7702CodeLoad, Host, SStoreResult, SelfDestructResult, StateLoad,
-};
+pub use host::{DummyHost, Host, SStoreResult, SelfDestructResult, StateLoad};
 pub use instruction_result::*;
 pub use interpreter::{
-    num_words, Contract, Interpreter, InterpreterResult, SharedMemory, Stack, EMPTY_SHARED_MEMORY,
-    STACK_LIMIT,
+    num_words, InputsImpl, Interpreter, InterpreterResult, MemoryGetter, SharedMemory, Stack,
+    EMPTY_SHARED_MEMORY, STACK_LIMIT,
 };
 pub use interpreter_action::{
     CallInputs, CallOutcome, CallScheme, CallValue, CreateInputs, CreateOutcome, EOFCreateInputs,
-    EOFCreateKind, InterpreterAction, NewFrameAction,
+    EOFCreateKind, FrameInput, InterpreterAction,
 };
+pub use interpreter_types::InterpreterTypes;
 pub use specification::constants::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 pub use table::Instruction;
-pub use wiring::default::CreateScheme;

@@ -1,17 +1,17 @@
 use precompile::{
-    bn128, {Precompile, PrecompileError, PrecompileResult, PrecompileWithAddress},
+    bn128, {PrecompileError, PrecompileResult, PrecompileWithAddress},
 };
 
-pub(crate) mod pair {
+pub mod pair {
     use super::*;
 
-    const GRANITE_MAX_INPUT_SIZE: usize = 112687;
-    pub(crate) const GRANITE: PrecompileWithAddress = PrecompileWithAddress(
-        bn128::pair::ADDRESS,
-        Precompile::Standard(|input, gas_limit| run_pair(input, gas_limit)),
-    );
+    pub const GRANITE_MAX_INPUT_SIZE: usize = 112687;
+    pub const GRANITE: PrecompileWithAddress =
+        PrecompileWithAddress(bn128::pair::ADDRESS, |input, gas_limit| {
+            run_pair(input, gas_limit)
+        });
 
-    pub(crate) fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    pub fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > GRANITE_MAX_INPUT_SIZE {
             return Err(PrecompileError::Bn128PairLength.into());
         }

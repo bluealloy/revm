@@ -1,6 +1,13 @@
-use core::{cmp::min, fmt, ops::Range};
+use core::{
+    cell::{Ref, RefCell},
+    cmp::min,
+    fmt,
+    ops::{Deref, Range},
+};
 use primitives::{hex, B256, U256};
-use std::vec::Vec;
+use std::{rc::Rc, vec::Vec};
+
+use super::MemoryTrait;
 
 /// A sequential memory shared between calls, which uses
 /// a `Vec` for internal representation.
@@ -16,7 +23,7 @@ pub struct SharedMemory {
     checkpoints: Vec<usize>,
     /// Invariant: equals `self.checkpoints.last()`
     last_checkpoint: usize,
-    /// Memory limit. See [`CfgEnv`](wiring::default::CfgEnv).
+    /// Memory limit. See [`Cfg`](context_interface::Cfg).
     #[cfg(feature = "memory_limit")]
     memory_limit: u64,
 }
@@ -45,6 +52,54 @@ impl Default for SharedMemory {
     #[inline]
     fn default() -> Self {
         Self::new()
+    }
+}
+
+pub trait MemoryGetter {
+    fn memory_mut(&mut self) -> &mut SharedMemory;
+    fn memory(&self) -> &SharedMemory;
+}
+
+impl MemoryGetter for SharedMemory {
+    #[inline]
+    fn memory_mut(&mut self) -> &mut SharedMemory {
+        self
+    }
+
+    #[inline]
+    fn memory(&self) -> &SharedMemory {
+        self
+    }
+}
+
+impl<T: MemoryGetter> MemoryTrait for Rc<RefCell<T>> {
+    fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
+        self.borrow_mut()
+            .memory_mut()
+            .set_data(memory_offset, data_offset, len, data);
+    }
+
+    fn set(&mut self, memory_offset: usize, data: &[u8]) {
+        self.borrow_mut().memory_mut().set(memory_offset, data);
+    }
+
+    fn size(&self) -> usize {
+        self.borrow().memory().len()
+    }
+
+    fn copy(&mut self, destination: usize, source: usize, len: usize) {
+        self.borrow_mut()
+            .memory_mut()
+            .copy(destination, source, len);
+    }
+
+    fn slice(&self, range: Range<usize>) -> impl Deref<Target = [u8]> + '_ {
+        Ref::map(self.borrow(), |i| i.memory().slice_range(range))
+    }
+
+    fn resize(&mut self, new_size: usize) -> bool {
+        self.borrow_mut().memory_mut().resize(new_size);
+        true
     }
 }
 
@@ -120,12 +175,6 @@ impl SharedMemory {
         self.len() == 0
     }
 
-    /// Returns the gas cost for the current memory expansion.
-    #[inline]
-    pub fn current_expansion_cost(&self) -> u64 {
-        crate::gas::memory_gas_for_len(self.len())
-    }
-
     /// Resizes the memory in-place so that `len` is equal to `new_len`.
     #[inline]
     pub fn resize(&mut self, new_size: usize) {
@@ -139,7 +188,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn slice(&self, offset: usize, size: usize) -> &[u8] {
+    pub fn slice_len(&self, offset: usize, size: usize) -> &[u8] {
         self.slice_range(offset..offset + size)
     }
 
@@ -179,7 +228,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     pub fn get_byte(&self, offset: usize) -> u8 {
-        self.slice(offset, 1)[0]
+        self.slice_len(offset, 1)[0]
     }
 
     /// Returns a 32-byte slice of the memory region at the given offset.
@@ -189,7 +238,7 @@ impl SharedMemory {
     /// Panics on out of bounds.
     #[inline]
     pub fn get_word(&self, offset: usize) -> B256 {
-        self.slice(offset, 32).try_into().unwrap()
+        self.slice_len(offset, 32).try_into().unwrap()
     }
 
     /// Returns a U256 of the memory region at the given offset.
@@ -308,7 +357,7 @@ impl SharedMemory {
 /// Returns number of words what would fit to provided number of bytes,
 /// i.e. it rounds up the number bytes to number of words.
 #[inline]
-pub const fn num_words(len: u64) -> u64 {
+pub const fn num_words(len: usize) -> usize {
     len.saturating_add(31) / 32
 }
 
@@ -326,7 +375,7 @@ mod tests {
         assert_eq!(num_words(63), 2);
         assert_eq!(num_words(64), 2);
         assert_eq!(num_words(65), 3);
-        assert_eq!(num_words(u64::MAX), u64::MAX / 32);
+        assert_eq!(num_words(usize::MAX), usize::MAX / 32);
     }
 
     #[test]

@@ -1,19 +1,17 @@
 use crate::{
     primitives::U256,
     utilities::{left_pad, left_pad_vec, right_pad_vec, right_pad_with_offset},
-    Precompile, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
+    PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
 use aurora_engine_modexp::modexp;
 use core::cmp::{max, min};
 use primitives::Bytes;
 
-pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
-    crate::u64_to_address(5),
-    Precompile::Standard(byzantium_run),
-);
+pub const BYZANTIUM: PrecompileWithAddress =
+    PrecompileWithAddress(crate::u64_to_address(5), byzantium_run);
 
 pub const BERLIN: PrecompileWithAddress =
-    PrecompileWithAddress(crate::u64_to_address(5), Precompile::Standard(berlin_run));
+    PrecompileWithAddress(crate::u64_to_address(5), berlin_run);
 
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>

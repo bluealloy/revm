@@ -15,7 +15,7 @@ use std::boxed::Box;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum NewFrameAction {
+pub enum FrameInput {
     /// CALL, CALLCODE, DELEGATECALL, STATICCALL
     /// or EOF EXT*CALL instruction called.
     Call(Box<CallInputs>),
@@ -25,11 +25,17 @@ pub enum NewFrameAction {
     EOFCreate(Box<EOFCreateInputs>),
 }
 
+impl AsMut<Self> for FrameInput {
+    fn as_mut(&mut self) -> &mut Self {
+        self
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InterpreterAction {
     /// New frame
-    NewFrame(NewFrameAction),
+    NewFrame(FrameInput),
     /// Interpreter finished execution.
     Return { result: InterpreterResult },
     /// No action
@@ -40,15 +46,12 @@ pub enum InterpreterAction {
 impl InterpreterAction {
     /// Returns true if action is call.
     pub fn is_call(&self) -> bool {
-        matches!(self, InterpreterAction::NewFrame(NewFrameAction::Call(..)))
+        matches!(self, InterpreterAction::NewFrame(FrameInput::Call(..)))
     }
 
     /// Returns true if action is create.
     pub fn is_create(&self) -> bool {
-        matches!(
-            self,
-            InterpreterAction::NewFrame(NewFrameAction::Create(..))
-        )
+        matches!(self, InterpreterAction::NewFrame(FrameInput::Create(..)))
     }
 
     /// Returns true if action is return.

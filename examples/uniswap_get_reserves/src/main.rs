@@ -7,15 +7,15 @@ use alloy_sol_types::sol;
 use alloy_sol_types::SolCall;
 use database::{AlloyDB, CacheDB};
 use revm::database_interface::WrapDatabaseAsync;
+use revm::handler::EthHandler;
+use revm::Context;
+use revm::EvmExec;
 use revm::{
+    context_interface::result::{ExecutionResult, Output},
     database_interface::DatabaseRef,
     database_interface::EmptyDB,
     primitives::{address, TxKind, U256},
-    wiring::{
-        result::{ExecutionResult, Output},
-        EthereumWiring,
-    },
-    Evm,
+    MainEvm,
 };
 
 #[tokio::main]
@@ -71,24 +71,25 @@ async fn main() -> anyhow::Result<()> {
         .unwrap();
 
     // initialise an empty (default) EVM
-    let mut evm = Evm::<EthereumWiring<CacheDB<EmptyDB>, ()>>::builder()
-        .with_db(cache_db)
-        .with_default_ext_ctx()
-        .modify_tx_env(|tx| {
-            // fill in missing bits of env struct
-            // change that to whatever caller you want to be
-            tx.caller = address!("0000000000000000000000000000000000000000");
-            // account you want to transact with
-            tx.transact_to = TxKind::Call(pool_address);
-            // calldata formed via abigen
-            tx.data = encoded.into();
-            // transaction value in wei
-            tx.value = U256::from(0);
-        })
-        .build();
+    let mut evm = MainEvm::new(
+        Context::builder()
+            .with_db(cache_db)
+            .modify_tx_chained(|tx| {
+                // fill in missing bits of env struct
+                // change that to whatever caller you want to be
+                tx.caller = address!("0000000000000000000000000000000000000000");
+                // account you want to transact with
+                tx.transact_to = TxKind::Call(pool_address);
+                // calldata formed via abigen
+                tx.data = encoded.into();
+                // transaction value in wei
+                tx.value = U256::from(0);
+            }),
+        EthHandler::default(),
+    );
 
     // execute transaction without writing to the DB
-    let ref_tx = evm.transact().unwrap();
+    let ref_tx = evm.exec().unwrap();
     // select ExecutionResult struct
     let result = ref_tx.result;
 

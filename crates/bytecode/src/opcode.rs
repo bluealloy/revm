@@ -138,6 +138,12 @@ impl OpCode {
         }
     }
 
+    /// Returns the opcode as a usize.
+    #[inline]
+    pub const fn as_usize(&self) -> usize {
+        self.0 as usize
+    }
+
     /// Returns the opcode information.
     #[inline]
     pub const fn info(&self) -> OpCodeInfo {

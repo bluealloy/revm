@@ -1,7 +1,7 @@
 use revm::{
+    context_interface::transaction::TransactionType,
     primitives::{Address, Bytes, B256, U256},
     specification::eip2930::AccessList,
-    transaction::TransactionType,
 };
 use serde::{Deserialize, Serialize};
 

@@ -40,8 +40,9 @@ impl Default for Eof {
         let body = EofBody {
             // types section with zero inputs, zero outputs and zero max stack size.
             types_section: vec![TypesSection::default()],
+            code_section: vec![1],
             // One code section with a STOP byte.
-            code_section: vec![Bytes::from_static(&[0x00])],
+            code: Bytes::from_static(&[0x00]),
             container_section: vec![],
             data_section: Bytes::new(),
             is_data_filled: true,

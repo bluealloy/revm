@@ -25,9 +25,10 @@ all = "warn"
 # revm
 revm.workspace = true
 precompile = { workspace = true, features = ["secp256r1"] }
+inspector.workspace = true
 
-# misc
-enumn = { version = "0.1" }
+# static precompile sets.
+once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -41,7 +42,7 @@ database.workspace = true
 anyhow = "1.0.89"
 criterion = "0.5"
 indicatif = "0.17"
-rstest = "0.22.0"
+rstest = "0.23.0"
 alloy-sol-types = "0.8"
 
 [features]
