@@ -17,7 +17,7 @@ pub fn print(code: &[u8]) {
         };
 
         if opcode.immediate_size() != 0 {
-            // check if the opcode immediate are within the bounds of the code
+            // Check if the opcode immediate are within the bounds of the code
             if i + opcode.immediate_size() as usize >= code.len() {
                 println!("Malformed code: immediate out of bounds");
                 break;
@@ -38,7 +38,7 @@ pub fn print(code: &[u8]) {
         if op == RJUMPV {
             let max_index = code[i + 1] as usize;
             let len = max_index + 1;
-            // and max_index+1 is to get size of vtable as index starts from 0.
+            // And max_index+1 is to get size of vtable as index starts from 0.
             rjumpv_additional_immediates = len * 2;
 
             // +1 is for max_index byte

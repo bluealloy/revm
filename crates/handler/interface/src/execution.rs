@@ -38,11 +38,11 @@ pub trait ExecutionHandler {
                         frame_stack.push(new_frame);
                         continue;
                     }
-                    // dont pop the frame as new frame was not created.
+                    // Dont pop the frame as new frame was not created.
                     FrameOrResultGen::Result(result) => result,
                 },
                 FrameOrResultGen::Result(result) => {
-                    // pop frame that returned result
+                    // Pop frame that returned result
                     frame_stack.pop();
                     result
                 }

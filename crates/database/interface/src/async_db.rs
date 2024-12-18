@@ -98,7 +98,7 @@ impl<T> WrapDatabaseAsync<T> {
         Some(Self { db, rt })
     }
 
-    /// Wrap a [DatabaseAsync] or [DatabaseAsyncRef] instance, with a runtime.
+    /// Wraps a [DatabaseAsync] or [DatabaseAsyncRef] instance, with a runtime.
     ///
     /// Refer to [tokio::runtime::Builder] on how to create a runtime if you are in synchronous world.
     /// If you are already using something like [tokio::main], call [WrapDatabaseAsync::new] instead.
@@ -107,7 +107,7 @@ impl<T> WrapDatabaseAsync<T> {
         Self { db, rt }
     }
 
-    /// Wrap a [DatabaseAsync] or [DatabaseAsyncRef] instance, with a runtime handle.
+    /// Wraps a [DatabaseAsync] or [DatabaseAsyncRef] instance, with a runtime handle.
     ///
     /// This generally allows you to pass any valid runtime handle, refer to [tokio::runtime::Handle] on how
     /// to obtain a handle. If you are already in asynchronous world, like [tokio::main], use [WrapDatabaseAsync::new]

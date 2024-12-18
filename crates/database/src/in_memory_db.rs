@@ -28,7 +28,7 @@ pub struct CacheDB<ExtDB> {
     pub block_hashes: HashMap<U256, B256>,
     /// The underlying database ([DatabaseRef]) that is used to load data.
     ///
-    /// Note: this is read-only, data is never written to this database.
+    /// Note: This is read-only, data is never written to this database.
     pub db: ExtDB,
 }
 
@@ -39,7 +39,7 @@ impl<ExtDB: Default> Default for CacheDB<ExtDB> {
 }
 
 impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
-    /// Flatten a nested cache by applying the outer cache to the inner cache.
+    /// Flattens a nested cache by applying the outer cache to the inner cache.
     ///
     /// The behavior is as follows:
     /// - Accounts are overridden with outer accounts
@@ -62,14 +62,14 @@ impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
         inner
     }
 
-    /// Discard the outer cache and return the inner cache.
+    /// Discards the outer cache and return the inner cache.
     pub fn discard_outer(self) -> CacheDB<ExtDb> {
         self.db
     }
 }
 
 impl<ExtDB> CacheDB<ExtDB> {
-    /// Create a new cache with the given external database.
+    /// Creates a new cache with the given external database.
     pub fn new(db: ExtDB) -> Self {
         let mut contracts = HashMap::default();
         contracts.insert(KECCAK_EMPTY, Bytecode::default());
@@ -104,13 +104,13 @@ impl<ExtDB> CacheDB<ExtDB> {
         }
     }
 
-    /// Insert account info but not override storage
+    /// Inserts account info but not override storage
     pub fn insert_account_info(&mut self, address: Address, mut info: AccountInfo) {
         self.insert_contract(&mut info);
         self.accounts.entry(address).or_default().info = info;
     }
 
-    /// Wrap the cache in a [CacheDB], creating a nested cache.
+    /// Wraps the cache in a [CacheDB], creating a nested cache.
     pub fn nest(self) -> CacheDB<Self> {
         CacheDB::new(self)
     }
@@ -135,7 +135,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         }
     }
 
-    /// insert account storage without overriding account info
+    /// Inserts account storage without overriding account info
     pub fn insert_account_storage(
         &mut self,
         address: Address,
@@ -147,7 +147,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         Ok(())
     }
 
-    /// replace account storage without overriding account info
+    /// Replaces account storage without overriding account info
     pub fn replace_account_storage(
         &mut self,
         address: Address,
@@ -221,7 +221,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
         match self.contracts.entry(code_hash) {
             Entry::Occupied(entry) => Ok(entry.get().clone()),
             Entry::Vacant(entry) => {
-                // if you return code bytes when basic fn is called this function is not needed.
+                // If you return code bytes when basic fn is called this function is not needed.
                 Ok(entry.insert(self.db.code_by_hash_ref(code_hash)?).clone())
             }
         }
@@ -251,7 +251,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                 }
             }
             Entry::Vacant(acc_entry) => {
-                // acc needs to be loaded for us to access slots.
+                // Acc needs to be loaded for us to access slots.
                 let info = self.db.basic_ref(address)?;
                 let (account, value) = if info.is_some() {
                     let value = self.db.storage_ref(address, index)?;
@@ -329,7 +329,7 @@ pub struct DbAccount {
     pub info: AccountInfo,
     /// If account is selfdestructed or newly created, storage will be cleared.
     pub account_state: AccountState,
-    /// storage slots
+    /// Storage slots
     pub storage: HashMap<U256, U256>,
 }
 

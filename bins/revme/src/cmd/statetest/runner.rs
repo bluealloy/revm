@@ -86,15 +86,15 @@ fn skip_test(path: &Path) -> bool {
 
     matches!(
         name,
-        // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require
+        // Funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require
         // custom json parser. https://github.com/ethereum/tests/issues/971
         |"ValueOverflow.json"| "ValueOverflowParis.json"
 
-        // precompiles having storage is not possible
+        // Precompiles having storage is not possible
         | "RevertPrecompiledTouch_storage.json"
         | "RevertPrecompiledTouch.json"
 
-        // txbyte is of type 02 and we don't parse tx bytes for this test to fail.
+        // `txbyte` is of type 02 and we don't parse tx bytes for this test to fail.
         | "typeTwoBerlin.json"
 
         // Need to handle Test errors
@@ -132,7 +132,7 @@ fn skip_test(path: &Path) -> bool {
         | "loopMul.json"
         | "CALLBlake2f_MaxRounds.json"
 
-        // evmone statetest
+        // `evmone` statetest
         | "initcode_transaction_before_prague.json"
         | "invalid_tx_non_existing_sender.json"
         | "tx_non_existing_sender.json"
@@ -196,9 +196,9 @@ fn check_evm_execution(
     // Test where this happens: `tests/GeneralStateTests/stTransactionTest/NoSrcAccountCreate.json`
     // and you can check that we have only two "hash" values for before and after state clear.
     match (&test.expect_exception, exec_result) {
-        // do nothing
+        // Do nothing
         (None, Ok(result)) => {
-            // check output
+            // Check output
             if let Some((expected_output, output)) = expected_output.zip(result.output()) {
                 if expected_output != output {
                     let kind = TestErrorKind::UnexpectedOutput {
@@ -210,7 +210,7 @@ fn check_evm_execution(
                 }
             }
         }
-        // return okay, exception is expected.
+        // Return okay, exception is expected.
         (Some(_), Err(_)) => return Ok(()),
         _ => {
             let kind = TestErrorKind::UnexpectedException {
@@ -282,17 +282,17 @@ pub fn execute_test_suite(
         let mut cfg = CfgEnv::default();
         let mut block = BlockEnv::default();
         let mut tx = TxEnv::default();
-        // for mainnet
+        // For mainnet
         cfg.chain_id = 1;
 
-        // block env
+        // Block env
         block.number = unit.env.current_number;
         block.beneficiary = unit.env.current_coinbase;
         block.timestamp = unit.env.current_timestamp;
         block.gas_limit = unit.env.current_gas_limit;
         block.basefee = unit.env.current_base_fee.unwrap_or_default();
         block.difficulty = unit.env.current_difficulty;
-        // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
+        // After the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
         block.prevrandao = unit.env.current_random;
         // EIP-4844
         if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
@@ -307,7 +307,7 @@ pub fn execute_test_suite(
             ));
         }
 
-        // tx env
+        // Tx env
         tx.caller = if let Some(address) = unit.transaction.sender {
             address
         } else {
@@ -327,7 +327,7 @@ pub fn execute_test_suite(
         tx.blob_hashes = unit.transaction.blob_versioned_hashes.clone();
         tx.max_fee_per_blob_gas = unit.transaction.max_fee_per_blob_gas;
 
-        // post and execution
+        // Post and execution
         for (spec_name, tests) in unit.post {
             // Constantinople was immediately extended by Petersburg.
             // There isn't any production Constantinople transaction
@@ -344,12 +344,12 @@ pub fn execute_test_suite(
             };
 
             if cfg.spec.is_enabled_in(SpecId::MERGE) && block.prevrandao.is_none() {
-                // if spec is merge and prevrandao is not set, set it to default
+                // If spec is merge and prevrandao is not set, set it to default
                 block.prevrandao = Some(B256::default());
             }
 
             for (index, test) in tests.into_iter().enumerate() {
-                // TODO TX TYPE needs to be set
+                // TODO : TX TYPE needs to be set
                 let Some(tx_type) = unit.transaction.tx_type(test.indexes.data) else {
                     if test.expect_exception.is_some() {
                         continue;
@@ -413,7 +413,7 @@ pub fn execute_test_suite(
                     EthHandler::default(),
                 );
 
-                // do the deed
+                // Do the deed
                 let (e, exec_result) = if trace {
                     let mut evm = InspectorMainEvm::new(
                         InspectorContext::new(
@@ -433,7 +433,7 @@ pub fn execute_test_suite(
 
                     let spec = cfg.spec();
                     let db = evm.context.inner.journaled_state.database;
-                    // dump state and traces if test failed
+                    // Dump state and traces if test failed
                     let output = check_evm_execution(
                         &test,
                         unit.out.as_ref(),
@@ -454,7 +454,7 @@ pub fn execute_test_suite(
 
                     let spec = cfg.spec();
                     let db = evm.context.journaled_state.database;
-                    // dump state and traces if test failed
+                    // Dump state and traces if test failed
                     let output = check_evm_execution(
                         &test,
                         unit.out.as_ref(),
@@ -470,7 +470,7 @@ pub fn execute_test_suite(
                     (e, res)
                 };
 
-                // print only once or
+                // Print only once or
                 // if we are already in trace mode, just return error
                 static FAILED: AtomicBool = AtomicBool::new(false);
                 if trace || FAILED.swap(true, Ordering::SeqCst) {
@@ -481,7 +481,7 @@ pub fn execute_test_suite(
                     });
                 }
 
-                // re build to run with tracing
+                // Re-build to run with tracing
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(cfg.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
                 let mut state = database::State::builder()
@@ -540,11 +540,11 @@ pub fn run(
     mut print_outcome: bool,
     keep_going: bool,
 ) -> Result<(), TestError> {
-    // trace implies print_outcome
+    // Trace implies print_outcome
     if trace {
         print_outcome = true;
     }
-    // print_outcome or trace implies single_thread
+    // `print_outcome` or trace implies single_thread
     if print_outcome {
         single_thread = true;
     }

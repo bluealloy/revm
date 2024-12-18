@@ -54,7 +54,7 @@ mod tests {
         let outcome = pair::run_pair(&input, 260_000).unwrap();
         assert_eq!(outcome.bytes, expected);
 
-        // invalid input length
+        // Invalid input length
         let input = hex::decode(
             "\
           1111111111111111111111111111111111111111111111111111111111111111\
@@ -70,7 +70,7 @@ mod tests {
             Err(PrecompileErrors::Error(PrecompileError::Bn128PairLength))
         ));
 
-        // valid input length shorter than 112687
+        // Valid input length shorter than 112687
         let input = vec![1u8; 586 * bn128::PAIR_ELEMENT_LEN];
         let res = pair::run_pair(&input, 260_000);
         assert!(matches!(
@@ -78,7 +78,7 @@ mod tests {
             Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
         ));
 
-        // input length longer than 112687
+        // Input length longer than 112687
         let input = vec![1u8; 587 * bn128::PAIR_ELEMENT_LEN];
         let res = pair::run_pair(&input, 260_000);
         assert!(matches!(

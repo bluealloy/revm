@@ -8,7 +8,6 @@ pub const BLOCK_HASH_HISTORY: u64 = 256;
 /// Number of block hashes the EVM can access in the past (Prague).
 ///
 /// # Note
-///
 /// This is named `HISTORY_SERVE_WINDOW` in the EIP.
 pub const BLOCKHASH_SERVE_WINDOW: usize = 8192;
 
@@ -17,7 +16,6 @@ pub const BLOCKHASH_SERVE_WINDOW: usize = 8192;
 /// The address where historical blockhashes are available.
 ///
 /// # Note
-///
 /// This is named `HISTORY_STORAGE_ADDRESS` in the EIP.
 pub const BLOCKHASH_STORAGE_ADDRESS: Address = address!("25a219378dad9b3503c8268c9ca836a52427a4fb");
 

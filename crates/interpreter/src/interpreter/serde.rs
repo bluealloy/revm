@@ -94,7 +94,7 @@
 //             return Err(serde::de::Error::custom("program_counter out of bounds"));
 //         }
 
-//         // SAFETY: range of program_counter checked above
+//         // SAFETY: Range of program_counter checked above
 //         let instruction_pointer = unsafe { bytecode.as_ptr().add(program_counter) };
 
 //         Ok(Interpreter {

@@ -2,7 +2,8 @@ use super::Eip1559Tx;
 use auto_impl::auto_impl;
 use primitives::Address;
 
-/// EIP-7702 transaction, TODO set Trait for AuthorizationList.
+/// EIP-7702 transaction
+// TODO : Set Trait for AuthorizationList.
 #[auto_impl(&, Box, Arc, Rc)]
 pub trait Eip7702Tx: Eip1559Tx {
     /// Destination address of the call.
@@ -11,7 +12,6 @@ pub trait Eip7702Tx: Eip1559Tx {
     /// Returns length of the authorization list.
     ///
     /// # Note
-    ///
     /// Transaction is considered invalid if list is empty.
     fn authorization_list_len(&self) -> usize;
 
@@ -27,10 +27,9 @@ pub trait Eip7702Tx: Eip1559Tx {
 /// Authorization trait.
 #[auto_impl(&, Arc)]
 pub trait Authorization: Clone {
-    /// Authority address.
+    /// Authority address
     ///
     /// # Note
-    ///
     /// Authority signature can be invalid, so this method returns None if the authority
     /// could not be recovered.
     ///
@@ -44,7 +43,6 @@ pub trait Authorization: Clone {
     /// Returns the nonce.
     ///
     /// # Note
-    ///
     /// If nonce is not same as the nonce of the signer account,
     /// the authorization is skipped.
     fn nonce(&self) -> u64;
@@ -59,7 +57,7 @@ pub trait Authorization: Clone {
     fn is_invalid(&self) -> bool;
 }
 
-// TODO move to default context
+// TODO : Move to default context
 use specification::eip7702::RecoveredAuthorization;
 
 impl Authorization for RecoveredAuthorization {
@@ -70,14 +68,13 @@ impl Authorization for RecoveredAuthorization {
 
     /// Returns authorization the chain id.
     fn chain_id(&self) -> u64 {
-        // TODO chain_id is set as u64 in newest EIP-7702 spec
+        // TODO : `chain_id` is set as u64 in newest EIP-7702 spec
         self.inner().chain_id().try_into().unwrap()
     }
 
     /// Returns the nonce.
     ///
     /// # Note
-    ///
     /// If nonce is not same as the nonce of the signer account,
     /// authorization is skipped and considered invalidated.
     fn nonce(&self) -> u64 {

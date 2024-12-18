@@ -9,7 +9,7 @@ use std::vec::Vec;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EofHeader {
     /// Size of EOF types section.
-    /// types section includes num of input and outputs and max stack size.
+    /// Types section includes num of input and outputs and max stack size.
     pub types_size: u16,
     /// Sizes of EOF code section.
     /// Code size can't be zero.
@@ -19,9 +19,9 @@ pub struct EofHeader {
     pub container_sizes: Vec<u16>,
     /// EOF data size.
     pub data_size: u16,
-    /// sum code sizes
+    /// Sum code sizes
     pub sum_code_sizes: usize,
-    /// sum container sizes
+    /// Sum container sizes
     pub sum_container_sizes: usize,
 }
 
@@ -33,7 +33,7 @@ const KIND_DATA: u8 = 4;
 
 #[inline]
 fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize), EofDecodeError> {
-    // num_sections	2 bytes	0x0001-0xFFFF
+    // `num_sections`   2 bytes 0x0001-0xFFFF
     // 16-bit unsigned big-endian integer denoting the number of the sections
     let (input, num_sections) = consume_u16(input)?;
     if num_sections == 0 {
@@ -47,7 +47,7 @@ fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize),
     let mut sizes = Vec::with_capacity(num_sections);
     let mut sum = 0;
     for i in 0..num_sections {
-        // size	2 bytes	0x0001-0xFFFF
+        // `code_size`  2 bytes 0x0001-0xFFFF
         // 16-bit unsigned big-endian integer denoting the length of the section content
         let code_size = u16::from_be_bytes([input[i * 2], input[i * 2 + 1]]);
         if code_size == 0 {
@@ -65,14 +65,14 @@ impl EofHeader {
     ///
     /// It is minimum 15 bytes (there is at least one code section).
     pub fn size(&self) -> usize {
-        2 + // magic
-        1 + // version
-        3 + // types section
-        3 + // code section
-        2 * self.code_sizes.len() + // num_code_sections
-        if self.container_sizes.is_empty() { 0 } else { 3 + 2 * self.container_sizes.len() } + // container
-        3 + // data section.
-        1 // terminator
+        2 + // Magic
+        1 + // Version
+        3 + // Types section
+        3 + // Code section
+        2 * self.code_sizes.len() + // `num_code_sections`
+        if self.container_sizes.is_empty() { 0 } else { 3 + 2 * self.container_sizes.len() } + // Container
+        3 + // Data section.
+        1 // Terminator
     }
 
     /// Return index where data size starts.
@@ -102,37 +102,37 @@ impl EofHeader {
 
     /// Encodes EOF header into binary form.
     pub fn encode(&self, buffer: &mut Vec<u8>) {
-        // magic	2 bytes	0xEF00	EOF prefix
+        // `magic`	2 bytes	0xEF00	EOF prefix
         buffer.extend_from_slice(&0xEF00u16.to_be_bytes());
-        // version	1 byte	0x01	EOF version
+        // `version`	1 byte	0x01	EOF version
         buffer.push(0x01);
-        // kind_types	1 byte	0x01	kind marker for types size section
+        // `kind_types`	1 byte	0x01	kind marker for types size section
         buffer.push(KIND_TYPES);
-        // types_size	2 bytes	0x0004-0xFFFF
+        // `types_size`	2 bytes	0x0004-0xFFFF
         buffer.extend_from_slice(&self.types_size.to_be_bytes());
-        // kind_code	1 byte	0x02	kind marker for code size section
+        // `kind_code`	1 byte	0x02	kind marker for code size section
         buffer.push(KIND_CODE);
-        // code_sections_sizes
+        // `code_sections_sizes`
         buffer.extend_from_slice(&(self.code_sizes.len() as u16).to_be_bytes());
         for size in &self.code_sizes {
             buffer.extend_from_slice(&size.to_be_bytes());
         }
-        // kind_container_or_data	1 byte	0x03 or 0x04	kind marker for container size section or data size section
+        // `kind_container_or_data`	1 byte	0x03 or 0x04	kind marker for container size section or data size section
         if self.container_sizes.is_empty() {
             buffer.push(KIND_DATA);
         } else {
             buffer.push(KIND_CONTAINER);
-            // container_sections_sizes
+            // `container_sections_sizes`
             buffer.extend_from_slice(&(self.container_sizes.len() as u16).to_be_bytes());
             for size in &self.container_sizes {
                 buffer.extend_from_slice(&size.to_be_bytes());
             }
-            // kind_data	1 byte	0x04	kind marker for data size section
+            // `kind_data`	1 byte	0x04	kind marker for data size section
             buffer.push(KIND_DATA);
         }
-        // data_size	2 bytes	0x0000-0xFFFF	16-bit unsigned big-endian integer denoting the length of the data section content
+        // `data_size`	2 bytes	0x0000-0xFFFF	16-bit unsigned big-endian integer denoting the length of the data section content
         buffer.extend_from_slice(&self.data_size.to_be_bytes());
-        // terminator	1 byte	0x00	marks the end of the EofHeader
+        // `terminator`	1 byte	0x00	marks the end of the EofHeader
         buffer.push(KIND_TERMINAL);
     }
 
@@ -140,25 +140,25 @@ impl EofHeader {
     pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), EofDecodeError> {
         let mut header = EofHeader::default();
 
-        // magic	2 bytes	0xEF00	EOF prefix
+        // `magic`	2 bytes	0xEF00	EOF prefix
         let (input, kind) = consume_u16(input)?;
         if kind != 0xEF00 {
             return Err(EofDecodeError::InvalidEOFMagicNumber);
         }
 
-        // version	1 byte	0x01	EOF version
+        // `version`	1 byte	0x01	EOF version
         let (input, version) = consume_u8(input)?;
         if version != 0x01 {
             return Err(EofDecodeError::InvalidEOFVersion);
         }
 
-        // kind_types	1 byte	0x01	kind marker for types size section
+        // `kind_types`	1 byte	0x01	kind marker for types size section
         let (input, kind_types) = consume_u8(input)?;
         if kind_types != KIND_TYPES {
             return Err(EofDecodeError::InvalidTypesKind);
         }
 
-        // types_size	2 bytes	0x0004-0xFFFF
+        // `types_size`	2 bytes	0x0004-0xFFFF
         // 16-bit unsigned big-endian integer denoting the length of the type section content
         let (input, types_size) = consume_u16(input)?;
         header.types_size = types_size;
@@ -167,13 +167,13 @@ impl EofHeader {
             return Err(EofDecodeError::InvalidTypesSection);
         }
 
-        // kind_code	1 byte	0x02	kind marker for code size section
+        // `kind_code`	1 byte	0x02	kind marker for code size section
         let (input, kind_types) = consume_u8(input)?;
         if kind_types != KIND_CODE {
             return Err(EofDecodeError::InvalidCodeKind);
         }
 
-        // code_sections_sizes
+        // `code_sections_sizes`
         let (input, sizes, sum) = consume_header_section_size(input)?;
 
         // more than 1024 code sections are not allowed
@@ -214,14 +214,14 @@ impl EofHeader {
             _ => return Err(EofDecodeError::InvalidKindAfterCode),
         };
 
-        // data_size	2 bytes	0x0000-0xFFFF	16-bit
+        // `data_size`	2 bytes	0x0000-0xFFFF	16-bit
         // unsigned big-endian integer denoting the length
         // of the data section content (for not yet deployed
         // containers this can be more than the actual content, see Data Section Lifecycle)
         let (input, data_size) = consume_u16(input)?;
         header.data_size = data_size;
 
-        // terminator	1 byte	0x00	marks the end of the EofHeader
+        // `terminator`	1 byte	0x00	marks the end of the EofHeader
         let (input, terminator) = consume_u8(input)?;
         if terminator != KIND_TERMINAL {
             return Err(EofDecodeError::InvalidTerminalByte);

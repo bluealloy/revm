@@ -133,7 +133,7 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let code_offset = min(as_usize_saturated!(code_offset), code.len());
     resize_memory!(interpreter, memory_offset, len);
 
-    // Note: this can't panic because we resized memory to fit.
+    // Note: This can't panic because we resized memory to fit.
     interpreter
         .memory
         .set_data(memory_offset, code_offset, len, &code);

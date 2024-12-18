@@ -60,11 +60,11 @@ pub fn run() {
         _ => unreachable!("Execution failed: {:?}", tx_result),
     };
 
-    // remove returndata offset and length from output
+    // Remove returndata offset and length from output
     let returndata_offset = 64;
     let data = &return_data[returndata_offset..];
 
-    // remove trailing zeros
+    // Remove trailing zeros
     let trimmed_data = data
         .split_at(data.len() - data.iter().rev().filter(|&x| *x == 0).count())
         .0;

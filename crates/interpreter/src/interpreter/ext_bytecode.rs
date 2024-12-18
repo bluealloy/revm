@@ -97,7 +97,7 @@ impl Immediates for ExtBytecode {
         unsafe {
             read_i16(
                 self.instruction_pointer
-                    // offset for max_index that is one byte
+                    // Offset for max_index that is one byte
                     .offset(offset),
             )
         }
@@ -108,7 +108,7 @@ impl Immediates for ExtBytecode {
         unsafe {
             read_u16(
                 self.instruction_pointer
-                    // offset for max_index that is one byte
+                    // Offset for max_index that is one byte
                     .offset(offset),
             )
         }
