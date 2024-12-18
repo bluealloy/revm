@@ -76,6 +76,8 @@ pub trait JournaledState {
         spec_id: SpecId,
     ) -> Result<JournalCheckpoint, TransferError>;
 
+    fn depth(&self) -> usize;
+
     /// Does cleanup and returns modified state.
     ///
     /// This resets the [JournaledState] to its initial state.

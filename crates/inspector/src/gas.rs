@@ -7,8 +7,6 @@ use revm::interpreter::{CallOutcome, CreateOutcome, Gas};
 pub struct GasInspector {
     gas_remaining: u64,
     last_gas_cost: u64,
-    /// depth
-    depth: usize,
 }
 
 impl Default for GasInspector {
@@ -30,7 +28,6 @@ impl GasInspector {
         Self {
             gas_remaining: 0,
             last_gas_cost: 0,
-            depth: 0,
         }
     }
 
@@ -65,24 +62,6 @@ impl GasInspector {
             outcome.result.gas.spend_all();
             self.gas_remaining = 0;
         }
-    }
-
-    /// Returns depth
-    #[inline]
-    pub fn depth(&self) -> usize {
-        self.depth
-    }
-
-    /// Increment depth
-    #[inline]
-    pub fn incr_depth(&mut self) {
-        self.depth += 1;
-    }
-
-    /// Decrement depth
-    #[inline]
-    pub fn decr_depth(&mut self) {
-        self.depth -= 1;
     }
 }
 
