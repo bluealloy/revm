@@ -135,7 +135,7 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
         self.state.clear();
         self.transient_storage.clear();
         self.logs.clear();
-        self.journal.clear();
+        self.journal = vec![vec![]];
         self.depth = 0;
         self.warm_preloaded_addresses.clear();
     }
