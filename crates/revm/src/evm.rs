@@ -112,19 +112,13 @@ where
         ExecResult = FrameResult,
         Frame: Frame<FrameResult = FrameResult>,
     >,
-    POSTEXEC: PostExecutionHandler<
-        Context = CTX,
-        Error = ERROR,
-        ExecResult = FrameResult,
-        // TODO make output generics
-        Output = ResultAndState<HaltReason>,
-    >,
+    POSTEXEC: PostExecutionHandler<Context = CTX, Error = ERROR, ExecResult = FrameResult>,
 {
     type Transaction = <CTX as TransactionGetter>::Transaction;
 
     type Block = <CTX as BlockGetter>::Block;
 
-    type Output = Result<ResultAndState<HaltReason>, ERROR>;
+    type Output = Result<<POSTEXEC as PostExecutionHandler>::Output, ERROR>;
 
     fn set_block(&mut self, block: Self::Block) {
         self.context.set_block(block);
@@ -176,12 +170,7 @@ where
         ExecResult = FrameResult,
         Frame: Frame<FrameResult = FrameResult>,
     >,
-    POSTEXEC: PostExecutionHandler<
-        Context = CTX,
-        Error = ERROR,
-        ExecResult = FrameResult,
-        Output = ResultAndState<HaltReason>,
-    >,
+    POSTEXEC: PostExecutionHandler<Context = CTX, Error = ERROR, ExecResult = FrameResult>,
 {
     /// Pre verify transaction by checking Environment, initial gas spend and if caller
     /// has enough balance to pay for the gas.
@@ -201,7 +190,9 @@ where
     ///
     /// This function will not validate the transaction.
     #[inline]
-    pub fn transact_preverified(&mut self) -> Result<ResultAndState<HaltReason>, ERROR> {
+    pub fn transact_preverified(
+        &mut self,
+    ) -> Result<<POSTEXEC as PostExecutionHandler>::Output, ERROR> {
         let initial_gas_spend = self
             .handler
             .validation()
@@ -233,7 +224,7 @@ where
     ///
     /// This function will validate the transaction.
     #[inline]
-    pub fn transact(&mut self) -> Result<ResultAndState<HaltReason>, ERROR> {
+    pub fn transact(&mut self) -> Result<<POSTEXEC as PostExecutionHandler>::Output, ERROR> {
         let initial_gas_spend = self.preverify_transaction_inner().inspect_err(|_| {
             self.clear();
         })?;
@@ -248,7 +239,7 @@ where
     fn transact_preverified_inner(
         &mut self,
         initial_gas_spend: u64,
-    ) -> Result<ResultAndState<HaltReason>, ERROR> {
+    ) -> Result<<POSTEXEC as PostExecutionHandler>::Output, ERROR> {
         let context = &mut self.context;
         let pre_exec = self.handler.pre_execution();
 
