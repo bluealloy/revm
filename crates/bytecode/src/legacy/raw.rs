@@ -5,7 +5,7 @@ use core::ops::Deref;
 use primitives::Bytes;
 use std::{sync::Arc, vec::Vec};
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LegacyRawBytecode(pub Bytes);
 

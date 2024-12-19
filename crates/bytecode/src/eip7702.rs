@@ -14,7 +14,7 @@ pub const EIP7702_VERSION: u8 = 0;
 ///
 /// Format of EIP-7702 bytecode consist of:
 /// 0xEF00 (MAGIC) + 0x00 (VERSION) + 20 bytes of address.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eip7702Bytecode {
     pub delegated_address: Address,
