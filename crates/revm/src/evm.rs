@@ -4,7 +4,8 @@ use context_interface::{
     block::BlockSetter,
     journaled_state::JournaledState,
     result::{
-        EVMError, ExecutionResult, HaltReason, InvalidHeader, InvalidTransaction, ResultAndState,
+        EVMError, ExecutionResult, HaltReasonTrait, InvalidHeader, InvalidTransaction,
+        ResultAndState,
     },
     transaction::TransactionSetter,
     BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
@@ -39,7 +40,7 @@ impl<ERROR, CTX, HANDLER> Evm<ERROR, CTX, HANDLER> {
     }
 }
 
-impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC> EvmCommit
+impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC, HALT> EvmCommit
     for Evm<ERROR, CTX, EthHandler<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC>>
 where
     CTX: TransactionSetter
@@ -70,11 +71,12 @@ where
         Context = CTX,
         Error = ERROR,
         ExecResult = FrameResult,
-        // TODO make output generics
-        Output = ResultAndState<HaltReason>,
+        // TODO make output more generics
+        Output = ResultAndState<HALT>,
     >,
+    HALT: HaltReasonTrait,
 {
-    type CommitOutput = Result<ExecutionResult<HaltReason>, ERROR>;
+    type CommitOutput = Result<ExecutionResult<HALT>, ERROR>;
 
     fn exec_commit(&mut self) -> Self::CommitOutput {
         let res = self.transact();
