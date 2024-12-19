@@ -110,8 +110,6 @@ cargo run -p example-uniswap-v2-usdc-swap
 # Generate block traces 
 cargo run -p example-block-traces
 
-# Run database reference example
-cargo run -p example-database-ref
 ```
 
 All examples can be found in the `examples/` directory. Each example demonstrates different aspects of revm:
