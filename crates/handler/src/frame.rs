@@ -267,12 +267,6 @@ where
             }
         };
 
-        // created address is not allowed to be a precompile.
-        // TODO add precompile check
-        if precompile.contains(&created_address) {
-            return return_error(InstructionResult::CreateCollision);
-        }
-
         // warm load account.
         context.journal().load_account(created_address)?;
 
@@ -391,11 +385,6 @@ where
         let old_nonce = nonce - 1;
 
         let created_address = created_address.unwrap_or_else(|| inputs.caller.create(old_nonce));
-
-        // created address is not allowed to be a precompile.
-        if precompile.contains(&created_address) {
-            return return_error(InstructionResult::CreateCollision);
-        }
 
         // Load account so it needs to be marked as warm for access list.
         context.journal().load_account(created_address)?;
