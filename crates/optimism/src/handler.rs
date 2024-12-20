@@ -7,7 +7,7 @@ use crate::{
         abstraction::OpTxGetter, deposit::DepositTransaction, OpTransactionType, OpTxTrait,
     },
     L1BlockInfoGetter, OpSpec, OpSpecId, OpTransactionError, OptimismHaltReason,
-    BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
+    BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT, OPERATOR_FEE_RECIPIENT,
 };
 use core::ops::Mul;
 use precompiles::OpPrecompileProvider;
@@ -157,7 +157,13 @@ where
 
         // If the transaction is not a deposit transaction, subtract the L1 data fee from the
         // caller's balance directly after minting the requested amount of ETH.
+        // Additionally deduct the operator fee from the caller's account.
         if !is_deposit {
+            let gas_limit = U256::from(context.tx().common_fields().gas_limit());
+            let operator_fee_charge = context
+                .l1_block_info()
+                .operator_fee_charge(gas_limit, context.cfg().spec());
+
             let mut caller_account = context.journal().load_account(caller)?;
 
             if tx_l1_cost > caller_account.info.balance {
@@ -168,6 +174,12 @@ where
                 .into());
             }
             caller_account.info.balance = caller_account.info.balance.saturating_sub(tx_l1_cost);
+
+            // Deduct the operator fee from the caller's account.
+            caller_account.info.balance = caller_account
+                .info
+                .balance
+                .saturating_sub(operator_fee_charge);
         }
         Ok(())
     }
@@ -323,7 +335,25 @@ where
         context: &mut Self::Context,
         exec_result: &mut Self::ExecResult,
     ) -> Result<(), Self::Error> {
-        self.eth.reimburse_caller(context, exec_result)
+        self.eth.reimburse_caller(context, exec_result)?;
+
+        let caller = context.tx().common_fields().caller();
+        let gas = exec_result.gas();
+        let operator_fee_refund = context
+            .l1_block_info()
+            .operator_fee_refund(gas, context.cfg().spec());
+
+        let caller_account = context.journal().load_account(caller)?;
+        // In additional to the normal transaction fee, additionally refund the caller
+        // for the operator fee.
+
+        caller_account.data.info.balance = caller_account
+            .data
+            .info
+            .balance
+            .saturating_add(operator_fee_refund);
+
+        Ok(())
     }
 
     fn reward_beneficiary(
@@ -351,6 +381,10 @@ where
             };
 
             let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, context.cfg().spec());
+            let operator_fee_cost = l1_block_info.operator_fee_charge(
+                U256::from(exec_result.gas().spent() - exec_result.gas().refunded() as u64),
+                context.cfg().spec(),
+            );
 
             // Send the L1 cost of the transaction to the L1 Fee Vault.
             let mut l1_fee_vault_account = context.journal().load_account(L1_FEE_RECIPIENT)?;
@@ -363,6 +397,16 @@ where
             base_fee_vault_account.info.balance += basefee.mul(U256::from(
                 exec_result.gas().spent() - exec_result.gas().refunded() as u64,
             ));
+
+            // Send the operator fee of the transaction to the coinbase.
+            let operator_fee_vault_account =
+                context.journal().load_account(OPERATOR_FEE_RECIPIENT)?;
+
+            operator_fee_vault_account.data.info.balance = operator_fee_vault_account
+                .data
+                .info
+                .balance
+                .saturating_add(operator_fee_cost);
         }
         Ok(())
     }

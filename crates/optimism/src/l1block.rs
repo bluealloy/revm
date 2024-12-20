@@ -228,7 +228,7 @@ impl L1BlockInfo {
     /// Calculate the operator fee for executing this transaction.
     ///
     /// Introduced in isthmus. Prior to isthmus, the operator fee is always zero.
-    pub fn operator_fee_charge(&self, gas_limit: U256, spec_id: OpSpecId) -> U256 {
+    pub fn operator_fee_charge(&self, gas_limit: U256, spec_id: OpSpec) -> U256 {
         if !spec_id.is_enabled_in(OpSpecId::ISTHMUS) {
             return U256::ZERO;
         }
@@ -248,7 +248,7 @@ impl L1BlockInfo {
     /// Calculate the operator fee for executing this transaction.
     ///
     /// Introduced in isthmus. Prior to isthmus, the operator fee is always zero.
-    pub fn operator_fee_refund(&self, gas: &Gas, spec_id: OpSpecId) -> U256 {
+    pub fn operator_fee_refund(&self, gas: &Gas, spec_id: OpSpec) -> U256 {
         if !spec_id.is_enabled_in(OpSpecId::ISTHMUS) {
             return U256::ZERO;
         }
