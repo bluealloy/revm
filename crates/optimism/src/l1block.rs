@@ -17,12 +17,12 @@ const BASE_FEE_SCALAR_OFFSET: usize = 16;
 /// The two 4-byte Ecotone fee scalar values are packed into the same storage slot as the 8-byte sequence number.
 /// Byte offset within the storage slot of the 4-byte blobBaseFeeScalar attribute.
 const BLOB_BASE_FEE_SCALAR_OFFSET: usize = 20;
-/// The two 8-byte Isthmus operator fee scalar values are similarly packed. Byte offset within
-/// the storage slot of the 8-byte operatorFeeScalar attribute.
-const OPERATOR_FEE_SCALAR_OFFSET: usize = 4;
-/// The two 8-byte Isthmus operator fee scalar values are similarly packed. Byte offset within
+/// The Isthmus operator fee scalar values are similarly packed. Byte offset within
+/// the storage slot of the 4-byte operatorFeeScalar attribute.
+const OPERATOR_FEE_SCALAR_OFFSET: usize = 28;
+/// The Isthmus operator fee scalar values are similarly packed. Byte offset within
 /// the storage slot of the 8-byte operatorFeeConstant attribute.
-const OPERATOR_FEE_CONSTANT_OFFSET: usize = 8;
+const OPERATOR_FEE_CONSTANT_OFFSET: usize = 20;
 
 /// The fixed point decimal scaling factor associated with the operator fee scalar.
 ///
