@@ -36,20 +36,13 @@ use std::{rc::Rc, vec::Vec};
 
 /// EVM [Interpreter] callbacks.
 #[auto_impl(&mut, Box)]
-pub trait Inspector {
-    type Context;
-    type InterpreterTypes: InterpreterTypes;
-
+pub trait Inspector<CTX, INTR: InterpreterTypes> {
     /// Called before the interpreter is initialized.
     ///
     /// If `interp.instruction_result` is set to anything other than [revm::interpreter::InstructionResult::Continue] then the execution of the interpreter
     /// is skipped.
     #[inline]
-    fn initialize_interp(
-        &mut self,
-        interp: &mut Interpreter<Self::InterpreterTypes>,
-        context: &mut Self::Context,
-    ) {
+    fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         let _ = interp;
         let _ = context;
     }
@@ -63,11 +56,7 @@ pub trait Inspector {
     ///
     /// To get the current opcode, use `interp.current_opcode()`.
     #[inline]
-    fn step(
-        &mut self,
-        interp: &mut Interpreter<Self::InterpreterTypes>,
-        context: &mut Self::Context,
-    ) {
+    fn step(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         let _ = interp;
         let _ = context;
     }
@@ -77,23 +66,14 @@ pub trait Inspector {
     /// Setting `interp.instruction_result` to anything other than [revm::interpreter::InstructionResult::Continue] alters the execution
     /// of the interpreter.
     #[inline]
-    fn step_end(
-        &mut self,
-        interp: &mut Interpreter<Self::InterpreterTypes>,
-        context: &mut Self::Context,
-    ) {
+    fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         let _ = interp;
         let _ = context;
     }
 
     /// Called when a log is emitted.
     #[inline]
-    fn log(
-        &mut self,
-        interp: &mut Interpreter<Self::InterpreterTypes>,
-        context: &mut Self::Context,
-        log: &Log,
-    ) {
+    fn log(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: &Log) {
         let _ = interp;
         let _ = context;
         let _ = log;
@@ -103,11 +83,7 @@ pub trait Inspector {
     ///
     /// InstructionResulting anything other than [revm::interpreter::InstructionResult::Continue] overrides the result of the call.
     #[inline]
-    fn call(
-        &mut self,
-        context: &mut Self::Context,
-        inputs: &mut CallInputs,
-    ) -> Option<CallOutcome> {
+    fn call(&mut self, context: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {
         let _ = context;
         let _ = inputs;
         None
@@ -119,12 +95,7 @@ pub trait Inspector {
     ///
     /// This allows the inspector to modify the given `result` before returning it.
     #[inline]
-    fn call_end(
-        &mut self,
-        context: &mut Self::Context,
-        inputs: &CallInputs,
-        outcome: &mut CallOutcome,
-    ) {
+    fn call_end(&mut self, context: &mut CTX, inputs: &CallInputs, outcome: &mut CallOutcome) {
         let _ = context;
         let _ = inputs;
         let _ = outcome;
@@ -136,11 +107,7 @@ pub trait Inspector {
     ///
     /// If this returns `None` then the creation proceeds as normal.
     #[inline]
-    fn create(
-        &mut self,
-        context: &mut Self::Context,
-        inputs: &mut CreateInputs,
-    ) -> Option<CreateOutcome> {
+    fn create(&mut self, context: &mut CTX, inputs: &mut CreateInputs) -> Option<CreateOutcome> {
         let _ = context;
         let _ = inputs;
         None
@@ -153,7 +120,7 @@ pub trait Inspector {
     #[inline]
     fn create_end(
         &mut self,
-        context: &mut Self::Context,
+        context: &mut CTX,
         inputs: &CreateInputs,
         outcome: &mut CreateOutcome,
     ) {
@@ -167,7 +134,7 @@ pub trait Inspector {
     /// This can happen from create TX or from EOFCREATE opcode.
     fn eofcreate(
         &mut self,
-        context: &mut Self::Context,
+        context: &mut CTX,
         inputs: &mut EOFCreateInputs,
     ) -> Option<CreateOutcome> {
         let _ = context;
@@ -178,7 +145,7 @@ pub trait Inspector {
     /// Called when eof creating has ended.
     fn eofcreate_end(
         &mut self,
-        context: &mut Self::Context,
+        context: &mut CTX,
         inputs: &EOFCreateInputs,
         outcome: &mut CreateOutcome,
     ) {
@@ -197,10 +164,9 @@ pub trait Inspector {
 }
 
 /// Provides access to an `Inspector` instance.
-pub trait GetInspector {
-    type Inspector: Inspector;
+pub trait GetInspector<CTX, INTR: InterpreterTypes> {
     /// Returns the associated `Inspector`.
-    fn get_inspector(&mut self) -> &mut Self::Inspector;
+    fn get_inspector(&mut self) -> &mut impl Inspector<CTX, INTR>;
 }
 
 pub trait InspectorCtx {
@@ -215,10 +181,9 @@ pub trait InspectorCtx {
     fn inspector_log(&mut self, interp: &mut Interpreter<Self::IT>, log: &Log);
 }
 
-impl<INSP: Inspector> GetInspector for INSP {
-    type Inspector = INSP;
+impl<CTX, INTR: InterpreterTypes, INSP: Inspector<CTX, INTR>> GetInspector<CTX, INTR> for INSP {
     #[inline]
-    fn get_inspector(&mut self) -> &mut Self::Inspector {
+    fn get_inspector(&mut self) -> &mut impl Inspector<CTX, INTR> {
         self
     }
 }
@@ -259,7 +224,7 @@ impl<
 }
 
 impl<
-        INSP: GetInspector,
+        INSP: GetInspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
         BLOCK: Block,
         TX: Transaction,
         CFG: Cfg,
@@ -342,12 +307,7 @@ impl<
 impl<INSP, BLOCK, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> InspectorCtx
     for InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
 where
-    INSP: GetInspector<
-        Inspector: Inspector<
-            Context = Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>,
-            InterpreterTypes = EthInterpreter,
-        >,
-    >,
+    INSP: GetInspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
 {
     type IT = EthInterpreter<()>;
 
@@ -735,7 +695,7 @@ where
     type FrameResult = FrameResult;
 
     fn init_first(
-        context: &mut Self::Context,
+        context: &mut CTX,
         mut frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
         if let Some(output) = context.frame_start(&mut frame_input) {
@@ -759,7 +719,7 @@ where
 
     fn init(
         &self,
-        context: &mut Self::Context,
+        context: &mut CTX,
         mut frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
         if let Some(output) = context.frame_start(&mut frame_input) {
@@ -781,14 +741,14 @@ where
 
     fn run(
         &mut self,
-        context: &mut Self::Context,
+        context: &mut CTX,
     ) -> Result<FrameOrResultGen<Self::FrameInit, Self::FrameResult>, Self::Error> {
         self.eth_frame.run(context)
     }
 
     fn return_result(
         &mut self,
-        context: &mut Self::Context,
+        context: &mut CTX,
         mut result: Self::FrameResult,
     ) -> Result<(), Self::Error> {
         context.frame_end(&mut result);
