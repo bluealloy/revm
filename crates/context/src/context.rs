@@ -313,7 +313,7 @@ where
     where
         F: FnOnce(&mut DB),
     {
-        f(&mut self.journaled_state.db_mut());
+        f(self.journaled_state.db_mut());
     }
 
     pub fn modify_journal<F>(&mut self, f: F)
