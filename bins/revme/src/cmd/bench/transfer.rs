@@ -5,7 +5,6 @@ use revm::{
     primitives::{TxKind, U256},
     Context, MainEvm,
 };
-use std::time::Duration;
 
 pub fn run() {
     let context = Context::builder()
@@ -24,10 +23,5 @@ pub fn run() {
         });
     let mut evm = MainEvm::new(context, EthHandler::default());
 
-    // Microbenchmark
-    let bench_options = microbench::Options::default().time(Duration::from_secs(3));
-
-    microbench::bench(&bench_options, "Simple value transfer", || {
-        let _ = evm.transact().unwrap();
-    });
+    let _ = evm.transact().unwrap();
 }
