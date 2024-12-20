@@ -1,7 +1,7 @@
 use primitives::{HashMap, U256};
 use state::{AccountInfo, EvmStorageSlot};
 
-// TODO rename this to BundleAccount. As for the block level we have original state.
+// TODO : Rename this to BundleAccount. As for the block level we have original state.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct PlainAccount {
     pub info: AccountInfo,
@@ -87,7 +87,7 @@ impl From<AccountInfo> for PlainAccount {
     fn from(info: AccountInfo) -> Self {
         Self {
             info,
-            storage: HashMap::new(),
+            storage: HashMap::default(),
         }
     }
 }

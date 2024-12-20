@@ -28,7 +28,7 @@ pub const BLOCKHASH: u64 = 20;
 pub const CODEDEPOSIT: u64 = 200;
 
 /// EIP-1884: Repricing for trie-size-dependent opcodes
-pub const INSTANBUL_SLOAD_GAS: u64 = 800;
+pub const ISTANBUL_SLOAD_GAS: u64 = 800;
 pub const SSTORE_SET: u64 = 20000;
 pub const SSTORE_RESET: u64 = 5000;
 pub const REFUND_SSTORE_CLEARS: i64 = 15000;
@@ -39,7 +39,7 @@ pub const TRANSACTION_NON_ZERO_DATA_FRONTIER: u64 = 68;
 
 pub const EOF_CREATE_GAS: u64 = 32000;
 
-// berlin eip2929 constants
+// Berlin eip2929 constants
 pub const ACCESS_LIST_ADDRESS: u64 = 2400;
 pub const ACCESS_LIST_STORAGE_KEY: u64 = 1900;
 pub const COLD_SLOAD_COST: u64 = 2100;

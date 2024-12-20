@@ -4,13 +4,13 @@ use super::{
     utils::{remove_padding, PADDED_FP2_LENGTH, PADDED_FP_LENGTH},
 };
 use crate::{u64_to_address, PrecompileWithAddress};
-use crate::{Precompile, PrecompileError, PrecompileOutput, PrecompileResult};
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{blst_map_to_g2, blst_p2, blst_p2_affine, blst_p2_to_affine};
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_MAP_FP2_TO_G2 precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(map_fp2_to_g2));
+    PrecompileWithAddress(u64_to_address(ADDRESS), map_fp2_to_g2);
 
 /// BLS12_MAP_FP2_TO_G2 precompile address.
 pub const ADDRESS: u64 = 0x13;
@@ -40,12 +40,12 @@ pub(super) fn map_fp2_to_g2(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let fp2 = check_canonical_fp2(input_p0_x, input_p0_y)?;
 
     let mut p = blst_p2::default();
-    // SAFETY: p and fp2 are blst values.
-    // third argument is unused if null.
+    // SAFETY: `p` and `fp2` are blst values.
+    // Third argument is unused if null.
     unsafe { blst_map_to_g2(&mut p, &fp2, core::ptr::null()) };
 
     let mut p_aff = blst_p2_affine::default();
-    // SAFETY: p_aff and p are blst values.
+    // SAFETY: `p_aff` and `p` are blst values.
     unsafe { blst_p2_to_affine(&mut p_aff, &p) };
 
     let out = encode_g2_point(&p_aff);

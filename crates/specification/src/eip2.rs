@@ -1,7 +1,8 @@
 use primitives::U256;
 
-/// The order of the secp256k1 curve, divided by two. Signatures that should be checked according
-/// to EIP-2 should have an S value less than or equal to this.
+/// The order of the secp256k1 curve, divided by two.
+///
+/// Signatures that should be checked according to EIP-2 should have an S value less than or equal to this:
 ///
 /// `57896044618658097711785492504343953926418782139537452191302581570759080747168`
 pub const SECP256K1N_HALF: U256 = U256::from_be_bytes([

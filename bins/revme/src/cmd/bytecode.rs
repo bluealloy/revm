@@ -1,11 +1,8 @@
 use clap::Parser;
 use revm::{
-    bytecode::Eof,
-    interpreter::{
-        analysis::{validate_eof_inner, CodeType, EofError},
-        opcode::eof_printer::print_eof_code,
-    },
-    primitives::{Bytes, MAX_INITCODE_SIZE},
+    bytecode::eof::{self, validate_eof_inner, CodeType, Eof, EofError},
+    primitives::{hex, Bytes},
+    specification::constants::MAX_INITCODE_SIZE,
 };
 use std::io;
 
@@ -18,9 +15,11 @@ pub struct Cmd {
     /// Is EOF code in RUNTIME mode.
     #[arg(long)]
     eof_runtime: bool,
-    /// Bytecode in hex format. If bytes start with 0xFE it will be interpreted as a EOF.
-    /// Otherwise, it will be interpreted as a EOF bytecode.
-    /// If not provided, it will operate in interactive EOF validation mode.
+    /// Bytecode in hex format string.
+    ///
+    /// - If bytes start with 0xFE it will be interpreted as a EOF.
+    /// - Otherwise, it will be interpreted as a EOF bytecode.
+    /// - If not provided, it will operate in interactive EOF validation mode.
     #[arg()]
     bytes: Option<String>,
 }
@@ -37,7 +36,7 @@ fn trim_decode(input: &str) -> Option<Bytes> {
 }
 
 impl Cmd {
-    /// Run statetest command.
+    /// Runs statetest command.
     pub fn run(&self) {
         let container_kind = if self.eof_initcode {
             Some(CodeType::ReturnContract)
@@ -62,17 +61,17 @@ impl Cmd {
                     Err(e) => eprintln!("Decoding Error: {:#?}", e),
                 }
             } else {
-                print_eof_code(&bytes)
+                eof::printer::print(&bytes)
             }
             return;
         }
 
-        // else run command in loop.
+        // Else run command in loop.
         loop {
             let mut input = String::new();
             io::stdin().read_line(&mut input).expect("Input Error");
             if input.len() == 1 {
-                // just a newline, so exit
+                // Just a newline, so exit
                 return;
             }
             let Some(bytes) = trim_decode(&input) else {

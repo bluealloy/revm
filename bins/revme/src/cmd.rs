@@ -12,7 +12,7 @@ use clap::Parser;
 pub enum MainCmd {
     /// Execute Ethereum state tests.
     Statetest(statetest::Cmd),
-    /// Execute eof validation tests.
+    /// Execute EOF validation tests.
     EofValidation(eofvalidation::Cmd),
     /// Run arbitrary EVM bytecode.
     Evm(evmrunner::Cmd),

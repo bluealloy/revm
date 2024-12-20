@@ -4,11 +4,11 @@ This is the logic part of the Evm.
 It contains the Specification ID, list of functions that do the logic and list of registers that can change behavior of the Handler when it is build.
 
 Functions can be grouped in five categories and are marked in that way in the code:
-* Validation functions: [`ValidationHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/validation.rs)
-* Pre-execution functions: [`PreExecutionHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/pre_execution.rs)
-* Execution functions: [`ExecutionHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/execution.rs)
-* Post-execution functions: [`PostExecutionHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/post_execution.rs)
-* Instruction table: [`InstructionTable`](https://github.com/bluealloy/revm/blob/main/crates/interpreter/src/opcode.rs)
+* Validation functions: ValidationHandler
+* Pre-execution functions: PreExecutionHandler
+* Execution functions: ExecutionHandler
+* Post-execution functions: PostExecutionHandler
+* Instruction table: InstructionTable
 
 ### Handle Registers
 

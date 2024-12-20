@@ -3,13 +3,13 @@ use super::{
     utils::{extract_scalar_input, NBITS},
 };
 use crate::{u64_to_address, PrecompileWithAddress};
-use crate::{Precompile, PrecompileError, PrecompileOutput, PrecompileResult};
+use crate::{PrecompileError, PrecompileOutput, PrecompileResult};
 use blst::{blst_p1, blst_p1_affine, blst_p1_from_affine, blst_p1_mult, blst_p1_to_affine};
 use primitives::Bytes;
 
 /// [EIP-2537](https://eips.ethereum.org/EIPS/eip-2537#specification) BLS12_G1MUL precompile.
 pub const PRECOMPILE: PrecompileWithAddress =
-    PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(g1_mul));
+    PrecompileWithAddress(u64_to_address(ADDRESS), g1_mul);
 /// BLS12_G1MUL precompile address.
 pub const ADDRESS: u64 = 0x0c;
 /// Base gas fee for BLS12-381 g1_mul operation.
@@ -44,16 +44,16 @@ pub(super) fn g1_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
 
     let mut p0 = blst_p1::default();
 
-    // SAFETY: p0 and p0_aff are blst values.
+    // SAFETY: `p0` and `p0_aff` are blst values.
     unsafe { blst_p1_from_affine(&mut p0, p0_aff) };
 
     let input_scalar0 = extract_scalar_input(&input[G1_INPUT_ITEM_LENGTH..])?;
 
     let mut p = blst_p1::default();
-    // SAFETY: input_scalar0.b has fixed size, p and p0 are blst values.
+    // SAFETY: `input_scalar0.b` has fixed size, `p` and `p0` are blst values.
     unsafe { blst_p1_mult(&mut p, &p0, input_scalar0.b.as_ptr(), NBITS) };
     let mut p_aff = blst_p1_affine::default();
-    // SAFETY: p_aff and p are blst values.
+    // SAFETY: `p_aff` and `p` are blst values.
     unsafe { blst_p1_to_affine(&mut p_aff, &p) };
 
     let out = encode_g1_point(&p_aff);

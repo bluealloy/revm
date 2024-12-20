@@ -1,30 +1,33 @@
 mod body;
 mod decode_helpers;
 mod header;
+pub mod printer;
 mod types_section;
+pub mod verification;
 
 pub use body::EofBody;
 pub use header::EofHeader;
 pub use types_section::TypesSection;
+pub use verification::*;
 
 use core::cmp::min;
 use primitives::{b256, bytes, Bytes, B256};
 use std::{fmt, vec, vec::Vec};
 
-/// Hash of EF00 bytes that is used for EXTCODEHASH when called from legacy bytecode.
+/// Hash of EF00 bytes that is used for EXTCODEHASH when called from legacy bytecode
 pub const EOF_MAGIC_HASH: B256 =
     b256!("9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5");
 
-/// EOF Magic in u16 form.
+/// EOF Magic in [u16] form
 pub const EOF_MAGIC: u16 = 0xEF00;
 
-/// EOF magic number in array form.
+/// EOF magic number in array form
 pub static EOF_MAGIC_BYTES: Bytes = bytes!("ef00");
 
-/// EVM Object Format (EOF) container.
+/// EVM Object Format (EOF) container
 ///
 /// It consists of a header, body and the raw original bytes.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eof {
     pub header: EofHeader,
@@ -35,10 +38,11 @@ pub struct Eof {
 impl Default for Eof {
     fn default() -> Self {
         let body = EofBody {
-            // types section with zero inputs, zero outputs and zero max stack size.
+            // Types section with zero inputs, zero outputs and zero max stack size.
             types_section: vec![TypesSection::default()],
+            code_section: vec![1],
             // One code section with a STOP byte.
-            code_section: vec![Bytes::from_static(&[0x00])],
+            code: Bytes::from_static(&[0x00]),
             container_section: vec![],
             data_section: Bytes::new(),
             is_data_filled: true,
@@ -48,6 +52,18 @@ impl Default for Eof {
 }
 
 impl Eof {
+    pub fn validate(&self) -> Result<(), EofError> {
+        validate_eof(self)
+    }
+
+    pub fn valitate_raw(bytes: Bytes) -> Result<Eof, EofError> {
+        validate_raw_eof(bytes)
+    }
+
+    pub fn validate_mode(&self, mode: CodeType) -> Result<(), EofError> {
+        validate_eof_inner(self, Some(mode))
+    }
+
     /// Creates a new EOF container from the given body.
     pub fn new(body: EofBody) -> Self {
         body.into_eof()
@@ -58,7 +74,7 @@ impl Eof {
         self.header.size() + self.header.body_size()
     }
 
-    /// Return raw EOF bytes.
+    /// Returns raw EOF bytes.
     pub fn raw(&self) -> &Bytes {
         &self.raw
     }
@@ -79,7 +95,7 @@ impl Eof {
         &self.body.data_section
     }
 
-    /// Slow encode EOF bytes.
+    /// Slow encodes EOF bytes.
     pub fn encode_slow(&self) -> Bytes {
         let mut buffer: Vec<u8> = Vec::with_capacity(self.size());
         self.header.encode(&mut buffer);
@@ -87,7 +103,8 @@ impl Eof {
         buffer.into()
     }
 
-    /// Decode EOF that have additional dangling bytes.
+    /// Decodes EOF that have additional dangling bytes.
+    ///
     /// Assume that data section is fully filled.
     pub fn decode_dangling(mut raw: Bytes) -> Result<(Self, Bytes), EofDecodeError> {
         let (header, _) = EofHeader::decode(&raw)?;
@@ -100,7 +117,7 @@ impl Eof {
         Ok((Self { header, body, raw }, dangling_data))
     }
 
-    /// Decode EOF from raw bytes.
+    /// Decodes EOF from raw bytes.
     pub fn decode(raw: Bytes) -> Result<Self, EofDecodeError> {
         let (header, _) = EofHeader::decode(&raw)?;
         let body = EofBody::decode(&raw, &header)?;
@@ -108,23 +125,23 @@ impl Eof {
     }
 }
 
-/// EOF decode errors.
+/// EOF decode errors
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EofDecodeError {
-    /// Short input while processing EOF.
+    /// Short input while processing EOF
     MissingInput,
-    /// Short body while processing EOF.
+    /// Short body while processing EOF
     MissingBodyWithoutData,
-    /// Body size is more than specified in the header.
+    /// Body size is more than specified in the header
     DanglingData,
-    /// Invalid types section data.
+    /// Invalid types section data
     InvalidTypesSection,
-    /// Invalid types section size.
+    /// Invalid types section size
     InvalidTypesSectionSize,
-    /// Invalid EOF magic number.
+    /// Invalid EOF magic number
     InvalidEOFMagicNumber,
-    /// Invalid EOF version.
+    /// Invalid EOF version
     InvalidEOFVersion,
     /// Invalid number for types kind
     InvalidTypesKind,
@@ -136,21 +153,21 @@ pub enum EofDecodeError {
     InvalidDataKind,
     /// Invalid kind after code
     InvalidKindAfterCode,
-    /// Mismatch of code and types sizes.
+    /// Mismatch of code and types sizes
     MismatchCodeAndTypesSize,
-    /// There should be at least one size.
+    /// There should be at least one size
     NonSizes,
-    /// Missing size.
+    /// Missing size
     ShortInputForSizes,
     /// Size cant be zero
     ZeroSize,
-    /// Invalid code number.
+    /// Invalid code number
     TooManyCodeSections,
-    /// Invalid number of code sections.
+    /// Invalid number of code sections
     ZeroCodeSections,
-    /// Invalid container number.
+    /// Invalid container number
     TooManyContainerSections,
-    /// Invalid initcode size.
+    /// Invalid initcode size
     InvalidEOFSize,
 }
 

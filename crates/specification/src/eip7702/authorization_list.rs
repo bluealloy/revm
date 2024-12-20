@@ -1,15 +1,21 @@
 use super::RecoveredAuthorization;
-use crate::{eip2::SECP256K1N_HALF, eip7702::SignedAuthorization};
+use crate::eip7702::SignedAuthorization;
 pub use alloy_primitives::{Parity, Signature};
 use core::fmt;
 use std::{boxed::Box, vec::Vec};
 
-/// Authorization list for EIP-7702 transaction type.
+/// Authorization list for EIP-7702 transaction type
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AuthorizationList {
     Signed(Vec<SignedAuthorization>),
     Recovered(Vec<RecoveredAuthorization>),
+}
+
+impl Default for AuthorizationList {
+    fn default() -> Self {
+        Self::Signed(Vec::new())
+    }
 }
 
 impl From<Vec<SignedAuthorization>> for AuthorizationList {
@@ -33,41 +39,7 @@ impl AuthorizationList {
         }
     }
 
-    /// Returns true if the authorization list is valid.
-    pub fn is_valid(&self, _chain_id: u64) -> Result<(), InvalidAuthorization> {
-        let validate = |auth: &SignedAuthorization| -> Result<(), InvalidAuthorization> {
-            // TODO Eip7702. Check chain_id
-            // Pending: https://github.com/ethereum/EIPs/pull/8833/files
-            // let auth_chain_id: u64 = auth.chain_id().try_into().unwrap_or(u64::MAX);
-            // if auth_chain_id != 0 && auth_chain_id != chain_id {
-            //     return Err(InvalidAuthorization::InvalidChainId);
-            // }
-
-            // Check y_parity, Parity::Parity means that it was 0 or 1.
-            if !matches!(auth.signature().v(), Parity::Parity(_)) {
-                return Err(InvalidAuthorization::InvalidYParity);
-            }
-
-            // Check s-value
-            if auth.signature().s() > SECP256K1N_HALF {
-                return Err(InvalidAuthorization::Eip2InvalidSValue);
-            }
-
-            Ok(())
-        };
-
-        match self {
-            Self::Signed(signed) => signed.iter().try_for_each(validate)?,
-            Self::Recovered(recovered) => recovered
-                .iter()
-                .map(|recovered| recovered.inner())
-                .try_for_each(validate)?,
-        };
-
-        Ok(())
-    }
-
-    /// Return empty authorization list.
+    /// Returns empty authorization list.
     pub fn empty() -> Self {
         Self::Recovered(Vec::new())
     }

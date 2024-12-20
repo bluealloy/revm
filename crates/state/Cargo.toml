@@ -38,6 +38,8 @@ serde = { version = "1.0", default-features = false, features = [
 
 
 [features]
+default = ["std"]
+std = ["serde?/std", "primitives/std"]
 serde = [
     "dep:serde",
     "primitives/serde",
@@ -45,5 +47,3 @@ serde = [
     "bytecode/serde",
     "specification/serde",
 ]
-default = ["std"]
-std = ["serde?/std", "primitives/std"]

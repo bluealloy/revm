@@ -4,22 +4,22 @@ pub use test_suite::{PragueTestResult, TestResult, TestSuite, TestUnit, TestVect
 
 use crate::{cmd::Error, dir_utils::find_all_json_tests};
 use clap::Parser;
-use revm::interpreter::analysis::{validate_raw_eof_inner, CodeType, EofError};
+use revm::bytecode::eof::{validate_raw_eof_inner, CodeType, EofError};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-/// `eof-validation` subcommand.
+/// `eof-validation` subcommand
 #[derive(Parser, Debug)]
 pub struct Cmd {
-    /// Input paths to EOF validation tests.
+    /// Input paths to EOF validation tests
     #[arg(required = true, num_args = 1..)]
     paths: Vec<PathBuf>,
 }
 
 impl Cmd {
-    /// Run statetest command.
+    /// Runs statetest command.
     pub fn run(&self) -> Result<(), Error> {
-        // check if path exists.
+        // Check if path exists.
         for path in &self.paths {
             if !path.exists() {
                 return Err(Error::Custom("The specified path does not exist"));
@@ -31,7 +31,7 @@ impl Cmd {
 }
 
 fn skip_test(name: &str) -> bool {
-    // embedded containers rules changed
+    // Embedded containers rules changed
     if name.starts_with("EOF1_embedded_container") {
         return true;
     }
@@ -39,7 +39,7 @@ fn skip_test(name: &str) -> bool {
         name,
         "EOF1_undefined_opcodes_186"
         | ""
-        // truncated data is only allowed in embedded containers
+        // Truncated data is only allowed in embedded containers
         | "validInvalid_48"
         | "validInvalid_1"
         | "EOF1_truncated_section_3"

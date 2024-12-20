@@ -1,19 +1,17 @@
 use crate::{
     primitives::U256,
     utilities::{left_pad, left_pad_vec, right_pad_vec, right_pad_with_offset},
-    Precompile, PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
+    PrecompileError, PrecompileOutput, PrecompileResult, PrecompileWithAddress,
 };
 use aurora_engine_modexp::modexp;
 use core::cmp::{max, min};
 use primitives::Bytes;
 
-pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
-    crate::u64_to_address(5),
-    Precompile::Standard(byzantium_run),
-);
+pub const BYZANTIUM: PrecompileWithAddress =
+    PrecompileWithAddress(crate::u64_to_address(5), byzantium_run);
 
 pub const BERLIN: PrecompileWithAddress =
-    PrecompileWithAddress(crate::u64_to_address(5), Precompile::Standard(berlin_run));
+    PrecompileWithAddress(crate::u64_to_address(5), berlin_run);
 
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>
@@ -56,15 +54,15 @@ where
     // The format of input is:
     // <length_of_BASE> <length_of_EXPONENT> <length_of_MODULUS> <BASE> <EXPONENT> <MODULUS>
     // Where every length is a 32-byte left-padded integer representing the number of bytes
-    // to be taken up by the next value
+    // to be taken up by the next value.
     const HEADER_LENGTH: usize = 96;
 
-    // Extract the header.
+    // Extract the header
     let base_len = U256::from_be_bytes(right_pad_with_offset::<32>(input, 0).into_owned());
     let exp_len = U256::from_be_bytes(right_pad_with_offset::<32>(input, 32).into_owned());
     let mod_len = U256::from_be_bytes(right_pad_with_offset::<32>(input, 64).into_owned());
 
-    // cast base and modulus to usize, it does not make sense to handle larger values
+    // Cast base and modulus to usize, it does not make sense to handle larger values
     let Ok(base_len) = usize::try_from(base_len) else {
         return Err(PrecompileError::ModexpBaseOverflow.into());
     };
@@ -79,7 +77,7 @@ where
 
     // Cast exponent length to usize, since it does not make sense to handle larger values.
     let Ok(exp_len) = usize::try_from(exp_len) else {
-        return Err(PrecompileError::ModexpModOverflow.into());
+        return Err(PrecompileError::ModexpExpOverflow.into());
     };
 
     // Used to extract ADJUSTED_EXPONENT_LENGTH.
@@ -89,7 +87,7 @@ where
     let input = input.get(HEADER_LENGTH..).unwrap_or_default();
 
     let exp_highp = {
-        // get right padded bytes so if data.len is less then exp_len we will get right padded zeroes.
+        // Get right padded bytes so if data.len is less then exp_len we will get right padded zeroes.
         let right_padded_highp = right_pad_with_offset::<32>(input, base_len);
         // If exp_len is less then 32 bytes get only exp_len bytes and do left padding.
         let out = left_pad::<32>(&right_padded_highp[..exp_highp_len]);
@@ -112,7 +110,7 @@ where
     // Call the modexp.
     let output = modexp(base, exponent, modulus);
 
-    // left pad the result to modulus length. bytes will always by less or equal to modulus length.
+    // Left pad the result to modulus length. bytes will always by less or equal to modulus length.
     Ok(PrecompileOutput::new(
         gas_cost,
         left_pad_vec(&output, mod_len).into_owned().into(),
@@ -120,14 +118,14 @@ where
 }
 
 pub fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U256) -> u64 {
-    // output of this function is bounded by 2^128
+    // Output of this function is bounded by 2^128
     fn mul_complexity(x: u64) -> U256 {
         if x <= 64 {
             U256::from(x * x)
         } else if x <= 1_024 {
             U256::from(x * x / 4 + 96 * x - 3_072)
         } else {
-            // up-cast to avoid overflow
+            // Up-cast to avoid overflow
             let x = U256::from(x);
             let x_sq = x * x; // x < 2^64 => x*x < 2^128 < 2^256 (no overflow)
             x_sq / U256::from(16) + U256::from(480) * x - U256::from(199_680)

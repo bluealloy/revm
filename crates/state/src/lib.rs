@@ -19,28 +19,28 @@ use specification::hardfork::SpecId;
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Account {
-    /// Balance, nonce, and code.
+    /// Balance, nonce, and code
     pub info: AccountInfo,
     /// Storage cache
     pub storage: EvmStorage,
-    /// Account status flags.
+    /// Account status flags
     pub status: AccountStatus,
 }
 
 impl Account {
-    /// Create new account and mark it as non existing.
+    /// Creates new account and mark it as non existing.
     pub fn new_not_existing() -> Self {
         Self {
             info: AccountInfo::default(),
-            storage: HashMap::new(),
+            storage: HashMap::default(),
             status: AccountStatus::LoadedAsNotExisting,
         }
     }
 
-    /// Check if account is empty and check if empty state before spurious dragon hardfork.
+    /// Checks if account is empty and check if empty state before spurious dragon hardfork.
     #[inline]
     pub fn state_clear_aware_is_empty(&self, spec: SpecId) -> bool {
-        if SpecId::enabled(spec, SpecId::SPURIOUS_DRAGON) {
+        if SpecId::is_enabled_in(spec, SpecId::SPURIOUS_DRAGON) {
             self.is_empty()
         } else {
             let loaded_not_existing = self.is_loaded_as_not_existing();
@@ -49,12 +49,12 @@ impl Account {
         }
     }
 
-    /// Mark account as self destructed.
+    /// Marks the account as self destructed.
     pub fn mark_selfdestruct(&mut self) {
         self.status |= AccountStatus::SelfDestructed;
     }
 
-    /// Unmark account as self destructed.
+    /// Unmarks the account as self destructed.
     pub fn unmark_selfdestruct(&mut self) {
         self.status -= AccountStatus::SelfDestructed;
     }
@@ -64,12 +64,12 @@ impl Account {
         self.status.contains(AccountStatus::SelfDestructed)
     }
 
-    /// Mark account as touched
+    /// Marks the account as touched
     pub fn mark_touch(&mut self) {
         self.status |= AccountStatus::Touched;
     }
 
-    /// Unmark the touch flag.
+    /// Unmarks the touch flag.
     pub fn unmark_touch(&mut self) {
         self.status -= AccountStatus::Touched;
     }
@@ -79,22 +79,22 @@ impl Account {
         self.status.contains(AccountStatus::Touched)
     }
 
-    /// Mark account as newly created.
+    /// Marks the account as newly created.
     pub fn mark_created(&mut self) {
         self.status |= AccountStatus::Created;
     }
 
-    /// Unmark created flag.
+    /// Unmarks the created flag.
     pub fn unmark_created(&mut self) {
         self.status -= AccountStatus::Created;
     }
 
-    /// Mark account as cold.
+    /// Marks the account as cold.
     pub fn mark_cold(&mut self) {
         self.status |= AccountStatus::Cold;
     }
 
-    /// Mark account as warm and return true if it was previously cold.
+    /// Marks the account as warm and return true if it was previously cold.
     pub fn mark_warm(&mut self) -> bool {
         if self.status.contains(AccountStatus::Cold) {
             self.status -= AccountStatus::Cold;
@@ -104,7 +104,8 @@ impl Account {
         }
     }
 
-    /// Is account loaded as not existing from database
+    /// Is account loaded as not existing from database.
+    ///
     /// This is needed for pre spurious dragon hardforks where
     /// existing and empty were two separate states.
     pub fn is_loaded_as_not_existing(&self) -> bool {
@@ -123,7 +124,7 @@ impl Account {
 
     /// Returns an iterator over the storage slots that have been changed.
     ///
-    /// See also [EvmStorageSlot::is_changed]
+    /// See also [EvmStorageSlot::is_changed].
     pub fn changed_storage_slots(&self) -> impl Iterator<Item = (&U256, &EvmStorageSlot)> {
         self.storage.iter().filter(|(_, slot)| slot.is_changed())
     }
@@ -133,7 +134,7 @@ impl From<AccountInfo> for Account {
     fn from(info: AccountInfo) -> Self {
         Self {
             info,
-            storage: HashMap::new(),
+            storage: HashMap::default(),
             status: AccountStatus::Loaded,
         }
     }
@@ -173,11 +174,11 @@ impl Default for AccountStatus {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EvmStorageSlot {
-    /// Original value of the storage slot.
+    /// Original value of the storage slot
     pub original_value: U256,
-    /// Present value of the storage slot.
+    /// Present value of the storage slot
     pub present_value: U256,
-    /// Represents if the storage slot is cold.
+    /// Represents if the storage slot is cold
     pub is_cold: bool,
 }
 
@@ -199,7 +200,7 @@ impl EvmStorageSlot {
             is_cold: false,
         }
     }
-    /// Returns true if the present value differs from the original value
+    /// Returns true if the present value differs from the original value.
     pub fn is_changed(&self) -> bool {
         self.original_value != self.present_value
     }

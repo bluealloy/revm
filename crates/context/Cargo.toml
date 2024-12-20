@@ -1,0 +1,64 @@
+[package]
+name = "revm-context"
+description = "Revm context crates"
+version = "1.0.0"
+authors.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unreachable_pub = "warn"
+unused_must_use = "deny"
+rust_2018_idioms = "deny"
+
+[lints.rustdoc]
+all = "warn"
+
+[dependencies]
+# revm
+interpreter.workspace = true
+context-interface.workspace = true
+primitives.workspace = true
+database-interface.workspace = true
+state.workspace = true
+specification.workspace = true
+bytecode.workspace = true
+
+# misc
+derive-where.workspace = true
+cfg-if.workspace = true
+
+# Optional
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+], optional = true }
+
+[dev-dependencies]
+database.workspace = true
+
+[features]
+# Implementation-specific features
+default = ["std"]
+std = []
+dev = [
+    "memory_limit",
+    "optional_balance_check",
+    "optional_block_gas_limit",
+    "optional_eip3607",
+    "optional_gas_refund",
+    "optional_no_base_fee",
+]
+memory_limit = []
+optional_balance_check = []
+optional_block_gas_limit = []
+optional_eip3607 = []
+optional_gas_refund = []
+optional_no_base_fee = []

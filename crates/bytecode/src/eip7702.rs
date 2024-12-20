@@ -1,20 +1,20 @@
 use core::fmt;
 use primitives::{bytes, Address, Bytes};
 
-/// EIP-7702 Version Magic in u16 form.
+/// EIP-7702 Version Magic in u16 form
 pub const EIP7702_MAGIC: u16 = 0xEF01;
 
-/// EIP-7702 magic number in array form.
+/// EIP-7702 magic number in array form
 pub static EIP7702_MAGIC_BYTES: Bytes = bytes!("ef01");
 
-/// EIP-7702 first version of bytecode.
+/// EIP-7702 first version of bytecode
 pub const EIP7702_VERSION: u8 = 0;
 
 /// Bytecode of delegated account, specified in EIP-7702
 ///
 /// Format of EIP-7702 bytecode consist of:
-/// 0xEF00 (MAGIC) + 0x00 (VERSION) + 20 bytes of address.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+/// `0xEF00` (MAGIC) + `0x00` (VERSION) + 20 bytes of address.
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eip7702Bytecode {
     pub delegated_address: Address,
@@ -57,28 +57,34 @@ impl Eip7702Bytecode {
         }
     }
 
-    /// Return the raw bytecode with version MAGIC number.
+    /// Returns the raw bytecode with version MAGIC number.
     #[inline]
     pub fn raw(&self) -> &Bytes {
         &self.raw
     }
 
-    /// Return the address of the delegated contract.
+    /// Returns the address of the delegated contract.
     #[inline]
     pub fn address(&self) -> Address {
         self.delegated_address
     }
 }
 
-/// Bytecode errors.
+/// Bytecode errors
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Eip7702DecodeError {
-    /// Invalid length of the raw bytecode. It should be 23 bytes.
+    /// Invalid length of the raw bytecode
+    ///
+    /// It should be 23 bytes.
     InvalidLength,
+    /// Invalid magic number
+    ///
     /// All Eip7702 bytecodes should start with the magic number 0xEF01.
     InvalidMagic,
-    /// Only supported version is version 0x00.
+    /// Unsupported version
+    ///
+    /// Only supported version is version 0x00
     UnsupportedVersion,
 }
 

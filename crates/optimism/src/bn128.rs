@@ -1,17 +1,17 @@
 use precompile::{
-    bn128, {Precompile, PrecompileError, PrecompileResult, PrecompileWithAddress},
+    bn128, {PrecompileError, PrecompileResult, PrecompileWithAddress},
 };
 
-pub(crate) mod pair {
+pub mod pair {
     use super::*;
 
-    const GRANITE_MAX_INPUT_SIZE: usize = 112687;
-    pub(crate) const GRANITE: PrecompileWithAddress = PrecompileWithAddress(
-        bn128::pair::ADDRESS,
-        Precompile::Standard(|input, gas_limit| run_pair(input, gas_limit)),
-    );
+    pub const GRANITE_MAX_INPUT_SIZE: usize = 112687;
+    pub const GRANITE: PrecompileWithAddress =
+        PrecompileWithAddress(bn128::pair::ADDRESS, |input, gas_limit| {
+            run_pair(input, gas_limit)
+        });
 
-    pub(crate) fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    pub fn run_pair(input: &[u8], gas_limit: u64) -> PrecompileResult {
         if input.len() > GRANITE_MAX_INPUT_SIZE {
             return Err(PrecompileError::Bn128PairLength.into());
         }
@@ -54,7 +54,7 @@ mod tests {
         let outcome = pair::run_pair(&input, 260_000).unwrap();
         assert_eq!(outcome.bytes, expected);
 
-        // invalid input length
+        // Invalid input length
         let input = hex::decode(
             "\
           1111111111111111111111111111111111111111111111111111111111111111\
@@ -70,7 +70,7 @@ mod tests {
             Err(PrecompileErrors::Error(PrecompileError::Bn128PairLength))
         ));
 
-        // valid input length shorter than 112687
+        // Valid input length shorter than 112687
         let input = vec![1u8; 586 * bn128::PAIR_ELEMENT_LEN];
         let res = pair::run_pair(&input, 260_000);
         assert!(matches!(
@@ -78,7 +78,7 @@ mod tests {
             Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
         ));
 
-        // input length longer than 112687
+        // Input length longer than 112687
         let input = vec![1u8; 587 * bn128::PAIR_ELEMENT_LEN];
         let res = pair::run_pair(&input, 260_000);
         assert!(matches!(

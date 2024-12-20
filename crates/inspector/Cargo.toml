@@ -26,8 +26,8 @@ all = "warn"
 revm.workspace = true
 
 # mics
-auto_impl = { version = "1.2", default-features = false }
-derive-where = { version = "1.2.7", default-features = false }
+auto_impl.workspace = true
+derive-where.workspace = true
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [
@@ -39,11 +39,12 @@ serde_json = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 [dev-dependencies]
+revm = { workspace = true, features = ["serde"] }
 database = { workspace = true, features = ["serde"] }
 
 [features]
 default = ["std"]
-# Preserve ordeder of json
+# Preserve order of json field
 std = ["serde?/std", "serde_json?/std", "serde_json?/preserve_order"]
 serde = ["dep:serde", "revm/serde", "database/serde"]
 serde-json = ["serde", "dep:serde_json"]

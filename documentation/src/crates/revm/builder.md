@@ -1,4 +1,3 @@
-
 # Evm Builder
 
 The builder creates or modifies the EVM and applies different handlers.
@@ -17,7 +16,7 @@ Simple example of using `EvmBuilder`:
 ```rust,ignore
   use crate::evm::Evm;
 
-  // build Evm with default values.
+  // Build Evm with default values.
   let mut evm = Evm::builder().build();
   let output = evm.transact();
 ```
@@ -25,28 +24,33 @@ Simple example of using `EvmBuilder`:
 ## Builder Stages
 
 There are two builder stages that are used to mitigate potential misuse of the builder:
-  * `SetGenericStage`: Initial stage that allows setting the database and external context.
-  * `HandlerStage`: Allows setting the handler registers but is explicit about setting new generic type as it will void the handler registers. 
+
+- `SetGenericStage`: Initial stage that allows setting the database and external context.
+- `HandlerStage`: Allows setting the handler registers but is explicit about setting new generic type as it will void the handler registers.
 
 Functions from one stage are just renamed functions from other stage, it is made so that user is more aware of what underlying function does.
 For example, in `SettingDbStage` we have `with_db` function while in `HandlerStage` we have `reset_handler_with_db`, both of them set the database but the latter also resets the handler.
 There are multiple functions that are common to both stages such as `build`.
 
 ### Builder naming conventions
+
 In both stages we have:
-  * `build` creates the Evm.
-  * `spec_id` creates new mainnet handler and reapplies all the handler registers.
-  * `modify_*` functions are used to modify the database, external context or Env.
-  * `clear_*` functions allows setting default values for Environment.
-  * `append_handler_register_*` functions are used to push handler registers.
-    This will transition the builder to the `HandlerStage`.
+
+- `build` creates the Evm.
+- `spec_id` creates new mainnet handler and reapplies all the handler registers.
+- `modify_*` functions are used to modify the database, external context or Env.
+- `clear_*` functions allows setting default values for Environment.
+- `append_handler_register_*` functions are used to push handler registers.
+  This will transition the builder to the `HandlerStage`.
 
 In `SetGenericStage` we have:
-  * `with_*` are found in `SetGenericStage` and are used to set the generics.
+
+- `with_*` are found in `SetGenericStage` and are used to set the generics.
 
 In `HandlerStage` we have:
-  * `reset_handler_with_*` is used if we want to change some of the generic types this will reset the handler registers.
-    This will transition the builder to the `SetGenericStage`.
+
+- `reset_handler_with_*` is used if we want to change some of the generic types this will reset the handler registers.
+  This will transition the builder to the `SetGenericStage`.
 
 # Creating and modification of Evm
 
@@ -57,7 +61,9 @@ Additionally, a function that is very important is `evm.modify()` that allows mo
 It returns a builder, allowing users to modify the Evm.
 
 # Examples
+
 The following example uses the builder to create an `Evm` with inspector:
+
 ```rust,ignore
   use crate::{
       db::EmptyDB, Context, EvmContext, inspector::inspector_handle_register, inspectors::NoOpInspector, Evm,
@@ -72,10 +78,10 @@ The following example uses the builder to create an `Evm` with inspector:
       // .with_db(..) does not compile as we already locked the builder generics,
       // alternative fn is reset_handler_with_db(..)
       .build();
-  
+
   // Execute the evm.
   let output = evm.transact();
-  
+
   // Extract evm context.
   let Context {
       external,
@@ -84,6 +90,7 @@ The following example uses the builder to create an `Evm` with inspector:
 ```
 
 The next example changes the spec id and environment of an already built evm.
+
 ```rust,ignore
   use crate::{Evm,SpecId::BERLIN};
 
@@ -127,7 +134,7 @@ impl ContextStatefulPrecompile<EvmContext<EmptyDB>, ()> for CustomPrecompile {
         _input: &Bytes,
         _gas_limit: u64,
         _context: &mut EvmContext<EmptyDB>,
-        _extctx: &mut (),
+        _extcontext: &mut (),
     ) -> PrecompileResult {
         Ok((10, Bytes::new()))
     }

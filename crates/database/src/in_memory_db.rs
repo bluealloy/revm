@@ -3,7 +3,6 @@ use database_interface::{Database, DatabaseCommit, DatabaseRef, EmptyDB};
 use primitives::{hash_map::Entry, Address, HashMap, Log, B256, KECCAK_EMPTY, U256};
 use state::{Account, AccountInfo, Bytecode};
 use std::vec::Vec;
-use wiring::EthereumWiring;
 
 /// A [Database] implementation that stores all state changes in memory.
 pub type InMemoryDB = CacheDB<EmptyDB>;
@@ -29,7 +28,7 @@ pub struct CacheDB<ExtDB> {
     pub block_hashes: HashMap<U256, B256>,
     /// The underlying database ([DatabaseRef]) that is used to load data.
     ///
-    /// Note: this is read-only, data is never written to this database.
+    /// Note: This is read-only, data is never written to this database.
     pub db: ExtDB,
 }
 
@@ -39,16 +38,47 @@ impl<ExtDB: Default> Default for CacheDB<ExtDB> {
     }
 }
 
+impl<ExtDb> CacheDB<CacheDB<ExtDb>> {
+    /// Flattens a nested cache by applying the outer cache to the inner cache.
+    ///
+    /// The behavior is as follows:
+    /// - Accounts are overridden with outer accounts
+    /// - Contracts are overridden with outer contracts
+    /// - Logs are appended
+    /// - Block hashes are overridden with outer block hashes
+    pub fn flatten(self) -> CacheDB<ExtDb> {
+        let CacheDB {
+            accounts,
+            contracts,
+            logs,
+            block_hashes,
+            db: mut inner,
+        } = self;
+
+        inner.accounts.extend(accounts);
+        inner.contracts.extend(contracts);
+        inner.logs.extend(logs);
+        inner.block_hashes.extend(block_hashes);
+        inner
+    }
+
+    /// Discards the outer cache and return the inner cache.
+    pub fn discard_outer(self) -> CacheDB<ExtDb> {
+        self.db
+    }
+}
+
 impl<ExtDB> CacheDB<ExtDB> {
+    /// Creates a new cache with the given external database.
     pub fn new(db: ExtDB) -> Self {
-        let mut contracts = HashMap::new();
+        let mut contracts = HashMap::default();
         contracts.insert(KECCAK_EMPTY, Bytecode::default());
         contracts.insert(B256::ZERO, Bytecode::default());
         Self {
-            accounts: HashMap::new(),
+            accounts: HashMap::default(),
             contracts,
             logs: Vec::default(),
-            block_hashes: HashMap::new(),
+            block_hashes: HashMap::default(),
             db,
         }
     }
@@ -74,10 +104,15 @@ impl<ExtDB> CacheDB<ExtDB> {
         }
     }
 
-    /// Insert account info but not override storage
+    /// Inserts account info but not override storage
     pub fn insert_account_info(&mut self, address: Address, mut info: AccountInfo) {
         self.insert_contract(&mut info);
         self.accounts.entry(address).or_default().info = info;
+    }
+
+    /// Wraps the cache in a [CacheDB], creating a nested cache.
+    pub fn nest(self) -> CacheDB<Self> {
+        CacheDB::new(self)
     }
 }
 
@@ -100,7 +135,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         }
     }
 
-    /// insert account storage without overriding account info
+    /// Inserts account storage without overriding account info
     pub fn insert_account_storage(
         &mut self,
         address: Address,
@@ -112,7 +147,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         Ok(())
     }
 
-    /// replace account storage without overriding account info
+    /// Replaces account storage without overriding account info
     pub fn replace_account_storage(
         &mut self,
         address: Address,
@@ -186,7 +221,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
         match self.contracts.entry(code_hash) {
             Entry::Occupied(entry) => Ok(entry.get().clone()),
             Entry::Vacant(entry) => {
-                // if you return code bytes when basic fn is called this function is not needed.
+                // If you return code bytes when basic fn is called this function is not needed.
                 Ok(entry.insert(self.db.code_by_hash_ref(code_hash)?).clone())
             }
         }
@@ -216,7 +251,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                 }
             }
             Entry::Vacant(acc_entry) => {
-                // acc needs to be loaded for us to access slots.
+                // Acc needs to be loaded for us to access slots.
                 let info = self.db.basic_ref(address)?;
                 let (account, value) = if info.is_some() {
                     let value = self.db.storage_ref(address, index)?;
@@ -294,7 +329,7 @@ pub struct DbAccount {
     pub info: AccountInfo,
     /// If account is selfdestructed or newly created, storage will be cleared.
     pub account_state: AccountState,
-    /// storage slots
+    /// Storage slots
     pub storage: HashMap<U256, U256>,
 }
 
@@ -354,9 +389,6 @@ impl AccountState {
     }
 }
 
-/// Ethereum benchmark wiring
-pub type EthereumBenchmarkWiring = EthereumWiring<BenchmarkDB, ()>;
-
 /// Custom benchmarking DB that only has account info for the zero address.
 ///
 /// Any other address will return an empty account.
@@ -413,7 +445,7 @@ impl Database for BenchmarkDB {
 mod tests {
     use super::{CacheDB, EmptyDB};
     use database_interface::Database;
-    use primitives::{Address, U256};
+    use primitives::{Address, HashMap, U256};
     use state::AccountInfo;
 
     #[test]
@@ -460,7 +492,7 @@ mod tests {
 
         let mut new_state = CacheDB::new(init_state);
         new_state
-            .replace_account_storage(account, [(key1, value1)].into())
+            .replace_account_storage(account, HashMap::from_iter([(key1, value1)]))
             .unwrap();
 
         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);

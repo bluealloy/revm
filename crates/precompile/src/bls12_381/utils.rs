@@ -30,7 +30,7 @@ pub(super) fn fp_to_bytes(out: &mut [u8], input: *const blst_fp) {
     }
     let (padding, rest) = out.split_at_mut(PADDING_LENGTH);
     padding.fill(0);
-    // SAFETY: out length is checked previously, input is a blst value.
+    // SAFETY: Out length is checked previously, `input` is a blst value.
     unsafe { blst_bendian_from_fp(rest.as_mut_ptr(), input) };
 }
 
@@ -70,9 +70,9 @@ pub(super) fn extract_scalar_input(input: &[u8]) -> Result<blst_scalar, Precompi
     }
 
     let mut out = blst_scalar::default();
-    // SAFETY: input length is checked previously, out is a blst value.
+    // SAFETY: `input` length is checked previously, out is a blst value.
     unsafe {
-        // NOTE: we do not use `blst_scalar_fr_check` here because, from EIP-2537:
+        // Note: We do not use `blst_scalar_fr_check` here because, from EIP-2537:
         //
         // * The corresponding integer is not required to be less than or equal than main subgroup
         // order `q`.
@@ -84,14 +84,14 @@ pub(super) fn extract_scalar_input(input: &[u8]) -> Result<blst_scalar, Precompi
 
 /// Checks if the input is a valid big-endian representation of a field element.
 fn is_valid_be(input: &[u8; 48]) -> bool {
-    for (i, modul) in input.iter().zip(MODULUS_REPR.iter()) {
-        match i.cmp(modul) {
+    for (i, modulo) in input.iter().zip(MODULUS_REPR.iter()) {
+        match i.cmp(modulo) {
             Ordering::Greater => return false,
             Ordering::Less => return true,
             Ordering::Equal => continue,
         }
     }
-    // false if matching the modulus
+    // Return false if matching the modulus
     false
 }
 
@@ -102,7 +102,7 @@ pub(super) fn fp_from_bendian(input: &[u8; 48]) -> Result<blst_fp, PrecompileErr
         return Err(PrecompileError::Other("non-canonical fp value".to_string()));
     }
     let mut fp = blst_fp::default();
-    // SAFETY: input has fixed length, and fp is a blst value.
+    // SAFETY: `input` has fixed length, and `fp` is a blst value.
     unsafe {
         // This performs the check for canonical field elements
         blst_fp_from_bendian(&mut fp, input.as_ptr());
