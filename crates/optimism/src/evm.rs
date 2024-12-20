@@ -12,13 +12,13 @@ use revm::{
     Evm, JournaledState,
 };
 
-/// Optimism Error.
+/// Optimism Error
 pub type OpError<DB> = EVMError<<DB as Database>::Error, InvalidTransaction>;
 
-/// Optimism Context.
+/// Optimism Context
 pub type OpContext<DB> = Context<BlockEnv, OpTransaction<TxEnv>, CfgEnv<OpSpec>, DB, L1BlockInfo>;
 
-/// Optimism EVM type.
+/// Optimism EVM type
 pub type OpEvm<DB> = Evm<OpError<DB>, OpContext<DB>, OpHandler<OpContext<DB>, OpError<DB>>>;
 
 pub type InspCtxType<INSP, DB> =

@@ -185,7 +185,7 @@ macro_rules! as_usize_saturated {
 macro_rules! as_isize_saturated {
     ($v:expr) => {
         // `isize_try_from(u64::MAX)`` will fail and return isize::MAX
-        // this is expected behavior as we are saturating the value.
+        // This is expected behavior as we are saturating the value.
         isize::try_from($crate::as_u64_saturated!($v)).unwrap_or(isize::MAX)
     };
 }

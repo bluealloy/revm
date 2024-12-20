@@ -9,7 +9,7 @@ use std::sync::Arc;
 pub trait BlockHash {
     type Error;
 
-    /// Get block hash by block number
+    /// Gets block hash by block number.
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error>;
 }
 
@@ -17,7 +17,7 @@ pub trait BlockHash {
 pub trait BlockHashRef {
     type Error;
 
-    /// Get block hash by block number
+    /// Gets block hash by block number.
     fn block_hash(&self, number: u64) -> Result<B256, Self::Error>;
 }
 

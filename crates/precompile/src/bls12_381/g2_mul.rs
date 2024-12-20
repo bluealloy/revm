@@ -41,16 +41,16 @@ pub(super) fn g2_mul(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     // So we set the subgroup_check flag to `true`
     let p0_aff = &extract_g2_input(&input[..G2_INPUT_ITEM_LENGTH], true)?;
     let mut p0 = blst_p2::default();
-    // SAFETY: p0 and p0_aff are blst values.
+    // SAFETY: `p0` and `p0_aff` are blst values.
     unsafe { blst_p2_from_affine(&mut p0, p0_aff) };
 
     let input_scalar0 = extract_scalar_input(&input[G2_INPUT_ITEM_LENGTH..])?;
 
     let mut p = blst_p2::default();
-    // SAFETY: input_scalar0.b has fixed size, p and p0 are blst values.
+    // SAFETY: `input_scalar0.b` has fixed size, `p` and `p0` are blst values.
     unsafe { blst_p2_mult(&mut p, &p0, input_scalar0.b.as_ptr(), NBITS) };
     let mut p_aff = blst_p2_affine::default();
-    // SAFETY: p_aff and p are blst values.
+    // SAFETY: `p_aff` and `p` are blst values.
     unsafe { blst_p2_to_affine(&mut p_aff, &p) };
 
     let out = encode_g2_point(&p_aff);

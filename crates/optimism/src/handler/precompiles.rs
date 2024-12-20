@@ -65,7 +65,7 @@ where
     fn new(context: &mut Self::Context) -> Self {
         let spec = context.cfg().spec();
         match spec {
-            // no changes
+            // No changes
             spec @ (OpSpec::Eth(
                 SpecId::FRONTIER
                 | SpecId::FRONTIER_THAWING

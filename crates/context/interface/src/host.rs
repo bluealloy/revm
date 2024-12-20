@@ -10,9 +10,9 @@ use crate::{
 use primitives::{Address, Bytes, Log, B256, U256};
 
 /// EVM context host.
-/// TODO move to context-interface
+// TODO : Move to context-interface
 pub trait Host {
-    /// Chain specification.
+    /// Chain specification
     type BLOCK: Block;
     type TX: Transaction;
     type CFG: Cfg;
@@ -23,28 +23,28 @@ pub trait Host {
     /// Returns a mutable reference to the environment.
     fn block(&self) -> &Self::BLOCK;
 
-    /// TODO make it generic in future
+    // TODO : Make it generic in future
     fn cfg(&self) -> &Self::CFG;
 
-    /// Load an account code.
+    /// Loads an account code.
     fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad>;
 
-    /// Get the block hash of the given block `number`.
+    /// Gets the block hash of the given block `number`.
     fn block_hash(&mut self, number: u64) -> Option<B256>;
 
-    /// Get balance of `address` and if the account is cold.
+    /// Gets balance of `address` and if the account is cold.
     fn balance(&mut self, address: Address) -> Option<StateLoad<U256>>;
 
-    /// Get code of `address` and if the account is cold.
+    /// Gets code of `address` and if the account is cold.
     fn code(&mut self, address: Address) -> Option<Eip7702CodeLoad<Bytes>>;
 
-    /// Get code hash of `address` and if the account is cold.
+    /// Gets code hash of `address` and if the account is cold.
     fn code_hash(&mut self, address: Address) -> Option<Eip7702CodeLoad<B256>>;
 
-    /// Get storage value of `address` at `index` and if the account is cold.
+    /// Gets storage value of `address` at `index` and if the account is cold.
     fn sload(&mut self, address: Address, index: U256) -> Option<StateLoad<U256>>;
 
-    /// Set storage value of account address at index.
+    /// Sets storage value of account address at index.
     ///
     /// Returns [`StateLoad`] with [`SStoreResult`] that contains original/new/old storage value.
     fn sstore(
@@ -54,16 +54,16 @@ pub trait Host {
         value: U256,
     ) -> Option<StateLoad<SStoreResult>>;
 
-    /// Get the transient storage value of `address` at `index`.
+    /// Gets the transient storage value of `address` at `index`.
     fn tload(&mut self, address: Address, index: U256) -> U256;
 
-    /// Set the transient storage value of `address` at `index`.
+    /// Sets the transient storage value of `address` at `index`.
     fn tstore(&mut self, address: Address, index: U256, value: U256);
 
-    /// Emit a log owned by `address` with given `LogData`.
+    /// Emits a log owned by `address` with given `LogData`.
     fn log(&mut self, log: Log);
 
-    /// Mark `address` to be deleted, with funds transferred to `target`.
+    /// Marks `address` to be deleted, with funds transferred to `target`.
     fn selfdestruct(
         &mut self,
         address: Address,
@@ -121,7 +121,7 @@ impl SStoreResult {
     }
 }
 
-/// Result of a selfdestruct action.
+/// Result of a selfdestruct action
 ///
 /// Value returned are needed to calculate the gas spent.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]

@@ -1,7 +1,7 @@
 use revm::specification::hardfork::SpecId;
 use serde::Deserialize;
 
-/// Ethereum specification names.
+/// Ethereum specification names
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Hash)]
 pub enum SpecName {
     Frontier,
@@ -32,7 +32,7 @@ pub enum SpecName {
 }
 
 impl SpecName {
-    /// Convert to a spec id.
+    /// Converts to a [SpecId].
     pub fn to_spec_id(&self) -> SpecId {
         match self {
             Self::Frontier => SpecId::FRONTIER,

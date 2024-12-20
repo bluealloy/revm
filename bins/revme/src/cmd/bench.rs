@@ -13,7 +13,7 @@ pub enum BenchName {
     Transfer,
 }
 
-/// `bytecode` subcommand.
+/// `bytecode` subcommand
 #[derive(Parser, Debug)]
 pub struct Cmd {
     #[arg(value_enum)]
@@ -21,7 +21,7 @@ pub struct Cmd {
 }
 
 impl Cmd {
-    /// Run bench command.
+    /// Runs bench command.
     pub fn run(&self) {
         match self.name {
             BenchName::Analysis => analysis::run(),

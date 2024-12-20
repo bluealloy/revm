@@ -177,7 +177,7 @@ pub fn run_pair(
 
         let mut points = Vec::with_capacity(elements);
 
-        // read points
+        // Read points
         for idx in 0..elements {
             let read_fq_at = |n: usize| {
                 debug_assert!(n < PAIR_ELEMENT_LEN / 32);
@@ -198,7 +198,7 @@ pub fn run_pair(
             let b = {
                 let ba = Fq2::new(bax, bay);
                 let bb = Fq2::new(bbx, bby);
-                // TODO: check whether or not we need these zero checks
+                // TODO : Check whether or not we need these zero checks
                 if ba.is_zero() && bb.is_zero() {
                     G2::zero()
                 } else {
@@ -253,7 +253,7 @@ mod tests {
         let outcome = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
         assert_eq!(outcome.bytes, expected);
 
-        // zero sum test
+        // Zero sum test
         let input = hex::decode(
             "\
             0000000000000000000000000000000000000000000000000000000000000000\
@@ -272,7 +272,7 @@ mod tests {
         let outcome = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
         assert_eq!(outcome.bytes, expected);
 
-        // out of gas test
+        // Out of gas test
         let input = hex::decode(
             "\
             0000000000000000000000000000000000000000000000000000000000000000\
@@ -289,7 +289,7 @@ mod tests {
             Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
         ));
 
-        // no input test
+        // No input test
         let input = [0u8; 0];
         let expected = hex::decode(
             "\
@@ -301,7 +301,7 @@ mod tests {
         let outcome = run_add(&input, BYZANTIUM_ADD_GAS_COST, 500).unwrap();
         assert_eq!(outcome.bytes, expected);
 
-        // point not on curve fail
+        // Point not on curve fail
         let input = hex::decode(
             "\
             1111111111111111111111111111111111111111111111111111111111111111\
@@ -339,7 +339,7 @@ mod tests {
         let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
         assert_eq!(outcome.bytes, expected);
 
-        // out of gas test
+        // Out of gas test
         let input = hex::decode(
             "\
             0000000000000000000000000000000000000000000000000000000000000000\
@@ -354,7 +354,7 @@ mod tests {
             Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
         ));
 
-        // zero multiplication test
+        // Zero multiplication test
         let input = hex::decode(
             "\
             0000000000000000000000000000000000000000000000000000000000000000\
@@ -372,7 +372,7 @@ mod tests {
         let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
         assert_eq!(outcome.bytes, expected);
 
-        // no input test
+        // No input test
         let input = [0u8; 0];
         let expected = hex::decode(
             "\
@@ -384,7 +384,7 @@ mod tests {
         let outcome = run_mul(&input, BYZANTIUM_MUL_GAS_COST, 40_000).unwrap();
         assert_eq!(outcome.bytes, expected);
 
-        // point not on curve fail
+        // Point not on curve fail
         let input = hex::decode(
             "\
             1111111111111111111111111111111111111111111111111111111111111111\
@@ -433,7 +433,7 @@ mod tests {
         .unwrap();
         assert_eq!(outcome.bytes, expected);
 
-        // out of gas test
+        // Out of gas test
         let input = hex::decode(
             "\
             1c76476f4def4bb94541d57ebba1193381ffa7aa76ada664dd31c16024c43f59\
@@ -462,7 +462,7 @@ mod tests {
             Err(PrecompileErrors::Error(PrecompileError::OutOfGas))
         ));
 
-        // no input test
+        // No input test
         let input = [0u8; 0];
         let expected =
             hex::decode("0000000000000000000000000000000000000000000000000000000000000001")
@@ -477,7 +477,7 @@ mod tests {
         .unwrap();
         assert_eq!(outcome.bytes, expected);
 
-        // point not on curve fail
+        // Point not on curve fail
         let input = hex::decode(
             "\
             1111111111111111111111111111111111111111111111111111111111111111\
@@ -502,7 +502,7 @@ mod tests {
             ))
         ));
 
-        // invalid input length
+        // Invalid input length
         let input = hex::decode(
             "\
             1111111111111111111111111111111111111111111111111111111111111111\

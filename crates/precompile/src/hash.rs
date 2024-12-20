@@ -9,7 +9,7 @@ pub const SHA256: PrecompileWithAddress =
 pub const RIPEMD160: PrecompileWithAddress =
     PrecompileWithAddress(crate::u64_to_address(3), ripemd160_run);
 
-/// Computes the SHA-256 hash of the input data.
+/// Computes the SHA-256 hash of the input data
 ///
 /// This function follows specifications defined in the following references:
 /// - [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf)
@@ -25,7 +25,7 @@ pub fn sha256_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     }
 }
 
-/// Computes the RIPEMD-160 hash of the input data.
+/// Computes the RIPEMD-160 hash of the input data
 ///
 /// This function follows specifications defined in the following references:
 /// - [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf)

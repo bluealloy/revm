@@ -57,8 +57,9 @@ impl From<OpTransactionType> for TransactionType {
 pub enum OpTransaction<T: Transaction> {
     Base {
         tx: T,
-        /// An enveloped EIP-2718 typed transaction. This is used
-        /// to compute the L1 tx cost using the L1 block info, as
+        /// An enveloped EIP-2718 typed transaction
+        ///
+        /// This is used to compute the L1 tx cost using the L1 block info, as
         /// opposed to requiring downstream apps to compute the cost
         /// externally.
         enveloped_tx: Option<Bytes>,

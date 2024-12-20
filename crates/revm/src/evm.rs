@@ -245,23 +245,23 @@ where
         let context = &mut self.context;
         let pre_exec = self.handler.pre_execution();
 
-        // load access list and beneficiary if needed.
+        // Load access list and beneficiary if needed.
         pre_exec.load_accounts(context)?;
 
-        // deduce caller balance with its limit.
+        // Deduce caller balance with its limit.
         pre_exec.deduct_caller(context)?;
 
         let gas_limit = context.tx().common_fields().gas_limit() - initial_gas_spend;
 
-        // apply EIP-7702 auth list.
+        // Apply EIP-7702 auth list.
         let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(context)? as i64;
 
-        // start execution
+        // Start execution
 
         //let instructions = self.handler.take_instruction_table();
         let exec = self.handler.execution();
 
-        // create first frame action
+        // Create first frame action
         let first_frame = exec.init_first_frame(context, gas_limit)?;
         let frame_result = match first_frame {
             FrameOrResultGen::Frame(frame) => exec.run(context, frame)?,
@@ -271,7 +271,7 @@ where
         let mut exec_result = exec.last_frame_result(context, frame_result)?;
 
         let post_exec = self.handler.post_execution();
-        // calculate final refund and add EIP-7702 refund to gas.
+        // Calculate final refund and add EIP-7702 refund to gas.
         post_exec.refund(context, &mut exec_result, eip7702_gas_refund);
         // Reimburse the caller
         post_exec.reimburse_caller(context, &mut exec_result)?;
@@ -386,7 +386,7 @@ mod tests {
 
         let mut tx2 = TxEnv::default();
         tx2.tx_type = TransactionType::Legacy;
-        // nonce was bumped from 0 to 1
+        // `nonce` was bumped from 0 to 1
         tx2.nonce = 1;
 
         let mut evm = EvmBuilder::new_with(

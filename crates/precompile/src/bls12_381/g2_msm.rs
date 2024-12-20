@@ -58,7 +58,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         let p0_aff = &extract_g2_input(slice, true)?;
 
         let mut p0 = blst_p2::default();
-        // SAFETY: p0 and p0_aff are blst values.
+        // SAFETY: `p0` and `p0_aff` are blst values.
         unsafe { blst_p2_from_affine(&mut p0, p0_aff) };
 
         g2_points.push(p0);
@@ -72,7 +72,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         );
     }
 
-    // return infinity point if all points are infinity
+    // Return infinity point if all points are infinity
     if g2_points.is_empty() {
         return Ok(PrecompileOutput::new(required_gas, [0; 256].into()));
     }
@@ -81,7 +81,7 @@ pub(super) fn g2_msm(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let multiexp = points.mult(&scalars, NBITS);
 
     let mut multiexp_aff = blst_p2_affine::default();
-    // SAFETY: multiexp_aff and multiexp are blst values.
+    // SAFETY: `multiexp_aff` and `multiexp` are blst values.
     unsafe { blst_p2_to_affine(&mut multiexp_aff, &multiexp) };
 
     let out = encode_g2_point(&multiexp_aff);

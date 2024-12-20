@@ -67,7 +67,7 @@ pub trait Journal {
 
     fn touch_account(&mut self, address: Address);
 
-    /// TODO instruction result is not known
+    // TODO : Instruction result is not known
     fn transfer(
         &mut self,
         from: &Address,
@@ -95,10 +95,12 @@ pub trait Journal {
         address: Address,
     ) -> Result<AccountLoad, <Self::Database as Database>::Error>;
 
-    /// Set bytecode with hash. Assume that account is warm.
+    /// Sets bytecode with hash. Assume that account is warm.
     fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256);
 
-    /// Assume account is warm
+    /// Sets bytecode and calculates hash.
+    ///
+    /// Assume account is warm.
     #[inline]
     fn set_code(&mut self, address: Address, code: Bytecode) {
         let hash = code.hash_slow();
@@ -130,12 +132,12 @@ pub trait Journal {
     fn finalize(&mut self) -> Result<Self::FinalOutput, <Self::Database as Database>::Error>;
 }
 
-/// Transfer and creation result.
+/// Transfer and creation result
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TransferError {
     /// Caller does not have enough funds
     OutOfFunds,
-    /// Overflow in target account.
+    /// Overflow in target account
     OverflowPayment,
     /// Create collision.
     CreateCollision,
@@ -149,13 +151,13 @@ pub struct JournalCheckpoint {
     pub journal_i: usize,
 }
 
-/// State load information that contains the data and if the account or storage is cold loaded.
+/// State load information that contains the data and if the account or storage is cold loaded
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StateLoad<T> {
-    /// returned data
+    /// Returned data
     pub data: T,
-    /// True if account is cold loaded.
+    /// Is account is cold loaded
     pub is_cold: bool,
 }
 
@@ -190,13 +192,13 @@ impl<T> StateLoad<T> {
     }
 }
 
-/// Result of the account load from Journal state.
+/// Result of the account load from Journal state
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountLoad {
     /// Is account and delegate code are loaded
     pub load: Eip7702CodeLoad<()>,
-    /// Is account empty, if true account is not created.
+    /// Is account empty, if true account is not created
     pub is_empty: bool,
 }
 
@@ -214,15 +216,15 @@ impl DerefMut for AccountLoad {
     }
 }
 
-/// EIP-7702 code load result that contains optional delegation is_cold information.
+/// EIP-7702 code load result that contains optional delegation is_cold information
 ///
-/// [`Self::is_delegate_account_cold`] will be [`Some`] if account has delegation.
+/// [`is_delegate_account_cold`][Self::is_delegate_account_cold] will be [`Some`] if account has delegation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eip7702CodeLoad<T> {
-    /// returned data
+    /// Returned data
     pub state_load: StateLoad<T>,
-    /// True if account has delegate code and delegated account is cold loaded.
+    /// Does account have delegate code and delegated account is cold loaded
     pub is_delegate_account_cold: Option<bool>,
 }
 
@@ -284,7 +286,7 @@ impl<T> Eip7702CodeLoad<T> {
     }
 }
 
-/// Helper that extracts database error from [`JournalStateGetter`].
+/// Helper that extracts database error from [`JournalStateGetter`]
 pub type JournalStateGetterDBError<CTX> =
     <<<CTX as JournalStateGetter>::Journal as Journal>::Database as Database>::Error;
 

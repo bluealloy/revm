@@ -36,16 +36,16 @@ pub trait Database {
     type Error: DBErrorMarker;
     //type Bytecode: BytecodeTrait;
 
-    /// Get basic account information.
+    /// Gets basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
 
-    /// Get account code by its hash.
+    /// Gets account code by its hash.
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
 
-    /// Get storage value of address at index.
+    /// Gets storage value of address at index.
     fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error>;
 
-    /// Get block hash by block number.
+    /// Gets block hash by block number.
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error>;
 }
 
@@ -67,16 +67,16 @@ pub trait DatabaseRef {
     /// The database error type.
     type Error: DBErrorMarker;
 
-    /// Get basic account information.
+    /// Gets basic account information.
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
 
-    /// Get account code by its hash.
+    /// Gets account code by its hash.
     fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error>;
 
-    /// Get storage value of address at index.
+    /// Gets storage value of address at index.
     fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error>;
 
-    /// Get block hash by block number.
+    /// Gets block hash by block number.
     fn block_hash_ref(&self, number: u64) -> Result<B256, Self::Error>;
 }
 

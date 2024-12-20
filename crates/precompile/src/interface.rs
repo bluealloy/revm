@@ -3,7 +3,7 @@ use core::fmt;
 use primitives::Bytes;
 use std::string::{String, ToString};
 
-/// A precompile operation result.
+/// A precompile operation result type
 ///
 /// Returns either `Ok((gas_used, return_bytes))` or `Err(error)`.
 pub type PrecompileResult = Result<PrecompileOutput, PrecompileErrors>;
@@ -11,9 +11,9 @@ pub type PrecompileResult = Result<PrecompileOutput, PrecompileErrors>;
 /// Precompile execution output
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct PrecompileOutput {
-    /// Gas used by the precompile.
+    /// Gas used by the precompile
     pub gas_used: u64,
-    /// Output bytes.
+    /// Output bytes
     pub bytes: Bytes,
 }
 
@@ -66,13 +66,13 @@ pub enum PrecompileError {
     Bn128AffineGFailedToCreate,
     Bn128PairLength,
     // Blob errors
-    /// The input length is not exactly 192 bytes.
+    /// The input length is not exactly 192 bytes
     BlobInvalidInputLength,
-    /// The commitment does not match the versioned hash.
+    /// The commitment does not match the versioned hash
     BlobMismatchedVersion,
-    /// The proof verification failed.
+    /// The proof verification failed
     BlobVerifyKzgProofFailed,
-    /// Catch-all variant for other errors.
+    /// Catch-all variant for other errors
     Other(String),
 }
 
@@ -82,7 +82,7 @@ impl PrecompileError {
         Self::Other(err.into())
     }
 
-    /// Returns true if the error is out of gas.
+    /// Returns `true` if the error is out of gas.
     pub fn is_oog(&self) -> bool {
         matches!(self, Self::OutOfGas)
     }

@@ -21,7 +21,7 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
 
     // === ECPAIRING ===
 
-    // set up ecpairing input
+    // Set up ecpairing input
     let input = hex::decode(
         "\
         1c76476f4def4bb94541d57ebba1193381ffa7aa76ada664dd31c16024c43f59\
@@ -68,7 +68,7 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
 
     // === ECRECOVER ===
 
-    // generate secp256k1 signature
+    // Generate secp256k1 signature
     let data = hex::decode("1337133713371337").unwrap();
     let hash = keccak256(data);
     let secret_key = SecretKey::new(&mut rand::thread_rng());
@@ -83,7 +83,7 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     let mut message_and_signature = [0u8; 128];
     message_and_signature[0..32].copy_from_slice(&hash[..]);
 
-    // fit signature into format the precompile expects
+    // Fit signature into format the precompile expects
     let rec_id = U256::from(rec_id as u64);
     message_and_signature[32..64].copy_from_slice(&rec_id.to_be_bytes::<32>());
     message_and_signature[64..128].copy_from_slice(&data);
@@ -96,7 +96,7 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
 
     // === POINT_EVALUATION ===
 
-    // now check kzg precompile gas
+    // Now check kzg precompile gas
     let commitment = hex!("8f59a8d2a1a625a17f3fea0fe5eb8c896db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7").to_vec();
     let mut versioned_hash = Sha256::digest(&commitment).to_vec();
     versioned_hash[0] = VERSIONED_HASH_VERSION_KZG;

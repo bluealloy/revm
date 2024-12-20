@@ -29,36 +29,36 @@ impl DerefMut for Reverts {
 }
 
 impl Reverts {
-    /// Create new reverts
+    /// Creates new reverts.
     pub fn new(reverts: Vec<Vec<(Address, AccountRevert)>>) -> Self {
         Self(reverts)
     }
 
-    /// Sort account inside transition by their address.
+    /// Sorts account inside transition by their address.
     pub fn sort(&mut self) {
         for revert in &mut self.0 {
             revert.sort_by_key(|(address, _)| *address);
         }
     }
 
-    /// Extend reverts with other reverts.
+    /// Extends reverts with other reverts.
     pub fn extend(&mut self, other: Reverts) {
         self.0.extend(other.0);
     }
 
-    /// Generate a [`PlainStateReverts`].
+    /// Generates a [`PlainStateReverts`].
     ///
     /// Note that account are sorted by address.
     pub fn to_plain_state_reverts(&self) -> PlainStateReverts {
         let mut state_reverts = PlainStateReverts::with_capacity(self.0.len());
         for reverts in &self.0 {
-            // pessimistically pre-allocate assuming _all_ accounts changed.
+            // Pessimistically pre-allocate assuming _all_ accounts changed.
             let mut accounts = Vec::with_capacity(reverts.len());
             let mut storage = Vec::with_capacity(reverts.len());
             for (address, revert_account) in reverts {
                 match &revert_account.account {
                     AccountInfoRevert::RevertTo(acc) => {
-                        // cloning is cheap, because account info has 3 small
+                        // Cloning is cheap, because account info has 3 small
                         // fields and a Bytes
                         accounts.push((*address, Some(acc.clone())))
                     }
@@ -130,10 +130,13 @@ impl PartialEq for Reverts {
 
 /// Assumption is that Revert can return full state from any future state to any past state.
 ///
+/// # Note
 /// It is created when new account state is applied to old account state.
+///
 /// And it is used to revert new account state to the old account state.
 ///
-/// AccountRevert is structured in this way as we need to save it inside database.
+/// [AccountRevert] is structured in this way as we need to save it inside database.
+///
 /// And we need to be able to read it from database.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -146,12 +149,13 @@ pub struct AccountRevert {
 
 impl AccountRevert {
     /// The approximate size of changes needed to store this account revert.
+    ///
     /// `1 + storage_reverts_len`
     pub fn size_hint(&self) -> usize {
         1 + self.storage.len()
     }
 
-    /// Very similar to new_selfdestructed but it will add additional zeros (RevertToSlot::Destroyed)
+    /// Very similar to new_selfdestructed but it will add additional zeros ([RevertToSlot::Destroyed])
     /// for the storage that are set if account is again created.
     pub fn new_selfdestructed_again(
         status: AccountStatus,
@@ -178,7 +182,7 @@ impl AccountRevert {
         }
     }
 
-    /// Create revert for states that were before selfdestruct.
+    /// Creates revert for states that were before selfdestruct.
     pub fn new_selfdestructed_from_bundle(
         account_info_revert: AccountInfoRevert,
         bundle_account: &mut BundleAccount,
@@ -212,7 +216,7 @@ impl AccountRevert {
         let previous_storage = storage
             .iter_mut()
             .map(|(key, value)| {
-                // take previous value and set ZERO as storage got destroyed.
+                // Take previous value and set ZERO as storage got destroyed.
                 (*key, RevertToSlot::Some(value.present_value))
             })
             .collect();
@@ -301,8 +305,10 @@ pub enum AccountInfoRevert {
 /// * Value, on revert set this value
 /// * Destroyed, should be removed on revert but on Revert set it as zero.
 ///
-/// Note: It is completely different state if Storage is Zero or Some or if Storage was
-/// Destroyed. Because if it is destroyed, previous values can be found in database or it can be zero.
+/// **Note**: It is completely different state if Storage is Zero or Some or if Storage was
+/// Destroyed.
+///
+/// Because if it is destroyed, previous values can be found in database or it can be zero.
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum RevertToSlot {

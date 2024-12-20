@@ -16,7 +16,7 @@ pub fn run() {
     let context = Context::builder()
         .with_db(BenchmarkDB::new_bytecode(bytecode))
         .modify_tx_chained(|tx| {
-            // execution globals block hash/gas_limit/coinbase/timestamp..
+            // Execution globals block hash/gas_limit/coinbase/timestamp..
             tx.caller = address!("1000000000000000000000000000000000000000");
             tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
             //evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());

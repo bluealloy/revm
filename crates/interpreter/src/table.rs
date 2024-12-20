@@ -151,7 +151,7 @@ where
 //     H: Host + ?Sized,
 //     F: Fn(&DynInstruction<W, H>, &mut W, &mut H),
 // {
-//     // NOTE: This first allocation gets elided by the compiler.
+//     // Note: This first allocation gets elided by the compiler.
 //     let prev = core::mem::replace(instruction, Box::new(|_, _| {}));
 //     *instruction = Box::new(move |i, h| f(&prev, i, h));
 // }
