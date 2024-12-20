@@ -83,23 +83,23 @@ async fn main() -> anyhow::Result<()> {
     let mut evm = InspectorMainEvm::new(
         InspectorContext::new(
             Context::builder()
-                // .with_db(&mut state)
-                // .modify_block_chained(|b| {
-                //     b.number = U256::from(block.header.number);
-                //     b.beneficiary = block.header.beneficiary;
-                //     b.timestamp = U256::from(block.header.timestamp);
+                .with_db(&mut state)
+                .modify_block_chained(|b| {
+                    b.number = U256::from(block.header.number);
+                    b.beneficiary = block.header.beneficiary;
+                    b.timestamp = U256::from(block.header.timestamp);
 
-                //     b.difficulty = block.header.difficulty;
-                //     b.gas_limit = U256::from(block.header.gas_limit);
-                //     b.basefee = block
-                //         .header
-                //         .base_fee_per_gas
-                //         .map(U256::from)
-                //         .unwrap_or_default();
-                // })
-                // .modify_cfg_chained(|c| {
-                //     c.chain_id = chain_id;
-                // }),
+                    b.difficulty = block.header.difficulty;
+                    b.gas_limit = U256::from(block.header.gas_limit);
+                    b.basefee = block
+                        .header
+                        .base_fee_per_gas
+                        .map(U256::from)
+                        .unwrap_or_default();
+                })
+                .modify_cfg_chained(|c| {
+                    c.chain_id = chain_id;
+                }),
             TracerEip3155::new(Box::new(stdout())),
         ),
         EthHandler::new(

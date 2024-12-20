@@ -1,6 +1,4 @@
-use crate::{
-    block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState as JournaledState, tx::TxEnv,
-};
+use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, tx::TxEnv};
 use bytecode::{Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 use context_interface::{
     block::BlockSetter,
@@ -132,13 +130,28 @@ where
         ))
     }
 
+    pub fn with_new_journal<OJOURNAL: Journal<Database = DB>>(
+        self,
+        mut journal: OJOURNAL,
+    ) -> Context<BLOCK, TX, CFG, DB, OJOURNAL, CHAIN> {
+        journal.set_spec_id(self.cfg.spec().into());
+        Context {
+            tx: self.tx,
+            block: self.block,
+            cfg: self.cfg,
+            journaled_state: journal,
+            chain: self.chain,
+            error: Ok(()),
+        }
+    }
+
     /// Create a new context with a new database type.
-    pub fn with_db<ODB: Database, OJOURNAL: Journal<Database = ODB>>(
+    pub fn with_db<ODB: Database>(
         self,
         db: ODB,
-    ) -> Context<BLOCK, TX, CFG, ODB, OJOURNAL, CHAIN> {
+    ) -> Context<BLOCK, TX, CFG, ODB, JournaledState<ODB>, CHAIN> {
         let spec = self.cfg.spec().into();
-        let mut journaled_state = OJOURNAL::new(db);
+        let mut journaled_state = JournaledState::new(spec, db);
         journaled_state.set_spec_id(spec);
         Context {
             tx: self.tx,

@@ -17,5 +17,5 @@ pub use block::{Block, BlockGetter};
 pub use cfg::{Cfg, CfgGetter, CreateScheme, TransactTo};
 pub use database_interface::{DBErrorMarker, Database, DatabaseGetter};
 pub use errors::ErrorGetter;
-pub use journaled_state::{JournalStateGetter, JournalStateGetterDBError, Journal};
+pub use journaled_state::{Journal, JournalStateGetter, JournalStateGetterDBError};
 pub use transaction::{Transaction, TransactionGetter, TransactionType};

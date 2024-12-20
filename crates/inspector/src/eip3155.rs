@@ -3,9 +3,7 @@ use derive_where::derive_where;
 use revm::{
     bytecode::opcode::OpCode,
     context::Cfg,
-    context_interface::{
-        CfgGetter, JournalStateGetter, Journal, Transaction, TransactionGetter,
-    },
+    context_interface::{CfgGetter, Journal, JournalStateGetter, Transaction, TransactionGetter},
     interpreter::{
         interpreter_types::{Jumps, LoopControl, MemoryTrait, StackTrait},
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,

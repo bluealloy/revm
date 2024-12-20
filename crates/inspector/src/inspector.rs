@@ -820,7 +820,7 @@ pub type InspectorMainEvm<
         Error<DB>,
         EthValidation<InspCtxType<INSP, DB, BLOCK, TX, CFG, JOURNAL>, Error<DB>>,
         EthPreExecution<InspCtxType<INSP, DB, BLOCK, TX, CFG, JOURNAL>, Error<DB>>,
-        InspectorEthExecution<InspCtxType<INSP, DB, BLOCK, TX, JOURNAL, CFG>, Error<DB>>,
+        InspectorEthExecution<InspCtxType<INSP, DB, BLOCK, TX, CFG, JOURNAL>, Error<DB>>,
     >,
 >;
 
