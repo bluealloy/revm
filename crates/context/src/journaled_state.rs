@@ -62,6 +62,12 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
         self.warm_preloaded_addresses.insert(address);
     }
 
+    /// Returns call depth.
+    #[inline]
+    fn depth(&self) -> usize {
+        self.depth
+    }
+
     fn warm_account_and_storage(
         &mut self,
         address: Address,
@@ -126,10 +132,12 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
 
     fn clear(&mut self) {
         // Clears the JournaledState. Preserving only the spec.
-        //let spec = self.spec;
-        // TODO WIRING Clear it up
-        //let db = self.database;
-        //*self = Self::new(spec, db, HashSet::default());
+        self.state.clear();
+        self.transient_storage.clear();
+        self.logs.clear();
+        self.journal = vec![vec![]];
+        self.depth = 0;
+        self.warm_preloaded_addresses.clear();
     }
 
     fn create_account_checkpoint(
@@ -232,12 +240,6 @@ impl<DB: Database> JournaledState<DB> {
         self.state
             .get(&address)
             .expect("Account expected to be loaded") // Always assume that acc is already loaded
-    }
-
-    /// Returns call depth.
-    #[inline]
-    pub fn depth(&self) -> u64 {
-        self.depth as u64
     }
 
     /// Set code and its hash to the account.

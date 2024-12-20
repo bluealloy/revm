@@ -3,11 +3,13 @@ use derive_where::derive_where;
 use revm::{
     bytecode::opcode::OpCode,
     context::Cfg,
-    context_interface::{CfgGetter, JournalStateGetter, Transaction, TransactionGetter},
+    context_interface::{
+        CfgGetter, JournalStateGetter, JournaledState, Transaction, TransactionGetter,
+    },
     interpreter::{
         interpreter_types::{Jumps, LoopControl, MemoryTrait, StackTrait},
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
-        InterpreterResult, InterpreterTypes, Stack,
+        CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
+        InterpreterTypes, Stack,
     },
     primitives::{hex, HashMap, B256, U256},
 };
@@ -19,14 +21,9 @@ use std::io::Write;
 pub struct TracerEip3155<CTX, INTR> {
     #[derive_where(skip)]
     output: Box<dyn Write>,
-    gas_inspector: GasInspector<CTX, INTR>,
-
+    gas_inspector: GasInspector,
     /// Print summary of the execution.
     print_summary: bool,
-
-    /// depth
-    depth: usize,
-
     stack: Vec<U256>,
     pc: usize,
     opcode: u8,
@@ -36,6 +33,7 @@ pub struct TracerEip3155<CTX, INTR> {
     skip: bool,
     include_memory: bool,
     memory: Option<String>,
+    _phantom: std::marker::PhantomData<(CTX, INTR)>,
 }
 
 // # Output
@@ -144,7 +142,6 @@ where
             gas_inspector: GasInspector::new(),
             print_summary: true,
             include_memory: false,
-            depth: 0,
             stack: Default::default(),
             memory: Default::default(),
             pc: 0,
@@ -153,6 +150,7 @@ where
             refunded: 0,
             mem_size: 0,
             skip: false,
+            _phantom: Default::default(),
         }
     }
 
@@ -209,12 +207,12 @@ where
     type Context = CTX;
     type InterpreterTypes = INTR;
 
-    fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
-        self.gas_inspector.initialize_interp(interp, context);
+    fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {
+        self.gas_inspector.initialize_interp(interp.control.gas());
     }
 
-    fn step(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
-        self.gas_inspector.step(interp, context);
+    fn step(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {
+        self.gas_inspector.step(interp.control.gas());
         self.stack = interp.stack.clone_from();
         self.memory = if self.include_memory {
             Some(hex::encode_prefixed(
@@ -231,7 +229,7 @@ where
     }
 
     fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
-        self.gas_inspector.step_end(interp, context);
+        self.gas_inspector.step_end(interp.control.gas());
         if self.skip {
             self.skip = false;
             return;
@@ -243,7 +241,7 @@ where
             gas: hex_number(self.gas),
             gas_cost: hex_number(self.gas_inspector.last_gas_cost()),
             stack: self.stack.iter().map(hex_number_u256).collect(),
-            depth: self.depth as u64,
+            depth: context.journal().depth() as u64,
             return_data: "0x".to_string(),
             refund: hex_number(self.refunded as u64),
             mem_size: self.mem_size.to_string(),
@@ -261,55 +259,25 @@ where
         let _ = self.write_value(&value);
     }
 
-    fn call(&mut self, _: &mut Self::Context, _: &mut CallInputs) -> Option<CallOutcome> {
-        self.depth += 1;
-        None
-    }
+    fn call_end(&mut self, context: &mut CTX, _: &CallInputs, outcome: &mut CallOutcome) {
+        self.gas_inspector.call_end(outcome);
 
-    fn create(&mut self, _: &mut Self::Context, _: &mut CreateInputs) -> Option<CreateOutcome> {
-        self.depth += 1;
-        None
-    }
-
-    fn eofcreate(
-        &mut self,
-        _: &mut Self::Context,
-        _: &mut EOFCreateInputs,
-    ) -> Option<CreateOutcome> {
-        self.depth += 1;
-        None
-    }
-
-    fn call_end(&mut self, context: &mut CTX, inputs: &CallInputs, outcome: &mut CallOutcome) {
-        self.gas_inspector.call_end(context, inputs, outcome);
-        self.depth -= 1;
-
-        if self.depth == 0 {
+        if context.journal().depth() == 0 {
             self.print_summary(&outcome.result, context);
             // clear the state if we are at the top level
             self.clear();
         }
     }
 
-    fn create_end(
-        &mut self,
-        context: &mut CTX,
-        inputs: &CreateInputs,
-        outcome: &mut CreateOutcome,
-    ) {
-        self.gas_inspector.create_end(context, inputs, outcome);
-        self.depth -= 1;
+    fn create_end(&mut self, context: &mut CTX, _: &CreateInputs, outcome: &mut CreateOutcome) {
+        self.gas_inspector.create_end(outcome);
 
-        if self.depth == 0 {
+        if context.journal().depth() == 0 {
             self.print_summary(&outcome.result, context);
 
             // clear the state if we are at the top level
             self.clear();
         }
-    }
-
-    fn eofcreate_end(&mut self, _: &mut Self::Context, _: &EOFCreateInputs, _: &mut CreateOutcome) {
-        self.depth -= 1;
     }
 }
 

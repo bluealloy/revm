@@ -1,6 +1,9 @@
 use crate::interpreter::ReturnData;
 use primitives::Bytes;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Debug, Default)]
 pub struct ReturnDataImpl(Bytes);
 

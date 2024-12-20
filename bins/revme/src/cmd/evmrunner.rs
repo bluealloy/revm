@@ -5,7 +5,7 @@ use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
     handler::EthHandler,
     primitives::{address, hex, Address, TxKind},
-    Context, Database, MainEvm,
+    Context, Database, EvmExec, MainEvm,
 };
 use std::io::Error as IoError;
 use std::path::PathBuf;
@@ -108,7 +108,7 @@ impl Cmd {
                 inspector_handler(),
             );
 
-            evm.transact().map_err(|_| Errors::EVMError)?
+            evm.exec().map_err(|_| Errors::EVMError)?
         } else {
             let out = evm.transact().map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);

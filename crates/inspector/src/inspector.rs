@@ -3,13 +3,13 @@ use core::mem::MaybeUninit;
 use derive_where::derive_where;
 use revm::{
     bytecode::opcode::OpCode,
-    context::{block::BlockEnv, tx::TxEnv, Cfg},
+    context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv, Cfg},
     context_interface::{
         block::BlockSetter,
         journaled_state::{AccountLoad, Eip7702CodeLoad},
         result::EVMError,
         transaction::TransactionSetter,
-        Block, BlockGetter, CfgEnv, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
+        Block, BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
         JournalStateGetterDBError, Transaction, TransactionGetter,
     },
     database_interface::{Database, EmptyDB},

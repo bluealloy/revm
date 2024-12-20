@@ -1,6 +1,9 @@
 use crate::interpreter_types::LoopControl as LoopControlTrait;
 use crate::{Gas, InstructionResult, InterpreterAction};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LoopControl {
     /// The execution control flag. If this is not set to `Continue`, the interpreter will stop
     /// execution.

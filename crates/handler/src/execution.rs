@@ -66,7 +66,7 @@ where
             })),
             TxKind::Create => {
                 // if first byte of data is magic 0xEF00, then it is EOFCreate.
-                if spec.is_enabled_in(SpecId::PRAGUE_EOF) && input.starts_with(&EOF_MAGIC_BYTES) {
+                if spec.is_enabled_in(SpecId::OSAKA) && input.starts_with(&EOF_MAGIC_BYTES) {
                     FrameInput::EOFCreate(Box::new(EOFCreateInputs::new(
                         tx.common_fields().caller(),
                         tx.common_fields().value(),

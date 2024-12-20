@@ -7,10 +7,19 @@ use primitives::Bytes;
 
 use super::{EofCodeInfo, EofContainer, EofData, Immediates, Jumps, LegacyBytecode};
 
+#[cfg(feature = "serde")]
+mod serde;
+
 #[derive(Debug)]
 pub struct ExtBytecode {
-    pub base: Bytecode,
-    pub instruction_pointer: *const u8,
+    base: Bytecode,
+    instruction_pointer: *const u8,
+}
+
+impl AsRef<Bytecode> for ExtBytecode {
+    fn as_ref(&self) -> &Bytecode {
+        &self.base
+    }
 }
 
 impl ExtBytecode {

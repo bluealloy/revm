@@ -20,7 +20,7 @@ use precompile::PrecompileErrors;
 use primitives::{keccak256, Address, Bytes, B256, U256};
 use specification::{
     constants::CALL_STACK_LIMIT,
-    hardfork::SpecId::{self, HOMESTEAD, LONDON, PRAGUE_EOF, SPURIOUS_DRAGON},
+    hardfork::SpecId::{self, HOMESTEAD, LONDON, OSAKA, SPURIOUS_DRAGON},
 };
 use state::Bytecode;
 use std::borrow::ToOwned;
@@ -233,7 +233,7 @@ where
         }
 
         // Prague EOF
-        if spec.is_enabled_in(PRAGUE_EOF) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
+        if spec.is_enabled_in(OSAKA) && inputs.init_code.starts_with(&EOF_MAGIC_BYTES) {
             return return_error(InstructionResult::CreateInitCodeStartingEF00);
         }
 
@@ -266,12 +266,6 @@ where
                 inputs.caller.create2(salt.to_be_bytes(), _init_code_hash)
             }
         };
-
-        // created address is not allowed to be a precompile.
-        // TODO add precompile check
-        if precompile.contains(&created_address) {
-            return return_error(InstructionResult::CreateCollision);
-        }
 
         // warm load account.
         context.journal().load_account(created_address)?;
@@ -391,11 +385,6 @@ where
         let old_nonce = nonce - 1;
 
         let created_address = created_address.unwrap_or_else(|| inputs.caller.create(old_nonce));
-
-        // created address is not allowed to be a precompile.
-        if precompile.contains(&created_address) {
-            return return_error(InstructionResult::CreateCollision);
-        }
 
         // Load account so it needs to be marked as warm for access list.
         context.journal().load_account(created_address)?;

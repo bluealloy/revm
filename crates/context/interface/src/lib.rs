@@ -13,7 +13,7 @@ pub mod result;
 pub mod transaction;
 
 pub use block::{Block, BlockGetter};
-pub use cfg::{Cfg, CfgEnv, CfgGetter, CreateScheme, TransactTo};
+pub use cfg::{Cfg, CfgGetter, CreateScheme, TransactTo};
 pub use database_interface::{DBErrorMarker, Database, DatabaseGetter};
 pub use errors::ErrorGetter;
 pub use journaled_state::{JournalStateGetter, JournalStateGetterDBError, JournaledState};

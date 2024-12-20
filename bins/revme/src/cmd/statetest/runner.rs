@@ -7,11 +7,11 @@ use indicatif::{ProgressBar, ProgressDrawTarget};
 use inspector::{inspector_handler, inspectors::TracerEip3155, InspectorContext, InspectorMainEvm};
 use revm::{
     bytecode::Bytecode,
-    context::{block::BlockEnv, tx::TxEnv},
+    context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
     context_interface::{
         block::calc_excess_blob_gas,
         result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction},
-        Cfg, CfgEnv,
+        Cfg,
     },
     database_interface::EmptyDB,
     handler::EthHandler,
@@ -25,7 +25,7 @@ use statetest_types::{SpecName, Test, TestSuite};
 use std::{
     convert::Infallible,
     fmt::Debug,
-    io::stdout,
+    io::stderr,
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
@@ -268,7 +268,8 @@ pub fn execute_test_suite(
         let mut cache_state = database::CacheState::new(false);
         for (address, info) in unit.pre {
             let code_hash = keccak256(&info.code);
-            let bytecode = Bytecode::new_raw(info.code);
+            let bytecode = Bytecode::new_raw_checked(info.code.clone())
+                .unwrap_or(Bytecode::new_legacy(info.code));
             let acc_info = revm::state::AccountInfo {
                 balance: info.balance,
                 code_hash,
@@ -337,7 +338,7 @@ pub fn execute_test_suite(
 
             // Enable EOF in Prague tests.
             cfg.spec = if spec_name == SpecName::Prague {
-                SpecId::PRAGUE_EOF
+                SpecId::OSAKA
             } else {
                 spec_name.to_spec_id()
             };
@@ -421,7 +422,7 @@ pub fn execute_test_suite(
                                 .with_tx(&tx)
                                 .with_cfg(&cfg)
                                 .with_db(&mut state),
-                            TracerEip3155::new(Box::new(stdout())),
+                            TracerEip3155::new(Box::new(stderr())),
                         ),
                         inspector_handler(),
                     );
@@ -497,7 +498,7 @@ pub fn execute_test_suite(
                             .with_block(&block)
                             .with_tx(&tx)
                             .with_cfg(&cfg),
-                        TracerEip3155::new(Box::new(stdout())),
+                        TracerEip3155::new(Box::new(stderr())),
                     ),
                     inspector_handler(),
                 );

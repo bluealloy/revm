@@ -29,6 +29,7 @@ use std::rc::Rc;
 use subroutine_stack::SubRoutineImpl;
 
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes> {
     pub bytecode: WIRE::Bytecode,
     pub stack: WIRE::Stack,
@@ -284,4 +285,40 @@ mod tests {
     //         >();
     //     let _ = interp.run(EMPTY_SHARED_MEMORY, table, host);
     // }
+
+    use super::*;
+    use bytecode::Bytecode;
+    use primitives::{Address, Bytes, U256};
+    use specification::hardfork::SpecId;
+    use std::{cell::RefCell, rc::Rc};
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_interpreter_serde() {
+        let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00, 0x60, 0x00, 0x01][..]));
+        let interpreter = Interpreter::<EthInterpreter>::new(
+            Rc::new(RefCell::new(SharedMemory::new())),
+            bytecode,
+            InputsImpl {
+                target_address: Address::ZERO,
+                caller_address: Address::ZERO,
+                input: Bytes::default(),
+                call_value: U256::ZERO,
+            },
+            false,
+            false,
+            SpecId::LATEST,
+            u64::MAX,
+        );
+
+        let serialized = bincode::serialize(&interpreter).unwrap();
+
+        let deserialized: Interpreter<EthInterpreter> = bincode::deserialize(&serialized).unwrap();
+
+        assert_eq!(
+            interpreter.bytecode.pc(),
+            deserialized.bytecode.pc(),
+            "Program counter should be preserved"
+        );
+    }
 }

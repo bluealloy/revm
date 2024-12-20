@@ -8,7 +8,7 @@ use std::vec::Vec;
 const EOF_NON_RETURNING_FUNCTION: u8 = 0x80;
 
 /// Types section that contains stack information for matching code section.
-#[derive(Debug, Clone, Default, Hash, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, Default, Hash, PartialEq, Eq, Copy, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TypesSection {
     /// inputs - 1 byte - `0x00-0x7F`
