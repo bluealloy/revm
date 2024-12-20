@@ -38,7 +38,7 @@ pub use validation::{
 // Imports
 
 use context_interface::{
-    journaled_state::JournaledState,
+    journaled_state::Journal,
     result::{HaltReason, InvalidHeader, InvalidTransaction},
 };
 use context_interface::{
@@ -105,7 +105,7 @@ where
         + JournalStateGetter
         + CfgGetter
         + ErrorGetter<Error = ERROR>
-        + JournalStateGetter<Journal: JournaledState<FinalOutput = (EvmState, Vec<Log>)>>
+        + JournalStateGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
         + Host,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>

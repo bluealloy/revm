@@ -1,5 +1,5 @@
 use context_interface::{
-    journaled_state::JournaledState,
+    journaled_state::Journal,
     result::{InvalidHeader, InvalidTransaction},
     transaction::{
         eip7702::Authorization, Eip1559CommonTxFields, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx,

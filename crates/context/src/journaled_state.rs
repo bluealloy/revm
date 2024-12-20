@@ -1,7 +1,6 @@
 use bytecode::Bytecode;
 use context_interface::journaled_state::{
-    AccountLoad, Eip7702CodeLoad, JournalCheckpoint, JournaledState as JournaledStateTrait,
-    TransferError,
+    AccountLoad, Eip7702CodeLoad, Journal, JournalCheckpoint, TransferError,
 };
 use database_interface::Database;
 use interpreter::{SStoreResult, SelfDestructResult, StateLoad};
@@ -53,10 +52,59 @@ pub struct JournaledState<DB> {
     pub warm_preloaded_addresses: HashSet<Address>,
 }
 
-impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
+impl<DB: Database> Journal for JournaledState<DB> {
     type Database = DB;
     // TODO make a struck here.
     type FinalOutput = (EvmState, Vec<Log>);
+
+    fn new(database: DB) -> JournaledState<DB> {
+        Self::new(SpecId::LATEST, database)
+    }
+
+    fn db(&self) -> &Self::Database {
+        &self.database
+    }
+
+    fn db_mut(&mut self) -> &mut Self::Database {
+        &mut self.database
+    }
+
+    fn sload(
+        &mut self,
+        address: Address,
+        key: U256,
+    ) -> Result<StateLoad<U256>, <Self::Database as Database>::Error> {
+        self.sload(address, key)
+    }
+
+    fn sstore(
+        &mut self,
+        address: Address,
+        key: U256,
+        value: U256,
+    ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error> {
+        self.sstore(address, key, value)
+    }
+
+    fn tload(&mut self, address: Address, key: U256) -> U256 {
+        self.tload(address, key)
+    }
+
+    fn tstore(&mut self, address: Address, key: U256, value: U256) {
+        self.tstore(address, key, value)
+    }
+
+    fn log(&mut self, log: Log) {
+        self.log(log)
+    }
+
+    fn selfdestruct(
+        &mut self,
+        address: Address,
+        target: Address,
+    ) -> Result<StateLoad<SelfDestructResult>, DB::Error> {
+        self.selfdestruct(address, target)
+    }
 
     fn warm_account(&mut self, address: Address) {
         self.warm_preloaded_addresses.insert(address);

@@ -4,7 +4,7 @@
 
 use bytecode::Bytecode;
 use context_interface::{
-    journaled_state::JournaledState,
+    journaled_state::Journal,
     result::InvalidTransaction,
     transaction::{
         eip7702::Authorization, AccessListTrait, Eip4844Tx, Eip7702Tx, Transaction, TransactionType,

@@ -1,5 +1,5 @@
 use context_interface::{
-    journaled_state::JournaledState,
+    journaled_state::Journal,
     result::{ExecutionResult, HaltReasonTrait, ResultAndState},
     Block, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
     Transaction, TransactionGetter,
@@ -170,7 +170,7 @@ pub trait EthPostExecutionContext<ERROR>:
     TransactionGetter
     + ErrorGetter<Error = ERROR>
     + BlockGetter
-    + JournalStateGetter<Journal: JournaledState<FinalOutput = (EvmState, Vec<Log>)>>
+    + JournalStateGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
     + CfgGetter
 {
 }
@@ -180,7 +180,7 @@ impl<
         CTX: TransactionGetter
             + ErrorGetter<Error = ERROR>
             + BlockGetter
-            + JournalStateGetter<Journal: JournaledState<FinalOutput = (EvmState, Vec<Log>)>>
+            + JournalStateGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
             + CfgGetter,
     > EthPostExecutionContext<ERROR> for CTX
 {

@@ -1,6 +1,11 @@
+mod dummy;
+
+pub use crate::journaled_state::StateLoad;
+pub use dummy::DummyHost;
+
 use crate::{
-    journaled_state::{AccountLoad, Eip7702CodeLoad, StateLoad},
-    Block, CfgEnv, Transaction,
+    journaled_state::{AccountLoad, Eip7702CodeLoad},
+    Block, Cfg, Transaction,
 };
 use primitives::{Address, Bytes, Log, B256, U256};
 
@@ -10,6 +15,7 @@ pub trait Host {
     /// Chain specification.
     type BLOCK: Block;
     type TX: Transaction;
+    type CFG: Cfg;
 
     /// Returns a reference to the environment.
     fn tx(&self) -> &Self::TX;
@@ -18,7 +24,7 @@ pub trait Host {
     fn block(&self) -> &Self::BLOCK;
 
     /// TODO make it generic in future
-    fn cfg(&self) -> &CfgEnv;
+    fn cfg(&self) -> &Self::CFG;
 
     /// Load an account code.
     fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad>;
@@ -125,3 +131,20 @@ pub struct SelfDestructResult {
     pub target_exists: bool,
     pub previously_destroyed: bool,
 }
+
+// TODO TEST
+// #[cfg(test)]
+// mod tests {
+//     use database_interface::EmptyDB;
+//     use context_interface::EthereumWiring;
+
+//     use super::*;
+
+//     fn assert_host<H: Host + ?Sized>() {}
+
+//     #[test]
+//     fn object_safety() {
+//         assert_host::<DummyHost<EthereumWiring<EmptyDB, ()>>>();
+//         assert_host::<dyn Host<EvmWiringT = EthereumWiring<EmptyDB, ()>>>();
+//     }
+// }

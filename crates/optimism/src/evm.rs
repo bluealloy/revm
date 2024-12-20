@@ -9,7 +9,7 @@ use revm::{
     context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context},
     context_interface::result::{EVMError, InvalidTransaction},
     database_interface::Database,
-    Evm,
+    Evm, JournaledState,
 };
 
 /// Optimism Error.
@@ -22,7 +22,7 @@ pub type OpContext<DB> = Context<BlockEnv, OpTransaction<TxEnv>, CfgEnv<OpSpec>,
 pub type OpEvm<DB> = Evm<OpError<DB>, OpContext<DB>, OpHandler<OpContext<DB>, OpError<DB>>>;
 
 pub type InspCtxType<INSP, DB> =
-    InspectorContext<INSP, BlockEnv, TxEnv, CfgEnv<OpSpec>, DB, L1BlockInfo>;
+    InspectorContext<INSP, BlockEnv, TxEnv, CfgEnv<OpSpec>, DB, JournaledState<DB>, L1BlockInfo>;
 
 pub type InspectorOpEvm<DB, INSP> = Evm<
     OpError<DB>,

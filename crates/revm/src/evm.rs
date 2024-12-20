@@ -1,8 +1,8 @@
 use crate::{exec::EvmCommit, EvmExec};
-use context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context};
+use context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context, JournaledState};
 use context_interface::{
     block::BlockSetter,
-    journaled_state::JournaledState,
+    journaled_state::Journal,
     result::{
         EVMError, ExecutionResult, HaltReasonTrait, InvalidHeader, InvalidTransaction,
         ResultAndState,
@@ -50,7 +50,7 @@ where
         + DatabaseGetter<Database: Database + DatabaseCommit>
         + ErrorGetter<Error = ERROR>
         + JournalStateGetter<
-            Journal: JournaledState<
+            Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
             >,
@@ -97,7 +97,7 @@ where
         + DatabaseGetter
         + ErrorGetter<Error = ERROR>
         + JournalStateGetter<
-            Journal: JournaledState<
+            Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
             >,
@@ -139,8 +139,8 @@ where
 pub type Error<DB> = EVMError<<DB as Database>::Error, InvalidTransaction>;
 
 /// Mainnet Contexts.
-pub type EthContext<DB, BLOCK = BlockEnv, TX = TxEnv, CFG = CfgEnv> =
-    Context<BLOCK, TX, CFG, DB, ()>;
+pub type EthContext<DB, BLOCK = BlockEnv, TX = TxEnv, CFG = CfgEnv, JOURNAL = JournaledState<DB>> =
+    Context<BLOCK, TX, CFG, DB, JOURNAL, ()>;
 
 /// Mainnet EVM type.
 pub type MainEvm<DB, BLOCK, TX, CFG> = Evm<Error<DB>, EthContext<DB, BLOCK, TX, CFG>>;
@@ -155,7 +155,7 @@ where
         + DatabaseGetter
         + ErrorGetter<Error = ERROR>
         + JournalStateGetter<
-            Journal: JournaledState<
+            Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
             >,
