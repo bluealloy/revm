@@ -16,8 +16,7 @@ pub enum BenchName {
 impl BenchName {
     pub const ALL: &[BenchName] = &[
         BenchName::Analysis,
-        // TODO: Fails with OutOfGas(InvalidOperand)
-        // BenchName::Burntpix,
+        BenchName::Burntpix,
         BenchName::Snailtracer,
         BenchName::Transfer,
     ];
