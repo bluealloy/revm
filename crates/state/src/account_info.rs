@@ -12,7 +12,7 @@ pub struct AccountInfo {
     pub nonce: u64,
     /// code hash
     pub code_hash: B256,
-    /// [`Bytecode`] data assocciated with this account
+    /// [`Bytecode`] data associated with this account
     ///
     /// If [None], `code_hash` will be used to fetch it if code needs to be loaded from
     /// inside `revm`.

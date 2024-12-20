@@ -24,7 +24,7 @@ pub trait Host {
     fn block(&self) -> &Self::BLOCK;
 
     // TODO : Make it generic in future
-    fn cfg(&self) -> &CfgEnv;
+    fn cfg(&self) -> &Self::CFG;
 
     /// Loads an account code.
     fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad>;

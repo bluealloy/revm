@@ -298,7 +298,7 @@ impl<
 
     fn code(&mut self, address: Address) -> Option<Eip7702CodeLoad<Bytes>> {
         // TODO : Remove duplicated function name.
-        <Context<_, _, _, _, _> as Host>::code(&mut self.inner, address)
+        <Context<_, _, _, _, _, _> as Host>::code(&mut self.inner, address)
     }
 
     fn code_hash(&mut self, address: Address) -> Option<Eip7702CodeLoad<B256>> {

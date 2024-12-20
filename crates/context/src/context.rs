@@ -93,7 +93,7 @@ where
         &mut self,
         address: Address,
     ) -> Result<Eip7702CodeLoad<Bytes>, <DB as Database>::Error> {
-        let a = self.journaled_state.load_code(address)?;
+        let a = self.journaled_state.load_account_code(address)?;
         // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = a.info.code.as_ref().unwrap();
         if code.is_eof() {
