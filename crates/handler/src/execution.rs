@@ -1,8 +1,8 @@
 use super::{frame_data::FrameResult, EthFrame, EthPrecompileProvider};
 use bytecode::EOF_MAGIC_BYTES;
 use context_interface::{
-    result::InvalidTransaction, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalGetter,
-    JournalDBError, Transaction, TransactionGetter,
+    result::InvalidTransaction, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalDBError,
+    JournalGetter, Transaction, TransactionGetter,
 };
 use handler_interface::{util::FrameOrFrameResult, ExecutionHandler, Frame as FrameTrait};
 use interpreter::{
@@ -131,11 +131,7 @@ pub trait EthExecutionContext<ERROR>:
 
 impl<
         ERROR,
-        T: TransactionGetter
-            + ErrorGetter<Error = ERROR>
-            + BlockGetter
-            + JournalGetter
-            + CfgGetter,
+        T: TransactionGetter + ErrorGetter<Error = ERROR> + BlockGetter + JournalGetter + CfgGetter,
     > EthExecutionContext<ERROR> for T
 {
 }
@@ -145,10 +141,8 @@ pub trait EthExecutionError<CTX: JournalGetter>:
 {
 }
 
-impl<
-        CTX: JournalGetter,
-        T: From<InvalidTransaction> + From<JournalDBError<CTX>>,
-    > EthExecutionError<CTX> for T
+impl<CTX: JournalGetter, T: From<InvalidTransaction> + From<JournalDBError<CTX>>>
+    EthExecutionError<CTX> for T
 {
 }
 

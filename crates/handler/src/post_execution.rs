@@ -1,8 +1,8 @@
 use context_interface::{
     journaled_state::Journal,
     result::{ExecutionResult, HaltReasonTrait, ResultAndState},
-    Block, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalGetter, JournalDBError,
-    Transaction, TransactionGetter,
+    Block, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalDBError, JournalGetter, Transaction,
+    TransactionGetter,
 };
 use handler_interface::PostExecutionHandler;
 use interpreter::SuccessOrHalt;
@@ -186,12 +186,6 @@ impl<
 {
 }
 
-pub trait EthPostExecutionError<CTX: JournalGetter>:
-    From<JournalDBError<CTX>>
-{
-}
+pub trait EthPostExecutionError<CTX: JournalGetter>: From<JournalDBError<CTX>> {}
 
-impl<CTX: JournalGetter, ERROR: From<JournalDBError<CTX>>>
-    EthPostExecutionError<CTX> for ERROR
-{
-}
+impl<CTX: JournalGetter, ERROR: From<JournalDBError<CTX>>> EthPostExecutionError<CTX> for ERROR {}

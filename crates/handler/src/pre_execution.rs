@@ -9,8 +9,7 @@ use context_interface::{
     transaction::{
         eip7702::Authorization, AccessListTrait, Eip4844Tx, Eip7702Tx, Transaction, TransactionType,
     },
-    Block, BlockGetter, Cfg, CfgGetter, JournalGetter, JournalDBError,
-    TransactionGetter,
+    Block, BlockGetter, Cfg, CfgGetter, JournalDBError, JournalGetter, TransactionGetter,
 };
 use handler_interface::PreExecutionHandler;
 use primitives::{Address, BLOCKHASH_STORAGE_ADDRESS, U256};
@@ -217,9 +216,7 @@ pub trait EthPreExecutionError<CTX: JournalGetter>:
 {
 }
 
-impl<
-        CTX: JournalGetter,
-        T: From<InvalidTransaction> + From<JournalDBError<CTX>>,
-    > EthPreExecutionError<CTX> for T
+impl<CTX: JournalGetter, T: From<InvalidTransaction> + From<JournalDBError<CTX>>>
+    EthPreExecutionError<CTX> for T
 {
 }

@@ -2,8 +2,8 @@ use super::frame_data::*;
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context_interface::{
     journaled_state::{Journal, JournalCheckpoint},
-    BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalGetter, JournalDBError,
-    Transaction, TransactionGetter,
+    BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalDBError, JournalGetter, Transaction,
+    TransactionGetter,
 };
 use core::{cell::RefCell, cmp::min};
 use handler_interface::{Frame, FrameOrResultGen, PrecompileProvider};
@@ -813,7 +813,7 @@ pub trait EthFrameError<CTX: JournalGetter>:
 {
 }
 
-impl<CTX: JournalGetter, T: From<JournalDBError<CTX>> + From<PrecompileErrors>>
-    EthFrameError<CTX> for T
+impl<CTX: JournalGetter, T: From<JournalDBError<CTX>> + From<PrecompileErrors>> EthFrameError<CTX>
+    for T
 {
 }

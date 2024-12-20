@@ -8,8 +8,8 @@ use context_interface::{
         ResultAndState,
     },
     transaction::TransactionSetter,
-    BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalGetter,
-    JournalDBError, Transaction, TransactionGetter,
+    BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalDBError, JournalGetter,
+    Transaction, TransactionGetter,
 };
 use database_interface::{Database, DatabaseCommit};
 use handler::{EthHandler, FrameResult};

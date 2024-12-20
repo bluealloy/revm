@@ -5,8 +5,7 @@ use context_interface::{
         eip7702::Authorization, Eip1559CommonTxFields, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx,
         Transaction, TransactionType,
     },
-    Block, BlockGetter, Cfg, CfgGetter, JournalGetter, JournalDBError,
-    TransactionGetter,
+    Block, BlockGetter, Cfg, CfgGetter, JournalDBError, JournalGetter, TransactionGetter,
 };
 use core::cmp::{self, Ordering};
 use handler_interface::ValidationHandler;
@@ -389,10 +388,7 @@ pub trait EthValidationContext:
 {
 }
 
-impl<T: TransactionGetter + BlockGetter + JournalGetter + CfgGetter> EthValidationContext
-    for T
-{
-}
+impl<T: TransactionGetter + BlockGetter + JournalGetter + CfgGetter> EthValidationContext for T {}
 
 /// Helper trait that summarizes all possible requirements by EthValidation.
 pub trait EthValidationError<CTX: JournalGetter>:

@@ -42,8 +42,7 @@ use context_interface::{
     result::{HaltReason, InvalidHeader, InvalidTransaction},
 };
 use context_interface::{
-    BlockGetter, CfgGetter, ErrorGetter, JournalGetter, JournalDBError,
-    TransactionGetter,
+    BlockGetter, CfgGetter, ErrorGetter, JournalDBError, JournalGetter, TransactionGetter,
 };
 use handler_interface::{
     ExecutionHandler, Handler, PostExecutionHandler, PreExecutionHandler, ValidationHandler,
