@@ -13,11 +13,29 @@ pub enum BenchName {
     Transfer,
 }
 
+impl BenchName {
+    pub const ALL: &[BenchName] = &[
+        BenchName::Analysis,
+        BenchName::Burntpix,
+        BenchName::Snailtracer,
+        BenchName::Transfer,
+    ];
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            BenchName::Analysis => "analysis",
+            BenchName::Burntpix => "burntpix",
+            BenchName::Snailtracer => "snailtracer",
+            BenchName::Transfer => "transfer",
+        }
+    }
+}
+
 /// `bytecode` subcommand
 #[derive(Parser, Debug)]
 pub struct Cmd {
     #[arg(value_enum)]
-    name: BenchName,
+    pub name: BenchName,
 }
 
 impl Cmd {

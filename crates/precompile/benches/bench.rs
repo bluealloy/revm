@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use primitives::{hex, keccak256, U256};
 use revm_precompile::{
     bn128::{
@@ -111,17 +111,11 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
     println!("gas used by kzg precompile: {:?}", output.gas_used);
 
     group.bench_function(group_name("ecrecover precompile"), |b| {
-        b.iter(|| {
-            ec_recover_run(&message_and_signature, u64::MAX).unwrap();
-            black_box(())
-        })
+        b.iter(|| ec_recover_run(&message_and_signature, u64::MAX).unwrap())
     });
 
     group.bench_function(group_name("bn128 add precompile"), |b| {
-        b.iter(|| {
-            run_add(&ecadd_input, ISTANBUL_ADD_GAS_COST, 150).unwrap();
-            black_box(())
-        })
+        b.iter(|| run_add(&ecadd_input, ISTANBUL_ADD_GAS_COST, 150).unwrap())
     });
 
     group.bench_function(group_name("ecpairing precompile"), |b| {
@@ -132,16 +126,12 @@ pub fn benchmark_crypto_precompiles(c: &mut Criterion) {
                 ISTANBUL_PAIR_BASE,
                 u64::MAX,
             )
-            .unwrap();
-            black_box(())
+            .unwrap()
         })
     });
 
     group.bench_function(group_name("kzg precompile"), |b| {
-        b.iter(|| {
-            run(&kzg_input, gas).unwrap();
-            black_box(())
-        })
+        b.iter(|| run(&kzg_input, gas).unwrap())
     });
 }
 
