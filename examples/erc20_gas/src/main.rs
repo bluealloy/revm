@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
     // Random empty account: From
     let account = address!("18B06aaF27d44B756FCF16Ca20C1f183EB49111f");
     // Random empty account: To
-    let account_to = address!("0x21a4B6F62E51e59274b6Be1705c7c68781B87C77");
+    let account_to = address!("21a4B6F62E51e59274b6Be1705c7c68781B87C77");
 
     let usdc = address!("a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48");
 
