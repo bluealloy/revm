@@ -1,5 +1,5 @@
-use crate::{Host, SStoreResult, SelfDestructResult};
-use context_interface::{Block, Cfg, Transaction};
+use super::{Host, SStoreResult, SelfDestructResult};
+use crate::{Block, Cfg, Transaction};
 use primitives::{hash_map::Entry, Address, Bytes, HashMap, Log, B256, KECCAK_EMPTY, U256};
 use std::vec::Vec;
 

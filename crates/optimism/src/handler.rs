@@ -15,7 +15,7 @@ use revm::{
     context_interface::{
         result::{ExecutionResult, FromStringError, InvalidTransaction, ResultAndState},
         transaction::CommonTxFields,
-        Block, Cfg, CfgGetter, DatabaseGetter, JournaledState, Transaction, TransactionGetter,
+        Block, Cfg, CfgGetter, DatabaseGetter, Journal, Transaction, TransactionGetter,
     },
     handler::{
         EthExecution, EthExecutionContext, EthExecutionError, EthFrame, EthFrameContext,

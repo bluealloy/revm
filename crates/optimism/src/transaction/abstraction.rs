@@ -4,7 +4,7 @@ use revm::{
     context::TxEnv,
     context_interface::{
         transaction::{CommonTxFields, Transaction, TransactionType},
-        TransactionGetter,
+        Journal, TransactionGetter,
     },
     primitives::Bytes,
     Context, Database,
@@ -24,8 +24,8 @@ pub trait OpTxGetter: TransactionGetter {
     fn op_tx(&self) -> &Self::OpTransaction;
 }
 
-impl<BLOCK, TX: Transaction, DB: Database, CFG, CHAIN> OpTxGetter
-    for Context<BLOCK, OpTransaction<TX>, CFG, DB, CHAIN>
+impl<BLOCK, TX: Transaction, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> OpTxGetter
+    for Context<BLOCK, OpTransaction<TX>, CFG, DB, JOURNAL, CHAIN>
 {
     type OpTransaction = OpTransaction<TX>;
 

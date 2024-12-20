@@ -1,13 +1,59 @@
 use core::ops::{Deref, DerefMut};
 use database_interface::{Database, DatabaseGetter};
-use primitives::{Address, B256, U256};
+use primitives::{Address, Log, B256, U256};
 use specification::hardfork::SpecId;
 use state::{Account, Bytecode};
 use std::boxed::Box;
 
-pub trait JournaledState {
+use crate::host::{SStoreResult, SelfDestructResult};
+
+pub trait Journal {
     type Database: Database;
     type FinalOutput;
+
+    /// Creates new Journaled state.
+    ///
+    /// Dont forget to set spec_id.
+    fn new(database: Self::Database) -> Self;
+
+    /// Returns the database.
+    fn db(&self) -> &Self::Database;
+
+    /// Returns the mutable database.
+    fn db_mut(&mut self) -> &mut Self::Database;
+
+    /// Returns the storage value from Journal state.
+    ///
+    /// Loads the storage from database if not found in Journal state.
+    fn sload(
+        &mut self,
+        address: Address,
+        key: U256,
+    ) -> Result<StateLoad<U256>, <Self::Database as Database>::Error>;
+
+    /// Stores the storage value in Journal state.
+    fn sstore(
+        &mut self,
+        address: Address,
+        key: U256,
+        value: U256,
+    ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error>;
+
+    /// Loads transient storage value.
+    fn tload(&mut self, address: Address, key: U256) -> U256;
+
+    /// Stores transient storage value.
+    fn tstore(&mut self, address: Address, key: U256, value: U256);
+
+    /// Logs the log in Journal state.
+    fn log(&mut self, log: Log);
+
+    /// Marks the account for selfdestruction and transfers all the balance to the target.
+    fn selfdestruct(
+        &mut self,
+        address: Address,
+        target: Address,
+    ) -> Result<StateLoad<SelfDestructResult>, <Self::Database as Database>::Error>;
 
     fn warm_account_and_storage(
         &mut self,
@@ -240,10 +286,10 @@ impl<T> Eip7702CodeLoad<T> {
 
 /// Helper that extracts database error from [`JournalStateGetter`].
 pub type JournalStateGetterDBError<CTX> =
-    <<<CTX as JournalStateGetter>::Journal as JournaledState>::Database as Database>::Error;
+    <<<CTX as JournalStateGetter>::Journal as Journal>::Database as Database>::Error;
 
 pub trait JournalStateGetter: DatabaseGetter {
-    type Journal: JournaledState<Database = <Self as DatabaseGetter>::Database>;
+    type Journal: Journal<Database = <Self as DatabaseGetter>::Database>;
 
     fn journal(&mut self) -> &mut Self::Journal;
 }

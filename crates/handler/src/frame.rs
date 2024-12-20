@@ -1,7 +1,7 @@
 use super::frame_data::*;
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context_interface::{
-    journaled_state::{JournalCheckpoint, JournaledState},
+    journaled_state::{Journal, JournalCheckpoint},
     BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
     Transaction, TransactionGetter,
 };
@@ -693,8 +693,8 @@ where
     }
 }
 
-pub fn return_create<Journal: JournaledState>(
-    journal: &mut Journal,
+pub fn return_create<JOURNAL: Journal>(
+    journal: &mut JOURNAL,
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
     address: Address,
@@ -749,8 +749,8 @@ pub fn return_create<Journal: JournaledState>(
     interpreter_result.result = InstructionResult::Return;
 }
 
-pub fn return_eofcreate<Journal: JournaledState>(
-    journal: &mut Journal,
+pub fn return_eofcreate<JOURNAL: Journal>(
+    journal: &mut JOURNAL,
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
     address: Address,

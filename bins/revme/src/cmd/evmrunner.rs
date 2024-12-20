@@ -108,6 +108,8 @@ impl Cmd {
                 inspector_handler(),
             );
 
+            evm.handler.execution.
+
             evm.exec().map_err(|_| Errors::EVMError)?
         } else {
             let out = evm.transact().map_err(|_| Errors::EVMError)?;

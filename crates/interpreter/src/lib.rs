@@ -18,7 +18,6 @@ use serde_json as _;
 use walkdir as _;
 
 pub mod gas;
-mod host;
 mod instruction_result;
 pub mod instructions;
 pub mod interpreter;
@@ -27,9 +26,11 @@ pub mod interpreter_types;
 pub mod table;
 
 // Reexport primary types.
-pub use context_interface::CreateScheme;
+pub use context_interface::{
+    host::{DummyHost, Host, SStoreResult, SelfDestructResult, StateLoad},
+    CreateScheme,
+};
 pub use gas::Gas;
-pub use host::{DummyHost, Host, SStoreResult, SelfDestructResult, StateLoad};
 pub use instruction_result::*;
 pub use interpreter::{
     num_words, InputsImpl, Interpreter, InterpreterResult, MemoryGetter, SharedMemory, Stack,

@@ -1,6 +1,7 @@
 use crate::{fast_lz::flz_compress_len, OpSpecId};
 use core::ops::Mul;
 use revm::{
+    context_interface::Journal,
     database_interface::Database,
     primitives::{address, Address, U256},
     specification::hardfork::SpecId,
@@ -265,8 +266,8 @@ pub trait L1BlockInfoGetter {
     fn l1_block_info_mut(&mut self) -> &mut L1BlockInfo;
 }
 
-impl<BLOCK, TX, SPEC, DB: Database> L1BlockInfoGetter
-    for Context<BLOCK, TX, SPEC, DB, L1BlockInfo>
+impl<BLOCK, TX, SPEC, DB: Database, JOURNAL: Journal<Database = DB>> L1BlockInfoGetter
+    for Context<BLOCK, TX, SPEC, DB, JOURNAL, L1BlockInfo>
 {
     fn l1_block_info(&self) -> &L1BlockInfo {
         &self.chain

@@ -4,7 +4,7 @@ use revm::{
     bytecode::opcode::OpCode,
     context::Cfg,
     context_interface::{
-        CfgGetter, JournalStateGetter, JournaledState, Transaction, TransactionGetter,
+        CfgGetter, JournalStateGetter, Journal, Transaction, TransactionGetter,
     },
     interpreter::{
         interpreter_types::{Jumps, LoopControl, MemoryTrait, StackTrait},
