@@ -5,7 +5,7 @@ use crate::{Gas, InstructionResult, InterpreterAction};
 use core::ops::{Deref, Range};
 use primitives::{Address, Bytes, B256, U256};
 
-/// Helper function to read immediates data from the bytecode.
+/// Helper function to read immediates data from the bytecode
 pub trait Immediates {
     fn read_i16(&self) -> i16;
     fn read_u16(&self) -> u16;
@@ -31,18 +31,18 @@ pub trait LegacyBytecode {
     fn bytecode_slice(&self) -> &[u8];
 }
 
-/// Trait for interpreter to be able to jump.
+/// Trait for interpreter to be able to jump
 pub trait Jumps {
-    /// Relative jumps does not require checking for overflow
+    /// Relative jumps does not require checking for overflow.
     fn relative_jump(&mut self, offset: isize);
     /// Absolute jumps require checking for overflow and if target is a jump destination
     /// from jump table.
     fn absolute_jump(&mut self, offset: usize);
     /// Check legacy jump destination from jump table.
     fn is_valid_legacy_jump(&mut self, offset: usize) -> bool;
-    /// Return current program counter.
+    /// Returns current program counter.
     fn pc(&self) -> usize;
-    /// Instruction opcode
+    /// Returns instruction opcode.
     fn opcode(&self) -> u8;
 }
 
@@ -53,21 +53,20 @@ pub trait MemoryTrait {
     fn size(&self) -> usize;
     fn copy(&mut self, destination: usize, source: usize, len: usize);
 
-    /// Memory slice with range.
+    /// Memory slice with range
     ///
     /// # Panics
-    ///
     /// Panics if range is out of scope of allocated memory.
     fn slice(&self, range: Range<usize>) -> impl Deref<Target = [u8]> + '_;
 
     /// Memory slice len
     ///
-    /// Uses [`MemoryTrait::slice`] internally.
+    /// Uses [`slice`][MemoryTrait::slice] internally.
     fn slice_len(&self, offset: usize, len: usize) -> impl Deref<Target = [u8]> + '_ {
         self.slice(offset..offset + len)
     }
 
-    /// Resizes memory to new size.
+    /// Resizes memory to new size
     ///
     /// # Note
     /// It checks memory limits.
@@ -96,7 +95,7 @@ pub trait SubRoutineStack {
     /// Pops previous subroutine, sets previous code index and returns program counter.
     fn pop(&mut self) -> Option<usize>;
 
-    // /// Return code info from EOF body.
+    // /// Returns code info from EOF body.
     // fn eof_code_info(&self, idx: usize) -> Option<&TypesSection>;
 }
 
@@ -111,7 +110,7 @@ pub trait StackTrait {
 
     /// Pushes values to the stack.
     ///
-    /// Return `true` if push was successful, `false` if stack overflow.
+    /// Returns `true` if push was successful, `false` if stack overflow.
     ///
     /// # Note
     /// Error is internally set in interpreter.
@@ -123,7 +122,7 @@ pub trait StackTrait {
         self.push(value.into())
     }
 
-    /// Pop value from the stack.
+    /// Pops value from the stack.
     #[must_use]
     fn popn<const N: usize>(&mut self) -> Option<[U256; N]>;
 
@@ -131,13 +130,13 @@ pub trait StackTrait {
     #[must_use]
     fn popn_top<const POPN: usize>(&mut self) -> Option<([U256; POPN], &mut U256)>;
 
-    /// Return top value from the stack.
+    /// Returns top value from the stack.
     #[must_use]
     fn top(&mut self) -> Option<&mut U256> {
         self.popn_top::<0>().map(|(_, top)| top)
     }
 
-    /// Pop one value from the stack.
+    /// Pops one value from the stack.
     #[must_use]
     fn pop(&mut self) -> Option<U256> {
         self.popn::<1>().map(|[value]| value)
@@ -148,11 +147,11 @@ pub trait StackTrait {
         self.pop().map(|value| Address::from(value.to_be_bytes()))
     }
 
-    /// Exchange two values on the stack.
+    /// Exchanges two values on the stack.
     ///
     /// Indexes are based from the top of the stack.
     ///
-    /// Return `true` if swap was successful, `false` if stack underflow.
+    /// Returns `true` if swap was successful, `false` if stack underflow.
     #[must_use]
     fn exchange(&mut self, n: usize, m: usize) -> bool;
 
@@ -160,7 +159,7 @@ pub trait StackTrait {
     ///
     /// Index is based from the top of the stack.
     ///
-    /// Return `true` if duplicate was successful, `false` if stack underflow.
+    /// Returns `true` if duplicate was successful, `false` if stack underflow.
     #[must_use]
     fn dup(&mut self, n: usize) -> bool;
 }

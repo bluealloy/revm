@@ -2,7 +2,7 @@ use specification::eip4844::{
     BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK,
 };
 
-/// Structure holding block blob excess gas and it calculates blob fee.
+/// Structure holding block blob excess gas and it calculates blob fee
 ///
 /// Incorporated as part of the Cancun upgrade via [EIP-4844].
 ///
@@ -10,9 +10,11 @@ use specification::eip4844::{
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlobExcessGasAndPrice {
-    /// The excess blob gas of the block.
+    /// The excess blob gas of the block
     pub excess_blob_gas: u64,
-    /// The calculated blob gas price based on the `excess_blob_gas`, See [calc_blob_gasprice]
+    /// The calculated blob gas price based on the `excess_blob_gas`
+    ///
+    /// See [calc_blob_gasprice]
     pub blob_gasprice: u128,
 }
 

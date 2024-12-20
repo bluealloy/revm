@@ -49,7 +49,7 @@ mod test {
     use serde_derive::{Deserialize, Serialize};
     use std::{fs, path::Path};
 
-    /// Test vector structure for BLS12-381 precompile tests.
+    /// Test vector structure for BLS12-381 precompile tests
     #[derive(Serialize, Deserialize, Debug)]
     #[serde(rename_all = "PascalCase")]
     struct TestVector {

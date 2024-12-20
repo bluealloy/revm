@@ -13,7 +13,7 @@ mod noop;
 
 pub use inspector::*;
 
-/// [Inspector] implementations.
+/// [Inspector][crate::Inspector] implementations.
 pub mod inspectors {
     #[cfg(all(feature = "std", feature = "serde-json"))]
     pub use super::eip3155::TracerEip3155;

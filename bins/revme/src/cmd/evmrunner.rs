@@ -28,33 +28,35 @@ pub enum Errors {
     BytecodeDecodeError(#[from] BytecodeDecodeError),
 }
 
-/// Evm runner command allows running arbitrary evm bytecode.
-/// Bytecode can be provided from cli or from file with --path option.
+/// Evm runner command allows running arbitrary evm bytecode
+///
+/// Bytecode can be provided from cli or from file with `--path` option.
 #[derive(Parser, Debug)]
 pub struct Cmd {
-    /// Hex-encoded EVM bytecode to be executed.
+    /// Hex-encoded EVM bytecode to be executed
     #[arg(required_unless_present = "path")]
     bytecode: Option<String>,
-    /// Path to a file containing the hex-encoded EVM bytecode to be executed.
+    /// Path to a file containing the hex-encoded EVM bytecode to be executed
+    ///
     /// Overrides the positional `bytecode` argument.
     #[arg(long)]
     path: Option<PathBuf>,
-    /// Run in benchmarking mode.
+    /// Whether to run in benchmarking mode
     #[arg(long)]
     bench: bool,
-    /// Hex-encoded input/calldata bytes.
+    /// Hex-encoded input/calldata bytes
     #[arg(long, default_value = "")]
     input: String,
-    /// Print the state.
+    /// Whether to print the state
     #[arg(long)]
     state: bool,
-    /// Print the trace.
+    /// Whether to print the trace
     #[arg(long)]
     trace: bool,
 }
 
 impl Cmd {
-    /// Run evm runner command.
+    /// Runs evm runner command.
     pub fn run(&self) -> Result<(), Errors> {
         const CALLER: Address = address!("0000000000000000000000000000000000000001");
 

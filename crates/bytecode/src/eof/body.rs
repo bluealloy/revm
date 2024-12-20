@@ -2,7 +2,7 @@ use super::{Eof, EofDecodeError, EofHeader, TypesSection};
 use primitives::Bytes;
 use std::vec::Vec;
 
-/// EOF container body.
+/// EOF container body
 ///
 /// Contains types, code, container and data sections.
 ///
@@ -12,7 +12,7 @@ use std::vec::Vec;
 pub struct EofBody {
     /// Code information
     pub types_section: Vec<TypesSection>,
-    /// Index of the last byte of each code section.
+    /// Index of the last byte of each code section
     pub code_section: Vec<usize>,
     pub code: Bytes,
     pub container_section: Vec<Bytes>,

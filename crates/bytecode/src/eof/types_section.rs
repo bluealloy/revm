@@ -4,10 +4,10 @@ use super::{
 };
 use std::vec::Vec;
 
-/// Non returning function has a output 0x80.
+/// Non returning function has a output `0x80`
 const EOF_NON_RETURNING_FUNCTION: u8 = 0x80;
 
-/// Types section that contains stack information for matching code section.
+/// Types section that contains stack information for matching code section
 #[derive(Debug, Clone, Default, Hash, PartialEq, Eq, Copy, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TypesSection {
@@ -35,7 +35,7 @@ impl TypesSection {
         }
     }
 
-    /// True if section is non-returning.
+    /// Returns `true` if section is non-returning.
     pub fn is_non_returning(&self) -> bool {
         self.outputs == EOF_NON_RETURNING_FUNCTION
     }
@@ -46,7 +46,7 @@ impl TypesSection {
         self.outputs as i32 - self.inputs as i32
     }
 
-    /// Encode the section into the buffer.
+    /// Encodes the section into the buffer.
     #[inline]
     pub fn encode(&self, buffer: &mut Vec<u8>) {
         buffer.push(self.inputs);
@@ -54,7 +54,7 @@ impl TypesSection {
         buffer.extend_from_slice(&self.max_stack_size.to_be_bytes());
     }
 
-    /// Decode the section from the input.
+    /// Decodes the section from the input.
     #[inline]
     pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), EofDecodeError> {
         let (input, inputs) = consume_u8(input)?;
@@ -69,7 +69,7 @@ impl TypesSection {
         Ok((section, input))
     }
 
-    /// Validate the section.
+    /// Validates the section.
     pub fn validate(&self) -> Result<(), EofDecodeError> {
         if self.inputs > 0x7f || self.outputs > 0x80 || self.max_stack_size > 0x03FF {
             return Err(EofDecodeError::InvalidTypesSection);

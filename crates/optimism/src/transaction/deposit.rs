@@ -16,23 +16,23 @@ pub trait DepositTransaction: CommonTxFields {
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxDeposit {
-    /// Hash that uniquely identifies the source of the deposit.
+    /// Hash that uniquely identifies the source of the deposit
     pub source_hash: B256,
-    /// The address of the sender account.
+    /// The address of the sender account
     pub from: Address,
     /// The address of the recipient account, or the null (zero-length) address if the deposited
-    /// transaction is a contract creation.
+    /// transaction is a contract creation
     pub to: TxKind,
-    /// The ETH value to mint on L2.
+    /// The ETH value to mint on L2
     pub mint: Option<u128>,
-    ///  The ETH value to send to the recipient account.
+    ///  The ETH value to send to the recipient account
     pub value: U256,
-    /// The gas limit for the L2 transaction.
+    /// The gas limit for the L2 transaction
     pub gas_limit: u64,
-    /// Field indicating if this transaction is exempt from the L2 gas limit.
+    /// Field indicating if this transaction is exempt from the L2 gas limit
     pub is_system_transaction: bool,
-    /// Input has two uses depending if transaction is Create or Call (if `to` field is None or
-    /// Some).
+    /// Input has two uses depending if transaction is Create or Call (if `to` field is [None]
+    /// or [Some])
     pub input: Bytes,
 }
 

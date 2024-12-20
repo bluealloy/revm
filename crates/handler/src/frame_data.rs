@@ -3,7 +3,7 @@ use core::ops::Range;
 use interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
 use primitives::Address;
 
-/// Call CallStackFrame.
+/// Call Frame
 //#[derive(Debug)]
 //#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallFrame {
@@ -11,6 +11,7 @@ pub struct CallFrame {
     pub return_memory_range: Range<usize>,
 }
 
+/// Create Frame
 //#[derive(Debug)]
 //#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateFrame {
@@ -18,14 +19,16 @@ pub struct CreateFrame {
     pub created_address: Address,
 }
 
-/// Eof Create Frame.
+/// Eof Create Frame
 //#[derive(Debug)]
 //#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EOFCreateFrame {
     pub created_address: Address,
 }
 
-/// Call stack frame.
+/// Frame Data
+///
+/// [`FrameData`] bundles different types of frames.
 //#[derive(Debug)]
 //#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FrameData {
@@ -34,6 +37,7 @@ pub enum FrameData {
     EOFCreate(EOFCreateFrame),
 }
 
+/// Frame Result
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug)]
 pub enum FrameResult {

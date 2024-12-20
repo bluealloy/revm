@@ -24,17 +24,17 @@ pub struct Context<
     JOURNAL: Journal<Database = DB> = JournaledState<DB>,
     CHAIN = (),
 > {
-    /// Transaction information.
+    /// Transaction information
     pub tx: TX,
-    /// Block information.
+    /// Block information
     pub block: BLOCK,
-    /// Configurations.
+    /// Configurations
     pub cfg: CFG,
-    /// EVM State with journaling support and database.
+    /// EVM State with journaling support and database
     pub journaled_state: JOURNAL,
-    /// Inner context.
+    /// Inner context
     pub chain: CHAIN,
-    /// Error that happened during execution.
+    /// Error that happened during execution
     pub error: Result<(), <DB as Database>::Error>,
 }
 
@@ -83,7 +83,7 @@ where
     DB: Database,
     JOURNAL: Journal<Database = DB>,
 {
-    /// Return account code bytes and if address is cold loaded.
+    /// Returns account code bytes and if address is cold loaded.
     ///
     /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
     ///
@@ -145,7 +145,7 @@ where
         }
     }
 
-    /// Create a new context with a new database type.
+    /// Creates a new context with a new database type.
     pub fn with_db<ODB: Database>(
         self,
         db: ODB,
@@ -163,7 +163,7 @@ where
         }
     }
 
-    /// Create a new context with a new block type.
+    /// Creates a new context with a new block type.
     pub fn with_block<OB: Block>(self, block: OB) -> Context<OB, TX, CFG, DB, JOURNAL, CHAIN> {
         Context {
             tx: self.tx,
@@ -175,7 +175,7 @@ where
         }
     }
 
-    /// Create a new context with a new transaction type.
+    /// Creates a new context with a new transaction type.
     pub fn with_tx<OTX: Transaction>(
         self,
         tx: OTX,
@@ -190,7 +190,7 @@ where
         }
     }
 
-    /// Create a new context with a new chain type.
+    /// Creates a new context with a new chain type.
     pub fn with_chain<OC>(self, chain: OC) -> Context<BLOCK, TX, CFG, DB, JOURNAL, OC> {
         Context {
             tx: self.tx,
@@ -202,7 +202,7 @@ where
         }
     }
 
-    /// Create a new context with a new chain type.
+    /// Creates a new context with a new chain type.
     pub fn with_cfg<OCFG: Cfg>(
         mut self,
         cfg: OCFG,
@@ -218,7 +218,7 @@ where
         }
     }
 
-    /// Modify the context configuration.
+    /// Modifies the context configuration.
     #[must_use]
     pub fn modify_cfg_chained<F>(mut self, f: F) -> Self
     where
@@ -229,7 +229,7 @@ where
         self
     }
 
-    /// Modify the context block.
+    /// Modifies the context block.
     #[must_use]
     pub fn modify_block_chained<F>(mut self, f: F) -> Self
     where
@@ -239,7 +239,7 @@ where
         self
     }
 
-    /// Modify the context transaction.
+    /// Modifies the context transaction.
     #[must_use]
     pub fn modify_tx_chained<F>(mut self, f: F) -> Self
     where
@@ -249,7 +249,7 @@ where
         self
     }
 
-    /// Modify the context chain.
+    /// Modifies the context chain.
     #[must_use]
     pub fn modify_chain_chained<F>(mut self, f: F) -> Self
     where
@@ -259,7 +259,7 @@ where
         self
     }
 
-    /// Modify the context database.
+    /// Modifies the context database.
     #[must_use]
     pub fn modify_db_chained<F>(mut self, f: F) -> Self
     where
@@ -269,7 +269,7 @@ where
         self
     }
 
-    /// Modify the context journal.
+    /// Modifies the context journal.
     #[must_use]
     pub fn modify_journal_chained<F>(mut self, f: F) -> Self
     where
@@ -279,7 +279,7 @@ where
         self
     }
 
-    /// Modify the context block.
+    /// Modifies the context block.
     pub fn modify_block<F>(&mut self, f: F)
     where
         F: FnOnce(&mut BLOCK),
@@ -323,7 +323,7 @@ where
         f(&mut self.journaled_state);
     }
 
-    /// Get code hash of address.
+    /// Gets code hash of address.
     ///
     /// In case of EOF account it will return `EOF_MAGIC_HASH`
     /// (the hash of `0xEF00`).

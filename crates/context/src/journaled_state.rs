@@ -13,27 +13,29 @@ use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use core::mem;
 use std::{vec, vec::Vec};
 
-/// A journal of state changes internal to the EVM.
+/// A journal of state changes internal to the EVM
 ///
-/// On each additional call, the depth of the journaled state is increased (`depth`) and a new journal is added. The journal contains every state change that happens within that call, making it possible to revert changes made in a specific call.
+/// On each additional call, the depth of the journaled state is increased (`depth`) and a new journal is added.
+///
+/// The journal contains every state change that happens within that call, making it possible to revert changes made in a specific call.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournaledState<DB> {
     /// Database
     pub database: DB,
-    /// The current state.
+    /// The current state
     pub state: EvmState,
     /// Transient storage that is discarded after every transaction.
     ///
     /// See [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153).
     pub transient_storage: TransientStorage,
-    /// Emitted logs.
+    /// Emitted logs
     pub logs: Vec<Log>,
-    /// The current call stack depth.
+    /// The current call stack depth
     pub depth: usize,
-    /// The journal of state changes, one for each call.
+    /// The journal of state changes, one for each call
     pub journal: Vec<Vec<JournalEntry>>,
-    /// The spec ID for the EVM.
+    /// The spec ID for the EVM
     ///
     /// This spec is used for two things:
     ///

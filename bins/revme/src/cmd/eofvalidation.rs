@@ -8,16 +8,16 @@ use revm::bytecode::eof::{validate_raw_eof_inner, CodeType, EofError};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-/// `eof-validation` subcommand.
+/// `eof-validation` subcommand
 #[derive(Parser, Debug)]
 pub struct Cmd {
-    /// Input paths to EOF validation tests.
+    /// Input paths to EOF validation tests
     #[arg(required = true, num_args = 1..)]
     paths: Vec<PathBuf>,
 }
 
 impl Cmd {
-    /// Run statetest command.
+    /// Runs statetest command.
     pub fn run(&self) -> Result<(), Error> {
         // Check if path exists.
         for path in &self.paths {

@@ -31,9 +31,10 @@ pub fn validate_raw_eof_inner(
 /// Fully validates an [`Eof`] container.
 ///
 /// Only place where validation happen is in Creating Transaction.
-/// Because of that we are assuming CodeType is ReturnContract.
 ///
-/// Note: If needed we can make a flag that would assume ReturnContract CodeType.
+/// Because of that we are assuming [CodeType] is [ReturnContract][CodeType::ReturnContract].
+///
+/// Note: If needed we can make a flag that would assume [ReturnContract][CodeType::ReturnContract]..
 pub fn validate_eof(eof: &Eof) -> Result<(), EofError> {
     validate_eof_inner(eof, Some(CodeType::ReturnContract))
 }
@@ -135,7 +136,7 @@ pub fn validate_eof_codes(
         .collect())
 }
 
-/// EOF Error.
+/// EOF Error
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum EofError {
     Decode(EofDecodeError),
@@ -165,79 +166,85 @@ impl fmt::Display for EofError {
 
 impl core::error::Error for EofError {}
 
+/// EOF Validation Error
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum EofValidationError {
     FalsePositive,
     /// Opcode is not known. It is not defined in the opcode table.
     UnknownOpcode,
-    /// Opcode is disabled in EOF. For example JUMP, JUMPI, etc.
+    /// Opcode is disabled in EOF. For example JUMP, JUMPI, etc
     OpcodeDisabled,
-    /// Every instruction inside bytecode should be forward accessed.
+    /// Every instruction inside bytecode should be forward accessed
+    ///
     /// Forward access can be a jump or sequential opcode.
+    ///
     /// In case after terminal opcode there should be a forward jump.
     InstructionNotForwardAccessed,
-    /// Bytecode is too small and is missing immediate bytes for instruction.
+    /// Bytecode is too small and is missing immediate bytes for instruction
     MissingImmediateBytes,
-    /// Similar to [`EofValidationError::MissingImmediateBytes`] but for special case of RJUMPV immediate bytes.
+    /// Bytecode is too small and is missing immediate bytes for instruction
+    ///
+    /// Similar to [`MissingImmediateBytes`][EofValidationError::MissingImmediateBytes] but for special case of RJUMPV immediate bytes.
     MissingRJUMPVImmediateBytes,
-    /// Invalid jump into immediate bytes.
+    /// Invalid jump into immediate bytes
     JumpToImmediateBytes,
-    /// Invalid jump into immediate bytes.
+    /// Invalid jump into immediate bytes
     BackwardJumpToImmediateBytes,
-    /// MaxIndex in RJUMPV can't be zero. Zero max index makes it RJUMPI.
+    /// MaxIndex in RJUMPV can't be zero. Zero max index makes it RJUMPI
     RJUMPVZeroMaxIndex,
-    /// Jump with zero offset would make a jump to next opcode, it does not make sense.
+    /// Jump with zero offset would make a jump to next opcode, it does not make sense
     JumpZeroOffset,
-    /// EOFCREATE points to container out of bounds.
+    /// EOFCREATE points to container out of bounds
     EOFCREATEInvalidIndex,
-    /// CALLF section out of bounds.
+    /// CALLF section out of bounds
     CodeSectionOutOfBounds,
-    /// CALLF to non returning function is not allowed.
+    /// CALLF to non returning function is not allowed
     CALLFNonReturningFunction,
-    /// CALLF stack overflow.
+    /// CALLF stack overflow
     StackOverflow,
-    /// JUMPF needs to have enough outputs.
+    /// JUMPF needs to have enough outputs
     JUMPFEnoughOutputs,
     /// JUMPF Stack
     JUMPFStackHigherThanOutputs,
-    /// DATA load out of bounds.
+    /// DATA load out of bounds
     DataLoadOutOfBounds,
-    /// RETF biggest stack num more then outputs.
+    /// RETF biggest stack num more then outputs
     RETFBiggestStackNumMoreThenOutputs,
-    /// Stack requirement is more than smallest stack items.
+    /// Stack requirement is more than smallest stack items
     StackUnderflow,
-    /// Smallest stack items is more than types output.
+    /// Smallest stack items is more than types output
     TypesStackUnderflow,
-    /// Jump out of bounds.
+    /// Jump out of bounds
     JumpUnderflow,
-    /// Jump to out of bounds.
+    /// Jump to out of bounds
     JumpOverflow,
-    /// Backward jump should have same smallest and biggest stack items.
+    /// Backward jump should have same smallest and biggest stack items
     BackwardJumpBiggestNumMismatch,
-    /// Backward jump should have same smallest and biggest stack items.
+    /// Backward jump should have same smallest and biggest stack items
     BackwardJumpSmallestNumMismatch,
-    /// Last instruction should be terminating.
+    /// Last instruction should be terminating
     LastInstructionNotTerminating,
-    /// Code section not accessed.
+    /// Code section not accessed
     CodeSectionNotAccessed,
     /// Types section invalid
     InvalidTypesSection,
-    /// First types section is invalid.
-    /// It should have inputs 0 and outputs 0x80.
+    /// First types section is invalid
+    /// It should have inputs 0 and outputs `0x80`
     InvalidFirstTypesSection,
-    /// Max stack element mismatch.
+    /// Max stack element mismatch
     MaxStackMismatch,
     /// No code sections present
     NoCodeSections,
-    /// Sub container called in two different modes.
+    /// Sub container called in two different modes
+    ///
     /// Check [`CodeType`] for more information.
     SubContainerCalledInTwoModes,
-    /// Sub container not accessed.
+    /// Sub container not accessed
     SubContainerNotAccessed,
-    /// Data size needs to be filled for ReturnContract type.
+    /// Data size needs to be filled for [ReturnContract][CodeType::ReturnContract] type
     DataNotFilled,
     /// Section is marked as non-returning but has either RETF or
-    /// JUMPF to returning section opcodes.
+    /// JUMPF to returning section opcodes
     NonReturningSectionIsReturning,
 }
 
@@ -318,18 +325,20 @@ impl AccessTracker {
     }
 }
 
-/// Types of code sections. It is a error if container to contain
+/// Types of code sections
+///
+/// It is a error if container to contain
 /// both RETURNCONTRACT and either of RETURN or STOP.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CodeType {
-    /// Return contract code.
+    /// Return contract code
     ReturnContract,
-    /// Return or Stop opcodes.
+    /// Return or Stop opcodes
     ReturnOrStop,
 }
 
 impl CodeType {
-    /// Returns true of the code is initcode.
+    /// Returns `true` of the code is initcode.
     pub fn is_initcode(&self) -> bool {
         matches!(self, CodeType::ReturnContract)
     }

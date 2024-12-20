@@ -43,9 +43,9 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
 
 #[derive(Clone, Default, Debug)]
 pub struct Precompiles {
-    /// Precompiles.
+    /// Precompiles
     inner: HashMap<Address, PrecompileFn>,
-    /// Addresses of precompile.
+    /// Addresses of precompile
     addresses: HashSet<Address>,
 }
 
@@ -303,8 +303,9 @@ impl PrecompileSpecId {
 
 /// Const function for making an address by concatenating the bytes from two given numbers.
 ///
-/// Note that 32 + 128 = 160 = 20 bytes (the length of an address). This function is used
-/// as a convenience for specifying the addresses of the various precompiles.
+/// Note that 32 + 128 = 160 = 20 bytes (the length of an address).
+///
+/// This function is used as a convenience for specifying the addresses of the various precompiles.
 #[inline]
 pub const fn u64_to_address(x: u64) -> Address {
     let x = x.to_be_bytes();

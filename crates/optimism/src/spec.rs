@@ -22,7 +22,7 @@ pub enum OpSpecId {
 }
 
 impl OpSpecId {
-    /// Converts the `OpSpec` into a `SpecId`.
+    /// Converts the [`OpSpec`] into a [`SpecId`].
     pub const fn into_eth_spec(self) -> SpecId {
         match self {
             Self::BEDROCK | Self::REGOLITH => SpecId::MERGE,
@@ -77,7 +77,7 @@ impl From<OpSpecId> for &'static str {
     }
 }
 
-/// String identifiers for Optimism hardforks.
+/// String identifiers for Optimism hardforks
 pub mod name {
     pub const BEDROCK: &str = "Bedrock";
     pub const REGOLITH: &str = "Regolith";
@@ -99,7 +99,7 @@ impl OpSpec {
         }
     }
 
-    /// Converts the `OpSpec` into a `SpecId`.
+    /// Converts the [`OpSpec`] into a [`SpecId`].
     pub const fn into_eth_spec(self) -> SpecId {
         match self {
             OpSpec::Eth(spec) => spec,

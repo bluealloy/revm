@@ -8,16 +8,19 @@ use std::vec::Vec;
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EofHeader {
-    /// Size of EOF types section.
+    /// Size of EOF types section
+    ///
     /// Types section includes num of input and outputs and max stack size.
     pub types_size: u16,
-    /// Sizes of EOF code section.
+    /// Sizes of EOF code section
+    ///
     /// Code size can't be zero.
     pub code_sizes: Vec<u16>,
-    /// EOF Container size.
+    /// EOF Container size
+    ///
     /// Container size can be zero.
     pub container_sizes: Vec<u16>,
-    /// EOF data size.
+    /// EOF data size
     pub data_size: u16,
     /// Sum code sizes
     pub sum_code_sizes: usize,
@@ -61,7 +64,7 @@ fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize),
 }
 
 impl EofHeader {
-    /// Length of the header in bytes.
+    /// Gets the length of the header in bytes.
     ///
     /// It is minimum 15 bytes (there is at least one code section).
     pub fn size(&self) -> usize {
@@ -75,7 +78,8 @@ impl EofHeader {
         1 // Terminator
     }
 
-    /// Return index where data size starts.
+    /// Returns index where data size starts.
+    ///
     /// Data size is two bytes long.
     pub fn data_size_raw_i(&self) -> usize {
         // termination(1byte) + code size(2) bytes.
@@ -87,7 +91,9 @@ impl EofHeader {
         self.types_size as usize / 4
     }
 
-    /// Returns body size. It is sum of code sizes, container sizes and data size.
+    /// Returns body size.
+    ///
+    /// It is sum of code sizes, container sizes and data size.
     pub fn body_size(&self) -> usize {
         self.types_size as usize
             + self.sum_code_sizes

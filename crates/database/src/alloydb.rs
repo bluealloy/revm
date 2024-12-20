@@ -22,7 +22,7 @@ impl From<TransportError> for DBTransportError {
     }
 }
 
-/// An alloy-powered REVM [database_interface::Database].
+/// An alloy-powered REVM [Database][database_interface::Database].
 ///
 /// When accessing the database, it'll use the given provider to fetch the corresponding account's data.
 #[derive(Debug)]

@@ -5,7 +5,7 @@ pub mod parse;
 
 use core::{fmt, ptr::NonNull};
 
-/// An EVM opcode.
+/// An EVM opcode
 ///
 /// This is always a valid opcode, as declared in the [`opcode`][self] module or the
 /// [`OPCODE_INFO`] constant.
@@ -25,7 +25,7 @@ impl fmt::Display for OpCode {
 }
 
 impl OpCode {
-    /// Instantiate a new opcode from a u8.
+    /// Instantiates a new opcode from a u8.
     #[inline]
     pub const fn new(opcode: u8) -> Option<Self> {
         match OPCODE_INFO[opcode as usize] {
@@ -82,7 +82,7 @@ impl OpCode {
         }
     }
 
-    /// Instantiate a new opcode from a u8 without checking if it is valid.
+    /// Instantiates a new opcode from a u8 without checking if it is valid.
     ///
     /// # Safety
     ///
@@ -169,7 +169,9 @@ impl OpCode {
     }
 
     /// Returns true if the opcode modifies memory.
+    ///
     /// <https://bluealloy.github.io/revm/crates/interpreter/memory.html#opcodes>
+    ///
     /// <https://github.com/crytic/evm-opcodes>
     #[inline]
     pub const fn modifies_memory(&self) -> bool {
@@ -197,23 +199,27 @@ impl OpCode {
     }
 }
 
-/// Information about opcode, such as name, and stack inputs and outputs.
+/// Information about opcode, such as name, and stack inputs and outputs
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OpCodeInfo {
-    /// Invariant: `(name_ptr, name_len)` is a `&'static str`. It is a shorted variant of `str` as
+    /// Invariant: `(name_ptr, name_len)` is a [`&'static str`][str]
+    ///
+    /// It is a shorted variant of [`str`] as
     /// the name length is always less than 256 characters.
     name_ptr: NonNull<u8>,
     name_len: u8,
-    /// Stack inputs.
+    /// Stack inputs
     inputs: u8,
-    /// Stack outputs.
+    /// Stack outputs
     outputs: u8,
-    /// Number of intermediate bytes.
+    /// Number of intermediate bytes
     ///
     /// RJUMPV is a special case where the bytes len depends on bytecode value,
     /// for RJUMV size will be set to one byte as it is the minimum immediate size.
     immediate_size: u8,
-    /// Used by EOF verification. All not EOF opcodes are marked false.
+    /// Used by EOF verification
+    ///
+    /// All not EOF opcodes are marked false.
     not_eof: bool,
     /// If the opcode stops execution. aka STOP, RETURN, ..
     terminating: bool,
@@ -327,7 +333,7 @@ pub const fn stack_io(mut op: OpCodeInfo, inputs: u8, outputs: u8) -> OpCodeInfo
     op
 }
 
-/// Alias for the [`JUMPDEST`] opcode.
+/// Alias for the [`JUMPDEST`] opcode
 pub const NOP: u8 = JUMPDEST;
 
 macro_rules! opcodes {
@@ -378,7 +384,8 @@ macro_rules! phf_map_cb {
 }
 
 /// Stringifies identifiers with `paste` so that they are available as literals.
-/// This doesn't work with `stringify!` because it cannot be expanded inside of another macro.
+///
+/// This doesn't work with [`stringify!`] because it cannot be expanded inside of another macro.
 #[cfg(feature = "parse")]
 macro_rules! stringify_with_cb {
     ($callback:ident; $($id:ident)*) => { paste::paste! {
