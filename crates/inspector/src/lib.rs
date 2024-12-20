@@ -10,8 +10,10 @@ mod eip3155;
 mod gas;
 mod inspector;
 mod noop;
+mod prev_inspector;
 
 pub use inspector::*;
+pub use prev_inspector::PrevContext;
 
 /// [Inspector] implementations.
 pub mod inspectors {
