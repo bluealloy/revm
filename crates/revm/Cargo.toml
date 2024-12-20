@@ -49,7 +49,6 @@ alloy-sol-types = { version = "0.8.2", default-features = false, features = [
 ] }
 ethers-contract = { version = "2.0.14", default-features = false }
 anyhow = "1.0.89"
-criterion = "0.5"
 indicatif = "0.17"
 reqwest = { version = "0.12" }
 rstest = "0.22.0"

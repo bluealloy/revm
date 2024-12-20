@@ -55,10 +55,11 @@ context-interface = { path = "crates/context/interface", package = "revm-context
 handler = { path = "crates/handler", package = "revm-handler", version = "1.0.0", default-features = false }
 handler-interface = { path = "crates/handler/interface", package = "revm-handler-interface", version = "1.0.0", default-features = false }
 
-# mics
+# misc
 cfg-if = { version = "1.0", default-features = false }
 auto_impl = { version = "1.2.0" }
 derive-where = { version = "1.2.7", default-features = false }
+criterion = { package = "codspeed-criterion-compat", version = "2.7" }
 
 [workspace.package]
 license = "MIT"
@@ -75,9 +76,23 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [profile.release]
-lto = true
-codegen-units = 1
-debug = true
+codegen-units = 16
+debug = "line-tables-only"
+lto = "thin"
+opt-level = 3
+panic = "abort"
+strip = true
+
+# Use the `--profile profiling` flag to show symbols in release mode.
+# e.g. `cargo build --profile profiling`
+[profile.profiling]
+debug = 2
+inherits = "release"
+strip = false
+
+# Make sure debug symbols are in the bench profile
+[profile.bench]
+inherits = "profiling"
 
 [profile.ethtests]
 inherits = "test"
