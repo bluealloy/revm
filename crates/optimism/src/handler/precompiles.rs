@@ -87,7 +87,12 @@ where
                 | SpecId::CANCUN,
             )
             | OpSpec::Op(
-                OpSpecId::BEDROCK | OpSpecId::REGOLITH | OpSpecId::CANYON | OpSpecId::ECOTONE,
+                OpSpecId::BEDROCK
+                | OpSpecId::REGOLITH
+                | OpSpecId::CANYON
+                | OpSpecId::ECOTONE
+                | OpSpecId::HOLOCENE
+                | OpSpecId::ISTHMUS,
             )) => Self::new(Precompiles::new(spec.into_eth_spec().into())),
             OpSpec::Op(OpSpecId::FJORD) => Self::new(fjord()),
             OpSpec::Op(OpSpecId::GRANITE)
