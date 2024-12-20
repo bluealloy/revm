@@ -7,7 +7,7 @@ use std::vec::Vec;
 /// `accounts`/`storages`/`contracts` for inclusion into database.
 ///
 /// Structure is made so it is easier to apply directly to database
-/// that mostly have separate tables to store accounts`/`storages`/`contracts` data.
+/// that mostly have separate tables to store `accounts`/`storages`/`contracts` data.
 ///
 /// **Note**: That data is **not** sorted. Some database benefit of faster inclusion
 /// and smaller footprint if data is inserted in sorted order.
