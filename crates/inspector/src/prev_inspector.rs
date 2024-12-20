@@ -1,7 +1,5 @@
-use crate::Inspector;
 use revm::{
     context::{BlockEnv, CfgEnv, TxEnv},
-    interpreter::interpreter::EthInterpreter,
     Context,
 };
 
