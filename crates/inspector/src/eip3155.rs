@@ -3,7 +3,7 @@ use derive_where::derive_where;
 use revm::{
     bytecode::opcode::OpCode,
     context::Cfg,
-    context_interface::{CfgGetter, Journal, JournalStateGetter, Transaction, TransactionGetter},
+    context_interface::{CfgGetter, Journal, JournalGetter, Transaction, TransactionGetter},
     interpreter::{
         interpreter_types::{Jumps, LoopControl, MemoryTrait, StackTrait},
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
@@ -199,7 +199,7 @@ impl CloneStack for Stack {
 
 impl<CTX, INTR> Inspector<CTX, INTR> for TracerEip3155<CTX, INTR>
 where
-    CTX: CfgGetter + TransactionGetter + JournalStateGetter,
+    CTX: CfgGetter + TransactionGetter + JournalGetter,
     INTR: InterpreterTypes<Stack: StackTrait + CloneStack>,
 {
     fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {

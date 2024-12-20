@@ -2,7 +2,7 @@ use super::frame_data::*;
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context_interface::{
     journaled_state::{Journal, JournalCheckpoint},
-    BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
+    BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalGetter, JournalDBError,
     Transaction, TransactionGetter,
 };
 use core::{cell::RefCell, cmp::min};
@@ -45,7 +45,7 @@ pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, PRECOMPILE, INSTRUCTIONS> 
 
 impl<CTX, IW, ERROR, PRECOMP, INST> EthFrame<CTX, ERROR, IW, PRECOMP, INST>
 where
-    CTX: JournalStateGetter,
+    CTX: JournalGetter,
     IW: InterpreterTypes,
 {
     pub fn new(
@@ -792,7 +792,7 @@ pub fn return_eofcreate<JOURNAL: Journal>(
 }
 
 pub trait EthFrameContext<ERROR>:
-    TransactionGetter + Host + ErrorGetter<Error = ERROR> + BlockGetter + JournalStateGetter + CfgGetter
+    TransactionGetter + Host + ErrorGetter<Error = ERROR> + BlockGetter + JournalGetter + CfgGetter
 {
 }
 
@@ -801,19 +801,19 @@ impl<
         CTX: TransactionGetter
             + ErrorGetter<Error = ERROR>
             + BlockGetter
-            + JournalStateGetter
+            + JournalGetter
             + CfgGetter
             + Host,
     > EthFrameContext<ERROR> for CTX
 {
 }
 
-pub trait EthFrameError<CTX: JournalStateGetter>:
-    From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>
+pub trait EthFrameError<CTX: JournalGetter>:
+    From<JournalDBError<CTX>> + From<PrecompileErrors>
 {
 }
 
-impl<CTX: JournalStateGetter, T: From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>>
+impl<CTX: JournalGetter, T: From<JournalDBError<CTX>> + From<PrecompileErrors>>
     EthFrameError<CTX> for T
 {
 }

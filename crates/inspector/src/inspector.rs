@@ -9,8 +9,8 @@ use revm::{
         journaled_state::{AccountLoad, Eip7702CodeLoad},
         result::EVMError,
         transaction::TransactionSetter,
-        Block, BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalStateGetter,
-        JournalStateGetterDBError, Transaction, TransactionGetter,
+        Block, BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalDBError,
+        JournalGetter, Transaction, TransactionGetter,
     },
     database_interface::{Database, EmptyDB},
     handler::{
@@ -399,13 +399,17 @@ impl<INSP, BLOCK, TX, CFG: Cfg, DB: Database, JOURNAL: Journal<Database = DB>, C
     }
 }
 
-impl<INSP, BLOCK, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> JournalStateGetter
+impl<INSP, BLOCK, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> JournalGetter
     for InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
 {
     type Journal = JOURNAL;
 
     fn journal(&mut self) -> &mut Self::Journal {
         &mut self.inner.journaled_state
+    }
+
+    fn journal_ref(&self) -> &Self::Journal {
+        &self.inner.journaled_state
     }
 }
 
@@ -479,6 +483,16 @@ impl<
 
     fn journal_ext(&self) -> &Self::JournalExt {
         &self.inner.journaled_state
+    }
+}
+
+impl<BLOCK: Block, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB> + JournalExt, CHAIN>
+    JournalExtGetter for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+{
+    type JournalExt = JOURNAL;
+
+    fn journal_ext(&self) -> &Self::JournalExt {
+        &self.journaled_state
     }
 }
 
@@ -561,7 +575,7 @@ pub trait JournalExtGetter {
 impl<WIRE, HOST> InstructionProvider for InspectorInstructionProvider<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
-    HOST: Host + JournalExtGetter + JournalStateGetter + InspectorCtx<IT = WIRE>,
+    HOST: Host + JournalExtGetter + JournalGetter + InspectorCtx<IT = WIRE>,
 {
     type WIRE = WIRE;
     type Host = HOST;
@@ -681,12 +695,12 @@ where
     CTX: TransactionGetter
         + ErrorGetter<Error = ERROR>
         + BlockGetter
-        + JournalStateGetter
+        + JournalGetter
         + CfgGetter
         + JournalExtGetter
         + Host
         + InspectorCtx<IT = EthInterpreter>,
-    ERROR: From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>,
+    ERROR: From<JournalDBError<CTX>> + From<PrecompileErrors>,
     PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR>,
 {
     type Context = CTX;

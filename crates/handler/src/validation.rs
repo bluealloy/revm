@@ -5,7 +5,7 @@ use context_interface::{
         eip7702::Authorization, Eip1559CommonTxFields, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx,
         Transaction, TransactionType,
     },
-    Block, BlockGetter, Cfg, CfgGetter, JournalStateGetter, JournalStateGetterDBError,
+    Block, BlockGetter, Cfg, CfgGetter, JournalGetter, JournalDBError,
     TransactionGetter,
 };
 use core::cmp::{self, Ordering};
@@ -43,7 +43,7 @@ impl<CTX, ERROR> EthValidation<CTX, ERROR> {
 impl<CTX, ERROR> ValidationHandler for EthValidation<CTX, ERROR>
 where
     CTX: EthValidationContext,
-    ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>,
+    ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<JournalDBError<CTX>>,
 {
     type Context = CTX;
     type Error = ERROR;
@@ -385,24 +385,24 @@ where
 
 /// Helper trait that summarizes ValidationHandler requirements from Context.
 pub trait EthValidationContext:
-    TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter
+    TransactionGetter + BlockGetter + JournalGetter + CfgGetter
 {
 }
 
-impl<T: TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter> EthValidationContext
+impl<T: TransactionGetter + BlockGetter + JournalGetter + CfgGetter> EthValidationContext
     for T
 {
 }
 
 /// Helper trait that summarizes all possible requirements by EthValidation.
-pub trait EthValidationError<CTX: JournalStateGetter>:
-    From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>
+pub trait EthValidationError<CTX: JournalGetter>:
+    From<InvalidTransaction> + From<InvalidHeader> + From<JournalDBError<CTX>>
 {
 }
 
 impl<
-        CTX: JournalStateGetter,
-        T: From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>,
+        CTX: JournalGetter,
+        T: From<InvalidTransaction> + From<InvalidHeader> + From<JournalDBError<CTX>>,
     > EthValidationError<CTX> for T
 {
 }

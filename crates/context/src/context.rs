@@ -5,7 +5,7 @@ use context_interface::{
     journaled_state::{AccountLoad, Eip7702CodeLoad},
     result::EVMError,
     transaction::TransactionSetter,
-    Block, BlockGetter, Cfg, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalStateGetter,
+    Block, BlockGetter, Cfg, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalGetter,
     Transaction, TransactionGetter,
 };
 use database_interface::{Database, EmptyDB};
@@ -24,10 +24,10 @@ pub struct Context<
     JOURNAL: Journal<Database = DB> = JournaledState<DB>,
     CHAIN = (),
 > {
-    /// Transaction information.
-    pub tx: TX,
     /// Block information.
     pub block: BLOCK,
+    /// Transaction information.
+    pub tx: TX,
     /// Configurations.
     pub cfg: CFG,
     /// EVM State with journaling support and database.
@@ -498,7 +498,7 @@ impl<BLOCK, TX, CFG: Cfg, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> 
     }
 }
 
-impl<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN> JournalStateGetter
+impl<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN> JournalGetter
     for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
 where
     DB: Database,
@@ -508,6 +508,10 @@ where
 
     fn journal(&mut self) -> &mut Self::Journal {
         &mut self.journaled_state
+    }
+
+    fn journal_ref(&self) -> &Self::Journal {
+        &self.journaled_state
     }
 }
 

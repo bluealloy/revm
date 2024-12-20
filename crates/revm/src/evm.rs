@@ -8,8 +8,8 @@ use context_interface::{
         ResultAndState,
     },
     transaction::TransactionSetter,
-    BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
-    JournalStateGetterDBError, Transaction, TransactionGetter,
+    BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalGetter,
+    JournalDBError, Transaction, TransactionGetter,
 };
 use database_interface::{Database, DatabaseCommit};
 use handler::{EthHandler, FrameResult};
@@ -45,11 +45,11 @@ impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC, HALT> EvmCommit
 where
     CTX: TransactionSetter
         + BlockSetter
-        + JournalStateGetter
+        + JournalGetter
         + CfgGetter
         + DatabaseGetter<Database: Database + DatabaseCommit>
         + ErrorGetter<Error = ERROR>
-        + JournalStateGetter<
+        + JournalGetter<
             Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
@@ -57,7 +57,7 @@ where
         > + Host,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
-        + From<JournalStateGetterDBError<CTX>>
+        + From<JournalDBError<CTX>>
         + From<PrecompileErrors>,
     VAL: ValidationHandler<Context = CTX, Error = ERROR>,
     PREEXEC: PreExecutionHandler<Context = CTX, Error = ERROR>,
@@ -92,11 +92,11 @@ impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC> EvmExec
 where
     CTX: TransactionSetter
         + BlockSetter
-        + JournalStateGetter
+        + JournalGetter
         + CfgGetter
         + DatabaseGetter
         + ErrorGetter<Error = ERROR>
-        + JournalStateGetter<
+        + JournalGetter<
             Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
@@ -104,7 +104,7 @@ where
         > + Host,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
-        + From<JournalStateGetterDBError<CTX>>
+        + From<JournalDBError<CTX>>
         + From<PrecompileErrors>,
     VAL: ValidationHandler<Context = CTX, Error = ERROR>,
     PREEXEC: PreExecutionHandler<Context = CTX, Error = ERROR>,
@@ -150,11 +150,11 @@ impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC>
 where
     CTX: TransactionGetter
         + BlockGetter
-        + JournalStateGetter
+        + JournalGetter
         + CfgGetter
         + DatabaseGetter
         + ErrorGetter<Error = ERROR>
-        + JournalStateGetter<
+        + JournalGetter<
             Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
@@ -162,7 +162,7 @@ where
         > + Host,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
-        + From<JournalStateGetterDBError<CTX>>
+        + From<JournalDBError<CTX>>
         + From<PrecompileErrors>,
     VAL: ValidationHandler<Context = CTX, Error = ERROR>,
     PREEXEC: PreExecutionHandler<Context = CTX, Error = ERROR>,

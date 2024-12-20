@@ -9,7 +9,7 @@ use context_interface::{
     transaction::{
         eip7702::Authorization, AccessListTrait, Eip4844Tx, Eip7702Tx, Transaction, TransactionType,
     },
-    Block, BlockGetter, Cfg, CfgGetter, JournalStateGetter, JournalStateGetterDBError,
+    Block, BlockGetter, Cfg, CfgGetter, JournalGetter, JournalDBError,
     TransactionGetter,
 };
 use handler_interface::PreExecutionHandler;
@@ -121,8 +121,8 @@ where
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
 #[inline]
 pub fn apply_eip7702_auth_list<
-    CTX: TransactionGetter + JournalStateGetter + CfgGetter,
-    ERROR: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
+    CTX: TransactionGetter + JournalGetter + CfgGetter,
+    ERROR: From<InvalidTransaction> + From<JournalDBError<CTX>>,
 >(
     context: &mut CTX,
 ) -> Result<u64, ERROR> {
@@ -203,23 +203,23 @@ pub fn apply_eip7702_auth_list<
 }
 
 pub trait EthPreExecutionContext:
-    TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter
+    TransactionGetter + BlockGetter + JournalGetter + CfgGetter
 {
 }
 
-impl<CTX: TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter> EthPreExecutionContext
+impl<CTX: TransactionGetter + BlockGetter + JournalGetter + CfgGetter> EthPreExecutionContext
     for CTX
 {
 }
 
-pub trait EthPreExecutionError<CTX: JournalStateGetter>:
-    From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>
+pub trait EthPreExecutionError<CTX: JournalGetter>:
+    From<InvalidTransaction> + From<JournalDBError<CTX>>
 {
 }
 
 impl<
-        CTX: JournalStateGetter,
-        T: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
+        CTX: JournalGetter,
+        T: From<InvalidTransaction> + From<JournalDBError<CTX>>,
     > EthPreExecutionError<CTX> for T
 {
 }

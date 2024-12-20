@@ -42,7 +42,7 @@ use context_interface::{
     result::{HaltReason, InvalidHeader, InvalidTransaction},
 };
 use context_interface::{
-    BlockGetter, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
+    BlockGetter, CfgGetter, ErrorGetter, JournalGetter, JournalDBError,
     TransactionGetter,
 };
 use handler_interface::{
@@ -102,14 +102,14 @@ impl<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC> Handler
 where
     CTX: TransactionGetter
         + BlockGetter
-        + JournalStateGetter
+        + JournalGetter
         + CfgGetter
         + ErrorGetter<Error = ERROR>
-        + JournalStateGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
+        + JournalGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
         + Host,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
-        + From<JournalStateGetterDBError<CTX>>
+        + From<JournalDBError<CTX>>
         + From<PrecompileErrors>,
     VAL: ValidationHandler,
     PREEXEC: PreExecutionHandler,
