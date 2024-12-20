@@ -49,7 +49,7 @@ async fn main() -> Result<()> {
 
     let balance_slot = keccak256((account, U256::from(3)).abi_encode()).into();
 
-    cache_db.insert_account_storage(usdc, balance_slot, hundred_tokens);
+    let _ = cache_db.insert_account_storage(usdc, balance_slot, hundred_tokens);
     cache_db.insert_account_info(
         account,
         AccountInfo {
