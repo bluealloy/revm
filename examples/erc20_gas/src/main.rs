@@ -17,7 +17,7 @@ use revm::{
     Context, EvmCommit, MainEvm,
 };
 
-mod handlers;
+pub mod handlers;
 use handlers::{CustomEvm, CustomHandler, Erc20PostExecution, Erc20PreExecution, Erc20Validation};
 
 type AlloyCacheDB =
