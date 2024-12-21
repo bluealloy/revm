@@ -186,9 +186,8 @@ impl<T: Transaction> OpTxTrait for OpTransaction<T> {
 #[cfg(feature = "std")]
 mod tests {
     use super::*;
-    use revm::primitives::{Address, U256, B256};
+    use revm::primitives::{Address, B256, U256};
     use std::panic;
-
 
     // Helper macro for testing panic messages
     macro_rules! assert_panic {
@@ -231,16 +230,12 @@ mod tests {
             source_hash: B256::default(),
             input: Default::default(),
         };
-        
         let op_tx: OpTransaction<TxEnv> = OpTransaction::Deposit(deposit);
-        
         // Verify transaction type
         assert_eq!(op_tx.tx_type(), OpTransactionType::Deposit);
-        
         // Verify common fields access
         assert_eq!(op_tx.common_fields().gas_limit(), 0);
         assert_eq!(op_tx.kind(), revm::primitives::TxKind::Call(Address::ZERO));
-        
         // Verify gas related calculations
         assert_eq!(op_tx.effective_gas_price(U256::from(100)), U256::from(100));
         assert_eq!(op_tx.max_fee(), 0);
@@ -258,9 +253,7 @@ mod tests {
             source_hash: B256::default(),
             input: Default::default(),
         };
-        
         let op_tx: OpTransaction<TxEnv> = OpTransaction::Deposit(deposit);
-
         // Test each transaction type access method
         assert_panic!("Not a legacy transaction", op_tx.legacy());
         assert_panic!("Not eip2930 transaction", op_tx.eip2930());
