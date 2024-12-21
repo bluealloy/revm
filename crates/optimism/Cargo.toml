@@ -38,7 +38,6 @@ serde = { version = "1.0", default-features = false, features = [
 
 
 [dev-dependencies]
-primitives.workspace = true
 database.workspace = true
 anyhow = "1.0.89"
 indicatif = "0.17"
