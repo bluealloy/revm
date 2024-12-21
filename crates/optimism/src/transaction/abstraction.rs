@@ -183,14 +183,17 @@ impl<T: Transaction> OpTxTrait for OpTransaction<T> {
 }
 
 #[cfg(test)]
+#[cfg(feature = "std")]
 mod tests {
     use super::*;
     use revm::primitives::{Address, U256, B256};
+    use std::panic;
+
 
     // Helper macro for testing panic messages
     macro_rules! assert_panic {
         ($expected:expr, $($eval:tt)+) => {
-            let result = std::panic::catch_unwind(|| {
+            let result = panic::catch_unwind(|| {
                 $($eval)+
             });
             assert!(result.is_err());
