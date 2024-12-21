@@ -181,3 +181,88 @@ impl<T: Transaction> OpTxTrait for OpTransaction<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use revm::primitives::{Address, U256, B256};
+
+    // Helper macro for testing panic messages
+    macro_rules! assert_panic {
+        ($expected:expr, $($eval:tt)+) => {
+            let result = std::panic::catch_unwind(|| {
+                $($eval)+
+            });
+            assert!(result.is_err());
+            if let Err(err) = result {
+                if let Some(message) = err.downcast_ref::<&str>() {
+                    assert_eq!(*message, $expected);
+                } else {
+                    panic!("Panic occurred but with unexpected message type");
+                }
+            }
+        };
+    }
+
+    #[test]
+    fn test_deposit_transaction_type_conversion() {
+        let deposit_tx = OpTransactionType::Deposit;
+        let tx_type: TransactionType = deposit_tx.into();
+        assert_eq!(tx_type, TransactionType::Custom);
+
+        // Also test base transaction conversion
+        let base_tx = OpTransactionType::Base(TransactionType::Legacy);
+        let tx_type: TransactionType = base_tx.into();
+        assert_eq!(tx_type, TransactionType::Legacy);
+    }
+
+    #[test]
+    fn test_deposit_transaction_fields() {
+        let deposit = TxDeposit {
+            from: Address::ZERO,
+            to: revm::primitives::TxKind::Call(Address::ZERO),
+            value: U256::ZERO,
+            gas_limit: 0,
+            is_system_transaction: false,
+            mint: Some(0u128),
+            source_hash: B256::default(),
+            input: Default::default(),
+        };
+        
+        let op_tx: OpTransaction<TxEnv> = OpTransaction::Deposit(deposit);
+        
+        // Verify transaction type
+        assert_eq!(op_tx.tx_type(), OpTransactionType::Deposit);
+        
+        // Verify common fields access
+        assert_eq!(op_tx.common_fields().gas_limit(), 0);
+        assert_eq!(op_tx.kind(), revm::primitives::TxKind::Call(Address::ZERO));
+        
+        // Verify gas related calculations
+        assert_eq!(op_tx.effective_gas_price(U256::from(100)), U256::from(100));
+        assert_eq!(op_tx.max_fee(), 0);
+    }
+
+    #[test]
+    fn test_deposit_transaction_type_access_panics() {
+        let deposit = TxDeposit {
+            from: Address::ZERO,
+            to: revm::primitives::TxKind::Call(Address::ZERO),
+            value: U256::ZERO,
+            gas_limit: 0,
+            is_system_transaction: false,
+            mint: Some(0u128),
+            source_hash: B256::default(),
+            input: Default::default(),
+        };
+        
+        let op_tx: OpTransaction<TxEnv> = OpTransaction::Deposit(deposit);
+
+        // Test each transaction type access method
+        assert_panic!("Not a legacy transaction", op_tx.legacy());
+        assert_panic!("Not eip2930 transaction", op_tx.eip2930());
+        assert_panic!("Not a eip1559 transaction", op_tx.eip1559());
+        assert_panic!("Not a eip4844 transaction", op_tx.eip4844());
+        assert_panic!("Not a eip7702 transaction", op_tx.eip7702());
+    }
+}
