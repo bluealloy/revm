@@ -16,6 +16,7 @@ pub mod transaction;
 
 pub use l1block::{
     L1BlockInfo, L1BlockInfoGetter, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT,
+    OPERATOR_FEE_RECIPIENT,
 };
 pub use result::OptimismHaltReason;
 pub use spec::*;
