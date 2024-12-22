@@ -54,8 +54,8 @@ where
 
         match (*precompile)(bytes, gas_limit) {
             Ok(output) => {
-                let underflow = result.gas.record_cost(output.gas_used);
-                assert!(underflow, "Gas underflow is not possible");
+                let success = result.gas.record_cost(output.gas_used);
+                assert!(success, "Gas underflow is not possible");
                 result.result = InstructionResult::Return;
                 result.output = output.bytes;
             }

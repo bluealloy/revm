@@ -725,6 +725,7 @@ pub fn return_create<JOURNAL: Journal>(
     }
     let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
     if !interpreter_result.gas.record_cost(gas_for_code) {
+        interpreter_result.gas.spend_all();
         // Record code deposit gas cost and check if we are out of gas.
         // EIP-2 point 3: If contract creation does not have enough gas to pay for the
         // final gas fee for adding the contract code to the state, the contract
@@ -777,6 +778,7 @@ pub fn return_eofcreate<JOURNAL: Journal>(
     // Deduct gas for code deployment.
     let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
     if !interpreter_result.gas.record_cost(gas_for_code) {
+        interpreter_result.gas.spend_all();
         journal.checkpoint_revert(checkpoint);
         interpreter_result.result = InstructionResult::OutOfGas;
         return;
