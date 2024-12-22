@@ -4,7 +4,7 @@ use crate::{
     },
     L1BlockInfo, OpSpec, OpTransaction,
 };
-use inspector::{InspectorContext, InspectorEthFrame};
+use inspector::{inspector_context::InspectorContext, inspector_frame::InspectorEthFrame};
 use revm::{
     context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context},
     context_interface::result::{EVMError, InvalidTransaction},

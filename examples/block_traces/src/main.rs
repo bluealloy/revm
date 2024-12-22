@@ -9,7 +9,10 @@ use alloy_provider::{
 };
 use database::{AlloyDB, CacheDB, StateBuilder};
 use indicatif::ProgressBar;
-use inspector::{inspectors::TracerEip3155, InspectorContext, InspectorEthFrame, InspectorMainEvm};
+use inspector::{
+    inspector_context::InspectorContext, inspector_frame::InspectorEthFrame,
+    inspectors::TracerEip3155, InspectorMainEvm,
+};
 use revm::{
     database_interface::WrapDatabaseAsync,
     handler::{
