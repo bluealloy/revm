@@ -1,4 +1,6 @@
-/// TODO change name of the trait
+use auto_impl::auto_impl;
+/// Trait to get error from context.
+#[auto_impl(&mut, Box)]
 pub trait ErrorGetter {
     type Error;
 
