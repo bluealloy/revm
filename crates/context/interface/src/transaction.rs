@@ -164,3 +164,15 @@ pub trait TransactionGetter {
 pub trait TransactionSetter: TransactionGetter {
     fn set_tx(&mut self, tx: <Self as TransactionGetter>::Transaction);
 }
+
+impl<T: TransactionSetter> TransactionSetter for &mut T {
+    fn set_tx(&mut self, block: <Self as TransactionGetter>::Transaction) {
+        (**self).set_tx(block)
+    }
+}
+
+impl<T: TransactionSetter> TransactionSetter for Box<T> {
+    fn set_tx(&mut self, block: <Self as TransactionGetter>::Transaction) {
+        (**self).set_tx(block)
+    }
+}

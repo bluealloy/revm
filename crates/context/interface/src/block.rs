@@ -79,3 +79,15 @@ pub trait BlockGetter {
 pub trait BlockSetter: BlockGetter {
     fn set_block(&mut self, block: <Self as BlockGetter>::Block);
 }
+
+impl<T: BlockSetter> BlockSetter for &mut T {
+    fn set_block(&mut self, block: <Self as BlockGetter>::Block) {
+        (**self).set_block(block)
+    }
+}
+
+impl<T: BlockSetter> BlockSetter for Box<T> {
+    fn set_block(&mut self, block: <Self as BlockGetter>::Block) {
+        (**self).set_block(block)
+    }
+}
