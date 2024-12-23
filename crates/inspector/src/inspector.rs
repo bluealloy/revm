@@ -7,7 +7,7 @@ use revm::{
         block::BlockSetter,
         journaled_state::{AccountLoad, Eip7702CodeLoad},
         transaction::TransactionSetter,
-        Block, BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalDBError,
+        BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalDBError,
         JournalGetter, TransactionGetter,
     },
     database_interface::{Database, EmptyDB},
@@ -460,7 +460,7 @@ where
     }
 }
 
-impl<BLOCK: Block, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB> + JournalExt, CHAIN>
+impl<BLOCK, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB> + JournalExt, CHAIN>
     JournalExtGetter for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
 {
     type JournalExt = JOURNAL;
