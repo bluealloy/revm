@@ -220,22 +220,6 @@ impl<INSP: GetInspector<CTX, EthInterpreter>, DB, CTX> Host for InspectorContext
 where
     CTX: Host + DatabaseGetter<Database = DB>,
 {
-    type BLOCK = <CTX as Host>::BLOCK;
-    type TX = <CTX as Host>::TX;
-    type CFG = <CTX as Host>::CFG;
-
-    fn tx(&self) -> &Self::TX {
-        self.inner.tx()
-    }
-
-    fn block(&self) -> &Self::BLOCK {
-        self.inner.block()
-    }
-
-    fn cfg(&self) -> &Self::CFG {
-        self.inner.cfg()
-    }
-
     fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
         self.inner.block_hash(requested_number)
     }

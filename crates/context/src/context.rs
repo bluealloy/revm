@@ -380,22 +380,6 @@ where
     DB: Database,
     JOURNAL: Journal<Database = DB>,
 {
-    type BLOCK = BLOCK;
-    type TX = TX;
-    type CFG = CFG;
-
-    fn tx(&self) -> &Self::TX {
-        &self.tx
-    }
-
-    fn block(&self) -> &Self::BLOCK {
-        &self.block
-    }
-
-    fn cfg(&self) -> &Self::CFG {
-        &self.cfg
-    }
-
     fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
         let block_number = as_u64_saturated!(*self.block().number());
 
