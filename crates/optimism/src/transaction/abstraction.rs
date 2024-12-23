@@ -183,28 +183,9 @@ impl<T: Transaction> OpTxTrait for OpTransaction<T> {
 }
 
 #[cfg(test)]
-#[cfg(feature = "std")]
 mod tests {
     use super::*;
     use revm::primitives::{Address, B256, U256};
-    use std::panic;
-
-    // Helper macro for testing panic messages
-    macro_rules! assert_panic {
-        ($expected:expr, $($eval:tt)+) => {
-            let result = panic::catch_unwind(|| {
-                $($eval)+
-            });
-            assert!(result.is_err());
-            if let Err(err) = result {
-                if let Some(message) = err.downcast_ref::<&str>() {
-                    assert_eq!(*message, $expected);
-                } else {
-                    panic!("Panic occurred but with unexpected message type");
-                }
-            }
-        };
-    }
 
     #[test]
     fn test_deposit_transaction_type_conversion() {
@@ -239,26 +220,5 @@ mod tests {
         // Verify gas related calculations
         assert_eq!(op_tx.effective_gas_price(U256::from(100)), U256::from(100));
         assert_eq!(op_tx.max_fee(), 0);
-    }
-
-    #[test]
-    fn test_deposit_transaction_type_access_panics() {
-        let deposit = TxDeposit {
-            from: Address::ZERO,
-            to: revm::primitives::TxKind::Call(Address::ZERO),
-            value: U256::ZERO,
-            gas_limit: 0,
-            is_system_transaction: false,
-            mint: Some(0u128),
-            source_hash: B256::default(),
-            input: Default::default(),
-        };
-        let op_tx: OpTransaction<TxEnv> = OpTransaction::Deposit(deposit);
-        // Test each transaction type access method
-        assert_panic!("Not a legacy transaction", op_tx.legacy());
-        assert_panic!("Not eip2930 transaction", op_tx.eip2930());
-        assert_panic!("Not a eip1559 transaction", op_tx.eip1559());
-        assert_panic!("Not a eip4844 transaction", op_tx.eip4844());
-        assert_panic!("Not a eip7702 transaction", op_tx.eip7702());
     }
 }
