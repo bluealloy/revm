@@ -19,6 +19,8 @@ pub enum OpSpecId {
     ECOTONE,
     FJORD,
     GRANITE,
+    HOLOCENE,
+    ISTHMUS,
 }
 
 impl OpSpecId {
@@ -27,7 +29,9 @@ impl OpSpecId {
         match self {
             Self::BEDROCK | Self::REGOLITH => SpecId::MERGE,
             Self::CANYON => SpecId::SHANGHAI,
-            Self::ECOTONE | Self::FJORD | Self::GRANITE => SpecId::CANCUN,
+            Self::ECOTONE | Self::FJORD | Self::GRANITE | Self::HOLOCENE | Self::ISTHMUS => {
+                SpecId::CANCUN
+            }
         }
     }
 
@@ -73,6 +77,8 @@ impl From<OpSpecId> for &'static str {
             OpSpecId::ECOTONE => name::ECOTONE,
             OpSpecId::FJORD => name::FJORD,
             OpSpecId::GRANITE => name::GRANITE,
+            OpSpecId::HOLOCENE => name::HOLOCENE,
+            OpSpecId::ISTHMUS => name::ISTHMUS,
         }
     }
 }
@@ -85,6 +91,8 @@ pub mod name {
     pub const ECOTONE: &str = "Ecotone";
     pub const FJORD: &str = "Fjord";
     pub const GRANITE: &str = "Granite";
+    pub const HOLOCENE: &str = "Holocene";
+    pub const ISTHMUS: &str = "Isthmus";
 }
 
 impl OpSpec {
