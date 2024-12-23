@@ -119,7 +119,7 @@ macro_rules! resize_memory {
             $crate::gas::MemoryExtensionResult::OutOfGas => {
                 $interpreter
                     .control
-                    .set_instruction_result($crate::InstructionResult::OutOfGas);
+                    .set_instruction_result($crate::InstructionResult::MemoryOOG);
                 return $ret;
             }
             $crate::gas::MemoryExtensionResult::Same => (), // no action
