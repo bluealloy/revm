@@ -57,7 +57,7 @@ impl StackTrait for Stack {
         if self.len() < N {
             return None;
         }
-        // SAFETY: stack length is checked above.
+        // SAFETY: Stack length is checked above.
         Some(unsafe { self.popn::<N>() })
     }
 
@@ -66,7 +66,7 @@ impl StackTrait for Stack {
         if self.len() < POPN + 1 {
             return None;
         }
-        // SAFETY: stack length is checked above.
+        // SAFETY: Stack length is checked above.
         Some(unsafe { self.popn_top::<POPN>() })
     }
 
@@ -88,7 +88,7 @@ impl Stack {
     #[inline]
     pub fn new() -> Self {
         Self {
-            // SAFETY: expansion functions assume that capacity is `STACK_LIMIT`.
+            // SAFETY: Expansion functions assume that capacity is `STACK_LIMIT`.
             data: Vec::with_capacity(STACK_LIMIT),
         }
     }
@@ -228,7 +228,7 @@ impl Stack {
         if len < n || len + 1 > STACK_LIMIT {
             false
         } else {
-            // SAFETY: check for out of bounds is done above and it makes this safe to do.
+            // SAFETY: Check for out of bounds is done above and it makes this safe to do.
             unsafe {
                 let ptr = self.data.as_mut_ptr().add(len);
                 ptr::copy_nonoverlapping(ptr.sub(n), ptr, 1);
@@ -267,7 +267,7 @@ impl Stack {
         }
         // SAFETY: `n` and `n_m` are checked to be within bounds, and they don't overlap.
         unsafe {
-            // NOTE: `ptr::swap_nonoverlapping` is more efficient than `slice::swap` or `ptr::swap`
+            // Note: `ptr::swap_nonoverlapping` is more efficient than `slice::swap` or `ptr::swap`
             // because it operates under the assumption that the pointers do not overlap,
             // eliminating an intemediate copy,
             // which is a condition we know to be true in this context.
@@ -291,18 +291,18 @@ impl Stack {
             return Err(InstructionResult::StackOverflow);
         }
 
-        // SAFETY: length checked above.
+        // SAFETY: Length checked above.
         unsafe {
             let dst = self.data.as_mut_ptr().add(self.data.len()).cast::<u64>();
             self.data.set_len(new_len);
 
             let mut i = 0;
 
-            // write full words
+            // Write full words
             let words = slice.chunks_exact(32);
             let partial_last_word = words.remainder();
             for word in words {
-                // Note: we unroll `U256::from_be_bytes` here to write directly into the buffer,
+                // Note: We unroll `U256::from_be_bytes` here to write directly into the buffer,
                 // instead of creating a 32 byte array on the stack and then copying it over.
                 for l in word.rchunks_exact(8) {
                     dst.add(i).write(u64::from_be_bytes(l.try_into().unwrap()));
@@ -314,7 +314,7 @@ impl Stack {
                 return Ok(());
             }
 
-            // write limbs of partial last word
+            // Write limbs of partial last word
             let limbs = partial_last_word.rchunks_exact(8);
             let partial_last_limb = limbs.remainder();
             for l in limbs {
@@ -322,7 +322,7 @@ impl Stack {
                 i += 1;
             }
 
-            // write partial last limb by padding with zeros
+            // Write partial last limb by padding with zeros
             if !partial_last_limb.is_empty() {
                 let mut tmp = [0u8; 8];
                 tmp[8 - partial_last_limb.len()..].copy_from_slice(partial_last_limb);
@@ -332,7 +332,7 @@ impl Stack {
 
             debug_assert_eq!((i + 3) / 4, n_words, "wrote too much");
 
-            // zero out upper bytes of last word
+            // Zero out upper bytes of last word
             let m = i % 4; // 32 / 8
             if m != 0 {
                 dst.add(i).write_bytes(0, 4 - m);
@@ -382,7 +382,7 @@ mod tests {
 
     fn run(f: impl FnOnce(&mut Stack)) {
         let mut stack = Stack::new();
-        // fill capacity with non-zero values
+        // Fill capacity with non-zero values
         unsafe {
             stack.data.set_len(STACK_LIMIT);
             stack.data.fill(U256::MAX);
@@ -393,13 +393,13 @@ mod tests {
 
     #[test]
     fn push_slices() {
-        // no-op
+        // No-op
         run(|stack| {
             stack.push_slice(b"").unwrap();
             assert_eq!(stack.data, []);
         });
 
-        // one word
+        // One word
         run(|stack| {
             stack.push_slice(&[42]).unwrap();
             assert_eq!(stack.data, [U256::from(42)]);
@@ -411,7 +411,7 @@ mod tests {
             assert_eq!(stack.data, [U256::from(n)]);
         });
 
-        // more than one word
+        // More than one word
         run(|stack| {
             let b = [U256::from(n).to_be_bytes::<32>(); 2].concat();
             stack.push_slice(&b).unwrap();

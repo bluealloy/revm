@@ -296,16 +296,16 @@ pub const fn call_cost(spec_id: SpecId, transfers_value: bool, account_load: Acc
         40
     };
 
-    // transfer value cost
+    // Transfer value cost
     if transfers_value {
         gas += CALLVALUE;
     }
 
-    // new account cost
+    // New account cost
     if account_load.is_empty {
         // EIP-161: State trie clearing (invariant-preserving alternative)
         if spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
-            // account only if there is value transferred.
+            // Account only if there is value transferred.
             if transfers_value {
                 gas += NEWACCOUNT;
             }
@@ -361,7 +361,7 @@ pub fn validate_initial_tx_gas<AccessListT: AccessListTrait>(
     let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
     let non_zero_data_len = input.len() as u64 - zero_data_len;
 
-    // initdate stipend
+    // Initdate stipend
     initial_gas += zero_data_len * TRANSACTION_ZERO_DATA;
     // EIP-2028: Transaction data gas cost reduction
     initial_gas += non_zero_data_len
@@ -371,14 +371,14 @@ pub fn validate_initial_tx_gas<AccessListT: AccessListTrait>(
             68
         };
 
-    // get number of access list account and storages.
+    // Get number of access list account and storages.
     if let Some(access_list) = access_list {
         let (account_num, storage_num) = access_list.num_account_storages();
         initial_gas += account_num as u64 * ACCESS_LIST_ADDRESS;
         initial_gas += storage_num as u64 * ACCESS_LIST_STORAGE_KEY;
     }
 
-    // base stipend
+    // Base stipend
     initial_gas += if is_create {
         if spec_id.is_enabled_in(SpecId::HOMESTEAD) {
             // EIP-2: Homestead Hard-fork Changes

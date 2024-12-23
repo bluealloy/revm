@@ -83,18 +83,18 @@ where
     DB: Database,
     JOURNAL: Journal<Database = DB>,
 {
-    /// Return account code bytes and if address is cold loaded.
+    /// Returns account code bytes and if address is cold loaded.
     ///
     /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
     ///
-    /// TODO move this in Journaled state
+    // TODO : Move this in Journaled state
     #[inline]
     pub fn code(
         &mut self,
         address: Address,
     ) -> Result<Eip7702CodeLoad<Bytes>, <DB as Database>::Error> {
         let a = self.journaled_state.load_account_code(address)?;
-        // SAFETY: safe to unwrap as load_code will insert code if it is empty.
+        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = a.info.code.as_ref().unwrap();
         if code.is_eof() {
             return Ok(Eip7702CodeLoad::new_not_delegated(
@@ -109,7 +109,7 @@ where
 
             let delegated_account = self.journaled_state.load_account_code(address)?;
 
-            // SAFETY: safe to unwrap as load_code will insert code if it is empty.
+            // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
             let delegated_code = delegated_account.info.code.as_ref().unwrap();
 
             let bytes = if delegated_code.is_eof() {
@@ -145,7 +145,7 @@ where
         }
     }
 
-    /// Create a new context with a new database type.
+    /// Creates a new context with a new database type.
     pub fn with_db<ODB: Database>(
         self,
         db: ODB,
@@ -163,7 +163,7 @@ where
         }
     }
 
-    /// Create a new context with a new block type.
+    /// Creates a new context with a new block type.
     pub fn with_block<OB: Block>(self, block: OB) -> Context<OB, TX, CFG, DB, JOURNAL, CHAIN> {
         Context {
             tx: self.tx,
@@ -175,7 +175,7 @@ where
         }
     }
 
-    /// Create a new context with a new transaction type.
+    /// Creates a new context with a new transaction type.
     pub fn with_tx<OTX: Transaction>(
         self,
         tx: OTX,
@@ -190,7 +190,7 @@ where
         }
     }
 
-    /// Create a new context with a new chain type.
+    /// Creates a new context with a new chain type.
     pub fn with_chain<OC>(self, chain: OC) -> Context<BLOCK, TX, CFG, DB, JOURNAL, OC> {
         Context {
             tx: self.tx,
@@ -202,7 +202,7 @@ where
         }
     }
 
-    /// Create a new context with a new chain type.
+    /// Creates a new context with a new chain type.
     pub fn with_cfg<OCFG: Cfg>(
         mut self,
         cfg: OCFG,
@@ -218,7 +218,7 @@ where
         }
     }
 
-    /// Modify the context configuration.
+    /// Modifies the context configuration.
     #[must_use]
     pub fn modify_cfg_chained<F>(mut self, f: F) -> Self
     where
@@ -229,7 +229,7 @@ where
         self
     }
 
-    /// Modify the context block.
+    /// Modifies the context block.
     #[must_use]
     pub fn modify_block_chained<F>(mut self, f: F) -> Self
     where
@@ -239,7 +239,7 @@ where
         self
     }
 
-    /// Modify the context transaction.
+    /// Modifies the context transaction.
     #[must_use]
     pub fn modify_tx_chained<F>(mut self, f: F) -> Self
     where
@@ -249,7 +249,7 @@ where
         self
     }
 
-    /// Modify the context chain.
+    /// Modifies the context chain.
     #[must_use]
     pub fn modify_chain_chained<F>(mut self, f: F) -> Self
     where
@@ -259,7 +259,7 @@ where
         self
     }
 
-    /// Modify the context database.
+    /// Modifies the context database.
     #[must_use]
     pub fn modify_db_chained<F>(mut self, f: F) -> Self
     where
@@ -269,7 +269,7 @@ where
         self
     }
 
-    /// Modify the context journal.
+    /// Modifies the context journal.
     #[must_use]
     pub fn modify_journal_chained<F>(mut self, f: F) -> Self
     where
@@ -279,7 +279,7 @@ where
         self
     }
 
-    /// Modify the context block.
+    /// Modifies the context block.
     pub fn modify_block<F>(&mut self, f: F)
     where
         F: FnOnce(&mut BLOCK),
@@ -323,12 +323,12 @@ where
         f(&mut self.journaled_state);
     }
 
-    /// Get code hash of address.
+    /// Gets code hash of address.
     ///
     /// In case of EOF account it will return `EOF_MAGIC_HASH`
     /// (the hash of `0xEF00`).
     ///
-    /// TODO move this in Journaled state
+    // TODO : Move this in Journaled state
     #[inline]
     pub fn code_hash(
         &mut self,
@@ -338,7 +338,7 @@ where
         if acc.is_empty() {
             return Ok(Eip7702CodeLoad::new_not_delegated(B256::ZERO, acc.is_cold));
         }
-        // SAFETY: safe to unwrap as load_code will insert code if it is empty.
+        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = acc.info.code.as_ref().unwrap();
 
         // If bytecode is EIP-7702 then we need to load the delegated account.

@@ -16,12 +16,12 @@ use std::boxed::Box;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FrameInput {
-    /// CALL, CALLCODE, DELEGATECALL, STATICCALL
-    /// or EOF EXT*CALL instruction called.
+    /// `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL`
+    /// or EOF `EXTCALL`, `EXTDELEGATECALL`, `EXTSTATICCALL` instruction called.
     Call(Box<CallInputs>),
-    /// CREATE or CREATE2 instruction called.
+    /// `CREATE` or `CREATE2` instruction called.
     Create(Box<CreateInputs>),
-    /// EOF CREATE instruction called.
+    /// EOF `CREATE` instruction called.
     EOFCreate(Box<EOFCreateInputs>),
 }
 
@@ -44,32 +44,34 @@ pub enum InterpreterAction {
 }
 
 impl InterpreterAction {
-    /// Returns true if action is call.
+    /// Returns `true` if action is call.
     pub fn is_call(&self) -> bool {
         matches!(self, InterpreterAction::NewFrame(FrameInput::Call(..)))
     }
 
-    /// Returns true if action is create.
+    /// Returns `true` if action is create.
     pub fn is_create(&self) -> bool {
         matches!(self, InterpreterAction::NewFrame(FrameInput::Create(..)))
     }
 
-    /// Returns true if action is return.
+    /// Returns `true` if action is return.
     pub fn is_return(&self) -> bool {
         matches!(self, InterpreterAction::Return { .. })
     }
 
-    /// Returns true if action is none.
+    /// Returns `true` if action is none.
     pub fn is_none(&self) -> bool {
         matches!(self, InterpreterAction::None)
     }
 
-    /// Returns true if action is some.
+    /// Returns `true` if action is some.
     pub fn is_some(&self) -> bool {
         !self.is_none()
     }
 
-    /// Returns result if action is return.
+    /// Returns [`InterpreterResult`] if action is return.
+    ///
+    /// Else it returns [None].
     pub fn into_result_return(self) -> Option<InterpreterResult> {
         match self {
             InterpreterAction::Return { result } => Some(result),

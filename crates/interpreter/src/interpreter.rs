@@ -127,7 +127,7 @@ where
         }
     }
 
-    // TODO make impl a associate type. With this associate type we can implement
+    // TODO : Make impl a associate type. With this associate type we can implement.
     // InspectorInstructionProvider over generic type.
     fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256] {
         self.instruction_table.as_ref()
@@ -166,7 +166,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         // it will do noop and just stop execution of this contract
         self.bytecode.relative_jump(1);
 
-        // execute instruction.
+        // Execute instruction.
         instruction_table[opcode as usize].exec(self, host)
     }
 
@@ -182,7 +182,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.control
             .set_next_action(InterpreterAction::None, InstructionResult::Continue);
 
-        // main loop
+        // Main loop
         while self.control.instruction_result().is_continue() {
             self.step(instruction_table, host);
         }
@@ -196,7 +196,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         InterpreterAction::Return {
             result: InterpreterResult {
                 result: self.control.instruction_result(),
-                // return empty bytecode
+                // Return empty bytecode
                 output: Bytes::new(),
                 gas: *self.control.gas(),
             },

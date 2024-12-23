@@ -259,7 +259,7 @@ where
 
         if context.journal().depth() == 0 {
             self.print_summary(&outcome.result, context);
-            // clear the state if we are at the top level
+            // Clear the state if we are at the top level
             self.clear();
         }
     }
@@ -270,7 +270,7 @@ where
         if context.journal().depth() == 0 {
             self.print_summary(&outcome.result, context);
 
-            // clear the state if we are at the top level
+            // Clear the state if we are at the top level
             self.clear();
         }
     }

@@ -1,40 +1,41 @@
 use context_interface::block::{BlobExcessGasAndPrice, Block};
 use primitives::{Address, B256, U256};
 
-/// The block environment.
+/// The block environment
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlockEnv {
-    /// The number of ancestor blocks of this block (block height).
+    /// The number of ancestor blocks of this block (block height)
     pub number: U256,
-    /// Beneficiary (Coinbase or miner) is a address that have signed the block.
+    /// Beneficiary (Coinbase or miner) is a address that have signed the block
     ///
     /// This is the receiver address of all the gas spent in the block.
     pub beneficiary: Address,
 
-    /// The timestamp of the block in seconds since the UNIX epoch.
+    /// The timestamp of the block in seconds since the UNIX epoch
     pub timestamp: U256,
-    /// The gas limit of the block.
+    /// The gas limit of the block
     pub gas_limit: U256,
-    /// The base fee per gas, added in the London upgrade with [EIP-1559].
+    /// The base fee per gas, added in the London upgrade with [EIP-1559]
     ///
     /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
     pub basefee: U256,
-    /// The difficulty of the block.
+    /// The difficulty of the block
     ///
     /// Unused after the Paris (AKA the merge) upgrade, and replaced by `prevrandao`.
     pub difficulty: U256,
-    /// The output of the randomness beacon provided by the beacon chain.
+    /// The output of the randomness beacon provided by the beacon chain
     ///
     /// Replaces `difficulty` after the Paris (AKA the merge) upgrade with [EIP-4399].
     ///
-    /// NOTE: `prevrandao` can be found in a block in place of `mix_hash`.
+    /// Note: `prevrandao` can be found in a block in place of `mix_hash`.
     ///
     /// [EIP-4399]: https://eips.ethereum.org/EIPS/eip-4399
     pub prevrandao: Option<B256>,
-    /// Excess blob gas and blob gasprice.
-    /// See also [`context_interface::block::calc_excess_blob_gas`]
-    /// and [`context_interface::block::blob::calc_blob_gasprice`].
+    /// Excess blob gas and blob gasprice
+    ///
+    /// See also [`calc_excess_blob_gas`][context_interface::block::calc_excess_blob_gas]
+    /// and [`calc_blob_gasprice`][context_interface::block::blob::calc_blob_gasprice].
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///

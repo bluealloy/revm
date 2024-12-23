@@ -22,7 +22,7 @@ pub struct ResultAndState<HaltReasonT: HaltReasonTrait> {
     pub state: EvmState,
 }
 
-/// Result of a transaction execution.
+/// Result of a transaction execution
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExecutionResult<HaltReasonT: HaltReasonTrait> {
@@ -34,9 +34,9 @@ pub enum ExecutionResult<HaltReasonT: HaltReasonTrait> {
         logs: Vec<Log>,
         output: Output,
     },
-    /// Reverted by `REVERT` opcode that doesn't spend all gas.
+    /// Reverted by `REVERT` opcode that doesn't spend all gas
     Revert { gas_used: u64, output: Bytes },
-    /// Reverted for various reasons and spend all gas.
+    /// Reverted for various reasons and spend all gas
     Halt {
         reason: HaltReasonT,
         /// Halting will spend all the gas, and will be equal to gas_limit.
@@ -46,7 +46,9 @@ pub enum ExecutionResult<HaltReasonT: HaltReasonTrait> {
 
 impl<HaltReasonT: HaltReasonTrait> ExecutionResult<HaltReasonT> {
     /// Returns if transaction execution is successful.
+    ///
     /// 1 indicates success, 0 indicates revert.
+    ///
     /// <https://eips.ethereum.org/EIPS/eip-658>
     pub fn is_success(&self) -> bool {
         matches!(self, Self::Success { .. })
@@ -59,7 +61,7 @@ impl<HaltReasonT: HaltReasonTrait> ExecutionResult<HaltReasonT> {
 
     /// Returns the output data of the execution.
     ///
-    /// Returns `None` if the execution was halted.
+    /// Returns [`None`] if the execution was halted.
     pub fn output(&self) -> Option<&Bytes> {
         match self {
             Self::Success { output, .. } => Some(output.data()),
@@ -70,7 +72,7 @@ impl<HaltReasonT: HaltReasonTrait> ExecutionResult<HaltReasonT> {
 
     /// Consumes the type and returns the output data of the execution.
     ///
-    /// Returns `None` if the execution was halted.
+    /// Returns [`None`] if the execution was halted.
     pub fn into_output(self) -> Option<Bytes> {
         match self {
             Self::Success { output, .. } => Some(output.into_data()),
@@ -87,7 +89,7 @@ impl<HaltReasonT: HaltReasonTrait> ExecutionResult<HaltReasonT> {
         }
     }
 
-    /// Consumes `self` and returns the logs if execution is successful, or an empty list otherwise.
+    /// Consumes [`self`] and returns the logs if execution is successful, or an empty list otherwise.
     pub fn into_logs(self) -> Vec<Log> {
         match self {
             Self::Success { logs, .. } => logs,
@@ -105,7 +107,7 @@ impl<HaltReasonT: HaltReasonTrait> ExecutionResult<HaltReasonT> {
     }
 }
 
-/// Output of a transaction execution.
+/// Output of a transaction execution
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Output {
@@ -139,21 +141,21 @@ impl Output {
     }
 }
 
-/// Main EVM error.
+/// Main EVM error
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EVMError<DBError, TransactionError> {
-    /// Transaction validation error.
+    /// Transaction validation error
     Transaction(TransactionError),
-    /// Header validation error.
+    /// Header validation error
     Header(InvalidHeader),
-    /// Database error.
+    /// Database error
     Database(DBError),
-    /// Custom error.
+    /// Custom error
     ///
     /// Useful for handler registers where custom logic would want to return their own custom error.
     Custom(String),
-    /// Precompile error.
+    /// Precompile error
     Precompile(String),
 }
 
@@ -289,6 +291,7 @@ pub enum InvalidTransaction {
     /// There should be at least one blob in Blob transaction.
     EmptyBlobs,
     /// Blob transaction can't be a create transaction.
+    ///
     /// `to` must be present
     BlobCreateTransaction,
     /// Transaction has more then [`specification::eip4844::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
@@ -427,8 +430,9 @@ pub enum SuccessReason {
     EofReturnContract,
 }
 
-/// Indicates that the EVM has experienced an exceptional halt. This causes execution to
-/// immediately end with all gas being consumed.
+/// Indicates that the EVM has experienced an exceptional halt.
+///
+/// This causes execution to immediately end with all gas being consumed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum HaltReason {
@@ -457,7 +461,7 @@ pub enum HaltReason {
     OutOfFunds,
     CallTooDeep,
 
-    /// Aux data overflow, new aux data is larger than u16 max size.
+    /// Aux data overflow, new aux data is larger than [u16] max size.
     EofAuxDataOverflow,
     /// Aud data is smaller then already present data size.
     EofAuxDataTooSmall,

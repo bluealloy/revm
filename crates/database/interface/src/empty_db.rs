@@ -4,10 +4,10 @@ use primitives::{keccak256, Address, B256, U256};
 use state::{AccountInfo, Bytecode};
 use std::string::ToString;
 
-/// An empty database that always returns default values when queried.
+/// An empty database that always returns default values when queried
 pub type EmptyDB = EmptyDBTyped<Infallible>;
 
-/// An empty database that always returns default values when queried.
+/// An empty database that always returns default values when queried
 ///
 /// This is generic over a type which is used as the database error type.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

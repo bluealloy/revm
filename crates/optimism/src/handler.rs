@@ -70,7 +70,7 @@ where
         if tx_type == OpTransactionType::Deposit {
             let tx = context.op_tx().deposit();
             // Do not allow for a system transaction to be processed if Regolith is enabled.
-            // TODO check if this is correct.
+            // TODO : Check if this is correct.
             if tx.is_system_transaction() && context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH)
             {
                 return Err(OpTransactionError::DepositSystemTxPostRegolith.into());
@@ -109,13 +109,13 @@ where
     type Error = ERROR;
 
     fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        // the L1-cost fee is only computed for Optimism non-deposit transactions.
+        // The L1-cost fee is only computed for Optimism non-deposit transactions.
         let spec = context.cfg().spec();
         if context.tx().tx_type() != OpTransactionType::Deposit {
             let l1_block_info: crate::L1BlockInfo =
                 super::L1BlockInfo::try_fetch(context.db(), spec)?;
 
-            // storage l1 block info for later use.
+            // Storage L1 block info for later use.
             *context.l1_block_info_mut() = l1_block_info;
         }
 
@@ -152,7 +152,7 @@ where
         }
 
         // We deduct caller max balance after minting and before deducing the
-        // l1 cost, max values is already checked in pre_validate but l1 cost wasn't.
+        // L1 cost, max values is already checked in pre_validate but L1 cost wasn't.
         self.eth.deduct_caller(context)?;
 
         // If the transaction is not a deposit transaction, subtract the L1 data fee from the
@@ -335,7 +335,7 @@ where
 
         let is_deposit = context.tx().tx_type() == OpTransactionType::Deposit;
 
-        // transfer fee to coinbase/beneficiary.
+        // Transfer fee to coinbase/beneficiary.
         if !is_deposit {
             self.eth.reward_beneficiary(context, exec_result)?;
             let basefee = *context.block().basefee();

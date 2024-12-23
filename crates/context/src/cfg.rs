@@ -3,48 +3,70 @@ pub use context_interface::Cfg;
 use interpreter::MAX_CODE_SIZE;
 use specification::hardfork::SpecId;
 
-/// EVM configuration.
+/// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub struct CfgEnv<SPEC: Into<SpecId> = SpecId> {
-    /// Chain ID of the EVM, it will be compared to the transaction's Chain ID.
-    /// Chain ID is introduced EIP-155
+    /// Chain ID of the EVM
+    ///
+    /// `chain_id` will be compared to the transaction's Chain ID.
+    ///
+    /// Chain ID is introduced EIP-155.
     pub chain_id: u64,
-    /// Specification for EVM represent the hardfork.
+    /// Specification for EVM represent the hardfork
     pub spec: SPEC,
-    /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
-    /// By default it is 0x6000 (~25kb).
+    /// If some it will effects EIP-170: Contract code size limit.
+    ///
+    /// Useful to increase this because of tests.
+    ///
+    /// By default it is `0x6000` (~25kb).
     pub limit_contract_code_size: Option<usize>,
-    /// Skips the nonce validation against the account's nonce.
+    /// Skips the nonce validation against the account's nonce
     pub disable_nonce_check: bool,
-    /// A hard memory limit in bytes beyond which [context_interface::result::OutOfGasError::Memory] cannot be resized.
+    /// A hard memory limit in bytes beyond which
+    /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
     /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
-    /// a sane value to prevent memory allocation panics. Defaults to `2^32 - 1` bytes per
-    /// EIP-1985.
+    /// a sane value to prevent memory allocation panics.
+    ///
+    /// Defaults to `2^32 - 1` bytes per EIP-1985.
     #[cfg(feature = "memory_limit")]
     pub memory_limit: u64,
-    /// Skip balance checks if true. Adds transaction cost to balance to ensure execution doesn't fail.
+    /// Skip balance checks if `true`
+    ///
+    /// Adds transaction cost to balance to ensure execution doesn't fail.
+    ///
+    /// By default, it is set to `false`.
     #[cfg(feature = "optional_balance_check")]
     pub disable_balance_check: bool,
-    /// There are use cases where it's allowed to provide a gas limit that's higher than a block's gas limit. To that
-    /// end, you can disable the block gas limit validation.
+    /// There are use cases where it's allowed to provide a gas limit that's higher than a block's gas limit.
+    ///
+    /// To that end, you can disable the block gas limit validation.
+    ///
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_block_gas_limit")]
     pub disable_block_gas_limit: bool,
-    /// EIP-3607 rejects transactions from senders with deployed code. In development, it can be desirable to simulate
-    /// calls from contracts, which this setting allows.
+    /// EIP-3607 rejects transactions from senders with deployed code
+    ///
+    /// In development, it can be desirable to simulate calls from contracts, which this setting allows.
+    ///
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_eip3607")]
     pub disable_eip3607: bool,
-    /// Disables all gas refunds. This is useful when using chains that have gas refunds disabled e.g. Avalanche.
+    /// Disables all gas refunds
+    ///
+    /// This is useful when using chains that have gas refunds disabled, e.g. Avalanche.
+    ///
     /// Reasoning behind removing gas refunds can be found in EIP-3298.
+    ///
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_gas_refund")]
     pub disable_gas_refund: bool,
-    /// Disables base fee checks for EIP-1559 transactions.
+    /// Disables base fee checks for EIP-1559 transactions
+    ///
     /// This is useful for testing method calls with zero gas price.
+    ///
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_no_base_fee")]
     pub disable_base_fee: bool,

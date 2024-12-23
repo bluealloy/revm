@@ -483,7 +483,7 @@ where
     type Host = HOST;
 
     fn exec(&self, interpreter: &mut Interpreter<Self::Wire>, host: &mut Self::Host) {
-        // SAFETY: as the PC was already incremented we need to subtract 1 to preserve the
+        // SAFETY: As the PC was already incremented we need to subtract 1 to preserve the
         // old Inspector behavior.
         interpreter.bytecode.relative_jump(-1);
 
@@ -573,8 +573,7 @@ where
             >(table)
         };
 
-        // inspector log wrapper
-
+        // Inspector log wrapper
         fn inspector_log<CTX: Host + JournalExtGetter + InspectorCtx>(
             interpreter: &mut Interpreter<<CTX as InspectorCtx>::IT>,
             context: &mut CTX,
@@ -653,8 +652,7 @@ pub struct InspectorEthFrame<CTX, ERROR, PRECOMPILE>
 where
     CTX: Host,
 {
-    /// TODO for now hardcode the InstructionProvider. But in future this should be configurable
-    /// as generic parameter.
+    // TODO : For now, hardcode the InstructionProvider. But in future this should be configurable as generic parameter.
     pub eth_frame: EthFrame<
         CTX,
         ERROR,
@@ -722,7 +720,7 @@ where
             context.initialize_interp(&mut frame.eth_frame.interpreter);
         }
 
-        // TODO handle last frame_end. MAKE a separate function for `last_return_result`.
+        // TODO : Handle last frame_end. MAKE a separate function for `last_return_result`.
 
         ret
     }

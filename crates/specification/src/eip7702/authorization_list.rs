@@ -4,7 +4,7 @@ pub use alloy_primitives::{Parity, Signature};
 use core::fmt;
 use std::{boxed::Box, vec::Vec};
 
-/// Authorization list for EIP-7702 transaction type.
+/// Authorization list for EIP-7702 transaction type
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AuthorizationList {
@@ -39,7 +39,7 @@ impl AuthorizationList {
         }
     }
 
-    /// Return empty authorization list.
+    /// Returns empty authorization list.
     pub fn empty() -> Self {
         Self::Recovered(Vec::new())
     }

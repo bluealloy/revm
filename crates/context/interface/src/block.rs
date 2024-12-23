@@ -5,7 +5,7 @@ pub use blob::{calc_blob_gasprice, calc_excess_blob_gas, BlobExcessGasAndPrice};
 use auto_impl::auto_impl;
 use primitives::{Address, B256, U256};
 
-/// Trait for retrieving block information required for execution.\
+/// Trait for retrieving block information required for execution.
 #[auto_impl(&, &mut, Box, Arc)]
 pub trait Block {
     /// The number of ancestor blocks of this block (block height).
@@ -36,7 +36,7 @@ pub trait Block {
     ///
     /// Replaces `difficulty` after the Paris (AKA the merge) upgrade with [EIP-4399].
     ///
-    /// NOTE: `prevrandao` can be found in a block in place of `mix_hash`.
+    /// Note: `prevrandao` can be found in a block in place of `mix_hash`.
     ///
     /// [EIP-4399]: https://eips.ethereum.org/EIPS/eip-4399
     fn prevrandao(&self) -> Option<&B256>;

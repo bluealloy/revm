@@ -51,7 +51,7 @@ async fn main() -> anyhow::Result<()> {
     // Set up the HTTP transport which is consumed by the RPC client.
     let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
 
-    // create ethers client and wrap it in Arc<M>
+    // Create ethers client and wrap it in Arc<M>
     let client = ProviderBuilder::new().on_http(rpc_url);
 
     // Params

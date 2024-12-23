@@ -1,6 +1,6 @@
 use crate::FrameOrResultGen;
 
-/// Call frame trait.
+/// Call frame trait
 pub trait Frame: Sized {
     type Context;
     type FrameInit;

@@ -6,70 +6,70 @@ use tokio::runtime::{Handle, Runtime};
 
 use crate::{DBErrorMarker, Database, DatabaseRef};
 
-/// The async EVM database interface.
+/// The async EVM database interface
 ///
 /// Contains the same methods as [Database], but it returns [Future] type instead.
 ///
 /// Use [WrapDatabaseAsync] to provide [Database] implementation for a type that only implements this trait.
 pub trait DatabaseAsync {
-    /// The database error type.
+    /// The database error type
     type Error: Send + DBErrorMarker;
 
-    /// Get basic account information.
+    /// Gets basic account information.
     fn basic_async(
         &mut self,
         address: Address,
     ) -> impl Future<Output = Result<Option<AccountInfo>, Self::Error>> + Send;
 
-    /// Get account code by its hash.
+    /// Gets account code by its hash.
     fn code_by_hash_async(
         &mut self,
         code_hash: B256,
     ) -> impl Future<Output = Result<Bytecode, Self::Error>> + Send;
 
-    /// Get storage value of address at index.
+    /// Gets storage value of address at index.
     fn storage_async(
         &mut self,
         address: Address,
         index: U256,
     ) -> impl Future<Output = Result<U256, Self::Error>> + Send;
 
-    /// Get block hash by block number.
+    /// Gets block hash by block number.
     fn block_hash_async(
         &mut self,
         number: u64,
     ) -> impl Future<Output = Result<B256, Self::Error>> + Send;
 }
 
-/// The async EVM database interface.
+/// The async EVM database interface
 ///
 /// Contains the same methods as [DatabaseRef], but it returns [Future] type instead.
 ///
 /// Use [WrapDatabaseAsync] to provide [DatabaseRef] implementation for a type that only implements this trait.
 pub trait DatabaseAsyncRef {
-    /// The database error type.
+    /// The database error type
     type Error: Send + DBErrorMarker;
 
-    /// Get basic account information.
+    /// Gets basic account information.
     fn basic_async_ref(
         &self,
         address: Address,
     ) -> impl Future<Output = Result<Option<AccountInfo>, Self::Error>> + Send;
 
-    /// Get account code by its hash.
+    /// Gets account code by its hash.
     fn code_by_hash_async_ref(
         &self,
         code_hash: B256,
     ) -> impl Future<Output = Result<Bytecode, Self::Error>> + Send;
 
-    /// Get storage value of address at index.
+    /// Gets storage value of address at index.
     fn storage_async_ref(
         &self,
         address: Address,
         index: U256,
     ) -> impl Future<Output = Result<U256, Self::Error>> + Send;
 
-    /// Get block hash by block number.
+    /// Gets block hash by block number.
     fn block_hash_async_ref(
         &self,
         number: u64,
@@ -84,7 +84,7 @@ pub struct WrapDatabaseAsync<T> {
 }
 
 impl<T> WrapDatabaseAsync<T> {
-    /// Wrap a [DatabaseAsync] or [DatabaseAsyncRef] instance.
+    /// Wraps a [DatabaseAsync] or [DatabaseAsyncRef] instance.
     ///
     /// Returns `None` if no tokio runtime is available or if the current runtime is a current-thread runtime.
     pub fn new(db: T) -> Option<Self> {
@@ -98,20 +98,22 @@ impl<T> WrapDatabaseAsync<T> {
         Some(Self { db, rt })
     }
 
-    /// Wrap a [DatabaseAsync] or [DatabaseAsyncRef] instance, with a runtime.
+    /// Wraps a [DatabaseAsync] or [DatabaseAsyncRef] instance, with a runtime.
     ///
     /// Refer to [tokio::runtime::Builder] on how to create a runtime if you are in synchronous world.
-    /// If you are already using something like [tokio::main], call [WrapDatabaseAsync::new] instead.
+    ///
+    /// If you are already using something like [tokio::main], call [`WrapDatabaseAsync::new`] instead.
     pub fn with_runtime(db: T, runtime: Runtime) -> Self {
         let rt = HandleOrRuntime::Runtime(runtime);
         Self { db, rt }
     }
 
-    /// Wrap a [DatabaseAsync] or [DatabaseAsyncRef] instance, with a runtime handle.
+    /// Wraps a [DatabaseAsync] or [DatabaseAsyncRef] instance, with a runtime handle.
     ///
     /// This generally allows you to pass any valid runtime handle, refer to [tokio::runtime::Handle] on how
-    /// to obtain a handle. If you are already in asynchronous world, like [tokio::main], use [WrapDatabaseAsync::new]
-    /// instead.
+    /// to obtain a handle.
+    ///
+    /// If you are already in asynchronous world, like [tokio::main], use [`WrapDatabaseAsync::new`] instead.
     pub fn with_handle(db: T, handle: Handle) -> Self {
         let rt = HandleOrRuntime::Handle(handle);
         Self { db, rt }
