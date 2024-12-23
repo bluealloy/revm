@@ -21,8 +21,11 @@ pub type OpContext<DB> = Context<BlockEnv, OpTransaction<TxEnv>, CfgEnv<OpSpec>,
 /// Optimism EVM type.
 pub type OpEvm<DB> = Evm<OpError<DB>, OpContext<DB>, OpHandler<OpContext<DB>, OpError<DB>>>;
 
-pub type InspCtxType<INSP, DB> =
-    InspectorContext<INSP, BlockEnv, TxEnv, CfgEnv<OpSpec>, DB, JournaledState<DB>, L1BlockInfo>;
+pub type InspCtxType<INSP, DB> = InspectorContext<
+    INSP,
+    DB,
+    Context<BlockEnv, TxEnv, CfgEnv<OpSpec>, DB, JournaledState<DB>, L1BlockInfo>,
+>;
 
 pub type InspectorOpEvm<DB, INSP> = Evm<
     OpError<DB>,

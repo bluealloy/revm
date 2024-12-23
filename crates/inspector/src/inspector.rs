@@ -1,16 +1,14 @@
 use auto_impl::auto_impl;
 use core::mem::MaybeUninit;
-use derive_where::derive_where;
 use revm::{
     bytecode::opcode::OpCode,
-    context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv, Cfg, JournaledState},
+    context::JournaledState,
     context_interface::{
         block::BlockSetter,
         journaled_state::{AccountLoad, Eip7702CodeLoad},
-        result::EVMError,
         transaction::TransactionSetter,
         Block, BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalDBError,
-        JournalGetter, Transaction, TransactionGetter,
+        JournalGetter, TransactionGetter,
     },
     database_interface::{Database, EmptyDB},
     handler::{
@@ -29,7 +27,6 @@ use revm::{
     },
     precompile::PrecompileErrors,
     primitives::{Address, Bytes, Log, B256, U256},
-    specification::hardfork::SpecId,
     Context, Error, Evm, JournalEntry,
 };
 use std::{rc::Rc, vec::Vec};
@@ -189,32 +186,28 @@ impl<CTX, INTR: InterpreterTypes, INSP: Inspector<CTX, INTR>> GetInspector<CTX, 
 }
 
 /// EVM context contains data that EVM needs for execution.
-#[derive_where(Clone, Debug; INSP, BLOCK, CFG, CHAIN, TX, DB,JOURNAL, <DB as Database>::Error)]
-pub struct InspectorContext<
-    INSP,
-    BLOCK = BlockEnv,
-    TX = TxEnv,
-    CFG = CfgEnv<SpecId>,
-    DB: Database = EmptyDB,
-    JOURNAL: Journal<Database = DB> = JournaledState<DB>,
-    CHAIN = (),
-> {
-    pub inner: Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>,
+#[derive(Clone, Debug)]
+pub struct InspectorContext<INSP, DB, CTX>
+where
+    CTX: DatabaseGetter<Database = DB>,
+{
     pub inspector: INSP,
+    pub inner: CTX,
     pub frame_input_stack: Vec<FrameInput>,
 }
 
-impl<
-        INSP,
-        BLOCK: Block,
-        TX: Transaction,
-        CFG: Cfg,
-        DB: Database,
-        JOURNAL: Journal<Database = DB>,
-        CHAIN,
-    > InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<INSP, DB, CTX> InspectorContext<INSP, DB, CTX>
+where
+    CTX: BlockGetter
+        + TransactionGetter
+        + CfgGetter
+        + DatabaseGetter<Database = DB>
+        + JournalGetter
+        + ErrorGetter
+        + Host
+        + ErrorGetter,
 {
-    pub fn new(inner: Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, inspector: INSP) -> Self {
+    pub fn new(inner: CTX, inspector: INSP) -> Self {
         Self {
             inner,
             inspector,
@@ -223,30 +216,24 @@ impl<
     }
 }
 
-impl<
-        INSP: GetInspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
-        BLOCK: Block,
-        TX: Transaction,
-        CFG: Cfg,
-        DB: Database,
-        JOURNAL: Journal<Database = DB>,
-        CHAIN,
-    > Host for InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<INSP: GetInspector<CTX, EthInterpreter>, DB, CTX> Host for InspectorContext<INSP, DB, CTX>
+where
+    CTX: Host + DatabaseGetter<Database = DB>,
 {
-    type BLOCK = BLOCK;
-    type TX = TX;
-    type CFG = CFG;
+    type BLOCK = <CTX as Host>::BLOCK;
+    type TX = <CTX as Host>::TX;
+    type CFG = <CTX as Host>::CFG;
 
     fn tx(&self) -> &Self::TX {
-        &self.inner.tx
+        self.inner.tx()
     }
 
     fn block(&self) -> &Self::BLOCK {
-        &self.inner.block
+        self.inner.block()
     }
 
     fn cfg(&self) -> &Self::CFG {
-        &self.inner.cfg
+        self.inner.cfg()
     }
 
     fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
@@ -262,12 +249,11 @@ impl<
     }
 
     fn code(&mut self, address: Address) -> Option<Eip7702CodeLoad<Bytes>> {
-        // TODO remove duplicated function name.
-        <Context<_, _, _, _, _, _> as Host>::code(&mut self.inner, address)
+        self.inner.code(address)
     }
 
     fn code_hash(&mut self, address: Address) -> Option<Eip7702CodeLoad<B256>> {
-        <Context<_, _, _, _, _, _> as Host>::code_hash(&mut self.inner, address)
+        self.inner.code_hash(address)
     }
 
     fn sload(&mut self, address: Address, index: U256) -> Option<StateLoad<U256>> {
@@ -304,10 +290,10 @@ impl<
     }
 }
 
-impl<INSP, BLOCK, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> InspectorCtx
-    for InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<INSP, DB, CTX> InspectorCtx for InspectorContext<INSP, DB, CTX>
 where
-    INSP: GetInspector<Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>, EthInterpreter>,
+    INSP: GetInspector<CTX, EthInterpreter>,
+    CTX: DatabaseGetter<Database = DB>,
 {
     type IT = EthInterpreter<()>;
 
@@ -389,100 +375,104 @@ where
     }
 }
 
-impl<INSP, BLOCK, TX, CFG: Cfg, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> CfgGetter
-    for InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<INSP, DB, CTX> CfgGetter for InspectorContext<INSP, DB, CTX>
+where
+    CTX: CfgGetter + DatabaseGetter<Database = DB>,
 {
-    type Cfg = CFG;
+    type Cfg = <CTX as CfgGetter>::Cfg;
 
     fn cfg(&self) -> &Self::Cfg {
-        &self.inner.cfg
+        self.inner.cfg()
     }
 }
 
-impl<INSP, BLOCK, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> JournalGetter
-    for InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<INSP, DB, CTX> JournalGetter for InspectorContext<INSP, DB, CTX>
+where
+    CTX: JournalGetter + DatabaseGetter<Database = DB>,
+    DB: Database,
 {
-    type Journal = JOURNAL;
+    type Journal = <CTX as JournalGetter>::Journal;
 
     fn journal(&mut self) -> &mut Self::Journal {
-        &mut self.inner.journaled_state
+        self.inner.journal()
     }
 
     fn journal_ref(&self) -> &Self::Journal {
-        &self.inner.journaled_state
+        self.inner.journal_ref()
     }
 }
 
-impl<INSP, BLOCK, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> DatabaseGetter
-    for InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<INSP, DB, CTX> DatabaseGetter for InspectorContext<INSP, DB, CTX>
+where
+    CTX: DatabaseGetter<Database = DB>,
+    DB: Database,
 {
-    type Database = DB;
+    type Database = <CTX as DatabaseGetter>::Database;
 
     fn db(&mut self) -> &mut Self::Database {
-        self.inner.journaled_state.db_mut()
+        self.inner.db()
     }
 }
 
-impl<INSP, BLOCK, TX: Transaction, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN>
-    ErrorGetter for InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<INSP, DB, CTX> ErrorGetter for InspectorContext<INSP, DB, CTX>
+where
+    CTX: ErrorGetter + DatabaseGetter<Database = DB>,
 {
-    type Error = EVMError<DB::Error, TX::TransactionError>;
+    type Error = <CTX as ErrorGetter>::Error;
 
     fn take_error(&mut self) -> Result<(), Self::Error> {
-        core::mem::replace(&mut self.inner.error, Ok(())).map_err(EVMError::Database)
+        self.inner.take_error()
     }
 }
 
-impl<INSP, BLOCK, TX: Transaction, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN>
-    TransactionGetter for InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<INSP, DB, CTX> TransactionGetter for InspectorContext<INSP, DB, CTX>
+where
+    CTX: TransactionGetter + DatabaseGetter<Database = DB>,
 {
-    type Transaction = TX;
+    type Transaction = <CTX as TransactionGetter>::Transaction;
 
     fn tx(&self) -> &Self::Transaction {
-        &self.inner.tx
+        self.inner.tx()
     }
 }
 
-impl<INSP, BLOCK, TX: Transaction, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN>
-    TransactionSetter for InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<INSP, DB, CTX> TransactionSetter for InspectorContext<INSP, DB, CTX>
+where
+    CTX: TransactionSetter + DatabaseGetter<Database = DB>,
 {
     fn set_tx(&mut self, tx: <Self as TransactionGetter>::Transaction) {
-        self.inner.tx = tx;
+        self.inner.set_tx(tx);
     }
 }
 
-impl<INSP, BLOCK: Block, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> BlockGetter
-    for InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<INSP, DB, CTX> BlockGetter for InspectorContext<INSP, DB, CTX>
+where
+    CTX: BlockGetter + DatabaseGetter<Database = DB>,
 {
-    type Block = BLOCK;
+    type Block = <CTX as BlockGetter>::Block;
 
     fn block(&self) -> &Self::Block {
-        &self.inner.block
+        self.inner.block()
     }
 }
 
-impl<INSP, BLOCK: Block, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> BlockSetter
-    for InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<INSP, DB, CTX> BlockSetter for InspectorContext<INSP, DB, CTX>
+where
+    CTX: BlockSetter + DatabaseGetter<Database = DB>,
 {
     fn set_block(&mut self, block: <Self as BlockGetter>::Block) {
-        self.inner.block = block;
+        self.inner.set_block(block);
     }
 }
 
-impl<
-        INSP,
-        BLOCK: Block,
-        TX,
-        CFG,
-        DB: Database,
-        JOURNAL: Journal<Database = DB> + JournalExt,
-        CHAIN,
-    > JournalExtGetter for InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+impl<INSP, DB, CTX> JournalExtGetter for InspectorContext<INSP, DB, CTX>
+where
+    CTX: JournalExtGetter + DatabaseGetter<Database = DB>,
 {
-    type JournalExt = JOURNAL;
+    type JournalExt = <CTX as JournalExtGetter>::JournalExt;
 
     fn journal_ext(&self) -> &Self::JournalExt {
-        &self.inner.journaled_state
+        self.inner.journal_ext()
     }
 }
 
@@ -770,31 +760,17 @@ where
     }
 }
 
-pub type InspCtxType<
-    INSP,
-    DB,
-    BLOCK = BlockEnv,
-    TX = TxEnv,
-    CFG = CfgEnv,
-    JOURNAL = JournaledState<DB>,
-> = InspectorContext<INSP, BLOCK, TX, CFG, DB, JOURNAL, ()>;
+pub type InspCtxType<INSP, DB, CTX> = InspectorContext<INSP, DB, CTX>;
 
-pub type InspectorMainEvm<
-    DB,
-    INSP,
-    BLOCK = BlockEnv,
-    TX = TxEnv,
-    CFG = CfgEnv,
-    JOURNAL = JournaledState<DB>,
-> = Evm<
+pub type InspectorMainEvm<INSP, CTX, DB = EmptyDB> = Evm<
     Error<DB>,
-    InspCtxType<INSP, DB, BLOCK, TX, CFG, JOURNAL>,
+    InspCtxType<INSP, DB, CTX>,
     EthHandler<
-        InspCtxType<INSP, DB, BLOCK, TX, CFG, JOURNAL>,
+        InspCtxType<INSP, DB, CTX>,
         Error<DB>,
-        EthValidation<InspCtxType<INSP, DB, BLOCK, TX, CFG, JOURNAL>, Error<DB>>,
-        EthPreExecution<InspCtxType<INSP, DB, BLOCK, TX, CFG, JOURNAL>, Error<DB>>,
-        InspectorEthExecution<InspCtxType<INSP, DB, BLOCK, TX, CFG, JOURNAL>, Error<DB>>,
+        EthValidation<InspCtxType<INSP, DB, CTX>, Error<DB>>,
+        EthPreExecution<InspCtxType<INSP, DB, CTX>, Error<DB>>,
+        InspectorEthExecution<InspCtxType<INSP, DB, CTX>, Error<DB>>,
     >,
 >;
 
