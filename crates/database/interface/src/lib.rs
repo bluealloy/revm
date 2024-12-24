@@ -130,4 +130,6 @@ pub trait DatabaseGetter {
     type Database: Database;
 
     fn db(&mut self) -> &mut Self::Database;
+
+    fn db_ref(&self) -> &Self::Database;
 }

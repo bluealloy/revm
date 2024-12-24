@@ -27,6 +27,7 @@ use revm::{
     },
     precompile::PrecompileErrors,
     primitives::{Address, Bytes, Log, B256, U256},
+    state::EvmState,
     Context, Error, Evm, JournalEntry,
 };
 use std::{rc::Rc, vec::Vec};
@@ -396,6 +397,10 @@ where
     fn db(&mut self) -> &mut Self::Database {
         self.inner.db()
     }
+
+    fn db_ref(&self) -> &Self::Database {
+        self.inner.db_ref()
+    }
 }
 
 impl<INSP, DB, CTX> ErrorGetter for InspectorContext<INSP, DB, CTX>
@@ -527,6 +532,10 @@ pub trait JournalExt {
     fn logs(&self) -> &[Log];
 
     fn last_journal(&self) -> &[JournalEntry];
+
+    fn evm_state(&self) -> &EvmState;
+
+    fn evm_state_mut(&mut self) -> &mut EvmState;
 }
 
 impl<DB: Database> JournalExt for JournaledState<DB> {
@@ -536,6 +545,14 @@ impl<DB: Database> JournalExt for JournaledState<DB> {
 
     fn last_journal(&self) -> &[JournalEntry] {
         self.journal.last().expect("Journal is never empty")
+    }
+
+    fn evm_state(&self) -> &EvmState {
+        &self.state
+    }
+
+    fn evm_state_mut(&mut self) -> &mut EvmState {
+        &mut self.state
     }
 }
 

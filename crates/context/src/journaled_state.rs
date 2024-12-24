@@ -63,11 +63,11 @@ impl<DB: Database> Journal for JournaledState<DB> {
         Self::new(SpecId::LATEST, database)
     }
 
-    fn db(&self) -> &Self::Database {
+    fn db_ref(&self) -> &Self::Database {
         &self.database
     }
 
-    fn db_mut(&mut self) -> &mut Self::Database {
+    fn db(&mut self) -> &mut Self::Database {
         &mut self.database
     }
 
