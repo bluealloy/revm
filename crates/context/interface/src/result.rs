@@ -54,6 +54,15 @@ impl<HaltReasonT: HaltReasonTrait> ExecutionResult<HaltReasonT> {
         matches!(self, Self::Success { .. })
     }
 
+    /// Returns created address if execution is Create transaction
+    /// and Contract was created.
+    pub fn created_address(&self) -> Option<Address> {
+        match self {
+            Self::Success { output, .. } => output.address().cloned(),
+            _ => None,
+        }
+    }
+
     /// Returns true if execution result is a Halt.
     pub fn is_halt(&self) -> bool {
         matches!(self, Self::Halt { .. })
