@@ -28,6 +28,7 @@ pub trait DBErrorMarker {}
 /// Implement marker for `()`.
 impl DBErrorMarker for () {}
 impl DBErrorMarker for Infallible {}
+impl DBErrorMarker for String {}
 
 /// EVM database interface.
 #[auto_impl(&mut, Box)]

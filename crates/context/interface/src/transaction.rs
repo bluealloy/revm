@@ -20,6 +20,7 @@ use auto_impl::auto_impl;
 use core::cmp::min;
 use core::fmt::Debug;
 use primitives::{TxKind, U256};
+use std::boxed::Box;
 
 /// Transaction validity error types.
 pub trait TransactionError: Debug + core::error::Error {}
