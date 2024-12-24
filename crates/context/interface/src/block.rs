@@ -4,6 +4,7 @@ pub use blob::{calc_blob_gasprice, calc_excess_blob_gas, BlobExcessGasAndPrice};
 
 use auto_impl::auto_impl;
 use primitives::{Address, B256, U256};
+use std::boxed::Box;
 
 /// Trait for retrieving block information required for execution.
 #[auto_impl(&, &mut, Box, Arc)]
