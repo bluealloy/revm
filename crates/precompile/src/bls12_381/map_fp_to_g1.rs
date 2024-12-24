@@ -11,7 +11,7 @@ pub const PRECOMPILE: PrecompileWithAddress =
     PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(map_fp_to_g1));
 
 /// BLS12_MAP_FP_TO_G1 precompile address.
-pub const ADDRESS: u64 = 0x12;
+pub const ADDRESS: u64 = 0x0f;
 
 /// Base gas fee for BLS12-381 map_fp_to_g1 operation.
 const MAP_FP_TO_G1_BASE: u64 = 5500;

@@ -3,11 +3,9 @@ use crate::PrecompileWithAddress;
 mod g1;
 pub mod g1_add;
 pub mod g1_msm;
-pub mod g1_mul;
 mod g2;
 pub mod g2_add;
 pub mod g2_msm;
-pub mod g2_mul;
 pub mod map_fp2_to_g2;
 pub mod map_fp_to_g1;
 mod msm;
@@ -18,10 +16,8 @@ mod utils;
 pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
     [
         g1_add::PRECOMPILE,
-        g1_mul::PRECOMPILE,
         g1_msm::PRECOMPILE,
         g2_add::PRECOMPILE,
-        g2_mul::PRECOMPILE,
         g2_msm::PRECOMPILE,
         pairing::PRECOMPILE,
         map_fp_to_g1::PRECOMPILE,
@@ -34,10 +30,8 @@ pub fn precompiles() -> impl Iterator<Item = PrecompileWithAddress> {
 mod test {
     use super::g1_add;
     use super::g1_msm;
-    use super::g1_mul;
     use super::g2_add;
     use super::g2_msm;
-    use super::g2_mul;
     use super::map_fp2_to_g2;
     use super::map_fp_to_g1;
     use super::msm::msm_required_gas;
@@ -69,19 +63,15 @@ mod test {
 
     #[rstest]
     #[case::fail_g1_add(g1_add::g1_add, "fail-add_G1_bls.json")]
-    #[case::fail_g1_mul(g1_mul::g1_mul, "fail-mul_G1_bls.json")]
     #[case::fail_g1_msm(g1_msm::g1_msm, "fail-multiexp_G1_bls.json")]
     #[case::fail_g2_add(g2_add::g2_add, "fail-add_G2_bls.json")]
-    #[case::fail_g2_mul(g2_mul::g2_mul, "fail-mul_G2_bls.json")]
     #[case::fail_g2_msm(g2_msm::g2_msm, "fail-multiexp_G2_bls.json")]
     #[case::fail_pairing(pairing::pairing, "fail-pairing_check_bls.json")]
     #[case::fail_map_fp_to_g1(map_fp_to_g1::map_fp_to_g1, "fail-map_fp_to_G1_bls.json")]
     #[case::fail_map_fp2_to_g2(map_fp2_to_g2::map_fp2_to_g2, "fail-map_fp2_to_G2_bls.json")]
     #[case::g1_add(g1_add::g1_add, "add_G1_bls.json")]
-    #[case::g1_mul(g1_mul::g1_mul, "mul_G1_bls.json")]
     #[case::g1_msm(g1_msm::g1_msm, "multiexp_G1_bls.json")]
     #[case::g2_add(g2_add::g2_add, "add_G2_bls.json")]
-    #[case::g2_mul(g2_mul::g2_mul, "mul_G2_bls.json")]
     #[case::g2_msm(g2_msm::g2_msm, "multiexp_G2_bls.json")]
     #[case::pairing(pairing::pairing, "pairing_check_bls.json")]
     #[case::map_fp_to_g1(map_fp_to_g1::map_fp_to_g1, "map_fp_to_G1_bls.json")]
@@ -131,20 +121,20 @@ mod test {
     }
 
     #[rstest]
-    #[case::g1_empty(0, g1_mul::BASE_GAS_FEE, 0)]
-    #[case::g1_one_item(160, g1_mul::BASE_GAS_FEE, 14400)]
-    #[case::g1_two_items(320, g1_mul::BASE_GAS_FEE, 21312)]
-    #[case::g1_ten_items(1600, g1_mul::BASE_GAS_FEE, 50760)]
-    #[case::g1_sixty_four_items(10240, g1_mul::BASE_GAS_FEE, 170496)]
-    #[case::g1_one_hundred_twenty_eight_items(20480, g1_mul::BASE_GAS_FEE, 267264)]
-    #[case::g1_one_hundred_twenty_nine_items(20640, g1_mul::BASE_GAS_FEE, 269352)]
-    #[case::g1_two_hundred_fifty_six_items(40960, g1_mul::BASE_GAS_FEE, 534528)]
+    #[case::g1_empty(0, g1_msm::BASE_GAS_FEE, 0)]
+    #[case::g1_one_item(160, g1_msm::BASE_GAS_FEE, 14400)]
+    #[case::g1_two_items(320, g1_msm::BASE_GAS_FEE, 21312)]
+    #[case::g1_ten_items(1600, g1_msm::BASE_GAS_FEE, 50760)]
+    #[case::g1_sixty_four_items(10240, g1_msm::BASE_GAS_FEE, 170496)]
+    #[case::g1_one_hundred_twenty_eight_items(20480, g1_msm::BASE_GAS_FEE, 267264)]
+    #[case::g1_one_hundred_twenty_nine_items(20640, g1_msm::BASE_GAS_FEE, 269352)]
+    #[case::g1_two_hundred_fifty_six_items(40960, g1_msm::BASE_GAS_FEE, 534528)]
     fn test_g1_msm_required_gas(
         #[case] input_len: usize,
         #[case] multiplication_cost: u64,
         #[case] expected_output: u64,
     ) {
-        let k = input_len / g1_mul::INPUT_LENGTH;
+        let k = input_len / g1_msm::INPUT_LENGTH;
 
         let actual_output = msm_required_gas(k, multiplication_cost);
 

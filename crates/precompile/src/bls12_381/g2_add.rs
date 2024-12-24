@@ -9,7 +9,7 @@ use revm_primitives::{Bytes, Precompile, PrecompileError, PrecompileOutput, Prec
 pub const PRECOMPILE: PrecompileWithAddress =
     PrecompileWithAddress(u64_to_address(ADDRESS), Precompile::Standard(g2_add));
 /// BLS12_G2ADD precompile address.
-pub const ADDRESS: u64 = 0x0e;
+pub const ADDRESS: u64 = 0x0c;
 /// Base gas fee for BLS12-381 g2_add operation.
 const BASE_GAS_FEE: u64 = 800;
 
