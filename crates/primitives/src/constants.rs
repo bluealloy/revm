@@ -17,7 +17,7 @@ pub const BLOCKHASH_SERVE_WINDOW: usize = 8192;
 ///
 /// # Note
 /// This is named `HISTORY_STORAGE_ADDRESS` in the EIP.
-pub const BLOCKHASH_STORAGE_ADDRESS: Address = address!("25a219378dad9b3503c8268c9ca836a52427a4fb");
+pub const BLOCKHASH_STORAGE_ADDRESS: Address = address!("0F792be4B0c0cb4DAE440Ef133E90C0eCD48CCCC");
 
 /// The address of precompile 3, which is handled specially in a few places
 pub const PRECOMPILE3: Address =
