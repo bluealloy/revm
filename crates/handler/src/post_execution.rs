@@ -1,8 +1,8 @@
 use context_interface::{
     journaled_state::Journal,
     result::{ExecutionResult, HaltReasonTrait, ResultAndState},
-    Block, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
-    Transaction, TransactionGetter,
+    Block, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalDBError, JournalGetter, Transaction,
+    TransactionGetter,
 };
 use handler_interface::PostExecutionHandler;
 use interpreter::SuccessOrHalt;
@@ -170,7 +170,7 @@ pub trait EthPostExecutionContext<ERROR>:
     TransactionGetter
     + ErrorGetter<Error = ERROR>
     + BlockGetter
-    + JournalStateGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
+    + JournalGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
     + CfgGetter
 {
 }
@@ -180,18 +180,12 @@ impl<
         CTX: TransactionGetter
             + ErrorGetter<Error = ERROR>
             + BlockGetter
-            + JournalStateGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
+            + JournalGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
             + CfgGetter,
     > EthPostExecutionContext<ERROR> for CTX
 {
 }
 
-pub trait EthPostExecutionError<CTX: JournalStateGetter>:
-    From<JournalStateGetterDBError<CTX>>
-{
-}
+pub trait EthPostExecutionError<CTX: JournalGetter>: From<JournalDBError<CTX>> {}
 
-impl<CTX: JournalStateGetter, ERROR: From<JournalStateGetterDBError<CTX>>>
-    EthPostExecutionError<CTX> for ERROR
-{
-}
+impl<CTX: JournalGetter, ERROR: From<JournalDBError<CTX>>> EthPostExecutionError<CTX> for ERROR {}

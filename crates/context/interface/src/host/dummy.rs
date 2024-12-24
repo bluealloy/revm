@@ -1,5 +1,5 @@
 use super::{Host, SStoreResult, SelfDestructResult};
-use crate::{Block, Cfg, Transaction};
+use crate::{Block, BlockGetter, Cfg, CfgGetter, Transaction, TransactionGetter};
 use primitives::{hash_map::Entry, Address, Bytes, HashMap, Log, B256, KECCAK_EMPTY, U256};
 use std::vec::Vec;
 
@@ -48,26 +48,31 @@ where
     }
 }
 
-impl<TX: Transaction, BLOCK: Block, CFG: Cfg> Host for DummyHost<BLOCK, TX, CFG> {
-    type TX = TX;
-    type BLOCK = BLOCK;
-    type CFG = CFG;
+impl<BLOCK: Block, TX: Transaction, CFG: Cfg> BlockGetter for DummyHost<BLOCK, TX, CFG> {
+    type Block = BLOCK;
 
-    #[inline]
-    fn tx(&self) -> &Self::TX {
-        &self.tx
-    }
-
-    #[inline]
-    fn block(&self) -> &Self::BLOCK {
+    fn block(&self) -> &Self::Block {
         &self.block
     }
+}
 
-    #[inline]
-    fn cfg(&self) -> &Self::CFG {
+impl<BLOCK: Block, TX: Transaction, CFG: Cfg> TransactionGetter for DummyHost<BLOCK, TX, CFG> {
+    type Transaction = TX;
+
+    fn tx(&self) -> &Self::Transaction {
+        &self.tx
+    }
+}
+
+impl<BLOCK: Block, TX: Transaction, CFG: Cfg> CfgGetter for DummyHost<BLOCK, TX, CFG> {
+    type Cfg = CFG;
+
+    fn cfg(&self) -> &Self::Cfg {
         &self.cfg
     }
+}
 
+impl<TX: Transaction, BLOCK: Block, CFG: Cfg> Host for DummyHost<BLOCK, TX, CFG> {
     #[inline]
     fn load_account_delegated(&mut self, _address: Address) -> Option<AccountLoad> {
         Some(AccountLoad::default())

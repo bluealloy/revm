@@ -5,28 +5,16 @@ pub use dummy::DummyHost;
 
 use crate::{
     journaled_state::{AccountLoad, Eip7702CodeLoad},
-    Block, Cfg, Transaction,
+    BlockGetter, CfgGetter, TransactionGetter,
 };
+use auto_impl::auto_impl;
 use primitives::{Address, Bytes, Log, B256, U256};
 
 /// EVM context host.
 // TODO : Move to context-interface
-pub trait Host {
-    /// Chain specification
-    type BLOCK: Block;
-    type TX: Transaction;
-    type CFG: Cfg;
-
-    /// Returns a reference to the environment.
-    fn tx(&self) -> &Self::TX;
-
-    /// Returns a mutable reference to the environment.
-    fn block(&self) -> &Self::BLOCK;
-
-    // TODO : Make it generic in future
-    fn cfg(&self) -> &Self::CFG;
-
-    /// Loads an account code.
+#[auto_impl(&mut, Box)]
+pub trait Host: TransactionGetter + BlockGetter + CfgGetter {
+    /// Load an account code.
     fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad>;
 
     /// Gets the block hash of the given block `number`.

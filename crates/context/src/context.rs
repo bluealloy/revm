@@ -5,7 +5,7 @@ use context_interface::{
     journaled_state::{AccountLoad, Eip7702CodeLoad},
     result::EVMError,
     transaction::TransactionSetter,
-    Block, BlockGetter, Cfg, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalStateGetter,
+    Block, BlockGetter, Cfg, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalGetter,
     Transaction, TransactionGetter,
 };
 use database_interface::{Database, EmptyDB};
@@ -24,17 +24,17 @@ pub struct Context<
     JOURNAL: Journal<Database = DB> = JournaledState<DB>,
     CHAIN = (),
 > {
-    /// Transaction information
-    pub tx: TX,
-    /// Block information
+    /// Block information.
     pub block: BLOCK,
-    /// Configurations
+    /// Transaction information.
+    pub tx: TX,
+    /// Configurations.
     pub cfg: CFG,
-    /// EVM State with journaling support and database
+    /// EVM State with journaling support and database.
     pub journaled_state: JOURNAL,
-    /// Inner context
+    /// Inner context.
     pub chain: CHAIN,
-    /// Error that happened during execution
+    /// Error that happened during execution.
     pub error: Result<(), <DB as Database>::Error>,
 }
 
@@ -380,22 +380,6 @@ where
     DB: Database,
     JOURNAL: Journal<Database = DB>,
 {
-    type BLOCK = BLOCK;
-    type TX = TX;
-    type CFG = CFG;
-
-    fn tx(&self) -> &Self::TX {
-        &self.tx
-    }
-
-    fn block(&self) -> &Self::BLOCK {
-        &self.block
-    }
-
-    fn cfg(&self) -> &Self::CFG {
-        &self.cfg
-    }
-
     fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
         let block_number = as_u64_saturated!(*self.block().number());
 
@@ -498,7 +482,7 @@ impl<BLOCK, TX, CFG: Cfg, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> 
     }
 }
 
-impl<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN> JournalStateGetter
+impl<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN> JournalGetter
     for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
 where
     DB: Database,
@@ -508,6 +492,10 @@ where
 
     fn journal(&mut self) -> &mut Self::Journal {
         &mut self.journaled_state
+    }
+
+    fn journal_ref(&self) -> &Self::Journal {
+        &self.journaled_state
     }
 }
 

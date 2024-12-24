@@ -10,6 +10,7 @@ use core::convert::Infallible;
 use auto_impl::auto_impl;
 use primitives::{Address, HashMap, B256, U256};
 use state::{Account, AccountInfo, Bytecode};
+use std::string::String;
 
 #[cfg(feature = "asyncdb")]
 pub mod async_db;
@@ -28,6 +29,7 @@ pub trait DBErrorMarker {}
 /// Implement marker for `()`.
 impl DBErrorMarker for () {}
 impl DBErrorMarker for Infallible {}
+impl DBErrorMarker for String {}
 
 /// EVM database interface.
 #[auto_impl(&mut, Box)]

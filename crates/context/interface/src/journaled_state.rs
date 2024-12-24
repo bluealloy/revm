@@ -286,28 +286,38 @@ impl<T> Eip7702CodeLoad<T> {
     }
 }
 
-/// Helper that extracts database error from [`JournalStateGetter`]
-pub type JournalStateGetterDBError<CTX> =
-    <<<CTX as JournalStateGetter>::Journal as Journal>::Database as Database>::Error;
+/// Helper that extracts database error from [`JournalGetter`].
+pub type JournalDBError<CTX> =
+    <<<CTX as JournalGetter>::Journal as Journal>::Database as Database>::Error;
 
-pub trait JournalStateGetter: DatabaseGetter {
+pub trait JournalGetter: DatabaseGetter {
     type Journal: Journal<Database = <Self as DatabaseGetter>::Database>;
 
     fn journal(&mut self) -> &mut Self::Journal;
+
+    fn journal_ref(&self) -> &Self::Journal;
 }
 
-impl<T: JournalStateGetter> JournalStateGetter for &mut T {
+impl<T: JournalGetter> JournalGetter for &mut T {
     type Journal = T::Journal;
 
     fn journal(&mut self) -> &mut Self::Journal {
         T::journal(*self)
     }
+
+    fn journal_ref(&self) -> &Self::Journal {
+        T::journal_ref(*self)
+    }
 }
 
-impl<T: JournalStateGetter> JournalStateGetter for Box<T> {
+impl<T: JournalGetter> JournalGetter for Box<T> {
     type Journal = T::Journal;
 
     fn journal(&mut self) -> &mut Self::Journal {
         T::journal(self.as_mut())
+    }
+
+    fn journal_ref(&self) -> &Self::Journal {
+        T::journal_ref(self.as_ref())
     }
 }
