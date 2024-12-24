@@ -181,3 +181,44 @@ impl<T: Transaction> OpTxTrait for OpTransaction<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use revm::primitives::{Address, B256, U256};
+
+    #[test]
+    fn test_deposit_transaction_type_conversion() {
+        let deposit_tx = OpTransactionType::Deposit;
+        let tx_type: TransactionType = deposit_tx.into();
+        assert_eq!(tx_type, TransactionType::Custom);
+
+        // Also test base transaction conversion
+        let base_tx = OpTransactionType::Base(TransactionType::Legacy);
+        let tx_type: TransactionType = base_tx.into();
+        assert_eq!(tx_type, TransactionType::Legacy);
+    }
+
+    #[test]
+    fn test_deposit_transaction_fields() {
+        let deposit = TxDeposit {
+            from: Address::ZERO,
+            to: revm::primitives::TxKind::Call(Address::ZERO),
+            value: U256::ZERO,
+            gas_limit: 0,
+            is_system_transaction: false,
+            mint: Some(0u128),
+            source_hash: B256::default(),
+            input: Default::default(),
+        };
+        let op_tx: OpTransaction<TxEnv> = OpTransaction::Deposit(deposit);
+        // Verify transaction type
+        assert_eq!(op_tx.tx_type(), OpTransactionType::Deposit);
+        // Verify common fields access
+        assert_eq!(op_tx.common_fields().gas_limit(), 0);
+        assert_eq!(op_tx.kind(), revm::primitives::TxKind::Call(Address::ZERO));
+        // Verify gas related calculations
+        assert_eq!(op_tx.effective_gas_price(U256::from(100)), U256::from(100));
+        assert_eq!(op_tx.max_fee(), 0);
+    }
+}
