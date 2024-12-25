@@ -1,6 +1,6 @@
 use core::ops::{Deref, DerefMut};
 use database_interface::{Database, DatabaseGetter};
-use primitives::{Address, Log, B256, U256};
+use primitives::{Address, HashSet, Log, B256, U256};
 use specification::hardfork::SpecId;
 use state::{Account, Bytecode};
 use std::boxed::Box;
@@ -62,6 +62,10 @@ pub trait Journal {
     ) -> Result<(), <Self::Database as Database>::Error>;
 
     fn warm_account(&mut self, address: Address);
+
+    fn warm_precompiles(&mut self, addresses: HashSet<Address>);
+
+    fn contains_precompile(&self, address: &Address) -> bool;
 
     fn set_spec_id(&mut self, spec_id: SpecId);
 
