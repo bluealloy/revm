@@ -11,7 +11,7 @@ use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
 use core::hash::Hash;
 use std::boxed::Box;
-use std::vec::Vec;
+use std::{vec, vec::Vec};
 
 /// EVM environment configuration.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
