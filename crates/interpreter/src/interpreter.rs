@@ -19,7 +19,7 @@ use core::cell::RefCell;
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
 use loop_control::LoopControl as LoopControlImpl;
-use primitives::Bytes;
+use primitives::{Bytes, B256};
 use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, MemoryGetter, SharedMemory, EMPTY_SHARED_MEMORY};
@@ -32,6 +32,7 @@ use subroutine_stack::SubRoutineImpl;
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes> {
     pub bytecode: WIRE::Bytecode,
+    pub bytecode_hash: B256,
     pub stack: WIRE::Stack,
     pub return_data: WIRE::ReturnData,
     pub memory: WIRE::Memory,
@@ -59,8 +60,12 @@ impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
             is_eof: bytecode.is_eof(),
             is_eof_init,
         };
+
+        let bytecode_hash = bytecode.hash_slow();
+
         Self {
             bytecode: ExtBytecode::new(bytecode),
+            bytecode_hash,
             stack: Stack::new(),
             return_data: ReturnDataImpl::default(),
             memory,
@@ -288,7 +293,7 @@ mod tests {
 
     use super::*;
     use bytecode::Bytecode;
-    use primitives::{Address, Bytes, U256};
+    use primitives::{Address, Bytes, U256, KECCAK_EMPTY};
     use specification::hardfork::SpecId;
     use std::{cell::RefCell, rc::Rc};
 
@@ -320,5 +325,44 @@ mod tests {
             deserialized.bytecode.pc(),
             "Program counter should be preserved"
         );
+    }
+
+    #[test]
+    fn test_bytecode_hash() {
+        // Test empty bytecode
+        let bytecode = Bytecode::new_raw(Bytes::new());
+        let interpreter = Interpreter::<EthInterpreter>::new(
+            Rc::new(RefCell::new(SharedMemory::new())),
+            bytecode,
+            InputsImpl {
+                target_address: Address::ZERO,
+                caller_address: Address::ZERO,
+                input: Bytes::default(),
+                call_value: U256::ZERO,
+            },
+            false,
+            false,
+            SpecId::LATEST,
+            u64::MAX,
+        );
+        assert_eq!(interpreter.bytecode_hash, KECCAK_EMPTY);
+
+        // Test non-empty bytecode
+        let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00][..]));
+        let interpreter = Interpreter::<EthInterpreter>::new(
+            Rc::new(RefCell::new(SharedMemory::new())),
+            bytecode.clone(),
+            InputsImpl {
+                target_address: Address::ZERO,
+                caller_address: Address::ZERO,
+                input: Bytes::default(),
+                call_value: U256::ZERO,
+            },
+            false,
+            false,
+            SpecId::LATEST,
+            u64::MAX,
+        );
+        assert_eq!(interpreter.bytecode_hash, bytecode.hash_slow());
     }
 }
