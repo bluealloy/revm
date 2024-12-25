@@ -69,6 +69,7 @@ pub enum SpecId {
     HOLOCENE = 24,
     PRAGUE = 25,
     OSAKA = 26,
+    ISTHMUS = 27,
     #[default]
     LATEST = u8::MAX,
 }
@@ -126,6 +127,8 @@ impl From<&str> for SpecId {
             "Granite" => SpecId::GRANITE,
             #[cfg(feature = "optimism")]
             "Holocene" => SpecId::HOLOCENE,
+            #[cfg(feature = "optimism")]
+            "Isthmus" => SpecId::ISTHMUS,
             _ => Self::LATEST,
         }
     }
@@ -168,6 +171,8 @@ impl From<SpecId> for &'static str {
             SpecId::GRANITE => "Granite",
             #[cfg(feature = "optimism")]
             SpecId::HOLOCENE => "Holocene",
+            #[cfg(feature = "optimism")]
+            SpecId::ISTHMUS => "Isthmus",
             SpecId::LATEST => "Latest",
         }
     }
@@ -233,6 +238,8 @@ spec!(FJORD, FjordSpec);
 spec!(GRANITE, GraniteSpec);
 #[cfg(feature = "optimism")]
 spec!(HOLOCENE, HoloceneSpec);
+#[cfg(feature = "optimism")]
+spec!(ISTHMUS, IsthmusSpec);
 
 #[cfg(not(feature = "optimism"))]
 #[macro_export]
@@ -400,6 +407,10 @@ macro_rules! spec_to_generic {
                 use $crate::HoloceneSpec as SPEC;
                 $e
             }
+            $crate::SpecId::ISTHMUS => {
+                use $crate::IsthmusSpec as SPEC;
+                $e
+            }
         }
     }};
 }
@@ -446,6 +457,8 @@ mod tests {
         spec_to_generic!(HOLOCENE, assert_eq!(SPEC::SPEC_ID, HOLOCENE));
         spec_to_generic!(PRAGUE, assert_eq!(SPEC::SPEC_ID, PRAGUE));
         spec_to_generic!(OSAKA, assert_eq!(SPEC::SPEC_ID, OSAKA));
+        #[cfg(feature = "optimism")]
+        spec_to_generic!(ISTHMUS, assert_eq!(SPEC::SPEC_ID, ISTHMUS));
         spec_to_generic!(LATEST, assert_eq!(SPEC::SPEC_ID, LATEST));
     }
 }
