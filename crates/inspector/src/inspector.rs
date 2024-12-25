@@ -716,8 +716,16 @@ where
             }
             _ => (),
         }
-
         ret
+    }
+
+    fn final_return(
+        self,
+        context: &mut Self::Context,
+        result: &mut Self::FrameResult,
+    ) -> Result<(), Self::Error> {
+        context.frame_end(result);
+        Ok(())
     }
 
     fn init(
@@ -736,9 +744,6 @@ where
         if let Ok(FrameOrResultGen::Frame(frame)) = &mut ret {
             context.initialize_interp(&mut frame.eth_frame.interpreter);
         }
-
-        // TODO : Handle last frame_end. MAKE a separate function for `last_return_result`.
-
         ret
     }
 

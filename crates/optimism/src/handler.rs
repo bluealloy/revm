@@ -70,7 +70,6 @@ where
         if tx_type == OpTransactionType::Deposit {
             let tx = context.op_tx().deposit();
             // Do not allow for a system transaction to be processed if Regolith is enabled.
-            // TODO : Check if this is correct.
             if tx.is_system_transaction() && context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH)
             {
                 return Err(OpTransactionError::DepositSystemTxPostRegolith.into());
