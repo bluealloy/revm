@@ -426,7 +426,7 @@ mod tests {
                 tx.authorization_list = Some(
                     vec![RecoveredAuthorization::new_unchecked(
                         Authorization {
-                            chain_id: 1,
+                            chain_id: U256::from(1),
                             address: delegate,
                             nonce: 0,
                         },
