@@ -32,7 +32,7 @@ use subroutine_stack::SubRoutineImpl;
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes> {
     pub bytecode: WIRE::Bytecode,
-    pub bytecode_hash: B256,
+    pub bytecode_hash: Option<B256>,
     pub stack: WIRE::Stack,
     pub return_data: WIRE::ReturnData,
     pub memory: WIRE::Memory,
@@ -61,11 +61,9 @@ impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
             is_eof_init,
         };
 
-        let bytecode_hash = bytecode.hash_slow();
-
         Self {
             bytecode: ExtBytecode::new(bytecode),
-            bytecode_hash,
+            bytecode_hash: None,
             stack: Stack::new(),
             return_data: ReturnDataImpl::default(),
             memory,
@@ -154,7 +152,10 @@ impl<IW: InterpreterTypes, H: Host> CustomInstruction for Instruction<IW, H> {
     }
 }
 
-impl<IW: InterpreterTypes> Interpreter<IW> {
+impl<IW: InterpreterTypes> Interpreter<IW>
+where
+    IW::Bytecode: AsRef<Bytecode>,
+{
     /// Executes the instruction at the current instruction pointer.
     ///
     /// Internally it will increment instruction pointer by one.
@@ -206,6 +207,17 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
                 gas: *self.control.gas(),
             },
         }
+    }
+
+    pub fn set_bytecode_hash(&mut self) {
+        if self.bytecode_hash.is_none() {
+            self.bytecode_hash = Some(self.bytecode.as_ref().hash_slow());
+        }
+    }
+
+    pub fn get_bytecode_hash(&mut self) -> B256 {
+        self.bytecode_hash
+            .unwrap_or_else(|| self.bytecode.as_ref().hash_slow())
     }
 }
 
@@ -293,7 +305,7 @@ mod tests {
 
     use super::*;
     use bytecode::Bytecode;
-    use primitives::{Address, Bytes, KECCAK_EMPTY, U256};
+    use primitives::{Address, Bytes, U256};
     use specification::hardfork::SpecId;
     use std::{cell::RefCell, rc::Rc};
 
@@ -329,27 +341,8 @@ mod tests {
 
     #[test]
     fn test_bytecode_hash() {
-        // Test empty bytecode
-        let bytecode = Bytecode::new_raw(Bytes::new());
-        let interpreter = Interpreter::<EthInterpreter>::new(
-            Rc::new(RefCell::new(SharedMemory::new())),
-            bytecode,
-            InputsImpl {
-                target_address: Address::ZERO,
-                caller_address: Address::ZERO,
-                input: Bytes::default(),
-                call_value: U256::ZERO,
-            },
-            false,
-            false,
-            SpecId::LATEST,
-            u64::MAX,
-        );
-        assert_eq!(interpreter.bytecode_hash, KECCAK_EMPTY);
-
-        // Test non-empty bytecode
         let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00][..]));
-        let interpreter = Interpreter::<EthInterpreter>::new(
+        let mut interpreter = Interpreter::<EthInterpreter>::new(
             Rc::new(RefCell::new(SharedMemory::new())),
             bytecode.clone(),
             InputsImpl {
@@ -363,6 +356,13 @@ mod tests {
             SpecId::LATEST,
             u64::MAX,
         );
-        assert_eq!(interpreter.bytecode_hash, bytecode.hash_slow());
+
+        let bytecode_hash = interpreter.get_bytecode_hash();
+        assert_eq!(bytecode_hash, bytecode.hash_slow());
+        assert_eq!(interpreter.bytecode_hash, None);
+
+        interpreter.set_bytecode_hash();
+        assert_eq!(interpreter.bytecode_hash, Some(bytecode.hash_slow()));
+        assert_eq!(interpreter.get_bytecode_hash(), bytecode.hash_slow());
     }
 }
