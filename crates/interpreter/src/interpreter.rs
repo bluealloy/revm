@@ -293,7 +293,7 @@ mod tests {
 
     use super::*;
     use bytecode::Bytecode;
-    use primitives::{Address, Bytes, U256, KECCAK_EMPTY};
+    use primitives::{Address, Bytes, KECCAK_EMPTY, U256};
     use specification::hardfork::SpecId;
     use std::{cell::RefCell, rc::Rc};
 
