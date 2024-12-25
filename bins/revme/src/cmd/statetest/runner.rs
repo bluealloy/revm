@@ -11,7 +11,7 @@ use revm::{
     interpreter::analysis::to_analysed,
     primitives::{
         calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, ExecutionResult,
-        SpecId, TxKind, B256, TARGET_BLOB_GAS_PER_BLOCK,
+        SpecId, TxKind, B256,
     },
     Evm, State,
 };
@@ -331,7 +331,7 @@ pub fn execute_test_suite(
                         unit.env
                             .parent_target_blobs_per_block
                             .map(|i| i.to())
-                            .unwrap_or(TARGET_BLOB_GAS_PER_BLOCK),
+                            .unwrap_or(3),
                     ),
                     spec_id.is_enabled_in(SpecId::PRAGUE),
                 );

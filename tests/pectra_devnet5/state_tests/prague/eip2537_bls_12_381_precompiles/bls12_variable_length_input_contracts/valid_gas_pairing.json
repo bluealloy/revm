@@ -1,0 +1,134 @@
+{
+    "tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py::test_valid_gas_pairing[fork_Prague-state_test-precompile_address_15---sufficient_gas]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x6000600061018060006000600f6201129cf16000556000600061030060006000600f620191f4f16001556000600061048060006000600f6202114cf16002556000600061060060006000600f620290a4f16003556000600061078060006000600f62030ffcf16004556000600061090060006000600f62038f54f160055560006000610a8060006000600f62040eacf160065560006000610c0060006000600f62048e04f160075560006000610d8060006000600f62050d5cf160085560006000610f0060006000600f62058cb4f16009556000600061108060006000600f62060c0cf1600a556000600061120060006000600f62068b64f1600b556000600061138060006000600f62070abcf1600c556000600061150060006000600f62078a14f1600d556000600061168060006000600f6208096cf1600e556000600061180060006000600f620888c4f1600f556000600061198060006000600f6209081cf160105560006000611b0060006000600f62098774f160115560006000611c8060006000600f620a06ccf160125560006000611e0060006000600f620a8624f1601355",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x038d7ea4c68000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xa8aeb58cbe06ad7cb85a534be5df1146b2363b06d2793db78021bab92db6fa4c",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8405f5e100940000000000000000000000000000000000001000808026a00c80636d627692750a38994c80e17de29770a0e34498f5e6eccd4f233ec21b5fa04c33c43ced36fe3329a16f21f2704902ac998ae26f175265e7b14a6229b1feb1",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xfa87c3cb595e7a08c9555ed5a8e9b2e8a2ca9e22c92b5fbdf8d9e90c6facd8a9",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Test the BLS12_PAIRING precompile, by expecting the call to succeed for all possible input\n    lengths (up to k == PAIRINGS_TO_TEST).\n\n    If any of the calls fails, the test will fail.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L350",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
+            "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
+        }
+    },
+    "tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py::test_valid_gas_pairing[fork_Prague-state_test-precompile_address_15---extra_gas]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x6000600061018060006000600f6201129df16000556000600061030060006000600f620191f5f16001556000600061048060006000600f6202114df16002556000600061060060006000600f620290a5f16003556000600061078060006000600f62030ffdf16004556000600061090060006000600f62038f55f160055560006000610a8060006000600f62040eadf160065560006000610c0060006000600f62048e05f160075560006000610d8060006000600f62050d5df160085560006000610f0060006000600f62058cb5f16009556000600061108060006000600f62060c0df1600a556000600061120060006000600f62068b65f1600b556000600061138060006000600f62070abdf1600c556000600061150060006000600f62078a15f1600d556000600061168060006000600f6208096df1600e556000600061180060006000600f620888c5f1600f556000600061198060006000600f6209081df160105560006000611b0060006000600f62098775f160115560006000611c8060006000600f620a06cdf160125560006000611e0060006000600f620a8625f1601355",
+                "storage": {}
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x038d7ea4c68000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x05f5e100"
+            ],
+            "to": "0x0000000000000000000000000000000000001000",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x824360aa2b543da4083d2aa834932f475bcc0da099a4094e547b2e5241154ce4",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf861800a8405f5e100940000000000000000000000000000000000001000808026a00c80636d627692750a38994c80e17de29770a0e34498f5e6eccd4f233ec21b5fa04c33c43ced36fe3329a16f21f2704902ac998ae26f175265e7b14a6229b1feb1",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x1a7497d9a4ca8c4c223d9c025b1a8bf4d6c406e3463f0bd36444d1c696790da6",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Test the BLS12_PAIRING precompile, by expecting the call to succeed for all possible input\n    lengths (up to k == PAIRINGS_TO_TEST).\n\n    If any of the calls fails, the test will fail.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L350",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
+            "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
+        }
+    }
+}

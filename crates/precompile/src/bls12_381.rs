@@ -136,7 +136,7 @@ mod test {
     ) {
         let k = input_len / g1_msm::INPUT_LENGTH;
 
-        let actual_output = msm_required_gas(k, multiplication_cost);
+        let actual_output = msm_required_gas(k, &g1_msm::DISCOUNT_TABLE, multiplication_cost);
 
         assert_eq!(expected_output, actual_output);
     }
