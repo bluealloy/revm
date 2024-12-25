@@ -4,14 +4,14 @@ pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
     calc_blob_gasprice, calc_excess_blob_gas, AccessListItem, Account, Address, AuthorizationList,
-    Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB,
-    MAX_BLOB_NUMBER_PER_BLOCK, MAX_CODE_SIZE, MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
+    Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, MAX_CODE_SIZE,
+    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
 use alloy_primitives::TxKind;
 use core::cmp::{min, Ordering};
 use core::hash::Hash;
 use std::boxed::Box;
-use std::vec::Vec;
+use std::{vec, vec::Vec};
 
 /// EVM environment configuration.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -177,9 +177,9 @@ impl Env {
 
             // ensure the total blob gas spent is at most equal to the limit
             // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
-            if SPEC::SPEC_ID == SpecId::CANCUN {
+            if SPEC::enabled(SpecId::CANCUN) {
                 let num_blobs = self.tx.blob_hashes.len();
-                if num_blobs > MAX_BLOB_NUMBER_PER_BLOCK as usize {
+                if num_blobs > self.cfg.blob_max_count(SPEC::SPEC_ID) as usize {
                     return Err(InvalidTransaction::TooManyBlobs { have: num_blobs });
                 }
             }
@@ -297,6 +297,10 @@ pub struct CfgEnv {
     /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
     /// By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
+    /// Blob target count. EIP-7840 Add blob schedule to EL config files.
+    ///
+    /// Note : Items must be sorted by `SpecId`.
+    pub blob_target_and_max_count: Vec<(SpecId, u8, u8)>,
     /// A hard memory limit in bytes beyond which [crate::result::OutOfGasError::Memory] cannot be resized.
     ///
     /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
@@ -343,6 +347,27 @@ impl CfgEnv {
     pub fn with_chain_id(mut self, chain_id: u64) -> Self {
         self.chain_id = chain_id;
         self
+    }
+
+    /// Sets the blob target and max count over hardforks.
+    pub fn set_blob_max_and_target_count(&mut self, mut vec: Vec<(SpecId, u8, u8)>) {
+        vec.sort_by_key(|(id, _, _)| *id);
+        self.blob_target_and_max_count = vec;
+    }
+
+    /// Returns the blob target and max count for the given spec id.
+    #[inline]
+    pub fn blob_max_count(&self, spec_id: SpecId) -> u8 {
+        self.blob_target_and_max_count
+            .iter()
+            .rev()
+            .find_map(|(id, _, max)| {
+                if spec_id as u8 >= *id as u8 {
+                    return Some(*max);
+                }
+                None
+            })
+            .unwrap_or(6)
     }
 
     #[cfg(feature = "optional_eip3607")]
@@ -412,6 +437,7 @@ impl Default for CfgEnv {
             chain_id: 1,
             perf_analyse_created_bytecodes: AnalysisKind::default(),
             limit_contract_code_size: None,
+            blob_target_and_max_count: vec![(SpecId::CANCUN, 3, 6), (SpecId::PRAGUE, 6, 9)],
             #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
             kzg_settings: crate::kzg::EnvKzgSettings::Default,
             #[cfg(feature = "memory_limit")]
@@ -776,5 +802,14 @@ mod tests {
             env.validate_tx::<crate::FrontierSpec>(),
             Err(InvalidTransaction::AccessListNotSupported)
         );
+    }
+
+    #[test]
+    fn blob_max_and_target_count() {
+        let cfg = CfgEnv::default();
+        assert_eq!(cfg.blob_max_count(SpecId::BERLIN), (6));
+        assert_eq!(cfg.blob_max_count(SpecId::CANCUN), (6));
+        assert_eq!(cfg.blob_max_count(SpecId::PRAGUE), (9));
+        assert_eq!(cfg.blob_max_count(SpecId::OSAKA), (9));
     }
 }

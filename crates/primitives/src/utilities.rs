@@ -74,7 +74,9 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{GAS_PER_BLOB, TARGET_BLOB_GAS_PER_BLOCK};
+    use crate::GAS_PER_BLOB;
+
+    const TARGET_BLOB_GAS_PER_BLOCK: u64 = 3 * GAS_PER_BLOB;
 
     // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L27
     #[test]
