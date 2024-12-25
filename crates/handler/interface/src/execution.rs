@@ -32,7 +32,7 @@ pub trait ExecutionHandler {
             let frame = frame_stack.last_mut().unwrap();
             let call_or_result = frame.run(context)?;
 
-            let result = match call_or_result {
+            let mut result = match call_or_result {
                 FrameOrResultGen::Frame(init) => match frame.init(context, init)? {
                     FrameOrResultGen::Frame(new_frame) => {
                         frame_stack.push(new_frame);
@@ -49,6 +49,7 @@ pub trait ExecutionHandler {
             };
 
             let Some(frame) = frame_stack.last_mut() else {
+                Self::Frame::final_return(context, &mut result)?;
                 return self.last_frame_result(context, result);
             };
             frame.return_result(context, result)?;

@@ -484,7 +484,6 @@ where
     }
 
     fn final_return(
-        self,
         _context: &mut Self::Context,
         _result: &mut Self::FrameResult,
     ) -> Result<(), Self::Error> {

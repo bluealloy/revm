@@ -720,7 +720,6 @@ where
     }
 
     fn final_return(
-        self,
         context: &mut Self::Context,
         result: &mut Self::FrameResult,
     ) -> Result<(), Self::Error> {
