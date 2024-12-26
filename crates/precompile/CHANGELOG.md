@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v15.0.0...revm-precompile-v16.0.0) - 2024-12-26
+
+### Added
+
+- blst reprice, remove g1/g2 mul, eest test bump ([#1951](https://github.com/bluealloy/revm/pull/1951))
+- add Isthmus spec ([#1948](https://github.com/bluealloy/revm/pull/1948))
+
 ## [15.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v14.0.0...revm-precompile-v15.0.0) - 2024-11-06
 
 ### Other

@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v14.0.0...revm-interpreter-v15.0.0) - 2024-12-26
+
+### Added
+
+- apply latest EIP-7702 changes ([#1850](https://github.com/bluealloy/revm/pull/1850))
+- *(Prague)* EIP-7623 Increase Calldata Cost ([#1744](https://github.com/bluealloy/revm/pull/1744))
+
 ## [14.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v13.0.0...revm-interpreter-v14.0.0) - 2024-11-06
 
 ### Other

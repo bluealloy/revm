@@ -1,5 +1,15 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v51 tag
+date 26.12.2024
+devnet-5 release.
+
+* `revme`: 2.1.0 -> 2.2.0
+* `revm`: 18.0.0 -> 19.0.0
+* `revm-interpreter`: 14.0.0 -> 15.0.0
+* `revm-primitives`: 14.0.0 -> 15.0.0
+* `revm-precompile`: 15.0.0 -> 16.0.0
+
 # v50 tag
 date 06.11.2024
 Maintenance release. Bump alloy-primitives deps, few utilities.
