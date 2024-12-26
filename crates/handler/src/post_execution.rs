@@ -74,7 +74,7 @@ where
         let caller_account = context.journal().load_account(caller)?;
 
         let reimbursed =
-            effective_gas_price.saturating_add((gas.remaining() + gas.refunded() as u64) as u128);
+            effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128);
         caller_account.data.info.balance = caller_account
             .data
             .info
