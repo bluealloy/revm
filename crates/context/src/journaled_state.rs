@@ -121,8 +121,8 @@ impl<DB: Database> Journal for JournaledState<DB> {
     }
 
     #[inline]
-    fn contains_precompile(&self, address: &Address) -> bool {
-        self.precompiles.contains(address)
+    fn precompile_addresses(&self) -> &HashSet<Address> {
+        &self.precompiles
     }
 
     /// Returns call depth.

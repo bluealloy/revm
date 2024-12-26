@@ -65,7 +65,7 @@ pub trait Journal {
 
     fn warm_precompiles(&mut self, addresses: HashSet<Address>);
 
-    fn contains_precompile(&self, address: &Address) -> bool;
+    fn precompile_addresses(&self) -> &HashSet<Address>;
 
     fn set_spec_id(&mut self, spec_id: SpecId);
 
