@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [19.0.0](https://github.com/bluealloy/revm/compare/revm-v18.0.0...revm-v19.0.0) - 2024-12-26
+
+### Added
+
+- apply latest EIP-7702 changes ([#1850](https://github.com/bluealloy/revm/pull/1850))
+- *(Prague)* EIP-7623 Increase Calldata Cost ([#1744](https://github.com/bluealloy/revm/pull/1744))
+
+### Other
+
+- eip7702 chainid u256 change ([#1950](https://github.com/bluealloy/revm/pull/1950))
+- refactor L1BlockInfo::tx_estimated_size_fjord ([#1862](https://github.com/bluealloy/revm/pull/1862))
+- [v50] perf: remove unneeded clones ([#1863](https://github.com/bluealloy/revm/pull/1863))
+- Add static Optimism precompiles for Fjord & Granite ([#1864](https://github.com/bluealloy/revm/pull/1864))
+
 ## [18.0.0](https://github.com/bluealloy/revm/compare/revm-v17.1.0...revm-v18.0.0) - 2024-11-06
 
 ### Added

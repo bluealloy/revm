@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v14.0.0...revm-primitives-v15.0.0) - 2024-12-26
+
+### Added
+
+- blst reprice, remove g1/g2 mul, eest test bump ([#1951](https://github.com/bluealloy/revm/pull/1951))
+- add Isthmus spec ([#1948](https://github.com/bluealloy/revm/pull/1948))
+- eip7691 fraction update ([#1900](https://github.com/bluealloy/revm/pull/1900))
+- apply latest EIP-7702 changes ([#1850](https://github.com/bluealloy/revm/pull/1850))
+- *(Prague)* EIP-7623 Increase Calldata Cost ([#1744](https://github.com/bluealloy/revm/pull/1744))
+
+### Other
+
+- eip7702 chainid u256 change ([#1950](https://github.com/bluealloy/revm/pull/1950))
+- Uncouple blob count between CL and EL ([#1899](https://github.com/bluealloy/revm/pull/1899))
+
 ## [14.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v13.0.0...revm-primitives-v14.0.0) - 2024-11-06
 
 ### Added
