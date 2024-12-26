@@ -1,17 +1,23 @@
-
 use core::mem::MaybeUninit;
 use revm::{
-    bytecode::opcode::OpCode, context_interface::JournalGetter, handler_interface::PrecompileProvider, interpreter::{
+    bytecode::opcode::OpCode,
+    context_interface::JournalGetter,
+    handler_interface::PrecompileProvider,
+    interpreter::{
         instructions::host::{log, selfdestruct},
         interpreter::InstructionProvider,
         interpreter_types::LoopControl,
-        table::{self, CustomInstruction}, Host,
-        Instruction, InstructionResult, Interpreter, InterpreterTypes,
-    }, JournalEntry
+        table::{self, CustomInstruction},
+        Host, Instruction, InstructionResult, Interpreter, InterpreterTypes,
+    },
+    JournalEntry,
 };
 use std::{rc::Rc, vec::Vec};
 
-use crate::{journal::{JournalExt, JournalExtGetter}, InspectorCtx, InspectorInstruction};
+use crate::{
+    journal::{JournalExt, JournalExtGetter},
+    InspectorCtx, InspectorInstruction,
+};
 
 pub struct InspectorInstructionProvider<WIRE: InterpreterTypes, HOST> {
     instruction_table: Rc<[InspectorInstruction<WIRE, HOST>; 256]>,
@@ -27,7 +33,6 @@ where
         }
     }
 }
-
 
 impl<WIRE, HOST> InstructionProvider for InspectorInstructionProvider<WIRE, HOST>
 where

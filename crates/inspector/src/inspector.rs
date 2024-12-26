@@ -1,7 +1,13 @@
+use crate::{
+    inspector_context::InspectorContext,
+    inspector_instruction::InspectorInstructionProvider,
+    journal::{JournalExt, JournalExtGetter},
+};
 use auto_impl::auto_impl;
 use revm::{
     context_interface::{
-        BlockGetter, CfgGetter, ErrorGetter, Journal, JournalDBError, JournalGetter, TransactionGetter
+        BlockGetter, CfgGetter, ErrorGetter, Journal, JournalDBError, JournalGetter,
+        TransactionGetter,
     },
     database_interface::{Database, EmptyDB},
     handler::{
@@ -20,7 +26,6 @@ use revm::{
     primitives::{Address, Log, U256},
     Context, Error, Evm,
 };
-use crate::{inspector_context::InspectorContext, inspector_instruction::InspectorInstructionProvider, journal::{JournalExt, JournalExtGetter}};
 
 /// EVM [Interpreter] callbacks.
 #[auto_impl(&mut, Box)]

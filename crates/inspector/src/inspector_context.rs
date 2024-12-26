@@ -1,24 +1,21 @@
-
 use revm::{
     context_interface::{
-        block::BlockSetter, journaled_state::{AccountLoad, Eip7702CodeLoad}, transaction::TransactionSetter, BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalGetter, TransactionGetter
+        block::BlockSetter,
+        journaled_state::{AccountLoad, Eip7702CodeLoad},
+        transaction::TransactionSetter,
+        BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalGetter, TransactionGetter,
     },
     database_interface::Database,
-    handler::
-        FrameResult
-    ,
+    handler::FrameResult,
     interpreter::{
-        interpreter::EthInterpreter,
-        FrameInput, Host,
-        Interpreter, SStoreResult,
+        interpreter::EthInterpreter, FrameInput, Host, Interpreter, SStoreResult,
         SelfDestructResult, StateLoad,
     },
     primitives::{Address, Bytes, Log, B256, U256},
 };
-use std::{ vec::Vec};
+use std::vec::Vec;
 
 use crate::{journal::JournalExtGetter, GetInspector, Inspector, InspectorCtx};
-
 
 /// EVM context contains data that EVM needs for execution.
 #[derive(Clone, Debug)]
