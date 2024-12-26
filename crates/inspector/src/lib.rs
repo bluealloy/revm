@@ -9,7 +9,7 @@ extern crate alloc as std;
 mod eip3155;
 mod gas;
 mod inspector;
-mod inspector_context;
+pub mod inspector_context;
 pub mod inspector_instruction;
 pub mod journal;
 mod noop;

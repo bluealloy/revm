@@ -8,8 +8,7 @@ use revm::{
         block::BlockSetter,
         journaled_state::{AccountLoad, Eip7702CodeLoad},
         transaction::TransactionSetter,
-        BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalDBError,
-        JournalGetter, TransactionGetter,
+        BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, TransactionGetter,
     },
     database_interface::{Database, EmptyDB},
     handler::{

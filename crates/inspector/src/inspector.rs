@@ -1,14 +1,7 @@
 use auto_impl::auto_impl;
-use core::mem::MaybeUninit;
 use revm::{
-    bytecode::opcode::OpCode,
-    context::JournaledState,
     context_interface::{
-        block::BlockSetter,
-        journaled_state::{AccountLoad, Eip7702CodeLoad},
-        transaction::TransactionSetter,
-        BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalDBError,
-        JournalGetter, TransactionGetter,
+        BlockGetter, CfgGetter, ErrorGetter, Journal, JournalDBError, JournalGetter, TransactionGetter
     },
     database_interface::{Database, EmptyDB},
     handler::{
@@ -17,20 +10,17 @@ use revm::{
     },
     handler_interface::{Frame, FrameOrResultGen, PrecompileProvider},
     interpreter::{
-        instructions::host::{log, selfdestruct},
-        interpreter::{EthInterpreter, InstructionProvider},
+        interpreter::EthInterpreter,
         interpreter_types::{Jumps, LoopControl},
-        table::{self, CustomInstruction},
+        table::CustomInstruction,
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
-        Instruction, InstructionResult, Interpreter, InterpreterTypes, SStoreResult,
-        SelfDestructResult, StateLoad,
+        Instruction, InstructionResult, Interpreter, InterpreterTypes,
     },
     precompile::PrecompileErrors,
-    primitives::{Address, Bytes, Log, B256, U256},
-    state::EvmState,
-    Context, Error, Evm, JournalEntry,
+    primitives::{Address, Log, U256},
+    Context, Error, Evm,
 };
-use std::{rc::Rc, vec::Vec};
+use crate::{inspector_context::InspectorContext, inspector_instruction::InspectorInstructionProvider, journal::{JournalExt, JournalExtGetter}};
 
 /// EVM [Interpreter] callbacks.
 #[auto_impl(&mut, Box)]

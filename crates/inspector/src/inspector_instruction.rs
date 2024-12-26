@@ -1,37 +1,17 @@
 
-use auto_impl::auto_impl;
 use core::mem::MaybeUninit;
 use revm::{
-    bytecode::opcode::OpCode,
-    context::JournaledState,
-    context_interface::{
-        block::BlockSetter,
-        journaled_state::{AccountLoad, Eip7702CodeLoad},
-        transaction::TransactionSetter,
-        BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalDBError,
-        JournalGetter, TransactionGetter,
-    },
-    database_interface::{Database, EmptyDB},
-    handler::{
-        EthExecution, EthFrame, EthHandler, EthPostExecution, EthPreExecution,
-        EthPrecompileProvider, EthValidation, FrameResult,
-    },
-    handler_interface::{Frame, FrameOrResultGen, PrecompileProvider},
-    interpreter::{
+    bytecode::opcode::OpCode, context_interface::JournalGetter, handler_interface::PrecompileProvider, interpreter::{
         instructions::host::{log, selfdestruct},
-        interpreter::{EthInterpreter, InstructionProvider},
-        interpreter_types::{Jumps, LoopControl},
-        table::{self, CustomInstruction},
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
-        Instruction, InstructionResult, Interpreter, InterpreterTypes, SStoreResult,
-        SelfDestructResult, StateLoad,
-    },
-    precompile::PrecompileErrors,
-    primitives::{Address, Bytes, Log, B256, U256},
-    state::EvmState,
-    Context, Error, Evm, JournalEntry,
+        interpreter::InstructionProvider,
+        interpreter_types::LoopControl,
+        table::{self, CustomInstruction}, Host,
+        Instruction, InstructionResult, Interpreter, InterpreterTypes,
+    }, JournalEntry
 };
 use std::{rc::Rc, vec::Vec};
+
+use crate::{journal::{JournalExt, JournalExtGetter}, InspectorCtx, InspectorInstruction};
 
 pub struct InspectorInstructionProvider<WIRE: InterpreterTypes, HOST> {
     instruction_table: Rc<[InspectorInstruction<WIRE, HOST>; 256]>,

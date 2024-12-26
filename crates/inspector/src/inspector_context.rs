@@ -1,36 +1,23 @@
-use auto_impl::auto_impl;
-use core::mem::MaybeUninit;
+
 use revm::{
-    bytecode::opcode::OpCode,
-    context::JournaledState,
     context_interface::{
-        block::BlockSetter,
-        journaled_state::{AccountLoad, Eip7702CodeLoad},
-        transaction::TransactionSetter,
-        BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalDBError,
-        JournalGetter, TransactionGetter,
+        block::BlockSetter, journaled_state::{AccountLoad, Eip7702CodeLoad}, transaction::TransactionSetter, BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalGetter, TransactionGetter
     },
-    database_interface::{Database, EmptyDB},
-    handler::{
-        EthExecution, EthFrame, EthHandler, EthPostExecution, EthPreExecution,
-        EthPrecompileProvider, EthValidation, FrameResult,
-    },
-    handler_interface::{Frame, FrameOrResultGen, PrecompileProvider},
+    database_interface::Database,
+    handler::
+        FrameResult
+    ,
     interpreter::{
-        instructions::host::{log, selfdestruct},
-        interpreter::{EthInterpreter, InstructionProvider},
-        interpreter_types::{Jumps, LoopControl},
-        table::{self, CustomInstruction},
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
-        Instruction, InstructionResult, Interpreter, InterpreterTypes, SStoreResult,
+        interpreter::EthInterpreter,
+        FrameInput, Host,
+        Interpreter, SStoreResult,
         SelfDestructResult, StateLoad,
     },
-    precompile::PrecompileErrors,
     primitives::{Address, Bytes, Log, B256, U256},
-    state::EvmState,
-    Context, Error, Evm, JournalEntry,
 };
-use std::{rc::Rc, vec::Vec};
+use std::{ vec::Vec};
+
+use crate::{journal::JournalExtGetter, GetInspector, Inspector, InspectorCtx};
 
 
 /// EVM context contains data that EVM needs for execution.
