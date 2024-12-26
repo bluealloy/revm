@@ -1,7 +1,7 @@
 pub use alloy_eip7702::{
     Authorization, RecoveredAuthority, RecoveredAuthorization, SignedAuthorization,
 };
-pub use alloy_primitives::Signature;
+pub use alloy_primitives::PrimitiveSignature;
 
 use std::{boxed::Box, vec::Vec};
 
