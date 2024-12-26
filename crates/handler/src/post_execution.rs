@@ -65,7 +65,7 @@ where
         context: &mut Self::Context,
         exec_result: &mut Self::ExecResult,
     ) -> Result<(), Self::Error> {
-        let basefee = *context.block().basefee();
+        let basefee = context.block().basefee() as u128;
         let caller = context.tx().common_fields().caller();
         let effective_gas_price = context.tx().effective_gas_price(basefee);
         let gas = exec_result.gas();
@@ -73,9 +73,13 @@ where
         // Return balance of not spend gas.
         let caller_account = context.journal().load_account(caller)?;
 
-        let reimbursed = effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64);
-        caller_account.data.info.balance =
-            caller_account.data.info.balance.saturating_add(reimbursed);
+        let reimbursed =
+            effective_gas_price.saturating_add((gas.remaining() + gas.refunded() as u64) as u128);
+        caller_account.data.info.balance = caller_account
+            .data
+            .info
+            .balance
+            .saturating_add(U256::from(reimbursed));
 
         Ok(())
     }
@@ -87,8 +91,8 @@ where
     ) -> Result<(), Self::Error> {
         let block = context.block();
         let tx = context.tx();
-        let beneficiary = *block.beneficiary();
-        let basefee = *block.basefee();
+        let beneficiary = block.beneficiary();
+        let basefee = block.basefee() as u128;
         let effective_gas_price = tx.effective_gas_price(basefee);
         let gas = exec_result.gas();
 
@@ -104,9 +108,13 @@ where
 
         coinbase_account.data.mark_touch();
         coinbase_account.data.info.balance =
-            coinbase_account.data.info.balance.saturating_add(
-                coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64),
-            );
+            coinbase_account
+                .data
+                .info
+                .balance
+                .saturating_add(U256::from(
+                    coinbase_gas_price * (gas.spent() - gas.refunded() as u64) as u128,
+                ));
 
         Ok(())
     }

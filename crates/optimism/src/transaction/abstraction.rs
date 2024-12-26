@@ -114,7 +114,7 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
         }
     }
 
-    fn effective_gas_price(&self, base_fee: revm::primitives::U256) -> revm::primitives::U256 {
+    fn effective_gas_price(&self, base_fee: u128) -> u128 {
         match self {
             Self::Base { tx, .. } => tx.effective_gas_price(base_fee),
             Self::Deposit(_) => base_fee,
@@ -218,7 +218,7 @@ mod tests {
         assert_eq!(op_tx.common_fields().gas_limit(), 0);
         assert_eq!(op_tx.kind(), revm::primitives::TxKind::Call(Address::ZERO));
         // Verify gas related calculations
-        assert_eq!(op_tx.effective_gas_price(U256::from(100)), U256::from(100));
+        assert_eq!(op_tx.effective_gas_price(100), 100);
         assert_eq!(op_tx.max_fee(), 0);
     }
 }

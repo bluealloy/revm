@@ -10,7 +10,7 @@ use context_interface::{
 };
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
-use interpreter::{as_u64_saturated, Host, SStoreResult, SelfDestructResult, StateLoad};
+use interpreter::{Host, SStoreResult, SelfDestructResult, StateLoad};
 use primitives::{Address, Bytes, Log, B256, BLOCK_HASH_HISTORY, U256};
 use specification::hardfork::SpecId;
 
@@ -381,7 +381,7 @@ where
     JOURNAL: Journal<Database = DB>,
 {
     fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
-        let block_number = as_u64_saturated!(*self.block().number());
+        let block_number = self.block().number();
 
         let Some(diff) = block_number.checked_sub(requested_number) else {
             return Some(B256::ZERO);

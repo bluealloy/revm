@@ -49,7 +49,7 @@ where
         // Load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
         if spec.is_enabled_in(SpecId::SHANGHAI) {
-            let coinbase = *context.block().beneficiary();
+            let coinbase = context.block().beneficiary();
             context.journal().warm_account(coinbase);
         }
 
@@ -83,17 +83,17 @@ where
 
     #[inline]
     fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        let basefee = *context.block().basefee();
-        let blob_price = U256::from(context.block().blob_gasprice().unwrap_or_default());
-        let effective_gas_price = context.tx().effective_gas_price(basefee);
+        let basefee = context.block().basefee();
+        let blob_price = context.block().blob_gasprice().unwrap_or_default();
+        let effective_gas_price = context.tx().effective_gas_price(basefee as u128);
         // Subtract gas costs from the caller's account.
         // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
-        let mut gas_cost = U256::from(context.tx().common_fields().gas_limit())
-            .saturating_mul(effective_gas_price);
+        let mut gas_cost =
+            (context.tx().common_fields().gas_limit() as u128).saturating_mul(effective_gas_price);
 
         // EIP-4844
         if context.tx().tx_type().into() == TransactionType::Eip4844 {
-            let blob_gas = U256::from(context.tx().eip4844().total_blob_gas());
+            let blob_gas = context.tx().eip4844().total_blob_gas() as u128;
             gas_cost = gas_cost.saturating_add(blob_price.saturating_mul(blob_gas));
         }
 
@@ -103,7 +103,10 @@ where
         // Load caller's account.
         let caller_account = context.journal().load_account(caller)?.data;
         // Set new caller account balance.
-        caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
+        caller_account.info.balance = caller_account
+            .info
+            .balance
+            .saturating_sub(U256::from(gas_cost));
 
         // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
         if is_call {
