@@ -19,7 +19,7 @@ use core::cell::RefCell;
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
 use loop_control::LoopControl as LoopControlImpl;
-use primitives::{Bytes, B256};
+use primitives::Bytes;
 use return_data::ReturnDataImpl;
 pub use runtime_flags::RuntimeFlags;
 pub use shared_memory::{num_words, MemoryGetter, SharedMemory, EMPTY_SHARED_MEMORY};
@@ -32,7 +32,6 @@ use subroutine_stack::SubRoutineImpl;
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub struct Interpreter<WIRE: InterpreterTypes> {
     pub bytecode: WIRE::Bytecode,
-    pub bytecode_hash: Option<B256>,
     pub stack: WIRE::Stack,
     pub return_data: WIRE::ReturnData,
     pub memory: WIRE::Memory,
@@ -63,7 +62,6 @@ impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
 
         Self {
             bytecode: ExtBytecode::new(bytecode),
-            bytecode_hash: None,
             stack: Stack::new(),
             return_data: ReturnDataImpl::default(),
             memory,
@@ -208,17 +206,6 @@ where
             },
         }
     }
-
-    pub fn set_bytecode_hash(&mut self) {
-        if self.bytecode_hash.is_none() {
-            self.bytecode_hash = Some(self.bytecode.as_ref().hash_slow());
-        }
-    }
-
-    pub fn get_bytecode_hash(&mut self) -> B256 {
-        self.bytecode_hash
-            .unwrap_or_else(|| self.bytecode.as_ref().hash_slow())
-    }
 }
 
 /// The result of an interpreter operation.
@@ -306,8 +293,6 @@ mod tests {
     use super::*;
     use bytecode::Bytecode;
     use primitives::{Address, Bytes, U256};
-    use specification::hardfork::SpecId;
-    use std::{cell::RefCell, rc::Rc};
 
     #[test]
     #[cfg(feature = "serde")]
@@ -337,32 +322,5 @@ mod tests {
             deserialized.bytecode.pc(),
             "Program counter should be preserved"
         );
-    }
-
-    #[test]
-    fn test_bytecode_hash() {
-        let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00][..]));
-        let mut interpreter = Interpreter::<EthInterpreter>::new(
-            Rc::new(RefCell::new(SharedMemory::new())),
-            bytecode.clone(),
-            InputsImpl {
-                target_address: Address::ZERO,
-                caller_address: Address::ZERO,
-                input: Bytes::default(),
-                call_value: U256::ZERO,
-            },
-            false,
-            false,
-            SpecId::LATEST,
-            u64::MAX,
-        );
-
-        let bytecode_hash = interpreter.get_bytecode_hash();
-        assert_eq!(bytecode_hash, bytecode.hash_slow());
-        assert_eq!(interpreter.bytecode_hash, None);
-
-        interpreter.set_bytecode_hash();
-        assert_eq!(interpreter.bytecode_hash, Some(bytecode.hash_slow()));
-        assert_eq!(interpreter.get_bytecode_hash(), bytecode.hash_slow());
     }
 }

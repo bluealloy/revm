@@ -3,7 +3,7 @@ use bytecode::{
     utils::{read_i16, read_u16},
     Bytecode,
 };
-use primitives::Bytes;
+use primitives::{Bytes, B256};
 
 use super::{EofCodeInfo, EofContainer, EofData, Immediates, Jumps, LegacyBytecode};
 
@@ -13,6 +13,7 @@ mod serde;
 #[derive(Debug)]
 pub struct ExtBytecode {
     base: Bytecode,
+    bytecode_hash: Option<B256>,
     instruction_pointer: *const u8,
 }
 
@@ -29,6 +30,26 @@ impl ExtBytecode {
         Self {
             base,
             instruction_pointer,
+            bytecode_hash: None,
+        }
+    }
+
+    pub fn new_with_hash(base: Bytecode, hash: B256) -> Self {
+        let instruction_pointer = base.bytecode().as_ptr();
+        Self {
+            base,
+            instruction_pointer,
+            bytecode_hash: Some(hash),
+        }
+    }
+
+    pub fn hash(&mut self) -> B256 {
+        if let Some(hash) = self.bytecode_hash {
+            hash
+        } else {
+            let hash = self.base.hash_slow();
+            self.bytecode_hash = Some(hash);
+            hash
         }
     }
 }
@@ -162,5 +183,30 @@ impl LegacyBytecode for ExtBytecode {
         // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
         assume!(!self.base.is_eof());
         self.base.original_byte_slice()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use primitives::Bytes;
+
+    #[test]
+    fn test_hash_caching() {
+        let bytecode = Bytecode::new_raw(Bytes::new());
+        let mut ext_bytecode = ExtBytecode::new(bytecode.clone());
+        assert_eq!(ext_bytecode.bytecode_hash, None);
+
+        let hash = ext_bytecode.hash();
+        assert_eq!(hash, bytecode.hash_slow());
+        assert_eq!(ext_bytecode.bytecode_hash, Some(bytecode.hash_slow()));
+    }
+
+    #[test]
+    fn test_with_hash_constructor() {
+        let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00][..]));
+        let hash = bytecode.hash_slow();
+        let ext_bytecode = ExtBytecode::new_with_hash(bytecode.clone(), hash);
+        assert_eq!(ext_bytecode.bytecode_hash, Some(hash));
     }
 }
