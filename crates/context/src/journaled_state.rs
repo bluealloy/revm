@@ -52,6 +52,8 @@ pub struct JournaledState<DB> {
     /// Note that this not include newly loaded accounts, account and storage
     /// is considered warm if it is found in the `State`.
     pub warm_preloaded_addresses: HashSet<Address>,
+    /// Precompile addresses
+    pub precompiles: HashSet<Address>,
 }
 
 impl<DB: Database> Journal for JournaledState<DB> {
@@ -63,11 +65,11 @@ impl<DB: Database> Journal for JournaledState<DB> {
         Self::new(SpecId::LATEST, database)
     }
 
-    fn db(&self) -> &Self::Database {
+    fn db_ref(&self) -> &Self::Database {
         &self.database
     }
 
-    fn db_mut(&mut self) -> &mut Self::Database {
+    fn db(&mut self) -> &mut Self::Database {
         &mut self.database
     }
 
@@ -110,6 +112,17 @@ impl<DB: Database> Journal for JournaledState<DB> {
 
     fn warm_account(&mut self, address: Address) {
         self.warm_preloaded_addresses.insert(address);
+    }
+
+    fn warm_precompiles(&mut self, address: HashSet<Address>) {
+        self.precompiles = address;
+        self.warm_preloaded_addresses
+            .extend(self.precompiles.iter());
+    }
+
+    #[inline]
+    fn precompile_addresses(&self) -> &HashSet<Address> {
+        &self.precompiles
     }
 
     /// Returns call depth.
@@ -212,6 +225,7 @@ impl<DB: Database> Journal for JournaledState<DB> {
             spec: _,
             database: _,
             warm_preloaded_addresses: _,
+            precompiles: _,
         } = self;
 
         *transient_storage = TransientStorage::default();
@@ -243,6 +257,7 @@ impl<DB: Database> JournaledState<DB> {
             depth: 0,
             spec,
             warm_preloaded_addresses: HashSet::default(),
+            precompiles: HashSet::default(),
         }
     }
 

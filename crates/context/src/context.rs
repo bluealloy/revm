@@ -313,7 +313,7 @@ where
     where
         F: FnOnce(&mut DB),
     {
-        f(self.journaled_state.db_mut());
+        f(self.journaled_state.db());
     }
 
     pub fn modify_journal<F>(&mut self, f: F)
@@ -395,7 +395,7 @@ where
         if diff <= BLOCK_HASH_HISTORY {
             return self
                 .journaled_state
-                .db_mut()
+                .db()
                 .block_hash(requested_number)
                 .map_err(|e| self.error = Err(e))
                 .ok();
@@ -508,7 +508,11 @@ where
     type Database = DB;
 
     fn db(&mut self) -> &mut Self::Database {
-        self.journaled_state.db_mut()
+        self.journaled_state.db()
+    }
+
+    fn db_ref(&self) -> &Self::Database {
+        self.journaled_state.db_ref()
     }
 }
 

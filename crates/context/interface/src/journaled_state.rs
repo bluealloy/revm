@@ -1,6 +1,6 @@
 use core::ops::{Deref, DerefMut};
 use database_interface::{Database, DatabaseGetter};
-use primitives::{Address, Log, B256, U256};
+use primitives::{Address, HashSet, Log, B256, U256};
 use specification::hardfork::SpecId;
 use state::{Account, Bytecode};
 use std::boxed::Box;
@@ -17,10 +17,10 @@ pub trait Journal {
     fn new(database: Self::Database) -> Self;
 
     /// Returns the database.
-    fn db(&self) -> &Self::Database;
+    fn db_ref(&self) -> &Self::Database;
 
     /// Returns the mutable database.
-    fn db_mut(&mut self) -> &mut Self::Database;
+    fn db(&mut self) -> &mut Self::Database;
 
     /// Returns the storage value from Journal state.
     ///
@@ -62,6 +62,10 @@ pub trait Journal {
     ) -> Result<(), <Self::Database as Database>::Error>;
 
     fn warm_account(&mut self, address: Address);
+
+    fn warm_precompiles(&mut self, addresses: HashSet<Address>);
+
+    fn precompile_addresses(&self) -> &HashSet<Address>;
 
     fn set_spec_id(&mut self, spec_id: SpecId);
 
