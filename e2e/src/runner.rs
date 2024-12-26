@@ -10,8 +10,7 @@ use fluentbase_genesis::{
     GENESIS_POSEIDON_HASH_SLOT,
 };
 use fluentbase_poseidon::poseidon_hash;
-use fluentbase_sdk::derive::derive_keccak256;
-use fluentbase_types::{Address, ExitCode, PRECOMPILE_EVM};
+use fluentbase_sdk::{derive::derive_keccak256, Address, ExitCode, PRECOMPILE_EVM};
 use hashbrown::HashSet;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use lazy_static::lazy_static;

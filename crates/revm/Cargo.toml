@@ -27,8 +27,8 @@ revm-interpreter = { path = "../interpreter", version = "10.0.3", default-featur
 revm-precompile = { path = "../precompile", version = "11.0.3", default-features = false }
 
 # fluentbase
-fluentbase-sdk = { workspace = true, default-features = false }
-fluentbase-core = { workspace = true, default-features = false }
+fluentbase-sdk = { workspace = true }
+fluentbase-core = { workspace = true }
 
 # misc
 auto_impl = { version = "1.2", default-features = false }
@@ -69,7 +69,6 @@ indicatif = "0.17"
 reqwest = { version = "0.12" }
 rstest = "0.22.0"
 alloy-provider = "0.3"
-fluentbase-genesis = { workspace = true, default-features = false }
 
 [features]
 default = [
@@ -87,7 +86,6 @@ std = [
     "revm-precompile/std",
     "fluentbase-sdk/std",
     "fluentbase-core/std",
-    "fluentbase-genesis/std",
 ]
 e2e = [
     "revm-precompile/e2e",

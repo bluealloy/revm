@@ -1,16 +1,22 @@
 pub mod eof;
 pub mod legacy;
-
-pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
-pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
+pub mod rwasm;
 
 use crate::{
-    eip7702::bytecode::Eip7702DecodeError, keccak256, Bytes, Eip7702Bytecode, B256,
-    EIP7702_MAGIC_BYTES, KECCAK_EMPTY,
+    eip7702::bytecode::Eip7702DecodeError,
+    keccak256,
+    Bytes,
+    Eip7702Bytecode,
+    B256,
+    EIP7702_MAGIC_BYTES,
+    KECCAK_EMPTY,
 };
 use alloy_primitives::Address;
 use core::fmt::Debug;
 use eof::EofDecodeError;
+pub use eof::{Eof, EOF_MAGIC, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
+pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
+pub use rwasm::RWASM_MAGIC_BYTES;
 use std::{fmt, sync::Arc};
 
 /// State of the [`Bytecode`] analysis.
@@ -25,6 +31,8 @@ pub enum Bytecode {
     Eof(Arc<Eof>),
     /// EIP-7702 delegated bytecode
     Eip7702(Eip7702Bytecode),
+    /// An Rwasm bytecode
+    Rwasm(Bytes),
 }
 
 impl Default for Bytecode {
@@ -117,6 +125,7 @@ impl Bytecode {
                 let eip7702 = Eip7702Bytecode::new_raw(bytecode)?;
                 Ok(Self::Eip7702(eip7702))
             }
+            Some(prefix) if prefix == &RWASM_MAGIC_BYTES => Ok(Self::Rwasm(bytecode)),
             _ => Ok(Self::LegacyRaw(bytecode)),
         }
     }
@@ -152,6 +161,7 @@ impl Bytecode {
                 .code(0)
                 .expect("Valid EOF has at least one code section"),
             Self::Eip7702(code) => code.raw(),
+            Self::Rwasm(bytecode) => bytecode,
         }
     }
 
@@ -186,6 +196,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
             Self::Eof(eof) => eof.raw().clone(),
             Self::Eip7702(eip7702) => eip7702.raw().clone(),
+            Self::Rwasm(bytecode) => bytecode.clone(),
         }
     }
 
@@ -197,6 +208,7 @@ impl Bytecode {
             Self::LegacyAnalyzed(analyzed) => analyzed.original_byte_slice(),
             Self::Eof(eof) => eof.raw(),
             Self::Eip7702(eip7702) => eip7702.raw(),
+            Self::Rwasm(bytecode) => bytecode,
         }
     }
 

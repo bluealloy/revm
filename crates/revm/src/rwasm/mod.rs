@@ -14,8 +14,6 @@ use crate::{
         SpecId,
         TransactTo,
         TxEnv,
-        TxKind,
-        EOF_MAGIC_BYTES,
         U256,
     },
     rwasm::sdk_adapter::RwasmSdkAdapter,
@@ -23,14 +21,12 @@ use crate::{
     ContextWithHandlerCfg,
     Database,
     DatabaseCommit,
-    FrameOrResult,
     FrameResult,
     Handler,
 };
 use core::fmt;
 use fluentbase_core::blended::BlendedRuntime;
 use fluentbase_sdk::runtime::TestingContext;
-use revm_interpreter::EOFCreateInputs;
 
 pub mod context_reader;
 pub mod sdk_adapter;
@@ -250,77 +246,6 @@ impl<EXT, DB: Database> Rwasm<'_, EXT, DB> {
     pub fn into_context_with_handler_cfg(self) -> ContextWithHandlerCfg<EXT, DB> {
         ContextWithHandlerCfg::new(self.context, self.handler.cfg)
     }
-
-    /// Transact pre-verified transaction.
-    // fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
-    //     let spec_id = self.spec_id();
-    //     let ctx = &mut self.context;
-    //     let pre_exec = self.handler.pre_execution();
-    //
-    //     // load access list and beneficiary if needed.
-    //     pre_exec.load_accounts(ctx)?;
-    //
-    //     // load precompiles
-    //     let precompiles = pre_exec.load_precompiles();
-    //     ctx.evm.set_precompiles(precompiles);
-    //
-    //     // deduce caller balance with its limit.
-    //     pre_exec.deduct_caller(ctx)?;
-    //
-    //     let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
-    //
-    //     // apply EIP-7702 auth list.
-    //     let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(ctx)? as i64;
-    //
-    //     let exec = self.handler.execution();
-    //     // call inner handling of call/create
-    //     let first_frame_or_result = match ctx.evm.env.tx.transact_to {
-    //         TxKind::Call(_) => exec.call(
-    //             ctx,
-    //             CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-    //         )?,
-    //         TxKind::Create => {
-    //             // if the first byte of data is magic 0xEF00, then it is EOFCreate.
-    //             if spec_id.is_enabled_in(SpecId::PRAGUE_EOF)
-    //                 && ctx.env().tx.data.starts_with(&EOF_MAGIC_BYTES)
-    //             {
-    //                 exec.eofcreate(
-    //                     ctx,
-    //                     Box::new(EOFCreateInputs::new_tx(&ctx.evm.env.tx, gas_limit)),
-    //                 )?
-    //             } else {
-    //                 // Safe to unwrap because we are sure that it is creating tx.
-    //                 exec.create(
-    //                     ctx,
-    //                     CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-    //                 )?
-    //             }
-    //         }
-    //     };
-    //
-    //     // Starts the main running loop.
-    //     let mut result = match first_frame_or_result {
-    //         FrameOrResult::Frame(first_frame) => self.run_the_loop(first_frame)?,
-    //         FrameOrResult::Result(result) => result,
-    //     };
-    //
-    //     let ctx = &mut self.context;
-    //
-    //     // handle output of call/create calls.
-    //     self.handler
-    //         .execution()
-    //         .last_frame_return(ctx, &mut result)?;
-    //
-    //     let post_exec = self.handler.post_execution();
-    //     // calculate final refund and add EIP-7702 refund to gas.
-    //     post_exec.refund(ctx, result.gas_mut(), eip7702_gas_refund);
-    //     // Reimburse the caller
-    //     post_exec.reimburse_caller(ctx, result.gas())?;
-    //     // Reward beneficiary
-    //     post_exec.reward_beneficiary(ctx, result.gas())?;
-    //     // Returns output of transaction.
-    //     post_exec.output(ctx, result)
-    // }
 
     /// Transact pre-verified transaction.
     fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {

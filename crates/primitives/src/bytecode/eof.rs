@@ -3,13 +3,12 @@ mod decode_helpers;
 mod header;
 mod types_section;
 
-pub use body::EofBody;
-pub use header::EofHeader;
-pub use types_section::TypesSection;
-
 use crate::{b256, bytes, Bytes, B256};
+pub use body::EofBody;
 use core::cmp::min;
+pub use header::EofHeader;
 use std::{fmt, vec, vec::Vec};
+pub use types_section::TypesSection;
 
 /// Hash of EF00 bytes that is used for EXTCODEHASH when called from legacy bytecode.
 pub const EOF_MAGIC_HASH: B256 =
@@ -65,7 +64,8 @@ impl Eof {
 
     /// Returns a slice of the raw bytes.
     /// If offset is greater than the length of the raw bytes, an empty slice is returned.
-    /// If len is greater than the length of the raw bytes, the slice is truncated to the length of the raw bytes.
+    /// If len is greater than the length of the raw bytes, the slice is truncated to the length of
+    /// the raw bytes.
     pub fn data_slice(&self, offset: usize, len: usize) -> &[u8] {
         self.body
             .data_section
