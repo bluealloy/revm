@@ -6,9 +6,7 @@ use bytecode::Bytecode;
 use context_interface::{
     journaled_state::Journal,
     result::InvalidTransaction,
-    transaction::{
-        eip7702::Authorization, AccessListTrait, Eip4844Tx, Eip7702Tx, Transaction, TransactionType,
-    },
+    transaction::{Transaction, TransactionType},
     Block, BlockGetter, Cfg, CfgGetter, JournalDBError, JournalGetter, TransactionGetter,
 };
 use handler_interface::PreExecutionHandler;
@@ -88,17 +86,16 @@ where
         let effective_gas_price = context.tx().effective_gas_price(basefee as u128);
         // Subtract gas costs from the caller's account.
         // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
-        let mut gas_cost =
-            (context.tx().common_fields().gas_limit() as u128).saturating_mul(effective_gas_price);
+        let mut gas_cost = (context.tx().gas_limit() as u128).saturating_mul(effective_gas_price);
 
         // EIP-4844
-        if context.tx().tx_type().into() == TransactionType::Eip4844 {
-            let blob_gas = context.tx().eip4844().total_blob_gas() as u128;
+        if context.tx().tx_type() == TransactionType::Eip4844 {
+            let blob_gas = context.tx().total_blob_gas() as u128;
             gas_cost = gas_cost.saturating_add(blob_price.saturating_mul(blob_gas));
         }
 
         let is_call = context.tx().kind().is_call();
-        let caller = context.tx().common_fields().caller();
+        let caller = context.tx().caller();
 
         // Load caller's account.
         let caller_account = context.journal().load_account(caller)?.data;
@@ -142,7 +139,6 @@ pub fn apply_eip7702_auth_list<
     }
 
     let authorization_list = tx
-        .eip7702()
         .authorization_list_iter()
         .map(|a| Authorization {
             authority: a.authority(),

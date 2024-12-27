@@ -1,10 +1,7 @@
 use context_interface::{
     journaled_state::Journal,
     result::{InvalidHeader, InvalidTransaction},
-    transaction::{
-        eip7702::Authorization, Eip1559CommonTxFields, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx,
-        Transaction, TransactionType,
-    },
+    transaction::{Transaction, TransactionType},
     Block, BlockGetter, Cfg, CfgGetter, JournalDBError, JournalGetter, TransactionGetter,
 };
 use core::cmp::{self, Ordering};
@@ -63,7 +60,7 @@ where
     }
 
     fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        let tx_caller = context.tx().common_fields().caller();
+        let tx_caller = context.tx().caller();
 
         // Load acc
         let account = &mut context.journal().load_account_code(tx_caller)?;
@@ -144,8 +141,8 @@ where
     Error: From<InvalidTransaction>,
 {
     // Check if the transaction's chain id is correct
-    let common_field = context.tx().common_fields();
-    let tx_type = context.tx().tx_type().into();
+    let tx_type = context.tx().tx_type();
+    let tx = context.tx();
 
     let base_fee = if context.cfg().is_base_fee_check_disabled() {
         None
@@ -153,9 +150,8 @@ where
         Some(context.block().basefee() as u128)
     };
 
-    match tx_type {
+    match TransactionType::from(tx_type) {
         TransactionType::Legacy => {
-            let tx = context.tx().legacy();
             // Check chain_id only if it is present in the legacy transaction.
             // EIP-155: Simple replay attack protection
             if let Some(chain_id) = tx.chain_id() {
@@ -175,9 +171,8 @@ where
             if !spec_id.is_enabled_in(SpecId::BERLIN) {
                 return Err(InvalidTransaction::Eip2930NotSupported.into());
             }
-            let tx = context.tx().eip2930();
 
-            if context.cfg().chain_id() != tx.chain_id() {
+            if Some(context.cfg().chain_id()) != tx.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId.into());
             }
 
@@ -192,15 +187,14 @@ where
             if !spec_id.is_enabled_in(SpecId::LONDON) {
                 return Err(InvalidTransaction::Eip1559NotSupported.into());
             }
-            let tx = context.tx().eip1559();
 
-            if context.cfg().chain_id() != tx.chain_id() {
+            if Some(context.cfg().chain_id()) != tx.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId.into());
             }
 
             validate_priority_fee_tx(
                 tx.max_fee_per_gas(),
-                tx.max_priority_fee_per_gas(),
+                tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
             )?;
         }
@@ -208,15 +202,14 @@ where
             if !spec_id.is_enabled_in(SpecId::CANCUN) {
                 return Err(InvalidTransaction::Eip4844NotSupported.into());
             }
-            let tx = context.tx().eip4844();
 
-            if context.cfg().chain_id() != tx.chain_id() {
+            if Some(context.cfg().chain_id()) != tx.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId.into());
             }
 
             validate_priority_fee_tx(
                 tx.max_fee_per_gas(),
-                tx.max_priority_fee_per_gas(),
+                tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
             )?;
 
@@ -231,15 +224,14 @@ where
             if !spec_id.is_enabled_in(SpecId::PRAGUE) {
                 return Err(InvalidTransaction::Eip7702NotSupported.into());
             }
-            let tx = context.tx().eip7702();
 
-            if context.cfg().chain_id() != tx.chain_id() {
+            if Some(context.cfg().chain_id()) != tx.chain_id() {
                 return Err(InvalidTransaction::InvalidChainId.into());
             }
 
             validate_priority_fee_tx(
                 tx.max_fee_per_gas(),
-                tx.max_priority_fee_per_gas(),
+                tx.max_priority_fee_per_gas().unwrap_or_default(),
                 base_fee,
             )?;
 
@@ -248,13 +240,6 @@ where
             if auth_list_len == 0 {
                 return Err(InvalidTransaction::EmptyAuthorizationList.into());
             }
-
-            // TODO : Temporary here as newest EIP have removed this check.
-            for auth in tx.authorization_list_iter() {
-                if auth.is_invalid() {
-                    return Err(InvalidTransaction::Eip7702NotSupported.into());
-                }
-            }
         }
         TransactionType::Custom => {
             // Custom transaction type check is not done here.
@@ -262,16 +247,15 @@ where
     };
 
     // Check if gas_limit is more than block_gas_limit
-    if !context.cfg().is_block_gas_limit_disabled()
-        && common_field.gas_limit() > context.block().gas_limit()
+    if !context.cfg().is_block_gas_limit_disabled() && tx.gas_limit() > context.block().gas_limit()
     {
         return Err(InvalidTransaction::CallerGasLimitMoreThanBlock.into());
     }
 
     // EIP-3860: Limit and meter initcode
-    if spec_id.is_enabled_in(SpecId::SHANGHAI) && context.tx().kind().is_create() {
+    if spec_id.is_enabled_in(SpecId::SHANGHAI) && tx.kind().is_create() {
         let max_initcode_size = context.cfg().max_code_size().saturating_mul(2);
-        if context.tx().common_fields().input().len() > max_initcode_size {
+        if context.tx().input().len() > max_initcode_size {
             return Err(InvalidTransaction::CreateInitCodeSizeLimit.into());
         }
     }
@@ -288,7 +272,8 @@ pub fn validate_tx_against_account<CTX: TransactionGetter + CfgGetter, ERROR>(
 where
     ERROR: From<InvalidTransaction>,
 {
-    let tx_type = context.tx().tx_type().into();
+    let tx = context.tx();
+    let tx_type = context.tx().tx_type();
     // EIP-3607: Reject transactions from senders with deployed code
     // This EIP is introduced after london but there was no collision in past
     // so we can leave it enabled always
@@ -303,7 +288,7 @@ where
 
     // Check that the transaction's nonce is correct
     if !context.cfg().is_nonce_check_disabled() {
-        let tx = context.tx().common_fields().nonce();
+        let tx = tx.nonce();
         let state = account.info.nonce;
         match tx.cmp(&state) {
             Ordering::Greater => {
@@ -317,13 +302,12 @@ where
     }
 
     // gas_limit * max_fee + value
-    let mut balance_check = U256::from(context.tx().common_fields().gas_limit())
-        .checked_mul(U256::from(context.tx().max_fee()))
-        .and_then(|gas_cost| gas_cost.checked_add(context.tx().common_fields().value()))
+    let mut balance_check = U256::from(tx.gas_limit())
+        .checked_mul(U256::from(tx.max_fee_per_gas()))
+        .and_then(|gas_cost| gas_cost.checked_add(tx.value()))
         .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
     if tx_type == TransactionType::Eip4844 {
-        let tx = context.tx().eip4844();
         let data_fee = tx.calc_max_data_fee();
         balance_check = balance_check
             .checked_add(data_fee)
@@ -344,36 +328,25 @@ where
 }
 
 /// Validate initial transaction gas.
-pub fn validate_initial_tx_gas<TxGetter: TransactionGetter, Error>(
-    env: TxGetter,
-    spec_id: SpecId,
-) -> Result<u64, Error>
+pub fn validate_initial_tx_gas<CTX, Error>(context: CTX, spec_id: SpecId) -> Result<u64, Error>
 where
+    CTX: TransactionGetter,
     Error: From<InvalidTransaction>,
 {
-    let tx_type = env.tx().tx_type().into();
-
-    let authorization_list_num = if tx_type == TransactionType::Eip7702 {
-        env.tx().eip7702().authorization_list_len() as u64
-    } else {
-        0
-    };
-
-    let common_fields = env.tx().common_fields();
-    let is_create = env.tx().kind().is_create();
-    let input = common_fields.input();
-    let access_list = env.tx().access_list();
+    let tx = context.tx();
+    let (accounts, storages) = tx.access_list_nums().unwrap_or_default();
 
     let initial_gas_spend = gas::validate_initial_tx_gas(
         spec_id,
-        input,
-        is_create,
-        access_list,
-        authorization_list_num,
+        tx.input(),
+        tx.kind().is_create(),
+        accounts as u64,
+        storages as u64,
+        tx.authorization_list_len() as u64,
     );
 
     // Additional check to see if limit is big enough to cover initial gas.
-    if initial_gas_spend > common_fields.gas_limit() {
+    if initial_gas_spend > tx.gas_limit() {
         return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
     }
     Ok(initial_gas_spend)
