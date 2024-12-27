@@ -47,7 +47,7 @@ paste = { version = "1.0", default-features = false }
 
 [features]
 default = [
-    "debug-print",
+    #"debug-print",
 ]
 e2e = [
     "revm/e2e",
