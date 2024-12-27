@@ -9,7 +9,7 @@ pub use constants::*;
 
 pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, keccak256, ruint, uint, Address,
-    Bytes, FixedBytes, Log, LogData, TxKind, B256, I256, U256,
+    Bytes, FixedBytes, Log, LogData, TxKind, B256, I128, I256, U128, U256,
 };
 
 pub use alloy_primitives::map::{self, hash_map, hash_set, HashMap, HashSet};

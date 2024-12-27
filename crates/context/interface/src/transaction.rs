@@ -72,18 +72,18 @@ pub trait Transaction {
     /// For Eip1559 it is max_fee_per_gas.
     fn gas_price(&self) -> u128;
 
-    fn access_list(&self) -> Option<impl Iterator<Item = (Address, impl Iterator<Item = B256>)>>;
+    fn access_list(&self) -> Option<impl Iterator<Item = (&Address, &[B256])>>;
 
     fn access_list_nums(&self) -> Option<(usize, usize)> {
         self.access_list().map(|al| {
-            // TODO simplify this
-            let mut accounts = 0;
-            let mut storage = 0;
-            for (_, storage_iter) in al {
-                accounts += 1;
-                storage += storage_iter.count();
+            let mut accounts_num = 0;
+            let mut storage_num = 0;
+            for (_, storage) in al {
+                accounts_num += 1;
+                storage_num += storage.len();
             }
-            (accounts, storage)
+
+            (accounts_num, storage_num)
         })
     }
     /// Returns vector of fixed size hash(32 bytes)
@@ -131,7 +131,7 @@ pub trait Transaction {
     /// Set EOA account code for one transaction
     ///
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
-    fn authorization_list_iter(&self) -> impl Iterator<Item = AuthorizationItem>;
+    fn authorization_list(&self) -> &[AuthorizationItem];
 
     /// Returns maximum fee that can be paid for the transaction.
     fn max_fee_per_gas(&self) -> u128 {

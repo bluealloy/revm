@@ -1,9 +1,7 @@
 use context_interface::transaction::AuthorizationItem;
-use context_interface::{result::InvalidTransaction, transaction::TransactionType, Transaction};
+use context_interface::{result::InvalidTransaction, Transaction};
 use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, U256};
-use specification::eip2930::AccessList;
-use specification::eip7702::AuthorizationList;
 use std::vec::Vec;
 
 /// The transaction environment
@@ -18,7 +16,7 @@ pub struct TxEnv {
     /// The gas price of the transaction
     pub gas_price: u128,
     /// The destination of the transaction
-    pub transact_to: TxKind,
+    pub kind: TxKind,
     /// The value sent to `transact_to`
     pub value: U256,
     /// The data of the transaction
@@ -48,7 +46,7 @@ pub struct TxEnv {
     /// Incorporated as part of the London upgrade via [EIP-1559].
     ///
     /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
-    pub gas_priority_fee: Option<U256>,
+    pub gas_priority_fee: Option<u128>,
 
     /// The list of blob versioned hashes
     ///
@@ -64,7 +62,7 @@ pub struct TxEnv {
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub max_fee_per_blob_gas: Option<U256>,
+    pub max_fee_per_blob_gas: u128,
 
     /// List of authorizations
     ///
@@ -84,15 +82,15 @@ impl Default for TxEnv {
             caller: Address::default(),
             gas_limit: 30_000_000,
             gas_price: 0,
-            transact_to: TxKind::Call(Address::default()),
+            kind: TxKind::Call(Address::default()),
             value: U256::ZERO,
             data: Bytes::default(),
             nonce: 0,
             chain_id: Some(1), // Mainnet chain ID is 1
             access_list: Vec::new(),
-            gas_priority_fee: Some(U256::ZERO),
+            gas_priority_fee: Some(0),
             blob_hashes: Vec::new(),
-            max_fee_per_blob_gas: Some(U256::ZERO),
+            max_fee_per_blob_gas: 0,
             authorization_list: Vec::new(),
         }
     }
@@ -103,6 +101,10 @@ impl Transaction for TxEnv {
 
     fn tx_type(&self) -> u8 {
         self.tx_type
+    }
+
+    fn kind(&self) -> TxKind {
+        self.kind
     }
 
     fn caller(&self) -> Address {
@@ -129,52 +131,39 @@ impl Transaction for TxEnv {
         self.chain_id
     }
 
-    // TODO
-    fn access_list(&self) -> impl Iterator<Item = (Address, impl Iterator<Item = B256>)> {
-        todo!()
-        // self.access_list
-        //     .clone()
-        //     .into_iter()
-        //     .map(|(a, b)| (a, b.into_iter()))
+    fn access_list(&self) -> Option<impl Iterator<Item = (&Address, &[B256])>> {
+        Some(
+            self.access_list
+                .iter()
+                .map(|(address, storage_keys)| (address, storage_keys.as_slice())),
+        )
     }
 
     fn max_fee_per_gas(&self) -> u128 {
         self.gas_price
     }
 
-    fn blob_hashes(&self) -> &[B256] {
-        &self.blob_hashes
-    }
-
-    fn max_fee_per_blob_gas(&self) -> Option<U256> {
+    fn max_fee_per_blob_gas(&self) -> u128 {
         self.max_fee_per_blob_gas
     }
 
-    fn authorization_list(&self) -> AuthorizationList {
-        self.authorization_list.clone()
+    fn authorization_list_len(&self) -> usize {
+        self.authorization_list.len()
+    }
+
+    fn authorization_list(&self) -> &[AuthorizationItem] {
+        &self.authorization_list
     }
 
     fn input(&self) -> &Bytes {
-        todo!()
-    }
-
-    fn kind(&self) -> TxKind {
-        todo!()
+        &self.data
     }
 
     fn blob_versioned_hashes(&self) -> &[B256] {
-        todo!()
-    }
-
-    fn authorization_list_len(&self) -> usize {
-        todo!()
-    }
-
-    fn authorization_list_iter(&self) -> impl Iterator<Item = AuthorizationItem> {
-        todo!()
+        &self.blob_hashes
     }
 
     fn max_priority_fee_per_gas(&self) -> Option<u128> {
-        todo!()
+        self.gas_priority_fee
     }
 }

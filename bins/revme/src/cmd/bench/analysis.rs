@@ -17,7 +17,7 @@ pub fn run() {
         .modify_tx_chained(|tx| {
             // Execution globals block hash/gas_limit/coinbase/timestamp..
             tx.caller = address!("1000000000000000000000000000000000000000");
-            tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
+            tx.kind = TxKind::Call(address!("0000000000000000000000000000000000000000"));
             //evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
             tx.data = bytes!("8035F0CE");
         });

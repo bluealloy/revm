@@ -100,13 +100,6 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
         }
     }
 
-    fn common_fields(&self) -> &dyn CommonTxFields {
-        match self {
-            Self::Base { tx, .. } => tx.common_fields(),
-            Self::Deposit(deposit) => deposit,
-        }
-    }
-
     fn kind(&self) -> revm::primitives::TxKind {
         match self {
             Self::Base { tx, .. } => tx.kind(),
@@ -215,7 +208,7 @@ mod tests {
         // Verify transaction type
         assert_eq!(op_tx.tx_type(), OpTransactionType::Deposit);
         // Verify common fields access
-        assert_eq!(op_tx.common_fields().gas_limit(), 0);
+        assert_eq!(op_tx.gas_limit(), 0);
         assert_eq!(op_tx.kind(), revm::primitives::TxKind::Call(Address::ZERO));
         // Verify gas related calculations
         assert_eq!(op_tx.effective_gas_price(100), 100);

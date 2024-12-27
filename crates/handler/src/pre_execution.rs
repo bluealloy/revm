@@ -140,7 +140,8 @@ pub fn apply_eip7702_auth_list<
     }
 
     let authorization_list = tx
-        .authorization_list_iter()
+        .authorization_list()
+        .into_iter()
         .map(|a| Authorization {
             authority: a.0,
             chain_id: a.1,

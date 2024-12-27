@@ -95,18 +95,6 @@ dependencies = [
 
 [[package]]
 name = "alloy-eip7702"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea59dc42102bc9a1905dc57901edc6dd48b9f38115df86c7d252acba70d71d04"
-dependencies = [
- "alloy-primitives",
- "alloy-rlp",
- "k256",
- "serde",
-]
-
-[[package]]
-name = "alloy-eip7702"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f6cee6a35793f3db8a5ffe60e86c695f321d081a567211245f503e8c498fce8"
@@ -124,7 +112,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b6aa3961694b30ba53d41006131a2fca3bdab22e4c344e46db2c639e7c2dfdd"
 dependencies = [
  "alloy-eip2930",
- "alloy-eip7702 0.4.1",
+ "alloy-eip7702",
  "alloy-primitives",
  "alloy-rlp",
  "alloy-serde",
@@ -2983,7 +2971,7 @@ dependencies = [
  "revm-primitives",
  "revm-specification",
  "revm-state",
- "rstest 0.22.0",
+ "rstest",
 ]
 
 [[package]]
@@ -3044,7 +3032,7 @@ dependencies = [
  "revm-database-interface",
  "revm-primitives",
  "revm-state",
- "rstest 0.22.0",
+ "rstest",
  "serde",
  "serde_json",
  "tokio",
@@ -3060,7 +3048,7 @@ dependencies = [
  "indicatif",
  "revm-primitives",
  "revm-state",
- "rstest 0.22.0",
+ "rstest",
  "serde",
  "tokio",
 ]
@@ -3118,22 +3106,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "revm-optimism"
-version = "1.0.0"
-dependencies = [
- "alloy-sol-types",
- "anyhow",
- "indicatif",
- "once_cell",
- "revm",
- "revm-database",
- "revm-inspector",
- "revm-precompile",
- "rstest 0.23.0",
- "serde",
-]
-
-[[package]]
 name = "revm-precompile"
 version = "11.0.1"
 dependencies = [
@@ -3152,7 +3124,7 @@ dependencies = [
  "revm-primitives",
  "revm-specification",
  "ripemd",
- "rstest 0.22.0",
+ "rstest",
  "secp256k1",
  "serde",
  "serde_derive",
@@ -3172,9 +3144,6 @@ dependencies = [
 name = "revm-specification"
 version = "1.0.0"
 dependencies = [
- "alloy-eip2930",
- "alloy-eip7702 0.1.1",
- "alloy-primitives",
  "enumn",
  "revm-primitives",
  "serde",
@@ -3291,19 +3260,7 @@ checksum = "7b423f0e62bdd61734b67cd21ff50871dfaeb9cc74f869dcd6af974fbcb19936"
 dependencies = [
  "futures",
  "futures-timer",
- "rstest_macros 0.22.0",
- "rustc_version 0.4.1",
-]
-
-[[package]]
-name = "rstest"
-version = "0.23.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a2c585be59b6b5dd66a9d2084aa1d8bd52fbdb806eafdeffb52791147862035"
-dependencies = [
- "futures",
- "futures-timer",
- "rstest_macros 0.23.0",
+ "rstest_macros",
  "rustc_version 0.4.1",
 ]
 
@@ -3312,24 +3269,6 @@ name = "rstest_macros"
 version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c5e1711e7d14f74b12a58411c542185ef7fb7f2e7f8ee6e2940a883628522b42"
-dependencies = [
- "cfg-if",
- "glob",
- "proc-macro-crate",
- "proc-macro2",
- "quote",
- "regex",
- "relative-path",
- "rustc_version 0.4.1",
- "syn 2.0.87",
- "unicode-ident",
-]
-
-[[package]]
-name = "rstest_macros"
-version = "0.23.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "825ea780781b15345a146be27eaefb05085e337e869bff01b4306a4fd4a9ad5a"
 dependencies = [
  "cfg-if",
  "glob",

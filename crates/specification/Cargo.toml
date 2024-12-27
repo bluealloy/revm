@@ -24,13 +24,6 @@ all = "warn"
 [dependencies]
 primitives = { path = "../primitives", package = "revm-primitives", version = "9.0.1", default-features = false }
 
-# alloy
-alloy-eip2930 = { version = "0.1.0", default-features = false }
-alloy-eip7702 = { version = "0.1.0", default-features = false, features = ["k256"] }
-alloy-primitives = { version = "0.8.2", default-features = false, features = [
-    "rlp",
-] }
-
 # misc
 enumn = { version = "0.1" }
 
@@ -45,6 +38,6 @@ serde = { version = "1.0", default-features = false, features = [
 
 [features]
 default = ["std"]
-std = ["serde?/std", "alloy-eip2930/std", "alloy-eip7702/std", "alloy-primitives/std"]
-serde = ["dep:serde", "alloy-eip2930/serde", "alloy-eip7702/serde", "alloy-primitives/serde"]
+std = ["serde?/std"]
+serde = ["dep:serde"]
 serde-json = ["serde"]

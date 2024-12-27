@@ -179,7 +179,7 @@ impl GasInspector {
 //                 *tx = <TestEvmWiring as PrimitiveEvmWiring>::Transaction::default();
 
 //                 tx.caller = address!("1000000000000000000000000000000000000000");
-//                 tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
+//                 tx.kind = TxKind::Call(address!("0000000000000000000000000000000000000000"));
 //                 tx.gas_limit = 21100;
 //             })
 //             .append_handler_register(inspector_handle_register)

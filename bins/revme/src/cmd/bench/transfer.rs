@@ -15,7 +15,7 @@ pub fn run() {
                 .parse()
                 .unwrap();
             tx.value = U256::from(10);
-            tx.transact_to = TxKind::Call(
+            tx.kind = TxKind::Call(
                 "0x0000000000000000000000000000000000000000"
                     .parse()
                     .unwrap(),
