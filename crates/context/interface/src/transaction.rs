@@ -131,7 +131,7 @@ pub trait Transaction {
     /// Set EOA account code for one transaction
     ///
     /// [EIP-Set EOA account code for one transaction](https://eips.ethereum.org/EIPS/eip-7702)
-    fn authorization_list(&self) -> &[AuthorizationItem];
+    fn authorization_list(&self) -> impl Iterator<Item = AuthorizationItem>;
 
     /// Returns maximum fee that can be paid for the transaction.
     fn max_fee_per_gas(&self) -> u128 {

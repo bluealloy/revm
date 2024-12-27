@@ -151,8 +151,8 @@ impl Transaction for TxEnv {
         self.authorization_list.len()
     }
 
-    fn authorization_list(&self) -> &[AuthorizationItem] {
-        &self.authorization_list
+    fn authorization_list(&self) -> impl Iterator<Item = AuthorizationItem> {
+        self.authorization_list.iter().cloned()
     }
 
     fn input(&self) -> &Bytes {
