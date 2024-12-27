@@ -49,7 +49,7 @@ jobs:
             ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/ \
             ethtests/EIPTests/StateTests/stEIP2537/ \
             tests/eof_suite/eest/state_tests \
-            tests/prague_suite/state_tests
+            tests/pectra_devnet5/state_tests
       - name: Run EOF validation tests
         run: |
           cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- eof-validation \
