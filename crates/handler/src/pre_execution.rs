@@ -58,14 +58,15 @@ where
         }
 
         // Load access list
-        if let Some(access_list) = context.tx().access_list().cloned() {
-            for access_list in access_list.iter() {
-                context.journal().warm_account_and_storage(
-                    access_list.0,
-                    access_list.1.map(|i| U256::from_be_bytes(i.0)),
-                )?;
-            }
-        };
+        // TODO
+        // if let Some(access_list) = context.tx().access_list().cloned() {
+        //     for access_list in access_list.iter() {
+        //         context.journal().warm_account_and_storage(
+        //             access_list.0,
+        //             access_list.1.map(|i| U256::from_be_bytes(i.0)),
+        //         )?;
+        //     }
+        // };
 
         Ok(())
     }
@@ -127,7 +128,7 @@ pub fn apply_eip7702_auth_list<
 ) -> Result<u64, ERROR> {
     // Return if there is no auth list.
     let tx = context.tx();
-    if tx.tx_type().into() != TransactionType::Eip7702 {
+    if tx.tx_type() != TransactionType::Eip7702 {
         return Ok(0);
     }
 
@@ -135,16 +136,16 @@ pub fn apply_eip7702_auth_list<
         authority: Option<Address>,
         address: Address,
         nonce: u64,
-        chain_id: u64,
+        chain_id: U256,
     }
 
     let authorization_list = tx
         .authorization_list_iter()
         .map(|a| Authorization {
-            authority: a.authority(),
-            address: a.address(),
-            nonce: a.nonce(),
-            chain_id: a.chain_id(),
+            authority: a.0,
+            chain_id: a.1,
+            nonce: a.2,
+            address: a.3,
         })
         .collect::<Vec<_>>();
     let chain_id = context.cfg().chain_id();
@@ -158,7 +159,7 @@ pub fn apply_eip7702_auth_list<
         };
 
         // 2. Verify the chain id is either 0 or the chain's current ID.
-        if authorization.chain_id != 0 && authorization.chain_id != chain_id {
+        if authorization.chain_id.is_zero() && authorization.chain_id != U256::from(chain_id) {
             continue;
         }
 

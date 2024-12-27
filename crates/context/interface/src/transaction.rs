@@ -13,7 +13,7 @@ use std::boxed::Box;
 pub trait TransactionError: Debug + core::error::Error {}
 
 /// (Optional signer, chain id, nonce, address)
-type AuthorizationItem = (Option<Address>, U256, u64, Address);
+pub type AuthorizationItem = (Option<Address>, U256, u64, Address);
 
 /// Main Transaction trait that abstracts and specifies all transaction currently supported by Ethereum
 ///
