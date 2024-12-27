@@ -150,10 +150,7 @@ impl<IW: InterpreterTypes, H: Host> CustomInstruction for Instruction<IW, H> {
     }
 }
 
-impl<IW: InterpreterTypes> Interpreter<IW>
-where
-    IW::Bytecode: AsRef<Bytecode>,
-{
+impl<IW: InterpreterTypes> Interpreter<IW> {
     /// Executes the instruction at the current instruction pointer.
     ///
     /// Internally it will increment instruction pointer by one.
