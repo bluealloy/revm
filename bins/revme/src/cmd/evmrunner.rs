@@ -1,6 +1,9 @@
 use clap::Parser;
 use database::BenchmarkDB;
-use inspector::{inspector_handler, inspectors::TracerEip3155, inspector_context::InspectorContext, InspectorMainEvm};
+use inspector::{
+    inspector_context::InspectorContext, inspector_handler, inspectors::TracerEip3155,
+    InspectorMainEvm,
+};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
     handler::EthHandler,

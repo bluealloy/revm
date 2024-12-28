@@ -4,7 +4,10 @@ use super::{
 };
 use database::State;
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use inspector::{inspector_handler, inspectors::TracerEip3155, inspector_context::InspectorContext, InspectorMainEvm};
+use inspector::{
+    inspector_context::InspectorContext, inspector_handler, inspectors::TracerEip3155,
+    InspectorMainEvm,
+};
 use revm::{
     bytecode::Bytecode,
     context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv},
