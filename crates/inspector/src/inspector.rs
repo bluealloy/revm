@@ -5,6 +5,7 @@ use revm::{
     context::JournaledState,
     context_interface::{
         block::BlockSetter,
+        context::PerformantContextAccess,
         journaled_state::{AccountLoad, Eip7702CodeLoad},
         transaction::TransactionSetter,
         BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalDBError,
@@ -384,6 +385,17 @@ where
 
     fn journal_ref(&self) -> &Self::Journal {
         self.inner.journal_ref()
+    }
+}
+
+impl<INSP, DB: Database, CTX> PerformantContextAccess for InspectorContext<INSP, DB, CTX>
+where
+    CTX: PerformantContextAccess<Error = DB::Error> + DatabaseGetter<Database = DB>,
+{
+    type Error = <CTX as PerformantContextAccess>::Error;
+
+    fn load_access_list(&mut self) -> Result<(), Self::Error> {
+        self.inner.load_access_list()
     }
 }
 

@@ -370,8 +370,8 @@ pub fn validate_initial_tx_gas(
         };
 
     // Get number of access list account and storages.
-    initial_gas += access_list_accounts as u64 * ACCESS_LIST_ADDRESS;
-    initial_gas += access_list_storages as u64 * ACCESS_LIST_STORAGE_KEY;
+    initial_gas += access_list_accounts * ACCESS_LIST_ADDRESS;
+    initial_gas += access_list_storages * ACCESS_LIST_STORAGE_KEY;
 
     // Base stipend
     initial_gas += if is_create {

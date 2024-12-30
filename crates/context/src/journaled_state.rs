@@ -881,6 +881,7 @@ impl<DB: Database> JournaledState<DB> {
         key: U256,
         new: U256,
     ) -> Result<StateLoad<SStoreResult>, DB::Error> {
+        println!("sstore state: {:#?}", self.state);
         // assume that acc exists and load the slot.
         let present = self.sload(address, key)?;
         let acc = self.state.get_mut(&address).unwrap();

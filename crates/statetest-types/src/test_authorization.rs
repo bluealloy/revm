@@ -1,5 +1,3 @@
-use std::u64;
-
 use revm::{
     context_interface::transaction::AuthorizationItem,
     primitives::{Address, U256},

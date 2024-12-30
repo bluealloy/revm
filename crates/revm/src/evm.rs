@@ -2,6 +2,7 @@ use crate::{exec::EvmCommit, EvmExec};
 use context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context, JournaledState};
 use context_interface::{
     block::BlockSetter,
+    context::PerformantContextAccess,
     journaled_state::Journal,
     result::{
         EVMError, ExecutionResult, HaltReasonTrait, InvalidHeader, InvalidTransaction,
@@ -54,7 +55,8 @@ where
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
             >,
-        > + Host,
+        > + Host
+        + PerformantContextAccess<Error = <<CTX as DatabaseGetter>::Database as Database>::Error>,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
         + From<JournalDBError<CTX>>
@@ -101,7 +103,8 @@ where
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
             >,
-        > + Host,
+        > + Host
+        + PerformantContextAccess<Error = <<CTX as DatabaseGetter>::Database as Database>::Error>,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
         + From<JournalDBError<CTX>>
@@ -159,7 +162,8 @@ where
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
             >,
-        > + Host,
+        > + Host
+        + PerformantContextAccess<Error = <<CTX as DatabaseGetter>::Database as Database>::Error>,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
         + From<JournalDBError<CTX>>

@@ -7,7 +7,8 @@ use context_interface::{
     journaled_state::Journal,
     result::InvalidTransaction,
     transaction::{Transaction, TransactionType},
-    Block, BlockGetter, Cfg, CfgGetter, JournalDBError, JournalGetter, TransactionGetter,
+    Block, BlockGetter, Cfg, CfgGetter, Database, DatabaseGetter, JournalDBError, JournalGetter,
+    PerformantContextAccess, TransactionGetter,
 };
 use handler_interface::PreExecutionHandler;
 use primitives::{Address, BLOCKHASH_STORAGE_ADDRESS, U256};
@@ -58,7 +59,7 @@ where
         }
 
         // Load access list
-        // TODO
+        context.load_access_list()?;
         // if let Some(access_list) = context.tx().access_list().cloned() {
         //     for access_list in access_list.iter() {
         //         context.journal().warm_account_and_storage(
@@ -141,7 +142,6 @@ pub fn apply_eip7702_auth_list<
 
     let authorization_list = tx
         .authorization_list()
-        .into_iter()
         .map(|a| Authorization {
             authority: a.0,
             chain_id: a.1,
@@ -203,12 +203,21 @@ pub fn apply_eip7702_auth_list<
 }
 
 pub trait EthPreExecutionContext:
-    TransactionGetter + BlockGetter + JournalGetter + CfgGetter
+    TransactionGetter
+    + BlockGetter
+    + JournalGetter
+    + CfgGetter
+    + PerformantContextAccess<Error = <<Self as DatabaseGetter>::Database as Database>::Error>
 {
 }
 
-impl<CTX: TransactionGetter + BlockGetter + JournalGetter + CfgGetter> EthPreExecutionContext
-    for CTX
+impl<
+        CTX: TransactionGetter
+            + BlockGetter
+            + JournalGetter
+            + CfgGetter
+            + PerformantContextAccess<Error = <<CTX as DatabaseGetter>::Database as Database>::Error>,
+    > EthPreExecutionContext for CTX
 {
 }
 

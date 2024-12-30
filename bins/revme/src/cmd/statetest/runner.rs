@@ -397,8 +397,7 @@ pub fn execute_test_suite(
                             .map(|item| (item.address, item.storage_keys.clone()))
                             .collect::<Vec<_>>()
                     })
-                    .unwrap_or_default()
-                    .into();
+                    .unwrap_or_default();
 
                 tx.authorization_list = unit
                     .transaction
