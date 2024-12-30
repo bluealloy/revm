@@ -19,7 +19,7 @@ pub use transaction_type::TransactionType;
 use auto_impl::auto_impl;
 use core::cmp::min;
 use core::fmt::Debug;
-use primitives::{TxKind, U256};
+use primitives::TxKind;
 use std::boxed::Box;
 
 /// Transaction validity error types.
@@ -105,11 +105,11 @@ pub trait Transaction {
     /// Returns effective gas price is gas price field for Legacy and Eip2930 transaction.
     ///
     /// While for transactions after Eip1559 it is minimum of max_fee and `base + max_priority_fee`.
-    fn effective_gas_price(&self, base_fee: U256) -> U256 {
+    fn effective_gas_price(&self, base_fee: u128) -> u128 {
         let tx_type = self.tx_type().into();
         let (max_fee, max_priority_fee) = match tx_type {
-            TransactionType::Legacy => return U256::from(self.legacy().gas_price()),
-            TransactionType::Eip2930 => return U256::from(self.eip2930().gas_price()),
+            TransactionType::Legacy => return self.legacy().gas_price(),
+            TransactionType::Eip2930 => return self.eip2930().gas_price(),
             TransactionType::Eip1559 => (
                 self.eip1559().max_fee_per_gas(),
                 self.eip1559().max_priority_fee_per_gas(),
@@ -125,7 +125,7 @@ pub trait Transaction {
             TransactionType::Custom => unimplemented!("Custom tx not supported"),
         };
 
-        min(U256::from(max_fee), base_fee + U256::from(max_priority_fee))
+        min(max_fee, base_fee.saturating_add(max_priority_fee))
     }
 
     /// Returns transaction kind.

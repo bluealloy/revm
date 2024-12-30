@@ -7,7 +7,7 @@ use specification::eip4844::{
 /// Incorporated as part of the Cancun upgrade via [EIP-4844].
 ///
 /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlobExcessGasAndPrice {
     /// The excess blob gas of the block

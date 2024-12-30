@@ -6,20 +6,20 @@ use primitives::{Address, B256, U256};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlockEnv {
     /// The number of ancestor blocks of this block (block height)
-    pub number: U256,
+    pub number: u64,
     /// Beneficiary (Coinbase or miner) is a address that have signed the block
     ///
     /// This is the receiver address of all the gas spent in the block.
     pub beneficiary: Address,
 
     /// The timestamp of the block in seconds since the UNIX epoch
-    pub timestamp: U256,
+    pub timestamp: u64,
     /// The gas limit of the block
-    pub gas_limit: U256,
+    pub gas_limit: u64,
     /// The base fee per gas, added in the London upgrade with [EIP-1559]
     ///
     /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
-    pub basefee: U256,
+    pub basefee: u64,
     /// The difficulty of the block
     ///
     /// Unused after the Paris (AKA the merge) upgrade, and replaced by `prevrandao`.
@@ -53,54 +53,54 @@ impl BlockEnv {
 
 impl Block for BlockEnv {
     #[inline]
-    fn number(&self) -> &U256 {
-        &self.number
+    fn number(&self) -> u64 {
+        self.number
     }
 
     #[inline]
-    fn beneficiary(&self) -> &Address {
-        &self.beneficiary
+    fn beneficiary(&self) -> Address {
+        self.beneficiary
     }
 
     #[inline]
-    fn timestamp(&self) -> &U256 {
-        &self.timestamp
+    fn timestamp(&self) -> u64 {
+        self.timestamp
     }
 
     #[inline]
-    fn gas_limit(&self) -> &U256 {
-        &self.gas_limit
+    fn gas_limit(&self) -> u64 {
+        self.gas_limit
     }
 
     #[inline]
-    fn basefee(&self) -> &U256 {
-        &self.basefee
+    fn basefee(&self) -> u64 {
+        self.basefee
     }
 
     #[inline]
-    fn difficulty(&self) -> &U256 {
-        &self.difficulty
+    fn difficulty(&self) -> U256 {
+        self.difficulty
     }
 
     #[inline]
-    fn prevrandao(&self) -> Option<&B256> {
-        self.prevrandao.as_ref()
+    fn prevrandao(&self) -> Option<B256> {
+        self.prevrandao
     }
 
     #[inline]
-    fn blob_excess_gas_and_price(&self) -> Option<&BlobExcessGasAndPrice> {
-        self.blob_excess_gas_and_price.as_ref()
+    fn blob_excess_gas_and_price(&self) -> Option<BlobExcessGasAndPrice> {
+        self.blob_excess_gas_and_price
     }
 }
 
 impl Default for BlockEnv {
     fn default() -> Self {
         Self {
-            number: U256::ZERO,
+            number: 0,
             beneficiary: Address::ZERO,
-            timestamp: U256::from(1),
-            gas_limit: U256::MAX,
-            basefee: U256::ZERO,
+            timestamp: 1,
+            gas_limit: u64::MAX,
+            basefee: 0,
             difficulty: U256::ZERO,
             prevrandao: Some(B256::ZERO),
             blob_excess_gas_and_price: Some(BlobExcessGasAndPrice::new(0)),
