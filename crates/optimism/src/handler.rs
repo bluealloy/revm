@@ -125,7 +125,7 @@ where
     }
 
     fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        let caller = context.tx().common_fields().caller();
+        let caller = context.tx().caller();
         let is_deposit = context.tx().tx_type() == OpTransactionType::Deposit;
 
         // If the transaction is a deposit with a `mint` value, add the mint value
@@ -213,7 +213,7 @@ where
     ) -> Result<Self::ExecResult, Self::Error> {
         let tx = context.tx();
         let is_deposit = tx.tx_type() == OpTransactionType::Deposit;
-        let tx_gas_limit = tx.common_fields().gas_limit();
+        let tx_gas_limit = tx.gas_limit();
         let is_regolith = context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH);
 
         let instruction_result = frame_result.interpreter_result().result;

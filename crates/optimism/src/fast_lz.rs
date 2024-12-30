@@ -177,7 +177,7 @@ fn u24(input: &[u8], idx: u32) -> u32 {
 //                     panic!("Default is base tx");
 //                 };
 //                 tx.caller = address!("1000000000000000000000000000000000000000");
-//                 tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
+//                 tx.kind = TxKind::Call(address!("0000000000000000000000000000000000000000"));
 //                 tx.data = FastLz::fastLzCall::new((input,)).abi_encode().into();
 //                 tx.gas_limit = 300_000;
 //                 *enveloped_tx = Some(Bytes::default());

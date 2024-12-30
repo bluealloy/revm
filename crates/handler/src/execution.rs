@@ -49,7 +49,7 @@ where
         // Make new frame action.
         let spec = context.cfg().spec().into();
         let tx = context.tx();
-        let input = tx.common_fields().input().clone();
+        let input = tx.input().clone();
 
         let init_frame: FrameInput = match tx.kind() {
             TxKind::Call(target_address) => FrameInput::Call(Box::new(CallInputs {
@@ -57,8 +57,8 @@ where
                 gas_limit,
                 target_address,
                 bytecode_address: target_address,
-                caller: tx.common_fields().caller(),
-                value: CallValue::Transfer(tx.common_fields().value()),
+                caller: tx.caller(),
+                value: CallValue::Transfer(tx.value()),
                 scheme: CallScheme::Call,
                 is_static: false,
                 is_eof: false,
@@ -68,16 +68,16 @@ where
                 // If first byte of data is magic 0xEF00, then it is EOFCreate.
                 if spec.is_enabled_in(SpecId::OSAKA) && input.starts_with(&EOF_MAGIC_BYTES) {
                     FrameInput::EOFCreate(Box::new(EOFCreateInputs::new(
-                        tx.common_fields().caller(),
-                        tx.common_fields().value(),
+                        tx.caller(),
+                        tx.value(),
                         gas_limit,
                         EOFCreateKind::Tx { initdata: input },
                     )))
                 } else {
                     FrameInput::Create(Box::new(CreateInputs {
-                        caller: tx.common_fields().caller(),
+                        caller: tx.caller(),
                         scheme: CreateScheme::Create,
-                        value: tx.common_fields().value(),
+                        value: tx.value(),
                         init_code: input,
                         gas_limit,
                     }))
@@ -98,7 +98,7 @@ where
         let refunded = gas.refunded();
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-        *gas = Gas::new_spent(context.tx().common_fields().gas_limit());
+        *gas = Gas::new_spent(context.tx().gas_limit());
 
         if instruction_result.is_ok_or_revert() {
             gas.erase_cost(remaining);

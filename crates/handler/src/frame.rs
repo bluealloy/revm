@@ -354,7 +354,7 @@ where
                 }
 
                 // Use nonce from tx to calculate address.
-                let tx = context.tx().common_fields();
+                let tx = context.tx();
                 let create_address = tx.caller().create(tx.nonce());
 
                 (input, eof, Some(create_address))

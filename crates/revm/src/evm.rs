@@ -251,7 +251,7 @@ where
         // Deduce caller balance with its limit.
         pre_exec.deduct_caller(context)?;
 
-        let gas_limit = context.tx().common_fields().gas_limit() - initial_gas_spend;
+        let gas_limit = context.tx().gas_limit() - initial_gas_spend;
 
         // Apply EIP-7702 auth list.
         let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(context)? as i64;
@@ -382,7 +382,7 @@ mod tests {
         )]
         .into();
         tx.caller = caller;
-        tx.transact_to = TxKind::Call(auth);
+        tx.kind = TxKind::Call(auth);
 
         let mut tx2 = TxEnv::default();
         tx2.tx_type = TransactionType::Legacy;
@@ -435,7 +435,7 @@ mod tests {
                 )]
                 .into();
                 tx.caller = caller;
-                tx.transact_to = TxKind::Call(auth);
+                tx.kind = TxKind::Call(auth);
             })
             .build();
 

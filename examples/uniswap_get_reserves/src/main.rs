@@ -79,7 +79,7 @@ async fn main() -> anyhow::Result<()> {
                 // change that to whatever caller you want to be
                 tx.caller = address!("0000000000000000000000000000000000000000");
                 // account you want to transact with
-                tx.transact_to = TxKind::Call(pool_address);
+                tx.kind = TxKind::Call(pool_address);
                 // calldata formed via abigen
                 tx.data = encoded.into();
                 // transaction value in wei

@@ -173,7 +173,7 @@ where
     fn print_summary(&mut self, result: &InterpreterResult, context: &mut CTX) {
         if self.print_summary {
             let spec = context.cfg().spec().into();
-            let gas_limit = context.tx().common_fields().gas_limit();
+            let gas_limit = context.tx().gas_limit();
             let value = Summary {
                 state_root: B256::ZERO.to_string(),
                 output: result.output.to_string(),

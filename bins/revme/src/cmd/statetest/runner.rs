@@ -16,7 +16,7 @@ use revm::{
     database_interface::EmptyDB,
     handler::EthHandler,
     primitives::{keccak256, Bytes, TxKind, B256},
-    specification::{eip7702::AuthorizationList, hardfork::SpecId},
+    specification::hardfork::SpecId,
     Context, DatabaseCommit, EvmCommit, MainEvm,
 };
 use serde_json::json;
@@ -326,11 +326,20 @@ pub fn execute_test_suite(
             .transaction
             .gas_price
             .or(unit.transaction.max_fee_per_gas)
-            .unwrap_or_default();
-        tx.gas_priority_fee = unit.transaction.max_priority_fee_per_gas;
+            .unwrap_or_default()
+            .try_into()
+            .unwrap_or(u128::MAX);
+        tx.gas_priority_fee = unit
+            .transaction
+            .max_priority_fee_per_gas
+            .map(|b| u128::try_from(b).expect("max priority fee less than u128::MAX"));
         // EIP-4844
         tx.blob_hashes = unit.transaction.blob_versioned_hashes.clone();
-        tx.max_fee_per_blob_gas = unit.transaction.max_fee_per_blob_gas;
+        tx.max_fee_per_blob_gas = unit
+            .transaction
+            .max_fee_per_blob_gas
+            .map(|b| u128::try_from(b).expect("max fee less than u128::MAX"))
+            .unwrap_or(u128::MAX);
 
         // Post and execution
         for (spec_name, tests) in unit.post {
@@ -363,7 +372,7 @@ pub fn execute_test_suite(
                     }
                 };
 
-                tx.tx_type = tx_type;
+                tx.tx_type = tx_type as u8;
 
                 tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
 
@@ -382,26 +391,27 @@ pub fn execute_test_suite(
                     .access_lists
                     .get(test.indexes.data)
                     .and_then(Option::as_deref)
-                    .cloned()
+                    .map(|access_list| {
+                        access_list
+                            .iter()
+                            .map(|item| (item.address, item.storage_keys.clone()))
+                            .collect::<Vec<_>>()
+                    })
                     .unwrap_or_default()
                     .into();
 
                 tx.authorization_list = unit
                     .transaction
                     .authorization_list
-                    .as_ref()
-                    .map(|auth_list| {
-                        AuthorizationList::Recovered(
-                            auth_list.iter().map(|auth| auth.into_recovered()).collect(),
-                        )
-                    })
+                    .clone()
+                    .map(|auth_list| auth_list.into_iter().map(Into::into).collect::<Vec<_>>())
                     .unwrap_or_default();
 
                 let to = match unit.transaction.to {
                     Some(add) => TxKind::Call(add),
                     None => TxKind::Create,
                 };
-                tx.transact_to = to;
+                tx.kind = to;
 
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(cfg.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));

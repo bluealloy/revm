@@ -103,7 +103,7 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
             .modify_tx_chained(|tx| {
                 // 0x1 because calling USDC proxy from zero address fails
                 tx.caller = address!("0000000000000000000000000000000000000001");
-                tx.transact_to = TxKind::Call(token);
+                tx.kind = TxKind::Call(token);
                 tx.data = encoded.into();
                 tx.value = U256::from(0);
             }),
@@ -149,7 +149,7 @@ async fn get_amount_out(
             .with_db(cache_db)
             .modify_tx_chained(|tx| {
                 tx.caller = address!("0000000000000000000000000000000000000000");
-                tx.transact_to = TxKind::Call(uniswap_v2_router);
+                tx.kind = TxKind::Call(uniswap_v2_router);
                 tx.data = encoded.into();
                 tx.value = U256::from(0);
             }),
@@ -184,7 +184,7 @@ fn get_reserves(pair_address: Address, cache_db: &mut AlloyCacheDB) -> Result<(U
             .with_db(cache_db)
             .modify_tx_chained(|tx| {
                 tx.caller = address!("0000000000000000000000000000000000000000");
-                tx.transact_to = TxKind::Call(pair_address);
+                tx.kind = TxKind::Call(pair_address);
                 tx.data = encoded.into();
                 tx.value = U256::from(0);
             }),
@@ -235,7 +235,7 @@ fn swap(
             .with_db(cache_db)
             .modify_tx_chained(|tx| {
                 tx.caller = from;
-                tx.transact_to = TxKind::Call(pool_address);
+                tx.kind = TxKind::Call(pool_address);
                 tx.data = encoded.into();
                 tx.value = U256::from(0);
                 tx.nonce = 1;
@@ -271,7 +271,7 @@ fn transfer(
             .with_db(cache_db)
             .modify_tx_chained(|tx| {
                 tx.caller = from;
-                tx.transact_to = TxKind::Call(token);
+                tx.kind = TxKind::Call(token);
                 tx.data = encoded.into();
                 tx.value = U256::from(0);
             }),

@@ -66,7 +66,7 @@ where
         exec_result: &mut Self::ExecResult,
     ) -> Result<(), Self::Error> {
         let basefee = context.block().basefee() as u128;
-        let caller = context.tx().common_fields().caller();
+        let caller = context.tx().caller();
         let effective_gas_price = context.tx().effective_gas_price(basefee);
         let gas = exec_result.gas();
 
