@@ -21,6 +21,12 @@ impl<CTX, ERROR> Erc20PreExecution<CTX, ERROR> {
     }
 }
 
+impl<CTX, ERROR> Default for Erc20PreExecution<CTX, ERROR> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<CTX, ERROR> PreExecutionHandler for Erc20PreExecution<CTX, ERROR>
 where
     CTX: EthPreExecutionContext,
@@ -38,20 +44,20 @@ where
     }
 
     fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        let basefee = context.block().basefee();
-        let blob_price = U256::from(context.block().blob_gasprice().unwrap_or_default());
-        let effective_gas_price = context.tx().effective_gas_price(*basefee);
+        let basefee = context.block().basefee() as u128;
+        let blob_price = context.block().blob_gasprice().unwrap_or_default();
+        let effective_gas_price = context.tx().effective_gas_price(basefee);
 
-        let mut gas_cost = U256::from(context.tx().common_fields().gas_limit())
-            .saturating_mul(effective_gas_price);
+        let mut gas_cost =
+            (context.tx().common_fields().gas_limit() as u128).saturating_mul(effective_gas_price);
 
         if context.tx().tx_type().into() == TransactionType::Eip4844 {
-            let blob_gas = U256::from(context.tx().eip4844().total_blob_gas());
+            let blob_gas = context.tx().eip4844().total_blob_gas() as u128;
             gas_cost = gas_cost.saturating_add(blob_price.saturating_mul(blob_gas));
         }
 
         let caller = context.tx().common_fields().caller();
-        token_operation::<CTX, ERROR>(context, caller, TREASURY, gas_cost)?;
+        token_operation::<CTX, ERROR>(context, caller, TREASURY, U256::from(gas_cost))?;
 
         Ok(())
     }

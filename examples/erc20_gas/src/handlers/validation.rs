@@ -1,7 +1,7 @@
 use crate::keccak256;
 use crate::TOKEN;
 use alloy_sol_types::SolValue;
-use revm::context_interface::JournaledState;
+use revm::context_interface::Journal;
 use revm::context_interface::{Transaction, TransactionGetter};
 use revm::handler::EthValidationContext;
 use revm::handler::EthValidationError;
@@ -23,6 +23,12 @@ impl<CTX, ERROR> Erc20Validation<CTX, ERROR> {
         Self {
             inner: EthValidation::new(),
         }
+    }
+}
+
+impl<CTX, ERROR> Default for Erc20Validation<CTX, ERROR> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

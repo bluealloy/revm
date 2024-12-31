@@ -7,7 +7,7 @@ use reqwest::{Client, Url};
 use revm::{
     context_interface::{
         result::{ExecutionResult, InvalidHeader, InvalidTransaction, Output},
-        JournalStateGetter, JournalStateGetterDBError, JournaledState,
+        Journal, JournalDBError, JournalGetter,
     },
     database_interface::WrapDatabaseAsync,
     handler::EthExecution,
@@ -84,10 +84,10 @@ pub fn token_operation<CTX, ERROR>(
     amount: U256,
 ) -> Result<(), ERROR>
 where
-    CTX: JournalStateGetter,
+    CTX: JournalGetter,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
-        + From<JournalStateGetterDBError<CTX>>
+        + From<JournalDBError<CTX>>
         + From<PrecompileErrors>,
 {
     let token_account = context.journal().load_account(TOKEN)?.data;

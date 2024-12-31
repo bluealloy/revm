@@ -1,6 +1,6 @@
 use crate::{token_operation, TREASURY};
 use revm::context_interface::result::{HaltReasonTrait, InvalidHeader, InvalidTransaction};
-use revm::context_interface::JournalStateGetterDBError;
+use revm::context_interface::JournalDBError;
 use revm::handler::{EthPostExecutionContext, EthPostExecutionError};
 use revm::precompile::PrecompileErrors;
 use revm::{
@@ -27,13 +27,19 @@ impl<CTX, ERROR, HALTREASON> Erc20PostExecution<CTX, ERROR, HALTREASON> {
     }
 }
 
+impl<CTX, ERROR, HALTREASON> Default for Erc20PostExecution<CTX, ERROR, HALTREASON> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<CTX, ERROR, HALTREASON> PostExecutionHandler for Erc20PostExecution<CTX, ERROR, HALTREASON>
 where
     CTX: EthPostExecutionContext<ERROR>,
     ERROR: EthPostExecutionError<CTX>
         + From<InvalidTransaction>
         + From<InvalidHeader>
-        + From<JournalStateGetterDBError<CTX>>
+        + From<JournalDBError<CTX>>
         + From<PrecompileErrors>,
     HALTREASON: HaltReasonTrait,
 {
@@ -56,14 +62,14 @@ where
         context: &mut Self::Context,
         exec_result: &mut Self::ExecResult,
     ) -> Result<(), Self::Error> {
-        let basefee = context.block().basefee();
+        let basefee = context.block().basefee() as u128;
         let caller = context.tx().common_fields().caller();
-        let effective_gas_price = context.tx().effective_gas_price(*basefee);
+        let effective_gas_price = context.tx().effective_gas_price(basefee);
         let gas = exec_result.gas();
 
         let reimbursement =
-            effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64);
-        token_operation::<CTX, ERROR>(context, TREASURY, caller, reimbursement)?;
+            effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128);
+        token_operation::<CTX, ERROR>(context, TREASURY, caller, U256::from(reimbursement))?;
 
         Ok(())
     }
@@ -75,18 +81,19 @@ where
     ) -> Result<(), Self::Error> {
         let tx = context.tx();
         let beneficiary = context.block().beneficiary();
-        let basefee = context.block().basefee();
-        let effective_gas_price = tx.effective_gas_price(*basefee);
+        let basefee = context.block().basefee() as u128;
+        let effective_gas_price = tx.effective_gas_price(basefee);
         let gas = exec_result.gas();
 
         let coinbase_gas_price = if context.cfg().spec().into().is_enabled_in(SpecId::LONDON) {
-            effective_gas_price.saturating_sub(*basefee)
+            effective_gas_price.saturating_sub(basefee)
         } else {
             effective_gas_price
         };
 
-        let reward = coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64);
-        token_operation::<CTX, ERROR>(context, TREASURY, *beneficiary, reward)?;
+        let reward =
+            coinbase_gas_price.saturating_mul((gas.spent() - gas.refunded() as u64) as u128);
+        token_operation::<CTX, ERROR>(context, TREASURY, beneficiary, U256::from(reward))?;
 
         Ok(())
     }
