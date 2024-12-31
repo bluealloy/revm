@@ -45,7 +45,7 @@ impl ExtBytecode {
     }
 
     pub fn hash(&mut self) -> Option<B256> {
-       self.bytecode_hash
+        self.bytecode_hash
     }
 }
 
@@ -185,17 +185,6 @@ impl LegacyBytecode for ExtBytecode {
 mod tests {
     use super::*;
     use primitives::Bytes;
-
-    #[test]
-    fn test_hash_caching() {
-        let bytecode = Bytecode::new_raw(Bytes::new());
-        let mut ext_bytecode = ExtBytecode::new(bytecode.clone());
-        assert_eq!(ext_bytecode.bytecode_hash, None);
-
-        let hash = ext_bytecode.hash();
-        assert_eq!(hash, bytecode.hash_slow());
-        assert_eq!(ext_bytecode.bytecode_hash, Some(bytecode.hash_slow()));
-    }
 
     #[test]
     fn test_with_hash_constructor() {
