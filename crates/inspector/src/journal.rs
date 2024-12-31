@@ -1,35 +1,11 @@
 use auto_impl::auto_impl;
-use core::mem::MaybeUninit;
 use revm::{
-    bytecode::opcode::OpCode,
     context::JournaledState,
-    context_interface::{
-        block::BlockSetter,
-        journaled_state::{AccountLoad, Eip7702CodeLoad},
-        transaction::TransactionSetter,
-        BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, TransactionGetter,
-    },
-    database_interface::{Database, EmptyDB},
-    handler::{
-        EthExecution, EthFrame, EthHandler, EthPostExecution, EthPreExecution,
-        EthPrecompileProvider, EthValidation, FrameResult,
-    },
-    handler_interface::{Frame, FrameOrResultGen, PrecompileProvider},
-    interpreter::{
-        instructions::host::{log, selfdestruct},
-        interpreter::{EthInterpreter, InstructionProvider},
-        interpreter_types::{Jumps, LoopControl},
-        table::{self, CustomInstruction},
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
-        Instruction, InstructionResult, Interpreter, InterpreterTypes, SStoreResult,
-        SelfDestructResult, StateLoad,
-    },
-    precompile::PrecompileErrors,
-    primitives::{Address, Bytes, Log, B256, U256},
+    database_interface::Database,
+    primitives::Log,
     state::EvmState,
-    Context, Error, Evm, JournalEntry,
+    JournalEntry,
 };
-use std::{rc::Rc, vec::Vec};
 
 pub trait JournalExt {
     fn logs(&self) -> &[Log];

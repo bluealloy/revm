@@ -2,7 +2,6 @@ use core::mem::MaybeUninit;
 use revm::{
     bytecode::opcode::OpCode,
     context_interface::JournalGetter,
-    handler_interface::PrecompileProvider,
     interpreter::{
         instructions::host::{log, selfdestruct},
         interpreter::InstructionProvider,
@@ -12,7 +11,7 @@ use revm::{
     },
     JournalEntry,
 };
-use std::{rc::Rc, vec::Vec};
+use std::rc::Rc;
 
 use crate::{
     journal::{JournalExt, JournalExtGetter},
