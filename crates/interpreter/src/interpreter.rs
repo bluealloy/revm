@@ -13,8 +13,6 @@ use crate::{
     interpreter_types::*, table::CustomInstruction, Gas, Host, Instruction, InstructionResult,
     InterpreterAction,
 };
-use bytecode::Bytecode;
-
 use core::cell::RefCell;
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
@@ -46,7 +44,7 @@ impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
     /// Create new interpreter
     pub fn new(
         memory: Rc<RefCell<MG>>,
-        bytecode: Bytecode,
+        bytecode: ExtBytecode,
         inputs: InputsImpl,
         is_static: bool,
         is_eof_init: bool,
@@ -61,7 +59,7 @@ impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
         };
 
         Self {
-            bytecode: ExtBytecode::new(bytecode),
+            bytecode,
             stack: Stack::new(),
             return_data: ReturnDataImpl::default(),
             memory,
@@ -297,7 +295,7 @@ mod tests {
         let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00, 0x60, 0x00, 0x01][..]));
         let interpreter = Interpreter::<EthInterpreter>::new(
             Rc::new(RefCell::new(SharedMemory::new())),
-            bytecode,
+            ExtBytecode::new(bytecode),
             InputsImpl {
                 target_address: Address::ZERO,
                 caller_address: Address::ZERO,

@@ -1,3 +1,5 @@
+use core::ops::Deref;
+
 use bytecode::{
     eof::TypesSection,
     utils::{read_i16, read_u16},
@@ -17,8 +19,10 @@ pub struct ExtBytecode {
     instruction_pointer: *const u8,
 }
 
-impl AsRef<Bytecode> for ExtBytecode {
-    fn as_ref(&self) -> &Bytecode {
+impl Deref for ExtBytecode {
+    type Target = Bytecode;
+
+    fn deref(&self) -> &Self::Target {
         &self.base
     }
 }
@@ -44,6 +48,14 @@ impl ExtBytecode {
         }
     }
 
+    /// Regenerates the bytecode hash.
+    pub fn regenerate_hash(&mut self) -> B256 {
+        let hash = self.base.hash_slow();
+        self.bytecode_hash = Some(hash);
+        hash
+    }
+
+    /// Returns the bytecode hash.
     pub fn hash(&mut self) -> Option<B256> {
         self.bytecode_hash
     }
