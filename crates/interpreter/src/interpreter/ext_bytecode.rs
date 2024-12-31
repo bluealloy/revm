@@ -44,13 +44,8 @@ impl ExtBytecode {
         }
     }
 
-    pub fn hash(&mut self) -> B256 {
-        if let Some(hash) = self.bytecode_hash {
-            hash
-        } else {
-            let hash = self.base.hash_slow();
-            self.bytecode_hash = Some(hash);
-            hash
+    pub fn hash(&mut self) -> Option<B256> {
+       self.bytecode_hash
         }
     }
 }
