@@ -34,6 +34,7 @@ impl ExtBytecode {
         }
     }
 
+    /// Creates new `ExtBytecode` with the given hash.
     pub fn new_with_hash(base: Bytecode, hash: B256) -> Self {
         let instruction_pointer = base.bytecode().as_ptr();
         Self {
