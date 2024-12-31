@@ -3,9 +3,9 @@
 pub use std::string::{String, ToString};
 pub use SpecId::*;
 
-/// Specification IDs and their activation block.
+/// Specification IDs and their activation block
 ///
-/// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
+/// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs).
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, enumn::N)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -35,7 +35,7 @@ pub enum SpecId {
 }
 
 impl SpecId {
-    /// Returns the `SpecId` for the given `u8`.
+    /// Returns the [`SpecId`] for the given [`u8`].
     #[inline]
     pub fn try_from_u8(spec_id: u8) -> Option<Self> {
         Self::n(spec_id)

@@ -1,13 +1,14 @@
 use crate::{DBErrorMarker, Database, DatabaseRef};
+use core::error::Error;
 use core::{convert::Infallible, fmt, marker::PhantomData};
 use primitives::{keccak256, Address, B256, U256};
 use state::{AccountInfo, Bytecode};
 use std::string::ToString;
 
-/// An empty database that always returns default values when queried.
+/// An empty database that always returns default values when queried
 pub type EmptyDB = EmptyDBTyped<Infallible>;
 
-/// An empty database that always returns default values when queried.
+/// An empty database that always returns default values when queried
 ///
 /// This is generic over a type which is used as the database error type.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -52,7 +53,7 @@ impl<E> EmptyDBTyped<E> {
     }
 }
 
-impl<E: DBErrorMarker> Database for EmptyDBTyped<E> {
+impl<E: DBErrorMarker + Error> Database for EmptyDBTyped<E> {
     type Error = E;
 
     #[inline]
@@ -76,7 +77,7 @@ impl<E: DBErrorMarker> Database for EmptyDBTyped<E> {
     }
 }
 
-impl<E: DBErrorMarker> DatabaseRef for EmptyDBTyped<E> {
+impl<E: DBErrorMarker + Error> DatabaseRef for EmptyDBTyped<E> {
     type Error = E;
 
     #[inline]

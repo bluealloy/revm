@@ -17,7 +17,7 @@ pub fn cast_slice_to_u256(slice: &[u8], dest: &mut U256) {
 
     let n_words = (slice.len() + 31) / 32;
 
-    // SAFETY: length checked above.
+    // SAFETY: Length checked above.
     unsafe {
         //let dst = self.data.as_mut_ptr().add(self.data.len()).cast::<u64>();
         //self.data.set_len(new_len);
@@ -25,11 +25,11 @@ pub fn cast_slice_to_u256(slice: &[u8], dest: &mut U256) {
 
         let mut i = 0;
 
-        // write full words
+        // Write full words
         let words = slice.chunks_exact(32);
         let partial_last_word = words.remainder();
         for word in words {
-            // Note: we unroll `U256::from_be_bytes` here to write directly into the buffer,
+            // Note: We unroll `U256::from_be_bytes` here to write directly into the buffer,
             // instead of creating a 32 byte array on the stack and then copying it over.
             for l in word.rchunks_exact(8) {
                 dst.add(i).write(u64::from_be_bytes(l.try_into().unwrap()));
@@ -41,7 +41,7 @@ pub fn cast_slice_to_u256(slice: &[u8], dest: &mut U256) {
             return;
         }
 
-        // write limbs of partial last word
+        // Write limbs of partial last word
         let limbs = partial_last_word.rchunks_exact(8);
         let partial_last_limb = limbs.remainder();
         for l in limbs {
@@ -49,7 +49,7 @@ pub fn cast_slice_to_u256(slice: &[u8], dest: &mut U256) {
             i += 1;
         }
 
-        // write partial last limb by padding with zeros
+        // Write partial last limb by padding with zeros
         if !partial_last_limb.is_empty() {
             let mut tmp = [0u8; 8];
             tmp[8 - partial_last_limb.len()..].copy_from_slice(partial_last_limb);
@@ -59,7 +59,7 @@ pub fn cast_slice_to_u256(slice: &[u8], dest: &mut U256) {
 
         debug_assert_eq!((i + 3) / 4, n_words, "wrote too much");
 
-        // zero out upper bytes of last word
+        // Zero out upper bytes of last word
         let m = i % 4; // 32 / 8
         if m != 0 {
             dst.add(i).write_bytes(0, 4 - m);

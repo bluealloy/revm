@@ -1,13 +1,59 @@
 use core::ops::{Deref, DerefMut};
 use database_interface::{Database, DatabaseGetter};
-use primitives::{Address, B256, U256};
+use primitives::{Address, HashSet, Log, B256, U256};
 use specification::hardfork::SpecId;
 use state::{Account, Bytecode};
 use std::boxed::Box;
 
-pub trait JournaledState {
+use crate::host::{SStoreResult, SelfDestructResult};
+
+pub trait Journal {
     type Database: Database;
     type FinalOutput;
+
+    /// Creates new Journaled state.
+    ///
+    /// Dont forget to set spec_id.
+    fn new(database: Self::Database) -> Self;
+
+    /// Returns the database.
+    fn db_ref(&self) -> &Self::Database;
+
+    /// Returns the mutable database.
+    fn db(&mut self) -> &mut Self::Database;
+
+    /// Returns the storage value from Journal state.
+    ///
+    /// Loads the storage from database if not found in Journal state.
+    fn sload(
+        &mut self,
+        address: Address,
+        key: U256,
+    ) -> Result<StateLoad<U256>, <Self::Database as Database>::Error>;
+
+    /// Stores the storage value in Journal state.
+    fn sstore(
+        &mut self,
+        address: Address,
+        key: U256,
+        value: U256,
+    ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error>;
+
+    /// Loads transient storage value.
+    fn tload(&mut self, address: Address, key: U256) -> U256;
+
+    /// Stores transient storage value.
+    fn tstore(&mut self, address: Address, key: U256, value: U256);
+
+    /// Logs the log in Journal state.
+    fn log(&mut self, log: Log);
+
+    /// Marks the account for selfdestruction and transfers all the balance to the target.
+    fn selfdestruct(
+        &mut self,
+        address: Address,
+        target: Address,
+    ) -> Result<StateLoad<SelfDestructResult>, <Self::Database as Database>::Error>;
 
     fn warm_account_and_storage(
         &mut self,
@@ -17,11 +63,15 @@ pub trait JournaledState {
 
     fn warm_account(&mut self, address: Address);
 
+    fn warm_precompiles(&mut self, addresses: HashSet<Address>);
+
+    fn precompile_addresses(&self) -> &HashSet<Address>;
+
     fn set_spec_id(&mut self, spec_id: SpecId);
 
     fn touch_account(&mut self, address: Address);
 
-    /// TODO instruction result is not known
+    // TODO : Instruction result is not known
     fn transfer(
         &mut self,
         from: &Address,
@@ -49,10 +99,12 @@ pub trait JournaledState {
         address: Address,
     ) -> Result<AccountLoad, <Self::Database as Database>::Error>;
 
-    /// Set bytecode with hash. Assume that account is warm.
+    /// Sets bytecode with hash. Assume that account is warm.
     fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256);
 
-    /// Assume account is warm
+    /// Sets bytecode and calculates hash.
+    ///
+    /// Assume account is warm.
     #[inline]
     fn set_code(&mut self, address: Address, code: Bytecode) {
         let hash = code.hash_slow();
@@ -80,16 +132,16 @@ pub trait JournaledState {
 
     /// Does cleanup and returns modified state.
     ///
-    /// This resets the [JournaledState] to its initial state.
+    /// This resets the [Journal] to its initial state.
     fn finalize(&mut self) -> Result<Self::FinalOutput, <Self::Database as Database>::Error>;
 }
 
-/// Transfer and creation result.
+/// Transfer and creation result
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TransferError {
     /// Caller does not have enough funds
     OutOfFunds,
-    /// Overflow in target account.
+    /// Overflow in target account
     OverflowPayment,
     /// Create collision.
     CreateCollision,
@@ -103,13 +155,13 @@ pub struct JournalCheckpoint {
     pub journal_i: usize,
 }
 
-/// State load information that contains the data and if the account or storage is cold loaded.
+/// State load information that contains the data and if the account or storage is cold loaded
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StateLoad<T> {
-    /// returned data
+    /// Returned data
     pub data: T,
-    /// True if account is cold loaded.
+    /// Is account is cold loaded
     pub is_cold: bool,
 }
 
@@ -144,13 +196,13 @@ impl<T> StateLoad<T> {
     }
 }
 
-/// Result of the account load from Journal state.
+/// Result of the account load from Journal state
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountLoad {
     /// Is account and delegate code are loaded
     pub load: Eip7702CodeLoad<()>,
-    /// Is account empty, if true account is not created.
+    /// Is account empty, if true account is not created
     pub is_empty: bool,
 }
 
@@ -168,15 +220,15 @@ impl DerefMut for AccountLoad {
     }
 }
 
-/// EIP-7702 code load result that contains optional delegation is_cold information.
+/// EIP-7702 code load result that contains optional delegation is_cold information
 ///
-/// [`Self::is_delegate_account_cold`] will be [`Some`] if account has delegation.
+/// [`is_delegate_account_cold`][Self::is_delegate_account_cold] will be [`Some`] if account has delegation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eip7702CodeLoad<T> {
-    /// returned data
+    /// Returned data
     pub state_load: StateLoad<T>,
-    /// True if account has delegate code and delegated account is cold loaded.
+    /// Does account have delegate code and delegated account is cold loaded
     pub is_delegate_account_cold: Option<bool>,
 }
 
@@ -238,28 +290,38 @@ impl<T> Eip7702CodeLoad<T> {
     }
 }
 
-/// Helper that extracts database error from [`JournalStateGetter`].
-pub type JournalStateGetterDBError<CTX> =
-    <<<CTX as JournalStateGetter>::Journal as JournaledState>::Database as Database>::Error;
+/// Helper that extracts database error from [`JournalGetter`].
+pub type JournalDBError<CTX> =
+    <<<CTX as JournalGetter>::Journal as Journal>::Database as Database>::Error;
 
-pub trait JournalStateGetter: DatabaseGetter {
-    type Journal: JournaledState<Database = <Self as DatabaseGetter>::Database>;
+pub trait JournalGetter: DatabaseGetter {
+    type Journal: Journal<Database = <Self as DatabaseGetter>::Database>;
 
     fn journal(&mut self) -> &mut Self::Journal;
+
+    fn journal_ref(&self) -> &Self::Journal;
 }
 
-impl<T: JournalStateGetter> JournalStateGetter for &mut T {
+impl<T: JournalGetter> JournalGetter for &mut T {
     type Journal = T::Journal;
 
     fn journal(&mut self) -> &mut Self::Journal {
         T::journal(*self)
     }
+
+    fn journal_ref(&self) -> &Self::Journal {
+        T::journal_ref(*self)
+    }
 }
 
-impl<T: JournalStateGetter> JournalStateGetter for Box<T> {
+impl<T: JournalGetter> JournalGetter for Box<T> {
     type Journal = T::Journal;
 
     fn journal(&mut self) -> &mut Self::Journal {
         T::journal(self.as_mut())
+    }
+
+    fn journal_ref(&self) -> &Self::Journal {
+        T::journal_ref(self.as_ref())
     }
 }

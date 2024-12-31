@@ -1,7 +1,6 @@
 use bytecode::Bytecode;
 use context_interface::journaled_state::{
-    AccountLoad, Eip7702CodeLoad, JournalCheckpoint, JournaledState as JournaledStateTrait,
-    TransferError,
+    AccountLoad, Eip7702CodeLoad, Journal, JournalCheckpoint, TransferError,
 };
 use database_interface::Database;
 use interpreter::{SStoreResult, SelfDestructResult, StateLoad};
@@ -14,27 +13,29 @@ use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use core::mem;
 use std::{vec, vec::Vec};
 
-/// A journal of state changes internal to the EVM.
+/// A journal of state changes internal to the EVM
 ///
-/// On each additional call, the depth of the journaled state is increased (`depth`) and a new journal is added. The journal contains every state change that happens within that call, making it possible to revert changes made in a specific call.
+/// On each additional call, the depth of the journaled state is increased (`depth`) and a new journal is added.
+///
+/// The journal contains every state change that happens within that call, making it possible to revert changes made in a specific call.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournaledState<DB> {
     /// Database
     pub database: DB,
-    /// The current state.
+    /// The current state
     pub state: EvmState,
     /// Transient storage that is discarded after every transaction.
     ///
     /// See [EIP-1153](https://eips.ethereum.org/EIPS/eip-1153).
     pub transient_storage: TransientStorage,
-    /// Emitted logs.
+    /// Emitted logs
     pub logs: Vec<Log>,
-    /// The current call stack depth.
+    /// The current call stack depth
     pub depth: usize,
-    /// The journal of state changes, one for each call.
+    /// The journal of state changes, one for each call
     pub journal: Vec<Vec<JournalEntry>>,
-    /// The spec ID for the EVM.
+    /// The spec ID for the EVM
     ///
     /// This spec is used for two things:
     ///
@@ -51,15 +52,77 @@ pub struct JournaledState<DB> {
     /// Note that this not include newly loaded accounts, account and storage
     /// is considered warm if it is found in the `State`.
     pub warm_preloaded_addresses: HashSet<Address>,
+    /// Precompile addresses
+    pub precompiles: HashSet<Address>,
 }
 
-impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
+impl<DB: Database> Journal for JournaledState<DB> {
     type Database = DB;
-    // TODO make a struck here.
+    // TODO : Make a struck here.
     type FinalOutput = (EvmState, Vec<Log>);
+
+    fn new(database: DB) -> JournaledState<DB> {
+        Self::new(SpecId::LATEST, database)
+    }
+
+    fn db_ref(&self) -> &Self::Database {
+        &self.database
+    }
+
+    fn db(&mut self) -> &mut Self::Database {
+        &mut self.database
+    }
+
+    fn sload(
+        &mut self,
+        address: Address,
+        key: U256,
+    ) -> Result<StateLoad<U256>, <Self::Database as Database>::Error> {
+        self.sload(address, key)
+    }
+
+    fn sstore(
+        &mut self,
+        address: Address,
+        key: U256,
+        value: U256,
+    ) -> Result<StateLoad<SStoreResult>, <Self::Database as Database>::Error> {
+        self.sstore(address, key, value)
+    }
+
+    fn tload(&mut self, address: Address, key: U256) -> U256 {
+        self.tload(address, key)
+    }
+
+    fn tstore(&mut self, address: Address, key: U256, value: U256) {
+        self.tstore(address, key, value)
+    }
+
+    fn log(&mut self, log: Log) {
+        self.log(log)
+    }
+
+    fn selfdestruct(
+        &mut self,
+        address: Address,
+        target: Address,
+    ) -> Result<StateLoad<SelfDestructResult>, DB::Error> {
+        self.selfdestruct(address, target)
+    }
 
     fn warm_account(&mut self, address: Address) {
         self.warm_preloaded_addresses.insert(address);
+    }
+
+    fn warm_precompiles(&mut self, address: HashSet<Address>) {
+        self.precompiles = address;
+        self.warm_preloaded_addresses
+            .extend(self.precompiles.iter());
+    }
+
+    #[inline]
+    fn precompile_addresses(&self) -> &HashSet<Address> {
+        &self.precompiles
     }
 
     /// Returns call depth.
@@ -87,7 +150,7 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
         to: &Address,
         balance: U256,
     ) -> Result<Option<TransferError>, DB::Error> {
-        // TODO handle instruction result
+        // TODO : Handle instruction result
         self.transfer(from, to, balance)
     }
 
@@ -147,7 +210,7 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
         balance: U256,
         spec_id: SpecId,
     ) -> Result<JournalCheckpoint, TransferError> {
-        // ignore error.
+        // Ignore error.
         self.create_account_checkpoint(caller, address, balance, spec_id)
     }
 
@@ -162,6 +225,7 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
             spec: _,
             database: _,
             warm_preloaded_addresses: _,
+            precompiles: _,
         } = self;
 
         *transient_storage = TransientStorage::default();
@@ -175,13 +239,12 @@ impl<DB: Database> JournaledStateTrait for JournaledState<DB> {
 }
 
 impl<DB: Database> JournaledState<DB> {
-    /// Create new JournaledState.
+    /// Creates new JournaledState.
     ///
-    /// warm_preloaded_addresses is used to determine if address is considered warm loaded.
+    /// `warm_preloaded_addresses` is used to determine if address is considered warm loaded.
     /// In ordinary case this is precompile or beneficiary.
     ///
     /// # Note
-    ///
     /// This function will journal state after Spurious Dragon fork.
     /// And will not take into account if account is not existing or empty.
     pub fn new(spec: SpecId, database: DB) -> JournaledState<DB> {
@@ -194,6 +257,7 @@ impl<DB: Database> JournaledState<DB> {
             depth: 0,
             spec,
             warm_preloaded_addresses: HashSet::default(),
+            precompiles: HashSet::default(),
         }
     }
 
@@ -259,8 +323,9 @@ impl<DB: Database> JournaledState<DB> {
         account.info.code = Some(code);
     }
 
-    /// use it only if you know that acc is warm
-    /// Assume account is warm
+    /// Use it only if you know that acc is warm.
+    ///
+    /// Assume account is warm.
     #[inline]
     pub fn set_code(&mut self, address: Address, code: Bytecode) {
         let hash = code.hash_slow();
@@ -336,7 +401,7 @@ impl<DB: Database> JournaledState<DB> {
         Ok(None)
     }
 
-    /// Create account or return false if collision is detected.
+    /// Creates account or returns false if collision is detected.
     ///
     /// There are few steps done:
     /// 1. Make created account warm loaded (AccessList) and this should
@@ -421,7 +486,7 @@ impl<DB: Database> JournaledState<DB> {
         Ok(checkpoint)
     }
 
-    /// Revert all changes that happened in given journal entries.
+    /// Reverts all changes that happened in given journal entries.
     #[inline]
     fn journal_revert(
         state: &mut EvmState,
@@ -540,7 +605,7 @@ impl<DB: Database> JournaledState<DB> {
         checkpoint
     }
 
-    /// Commit the checkpoint.
+    /// Commits the checkpoint.
     #[inline]
     pub fn checkpoint_commit(&mut self) {
         self.depth -= 1;
@@ -572,14 +637,14 @@ impl<DB: Database> JournaledState<DB> {
         self.journal.truncate(checkpoint.journal_i);
     }
 
-    /// Performances selfdestruct action.
+    /// Performs selfdestruct action.
     /// Transfers balance from address to target. Check if target exist/is_cold
     ///
-    /// Note: balance will be lost if address and target are the same BUT when
+    /// Note: Balance will be lost if address and target are the same BUT when
     /// current spec enables Cancun, this happens only when the account associated to address
     /// is created in the same tx
     ///
-    /// references:
+    /// # References:
     ///  * <https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/vm/instructions.go#L832-L833>
     ///  * <https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/state/statedb.go#L449>
     ///  * <https://eips.ethereum.org/EIPS/eip-6780>
@@ -675,7 +740,7 @@ impl<DB: Database> JournaledState<DB> {
         Ok(account)
     }
 
-    /// load account into memory. return if it is cold or warm accessed
+    /// Loads account into memory. return if it is cold or warm accessed
     #[inline]
     pub fn load_account(&mut self, address: Address) -> Result<StateLoad<&mut Account>, DB::Error> {
         self.load_account_optional(address, false)
@@ -707,7 +772,7 @@ impl<DB: Database> JournaledState<DB> {
         self.load_account_optional(address, true)
     }
 
-    /// Loads code.
+    /// Loads code
     #[inline]
     pub fn load_account_optional(
         &mut self,
@@ -762,7 +827,7 @@ impl<DB: Database> JournaledState<DB> {
         Ok(load)
     }
 
-    /// Load storage slot
+    /// Loads storage slot.
     ///
     /// # Panics
     ///
@@ -805,11 +870,10 @@ impl<DB: Database> JournaledState<DB> {
     }
 
     /// Stores storage slot.
+    ///
     /// And returns (original,present,new) slot value.
     ///
-    /// Note:
-    ///
-    /// account should already be present in our state.
+    /// **Note**: Account should already be present in our state.
     #[inline]
     pub fn sstore(
         &mut self,
@@ -909,7 +973,7 @@ impl<DB: Database> JournaledState<DB> {
         }
     }
 
-    /// push log into subroutine
+    /// Pushes log into subroutine.
     #[inline]
     pub fn log(&mut self, log: Log) {
         self.logs.push(log);

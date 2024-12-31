@@ -1,7 +1,7 @@
-/// Amount used to calculate the multi-scalar-multiplication discount.
+/// Amount used to calculate the multi-scalar-multiplication discount
 const MSM_MULTIPLIER: u64 = 1000;
 
-/// Table of gas discounts for multi-scalar-multiplication operations.
+/// Table of gas discounts for multi-scalar-multiplication operations
 static MSM_DISCOUNT_TABLE: [u16; 128] = [
     1200, 888, 764, 641, 594, 547, 500, 453, 438, 423, 408, 394, 379, 364, 349, 334, 330, 326, 322,
     318, 314, 310, 306, 302, 298, 294, 289, 285, 281, 277, 273, 269, 268, 266, 265, 263, 262, 260,

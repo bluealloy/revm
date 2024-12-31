@@ -42,15 +42,15 @@ pub(super) fn g1_add(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let b_aff = &extract_g1_input(&input[G1_INPUT_ITEM_LENGTH..], false)?;
 
     let mut b = blst_p1::default();
-    // SAFETY: b and b_aff are blst values.
+    // SAFETY: `b` and `b_aff` are blst values.
     unsafe { blst_p1_from_affine(&mut b, b_aff) };
 
     let mut p = blst_p1::default();
-    // SAFETY: p, b and a_aff are blst values.
+    // SAFETY: `p`, `b` and `a_aff` are blst values.
     unsafe { blst_p1_add_or_double_affine(&mut p, &b, a_aff) };
 
     let mut p_aff = blst_p1_affine::default();
-    // SAFETY: p_aff and p are blst values.
+    // SAFETY: `p_aff` and `p`` are blst values.
     unsafe { blst_p1_to_affine(&mut p_aff, &p) };
 
     let out = encode_g1_point(&p_aff);

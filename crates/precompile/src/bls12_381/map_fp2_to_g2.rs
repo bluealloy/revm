@@ -40,12 +40,12 @@ pub(super) fn map_fp2_to_g2(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let fp2 = check_canonical_fp2(input_p0_x, input_p0_y)?;
 
     let mut p = blst_p2::default();
-    // SAFETY: p and fp2 are blst values.
-    // third argument is unused if null.
+    // SAFETY: `p` and `fp2` are blst values.
+    // Third argument is unused if null.
     unsafe { blst_map_to_g2(&mut p, &fp2, core::ptr::null()) };
 
     let mut p_aff = blst_p2_affine::default();
-    // SAFETY: p_aff and p are blst values.
+    // SAFETY: `p_aff` and `p` are blst values.
     unsafe { blst_p2_to_affine(&mut p_aff, &p) };
 
     let out = encode_g2_point(&p_aff);

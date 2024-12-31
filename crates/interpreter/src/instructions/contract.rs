@@ -39,7 +39,7 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .expect("valid container")
         .clone();
 
-    // resize memory and get return range.
+    // Resize memory and get return range.
     let Some(input_range) = resize_memory(interpreter, data_offset, data_size) else {
         return;
     };
@@ -53,11 +53,11 @@ pub fn eofcreate<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let eof = Eof::decode(container.clone()).expect("Subcontainer is verified");
 
     if !eof.body.is_data_filled {
-        // should be always false as it is verified by eof verification.
+        // Should be always false as it is verified by eof verification.
         panic!("Panic if data section is not full");
     }
 
-    // deduct gas for hash that is needed to calculate address.
+    // Deduct gas for hash that is needed to calculate address.
     gas_or_fail!(interpreter, cost_per_word(container.len(), KECCAK256WORD));
 
     let created_address = interpreter
@@ -104,12 +104,12 @@ pub fn return_contract<H: Host + ?Sized>(
         .expect("valid container")
         .clone();
 
-    // convert to EOF so we can check data section size.
+    // Convert to EOF so we can check data section size.
     let (eof_header, _) = EofHeader::decode(&container).expect("valid EOF header");
 
     let static_aux_size = eof_header.eof_size() - container.len();
 
-    // important: offset must be ignored if len is zeros
+    // Important: Offset must be ignored if len is zeros
     let mut output = if aux_data_size != 0 {
         let aux_data_offset = as_usize_or_fail!(interpreter, aux_data_offset);
         resize_memory!(interpreter, aux_data_offset, aux_data_size);
@@ -121,18 +121,18 @@ pub fn return_contract<H: Host + ?Sized>(
         container.to_vec()
     };
 
-    // data_size - static_aux_size give us current data `container` size.
-    // and with aux_slice len we can calculate new data size.
+    // `data_size - static_aux_size` give us current data `container` size.
+    // And with `aux_slice` len we can calculate new data size.
     let new_data_size = eof_header.data_size as usize - static_aux_size + aux_data_size;
     if new_data_size > 0xFFFF {
-        // aux data is too big
+        // Aux data is too big
         interpreter
             .control
             .set_instruction_result(InstructionResult::EofAuxDataOverflow);
         return;
     }
     if new_data_size < eof_header.data_size as usize {
-        // aux data is too small
+        // Aux data is too small
         interpreter
             .control
             .set_instruction_result(InstructionResult::EofAuxDataTooSmall);
@@ -140,7 +140,7 @@ pub fn return_contract<H: Host + ?Sized>(
     }
     let new_data_size = (new_data_size as u16).to_be_bytes();
 
-    // set new data size in eof bytes as we know exact index.
+    // Set new data size in eof bytes as we know exact index.
     output[eof_header.data_size_raw_i()..][..2].clone_from_slice(&new_data_size);
     let output: Bytes = output.into();
 
@@ -195,7 +195,7 @@ pub fn extcall_gas_calc<WIRE: InterpreterTypes, H: Host + ?Sized>(
     );
     gas!(interpreter, call_cost, None);
 
-    // 7. Calculate the gas available to callee as caller’s
+    // Calculate the gas available to callee as caller’s
     // remaining gas reduced by max(ceil(gas/64), MIN_RETAINED_GAS) (MIN_RETAINED_GAS is 5000).
     let gas_reduce = max(interpreter.control.gas().remaining() / 64, 5000);
     let gas_limit = interpreter
@@ -238,7 +238,7 @@ pub fn pop_extcall_target_address(
             .set_instruction_result(InstructionResult::InvalidEXTCALLTarget);
         return None;
     }
-    // discard first 12 bytes.
+    // Discard first 12 bytes.
     Some(Address::from_word(target_address))
 }
 
@@ -248,12 +248,12 @@ pub fn extcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     require_eof!(interpreter);
 
-    // pop target address
+    // Pop target address
     let Some(target_address) = pop_extcall_target_address(interpreter) else {
         return;
     };
 
-    // input call
+    // Input call
     let Some(input) = extcall_input(interpreter) else {
         return;
     };
@@ -295,12 +295,12 @@ pub fn extdelegatecall<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     require_eof!(interpreter);
 
-    // pop target address
+    // Pop target address
     let Some(target_address) = pop_extcall_target_address(interpreter) else {
         return;
     };
 
-    // input call
+    // Input call
     let Some(input) = extcall_input(interpreter) else {
         return;
     };
@@ -333,12 +333,12 @@ pub fn extstaticcall<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     require_eof!(interpreter);
 
-    // pop target address
+    // Pop target address
     let Some(target_address) = pop_extcall_target_address(interpreter) else {
         return;
     };
 
-    // input call
+    // Input call
     let Some(input) = extcall_input(interpreter) else {
         return;
     };
@@ -406,7 +406,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
     // EIP-1014: Skinny CREATE2
     let scheme = if IS_CREATE2 {
         popn!([salt], interpreter);
-        // SAFETY: len is reasonable in size as gas for it is already deducted.
+        // SAFETY: `len` is reasonable in size as gas for it is already deducted.
         gas_or_fail!(interpreter, gas::create2_cost(len));
         CreateScheme::Create2 { salt }
     } else {
@@ -422,7 +422,7 @@ pub fn create<WIRE: InterpreterTypes, const IS_CREATE2: bool, H: Host + ?Sized>(
         .spec_id()
         .is_enabled_in(SpecId::TANGERINE)
     {
-        // take remaining gas and deduce l64 part of it.
+        // Take remaining gas and deduce l64 part of it.
         gas_limit -= gas_limit / 64
     }
     gas!(interpreter, gas_limit);
@@ -446,7 +446,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     popn!([local_gas_limit, to, value], interpreter);
     let to = to.into_address();
-    // max gas limit is not possible in real ethereum situation.
+    // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
     let has_transfer = !value.is_zero();
@@ -475,7 +475,7 @@ pub fn call<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     gas!(interpreter, gas_limit);
 
-    // add call stipend if there is value to be transferred.
+    // Add call stipend if there is value to be transferred.
     if has_transfer {
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }
@@ -504,7 +504,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     popn!([local_gas_limit, to, value], interpreter);
     let to = Address::from_word(B256::from(to));
-    // max gas limit is not possible in real ethereum situation.
+    // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
     //pop!(interpreter, value);
@@ -518,7 +518,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
-    // set is_empty to false as we are not creating this account.
+    // Set `is_empty` to false as we are not creating this account.
     load.is_empty = false;
     let Some(mut gas_limit) = calc_call_gas(interpreter, load, !value.is_zero(), local_gas_limit)
     else {
@@ -527,7 +527,7 @@ pub fn call_code<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     gas!(interpreter, gas_limit);
 
-    // add call stipend if there is value to be transferred.
+    // Add call stipend if there is value to be transferred.
     if !value.is_zero() {
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }
@@ -557,7 +557,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     check!(interpreter, HOMESTEAD);
     popn!([local_gas_limit, to], interpreter);
     let to = Address::from_word(B256::from(to));
-    // max gas limit is not possible in real ethereum situation.
+    // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
     let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(interpreter) else {
@@ -570,7 +570,7 @@ pub fn delegate_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
-    // set is_empty to false as we are not creating this account.
+    // Set is_empty to false as we are not creating this account.
     load.is_empty = false;
     let Some(gas_limit) = calc_call_gas(interpreter, load, false, local_gas_limit) else {
         return;
@@ -603,7 +603,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
     check!(interpreter, BYZANTIUM);
     popn!([local_gas_limit, to], interpreter);
     let to = Address::from_word(B256::from(to));
-    // max gas limit is not possible in real ethereum situation.
+    // Max gas limit is not possible in real ethereum situation.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
     let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(interpreter) else {
@@ -616,7 +616,7 @@ pub fn static_call<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
-    // set is_empty to false as we are not creating this account.
+    // Set `is_empty` to false as we are not creating this account.
     load.is_empty = false;
     let Some(gas_limit) = calc_call_gas(interpreter, load, false, local_gas_limit) else {
         return;

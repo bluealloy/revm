@@ -1,15 +1,15 @@
 use crate::{exec::EvmCommit, EvmExec};
-use context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context};
+use context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context, JournaledState};
 use context_interface::{
     block::BlockSetter,
-    journaled_state::JournaledState,
+    journaled_state::Journal,
     result::{
         EVMError, ExecutionResult, HaltReasonTrait, InvalidHeader, InvalidTransaction,
         ResultAndState,
     },
     transaction::TransactionSetter,
-    BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
-    JournalStateGetterDBError, Transaction, TransactionGetter,
+    BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalDBError, JournalGetter,
+    Transaction, TransactionGetter,
 };
 use database_interface::{Database, DatabaseCommit};
 use handler::{EthHandler, FrameResult};
@@ -45,19 +45,19 @@ impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC, HALT> EvmCommit
 where
     CTX: TransactionSetter
         + BlockSetter
-        + JournalStateGetter
+        + JournalGetter
         + CfgGetter
         + DatabaseGetter<Database: Database + DatabaseCommit>
         + ErrorGetter<Error = ERROR>
-        + JournalStateGetter<
-            Journal: JournaledState<
+        + JournalGetter<
+            Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
             >,
         > + Host,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
-        + From<JournalStateGetterDBError<CTX>>
+        + From<JournalDBError<CTX>>
         + From<PrecompileErrors>,
     VAL: ValidationHandler<Context = CTX, Error = ERROR>,
     PREEXEC: PreExecutionHandler<Context = CTX, Error = ERROR>,
@@ -92,19 +92,19 @@ impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC> EvmExec
 where
     CTX: TransactionSetter
         + BlockSetter
-        + JournalStateGetter
+        + JournalGetter
         + CfgGetter
         + DatabaseGetter
         + ErrorGetter<Error = ERROR>
-        + JournalStateGetter<
-            Journal: JournaledState<
+        + JournalGetter<
+            Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
             >,
         > + Host,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
-        + From<JournalStateGetterDBError<CTX>>
+        + From<JournalDBError<CTX>>
         + From<PrecompileErrors>,
     VAL: ValidationHandler<Context = CTX, Error = ERROR>,
     PREEXEC: PreExecutionHandler<Context = CTX, Error = ERROR>,
@@ -139,8 +139,8 @@ where
 pub type Error<DB> = EVMError<<DB as Database>::Error, InvalidTransaction>;
 
 /// Mainnet Contexts.
-pub type EthContext<DB, BLOCK = BlockEnv, TX = TxEnv, CFG = CfgEnv> =
-    Context<BLOCK, TX, CFG, DB, ()>;
+pub type EthContext<DB, BLOCK = BlockEnv, TX = TxEnv, CFG = CfgEnv, JOURNAL = JournaledState<DB>> =
+    Context<BLOCK, TX, CFG, DB, JOURNAL, ()>;
 
 /// Mainnet EVM type.
 pub type MainEvm<DB, BLOCK, TX, CFG> = Evm<Error<DB>, EthContext<DB, BLOCK, TX, CFG>>;
@@ -150,19 +150,19 @@ impl<ERROR, CTX, VAL, PREEXEC, EXEC, POSTEXEC>
 where
     CTX: TransactionGetter
         + BlockGetter
-        + JournalStateGetter
+        + JournalGetter
         + CfgGetter
         + DatabaseGetter
         + ErrorGetter<Error = ERROR>
-        + JournalStateGetter<
-            Journal: JournaledState<
+        + JournalGetter<
+            Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
             >,
         > + Host,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
-        + From<JournalStateGetterDBError<CTX>>
+        + From<JournalDBError<CTX>>
         + From<PrecompileErrors>,
     VAL: ValidationHandler<Context = CTX, Error = ERROR>,
     PREEXEC: PreExecutionHandler<Context = CTX, Error = ERROR>,
@@ -245,23 +245,23 @@ where
         let context = &mut self.context;
         let pre_exec = self.handler.pre_execution();
 
-        // load access list and beneficiary if needed.
+        // Load access list and beneficiary if needed.
         pre_exec.load_accounts(context)?;
 
-        // deduce caller balance with its limit.
+        // Deduce caller balance with its limit.
         pre_exec.deduct_caller(context)?;
 
         let gas_limit = context.tx().common_fields().gas_limit() - initial_gas_spend;
 
-        // apply EIP-7702 auth list.
+        // Apply EIP-7702 auth list.
         let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(context)? as i64;
 
-        // start execution
+        // Start execution
 
         //let instructions = self.handler.take_instruction_table();
         let exec = self.handler.execution();
 
-        // create first frame action
+        // Create first frame action
         let first_frame = exec.init_first_frame(context, gas_limit)?;
         let frame_result = match first_frame {
             FrameOrResultGen::Frame(frame) => exec.run(context, frame)?,
@@ -271,7 +271,7 @@ where
         let mut exec_result = exec.last_frame_result(context, frame_result)?;
 
         let post_exec = self.handler.post_execution();
-        // calculate final refund and add EIP-7702 refund to gas.
+        // Calculate final refund and add EIP-7702 refund to gas.
         post_exec.refund(context, &mut exec_result, eip7702_gas_refund);
         // Reimburse the caller
         post_exec.reimburse_caller(context, &mut exec_result)?;
@@ -386,7 +386,7 @@ mod tests {
 
         let mut tx2 = TxEnv::default();
         tx2.tx_type = TransactionType::Legacy;
-        // nonce was bumped from 0 to 1
+        // `nonce` was bumped from 0 to 1
         tx2.nonce = 1;
 
         let mut evm = EvmBuilder::new_with(

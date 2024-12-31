@@ -26,7 +26,7 @@ async fn main() -> Result<()> {
     // Set up the HTTP transport which is consumed by the RPC client.
     let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
 
-    // create ethers client and wrap it in Arc<M>
+    // Create ethers client and wrap it in Arc<M>
     let client = ProviderBuilder::new().on_http(rpc_url);
 
     let alloy = WrapDatabaseAsync::new(AlloyDB::new(client, BlockId::latest())).unwrap();
@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
 
     let weth_balance_slot = U256::from(3);
 
-    // give our test account some fake WETH and ETH
+    // Give our test account some fake WETH and ETH
     let one_ether = U256::from(1_000_000_000_000_000_000u128);
     let hashed_acc_balance_slot = keccak256((account, weth_balance_slot).abi_encode());
     cache_db
@@ -65,13 +65,13 @@ async fn main() -> Result<()> {
 
     let amount_in = one_ether.div(U256::from(10));
 
-    // calculate USDC amount out
+    // Calculate USDC amount out
     let amount_out = get_amount_out(amount_in, reserve1, reserve0, &mut cache_db).await?;
 
-    // transfer WETH to USDC-WETH pair
+    // Transfer WETH to USDC-WETH pair
     transfer(account, usdc_weth_pair, amount_in, weth, &mut cache_db)?;
 
-    // execute low-level swap without using UniswapV2 router
+    // Execute low-level swap without using UniswapV2 router
     swap(
         account,
         usdc_weth_pair,

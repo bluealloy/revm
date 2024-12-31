@@ -4,11 +4,12 @@ use primitives::{Address, B256, U256};
 use state::AccountInfo;
 use std::vec::Vec;
 
-/// accounts/storages/contracts for inclusion into database.
-/// Structure is made so it is easier to apply directly to database
-/// that mostly have separate tables to store account/storage/contract data.
+/// `accounts`/`storages`/`contracts` for inclusion into database.
 ///
-/// Note: that data is **not** sorted. Some database benefit of faster inclusion
+/// Structure is made so it is easier to apply directly to database
+/// that mostly have separate tables to store `accounts`/`storages`/`contracts` data.
+///
+/// **Note**: That data is **not** sorted. Some database benefit of faster inclusion
 /// and smaller footprint if data is inserted in sorted order.
 #[derive(Clone, Debug, Default)]
 pub struct StateChangeset {
@@ -20,29 +21,34 @@ pub struct StateChangeset {
     pub contracts: Vec<(B256, Bytecode)>,
 }
 
-/// Plain storage changeset. Used to apply storage changes of plain state to
-/// the database.
+/// Plain storage changeset.
+///
+/// Used to apply storage changes of plain state to the database.
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct PlainStorageChangeset {
     /// Address of account
     pub address: Address,
-    /// Wipe storage,
+    /// Wipe storage
     pub wipe_storage: bool,
-    /// Storage key value pairs.
+    /// Storage key value pairs
     pub storage: Vec<(U256, U256)>,
 }
 
-/// Plain Storage Revert. Containing old values of changed storage.
+/// Plain Storage Revert.
+///
+/// [`PlainStorageRevert`] contains old values of changed storage.
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct PlainStorageRevert {
     /// Address of account
     pub address: Address,
-    /// Is storage wiped in this revert. Wiped flag is set on
-    /// first known selfdestruct and would require clearing the
+    /// Whether storage is wiped in this revert
+    ///
+    /// **Note**: Wiped flag is set on first known selfdestruct and would require clearing the
     /// state of this storage from database (And moving it to revert).
     pub wiped: bool,
-    /// Contains the storage key and old values of that storage.
-    /// Reverts are **not** sorted.
+    /// Contains the storage key and old values of that storage
+    ///
+    /// **Note**: Reverts are **not** sorted.
     pub storage_revert: Vec<(U256, RevertToSlot)>,
 }
 
@@ -51,16 +57,16 @@ pub struct PlainStorageRevert {
 /// Note that accounts are assumed **not** sorted.
 #[derive(Clone, Debug, Default)]
 pub struct PlainStateReverts {
-    /// Vector of account with removed contracts bytecode
+    /// Vector of account with removed contracts bytecode.
     ///
-    /// Note: If AccountInfo is None means that account needs to be removed.
+    /// **Note**: If AccountInfo is None means that account needs to be removed.
     pub accounts: Vec<Vec<(Address, Option<AccountInfo>)>>,
     /// Vector of storage with its address.
     pub storage: Vec<Vec<PlainStorageRevert>>,
 }
 
 impl PlainStateReverts {
-    /// Constructs new [PlainStateReverts] with pre-allocated capacity.
+    /// Constructs new [`PlainStateReverts`] with pre-allocated capacity.
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             accounts: Vec::with_capacity(capacity),

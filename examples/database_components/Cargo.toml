@@ -27,3 +27,4 @@ revm.workspace = true
 
 # mics
 auto_impl.workspace = true
+derive_more = { version = "1.0", default-features = false }

@@ -44,7 +44,7 @@ impl TransactionParts {
     pub fn tx_type(&self, access_list_index: usize) -> Option<TransactionType> {
         let mut tx_type = TransactionType::Legacy;
 
-        // if it has access list it is EIP-2930 tx
+        // If it has access list it is EIP-2930 tx
         if let Some(access_list) = self.access_lists.get(access_list_index) {
             if access_list.is_some() {
                 tx_type = TransactionType::Eip2930;
@@ -56,16 +56,16 @@ impl TransactionParts {
             tx_type = TransactionType::Eip1559;
         }
 
-        // if it has max_fee_per_blob_gas it is EIP-4844 tx
+        // If it has max_fee_per_blob_gas it is EIP-4844 tx
         if self.max_fee_per_blob_gas.is_some() {
             // target need to be present for EIP-4844 tx
             self.to?;
             tx_type = TransactionType::Eip4844;
         }
 
-        // and if it has authorization list it is EIP-7702 tx
+        // And if it has authorization list it is EIP-7702 tx
         if self.authorization_list.is_some() {
-            // target need to be present for EIP-7702 tx
+            // Target need to be present for EIP-7702 tx
             self.to?;
             tx_type = TransactionType::Eip7702;
         }

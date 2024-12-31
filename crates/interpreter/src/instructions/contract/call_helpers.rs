@@ -60,7 +60,7 @@ pub fn calc_call_gas(
 
     // EIP-150: Gas cost changes for IO-heavy operations
     let gas_limit = if interpreter.runtime_flag.spec_id().is_enabled_in(TANGERINE) {
-        // take l64 part of gas_limit
+        // Take l64 part of gas_limit
         min(
             interpreter.control.gas().remaining_63_of_64_parts(),
             local_gas_limit,

@@ -42,7 +42,7 @@ pub fn data_loadn<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     push!(interpreter, B256::new(word).into());
 
-    // add +2 to the instruction pointer to skip the offset
+    // Add +2 to the instruction pointer to skip the offset
     interpreter.bytecode.relative_jump(2);
 }
 
@@ -64,13 +64,13 @@ pub fn data_copy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     gas!(interpreter, VERYLOW);
     popn!([mem_offset, offset, size], interpreter);
 
-    // sizes more than u64::MAX will spend all the gas in memory resize.
+    // Sizes more than u64::MAX will spend all the gas in memory resize.
     let size = as_usize_or_fail!(interpreter, size);
-    // size of zero should not change the memory
+    // Size of zero should not change the memory
     if size == 0 {
         return;
     }
-    // fail if mem offset is big as it will spend all the gas
+    // Fail if mem offset is big as it will spend all the gas
     let mem_offset = as_usize_or_fail!(interpreter, mem_offset);
     resize_memory!(interpreter, mem_offset, size);
 
@@ -79,11 +79,12 @@ pub fn data_copy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let offset = as_usize_saturated!(offset);
     let data = interpreter.bytecode.data();
 
-    // set data from the eof to the shared memory. Padded it with zeros.
+    // Set data from the eof to the shared memory. Padded it with zeros.
     interpreter.memory.set_data(mem_offset, offset, size, data);
 }
+
+// TODO : Test
 /*
-TODO test
 #[cfg(test)]
 mod test {
     use bytecode::{Bytecode, Eof};

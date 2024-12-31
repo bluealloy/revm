@@ -1,8 +1,8 @@
 use super::{frame_data::FrameResult, EthFrame, EthPrecompileProvider};
 use bytecode::EOF_MAGIC_BYTES;
 use context_interface::{
-    result::InvalidTransaction, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalStateGetter,
-    JournalStateGetterDBError, Transaction, TransactionGetter,
+    result::InvalidTransaction, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalDBError,
+    JournalGetter, Transaction, TransactionGetter,
 };
 use handler_interface::{util::FrameOrFrameResult, ExecutionHandler, Frame as FrameTrait};
 use interpreter::{
@@ -65,7 +65,7 @@ where
                 return_memory_offset: 0..0,
             })),
             TxKind::Create => {
-                // if first byte of data is magic 0xEF00, then it is EOFCreate.
+                // If first byte of data is magic 0xEF00, then it is EOFCreate.
                 if spec.is_enabled_in(SpecId::OSAKA) && input.starts_with(&EOF_MAGIC_BYTES) {
                     FrameInput::EOFCreate(Box::new(EOFCreateInputs::new(
                         tx.common_fields().caller(),
@@ -125,30 +125,24 @@ impl<CTX, ERROR, FRAME> EthExecution<CTX, ERROR, FRAME> {
 }
 
 pub trait EthExecutionContext<ERROR>:
-    TransactionGetter + ErrorGetter<Error = ERROR> + BlockGetter + JournalStateGetter + CfgGetter
+    TransactionGetter + ErrorGetter<Error = ERROR> + BlockGetter + JournalGetter + CfgGetter
 {
 }
 
 impl<
         ERROR,
-        T: TransactionGetter
-            + ErrorGetter<Error = ERROR>
-            + BlockGetter
-            + JournalStateGetter
-            + CfgGetter,
+        T: TransactionGetter + ErrorGetter<Error = ERROR> + BlockGetter + JournalGetter + CfgGetter,
     > EthExecutionContext<ERROR> for T
 {
 }
 
-pub trait EthExecutionError<CTX: JournalStateGetter>:
-    From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>
+pub trait EthExecutionError<CTX: JournalGetter>:
+    From<InvalidTransaction> + From<JournalDBError<CTX>>
 {
 }
 
-impl<
-        CTX: JournalStateGetter,
-        T: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
-    > EthExecutionError<CTX> for T
+impl<CTX: JournalGetter, T: From<InvalidTransaction> + From<JournalDBError<CTX>>>
+    EthExecutionError<CTX> for T
 {
 }
 

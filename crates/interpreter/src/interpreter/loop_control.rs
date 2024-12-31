@@ -5,13 +5,17 @@ use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LoopControl {
-    /// The execution control flag. If this is not set to `Continue`, the interpreter will stop
-    /// execution.
+    /// The execution control flag.
+    ///
+    /// If this is not set to [`Continue`][InstructionResult::Continue], the interpreter will stop execution.
     pub instruction_result: InstructionResult,
     /// Actions that the EVM should do.
     ///
-    /// Set inside CALL or CREATE instructions and RETURN or REVERT instructions. Additionally those instructions will set
-    /// InstructionResult to CallOrCreate/Return/Revert so we know the reason.
+    /// Set inside `CALL` or `CREATE` instructions and `RETURN` or `REVERT` instructions.
+    ///
+    /// Additionally those instructions will set [`InstructionResult`] to
+    /// [`CallOrCreate`][InstructionResult::CallOrCreate]/[`Return`][InstructionResult::Return]/[`Revert`][InstructionResult::Revert]
+    /// so we know the reason.
     pub next_action: InterpreterAction,
     pub gas: Gas,
 }

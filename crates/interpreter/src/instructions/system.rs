@@ -68,7 +68,7 @@ pub fn codecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
     let code_offset = as_usize_saturated!(code_offset);
 
-    // Note: this can't panic because we resized memory to fit.
+    // Note: This can't panic because we resized memory to fit.
     interpreter.memory.set_data(
         memory_offset,
         code_offset,
@@ -90,7 +90,7 @@ pub fn calldataload<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let input_len = input.len();
     if offset < input_len {
         let count = 32.min(input_len - offset);
-        // SAFETY: count is bounded by the calldata length.
+        // SAFETY: `count` is bounded by the calldata length.
         // This is `word[..count].copy_from_slice(input[offset..offset + count])`, written using
         // raw pointers as apparently the compiler cannot optimize the slice version, and using
         // `get_unchecked` twice is uglier.
@@ -127,7 +127,7 @@ pub fn calldatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
 
     let data_offset = as_usize_saturated!(data_offset);
-    // Note: this can't panic because we resized memory to fit.
+    // Note: This can't panic because we resized memory to fit.
     interpreter
         .memory
         .set_data(memory_offset, data_offset, len, interpreter.input.input());
@@ -171,7 +171,7 @@ pub fn returndatacopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     };
 
-    // Note: this can't panic because we resized memory to fit.
+    // Note: This can't panic because we resized memory to fit.
     interpreter.memory.set_data(
         memory_offset,
         data_offset,
@@ -223,7 +223,7 @@ pub fn memory_resize(
     memory_offset: U256,
     len: usize,
 ) -> Option<usize> {
-    // safe to cast usize to u64
+    // Safe to cast usize to u64
     gas_or_fail!(interpreter, gas::copy_cost_verylow(len), None);
     if len == 0 {
         return None;
@@ -234,8 +234,8 @@ pub fn memory_resize(
     Some(memory_offset)
 }
 
+// TODO : Tests
 /*
-TODO tests
 #[cfg(test)]
 mod test {
     use super::*;

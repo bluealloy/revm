@@ -74,7 +74,7 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             // multiplication.
             let mut cur_ml = blst_fp12::default();
             let mut res = blst_fp12::default();
-            // SAFETY: res, acc, cur_ml, p1_aff and p2_aff are blst values.
+            // SAFETY: `res`, `acc`, `cur_ml`, `p1_aff` and `p2_aff` are blst values.
             unsafe {
                 blst_miller_loop(&mut cur_ml, p2_aff, p1_aff);
                 blst_fp12_mul(&mut res, &acc, &cur_ml);
@@ -83,21 +83,21 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         } else {
             // On the first slice (i==0) there is no previous results and no need
             // to accumulate.
-            // SAFETY: acc, p1_aff and p2_aff are blst values.
+            // SAFETY: `acc`, `p1_aff` and `p2_aff` are blst values.
             unsafe {
                 blst_miller_loop(&mut acc, p2_aff, p1_aff);
             }
         }
     }
 
-    // SAFETY: ret and acc are blst values.
+    // SAFETY: `ret` and `acc` are blst values.
     let mut ret = blst_fp12::default();
     unsafe {
         blst_final_exp(&mut ret, &acc);
     }
 
     let mut result: u8 = 0;
-    // SAFETY: ret is a blst value.
+    // SAFETY: `ret` is a blst value.
     unsafe {
         if blst_fp12_is_one(&ret) {
             result = 1;

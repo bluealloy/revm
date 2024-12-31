@@ -48,7 +48,7 @@ pub fn rjumpv<WIRE: InterpreterTypes, H: Host + ?Sized>(
     let case = as_isize_saturated!(case);
 
     let max_index = interpreter.bytecode.read_u8() as isize;
-    // for number of items we are adding 1 to max_index, multiply by 2 as each offset is 2 bytes
+    // For number of items we are adding 1 to max_index, multiply by 2 as each offset is 2 bytes
     // and add 1 for max_index itself. Note that revm already incremented the instruction pointer
     let mut offset = (max_index + 1) * 2 + 1;
 
@@ -108,13 +108,13 @@ pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     let idx = interpreter.bytecode.read_u16() as usize;
 
-    // get target types
+    // Get target types
     let Some(types) = interpreter.bytecode.code_section_info(idx) else {
         panic!("Invalid EOF in execution, expecting correct intermediate in callf")
     };
 
     // Check max stack height for target code section.
-    // safe to subtract as max_stack_height is always more than inputs.
+    // Safe to subtract as max_stack_height is always more than inputs.
     if interpreter.stack.len() + (types.max_stack_size - types.inputs as u16) as usize > 1024 {
         interpreter
             .control
@@ -122,7 +122,7 @@ pub fn callf<WIRE: InterpreterTypes, H: Host + ?Sized>(
         return;
     }
 
-    // push current idx and PC to the callf stack.
+    // Push current idx and PC to the callf stack.
     // PC is incremented by 2 to point to the next instruction after callf.
     if !(interpreter
         .sub_routine
@@ -163,14 +163,14 @@ pub fn jumpf<WIRE: InterpreterTypes, H: Host + ?Sized>(
 
     let idx = interpreter.bytecode.read_u16() as usize;
 
-    // get target types
+    // Get target types
     let types = interpreter
         .bytecode
         .code_section_info(idx)
         .expect("Invalid code section index");
 
     // Check max stack height for target code section.
-    // safe to subtract as max_stack_height is always more than inputs.
+    // Safe to subtract as max_stack_height is always more than inputs.
     if interpreter.stack.len() + (types.max_stack_size - types.inputs as u16) as usize > 1024 {
         interpreter
             .control
@@ -199,11 +199,11 @@ fn return_inner(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
     instruction_result: InstructionResult,
 ) {
-    // zero gas cost
+    // Zero gas cost
     // gas!(interpreter, gas::ZERO)
     popn!([offset, len], interpreter);
     let len = as_usize_or_fail!(interpreter, len);
-    // important: offset must be ignored if len is zeros
+    // Important: Offset must be ignored if len is zeros
     let mut output = Bytes::default();
     if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
@@ -270,8 +270,8 @@ pub fn unknown<WIRE: InterpreterTypes, H: Host + ?Sized>(
         .set_instruction_result(InstructionResult::OpcodeNotFound);
 }
 
+// TODO : Test
 /*
-TODO TEST
 #[cfg(test)]
 mod test {
     use super::*;
@@ -313,10 +313,10 @@ mod test {
         interp.gas = Gas::new(10000);
         interp.spec_id = SpecId::PRAGUE;
 
-        // dont jump
+        // Dont jump
         interp.step(&table, &mut host);
         assert_eq!(interp.program_counter(), 3);
-        // jumps to last opcode
+        // Jumps to last opcode
         interp.step(&table, &mut host);
         assert_eq!(interp.program_counter(), 7);
     }
@@ -347,30 +347,30 @@ mod test {
         interp.gas = Gas::new(1000);
         interp.spec_id = SpecId::PRAGUE;
 
-        // more then max_index
+        // More then max_index
         interp.stack.push(U256::from(10)).unwrap();
         interp.step(&table, &mut host);
         assert_eq!(interp.program_counter(), 6);
 
-        // cleanup
+        // Cleanup
         interp.step(&table, &mut host);
         interp.step(&table, &mut host);
         interp.step(&table, &mut host);
         interp.step(&table, &mut host);
         assert_eq!(interp.program_counter(), 0);
 
-        // jump to first index of vtable
+        // Jump to first index of vtable
         interp.stack.push(U256::from(0)).unwrap();
         interp.step(&table, &mut host);
         assert_eq!(interp.program_counter(), 7);
 
-        // cleanup
+        // Cleanup
         interp.step(&table, &mut host);
         interp.step(&table, &mut host);
         interp.step(&table, &mut host);
         assert_eq!(interp.program_counter(), 0);
 
-        // jump to second index of vtable
+        // Jump to second index of vtable
         interp.stack.push(U256::from(1)).unwrap();
         interp.step(&table, &mut host);
         assert_eq!(interp.program_counter(), 8);
@@ -477,7 +477,7 @@ mod test {
         // CALLF
         interp.step(&table, &mut host);
 
-        // stack overflow
+        // Stack overflow
         assert_eq!(interp.instruction_result, InstructionResult::StackOverflow);
     }
 
@@ -515,7 +515,7 @@ mod test {
         // JUMPF
         interp.step(&table, &mut host);
 
-        // stack overflow
+        // Stack overflow
         assert_eq!(interp.instruction_result, InstructionResult::StackOverflow);
     }
 }

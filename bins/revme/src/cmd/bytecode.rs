@@ -15,9 +15,11 @@ pub struct Cmd {
     /// Is EOF code in RUNTIME mode.
     #[arg(long)]
     eof_runtime: bool,
-    /// Bytecode in hex format. If bytes start with 0xFE it will be interpreted as a EOF.
-    /// Otherwise, it will be interpreted as a EOF bytecode.
-    /// If not provided, it will operate in interactive EOF validation mode.
+    /// Bytecode in hex format string.
+    ///
+    /// - If bytes start with 0xFE it will be interpreted as a EOF.
+    /// - Otherwise, it will be interpreted as a EOF bytecode.
+    /// - If not provided, it will operate in interactive EOF validation mode.
     #[arg()]
     bytes: Option<String>,
 }
@@ -34,7 +36,7 @@ fn trim_decode(input: &str) -> Option<Bytes> {
 }
 
 impl Cmd {
-    /// Run statetest command.
+    /// Runs statetest command.
     pub fn run(&self) {
         let container_kind = if self.eof_initcode {
             Some(CodeType::ReturnContract)
@@ -64,12 +66,12 @@ impl Cmd {
             return;
         }
 
-        // else run command in loop.
+        // Else run command in loop.
         loop {
             let mut input = String::new();
             io::stdin().read_line(&mut input).expect("Input Error");
             if input.len() == 1 {
-                // just a newline, so exit
+                // Just a newline, so exit
                 return;
             }
             let Some(bytes) = trim_decode(&input) else {

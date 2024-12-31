@@ -4,7 +4,7 @@ use revm::{
     context::TxEnv,
     context_interface::{
         transaction::{CommonTxFields, Transaction, TransactionType},
-        TransactionGetter,
+        Journal, TransactionGetter,
     },
     primitives::Bytes,
     Context, Database,
@@ -24,8 +24,8 @@ pub trait OpTxGetter: TransactionGetter {
     fn op_tx(&self) -> &Self::OpTransaction;
 }
 
-impl<BLOCK, TX: Transaction, DB: Database, CFG, CHAIN> OpTxGetter
-    for Context<BLOCK, OpTransaction<TX>, CFG, DB, CHAIN>
+impl<BLOCK, TX: Transaction, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> OpTxGetter
+    for Context<BLOCK, OpTransaction<TX>, CFG, DB, JOURNAL, CHAIN>
 {
     type OpTransaction = OpTransaction<TX>;
 
@@ -57,8 +57,9 @@ impl From<OpTransactionType> for TransactionType {
 pub enum OpTransaction<T: Transaction> {
     Base {
         tx: T,
-        /// An enveloped EIP-2718 typed transaction. This is used
-        /// to compute the L1 tx cost using the L1 block info, as
+        /// An enveloped EIP-2718 typed transaction
+        ///
+        /// This is used to compute the L1 tx cost using the L1 block info, as
         /// opposed to requiring downstream apps to compute the cost
         /// externally.
         enveloped_tx: Option<Bytes>,
@@ -113,7 +114,7 @@ impl<T: Transaction> Transaction for OpTransaction<T> {
         }
     }
 
-    fn effective_gas_price(&self, base_fee: revm::primitives::U256) -> revm::primitives::U256 {
+    fn effective_gas_price(&self, base_fee: u128) -> u128 {
         match self {
             Self::Base { tx, .. } => tx.effective_gas_price(base_fee),
             Self::Deposit(_) => base_fee,
@@ -178,5 +179,46 @@ impl<T: Transaction> OpTxTrait for OpTransaction<T> {
             Self::Base { enveloped_tx, .. } => enveloped_tx.as_ref(),
             Self::Deposit(_) => None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use revm::primitives::{Address, B256, U256};
+
+    #[test]
+    fn test_deposit_transaction_type_conversion() {
+        let deposit_tx = OpTransactionType::Deposit;
+        let tx_type: TransactionType = deposit_tx.into();
+        assert_eq!(tx_type, TransactionType::Custom);
+
+        // Also test base transaction conversion
+        let base_tx = OpTransactionType::Base(TransactionType::Legacy);
+        let tx_type: TransactionType = base_tx.into();
+        assert_eq!(tx_type, TransactionType::Legacy);
+    }
+
+    #[test]
+    fn test_deposit_transaction_fields() {
+        let deposit = TxDeposit {
+            from: Address::ZERO,
+            to: revm::primitives::TxKind::Call(Address::ZERO),
+            value: U256::ZERO,
+            gas_limit: 0,
+            is_system_transaction: false,
+            mint: Some(0u128),
+            source_hash: B256::default(),
+            input: Default::default(),
+        };
+        let op_tx: OpTransaction<TxEnv> = OpTransaction::Deposit(deposit);
+        // Verify transaction type
+        assert_eq!(op_tx.tx_type(), OpTransactionType::Deposit);
+        // Verify common fields access
+        assert_eq!(op_tx.common_fields().gas_limit(), 0);
+        assert_eq!(op_tx.kind(), revm::primitives::TxKind::Call(Address::ZERO));
+        // Verify gas related calculations
+        assert_eq!(op_tx.effective_gas_price(100), 100);
+        assert_eq!(op_tx.max_fee(), 0);
     }
 }
