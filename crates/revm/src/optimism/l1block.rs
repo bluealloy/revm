@@ -140,18 +140,7 @@ impl L1BlockInfo {
                 .then(|| db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT))
                 .transpose()?;
 
-            if !spec_id.is_enabled_in(SpecId::ISTHMUS) {
-                // Pre-isthmus L1 block info
-                Ok(L1BlockInfo {
-                    l1_base_fee,
-                    l1_base_fee_scalar,
-                    l1_blob_base_fee: Some(l1_blob_base_fee),
-                    l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
-                    empty_ecotone_scalars,
-                    l1_fee_overhead,
-                    ..Default::default()
-                })
-            } else {
+            if spec_id.is_enabled_in(SpecId::ISTHMUS) {
                 let operator_fee_scalars = db
                     .storage(L1_BLOCK_CONTRACT, OPERATOR_FEE_SCALARS_SLOT)?
                     .to_be_bytes::<32>();
@@ -180,6 +169,17 @@ impl L1BlockInfo {
                     l1_fee_overhead,
                     operator_fee_scalar: Some(operator_fee_scalar),
                     operator_fee_constant: Some(operator_fee_constant),
+                })
+            } else {
+                // Pre-isthmus L1 block info
+                Ok(L1BlockInfo {
+                    l1_base_fee,
+                    l1_base_fee_scalar,
+                    l1_blob_base_fee: Some(l1_blob_base_fee),
+                    l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
+                    empty_ecotone_scalars,
+                    l1_fee_overhead,
+                    ..Default::default()
                 })
             }
         }
