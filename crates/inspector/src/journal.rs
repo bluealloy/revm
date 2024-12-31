@@ -1,9 +1,6 @@
 use auto_impl::auto_impl;
 use revm::{
-    context::JournaledState,
-    database_interface::Database,
-    primitives::Log,
-    state::EvmState,
+    context::JournaledState, database_interface::Database, primitives::Log, state::EvmState,
     JournalEntry,
 };
 
