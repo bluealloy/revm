@@ -15,67 +15,6 @@ pub mod bitcoin_secp256k1;
 #[cfg(feature = "libsecp256k1")]
 pub mod parity_libsecp256k1;
 
-// #[allow(clippy::module_inception)]
-// mod secp256k1 {
-//     use primitives::{alloy_primitives::B512, keccak256, B256};
-
-//     #[cfg(feature = "secp256k1")]
-//         {
-//             use secp256k1::{
-//                 ecdsa::{RecoverableSignature, RecoveryId},
-//                 Message, SECP256K1,
-//             };
-
-//             // Silence the unused crate dependency warning.
-//             use k256 as _;
-
-//             pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, secp256k1::Error> {
-//                 let recid = RecoveryId::from_i32(recid as i32).expect("recovery ID is valid");
-//                 let sig = RecoverableSignature::from_compact(sig.as_slice(), recid)?;
-
-//                 let msg = Message::from_digest(msg.0);
-//                 let public = SECP256K1.recover_ecdsa(&msg, &sig)?;
-
-//                 let mut hash = keccak256(&public.serialize_uncompressed()[1..]);
-//                 hash[..12].fill(0);
-//                 Ok(hash)
-//             }
-//         }
-//         #[cfg(feature = "libsecp256k1")]
-//         {
-
-//         }
-//         #[cfg(feature = "k256")]
-//         {
-//             use k256::ecdsa::{Error, RecoveryId, Signature, VerifyingKey};
-
-//             pub fn ecrecover(sig: &B512, mut recid: u8, msg: &B256) -> Result<B256, Error> {
-//                 // parse signature
-//                 let mut sig = Signature::from_slice(sig.as_slice())?;
-
-//                 // normalize signature and flip recovery id if needed.
-//                 if let Some(sig_normalized) = sig.normalize_s() {
-//                     sig = sig_normalized;
-//                     recid ^= 1;
-//                 }
-//                 let recid = RecoveryId::from_byte(recid).expect("recovery ID is valid");
-
-//                 // recover key
-//                 let recovered_key = VerifyingKey::recover_from_prehash(&msg[..], &sig, recid)?;
-//                 // hash it
-//                 let mut hash = keccak256(
-//                     &recovered_key
-//                         .to_encoded_point(/* compress = */ false)
-//                         .as_bytes()[1..],
-//                 );
-
-//                 // truncate to 20 bytes
-//                 hash[..12].fill(0);
-//                 Ok(hash)
-//             }
-//         }
-// }
-
 pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     const ECRECOVER_BASE: u64 = 3_000;
 
