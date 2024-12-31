@@ -83,7 +83,7 @@ where
 pub fn validate_priority_fee_tx(
     max_fee: u128,
     max_priority_fee: u128,
-    base_fee: Option<U256>,
+    base_fee: Option<u128>,
 ) -> Result<(), InvalidTransaction> {
     if max_priority_fee > max_fee {
         // Or gas_max_fee for eip1559
@@ -92,10 +92,7 @@ pub fn validate_priority_fee_tx(
 
     // Check minimal cost against basefee
     if let Some(base_fee) = base_fee {
-        let effective_gas_price = cmp::min(
-            U256::from(max_fee),
-            base_fee.saturating_add(U256::from(max_priority_fee)),
-        );
+        let effective_gas_price = cmp::min(max_fee, base_fee.saturating_add(max_priority_fee));
         if effective_gas_price < base_fee {
             return Err(InvalidTransaction::GasPriceLessThanBasefee);
         }
@@ -153,7 +150,7 @@ where
     let base_fee = if context.cfg().is_base_fee_check_disabled() {
         None
     } else {
-        Some(*context.block().basefee())
+        Some(context.block().basefee() as u128)
     };
 
     match tx_type {
@@ -168,7 +165,7 @@ where
             }
             // Gas price must be at least the basefee.
             if let Some(base_fee) = base_fee {
-                if U256::from(tx.gas_price()) < base_fee {
+                if tx.gas_price() < base_fee {
                     return Err(InvalidTransaction::GasPriceLessThanBasefee.into());
                 }
             }
@@ -186,7 +183,7 @@ where
 
             // Gas price must be at least the basefee.
             if let Some(base_fee) = base_fee {
-                if U256::from(tx.gas_price()) < base_fee {
+                if tx.gas_price() < base_fee {
                     return Err(InvalidTransaction::GasPriceLessThanBasefee.into());
                 }
             }
@@ -266,7 +263,7 @@ where
 
     // Check if gas_limit is more than block_gas_limit
     if !context.cfg().is_block_gas_limit_disabled()
-        && U256::from(common_field.gas_limit()) > *context.block().gas_limit()
+        && common_field.gas_limit() > context.block().gas_limit()
     {
         return Err(InvalidTransaction::CallerGasLimitMoreThanBlock.into());
     }

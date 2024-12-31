@@ -10,7 +10,7 @@ use context_interface::{
 };
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
-use interpreter::{as_u64_saturated, Host, SStoreResult, SelfDestructResult, StateLoad};
+use interpreter::{Host, SStoreResult, SelfDestructResult, StateLoad};
 use primitives::{Address, Bytes, Log, B256, BLOCK_HASH_HISTORY, U256};
 use specification::hardfork::SpecId;
 
@@ -313,7 +313,7 @@ where
     where
         F: FnOnce(&mut DB),
     {
-        f(self.journaled_state.db_mut());
+        f(self.journaled_state.db());
     }
 
     pub fn modify_journal<F>(&mut self, f: F)
@@ -381,7 +381,7 @@ where
     JOURNAL: Journal<Database = DB>,
 {
     fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
-        let block_number = as_u64_saturated!(*self.block().number());
+        let block_number = self.block().number();
 
         let Some(diff) = block_number.checked_sub(requested_number) else {
             return Some(B256::ZERO);
@@ -395,7 +395,7 @@ where
         if diff <= BLOCK_HASH_HISTORY {
             return self
                 .journaled_state
-                .db_mut()
+                .db()
                 .block_hash(requested_number)
                 .map_err(|e| self.error = Err(e))
                 .ok();
@@ -508,7 +508,11 @@ where
     type Database = DB;
 
     fn db(&mut self) -> &mut Self::Database {
-        self.journaled_state.db_mut()
+        self.journaled_state.db()
+    }
+
+    fn db_ref(&self) -> &Self::Database {
+        self.journaled_state.db_ref()
     }
 }
 

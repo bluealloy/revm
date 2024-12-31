@@ -286,11 +286,16 @@ pub fn execute_test_suite(
         cfg.chain_id = 1;
 
         // Block env
-        block.number = unit.env.current_number;
+        block.number = unit.env.current_number.try_into().unwrap_or(u64::MAX);
         block.beneficiary = unit.env.current_coinbase;
-        block.timestamp = unit.env.current_timestamp;
-        block.gas_limit = unit.env.current_gas_limit;
-        block.basefee = unit.env.current_base_fee.unwrap_or_default();
+        block.timestamp = unit.env.current_timestamp.try_into().unwrap_or(u64::MAX);
+        block.gas_limit = unit.env.current_gas_limit.try_into().unwrap_or(u64::MAX);
+        block.basefee = unit
+            .env
+            .current_base_fee
+            .unwrap_or_default()
+            .try_into()
+            .unwrap_or(u64::MAX);
         block.difficulty = unit.env.current_difficulty;
         // After the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
         block.prevrandao = unit.env.current_random;

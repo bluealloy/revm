@@ -9,7 +9,6 @@ use crate::{
     L1BlockInfoGetter, OpSpec, OpSpecId, OpTransactionError, OptimismHaltReason,
     BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
 };
-use core::ops::Mul;
 use precompiles::OpPrecompileProvider;
 use revm::{
     context_interface::{
@@ -70,7 +69,6 @@ where
         if tx_type == OpTransactionType::Deposit {
             let tx = context.op_tx().deposit();
             // Do not allow for a system transaction to be processed if Regolith is enabled.
-            // TODO : Check if this is correct.
             if tx.is_system_transaction() && context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH)
             {
                 return Err(OpTransactionError::DepositSystemTxPostRegolith.into());
@@ -338,7 +336,7 @@ where
         // Transfer fee to coinbase/beneficiary.
         if !is_deposit {
             self.eth.reward_beneficiary(context, exec_result)?;
-            let basefee = *context.block().basefee();
+            let basefee = context.block().basefee() as u128;
 
             // If the transaction is not a deposit transaction, fees are paid out
             // to both the Base Fee Vault as well as the L1 Fee Vault.
@@ -360,8 +358,8 @@ where
             // Send the base fee of the transaction to the Base Fee Vault.
             let mut base_fee_vault_account = context.journal().load_account(BASE_FEE_RECIPIENT)?;
             base_fee_vault_account.mark_touch();
-            base_fee_vault_account.info.balance += basefee.mul(U256::from(
-                exec_result.gas().spent() - exec_result.gas().refunded() as u64,
+            base_fee_vault_account.info.balance += U256::from(basefee.saturating_mul(
+                (exec_result.gas().spent() - exec_result.gas().refunded() as u64) as u128,
             ));
         }
         Ok(())

@@ -483,6 +483,13 @@ where
         Self::init_with_context(0, frame_input, memory, precompiles, instructions, context)
     }
 
+    fn final_return(
+        _context: &mut Self::Context,
+        _result: &mut Self::FrameResult,
+    ) -> Result<(), Self::Error> {
+        Ok(())
+    }
+
     fn init(
         &self,
         context: &mut CTX,

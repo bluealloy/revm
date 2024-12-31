@@ -7,14 +7,24 @@ use alloy_provider::{
     Network, Provider,
 };
 use alloy_transport::{Transport, TransportError};
+use core::error::Error;
 use database_interface::{async_db::DatabaseAsyncRef, DBErrorMarker};
 use primitives::{Address, B256, U256};
 use state::{AccountInfo, Bytecode};
+use std::fmt::Display;
 
 #[derive(Debug)]
 pub struct DBTransportError(pub TransportError);
 
 impl DBErrorMarker for DBTransportError {}
+
+impl Display for DBTransportError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Transport error: {}", self.0)
+    }
+}
+
+impl Error for DBTransportError {}
 
 impl From<TransportError> for DBTransportError {
     fn from(e: TransportError) -> Self {
