@@ -46,7 +46,6 @@ impl ExtBytecode {
 
     pub fn hash(&mut self) -> Option<B256> {
        self.bytecode_hash
-        }
     }
 }
 
