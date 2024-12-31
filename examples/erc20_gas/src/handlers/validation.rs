@@ -1,16 +1,14 @@
-use crate::keccak256;
 use crate::TOKEN;
 use alloy_sol_types::SolValue;
-use revm::context_interface::Journal;
-use revm::context_interface::{Transaction, TransactionGetter};
-use revm::handler::EthValidationContext;
-use revm::handler::EthValidationError;
 use revm::{
     context::Cfg,
-    context_interface::{result::InvalidTransaction, transaction::Eip4844Tx, TransactionType},
-    handler::EthValidation,
+    context_interface::{
+        result::InvalidTransaction, transaction::Eip4844Tx, Journal, Transaction,
+        TransactionGetter, TransactionType,
+    },
+    handler::{EthValidation, EthValidationContext, EthValidationError},
     handler_interface::ValidationHandler,
-    primitives::U256,
+    primitives::{keccak256, U256},
 };
 use std::cmp::Ordering;
 

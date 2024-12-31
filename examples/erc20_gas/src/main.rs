@@ -1,3 +1,9 @@
+//! Example of a custom handler for ERC20 gas calculation.
+//!
+//! Gas is going to be deducted from ERC20 token.
+
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+
 use alloy_provider::{network::Ethereum, ProviderBuilder, RootProvider};
 use alloy_sol_types::{sol, SolCall, SolValue};
 use alloy_transport_http::Http;

@@ -1,12 +1,13 @@
 use crate::{token_operation, TREASURY};
-use revm::context_interface::result::InvalidHeader;
-use revm::context_interface::transaction::Eip4844Tx;
-use revm::context_interface::{Block, Transaction, TransactionGetter};
-use revm::handler::{EthPreExecutionContext, EthPreExecutionError};
-use revm::precompile::PrecompileErrors;
 use revm::{
-    context_interface::TransactionType, handler::EthPreExecution,
-    handler_interface::PreExecutionHandler, primitives::U256,
+    context_interface::{
+        result::InvalidHeader, transaction::Eip4844Tx, Block, Transaction, TransactionGetter,
+        TransactionType,
+    },
+    handler::{EthPreExecution, EthPreExecutionContext, EthPreExecutionError},
+    handler_interface::PreExecutionHandler,
+    precompile::PrecompileErrors,
+    primitives::U256,
 };
 
 pub struct Erc20PreExecution<CTX, ERROR> {

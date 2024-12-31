@@ -1468,7 +1468,6 @@ dependencies = [
 name = "example-erc20-gas"
 version = "0.0.0"
 dependencies = [
- "alloy-eips",
  "alloy-provider",
  "alloy-sol-types",
  "alloy-transport-http",
@@ -1476,7 +1475,6 @@ dependencies = [
  "reqwest",
  "revm",
  "revm-database",
- "revm-specification",
  "tokio",
 ]
 

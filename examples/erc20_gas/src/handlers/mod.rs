@@ -2,6 +2,10 @@ pub mod post_execution;
 pub mod pre_execution;
 pub mod validation;
 
+pub use post_execution::Erc20PostExecution;
+pub use pre_execution::Erc20PreExecution;
+pub use validation::Erc20Validation;
+
 use revm::{
     context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context},
     context_interface::result::{EVMError, InvalidTransaction},
@@ -9,10 +13,6 @@ use revm::{
     handler::{EthExecution, EthHandler},
     Evm,
 };
-
-pub use post_execution::Erc20PostExecution;
-pub use pre_execution::Erc20PreExecution;
-pub use validation::Erc20Validation;
 
 pub type Erc20GasError<DB> = EVMError<<DB as Database>::Error, InvalidTransaction>;
 
