@@ -31,13 +31,15 @@ specification.workspace = true
 once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
 
 # ecRecover
-libsecp256k1 = { version = "0.7", default-features = false, package = "libsecp256k1", optional = true }
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
 secp256k1 = { version = ">=0.28, <=0.29", default-features = false, features = [
     "alloc",
     "recovery",
     "rand",
     "global-context",
+], optional = true }
+libsecp256k1 = { version = "0.7", default-features = false, package = "libsecp256k1", features = [
+    "static-context",
 ], optional = true }
 
 # SHA2-256 and RIPEMD-160
@@ -88,6 +90,7 @@ std = [
     "sha2/std",
     "c-kzg?/std",
     "secp256k1?/std",
+    "libsecp256k1?/std",
 ]
 hashbrown = ["primitives/hashbrown"]
 asm-keccak = ["primitives/asm-keccak"]
@@ -108,6 +111,7 @@ portable = ["c-kzg"]
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
 # In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
 secp256k1 = ["dep:secp256k1"]
+libsecp256k1 = ["dep:libsecp256k1"]
 
 # Enables the BLS12-381 precompiles.
 blst = ["dep:blst"]
