@@ -41,7 +41,6 @@ tokio = { version = "1.40", optional = true }
 
 [dev-dependencies]
 anyhow = "1.0.83"
-criterion = "0.5"
 indicatif = "0.17"
 rstest = "0.22.0"
 alloy-sol-types = "0.8"

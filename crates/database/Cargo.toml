@@ -49,7 +49,6 @@ alloy-transport = { version = "0.6", optional = true, default-features = false }
 [dev-dependencies]
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 anyhow = "1.0.83"
-criterion = "0.5"
 indicatif = "0.17"
 rstest = "0.22.0"
 alloy-sol-types = "0.8"

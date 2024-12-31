@@ -2,17 +2,19 @@ use bytecode::Bytecode;
 use core::hash::{Hash, Hasher};
 use primitives::{B256, KECCAK_EMPTY, U256};
 
-/// AccountInfo account information.
-#[derive(Clone, Debug, Eq)]
+/// AccountInfo account information
+#[derive(Clone, Debug, Eq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountInfo {
-    /// Account balance.
+    /// Account balance
     pub balance: U256,
-    /// Account nonce.
+    /// Account nonce
     pub nonce: u64,
-    /// code hash,
+    /// code hash
     pub code_hash: B256,
-    /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
+    /// [`Bytecode`] data associated with this account
+    ///
+    /// If [None], `code_hash` will be used to fetch it if code needs to be loaded from
     /// inside `revm`.
     pub code: Option<Bytecode>,
 }
@@ -56,15 +58,17 @@ impl AccountInfo {
         }
     }
 
-    /// Returns a copy of this account with the [`Bytecode`] removed. This is
-    /// useful when creating journals or snapshots of the state, where it is
+    /// Returns a copy of this account with the [`Bytecode`] removed.
+    ///
+    /// This is useful when creating journals or snapshots of the state, where it is
     /// desirable to store the code blobs elsewhere.
     ///
     /// ## Note
     ///
-    /// This is distinct from [`AccountInfo::without_code`] in that it returns
-    /// a new `AccountInfo` instance with the code removed.
-    /// [`AccountInfo::without_code`] will modify and return the same instance.
+    /// This is distinct from [`without_code`][Self::without_code] in that it returns
+    /// a new [`AccountInfo`] instance with the code removed.
+    ///
+    /// [`without_code`][Self::without_code] will modify and return the same instance.
     #[inline]
     pub fn copy_without_code(&self) -> Self {
         Self {
@@ -75,15 +79,18 @@ impl AccountInfo {
         }
     }
 
-    /// Strip the [`Bytecode`] from this account and drop it. This is
-    /// useful when creating journals or snapshots of the state, where it is
+    /// Strips the [`Bytecode`] from this account and drop it.
+    ///
+    /// This is useful when creating journals or snapshots of the state, where it is
     /// desirable to store the code blobs elsewhere.
     ///
     /// ## Note
     ///
-    /// This is distinct from [`AccountInfo::copy_without_code`] in that it
-    /// modifies the account in place. [`AccountInfo::copy_without_code`]
-    /// will copy the non-code fields and return a new `AccountInfo` instance.
+    /// This is distinct from [`copy_without_code`][Self::copy_without_code] in that it
+    /// modifies the account in place.
+    ///
+    /// [`copy_without_code`][Self::copy_without_code]
+    /// will copy the non-code fields and return a new [`AccountInfo`] instance.
     pub fn without_code(mut self) -> Self {
         self.take_bytecode();
         self
@@ -113,7 +120,8 @@ impl AccountInfo {
         self.is_empty_code_hash() && self.nonce == 0
     }
 
-    /// Return bytecode hash associated with this account.
+    /// Returns bytecode hash associated with this account.
+    ///
     /// If account does not have code, it returns `KECCAK_EMPTY` hash.
     #[inline]
     pub fn code_hash(&self) -> B256 {
@@ -126,13 +134,15 @@ impl AccountInfo {
         self.code_hash == KECCAK_EMPTY
     }
 
-    /// Take bytecode from account. Code will be set to None.
+    /// Takes bytecode from account.
+    ///
+    /// Code will be set to [None].
     #[inline]
     pub fn take_bytecode(&mut self) -> Option<Bytecode> {
         self.code.take()
     }
 
-    /// Initialize an [`AccountInfo`] with the given balance, setting all other fields to their
+    /// Initializes an [`AccountInfo`] with the given balance, setting all other fields to their
     /// default values.
     #[inline]
     pub fn from_balance(balance: U256) -> Self {
@@ -142,7 +152,7 @@ impl AccountInfo {
         }
     }
 
-    /// Initialize an [`AccountInfo`] with the given bytecode, setting its balance to zero, its
+    /// Initializes an [`AccountInfo`] with the given bytecode, setting its balance to zero, its
     /// nonce to `1`, and calculating the code hash from the given bytecode.
     #[inline]
     pub fn from_bytecode(bytecode: Bytecode) -> Self {

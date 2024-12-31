@@ -2,17 +2,19 @@ use specification::eip4844::{
     BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK,
 };
 
-/// Structure holding block blob excess gas and it calculates blob fee.
+/// Structure holding block blob excess gas and it calculates blob fee
 ///
 /// Incorporated as part of the Cancun upgrade via [EIP-4844].
 ///
 /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlobExcessGasAndPrice {
-    /// The excess blob gas of the block.
+    /// The excess blob gas of the block
     pub excess_blob_gas: u64,
-    /// The calculated blob gas price based on the `excess_blob_gas`, See [calc_blob_gasprice]
+    /// The calculated blob gas price based on the `excess_blob_gas`
+    ///
+    /// See [calc_blob_gasprice]
     pub blob_gasprice: u128,
 }
 
@@ -146,7 +148,7 @@ mod tests {
             (2314057, 1),
             (2314058, 2),
             (10 * 1024 * 1024, 23),
-            // calc_blob_gasprice approximates `e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)` using Taylor expansion
+            // `calc_blob_gasprice` approximates `e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)` using Taylor expansion
             //
             // to roughly find where boundaries will be hit:
             // 2 ** bits = e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)

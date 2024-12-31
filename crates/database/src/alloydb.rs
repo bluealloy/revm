@@ -7,14 +7,24 @@ use alloy_provider::{
     Network, Provider,
 };
 use alloy_transport::{Transport, TransportError};
+use core::error::Error;
 use database_interface::{async_db::DatabaseAsyncRef, DBErrorMarker};
 use primitives::{Address, B256, U256};
 use state::{AccountInfo, Bytecode};
+use std::fmt::Display;
 
 #[derive(Debug)]
 pub struct DBTransportError(pub TransportError);
 
 impl DBErrorMarker for DBTransportError {}
+
+impl Display for DBTransportError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Transport error: {}", self.0)
+    }
+}
+
+impl Error for DBTransportError {}
 
 impl From<TransportError> for DBTransportError {
     fn from(e: TransportError) -> Self {
@@ -22,7 +32,7 @@ impl From<TransportError> for DBTransportError {
     }
 }
 
-/// An alloy-powered REVM [database_interface::Database].
+/// An alloy-powered REVM [Database][database_interface::Database].
 ///
 /// When accessing the database, it'll use the given provider to fetch the corresponding account's data.
 #[derive(Debug)]
@@ -35,7 +45,7 @@ pub struct AlloyDB<T: Transport + Clone, N: Network, P: Provider<T, N>> {
 }
 
 impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
-    /// Create a new AlloyDB instance, with a [Provider] and a block.
+    /// Creates a new AlloyDB instance, with a [Provider] and a block.
     pub fn new(provider: P, block_number: BlockId) -> Self {
         Self {
             provider,
@@ -44,7 +54,7 @@ impl<T: Transport + Clone, N: Network, P: Provider<T, N>> AlloyDB<T, N, P> {
         }
     }
 
-    /// Set the block number on which the queries will be based on.
+    /// Sets the block number on which the queries will be based on.
     pub fn set_block_number(&mut self, block_number: BlockId) {
         self.block_number = block_number;
     }

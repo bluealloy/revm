@@ -19,24 +19,25 @@ pub use transaction_type::TransactionType;
 use auto_impl::auto_impl;
 use core::cmp::min;
 use core::fmt::Debug;
-use primitives::{TxKind, U256};
+use primitives::TxKind;
+use std::boxed::Box;
 
 /// Transaction validity error types.
 pub trait TransactionError: Debug + core::error::Error {}
 
-/// Main Transaction trait that abstracts and specifies all transaction currently supported by Ethereum.
+/// Main Transaction trait that abstracts and specifies all transaction currently supported by Ethereum
 ///
-/// Access to any associated type is gaited behind `tx_type` function.
+/// Access to any associated type is gaited behind [`tx_type`][Transaction::tx_type] function.
 ///
 /// It can be extended to support new transaction types and only transaction types can be
 /// deprecated by not returning tx_type.
 #[auto_impl(&, Box, Arc, Rc)]
 pub trait Transaction {
-    /// An error that occurs when validating a transaction.
+    /// An error that occurs when validating a transaction
     type TransactionError: TransactionError;
-    /// Transaction type.
+    /// Transaction type
     type TransactionType: Into<TransactionType>;
-    /// Access list type.
+    /// Access list type
     type AccessList: AccessListTrait;
 
     type Legacy: LegacyTx;
@@ -45,36 +46,39 @@ pub trait Transaction {
     type Eip4844: Eip4844Tx<AccessList = Self::AccessList>;
     type Eip7702: Eip7702Tx<AccessList = Self::AccessList>;
 
-    /// Transaction type. Depending on this field other functions should be called.
-    /// If transaction is Legacy, then `legacy()` should be called.
+    /// Returns the transaction type.
+    ///
+    /// Depending on this field other functions should be called.
+    ///
+    /// If transaction is Legacy, then [`legacy()`][Transaction::legacy] should be called.
     fn tx_type(&self) -> Self::TransactionType;
 
-    /// Legacy transaction.
+    /// Returns the legacy transaction.
     fn legacy(&self) -> &Self::Legacy {
         unimplemented!("legacy tx not supported")
     }
 
-    /// EIP-2930 transaction.
+    /// Returns EIP-2930 transaction.
     fn eip2930(&self) -> &Self::Eip2930 {
         unimplemented!("Eip2930 tx not supported")
     }
 
-    /// EIP-1559 transaction.
+    /// Returns EIP-1559 transaction.
     fn eip1559(&self) -> &Self::Eip1559 {
         unimplemented!("Eip1559 tx not supported")
     }
 
-    /// EIP-4844 transaction.
+    /// Returns EIP-4844 transaction.
     fn eip4844(&self) -> &Self::Eip4844 {
         unimplemented!("Eip4844 tx not supported")
     }
 
-    /// EIP-7702 transaction.
+    /// Returns EIP-7702 transaction.
     fn eip7702(&self) -> &Self::Eip7702 {
         unimplemented!("Eip7702 tx not supported")
     }
 
-    /// Common fields for all transactions.
+    /// Returns common fields for all transactions.
     fn common_fields(&self) -> &dyn CommonTxFields {
         match self.tx_type().into() {
             TransactionType::Legacy => self.legacy(),
@@ -86,7 +90,7 @@ pub trait Transaction {
         }
     }
 
-    /// Maximum fee that can be paid for the transaction.
+    /// Returns maximum fee that can be paid for the transaction.
     fn max_fee(&self) -> u128 {
         match self.tx_type().into() {
             TransactionType::Legacy => self.legacy().gas_price(),
@@ -98,13 +102,14 @@ pub trait Transaction {
         }
     }
 
-    /// Effective gas price is gas price field for Legacy and Eip2930 transaction
-    /// While for transactions after Eip1559 it is minimum of max_fee and base+max_priority_fee.
-    fn effective_gas_price(&self, base_fee: U256) -> U256 {
+    /// Returns effective gas price is gas price field for Legacy and Eip2930 transaction.
+    ///
+    /// While for transactions after Eip1559 it is minimum of max_fee and `base + max_priority_fee`.
+    fn effective_gas_price(&self, base_fee: u128) -> u128 {
         let tx_type = self.tx_type().into();
         let (max_fee, max_priority_fee) = match tx_type {
-            TransactionType::Legacy => return U256::from(self.legacy().gas_price()),
-            TransactionType::Eip2930 => return U256::from(self.eip2930().gas_price()),
+            TransactionType::Legacy => return self.legacy().gas_price(),
+            TransactionType::Eip2930 => return self.eip2930().gas_price(),
             TransactionType::Eip1559 => (
                 self.eip1559().max_fee_per_gas(),
                 self.eip1559().max_priority_fee_per_gas(),
@@ -120,10 +125,10 @@ pub trait Transaction {
             TransactionType::Custom => unimplemented!("Custom tx not supported"),
         };
 
-        min(U256::from(max_fee), base_fee + U256::from(max_priority_fee))
+        min(max_fee, base_fee.saturating_add(max_priority_fee))
     }
 
-    /// Transaction kind.
+    /// Returns transaction kind.
     fn kind(&self) -> TxKind {
         let tx_type = self.tx_type().into();
         match tx_type {
@@ -159,4 +164,16 @@ pub trait TransactionGetter {
 
 pub trait TransactionSetter: TransactionGetter {
     fn set_tx(&mut self, tx: <Self as TransactionGetter>::Transaction);
+}
+
+impl<T: TransactionSetter> TransactionSetter for &mut T {
+    fn set_tx(&mut self, block: <Self as TransactionGetter>::Transaction) {
+        (**self).set_tx(block)
+    }
+}
+
+impl<T: TransactionSetter> TransactionSetter for Box<T> {
+    fn set_tx(&mut self, block: <Self as TransactionGetter>::Transaction) {
+        (**self).set_tx(block)
+    }
 }

@@ -5,7 +5,7 @@ use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
     handler::EthHandler,
     primitives::{address, hex, Address, TxKind},
-    Context, Database, MainEvm,
+    Context, Database, EvmExec, MainEvm,
 };
 use std::io::Error as IoError;
 use std::path::PathBuf;
@@ -28,38 +28,40 @@ pub enum Errors {
     BytecodeDecodeError(#[from] BytecodeDecodeError),
 }
 
-/// Evm runner command allows running arbitrary evm bytecode.
-/// Bytecode can be provided from cli or from file with --path option.
+/// Evm runner command allows running arbitrary evm bytecode
+///
+/// Bytecode can be provided from cli or from file with `--path` option.
 #[derive(Parser, Debug)]
 pub struct Cmd {
-    /// Hex-encoded EVM bytecode to be executed.
+    /// Hex-encoded EVM bytecode to be executed
     #[arg(required_unless_present = "path")]
     bytecode: Option<String>,
-    /// Path to a file containing the hex-encoded EVM bytecode to be executed.
+    /// Path to a file containing the hex-encoded EVM bytecode to be executed
+    ///
     /// Overrides the positional `bytecode` argument.
     #[arg(long)]
     path: Option<PathBuf>,
-    /// Run in benchmarking mode.
+    /// Whether to run in benchmarking mode
     #[arg(long)]
     bench: bool,
-    /// Hex-encoded input/calldata bytes.
+    /// Hex-encoded input/calldata bytes
     #[arg(long, default_value = "")]
     input: String,
-    /// Print the state.
+    /// Whether to print the state
     #[arg(long)]
     state: bool,
-    /// Print the trace.
+    /// Whether to print the trace
     #[arg(long)]
     trace: bool,
 }
 
 impl Cmd {
-    /// Run evm runner command.
+    /// Runs evm runner command.
     pub fn run(&self) -> Result<(), Errors> {
         const CALLER: Address = address!("0000000000000000000000000000000000000001");
 
         let bytecode_str: Cow<'_, str> = if let Some(path) = &self.path {
-            // check if path exists.
+            // Check if path exists.
             if !path.exists() {
                 return Err(Errors::PathNotExists);
             }
@@ -80,7 +82,7 @@ impl Cmd {
         let nonce = db.basic(CALLER).unwrap().map_or(0, |account| account.nonce);
 
         // BenchmarkDB is dummy state that implements Database trait.
-        // the bytecode is deployed at zero address.
+        // The bytecode is deployed at zero address.
         let mut evm = MainEvm::new(
             Context::builder().with_db(db).modify_tx_chained(|tx| {
                 tx.caller = CALLER;
@@ -108,7 +110,7 @@ impl Cmd {
                 inspector_handler(),
             );
 
-            evm.transact().map_err(|_| Errors::EVMError)?
+            evm.exec().map_err(|_| Errors::EVMError)?
         } else {
             let out = evm.transact().map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);

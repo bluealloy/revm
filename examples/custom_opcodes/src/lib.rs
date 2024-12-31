@@ -237,7 +237,7 @@ pub fn make_custom_instruction_table<
     H: Host + ?Sized,
     SPEC: CustomOpcodeSpec,
 >() -> InstructionTable<H> {
-    // custom opcode chain can reuse mainnet instructions
+    // Custom opcode chain can reuse mainnet instructions
     let mut table = make_instruction_table::<Interpreter, H, SPEC>();
 
     table[0x0c] = custom_opcode_handler::<H, SPEC>;
@@ -249,14 +249,14 @@ fn custom_opcode_handler<WIRE: InterpreterTypes, H: Host + ?Sized, SPEC: CustomO
     interpreter: &mut Interpreter<WIRE>,
     _host: &mut H,
 ) {
-    // opcode has access to the chain-specific spec
+    // Opcode has access to the chain-specific spec
     if SPEC::optimism_enabled(CustomOpcodeSpecId::INTRODUCES_OPCODE) {
         gas!(interpreter, gas::MID);
     } else {
         gas!(interpreter, gas::HIGH);
     }
 
-    // logic
+    // Logic
 }
 
 pub fn main() {

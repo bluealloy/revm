@@ -1,4 +1,7 @@
-/// TODO change name of the trait
+use auto_impl::auto_impl;
+
+// TODO : Change the name of the trait
+#[auto_impl(&mut, Box)]
 pub trait ErrorGetter {
     type Error;
 

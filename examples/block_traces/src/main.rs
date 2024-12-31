@@ -51,7 +51,7 @@ async fn main() -> anyhow::Result<()> {
     // Set up the HTTP transport which is consumed by the RPC client.
     let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
 
-    // create ethers client and wrap it in Arc<M>
+    // Create ethers client and wrap it in Arc<M>
     let client = ProviderBuilder::new().on_http(rpc_url);
 
     // Params
@@ -85,17 +85,13 @@ async fn main() -> anyhow::Result<()> {
             Context::builder()
                 .with_db(&mut state)
                 .modify_block_chained(|b| {
-                    b.number = U256::from(block.header.number);
+                    b.number = block.header.number;
                     b.beneficiary = block.header.beneficiary;
-                    b.timestamp = U256::from(block.header.timestamp);
+                    b.timestamp = block.header.timestamp;
 
                     b.difficulty = block.header.difficulty;
-                    b.gas_limit = U256::from(block.header.gas_limit);
-                    b.basefee = block
-                        .header
-                        .base_fee_per_gas
-                        .map(U256::from)
-                        .unwrap_or_default();
+                    b.gas_limit = block.header.gas_limit;
+                    b.basefee = block.header.base_fee_per_gas.unwrap_or_default();
                 })
                 .modify_cfg_chained(|c| {
                     c.chain_id = chain_id;

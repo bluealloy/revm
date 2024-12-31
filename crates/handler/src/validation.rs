@@ -1,12 +1,11 @@
 use context_interface::{
-    journaled_state::JournaledState,
+    journaled_state::Journal,
     result::{InvalidHeader, InvalidTransaction},
     transaction::{
         eip7702::Authorization, Eip1559CommonTxFields, Eip2930Tx, Eip4844Tx, Eip7702Tx, LegacyTx,
         Transaction, TransactionType,
     },
-    Block, BlockGetter, Cfg, CfgGetter, JournalStateGetter, JournalStateGetterDBError,
-    TransactionGetter,
+    Block, BlockGetter, Cfg, CfgGetter, JournalDBError, JournalGetter, TransactionGetter,
 };
 use core::cmp::{self, Ordering};
 use handler_interface::ValidationHandler;
@@ -43,7 +42,7 @@ impl<CTX, ERROR> EthValidation<CTX, ERROR> {
 impl<CTX, ERROR> ValidationHandler for EthValidation<CTX, ERROR>
 where
     CTX: EthValidationContext,
-    ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>,
+    ERROR: From<InvalidTransaction> + From<InvalidHeader> + From<JournalDBError<CTX>>,
 {
     type Context = CTX;
     type Error = ERROR;
@@ -66,7 +65,7 @@ where
     fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
         let tx_caller = context.tx().common_fields().caller();
 
-        // load acc
+        // Load acc
         let account = &mut context.journal().load_account_code(tx_caller)?;
         let account = account.data.clone();
 
@@ -84,19 +83,16 @@ where
 pub fn validate_priority_fee_tx(
     max_fee: u128,
     max_priority_fee: u128,
-    base_fee: Option<U256>,
+    base_fee: Option<u128>,
 ) -> Result<(), InvalidTransaction> {
     if max_priority_fee > max_fee {
-        // or gas_max_fee for eip1559
+        // Or gas_max_fee for eip1559
         return Err(InvalidTransaction::PriorityFeeGreaterThanMaxFee);
     }
 
-    // check minimal cost against basefee
+    // Check minimal cost against basefee
     if let Some(base_fee) = base_fee {
-        let effective_gas_price = cmp::min(
-            U256::from(max_fee),
-            base_fee.saturating_add(U256::from(max_priority_fee)),
-        );
+        let effective_gas_price = cmp::min(max_fee, base_fee.saturating_add(max_priority_fee));
         if effective_gas_price < base_fee {
             return Err(InvalidTransaction::GasPriceLessThanBasefee);
         }
@@ -111,24 +107,24 @@ pub fn validate_eip4844_tx(
     max_blob_fee: u128,
     block_blob_gas_price: u128,
 ) -> Result<(), InvalidTransaction> {
-    // ensure that the user was willing to at least pay the current blob gasprice
+    // Ensure that the user was willing to at least pay the current blob gasprice
     if block_blob_gas_price > max_blob_fee {
         return Err(InvalidTransaction::BlobGasPriceGreaterThanMax);
     }
 
-    // there must be at least one blob
+    // There must be at least one blob
     if blobs.is_empty() {
         return Err(InvalidTransaction::EmptyBlobs);
     }
 
-    // all versioned blob hashes must start with VERSIONED_HASH_VERSION_KZG
+    // All versioned blob hashes must start with VERSIONED_HASH_VERSION_KZG
     for blob in blobs {
         if blob[0] != eip4844::VERSIONED_HASH_VERSION_KZG {
             return Err(InvalidTransaction::BlobVersionNotSupported);
         }
     }
 
-    // ensure the total blob gas spent is at most equal to the limit
+    // Ensure the total blob gas spent is at most equal to the limit
     // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
     if blobs.len() > eip4844::MAX_BLOB_NUMBER_PER_BLOCK as usize {
         return Err(InvalidTransaction::TooManyBlobs {
@@ -154,28 +150,28 @@ where
     let base_fee = if context.cfg().is_base_fee_check_disabled() {
         None
     } else {
-        Some(*context.block().basefee())
+        Some(context.block().basefee() as u128)
     };
 
     match tx_type {
         TransactionType::Legacy => {
             let tx = context.tx().legacy();
-            // check chain_id only if it is present in the legacy transaction.
+            // Check chain_id only if it is present in the legacy transaction.
             // EIP-155: Simple replay attack protection
             if let Some(chain_id) = tx.chain_id() {
                 if chain_id != context.cfg().chain_id() {
                     return Err(InvalidTransaction::InvalidChainId.into());
                 }
             }
-            // gas price must be at least the basefee.
+            // Gas price must be at least the basefee.
             if let Some(base_fee) = base_fee {
-                if U256::from(tx.gas_price()) < base_fee {
+                if tx.gas_price() < base_fee {
                     return Err(InvalidTransaction::GasPriceLessThanBasefee.into());
                 }
             }
         }
         TransactionType::Eip2930 => {
-            // enabled in BERLIN hardfork
+            // Enabled in BERLIN hardfork
             if !spec_id.is_enabled_in(SpecId::BERLIN) {
                 return Err(InvalidTransaction::Eip2930NotSupported.into());
             }
@@ -185,9 +181,9 @@ where
                 return Err(InvalidTransaction::InvalidChainId.into());
             }
 
-            // gas price must be at least the basefee.
+            // Gas price must be at least the basefee.
             if let Some(base_fee) = base_fee {
-                if U256::from(tx.gas_price()) < base_fee {
+                if tx.gas_price() < base_fee {
                     return Err(InvalidTransaction::GasPriceLessThanBasefee.into());
                 }
             }
@@ -231,7 +227,7 @@ where
             )?;
         }
         TransactionType::Eip7702 => {
-            // check if EIP-7702 transaction is enabled.
+            // Check if EIP-7702 transaction is enabled.
             if !spec_id.is_enabled_in(SpecId::PRAGUE) {
                 return Err(InvalidTransaction::Eip7702NotSupported.into());
             }
@@ -253,7 +249,7 @@ where
                 return Err(InvalidTransaction::EmptyAuthorizationList.into());
             }
 
-            // TODO temporary here as newest EIP have removed this check.
+            // TODO : Temporary here as newest EIP have removed this check.
             for auth in tx.authorization_list_iter() {
                 if auth.is_invalid() {
                     return Err(InvalidTransaction::Eip7702NotSupported.into());
@@ -261,13 +257,13 @@ where
             }
         }
         TransactionType::Custom => {
-            // custom transaction type check is not done here.
+            // Custom transaction type check is not done here.
         }
     };
 
     // Check if gas_limit is more than block_gas_limit
     if !context.cfg().is_block_gas_limit_disabled()
-        && U256::from(common_field.gas_limit()) > *context.block().gas_limit()
+        && common_field.gas_limit() > context.block().gas_limit()
     {
         return Err(InvalidTransaction::CallerGasLimitMoreThanBlock.into());
     }
@@ -298,7 +294,7 @@ where
     // so we can leave it enabled always
     if !context.cfg().is_eip3607_disabled() {
         let bytecode = &account.info.code.as_ref().unwrap();
-        // allow EOAs whose code is a valid delegation designation,
+        // Allow EOAs whose code is a valid delegation designation,
         // i.e. 0xef0100 || address, to continue to originate transactions.
         if !bytecode.is_empty() && !bytecode.is_eip7702() {
             return Err(InvalidTransaction::RejectCallerWithCode.into());
@@ -385,24 +381,21 @@ where
 
 /// Helper trait that summarizes ValidationHandler requirements from Context.
 pub trait EthValidationContext:
-    TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter
+    TransactionGetter + BlockGetter + JournalGetter + CfgGetter
 {
 }
 
-impl<T: TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter> EthValidationContext
-    for T
-{
-}
+impl<T: TransactionGetter + BlockGetter + JournalGetter + CfgGetter> EthValidationContext for T {}
 
 /// Helper trait that summarizes all possible requirements by EthValidation.
-pub trait EthValidationError<CTX: JournalStateGetter>:
-    From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>
+pub trait EthValidationError<CTX: JournalGetter>:
+    From<InvalidTransaction> + From<InvalidHeader> + From<JournalDBError<CTX>>
 {
 }
 
 impl<
-        CTX: JournalStateGetter,
-        T: From<InvalidTransaction> + From<InvalidHeader> + From<JournalStateGetterDBError<CTX>>,
+        CTX: JournalGetter,
+        T: From<InvalidTransaction> + From<InvalidHeader> + From<JournalDBError<CTX>>,
     > EthValidationError<CTX> for T
 {
 }

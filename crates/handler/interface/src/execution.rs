@@ -32,23 +32,24 @@ pub trait ExecutionHandler {
             let frame = frame_stack.last_mut().unwrap();
             let call_or_result = frame.run(context)?;
 
-            let result = match call_or_result {
+            let mut result = match call_or_result {
                 FrameOrResultGen::Frame(init) => match frame.init(context, init)? {
                     FrameOrResultGen::Frame(new_frame) => {
                         frame_stack.push(new_frame);
                         continue;
                     }
-                    // dont pop the frame as new frame was not created.
+                    // Dont pop the frame as new frame was not created.
                     FrameOrResultGen::Result(result) => result,
                 },
                 FrameOrResultGen::Result(result) => {
-                    // pop frame that returned result
+                    // Pop frame that returned result
                     frame_stack.pop();
                     result
                 }
             };
 
             let Some(frame) = frame_stack.last_mut() else {
+                Self::Frame::final_return(context, &mut result)?;
                 return self.last_frame_result(context, result);
             };
             frame.return_result(context, result)?;

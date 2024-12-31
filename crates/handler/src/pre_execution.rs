@@ -4,13 +4,12 @@
 
 use bytecode::Bytecode;
 use context_interface::{
-    journaled_state::JournaledState,
+    journaled_state::Journal,
     result::InvalidTransaction,
     transaction::{
         eip7702::Authorization, AccessListTrait, Eip4844Tx, Eip7702Tx, Transaction, TransactionType,
     },
-    Block, BlockGetter, Cfg, CfgGetter, JournalStateGetter, JournalStateGetterDBError,
-    TransactionGetter,
+    Block, BlockGetter, Cfg, CfgGetter, JournalDBError, JournalGetter, TransactionGetter,
 };
 use handler_interface::PreExecutionHandler;
 use primitives::{Address, BLOCKHASH_STORAGE_ADDRESS, U256};
@@ -44,13 +43,13 @@ where
 
     fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
         let spec = context.cfg().spec().into();
-        // set journaling state flag.
+        // Set journaling state flag.
         context.journal().set_spec_id(spec);
 
-        // load coinbase
+        // Load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
         if spec.is_enabled_in(SpecId::SHANGHAI) {
-            let coinbase = *context.block().beneficiary();
+            let coinbase = context.block().beneficiary();
             context.journal().warm_account(coinbase);
         }
 
@@ -84,35 +83,38 @@ where
 
     #[inline]
     fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        let basefee = *context.block().basefee();
-        let blob_price = U256::from(context.block().blob_gasprice().unwrap_or_default());
-        let effective_gas_price = context.tx().effective_gas_price(basefee);
+        let basefee = context.block().basefee();
+        let blob_price = context.block().blob_gasprice().unwrap_or_default();
+        let effective_gas_price = context.tx().effective_gas_price(basefee as u128);
         // Subtract gas costs from the caller's account.
         // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
-        let mut gas_cost = U256::from(context.tx().common_fields().gas_limit())
-            .saturating_mul(effective_gas_price);
+        let mut gas_cost =
+            (context.tx().common_fields().gas_limit() as u128).saturating_mul(effective_gas_price);
 
         // EIP-4844
         if context.tx().tx_type().into() == TransactionType::Eip4844 {
-            let blob_gas = U256::from(context.tx().eip4844().total_blob_gas());
+            let blob_gas = context.tx().eip4844().total_blob_gas() as u128;
             gas_cost = gas_cost.saturating_add(blob_price.saturating_mul(blob_gas));
         }
 
         let is_call = context.tx().kind().is_call();
         let caller = context.tx().common_fields().caller();
 
-        // load caller's account.
+        // Load caller's account.
         let caller_account = context.journal().load_account(caller)?.data;
-        // set new caller account balance.
-        caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
+        // Set new caller account balance.
+        caller_account.info.balance = caller_account
+            .info
+            .balance
+            .saturating_sub(U256::from(gas_cost));
 
-        // bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
+        // Bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
         if is_call {
             // Nonce is already checked
             caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
         }
 
-        // touch account so we know it is changed.
+        // Touch account so we know it is changed.
         caller_account.mark_touch();
         Ok(())
     }
@@ -121,12 +123,12 @@ where
 /// Apply EIP-7702 auth list and return number gas refund on already created accounts.
 #[inline]
 pub fn apply_eip7702_auth_list<
-    CTX: TransactionGetter + JournalStateGetter + CfgGetter,
-    ERROR: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
+    CTX: TransactionGetter + JournalGetter + CfgGetter,
+    ERROR: From<InvalidTransaction> + From<JournalDBError<CTX>>,
 >(
     context: &mut CTX,
 ) -> Result<u64, ERROR> {
-    // return if there is no auth list.
+    // Return if there is no auth list.
     let tx = context.tx();
     if tx.tx_type().into() != TransactionType::Eip7702 {
         return Ok(0);
@@ -153,7 +155,7 @@ pub fn apply_eip7702_auth_list<
 
     let mut refunded_accounts = 0;
     for authorization in authorization_list {
-        // 1. recover authority and authorized addresses.
+        // 1. Recover authority and authorized addresses.
         // authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]
         let Some(authority) = authorization.authority else {
             continue;
@@ -164,13 +166,13 @@ pub fn apply_eip7702_auth_list<
             continue;
         }
 
-        // warm authority account and check nonce.
+        // Warm authority account and check nonce.
         // 3. Add authority to accessed_addresses (as defined in EIP-2929.)
         let mut authority_acc = context.journal().load_account_code(authority)?;
 
         // 4. Verify the code of authority is either empty or already delegated.
         if let Some(bytecode) = &authority_acc.info.code {
-            // if it is not empty and it is not eip7702
+            // If it is not empty and it is not eip7702
             if !bytecode.is_empty() && !bytecode.is_eip7702() {
                 continue;
             }
@@ -203,23 +205,21 @@ pub fn apply_eip7702_auth_list<
 }
 
 pub trait EthPreExecutionContext:
-    TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter
+    TransactionGetter + BlockGetter + JournalGetter + CfgGetter
 {
 }
 
-impl<CTX: TransactionGetter + BlockGetter + JournalStateGetter + CfgGetter> EthPreExecutionContext
+impl<CTX: TransactionGetter + BlockGetter + JournalGetter + CfgGetter> EthPreExecutionContext
     for CTX
 {
 }
 
-pub trait EthPreExecutionError<CTX: JournalStateGetter>:
-    From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>
+pub trait EthPreExecutionError<CTX: JournalGetter>:
+    From<InvalidTransaction> + From<JournalDBError<CTX>>
 {
 }
 
-impl<
-        CTX: JournalStateGetter,
-        T: From<InvalidTransaction> + From<JournalStateGetterDBError<CTX>>,
-    > EthPreExecutionError<CTX> for T
+impl<CTX: JournalGetter, T: From<InvalidTransaction> + From<JournalDBError<CTX>>>
+    EthPreExecutionError<CTX> for T
 {
 }

@@ -6,33 +6,33 @@ use revm::{
     primitives::{Address, B256, U256},
     state::{AccountInfo, Bytecode},
 };
-use std::sync::Arc;
+use std::{error::Error as StdError, sync::Arc};
 
 #[auto_impl(&mut, Box)]
 pub trait State {
-    type Error;
+    type Error: StdError;
 
-    /// Get basic account information.
+    /// Gets basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
 
-    /// Get account code by its hash
+    /// Gets account code by its hash.
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
 
-    /// Get storage value of address at index.
+    /// Gets storage value of address at index.
     fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error>;
 }
 
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait StateRef {
-    type Error;
+    type Error: StdError;
 
-    /// Get basic account information.
+    /// Gets basic account information.
     fn basic(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
 
-    /// Get account code by its hash
+    /// Gets account code by its hash.
     fn code_by_hash(&self, code_hash: B256) -> Result<Bytecode, Self::Error>;
 
-    /// Get storage value of address at index.
+    /// Gets storage value of address at index.
     fn storage(&self, address: Address, index: U256) -> Result<U256, Self::Error>;
 }
 

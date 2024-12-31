@@ -133,6 +133,7 @@ All examples can be found in the `examples/` directory. Each example demonstrate
 * [Trin](https://github.com/ethereum/trin) is Portal Network client. An execution and consensus layer Ethereum light client written in Rust. Portal Network client's provide complete, provable, and distributed execution archival access.
 * [Simular](https://github.com/simular-fi/simular/) is a Python smart-contract API with a fast, embedded, Ethereum Virtual Machine.
 * [rbuilder](https://github.com/flashbots/rbuilder) is a state of the art Ethereum MEV-Boost block builder written in Rust and designed to work with Reth.
+* [Tycho-simulation](https://github.com/propeller-heads/tycho-simulation) is a local simulation toolkit that lets you simulate any DEX pool in a revm environment without worrying about protocol internals.
 * ...
 
 (If you want to add project to the list, ping me or open the PR)

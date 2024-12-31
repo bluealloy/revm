@@ -72,7 +72,7 @@ p256 = { version = "0.13.2", optional = true, default-features = false, features
 cfg-if = { version = "1.0", default-features = false }
 
 [dev-dependencies]
-criterion = "0.5"
+criterion.workspace = true
 rand = { version = "0.8", features = ["std"] }
 eyre = "0.6.12"
 rstest = "0.22.0"

@@ -2,7 +2,8 @@ use std::vec::Vec;
 
 use crate::interpreter_types::SubRoutineStack;
 
-/// Function return frame.
+/// Function(Sub Routine) return frame in eof
+///
 /// Needed information for returning from a function.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

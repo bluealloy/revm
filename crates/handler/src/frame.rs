@@ -1,9 +1,9 @@
 use super::frame_data::*;
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context_interface::{
-    journaled_state::{JournalCheckpoint, JournaledState},
-    BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
-    Transaction, TransactionGetter,
+    journaled_state::{Journal, JournalCheckpoint},
+    BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalDBError, JournalGetter, Transaction,
+    TransactionGetter,
 };
 use core::{cell::RefCell, cmp::min};
 use handler_interface::{Frame, FrameOrResultGen, PrecompileProvider};
@@ -29,7 +29,7 @@ use std::{rc::Rc, sync::Arc};
 pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, PRECOMPILE, INSTRUCTIONS> {
     _phantom: core::marker::PhantomData<fn() -> (CTX, ERROR)>,
     data: FrameData,
-    // TODO include this
+    // TODO : Include this
     depth: usize,
     /// Journal checkpoint.
     pub checkpoint: JournalCheckpoint,
@@ -45,7 +45,7 @@ pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, PRECOMPILE, INSTRUCTIONS> 
 
 impl<CTX, IW, ERROR, PRECOMP, INST> EthFrame<CTX, ERROR, IW, PRECOMP, INST>
 where
-    CTX: JournalStateGetter,
+    CTX: JournalGetter,
     IW: InterpreterTypes,
 {
     pub fn new(
@@ -147,7 +147,7 @@ where
                 .journal()
                 .load_account_code(inputs.bytecode_address)?;
 
-            // TODO Request from foundry to get bytecode hash.
+            // TODO : Request from foundry to get bytecode hash.
             let _code_hash = account.info.code_hash();
             let mut bytecode = account.info.code.clone().unwrap_or_default();
 
@@ -257,7 +257,7 @@ where
         }
 
         // Create address
-        // TODO incorporating code hash inside interpreter. It was a request by foundry.
+        // TODO : Incorporating code hash inside interpreter. It was a request by foundry.
         let mut _init_code_hash = B256::ZERO;
         let created_address = match inputs.scheme {
             CreateScheme::Create => inputs.caller.create(old_nonce),
@@ -267,16 +267,10 @@ where
             }
         };
 
-        // created address is not allowed to be a precompile.
-        // TODO add precompile check
-        if precompile.contains(&created_address) {
-            return return_error(InstructionResult::CreateCollision);
-        }
-
         // warm load account.
         context.journal().load_account(created_address)?;
 
-        // create account, transfer funds and make the journal checkpoint.
+        // Create account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal().create_account_checkpoint(
             inputs.caller,
             created_address,
@@ -346,15 +340,15 @@ where
                 created_address,
             } => (input.clone(), initcode.clone(), Some(*created_address)),
             EOFCreateKind::Tx { initdata } => {
-                // decode eof and init code.
-                // TODO handle inc_nonce handling more gracefully.
+                // Decode eof and init code.
+                // TODO : Handle inc_nonce handling more gracefully.
                 let Ok((eof, input)) = Eof::decode_dangling(initdata.clone()) else {
                     context.journal().inc_account_nonce(inputs.caller)?;
                     return return_error(InstructionResult::InvalidEOFInitCode);
                 };
 
                 if eof.validate().is_err() {
-                    // TODO (EOF) new error type.
+                    // TODO : (EOF) New error type.
                     context.journal().inc_account_nonce(inputs.caller)?;
                     return return_error(InstructionResult::InvalidEOFInitCode);
                 }
@@ -385,22 +379,17 @@ where
 
         // Increase nonce of caller and check if it overflows
         let Some(nonce) = context.journal().inc_account_nonce(inputs.caller)? else {
-            // can't happen on mainnet.
+            // Can't happen on mainnet.
             return return_error(InstructionResult::Return);
         };
         let old_nonce = nonce - 1;
 
         let created_address = created_address.unwrap_or_else(|| inputs.caller.create(old_nonce));
 
-        // created address is not allowed to be a precompile.
-        if precompile.contains(&created_address) {
-            return return_error(InstructionResult::CreateCollision);
-        }
-
         // Load account so it needs to be marked as warm for access list.
         context.journal().load_account(created_address)?;
 
-        // create account, transfer funds and make the journal checkpoint.
+        // Create account, transfer funds and make the journal checkpoint.
         let checkpoint = match context.journal().create_account_checkpoint(
             inputs.caller,
             created_address,
@@ -485,13 +474,20 @@ where
         let precompiles = PRECOMPILE::new(context);
         let instructions = INSTRUCTION::new(context);
 
-        // load precompiles addresses as warm.
+        // Load precompiles addresses as warm.
         for address in precompiles.warm_addresses() {
             context.journal().warm_account(address);
         }
 
         memory.borrow_mut().new_context();
         Self::init_with_context(0, frame_input, memory, precompiles, instructions, context)
+    }
+
+    fn final_return(
+        _context: &mut Self::Context,
+        _result: &mut Self::FrameResult,
+    ) -> Result<(), Self::Error> {
+        Ok(())
     }
 
     fn init(
@@ -516,7 +512,7 @@ where
     ) -> Result<FrameOrResultGen<Self::FrameInit, Self::FrameResult>, Self::Error> {
         let spec = context.cfg().spec().into();
 
-        // run interpreter
+        // Run interpreter
         let next_action = self.interpreter.run(self.instructions.table(), context);
 
         let mut interpreter_result = match next_action {
@@ -531,7 +527,7 @@ where
         let result = match &self.data {
             FrameData::Call(frame) => {
                 // return_call
-                // revert changes or not.
+                // Revert changes or not.
                 if interpreter_result.result.is_ok() {
                     context.journal().checkpoint_commit();
                 } else {
@@ -620,7 +616,7 @@ where
                 // Safe to push without stack limit check
                 let _ = interpreter.stack.push(item);
 
-                // return unspend gas.
+                // Return unspend gas.
                 if ins_result.is_ok_or_revert() {
                     interpreter.control.gas().erase_cost(out_gas.remaining());
                     self.memory
@@ -704,21 +700,21 @@ where
     }
 }
 
-pub fn return_create<Journal: JournaledState>(
-    journal: &mut Journal,
+pub fn return_create<JOURNAL: Journal>(
+    journal: &mut JOURNAL,
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
     address: Address,
     max_code_size: usize,
     spec_id: SpecId,
 ) {
-    // if return is not ok revert and return.
+    // If return is not ok revert and return.
     if !interpreter_result.result.is_ok() {
         journal.checkpoint_revert(checkpoint);
         return;
     }
     // Host error if present on execution
-    // if ok, check contract creation limit and calculate gas deduction on output len.
+    // If ok, check contract creation limit and calculate gas deduction on output len.
     //
     // EIP-3541: Reject new contract code starting with the 0xEF byte
     if spec_id.is_enabled_in(LONDON) && interpreter_result.output.first() == Some(&0xEF) {
@@ -736,10 +732,10 @@ pub fn return_create<Journal: JournaledState>(
     }
     let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
     if !interpreter_result.gas.record_cost(gas_for_code) {
-        // record code deposit gas cost and check if we are out of gas.
+        // Record code deposit gas cost and check if we are out of gas.
         // EIP-2 point 3: If contract creation does not have enough gas to pay for the
         // final gas fee for adding the contract code to the state, the contract
-        //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
+        // creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
         if spec_id.is_enabled_in(HOMESTEAD) {
             journal.checkpoint_revert(checkpoint);
             interpreter_result.result = InstructionResult::OutOfGas;
@@ -748,20 +744,20 @@ pub fn return_create<Journal: JournaledState>(
             interpreter_result.output = Bytes::new();
         }
     }
-    // if we have enough gas we can commit changes.
+    // If we have enough gas we can commit changes.
     journal.checkpoint_commit();
 
     // Do analysis of bytecode straight away.
     let bytecode = Bytecode::new_legacy(interpreter_result.output.clone());
 
-    // set code
+    // Set code
     journal.set_code(address, bytecode);
 
     interpreter_result.result = InstructionResult::Return;
 }
 
-pub fn return_eofcreate<Journal: JournaledState>(
-    journal: &mut Journal,
+pub fn return_eofcreate<JOURNAL: Journal>(
+    journal: &mut JOURNAL,
     checkpoint: JournalCheckpoint,
     interpreter_result: &mut InterpreterResult,
     address: Address,
@@ -785,7 +781,7 @@ pub fn return_eofcreate<Journal: JournaledState>(
         return;
     }
 
-    // deduct gas for code deployment.
+    // Deduct gas for code deployment.
     let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
     if !interpreter_result.gas.record_cost(gas_for_code) {
         journal.checkpoint_revert(checkpoint);
@@ -795,15 +791,15 @@ pub fn return_eofcreate<Journal: JournaledState>(
 
     journal.checkpoint_commit();
 
-    // decode bytecode has a performance hit, but it has reasonable restrains.
+    // Decode bytecode has a performance hit, but it has reasonable restrains.
     let bytecode = Eof::decode(interpreter_result.output.clone()).expect("Eof is already verified");
 
-    // eof bytecode is going to be hashed.
+    // Eof bytecode is going to be hashed.
     journal.set_code(address, Bytecode::Eof(Arc::new(bytecode)));
 }
 
 pub trait EthFrameContext<ERROR>:
-    TransactionGetter + Host + ErrorGetter<Error = ERROR> + BlockGetter + JournalStateGetter + CfgGetter
+    TransactionGetter + Host + ErrorGetter<Error = ERROR> + BlockGetter + JournalGetter + CfgGetter
 {
 }
 
@@ -812,19 +808,19 @@ impl<
         CTX: TransactionGetter
             + ErrorGetter<Error = ERROR>
             + BlockGetter
-            + JournalStateGetter
+            + JournalGetter
             + CfgGetter
             + Host,
     > EthFrameContext<ERROR> for CTX
 {
 }
 
-pub trait EthFrameError<CTX: JournalStateGetter>:
-    From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>
+pub trait EthFrameError<CTX: JournalGetter>:
+    From<JournalDBError<CTX>> + From<PrecompileErrors>
 {
 }
 
-impl<CTX: JournalStateGetter, T: From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>>
-    EthFrameError<CTX> for T
+impl<CTX: JournalGetter, T: From<JournalDBError<CTX>> + From<PrecompileErrors>> EthFrameError<CTX>
+    for T
 {
 }

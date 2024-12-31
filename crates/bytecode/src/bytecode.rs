@@ -7,8 +7,8 @@ use core::fmt::Debug;
 use primitives::{keccak256, Address, Bytes, B256, KECCAK_EMPTY};
 use std::sync::Arc;
 
-/// State of the [`Bytecode`] analysis.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+/// State of the [`Bytecode`] analysis
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Bytecode {
     /// The bytecode has been analyzed for valid jump destinations.
@@ -22,19 +22,18 @@ pub enum Bytecode {
 impl Default for Bytecode {
     #[inline]
     fn default() -> Self {
-        // Creates a new legacy analyzed [`Bytecode`] with exactly one STOP opcode.
         Self::new()
     }
 }
 
 impl Bytecode {
-    // Creates a new legacy analyzed [`Bytecode`] with exactly one STOP opcode.
+    /// Creates a new legacy analyzed [`Bytecode`] with exactly one STOP opcode.
     #[inline]
     pub fn new() -> Self {
         Self::LegacyAnalyzed(LegacyAnalyzedBytecode::default())
     }
 
-    /// Return jump table if bytecode is analyzed
+    /// Returns jump table if bytecode is analyzed.
     #[inline]
     pub fn legacy_jump_table(&self) -> Option<&JumpTable> {
         match &self {
@@ -43,7 +42,7 @@ impl Bytecode {
         }
     }
 
-    /// Calculate hash of the bytecode.
+    /// Calculates hash of the bytecode.
     pub fn hash_slow(&self) -> B256 {
         if self.is_empty() {
             KECCAK_EMPTY
@@ -52,7 +51,7 @@ impl Bytecode {
         }
     }
 
-    /// Return reference to the EOF if bytecode is EOF.
+    /// Returns reference to the EOF if bytecode is EOF.
     #[inline]
     pub const fn eof(&self) -> Option<&Arc<Eof>> {
         match self {
@@ -61,13 +60,13 @@ impl Bytecode {
         }
     }
 
-    /// Returns true if bytecode is EOF.
+    /// Returns `true` if bytecode is EOF.
     #[inline]
     pub const fn is_eof(&self) -> bool {
         matches!(self, Self::Eof(_))
     }
 
-    /// Returns true if bytecode is EIP-7702.
+    /// Returns `true` if bytecode is EIP-7702.
     pub const fn is_eip7702(&self) -> bool {
         matches!(self, Self::Eip7702(_))
     }
@@ -96,7 +95,7 @@ impl Bytecode {
 
     /// Creates a new raw [`Bytecode`].
     ///
-    /// Returns an error on incorrect Bytecode format.
+    /// Returns an error on incorrect bytecode format.
     #[inline]
     pub fn new_raw_checked(bytes: Bytes) -> Result<Self, BytecodeDecodeError> {
         let prefix = bytes.get(..2);
@@ -117,7 +116,7 @@ impl Bytecode {
     ///
     /// # Safety
     ///
-    /// Bytecode needs to end with STOP (0x00) opcode as checked bytecode assumes
+    /// Bytecode needs to end with `STOP` (`0x00`) opcode as checked bytecode assumes
     /// that it is safe to iterate over bytecode without checking lengths.
     pub unsafe fn new_analyzed(
         bytecode: Bytes,
@@ -143,7 +142,7 @@ impl Bytecode {
         }
     }
 
-    /// Returns bytes
+    /// Returns bytes.
     #[inline]
     pub fn bytes(&self) -> Bytes {
         match self {
@@ -152,7 +151,7 @@ impl Bytecode {
         }
     }
 
-    /// Returns bytes slice
+    /// Returns bytes slice.
     #[inline]
     pub fn bytes_slice(&self) -> &[u8] {
         match self {

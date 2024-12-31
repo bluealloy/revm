@@ -2,7 +2,7 @@ use crate::eip7702::{Authorization, SignedAuthorization};
 use core::ops::Deref;
 use primitives::Address;
 
-/// A recovered authorization.
+/// A recovered authorization
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RecoveredAuthorization {
@@ -12,7 +12,9 @@ pub struct RecoveredAuthorization {
 }
 
 impl RecoveredAuthorization {
-    /// Instantiate without performing recovery. This should be used carefully.
+    /// Instantiates without performing recovery.
+    ///
+    /// This should be used carefully.
     pub const fn new_unchecked(inner: SignedAuthorization, authority: Option<Address>) -> Self {
         Self { inner, authority }
     }
@@ -24,7 +26,7 @@ impl RecoveredAuthorization {
 
     /// Get the `authority` for the authorization.
     ///
-    /// If this is `None`, then the authority could not be recovered.
+    /// If this is [`None`], then the authority could not be recovered.
     pub const fn authority(&self) -> Option<Address> {
         self.authority
     }
