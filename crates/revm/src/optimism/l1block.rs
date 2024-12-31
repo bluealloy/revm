@@ -1,3 +1,5 @@
+use revm_interpreter::Gas;
+
 use crate::optimism::fast_lz::flz_compress_len;
 use crate::primitives::{address, db::Database, Address, SpecId, U256};
 use core::ops::Mul;
@@ -11,6 +13,17 @@ const BASE_FEE_SCALAR_OFFSET: usize = 16;
 /// The two 4-byte Ecotone fee scalar values are packed into the same storage slot as the 8-byte sequence number.
 /// Byte offset within the storage slot of the 4-byte blobBaseFeeScalar attribute.
 const BLOB_BASE_FEE_SCALAR_OFFSET: usize = 20;
+/// The Isthmus operator fee scalar values are similarly packed. Byte offset within
+/// the storage slot of the 4-byte operatorFeeScalar attribute.
+const OPERATOR_FEE_SCALAR_OFFSET: usize = 20;
+/// The Isthmus operator fee scalar values are similarly packed. Byte offset within
+/// the storage slot of the 8-byte operatorFeeConstant attribute.
+const OPERATOR_FEE_CONSTANT_OFFSET: usize = 24;
+
+/// The fixed point decimal scaling factor associated with the operator fee scalar.
+///
+/// Allows users to use 6 decimal points of precision when specifying the operator_fee_scalar.
+const OPERATOR_FEE_SCALAR_DECIMAL: u64 = 1_000_000;
 
 const L1_BASE_FEE_SLOT: U256 = U256::from_limbs([1u64, 0, 0, 0]);
 const L1_OVERHEAD_SLOT: U256 = U256::from_limbs([5u64, 0, 0, 0]);
@@ -23,11 +36,18 @@ const ECOTONE_L1_BLOB_BASE_FEE_SLOT: U256 = U256::from_limbs([7u64, 0, 0, 0]);
 /// offsets [BASE_FEE_SCALAR_OFFSET] and [BLOB_BASE_FEE_SCALAR_OFFSET] respectively.
 const ECOTONE_L1_FEE_SCALARS_SLOT: U256 = U256::from_limbs([3u64, 0, 0, 0]);
 
+/// This storage slot stores the 32-bit operatorFeeScalar and operatorFeeConstant attributes at
+/// offsets [OPERATOR_FEE_SCALAR_OFFSET] and [OPERATOR_FEE_CONSTANT_OFFSET] respectively.
+const OPERATOR_FEE_SCALARS_SLOT: U256 = U256::from_limbs([8u64, 0, 0, 0]);
+
 /// An empty 64-bit set of scalar values.
 const EMPTY_SCALARS: [u8; 8] = [0u8; 8];
 
 /// The address of L1 fee recipient.
 pub const L1_FEE_RECIPIENT: Address = address!("420000000000000000000000000000000000001A");
+
+/// The address of the operator fee recipient.
+pub const OPERATOR_FEE_RECIPIENT: Address = address!("420000000000000000000000000000000000001B");
 
 /// The address of the base fee recipient.
 pub const BASE_FEE_RECIPIENT: Address = address!("4200000000000000000000000000000000000019");
@@ -68,8 +88,12 @@ pub struct L1BlockInfo {
     pub l1_blob_base_fee: Option<U256>,
     /// The current L1 blob base fee scalar. None if Ecotone is not activated.
     pub l1_blob_base_fee_scalar: Option<U256>,
+    /// The current L1 blob base fee. None if Isthmus is not activated, except if `empty_scalars` is `true`.
+    pub operator_fee_scalar: Option<U256>,
+    /// The current L1 blob base fee scalar. None if Isthmus is not activated.
+    pub operator_fee_constant: Option<U256>,
     /// True if Ecotone is activated, but the L1 fee scalars have not yet been set.
-    pub(crate) empty_scalars: bool,
+    pub(crate) empty_ecotone_scalars: bool,
 }
 
 impl L1BlockInfo {
@@ -109,22 +133,94 @@ impl L1BlockInfo {
 
             // Check if the L1 fee scalars are empty. If so, we use the Bedrock cost function. The L1 fee overhead is
             // only necessary if `empty_scalars` is true, as it was deprecated in Ecotone.
-            let empty_scalars = l1_blob_base_fee.is_zero()
+            let empty_ecotone_scalars = l1_blob_base_fee.is_zero()
                 && l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
                     == EMPTY_SCALARS;
-            let l1_fee_overhead = empty_scalars
+            let l1_fee_overhead = empty_ecotone_scalars
                 .then(|| db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT))
                 .transpose()?;
 
-            Ok(L1BlockInfo {
-                l1_base_fee,
-                l1_base_fee_scalar,
-                l1_blob_base_fee: Some(l1_blob_base_fee),
-                l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
-                empty_scalars,
-                l1_fee_overhead,
-            })
+            if !spec_id.is_enabled_in(SpecId::ISTHMUS) {
+                // Pre-isthmus L1 block info
+                Ok(L1BlockInfo {
+                    l1_base_fee,
+                    l1_base_fee_scalar,
+                    l1_blob_base_fee: Some(l1_blob_base_fee),
+                    l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
+                    empty_ecotone_scalars,
+                    l1_fee_overhead,
+                    ..Default::default()
+                })
+            } else {
+                let operator_fee_scalars = db
+                    .storage(L1_BLOCK_CONTRACT, OPERATOR_FEE_SCALARS_SLOT)?
+                    .to_be_bytes::<32>();
+
+                // Post-isthmus L1 block info
+                // The `operator_fee_scalar` is stored as a big endian u32 at
+                // OPERATOR_FEE_SCALAR_OFFSET.
+                let operator_fee_scalar = U256::from_be_slice(
+                    operator_fee_scalars
+                        [OPERATOR_FEE_SCALAR_OFFSET..OPERATOR_FEE_SCALAR_OFFSET + 4]
+                        .as_ref(),
+                );
+                // The `operator_fee_constant` is stored as a big endian u64 at
+                // OPERATOR_FEE_CONSTANT_OFFSET.
+                let operator_fee_constant = U256::from_be_slice(
+                    operator_fee_scalars
+                        [OPERATOR_FEE_CONSTANT_OFFSET..OPERATOR_FEE_CONSTANT_OFFSET + 8]
+                        .as_ref(),
+                );
+                Ok(L1BlockInfo {
+                    l1_base_fee,
+                    l1_base_fee_scalar,
+                    l1_blob_base_fee: Some(l1_blob_base_fee),
+                    l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
+                    empty_ecotone_scalars,
+                    l1_fee_overhead,
+                    operator_fee_scalar: Some(operator_fee_scalar),
+                    operator_fee_constant: Some(operator_fee_constant),
+                })
+            }
         }
+    }
+
+    /// Calculate the operator fee for executing this transaction.
+    ///
+    /// Introduced in isthmus. Prior to isthmus, the operator fee is always zero.
+    pub fn operator_fee_charge(&self, gas_limit: U256, spec_id: SpecId) -> U256 {
+        if !spec_id.is_enabled_in(SpecId::ISTHMUS) {
+            return U256::ZERO;
+        }
+        let operator_fee_scalar = self
+            .operator_fee_scalar
+            .expect("Missing operator fee scalar for isthmus L1 Block");
+        let operator_fee_constant = self
+            .operator_fee_constant
+            .expect("Missing operator fee constant for isthmus L1 Block");
+
+        let product = gas_limit.saturating_mul(operator_fee_scalar)
+            / (U256::from(OPERATOR_FEE_SCALAR_DECIMAL));
+
+        product.saturating_add(operator_fee_constant)
+    }
+
+    /// Calculate the operator fee for executing this transaction.
+    ///
+    /// Introduced in isthmus. Prior to isthmus, the operator fee is always zero.
+    pub fn operator_fee_refund(&self, gas: &Gas, spec_id: SpecId) -> U256 {
+        if !spec_id.is_enabled_in(SpecId::ISTHMUS) {
+            return U256::ZERO;
+        }
+
+        let operator_fee_scalar = self
+            .operator_fee_scalar
+            .expect("Missing operator fee scalar for isthmus L1 Block");
+
+        // We're computing the difference between two operator fees, so no need to include the
+        // constant.
+
+        operator_fee_scalar.saturating_mul(U256::from(gas.remaining() + gas.refunded() as u64))
     }
 
     /// Calculate the data gas for posting the transaction on L1. Calldata costs 16 gas per byte
@@ -213,7 +309,7 @@ impl L1BlockInfo {
         // There is an edgecase where, for the very first Ecotone block (unless it is activated at Genesis), we must
         // use the Bedrock cost function. To determine if this is the case, we can check if the Ecotone parameters are
         // unset.
-        if self.empty_scalars {
+        if self.empty_ecotone_scalars {
             return self.calculate_tx_l1_cost_bedrock(input, spec_id);
         }
 
@@ -371,7 +467,7 @@ mod tests {
         assert_eq!(gas_cost, U256::ZERO);
 
         // If the scalars are empty, the bedrock cost function should be used.
-        l1_block_info.empty_scalars = true;
+        l1_block_info.empty_ecotone_scalars = true;
         let input = bytes!("FACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
         assert_eq!(gas_cost, U256::from(1048));
