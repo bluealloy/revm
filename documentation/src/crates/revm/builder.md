@@ -5,11 +5,11 @@ The builder creates or modifies the EVM and applies different handlers.
 It allows setting external context and registering handler custom logic.
 
 The revm `Evm` consists of `Context` and `Handler`.
-`Context` is additionally split between `EvmContext` (contains generic `Database`) and `External` context (generic without restrain).
+`Context` is additionally split between `EvmContext` (contains generic `Database`) and `External` context (generic without restraint).
 Read [evm](./evm.md) for more information on the internals.
 
 The `Builder` ties dependencies between generic `Database`, `External` context and `Spec`.
-It allows handle registers to be added that implement logic on those generics.
+It allows handler registers to be added that implement logic on those generics.
 As they are interconnected, setting `Database` or `ExternalContext` resets handle registers, so builder stages are introduced to mitigate those misuses.
 
 Simple example of using `EvmBuilder`:
@@ -28,7 +28,7 @@ There are two builder stages that are used to mitigate potential misuse of the b
   * `SetGenericStage`: Initial stage that allows setting the database and external context.
   * `HandlerStage`: Allows setting the handler registers but is explicit about setting new generic type as it will void the handler registers. 
 
-Functions from one stage are just renamed functions from other stage, it is made so that user is more aware of what underlying function does.
+Functions from one stage are just renamed functions from other stage, it is made so that the user is more aware of what underlying function does.
 For example, in `SettingDbStage` we have `with_db` function while in `HandlerStage` we have `reset_handler_with_db`, both of them set the database but the latter also resets the handler.
 There are multiple functions that are common to both stages such as `build`.
 
@@ -157,7 +157,7 @@ fn main() {
 ## Appending handler registers
 
 Handler registers are simple functions that allow modifying the `Handler` logic by replacing the handler functions.
-They are used to add custom logic to the evm execution but as they are free to modify the `Handler` in any form they want.
+They are used to add custom logic to the evm execution but they are free to modify the `Handler` in any form they want.
 There may be conflicts if handlers that override the same function are added.
 
 The most common use case for adding new logic to `Handler` is `Inspector` that is used to inspect the execution of the evm.
