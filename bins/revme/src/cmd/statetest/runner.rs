@@ -134,17 +134,6 @@ fn skip_test(path: &Path) -> bool {
         | "static_Call50000_sha256.json"
         | "loopMul.json"
         | "CALLBlake2f_MaxRounds.json"
-
-        // `evmone` statetest
-        | "initcode_transaction_before_prague.json"
-        | "invalid_tx_non_existing_sender.json"
-        | "tx_non_existing_sender.json"
-        | "block_apply_withdrawal.json"
-        | "block_apply_ommers_reward.json"
-        | "known_block_hash.json"
-        | "eip7516_blob_base_fee.json"
-        | "create_tx_collision_storage.json"
-        | "create_collision_storage.json"
     )
 }
 
