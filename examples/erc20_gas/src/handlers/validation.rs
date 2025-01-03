@@ -3,8 +3,7 @@ use alloy_sol_types::SolValue;
 use revm::{
     context::Cfg,
     context_interface::{
-        result::InvalidTransaction, transaction::Eip4844Tx, Journal, Transaction,
-        TransactionGetter, TransactionType,
+        result::InvalidTransaction, Journal, Transaction, TransactionGetter, TransactionType,
     },
     handler::{EthValidation, EthValidationContext, EthValidationError},
     handler_interface::ValidationHandler,
@@ -43,12 +42,12 @@ where
     }
 
     fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        let caller = context.tx().common_fields().caller();
+        let caller = context.tx().caller();
         let caller_nonce = context.journal().load_account(caller)?.data.info.nonce;
         let token_account = context.journal().load_account(TOKEN)?.data.clone();
 
         if !context.cfg().is_nonce_check_disabled() {
-            let tx_nonce = context.tx().common_fields().nonce();
+            let tx_nonce = context.tx().nonce();
             let state_nonce = caller_nonce;
             match tx_nonce.cmp(&state_nonce) {
                 Ordering::Less => {
@@ -67,13 +66,13 @@ where
             }
         }
 
-        let mut balance_check = U256::from(context.tx().common_fields().gas_limit())
-            .checked_mul(U256::from(context.tx().max_fee()))
-            .and_then(|gas_cost| gas_cost.checked_add(context.tx().common_fields().value()))
+        let mut balance_check = U256::from(context.tx().gas_limit())
+            .checked_mul(U256::from(context.tx().max_fee_per_gas()))
+            .and_then(|gas_cost| gas_cost.checked_add(context.tx().value()))
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
-        if context.tx().tx_type().into() == TransactionType::Eip4844 {
-            let tx = context.tx().eip4844();
+        if context.tx().tx_type() == TransactionType::Eip4844 {
+            let tx = context.tx();
             let data_fee = tx.calc_max_data_fee();
             balance_check = balance_check
                 .checked_add(data_fee)

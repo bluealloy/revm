@@ -4,7 +4,6 @@ members = [
     "crates/revm",
     "crates/primitives",
     "crates/interpreter",
-    "crates/inspector",
     "crates/precompile",
     "crates/database",
     "crates/database/interface",
@@ -21,6 +20,7 @@ members = [
 
     # variants
     "crates/optimism",
+    "crates/inspector",
 
     # utility
     "crates/statetest-types",

@@ -3,7 +3,8 @@ use revm::{
         block::BlockSetter,
         journaled_state::{AccountLoad, Eip7702CodeLoad},
         transaction::TransactionSetter,
-        BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalGetter, TransactionGetter,
+        BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalGetter,
+        PerformantContextAccess, TransactionGetter,
     },
     database_interface::Database,
     handler::FrameResult,
@@ -36,8 +37,7 @@ where
         + DatabaseGetter<Database = DB>
         + JournalGetter
         + ErrorGetter
-        + Host
-        + ErrorGetter,
+        + Host,
 {
     pub fn new(inner: CTX, inspector: INSP) -> Self {
         Self {
@@ -236,7 +236,7 @@ where
 
 impl<INSP, DB, CTX> ErrorGetter for InspectorContext<INSP, DB, CTX>
 where
-    CTX: ErrorGetter + DatabaseGetter<Database = DB>,
+    CTX: ErrorGetter + JournalGetter<Database = DB>,
 {
     type Error = <CTX as ErrorGetter>::Error;
 
@@ -293,5 +293,16 @@ where
 
     fn journal_ext(&self) -> &Self::JournalExt {
         self.inner.journal_ext()
+    }
+}
+
+impl<INSP, DB: Database, CTX> PerformantContextAccess for InspectorContext<INSP, DB, CTX>
+where
+    CTX: PerformantContextAccess<Error = DB::Error> + DatabaseGetter<Database = DB>,
+{
+    type Error = <CTX as PerformantContextAccess>::Error;
+
+    fn load_access_list(&mut self) -> Result<(), Self::Error> {
+        self.inner.load_access_list()
     }
 }

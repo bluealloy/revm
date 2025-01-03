@@ -9,7 +9,7 @@ pub trait Eip1559Tx: Eip1559CommonTxFields {
 
 /// This trait is base for Eip1559, EIp4844 and Eip7702 transactions.
 #[auto_impl(&, Box, Arc, Rc)]
-pub trait Eip1559CommonTxFields: CommonTxFields {
+pub trait Eip1559CommonTxFields: CommonTxFields + AccessListTrait {
     /// Access list type.
     type AccessList: AccessListTrait;
 
@@ -21,7 +21,4 @@ pub trait Eip1559CommonTxFields: CommonTxFields {
 
     /// Maximum priority fee per gas.
     fn max_priority_fee_per_gas(&self) -> u128;
-
-    /// EIP-1559 access list.
-    fn access_list(&self) -> &Self::AccessList;
 }

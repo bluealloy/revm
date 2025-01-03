@@ -12,7 +12,7 @@ pub fn simple_example(bytecode: Bytecode) {
         .modify_tx_chained(|tx| {
             // Execution globals block hash/gas_limit/coinbase/timestamp..
             tx.caller = address!("1000000000000000000000000000000000000000");
-            tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
+            tx.kind = TxKind::Call(address!("0000000000000000000000000000000000000000"));
             tx.data = bytes!("30627b7c");
             tx.gas_limit = 1_000_000_000;
         });

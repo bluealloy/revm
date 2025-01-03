@@ -2,7 +2,6 @@ use crate::transaction::TransactionError;
 use core::fmt::{self, Debug};
 use database_interface::DBErrorMarker;
 use primitives::{Address, Bytes, Log, U256};
-use specification::eip7702::InvalidAuthorization;
 use state::EvmState;
 use std::{boxed::Box, string::String, vec::Vec};
 
@@ -318,8 +317,6 @@ pub enum InvalidTransaction {
     AuthorizationListInvalidFields,
     /// Empty Authorization List is not allowed.
     EmptyAuthorizationList,
-    /// Invalid EIP-7702 Authorization List
-    InvalidAuthorizationList(InvalidAuthorization),
     /// EIP-2930 is not supported.
     Eip2930NotSupported,
     /// EIP-1559 is not supported.
@@ -331,12 +328,6 @@ pub enum InvalidTransaction {
 }
 
 impl TransactionError for InvalidTransaction {}
-
-impl From<InvalidAuthorization> for InvalidTransaction {
-    fn from(value: InvalidAuthorization) -> Self {
-        Self::InvalidAuthorizationList(value)
-    }
-}
 
 impl core::error::Error for InvalidTransaction {}
 
@@ -403,7 +394,6 @@ impl fmt::Display for InvalidTransaction {
             Self::Eip1559NotSupported => write!(f, "Eip1559 is not supported"),
             Self::Eip4844NotSupported => write!(f, "Eip4844 is not supported"),
             Self::Eip7702NotSupported => write!(f, "Eip7702 is not supported"),
-            Self::InvalidAuthorizationList(i) => fmt::Display::fmt(i, f),
         }
     }
 }

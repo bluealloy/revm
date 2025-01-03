@@ -89,7 +89,7 @@ impl Cmd {
         let mut evm = MainEvm::new(
             Context::builder().with_db(db).modify_tx_chained(|tx| {
                 tx.caller = CALLER;
-                tx.transact_to = TxKind::Call(Address::ZERO);
+                tx.kind = TxKind::Call(Address::ZERO);
                 tx.data = input;
                 tx.nonce = nonce;
             }),

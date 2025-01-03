@@ -246,7 +246,7 @@ where
 impl<CTX, ERROR, PRECOMPILE> Frame for InspectorEthFrame<CTX, ERROR, PRECOMPILE>
 where
     CTX: TransactionGetter
-        + ErrorGetter<Error = ERROR>
+        + ErrorGetter<Error = JournalDBError<CTX>>
         + BlockGetter
         + JournalGetter
         + CfgGetter

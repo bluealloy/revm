@@ -73,7 +73,7 @@ where
 impl<CTX, ERROR, PRECOMPILE, INSTRUCTION>
     EthFrame<CTX, ERROR, EthInterpreter<()>, PRECOMPILE, INSTRUCTION>
 where
-    CTX: EthFrameContext<ERROR>,
+    CTX: EthFrameContext,
     ERROR: EthFrameError<CTX>,
     PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR>,
 {
@@ -352,7 +352,7 @@ where
                 }
 
                 // Use nonce from tx to calculate address.
-                let tx = context.tx().common_fields();
+                let tx = context.tx();
                 let create_address = tx.caller().create(tx.nonce());
 
                 (input, eof, Some(create_address))
@@ -454,7 +454,7 @@ where
 impl<CTX, ERROR, PRECOMPILE, INSTRUCTION> Frame
     for EthFrame<CTX, ERROR, EthInterpreter<()>, PRECOMPILE, INSTRUCTION>
 where
-    CTX: EthFrameContext<ERROR>,
+    CTX: EthFrameContext,
     ERROR: EthFrameError<CTX>,
     PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR>,
     INSTRUCTION: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
@@ -796,20 +796,24 @@ pub fn return_eofcreate<JOURNAL: Journal>(
     journal.set_code(address, Bytecode::Eof(Arc::new(bytecode)));
 }
 
-pub trait EthFrameContext<ERROR>:
-    TransactionGetter + Host + ErrorGetter<Error = ERROR> + BlockGetter + JournalGetter + CfgGetter
+pub trait EthFrameContext:
+    TransactionGetter
+    + Host
+    + ErrorGetter<Error = JournalDBError<Self>>
+    + BlockGetter
+    + JournalGetter
+    + CfgGetter
 {
 }
 
 impl<
-        ERROR,
         CTX: TransactionGetter
-            + ErrorGetter<Error = ERROR>
+            + ErrorGetter<Error = JournalDBError<CTX>>
             + BlockGetter
             + JournalGetter
             + CfgGetter
             + Host,
-    > EthFrameContext<ERROR> for CTX
+    > EthFrameContext for CTX
 {
 }
 

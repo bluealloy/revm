@@ -1,9 +1,10 @@
+pub mod performant_access;
+
 use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, tx::TxEnv};
 use bytecode::{Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 use context_interface::{
     block::BlockSetter,
     journaled_state::{AccountLoad, Eip7702CodeLoad},
-    result::EVMError,
     transaction::TransactionSetter,
     Block, BlockGetter, Cfg, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalGetter,
     Transaction, TransactionGetter,
@@ -519,10 +520,10 @@ where
 impl<BLOCK, TX: Transaction, SPEC, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> ErrorGetter
     for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
 {
-    type Error = EVMError<DB::Error, TX::TransactionError>;
+    type Error = DB::Error;
 
     fn take_error(&mut self) -> Result<(), Self::Error> {
-        core::mem::replace(&mut self.error, Ok(())).map_err(EVMError::Database)
+        core::mem::replace(&mut self.error, Ok(()))
     }
 }
 

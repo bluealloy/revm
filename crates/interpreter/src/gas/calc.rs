@@ -1,9 +1,6 @@
 use super::constants::*;
 use crate::{num_words, tri, SStoreResult, SelfDestructResult, StateLoad};
-use context_interface::{
-    journaled_state::{AccountLoad, Eip7702CodeLoad},
-    transaction::AccessListTrait,
-};
+use context_interface::journaled_state::{AccountLoad, Eip7702CodeLoad};
 use primitives::U256;
 use specification::{eip7702, hardfork::SpecId};
 
@@ -350,11 +347,12 @@ pub const fn memory_gas(num_words: usize) -> u64 {
 
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
-pub fn validate_initial_tx_gas<AccessListT: AccessListTrait>(
+pub fn validate_initial_tx_gas(
     spec_id: SpecId,
     input: &[u8],
     is_create: bool,
-    access_list: Option<&AccessListT>,
+    access_list_accounts: u64,
+    access_list_storages: u64,
     authorization_list_num: u64,
 ) -> u64 {
     let mut initial_gas = 0;
@@ -372,11 +370,8 @@ pub fn validate_initial_tx_gas<AccessListT: AccessListTrait>(
         };
 
     // Get number of access list account and storages.
-    if let Some(access_list) = access_list {
-        let (account_num, storage_num) = access_list.num_account_storages();
-        initial_gas += account_num as u64 * ACCESS_LIST_ADDRESS;
-        initial_gas += storage_num as u64 * ACCESS_LIST_STORAGE_KEY;
-    }
+    initial_gas += access_list_accounts * ACCESS_LIST_ADDRESS;
+    initial_gas += access_list_storages * ACCESS_LIST_STORAGE_KEY;
 
     // Base stipend
     initial_gas += if is_create {

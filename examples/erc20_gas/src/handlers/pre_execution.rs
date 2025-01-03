@@ -1,8 +1,7 @@
 use crate::{token_operation, TREASURY};
 use revm::{
     context_interface::{
-        result::InvalidHeader, transaction::Eip4844Tx, Block, Transaction, TransactionGetter,
-        TransactionType,
+        result::InvalidHeader, Block, Transaction, TransactionGetter, TransactionType,
     },
     handler::{EthPreExecution, EthPreExecutionContext, EthPreExecutionError},
     handler_interface::PreExecutionHandler,
@@ -49,15 +48,14 @@ where
         let blob_price = context.block().blob_gasprice().unwrap_or_default();
         let effective_gas_price = context.tx().effective_gas_price(basefee);
 
-        let mut gas_cost =
-            (context.tx().common_fields().gas_limit() as u128).saturating_mul(effective_gas_price);
+        let mut gas_cost = (context.tx().gas_limit() as u128).saturating_mul(effective_gas_price);
 
-        if context.tx().tx_type().into() == TransactionType::Eip4844 {
-            let blob_gas = context.tx().eip4844().total_blob_gas() as u128;
+        if context.tx().tx_type() == TransactionType::Eip4844 {
+            let blob_gas = context.tx().total_blob_gas() as u128;
             gas_cost = gas_cost.saturating_add(blob_price.saturating_mul(blob_gas));
         }
 
-        let caller = context.tx().common_fields().caller();
+        let caller = context.tx().caller();
         token_operation::<CTX, ERROR>(context, caller, TREASURY, U256::from(gas_cost))?;
 
         Ok(())

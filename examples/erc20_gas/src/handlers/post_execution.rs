@@ -32,7 +32,7 @@ impl<CTX, ERROR, HALTREASON> Default for Erc20PostExecution<CTX, ERROR, HALTREAS
 
 impl<CTX, ERROR, HALTREASON> PostExecutionHandler for Erc20PostExecution<CTX, ERROR, HALTREASON>
 where
-    CTX: EthPostExecutionContext<ERROR>,
+    CTX: EthPostExecutionContext,
     ERROR: EthPostExecutionError<CTX>
         + From<InvalidTransaction>
         + From<InvalidHeader>
@@ -60,7 +60,7 @@ where
         exec_result: &mut Self::ExecResult,
     ) -> Result<(), Self::Error> {
         let basefee = context.block().basefee() as u128;
-        let caller = context.tx().common_fields().caller();
+        let caller = context.tx().caller();
         let effective_gas_price = context.tx().effective_gas_price(basefee);
         let gas = exec_result.gas();
 

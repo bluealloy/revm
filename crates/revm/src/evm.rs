@@ -2,6 +2,7 @@ use crate::{exec::EvmCommit, EvmExec};
 use context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context, JournaledState};
 use context_interface::{
     block::BlockSetter,
+    context::PerformantContextAccess,
     journaled_state::Journal,
     result::{
         EVMError, ExecutionResult, HaltReasonTrait, InvalidHeader, InvalidTransaction,
@@ -48,13 +49,14 @@ where
         + JournalGetter
         + CfgGetter
         + DatabaseGetter<Database: Database + DatabaseCommit>
-        + ErrorGetter<Error = ERROR>
+        + ErrorGetter<Error = JournalDBError<CTX>>
         + JournalGetter<
             Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
             >,
-        > + Host,
+        > + Host
+        + PerformantContextAccess<Error = <<CTX as DatabaseGetter>::Database as Database>::Error>,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
         + From<JournalDBError<CTX>>
@@ -95,13 +97,14 @@ where
         + JournalGetter
         + CfgGetter
         + DatabaseGetter
-        + ErrorGetter<Error = ERROR>
+        + ErrorGetter<Error = JournalDBError<CTX>>
         + JournalGetter<
             Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
             >,
-        > + Host,
+        > + Host
+        + PerformantContextAccess<Error = <<CTX as DatabaseGetter>::Database as Database>::Error>,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
         + From<JournalDBError<CTX>>
@@ -153,13 +156,14 @@ where
         + JournalGetter
         + CfgGetter
         + DatabaseGetter
-        + ErrorGetter<Error = ERROR>
+        + ErrorGetter<Error = JournalDBError<CTX>>
         + JournalGetter<
             Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
                 Database = <CTX as DatabaseGetter>::Database,
             >,
-        > + Host,
+        > + Host
+        + PerformantContextAccess<Error = <<CTX as DatabaseGetter>::Database as Database>::Error>,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
         + From<JournalDBError<CTX>>
@@ -251,7 +255,7 @@ where
         // Deduce caller balance with its limit.
         pre_exec.deduct_caller(context)?;
 
-        let gas_limit = context.tx().common_fields().gas_limit() - initial_gas_spend;
+        let gas_limit = context.tx().gas_limit() - initial_gas_spend;
 
         // Apply EIP-7702 auth list.
         let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(context)? as i64;
@@ -382,7 +386,7 @@ mod tests {
         )]
         .into();
         tx.caller = caller;
-        tx.transact_to = TxKind::Call(auth);
+        tx.kind = TxKind::Call(auth);
 
         let mut tx2 = TxEnv::default();
         tx2.tx_type = TransactionType::Legacy;
@@ -435,7 +439,7 @@ mod tests {
                 )]
                 .into();
                 tx.caller = caller;
-                tx.transact_to = TxKind::Call(auth);
+                tx.kind = TxKind::Call(auth);
             })
             .build();
 

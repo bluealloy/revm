@@ -9,14 +9,14 @@ use primitives::{Address, B256};
 ///
 /// Number of account and storage slots is used to calculate initial tx gas cost.
 #[auto_impl(&, Box, Arc, Rc)]
-pub trait AccessListTrait: Clone {
+pub trait AccessListTrait {
     /// Iterate over access list.
-    fn iter(&self) -> impl Iterator<Item = (Address, impl Iterator<Item = B256>)>;
+    fn access_list(&self) -> impl Iterator<Item = (Address, impl Iterator<Item = B256>)>;
 
     /// Returns number of account and storage slots.
-    fn num_account_storages(&self) -> (usize, usize) {
-        let storage_num = self.iter().map(|i| i.1.count()).sum();
-        let account_num = self.iter().count();
+    fn access_list_nums(&self) -> (usize, usize) {
+        let storage_num = self.access_list().map(|i| i.1.count()).sum();
+        let account_num = self.access_list().count();
 
         (account_num, storage_num)
     }
@@ -26,7 +26,7 @@ pub trait AccessListTrait: Clone {
 use specification::eip2930::AccessList;
 
 impl AccessListTrait for AccessList {
-    fn iter(&self) -> impl Iterator<Item = (Address, impl Iterator<Item = B256>)> {
+    fn access_list(&self) -> impl Iterator<Item = (Address, impl Iterator<Item = B256>)> {
         self.0.iter().map(|item| {
             let slots = item.storage_keys.iter().copied();
             (item.address, slots)

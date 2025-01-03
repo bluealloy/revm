@@ -146,7 +146,7 @@ fn balance_of(token: Address, address: Address, alloy_db: &mut AlloyCacheDB) -> 
             .modify_tx_chained(|tx| {
                 // 0x1 because calling USDC proxy from zero address fails
                 tx.caller = address!("0000000000000000000000000000000000000001");
-                tx.transact_to = TxKind::Call(token);
+                tx.kind = TxKind::Call(token);
                 tx.data = encoded.into();
                 tx.value = U256::from(0);
             }),
@@ -185,7 +185,7 @@ fn transfer(
             .with_db(cache_db)
             .modify_tx_chained(|tx| {
                 tx.caller = from;
-                tx.transact_to = TxKind::Call(token);
+                tx.kind = TxKind::Call(token);
                 tx.data = encoded.into();
                 tx.value = U256::from(0);
             }),

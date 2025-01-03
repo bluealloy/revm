@@ -39,7 +39,7 @@ pub fn run() {
 
     let context = Context::builder().with_db(db).modify_tx_chained(|tx| {
         tx.caller = address!("1000000000000000000000000000000000000000");
-        tx.transact_to = TxKind::Call(BURNTPIX_MAIN_ADDRESS);
+        tx.kind = TxKind::Call(BURNTPIX_MAIN_ADDRESS);
         tx.data = run_call_data.clone().into();
         tx.gas_limit = u64::MAX;
     });

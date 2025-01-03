@@ -1,5 +1,4 @@
 use crate::{inspectors::GasInspector, Inspector};
-use derive_where::derive_where;
 use revm::{
     bytecode::opcode::OpCode,
     context::Cfg,
@@ -15,9 +14,7 @@ use serde::Serialize;
 use std::io::Write;
 
 /// [EIP-3155](https://eips.ethereum.org/EIPS/eip-3155) tracer [Inspector].
-#[derive_where(Debug; CTX, INTR)]
 pub struct TracerEip3155<CTX, INTR> {
-    #[derive_where(skip)]
     output: Box<dyn Write>,
     gas_inspector: GasInspector,
     /// Print summary of the execution.
@@ -173,7 +170,7 @@ where
     fn print_summary(&mut self, result: &InterpreterResult, context: &mut CTX) {
         if self.print_summary {
             let spec = context.cfg().spec().into();
-            let gas_limit = context.tx().common_fields().gas_limit();
+            let gas_limit = context.tx().gas_limit();
             let value = Summary {
                 state_root: B256::ZERO.to_string(),
                 output: result.output.to_string(),
