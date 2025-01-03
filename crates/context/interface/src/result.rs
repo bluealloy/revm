@@ -265,6 +265,11 @@ pub enum InvalidTransaction {
     /// - initial stipend gas
     /// - gas for access list and input data
     CallGasCostMoreThanGasLimit,
+    /// Gas floor calculated from EIP-7623 Increase calldata cost
+    /// is more than the gas limit.
+    ///
+    /// Tx data is too large to be executed.
+    GasFloorMoreThanGasLimit,
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
     /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
@@ -345,6 +350,9 @@ impl fmt::Display for InvalidTransaction {
             }
             Self::CallGasCostMoreThanGasLimit => {
                 write!(f, "call gas cost exceeds the gas limit")
+            }
+            Self::GasFloorMoreThanGasLimit => {
+                write!(f, "gas floor exceeds the gas limit")
             }
             Self::RejectCallerWithCode => {
                 write!(f, "reject transactions from senders with deployed code")

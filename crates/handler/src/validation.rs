@@ -5,8 +5,8 @@ use context_interface::{
     Block, BlockGetter, Cfg, CfgGetter, JournalDBError, JournalGetter, TransactionGetter,
 };
 use core::cmp::{self, Ordering};
-use handler_interface::ValidationHandler;
-use interpreter::gas;
+use handler_interface::{InitialAndFloorGas, ValidationHandler};
+use interpreter::gas::{self};
 use primitives::{B256, U256};
 use specification::{eip4844, hardfork::SpecId};
 use state::Account;
@@ -69,7 +69,10 @@ where
         validate_tx_against_account::<CTX, ERROR>(&account, context)
     }
 
-    fn validate_initial_tx_gas(&self, context: &Self::Context) -> Result<u64, Self::Error> {
+    fn validate_initial_tx_gas(
+        &self,
+        context: &Self::Context,
+    ) -> Result<InitialAndFloorGas, Self::Error> {
         let spec = context.cfg().spec().into();
         validate_initial_tx_gas::<&Self::Context, InvalidTransaction>(context, spec)
             .map_err(Into::into)
@@ -328,15 +331,19 @@ where
 }
 
 /// Validate initial transaction gas.
-pub fn validate_initial_tx_gas<CTX, Error>(context: CTX, spec_id: SpecId) -> Result<u64, Error>
+pub fn validate_initial_tx_gas<CTX, Error>(
+    context: CTX,
+    spec_id: SpecId,
+) -> Result<InitialAndFloorGas, Error>
 where
-    CTX: TransactionGetter,
+    CTX: TransactionGetter + CfgGetter,
     Error: From<InvalidTransaction>,
 {
+    let spec = context.cfg().spec().into();
     let tx = context.tx();
     let (accounts, storages) = tx.access_list_nums().unwrap_or_default();
 
-    let initial_gas_spend = gas::validate_initial_tx_gas(
+    let gas = gas::calculate_initial_tx_gas(
         spec_id,
         tx.input(),
         tx.kind().is_create(),
@@ -346,10 +353,17 @@ where
     );
 
     // Additional check to see if limit is big enough to cover initial gas.
-    if initial_gas_spend > tx.gas_limit() {
+    if gas.initial_gas > tx.gas_limit() {
         return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
     }
-    Ok(initial_gas_spend)
+
+    // EIP-7623: Increase calldata cost
+    // floor gas should be less than gas limit.
+    if spec.is_enabled_in(SpecId::PRAGUE) && gas.floor_gas > tx.gas_limit() {
+        return Err(InvalidTransaction::GasFloorMoreThanGasLimit.into());
+    };
+
+    Ok(gas)
 }
 
 /// Helper trait that summarizes ValidationHandler requirements from Context.
