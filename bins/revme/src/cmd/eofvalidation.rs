@@ -81,16 +81,21 @@ pub fn run_test(path: &Path) -> Result<(), Error> {
                 } else {
                     Some(CodeType::ReturnOrStop)
                 };
-                let test_result = test_vector.results.get("Osaka");
+                // In future this can be generalized to cover multiple forks, Not just Osaka.
+                let Some(test_result) = test_vector.results.get("Osaka") else {
+                    // if test does not have a result that we can compare to, we skip it
+                    println!("Test without result: {} - {}", name, vector_name);
+                    continue;
+                };
                 let res = validate_raw_eof_inner(test_vector.code.clone(), kind);
-                if test_result.map(|r| r.result).unwrap_or(res.is_ok()) != res.is_ok() {
+                if test_result.result != res.is_ok() {
                     println!(
                         "\nTest failed: {} - {}\nresult:{:?}\nrevm err_result:{:#?}\nExpected exception:{:?}\nbytes:{:?}\n",
                         name,
                         vector_name,
-                        test_result.unwrap().result,
+                        test_result.result,
                         res.as_ref().err(),
-                        test_result.unwrap().exception,
+                        test_result.exception,
                         test_vector.code
                     );
                     *types_of_error
