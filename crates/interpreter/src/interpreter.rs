@@ -126,7 +126,7 @@ where
         }
     }
 
-    // TODO : Make impl a associate type. With this associate type we can implement.
+    // TODO : Make impl an associate type. With this associate type we can implement.
     // InspectorInstructionProvider over generic type.
     fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256] {
         self.instruction_table.as_ref()
