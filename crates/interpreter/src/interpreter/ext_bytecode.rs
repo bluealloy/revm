@@ -1,9 +1,11 @@
+use core::ops::Deref;
+
 use bytecode::{
     eof::TypesSection,
     utils::{read_i16, read_u16},
     Bytecode,
 };
-use primitives::Bytes;
+use primitives::{Bytes, B256};
 
 use super::{EofCodeInfo, EofContainer, EofData, Immediates, Jumps, LegacyBytecode};
 
@@ -13,11 +15,14 @@ mod serde;
 #[derive(Debug)]
 pub struct ExtBytecode {
     base: Bytecode,
+    bytecode_hash: Option<B256>,
     instruction_pointer: *const u8,
 }
 
-impl AsRef<Bytecode> for ExtBytecode {
-    fn as_ref(&self) -> &Bytecode {
+impl Deref for ExtBytecode {
+    type Target = Bytecode;
+
+    fn deref(&self) -> &Self::Target {
         &self.base
     }
 }
@@ -29,7 +34,30 @@ impl ExtBytecode {
         Self {
             base,
             instruction_pointer,
+            bytecode_hash: None,
         }
+    }
+
+    /// Creates new `ExtBytecode` with the given hash.
+    pub fn new_with_hash(base: Bytecode, hash: B256) -> Self {
+        let instruction_pointer = base.bytecode().as_ptr();
+        Self {
+            base,
+            instruction_pointer,
+            bytecode_hash: Some(hash),
+        }
+    }
+
+    /// Regenerates the bytecode hash.
+    pub fn regenerate_hash(&mut self) -> B256 {
+        let hash = self.base.hash_slow();
+        self.bytecode_hash = Some(hash);
+        hash
+    }
+
+    /// Returns the bytecode hash.
+    pub fn hash(&mut self) -> Option<B256> {
+        self.bytecode_hash
     }
 }
 
@@ -162,5 +190,19 @@ impl LegacyBytecode for ExtBytecode {
         // Inform the optimizer that the bytecode cannot be EOF to remove a bounds check.
         assume!(!self.base.is_eof());
         self.base.original_byte_slice()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use primitives::Bytes;
+
+    #[test]
+    fn test_with_hash_constructor() {
+        let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00][..]));
+        let hash = bytecode.hash_slow();
+        let ext_bytecode = ExtBytecode::new_with_hash(bytecode.clone(), hash);
+        assert_eq!(ext_bytecode.bytecode_hash, Some(hash));
     }
 }

@@ -9,7 +9,7 @@ use core::{cell::RefCell, cmp::min};
 use handler_interface::{Frame, FrameOrResultGen, PrecompileProvider};
 use interpreter::{
     gas,
-    interpreter::{EthInterpreter, InstructionProvider},
+    interpreter::{EthInterpreter, ExtBytecode, InstructionProvider},
     interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
     return_ok, return_revert, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome,
     CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, Host, InputsImpl,
@@ -147,8 +147,7 @@ where
                 .journal()
                 .load_account_code(inputs.bytecode_address)?;
 
-            // TODO : Request from foundry to get bytecode hash.
-            let _code_hash = account.info.code_hash();
+            let mut code_hash = account.info.code_hash();
             let mut bytecode = account.info.code.clone().unwrap_or_default();
 
             // ExtDelegateCall is not allowed to call non-EOF contracts.
@@ -164,13 +163,12 @@ where
             }
 
             if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-                bytecode = context
+                let account = &context
                     .journal()
                     .load_account_code(eip7702_bytecode.delegated_address)?
-                    .info
-                    .code
-                    .clone()
-                    .unwrap_or_default();
+                    .info;
+                bytecode = account.code.clone().unwrap_or_default();
+                code_hash = account.code_hash();
             }
 
             // Create interpreter and executes call and push new CallStackFrame.
@@ -188,7 +186,7 @@ where
                 depth,
                 Interpreter::new(
                     memory.clone(),
-                    bytecode,
+                    ExtBytecode::new_with_hash(bytecode, code_hash),
                     interpreter_input,
                     inputs.is_static,
                     false,
@@ -281,7 +279,7 @@ where
             Err(e) => return return_error(e.into()),
         };
 
-        let bytecode = Bytecode::new_legacy(inputs.init_code.clone());
+        let bytecode = ExtBytecode::new(Bytecode::new_legacy(inputs.init_code.clone()));
 
         let interpreter_input = InputsImpl {
             target_address: created_address,
@@ -412,7 +410,7 @@ where
             depth,
             Interpreter::new(
                 memory.clone(),
-                Bytecode::Eof(Arc::new(initcode)),
+                ExtBytecode::new(Bytecode::Eof(Arc::new(initcode))),
                 interpreter_input,
                 false,
                 true,
