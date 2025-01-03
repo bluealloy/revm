@@ -103,7 +103,7 @@ where
         + BlockGetter
         + JournalGetter
         + CfgGetter
-        + ErrorGetter<Error = ERROR>
+        + ErrorGetter<Error = JournalDBError<CTX>>
         + JournalGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
         + Host,
     ERROR: From<InvalidTransaction>

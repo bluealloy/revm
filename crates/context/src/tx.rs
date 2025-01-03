@@ -1,5 +1,5 @@
 use context_interface::transaction::AuthorizationItem;
-use context_interface::{result::InvalidTransaction, Transaction};
+use context_interface::Transaction;
 use core::fmt::Debug;
 use primitives::{Address, Bytes, TxKind, B256, U256};
 use std::vec::Vec;
@@ -97,8 +97,6 @@ impl Default for TxEnv {
 }
 
 impl Transaction for TxEnv {
-    type TransactionError = InvalidTransaction;
-
     fn tx_type(&self) -> u8 {
         self.tx_type
     }

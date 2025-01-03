@@ -23,9 +23,6 @@ pub type AuthorizationItem = (Option<Address>, U256, u64, Address);
 /// deprecated by not returning tx_type.
 #[auto_impl(&, Box, Arc, Rc)]
 pub trait Transaction {
-    /// An error that occurs when validating a transaction
-    type TransactionError: TransactionError;
-
     /// Returns the transaction type.
     ///
     /// Depending on this field other functions should be called.

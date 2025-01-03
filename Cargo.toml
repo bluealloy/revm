@@ -19,7 +19,7 @@ members = [
     "bins/revme",
 
     # variants
-    #"crates/optimism",
+    "crates/optimism",
     "crates/inspector",
 
     # utility

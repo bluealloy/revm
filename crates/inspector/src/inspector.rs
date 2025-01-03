@@ -206,8 +206,7 @@ where
         + DatabaseGetter<Database = DB>
         + JournalGetter
         + ErrorGetter
-        + Host
-        + ErrorGetter,
+        + Host,
 {
     pub fn new(inner: CTX, inspector: INSP) -> Self {
         Self {
@@ -417,7 +416,7 @@ where
 
 impl<INSP, DB, CTX> ErrorGetter for InspectorContext<INSP, DB, CTX>
 where
-    CTX: ErrorGetter + DatabaseGetter<Database = DB>,
+    CTX: ErrorGetter + JournalGetter<Database = DB>,
 {
     type Error = <CTX as ErrorGetter>::Error;
 
@@ -694,7 +693,7 @@ where
 impl<CTX, ERROR, PRECOMPILE> Frame for InspectorEthFrame<CTX, ERROR, PRECOMPILE>
 where
     CTX: TransactionGetter
-        + ErrorGetter<Error = ERROR>
+        + ErrorGetter<Error = JournalDBError<CTX>>
         + BlockGetter
         + JournalGetter
         + CfgGetter

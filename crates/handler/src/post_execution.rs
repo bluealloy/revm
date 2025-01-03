@@ -36,7 +36,7 @@ impl<CTX, ERROR, HALTREASON> EthPostExecution<CTX, ERROR, HALTREASON> {
 
 impl<CTX, ERROR, HALTREASON> PostExecutionHandler for EthPostExecution<CTX, ERROR, HALTREASON>
 where
-    CTX: EthPostExecutionContext<ERROR>,
+    CTX: EthPostExecutionContext,
     ERROR: EthPostExecutionError<CTX>,
     HALTREASON: HaltReasonTrait,
 {
@@ -174,9 +174,9 @@ where
 /// Trait for post execution context.
 ///
 // TODO : Generalize FinalOutput.
-pub trait EthPostExecutionContext<ERROR>:
+pub trait EthPostExecutionContext:
     TransactionGetter
-    + ErrorGetter<Error = ERROR>
+    + ErrorGetter<Error = JournalDBError<Self>>
     + BlockGetter
     + JournalGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
     + CfgGetter
@@ -184,13 +184,12 @@ pub trait EthPostExecutionContext<ERROR>:
 }
 
 impl<
-        ERROR,
         CTX: TransactionGetter
-            + ErrorGetter<Error = ERROR>
+            + ErrorGetter<Error = JournalDBError<CTX>>
             + BlockGetter
             + JournalGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
             + CfgGetter,
-    > EthPostExecutionContext<ERROR> for CTX
+    > EthPostExecutionContext for CTX
 {
 }
 

@@ -49,7 +49,7 @@ where
         + JournalGetter
         + CfgGetter
         + DatabaseGetter<Database: Database + DatabaseCommit>
-        + ErrorGetter<Error = ERROR>
+        + ErrorGetter<Error = JournalDBError<CTX>>
         + JournalGetter<
             Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
@@ -97,7 +97,7 @@ where
         + JournalGetter
         + CfgGetter
         + DatabaseGetter
-        + ErrorGetter<Error = ERROR>
+        + ErrorGetter<Error = JournalDBError<CTX>>
         + JournalGetter<
             Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),
@@ -156,7 +156,7 @@ where
         + JournalGetter
         + CfgGetter
         + DatabaseGetter
-        + ErrorGetter<Error = ERROR>
+        + ErrorGetter<Error = JournalDBError<CTX>>
         + JournalGetter<
             Journal: Journal<
                 FinalOutput = (EvmState, Vec<Log>),

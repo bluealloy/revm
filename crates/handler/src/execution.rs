@@ -125,13 +125,21 @@ impl<CTX, ERROR, FRAME> EthExecution<CTX, ERROR, FRAME> {
 }
 
 pub trait EthExecutionContext<ERROR>:
-    TransactionGetter + ErrorGetter<Error = ERROR> + BlockGetter + JournalGetter + CfgGetter
+    TransactionGetter
+    + ErrorGetter<Error = JournalDBError<Self>>
+    + BlockGetter
+    + JournalGetter
+    + CfgGetter
 {
 }
 
 impl<
         ERROR,
-        T: TransactionGetter + ErrorGetter<Error = ERROR> + BlockGetter + JournalGetter + CfgGetter,
+        T: TransactionGetter
+            + ErrorGetter<Error = JournalDBError<T>>
+            + BlockGetter
+            + JournalGetter
+            + CfgGetter,
     > EthExecutionContext<ERROR> for T
 {
 }
