@@ -13,6 +13,8 @@ use state::{Account, EvmState, EvmStorageSlot, TransientStorage};
 use core::mem;
 use std::{vec, vec::Vec};
 
+use crate::JournalInit;
+
 /// A journal of state changes internal to the EVM
 ///
 /// On each additional call, the depth of the journaled state is increased (`depth`) and a new journal is added.
@@ -1044,4 +1046,21 @@ pub enum JournalEntry {
     /// Action: Account code changed
     /// Revert: Revert to previous bytecode.
     CodeChange { address: Address },
+}
+
+impl<DB> JournaledState<DB> {
+    /// Initialize a new JournaledState from JournalInit with a database
+    pub fn from_init(init: &JournalInit, database: DB) -> Self {
+        Self {
+            database,
+            state: init.state.clone(),
+            transient_storage: init.transient_storage.clone(),
+            logs: init.logs.clone(),
+            depth: init.depth,
+            journal: init.journal.clone(),
+            spec: init.spec,
+            warm_preloaded_addresses: init.warm_preloaded_addresses.clone(),
+            precompiles: init.precompiles.clone(),
+        }
+    }
 }
