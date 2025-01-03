@@ -7,7 +7,7 @@ use primitives::{Address, B256, U256};
 pub struct BlockEnv {
     /// The number of ancestor blocks of this block (block height)
     pub number: u64,
-    /// Beneficiary (Coinbase or miner) is a address that have signed the block
+    /// Beneficiary (Coinbase or miner) is an address that have signed the block
     ///
     /// This is the receiver address of all the gas spent in the block.
     pub beneficiary: Address,
