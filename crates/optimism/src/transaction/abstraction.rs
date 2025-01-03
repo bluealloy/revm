@@ -154,6 +154,9 @@ mod tests {
         let op_tx = OpTransaction {
             tx: TxEnv {
                 tx_type: DEPOSIT_TRANSACTION_TYPE,
+                gas_limit: 10,
+                gas_price: 100,
+                gas_priority_fee: Some(5),
                 ..Default::default()
             },
             enveloped_tx: None,
@@ -166,10 +169,10 @@ mod tests {
         // Verify transaction type
         assert_eq!(op_tx.tx_type(), DEPOSIT_TRANSACTION_TYPE);
         // Verify common fields access
-        assert_eq!(op_tx.gas_limit(), 0);
+        assert_eq!(op_tx.gas_limit(), 10);
         assert_eq!(op_tx.kind(), revm::primitives::TxKind::Call(Address::ZERO));
         // Verify gas related calculations
-        assert_eq!(op_tx.effective_gas_price(100), 100);
-        assert_eq!(op_tx.max_fee_per_gas(), 0);
+        assert_eq!(op_tx.effective_gas_price(90), 95);
+        assert_eq!(op_tx.max_fee_per_gas(), 100);
     }
 }
