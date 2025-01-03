@@ -4,7 +4,7 @@ use super::{
 };
 use std::vec::Vec;
 
-/// Non returning function has a output `0x80`
+/// Non returning function has an output `0x80`
 const EOF_NON_RETURNING_FUNCTION: u8 = 0x80;
 
 /// Types section that contains stack information for matching code section
