@@ -342,12 +342,7 @@ pub fn execute_test_suite(
                 continue;
             }
 
-            // Enable EOF in Prague tests.
-            cfg.spec = if spec_name == SpecName::Prague {
-                SpecId::OSAKA
-            } else {
-                spec_name.to_spec_id()
-            };
+            cfg.spec = spec_name.to_spec_id();
 
             if cfg.spec.is_enabled_in(SpecId::MERGE) && block.prevrandao.is_none() {
                 // If spec is merge and prevrandao is not set, set it to default

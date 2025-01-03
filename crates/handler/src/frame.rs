@@ -126,79 +126,79 @@ where
                 return return_result(i.into());
             }
         }
-
-        if let Some(result) = precompile.run(
-            context,
-            &inputs.bytecode_address,
-            &inputs.input,
-            inputs.gas_limit,
-        )? {
-            if result.result.is_ok() {
-                context.journal().checkpoint_commit();
-            } else {
-                context.journal().checkpoint_revert(checkpoint);
+        let is_ext_delegate_call = inputs.scheme.is_ext_delegate_call();
+        if !is_ext_delegate_call {
+            if let Some(result) = precompile.run(
+                context,
+                &inputs.bytecode_address,
+                &inputs.input,
+                inputs.gas_limit,
+            )? {
+                if result.result.is_ok() {
+                    context.journal().checkpoint_commit();
+                } else {
+                    context.journal().checkpoint_revert(checkpoint);
+                }
+                return Ok(FrameOrResultGen::Result(FrameResult::Call(CallOutcome {
+                    result,
+                    memory_offset: inputs.return_memory_offset.clone(),
+                })));
             }
-            Ok(FrameOrResultGen::Result(FrameResult::Call(CallOutcome {
-                result,
-                memory_offset: inputs.return_memory_offset.clone(),
-            })))
-        } else {
-            let account = context
-                .journal()
-                .load_account_code(inputs.bytecode_address)?;
-
-            let mut code_hash = account.info.code_hash();
-            let mut bytecode = account.info.code.clone().unwrap_or_default();
-
-            // ExtDelegateCall is not allowed to call non-EOF contracts.
-            if inputs.scheme.is_ext_delegate_call()
-                && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES)
-            {
-                return return_result(InstructionResult::InvalidExtDelegateCallTarget);
-            }
-
-            if bytecode.is_empty() {
-                context.journal().checkpoint_commit();
-                return return_result(InstructionResult::Stop);
-            }
-
-            if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
-                let account = &context
-                    .journal()
-                    .load_account_code(eip7702_bytecode.delegated_address)?
-                    .info;
-                bytecode = account.code.clone().unwrap_or_default();
-                code_hash = account.code_hash();
-            }
-
-            // Create interpreter and executes call and push new CallStackFrame.
-            let interpreter_input = InputsImpl {
-                target_address: inputs.target_address,
-                caller_address: inputs.caller,
-                input: inputs.input.clone(),
-                call_value: inputs.value.get(),
-            };
-
-            Ok(FrameOrResultGen::Frame(Self::new(
-                FrameData::Call(CallFrame {
-                    return_memory_range: inputs.return_memory_offset.clone(),
-                }),
-                depth,
-                Interpreter::new(
-                    memory.clone(),
-                    ExtBytecode::new_with_hash(bytecode, code_hash),
-                    interpreter_input,
-                    inputs.is_static,
-                    false,
-                    context.cfg().spec().into(),
-                    inputs.gas_limit,
-                ),
-                checkpoint,
-                precompile,
-                instructions,
-                memory,
-            )))
         }
+
+        let account = context
+            .journal()
+            .load_account_code(inputs.bytecode_address)?;
+
+        let mut code_hash = account.info.code_hash();
+        let mut bytecode = account.info.code.clone().unwrap_or_default();
+
+        // ExtDelegateCall is not allowed to call non-EOF contracts.
+        if is_ext_delegate_call && !bytecode.bytes_slice().starts_with(&EOF_MAGIC_BYTES) {
+            return return_result(InstructionResult::InvalidExtDelegateCallTarget);
+        }
+
+        if bytecode.is_empty() {
+            context.journal().checkpoint_commit();
+            return return_result(InstructionResult::Stop);
+        }
+
+        if let Bytecode::Eip7702(eip7702_bytecode) = bytecode {
+            let account = &context
+                .journal()
+                .load_account_code(eip7702_bytecode.delegated_address)?
+                .info;
+            bytecode = account.code.clone().unwrap_or_default();
+            code_hash = account.code_hash();
+        }
+
+        // Create interpreter and executes call and push new CallStackFrame.
+        let interpreter_input = InputsImpl {
+            target_address: inputs.target_address,
+            caller_address: inputs.caller,
+            input: inputs.input.clone(),
+            call_value: inputs.value.get(),
+        };
+
+        Ok(FrameOrResultGen::Frame(Self::new(
+            FrameData::Call(CallFrame {
+                return_memory_range: inputs.return_memory_offset.clone(),
+            }),
+            depth,
+            Interpreter::new(
+                memory.clone(),
+                ExtBytecode::new_with_hash(bytecode, code_hash),
+                interpreter_input,
+                inputs.is_static,
+                false,
+                context.cfg().spec().into(),
+                inputs.gas_limit,
+            ),
+            checkpoint,
+            precompile,
+            instructions,
+            memory,
+        )))
     }
 
     /// Make create frame.
