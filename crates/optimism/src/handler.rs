@@ -23,8 +23,8 @@ use revm::{
         EthValidation, EthValidationContext, EthValidationError, FrameResult,
     },
     handler_interface::{
-        util::FrameOrFrameResult, ExecutionHandler, Frame, PostExecutionHandler,
-        PreExecutionHandler, ValidationHandler,
+        util::FrameOrFrameResult, ExecutionHandler, Frame, InitialAndFloorGas,
+        PostExecutionHandler, PreExecutionHandler, ValidationHandler,
     },
     interpreter::{
         interpreter::{EthInstructionProvider, EthInterpreter},
@@ -87,7 +87,10 @@ where
     }
 
     /// Validate initial gas.
-    fn validate_initial_tx_gas(&self, context: &Self::Context) -> Result<u64, Self::Error> {
+    fn validate_initial_tx_gas(
+        &self,
+        context: &Self::Context,
+    ) -> Result<InitialAndFloorGas, Self::Error> {
         self.eth.validate_initial_tx_gas(context)
     }
 }
@@ -294,6 +297,16 @@ where
     type Error = ERROR;
     type ExecResult = FrameResult;
     type Output = ResultAndState<OptimismHaltReason>;
+
+    fn eip7623_check_gas_floor(
+        &self,
+        context: &mut Self::Context,
+        exec_result: &mut Self::ExecResult,
+        init_and_floor_gas: InitialAndFloorGas,
+    ) {
+        self.eth
+            .eip7623_check_gas_floor(context, exec_result, init_and_floor_gas);
+    }
 
     fn refund(
         &self,

@@ -6,7 +6,7 @@ use revm::{
         result::InvalidTransaction, Journal, Transaction, TransactionGetter, TransactionType,
     },
     handler::{EthValidation, EthValidationContext, EthValidationError},
-    handler_interface::ValidationHandler,
+    handler_interface::{InitialAndFloorGas, ValidationHandler},
     primitives::{keccak256, U256},
 };
 use std::cmp::Ordering;
@@ -97,7 +97,10 @@ where
         Ok(())
     }
 
-    fn validate_initial_tx_gas(&self, context: &Self::Context) -> Result<u64, Self::Error> {
+    fn validate_initial_tx_gas(
+        &self,
+        context: &Self::Context,
+    ) -> Result<InitialAndFloorGas, Self::Error> {
         self.inner.validate_initial_tx_gas(context)
     }
 }

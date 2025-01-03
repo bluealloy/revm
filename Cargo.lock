@@ -3161,7 +3161,6 @@ name = "revm-handler-interface"
 version = "1.0.0"
 dependencies = [
  "revm-database",
- "revm-interpreter",
  "revm-primitives",
 ]
 
@@ -3184,6 +3183,7 @@ dependencies = [
  "revm-bytecode",
  "revm-context-interface",
  "revm-database-interface",
+ "revm-handler-interface",
  "revm-primitives",
  "revm-specification",
  "serde",

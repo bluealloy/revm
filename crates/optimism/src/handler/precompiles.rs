@@ -3,7 +3,8 @@ use once_cell::race::OnceBox;
 use precompile::{secp256r1, PrecompileErrors, Precompiles};
 use revm::{
     context::Cfg, context_interface::CfgGetter, handler::EthPrecompileProvider,
-    handler_interface::PrecompileProvider, specification::hardfork::SpecId,
+    handler_interface::PrecompileProvider, interpreter::InterpreterResult,
+    specification::hardfork::SpecId,
 };
 use std::boxed::Box;
 
@@ -60,6 +61,7 @@ where
 {
     type Context = CTX;
     type Error = ERROR;
+    type Output = InterpreterResult;
 
     #[inline]
     fn new(context: &mut Self::Context) -> Self {
@@ -107,7 +109,7 @@ where
         address: &precompile::Address,
         bytes: &precompile::Bytes,
         gas_limit: u64,
-    ) -> Result<Option<revm::interpreter::InterpreterResult>, Self::Error> {
+    ) -> Result<Option<Self::Output>, Self::Error> {
         self.precompile_provider
             .run(context, address, bytes, gas_limit)
     }

@@ -6,7 +6,7 @@ use revm::{
         Block, JournalDBError, Transaction, TransactionGetter,
     },
     handler::{EthPostExecution, EthPostExecutionContext, EthPostExecutionError, FrameResult},
-    handler_interface::PostExecutionHandler,
+    handler_interface::{InitialAndFloorGas, PostExecutionHandler},
     precompile::PrecompileErrors,
     primitives::U256,
     specification::hardfork::SpecId,
@@ -44,6 +44,16 @@ where
     type Error = ERROR;
     type ExecResult = FrameResult;
     type Output = ResultAndState<HALTREASON>;
+
+    fn eip7623_check_gas_floor(
+        &self,
+        context: &mut Self::Context,
+        exec_result: &mut Self::ExecResult,
+        init_and_floor_gas: InitialAndFloorGas,
+    ) {
+        self.inner
+            .eip7623_check_gas_floor(context, exec_result, init_and_floor_gas)
+    }
 
     fn refund(
         &self,

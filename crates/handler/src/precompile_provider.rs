@@ -26,6 +26,7 @@ where
 {
     type Context = CTX;
     type Error = ERROR;
+    type Output = InterpreterResult;
 
     fn new(context: &mut Self::Context) -> Self {
         let spec = context.cfg().spec().into();

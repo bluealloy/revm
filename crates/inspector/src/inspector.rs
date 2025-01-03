@@ -20,7 +20,7 @@ use revm::{
         interpreter_types::{Jumps, LoopControl},
         table::CustomInstruction,
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
-        Instruction, InstructionResult, Interpreter, InterpreterTypes,
+        Instruction, InstructionResult, Interpreter, InterpreterResult, InterpreterTypes,
     },
     precompile::PrecompileErrors,
     primitives::{Address, Log, U256},
@@ -254,7 +254,7 @@ where
         + Host
         + InspectorCtx<IT = EthInterpreter>,
     ERROR: From<JournalDBError<CTX>> + From<PrecompileErrors>,
-    PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR>,
+    PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR, Output = InterpreterResult>,
 {
     type Context = CTX;
     type Error = ERROR;
