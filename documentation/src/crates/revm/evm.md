@@ -6,7 +6,7 @@
 
 It is consisting of two main parts the `Context` and the `Handler`. `Context` represent the state that is needed for execution and `Handler` contains list of functions that act as a logic.
 
-`Context` is additionally split between `EvmContext` and `External` context. `EvmContext` is internal and contains `Database`, `Environment`, `JournaledState` and `Precompiles`. And `External` context is fully generic without any trait restrains and its purpose is to allow custom handlers to save state in runtime or allows hooks to be added (For example external contexts can be a Inspector), more on its usage can be seen in [`EvmBuilder`](./builder.md).
+`Context` is additionally split between `EvmContext` and `External` context. `EvmContext` is internal and contains `Database`, `Environment`, `JournaledState` and `Precompiles`. And `External` context is fully generic without any trait restrains and its purpose is to allow custom handlers to save state in runtime or allows hooks to be added (For example external contexts can be an Inspector), more on its usage can be seen in [`EvmBuilder`](./builder.md).
 
 `Evm` implements the [`Host`](./../interpreter/host.md) trait, which defines an interface for the interaction of the EVM Interpreter with its environment (or "host"), encompassing essential operations such as account and storage access, creating logs, and invoking sub calls and selfdestruct.
 
