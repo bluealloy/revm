@@ -60,14 +60,6 @@ where
 
         // Load access list
         context.load_access_list()?;
-        // if let Some(access_list) = context.tx().access_list().cloned() {
-        //     for access_list in access_list.iter() {
-        //         context.journal().warm_account_and_storage(
-        //             access_list.0,
-        //             access_list.1.map(|i| U256::from_be_bytes(i.0)),
-        //         )?;
-        //     }
-        // };
 
         Ok(())
     }
