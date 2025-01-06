@@ -1,8 +1,7 @@
-use revm_interpreter::Gas;
-
 use crate::optimism::fast_lz::flz_compress_len;
 use crate::primitives::{address, db::Database, Address, SpecId, U256};
 use core::ops::Mul;
+use revm_interpreter::Gas;
 
 const ZERO_BYTE_COST: u64 = 4;
 const NON_ZERO_BYTE_COST: u64 = 16;

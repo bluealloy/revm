@@ -73,13 +73,14 @@ pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
         return Ok(());
     }
 
-    // the L1-cost fee is only computed for Optimism non-deposit transactions.
-    let l1_block_info =
-        crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.inner.db, SPEC::SPEC_ID)
-            .map_err(EVMError::Database)?;
-
-    // storage l1 block info for later use.
-    context.evm.inner.l1_block_info = Some(l1_block_info);
+    // storage l1 block info for later use. l1_block_info is cleared after execution.
+    if context.evm.inner.l1_block_info.is_none() {
+        // the L1-cost fee is only computed for Optimism non-deposit transactions.
+        let l1_block_info =
+            crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.inner.db, SPEC::SPEC_ID)
+                .map_err(EVMError::Database)?;
+        context.evm.inner.l1_block_info = Some(l1_block_info);
+    }
 
     let env @ Env { cfg, tx, .. } = context.evm.inner.env.as_ref();
 
@@ -546,9 +547,7 @@ pub fn end<SPEC: Spec, EXT, DB: Database>(
 pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
     // clear error and journaled state.
     mainnet::clear(context);
-    if let Some(l1_block) = &mut context.evm.inner.l1_block_info {
-        l1_block.clear_tx_l1_cost();
-    }
+    context.evm.inner.l1_block_info = None;
 }
 
 #[cfg(test)]
