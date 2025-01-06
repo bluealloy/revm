@@ -14,10 +14,9 @@ use crate::{
     },
     Context, ContextPrecompiles, FrameResult,
 };
-use core::ops::Mul;
+use core::{cmp::Ordering, ops::Mul};
 use revm_precompile::PrecompileSpecId;
-use std::string::ToString;
-use std::sync::Arc;
+use std::{boxed::Box, string::ToString, sync::Arc};
 
 use super::l1block::OPERATOR_FEE_RECIPIENT;
 
@@ -41,6 +40,7 @@ pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, 
         // In case of halt of deposit transaction return Error.
         handler.post_execution.output = Arc::new(output::<SPEC, EXT, DB>);
         handler.post_execution.end = Arc::new(end::<SPEC, EXT, DB>);
+        handler.post_execution.clear = Arc::new(clear::<EXT, DB>);
     });
 }
 
@@ -70,10 +70,113 @@ pub fn validate_env<SPEC: Spec, DB: Database>(env: &Env) -> Result<(), EVMError<
 pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<(), EVMError<DB::Error>> {
-    if context.evm.inner.env.tx.optimism.source_hash.is_some() {
+    let env @ Env { cfg, tx, .. } = context.evm.inner.env.as_ref();
+
+    // No validation is needed for deposit transactions, as they are pre-verified on L1.
+    if tx.optimism.source_hash.is_some() {
         return Ok(());
     }
-    mainnet::validate_tx_against_state::<SPEC, EXT, DB>(context)
+
+    // load acc
+    let tx_caller = tx.caller;
+    let account = context
+        .evm
+        .inner
+        .journaled_state
+        .load_code(tx_caller, &mut context.evm.inner.db)?
+        .data;
+
+    // EIP-3607: Reject transactions from senders with deployed code
+    // This EIP is introduced after london but there was no collision in past
+    // so we can leave it enabled always
+    if !cfg.is_eip3607_disabled() {
+        let bytecode = &account.info.code.as_ref().unwrap();
+        // allow EOAs whose code is a valid delegation designation,
+        // i.e. 0xef0100 || address, to continue to originate transactions.
+        if !bytecode.is_empty() && !bytecode.is_eip7702() {
+            return Err(EVMError::Transaction(
+                InvalidTransaction::RejectCallerWithCode,
+            ));
+        }
+    }
+
+    // Check that the transaction's nonce is correct
+    if let Some(tx) = tx.nonce {
+        let state = account.info.nonce;
+        match tx.cmp(&state) {
+            Ordering::Greater => {
+                return Err(EVMError::Transaction(InvalidTransaction::NonceTooHigh {
+                    tx,
+                    state,
+                }));
+            }
+            Ordering::Less => {
+                return Err(EVMError::Transaction(InvalidTransaction::NonceTooLow {
+                    tx,
+                    state,
+                }));
+            }
+            _ => {}
+        }
+    }
+
+    // get envelope
+    let Some(enveloped_tx) = &tx.optimism.enveloped_tx else {
+        return Err(EVMError::Custom(
+            "[OPTIMISM] Failed to load enveloped transaction.".to_string(),
+        ));
+    };
+
+    // compute L1 cost
+    let tx_l1_cost = context
+        .evm
+        .inner
+        .l1_block_info
+        .as_mut()
+        .expect("L1BlockInfo should be loaded")
+        .calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
+
+    let gas_limit = U256::from(tx.gas_limit);
+    let operator_fee_charge = context
+        .evm
+        .inner
+        .l1_block_info
+        .as_ref()
+        .expect("L1BlockInfo should be loaded")
+        .operator_fee_charge(gas_limit, SPEC::SPEC_ID);
+
+    let mut balance_check = gas_limit
+        .checked_mul(tx.gas_price)
+        .and_then(|gas_cost| gas_cost.checked_add(tx.value))
+        .and_then(|total_cost| total_cost.checked_add(tx_l1_cost))
+        .and_then(|total_cost| total_cost.checked_add(operator_fee_charge))
+        .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+
+    if SPEC::enabled(SpecId::CANCUN) {
+        // if the tx is not a blob tx, this will be None, so we add zero
+        let data_fee = env.calc_max_data_fee().unwrap_or_default();
+        balance_check = balance_check
+            .checked_add(U256::from(data_fee))
+            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+    }
+
+    // Check if account has enough balance for gas_limit*gas_price and value transfer.
+    // Transfer will be done inside `*_inner` functions.
+    if balance_check > account.info.balance {
+        if cfg.is_balance_check_disabled() {
+            // Add transaction cost to balance to ensure execution doesn't fail.
+            account.info.balance = balance_check;
+        } else {
+            return Err(EVMError::Transaction(
+                InvalidTransaction::LackOfFundForMaxFee {
+                    fee: Box::new(balance_check),
+                    balance: Box::new(account.info.balance),
+                },
+            ));
+        }
+    }
+
+    Ok(())
 }
 
 /// Handle output of the transaction
@@ -266,17 +369,9 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
             .evm
             .inner
             .l1_block_info
-            .as_ref()
+            .as_mut()
             .expect("L1BlockInfo should be loaded")
             .calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
-        if tx_l1_cost.gt(&caller_account.info.balance) {
-            return Err(EVMError::Transaction(
-                InvalidTransaction::LackOfFundForMaxFee {
-                    fee: tx_l1_cost.into(),
-                    balance: caller_account.info.balance.into(),
-                },
-            ));
-        }
         caller_account.info.balance = caller_account.info.balance.saturating_sub(tx_l1_cost);
 
         // Deduct the operator fee from the caller's account.
@@ -314,7 +409,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
     if !is_deposit {
         // If the transaction is not a deposit transaction, fees are paid out
         // to both the Base Fee Vault as well as the L1 Fee Vault.
-        let Some(l1_block_info) = &context.evm.inner.l1_block_info else {
+        let Some(l1_block_info) = &mut context.evm.inner.l1_block_info else {
             return Err(EVMError::Custom(
                 "[OPTIMISM] Failed to load L1 block information.".to_string(),
             ));
@@ -457,6 +552,16 @@ pub fn end<SPEC: Spec, EXT, DB: Database>(
             Err(err)
         }
     })
+}
+
+/// Clears cache OP l1 value.
+#[inline]
+pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
+    // clear error and journaled state.
+    mainnet::clear(context);
+    if let Some(l1_block) = &mut context.evm.inner.l1_block_info {
+        l1_block.clear_tx_l1_cost();
+    }
 }
 
 #[cfg(test)]
@@ -714,7 +819,7 @@ mod tests {
         context.evm.inner.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
 
         assert_eq!(
-            deduct_caller::<RegolithSpec, (), _>(&mut context),
+            validate_tx_against_state::<RegolithSpec, (), _>(&mut context),
             Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
                     fee: Box::new(U256::from(1048)),

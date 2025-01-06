@@ -94,6 +94,8 @@ pub struct L1BlockInfo {
     pub operator_fee_constant: Option<U256>,
     /// True if Ecotone is activated, but the L1 fee scalars have not yet been set.
     pub(crate) empty_ecotone_scalars: bool,
+    /// Last calculated l1 fee cost. Uses as a cache between validation and pre execution stages.
+    pub tx_l1_cost: Option<U256>,
 }
 
 impl L1BlockInfo {
@@ -169,6 +171,7 @@ impl L1BlockInfo {
                     l1_fee_overhead,
                     operator_fee_scalar: Some(operator_fee_scalar),
                     operator_fee_constant: Some(operator_fee_constant),
+                    tx_l1_cost: None,
                 })
             } else {
                 // Pre-isthmus L1 block info
@@ -269,20 +272,30 @@ impl L1BlockInfo {
         )
     }
 
-    /// Calculate the gas cost of a transaction based on L1 block data posted on L2, depending on the [SpecId] passed.
-    pub fn calculate_tx_l1_cost(&self, input: &[u8], spec_id: SpecId) -> U256 {
-        // If the input is a deposit transaction or empty, the default value is zero.
-        if input.is_empty() || input.first() == Some(&0x7F) {
-            return U256::ZERO;
-        }
+    /// Clears the cached L1 cost of the transaction.
+    pub fn clear_tx_l1_cost(&mut self) {
+        self.tx_l1_cost = None;
+    }
 
-        if spec_id.is_enabled_in(SpecId::FJORD) {
+    /// Calculate the gas cost of a transaction based on L1 block data posted on L2, depending on the [SpecId] passed.
+    /// And cache the result for future use.
+    pub fn calculate_tx_l1_cost(&mut self, input: &[u8], spec_id: SpecId) -> U256 {
+        if let Some(tx_l1_cost) = self.tx_l1_cost {
+            return tx_l1_cost;
+        }
+        // If the input is a deposit transaction or empty, the default value is zero.
+        let tx_l1_cost = if input.is_empty() || input.first() == Some(&0x7F) {
+            return U256::ZERO;
+        } else if spec_id.is_enabled_in(SpecId::FJORD) {
             self.calculate_tx_l1_cost_fjord(input)
         } else if spec_id.is_enabled_in(SpecId::ECOTONE) {
             self.calculate_tx_l1_cost_ecotone(input, spec_id)
         } else {
             self.calculate_tx_l1_cost_bedrock(input, spec_id)
-        }
+        };
+
+        self.tx_l1_cost = Some(tx_l1_cost);
+        tx_l1_cost
     }
 
     /// Calculate the gas cost of a transaction based on L1 block data posted on L2, pre-Ecotone.
@@ -416,7 +429,7 @@ mod tests {
 
     #[test]
     fn test_calculate_tx_l1_cost() {
-        let l1_block_info = L1BlockInfo {
+        let mut l1_block_info = L1BlockInfo {
             l1_base_fee: U256::from(1_000),
             l1_fee_overhead: Some(U256::from(1_000)),
             l1_base_fee_scalar: U256::from(1_000),
@@ -426,16 +439,19 @@ mod tests {
         let input = bytes!("FACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::REGOLITH);
         assert_eq!(gas_cost, U256::from(1048));
+        l1_block_info.clear_tx_l1_cost();
 
         // Zero rollup data gas cost should result in zero
         let input = bytes!("");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::REGOLITH);
         assert_eq!(gas_cost, U256::ZERO);
+        l1_block_info.clear_tx_l1_cost();
 
         // Deposit transactions with the EIP-2718 type of 0x7F should result in zero
         let input = bytes!("7FFACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::REGOLITH);
         assert_eq!(gas_cost, U256::ZERO);
+        l1_block_info.clear_tx_l1_cost();
     }
 
     #[test]
@@ -455,16 +471,19 @@ mod tests {
         let input = bytes!("FACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
         assert_eq!(gas_cost, U256::from(51));
+        l1_block_info.clear_tx_l1_cost();
 
         // Zero rollup data gas cost should result in zero
         let input = bytes!("");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
         assert_eq!(gas_cost, U256::ZERO);
+        l1_block_info.clear_tx_l1_cost();
 
         // Deposit transactions with the EIP-2718 type of 0x7F should result in zero
         let input = bytes!("7FFACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
         assert_eq!(gas_cost, U256::ZERO);
+        l1_block_info.clear_tx_l1_cost();
 
         // If the scalars are empty, the bedrock cost function should be used.
         l1_block_info.empty_ecotone_scalars = true;
@@ -478,7 +497,7 @@ mod tests {
         // l1FeeScaled = baseFeeScalar*l1BaseFee*16 + blobFeeScalar*l1BlobBaseFee
         //             = 1000 * 1000 * 16 + 1000 * 1000
         //             = 17e6
-        let l1_block_info = L1BlockInfo {
+        let mut l1_block_info = L1BlockInfo {
             l1_base_fee: U256::from(1_000),
             l1_base_fee_scalar: U256::from(1_000),
             l1_blob_base_fee: Some(U256::from(1_000)),
@@ -496,6 +515,7 @@ mod tests {
         //        = 1700
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::FJORD);
         assert_eq!(gas_cost, U256::from(1700));
+        l1_block_info.clear_tx_l1_cost();
 
         // fastLzSize = 202
         // estimatedSize = max(minTransactionSize, intercept + fastlzCoef*fastlzSize)
@@ -507,11 +527,13 @@ mod tests {
         //        = 2148
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::FJORD);
         assert_eq!(gas_cost, U256::from(2148));
+        l1_block_info.clear_tx_l1_cost();
 
         // Zero rollup data gas cost should result in zero
         let input = bytes!("");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::FJORD);
         assert_eq!(gas_cost, U256::ZERO);
+        l1_block_info.clear_tx_l1_cost();
 
         // Deposit transactions with the EIP-2718 type of 0x7F should result in zero
         let input = bytes!("7FFACADE");
