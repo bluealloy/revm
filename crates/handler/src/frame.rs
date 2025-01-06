@@ -75,7 +75,7 @@ impl<CTX, ERROR, PRECOMPILE, INSTRUCTION>
 where
     CTX: EthFrameContext,
     ERROR: EthFrameError<CTX>,
-    PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR>,
+    PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR, Output = InterpreterResult>,
 {
     /// Make call frame
     #[inline]
@@ -456,7 +456,7 @@ impl<CTX, ERROR, PRECOMPILE, INSTRUCTION> Frame
 where
     CTX: EthFrameContext,
     ERROR: EthFrameError<CTX>,
-    PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR>,
+    PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR, Output = InterpreterResult>,
     INSTRUCTION: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
 {
     type Context = CTX;

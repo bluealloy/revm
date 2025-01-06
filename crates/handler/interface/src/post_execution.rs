@@ -1,8 +1,18 @@
+use crate::InitialAndFloorGas;
+
 pub trait PostExecutionHandler {
     type Context;
     type Error;
     type ExecResult;
     type Output;
+
+    /// Calculate final refund.
+    fn eip7623_check_gas_floor(
+        &self,
+        context: &mut Self::Context,
+        exec_result: &mut Self::ExecResult,
+        init_and_floor_gas: InitialAndFloorGas,
+    );
 
     /// Calculate final refund.
     fn refund(

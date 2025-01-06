@@ -21,4 +21,4 @@ pub use post_execution::PostExecutionHandler;
 pub use pre_execution::PreExecutionHandler;
 pub use precompile_provider::PrecompileProvider;
 pub use util::FrameOrResultGen;
-pub use validation::ValidationHandler;
+pub use validation::{InitialAndFloorGas, ValidationHandler};

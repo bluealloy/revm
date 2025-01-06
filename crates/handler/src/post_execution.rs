@@ -45,6 +45,18 @@ where
     type ExecResult = FrameResult;
     type Output = ResultAndState<HALTREASON>;
 
+    fn eip7623_check_gas_floor(
+        &self,
+        _context: &mut Self::Context,
+        exec_result: &mut Self::ExecResult,
+        init_and_floor_gas: handler_interface::InitialAndFloorGas,
+    ) {
+        let gas_result = exec_result.gas_mut();
+        if gas_result.spent() < init_and_floor_gas.floor_gas {
+            let _ = gas_result.record_cost(init_and_floor_gas.floor_gas - gas_result.spent());
+        }
+    }
+
     fn refund(
         &self,
         context: &mut Self::Context,

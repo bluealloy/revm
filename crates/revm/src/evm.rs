@@ -15,8 +15,8 @@ use context_interface::{
 use database_interface::{Database, DatabaseCommit};
 use handler::{EthHandler, FrameResult};
 use handler_interface::{
-    ExecutionHandler, Frame, FrameOrResultGen, Handler, PostExecutionHandler, PreExecutionHandler,
-    ValidationHandler,
+    ExecutionHandler, Frame, FrameOrResultGen, Handler, InitialAndFloorGas, PostExecutionHandler,
+    PreExecutionHandler, ValidationHandler,
 };
 use interpreter::Host;
 use precompile::PrecompileErrors;
@@ -206,15 +206,18 @@ where
             .inspect_err(|_| {
                 self.clear();
             })?;
-        let output = self.transact_preverified_inner(initial_gas_spend);
-        let output = self.handler.post_execution().end(&mut self.context, output);
+        let init_and_floor_gas = self.transact_preverified_inner(initial_gas_spend);
+        let output = self
+            .handler
+            .post_execution()
+            .end(&mut self.context, init_and_floor_gas);
         self.clear();
         output
     }
 
     /// Pre verify transaction inner.
     #[inline]
-    fn preverify_transaction_inner(&mut self) -> Result<u64, ERROR> {
+    fn preverify_transaction_inner(&mut self) -> Result<InitialAndFloorGas, ERROR> {
         self.handler.validation().validate_env(&self.context)?;
         let initial_gas_spend = self
             .handler
@@ -235,8 +238,11 @@ where
             self.clear();
         })?;
 
-        let output = self.transact_preverified_inner(initial_gas_spend);
-        let output = self.handler.post_execution().end(&mut self.context, output);
+        let init_and_floor_gas = self.transact_preverified_inner(initial_gas_spend);
+        let output = self
+            .handler
+            .post_execution()
+            .end(&mut self.context, init_and_floor_gas);
         self.clear();
         output
     }
@@ -244,7 +250,7 @@ where
     /// Transact pre-verified transaction.
     fn transact_preverified_inner(
         &mut self,
-        initial_gas_spend: u64,
+        init_and_floor_gas: InitialAndFloorGas,
     ) -> Result<<POSTEXEC as PostExecutionHandler>::Output, ERROR> {
         let context = &mut self.context;
         let pre_exec = self.handler.pre_execution();
@@ -255,7 +261,7 @@ where
         // Deduce caller balance with its limit.
         pre_exec.deduct_caller(context)?;
 
-        let gas_limit = context.tx().gas_limit() - initial_gas_spend;
+        let gas_limit = context.tx().gas_limit() - init_and_floor_gas.initial_gas;
 
         // Apply EIP-7702 auth list.
         let eip7702_gas_refund = pre_exec.apply_eip7702_auth_list(context)? as i64;
@@ -275,6 +281,8 @@ where
         let mut exec_result = exec.last_frame_result(context, frame_result)?;
 
         let post_exec = self.handler.post_execution();
+        // Check gas floor
+        post_exec.eip7623_check_gas_floor(context, &mut exec_result, init_and_floor_gas);
         // Calculate final refund and add EIP-7702 refund to gas.
         post_exec.refund(context, &mut exec_result, eip7702_gas_refund);
         // Reimburse the caller
