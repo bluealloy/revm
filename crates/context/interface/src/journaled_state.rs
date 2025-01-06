@@ -97,7 +97,7 @@ pub trait Journal {
     fn load_account_delegated(
         &mut self,
         address: Address,
-    ) -> Result<AccountLoad, <Self::Database as Database>::Error>;
+    ) -> Result<StateLoad<AccountLoad>, <Self::Database as Database>::Error>;
 
     /// Sets bytecode with hash. Assume that account is warm.
     fn set_code_with_hash(&mut self, address: Address, code: Bytecode, hash: B256);
@@ -200,94 +200,10 @@ impl<T> StateLoad<T> {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountLoad {
-    /// Is account and delegate code are loaded
-    pub load: Eip7702CodeLoad<()>,
-    /// Is account empty, if true account is not created
-    pub is_empty: bool,
-}
-
-impl Deref for AccountLoad {
-    type Target = Eip7702CodeLoad<()>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.load
-    }
-}
-
-impl DerefMut for AccountLoad {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.load
-    }
-}
-
-/// EIP-7702 code load result that contains optional delegation is_cold information
-///
-/// [`is_delegate_account_cold`][Self::is_delegate_account_cold] will be [`Some`] if account has delegation.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Eip7702CodeLoad<T> {
-    /// Returned data
-    pub state_load: StateLoad<T>,
     /// Does account have delegate code and delegated account is cold loaded
     pub is_delegate_account_cold: Option<bool>,
-}
-
-impl<T> Deref for Eip7702CodeLoad<T> {
-    type Target = StateLoad<T>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.state_load
-    }
-}
-
-impl<T> DerefMut for Eip7702CodeLoad<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.state_load
-    }
-}
-
-impl<T> Eip7702CodeLoad<T> {
-    /// Returns a new [`Eip7702CodeLoad`] with the given data and without delegation.
-    pub fn new_state_load(state_load: StateLoad<T>) -> Self {
-        Self {
-            state_load,
-            is_delegate_account_cold: None,
-        }
-    }
-
-    /// Returns a new [`Eip7702CodeLoad`] with the given data and without delegation.
-    pub fn new_not_delegated(data: T, is_cold: bool) -> Self {
-        Self {
-            state_load: StateLoad::new(data, is_cold),
-            is_delegate_account_cold: None,
-        }
-    }
-
-    /// Deconstructs the [`Eip7702CodeLoad`] by extracting data and
-    /// returning a new [`Eip7702CodeLoad`] with empty data.
-    pub fn into_components(self) -> (T, Eip7702CodeLoad<()>) {
-        let is_cold = self.is_cold;
-        (
-            self.state_load.data,
-            Eip7702CodeLoad {
-                state_load: StateLoad::new((), is_cold),
-                is_delegate_account_cold: self.is_delegate_account_cold,
-            },
-        )
-    }
-
-    /// Sets the delegation cold load status.
-    pub fn set_delegate_load(&mut self, is_delegate_account_cold: bool) {
-        self.is_delegate_account_cold = Some(is_delegate_account_cold);
-    }
-
-    /// Returns a new [`Eip7702CodeLoad`] with the given data and delegation cold load status.
-    pub fn new(state_load: StateLoad<T>, is_delegate_account_cold: bool) -> Self {
-        Self {
-            state_load,
-            is_delegate_account_cold: Some(is_delegate_account_cold),
-        }
-    }
+    /// Is account empty, if `true` account is not created
+    pub is_empty: bool,
 }
 
 /// Helper that extracts database error from [`JournalGetter`].

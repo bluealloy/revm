@@ -3,10 +3,7 @@ mod dummy;
 pub use crate::journaled_state::StateLoad;
 pub use dummy::DummyHost;
 
-use crate::{
-    journaled_state::{AccountLoad, Eip7702CodeLoad},
-    BlockGetter, CfgGetter, TransactionGetter,
-};
+use crate::{journaled_state::AccountLoad, BlockGetter, CfgGetter, TransactionGetter};
 use auto_impl::auto_impl;
 use primitives::{Address, Bytes, Log, B256, U256};
 
@@ -15,7 +12,7 @@ use primitives::{Address, Bytes, Log, B256, U256};
 #[auto_impl(&mut, Box)]
 pub trait Host: TransactionGetter + BlockGetter + CfgGetter {
     /// Load an account code.
-    fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad>;
+    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>>;
 
     /// Gets the block hash of the given block `number`.
     fn block_hash(&mut self, number: u64) -> Option<B256>;
@@ -24,10 +21,10 @@ pub trait Host: TransactionGetter + BlockGetter + CfgGetter {
     fn balance(&mut self, address: Address) -> Option<StateLoad<U256>>;
 
     /// Gets code of `address` and if the account is cold.
-    fn code(&mut self, address: Address) -> Option<Eip7702CodeLoad<Bytes>>;
+    fn code(&mut self, address: Address) -> Option<StateLoad<Bytes>>;
 
     /// Gets code hash of `address` and if the account is cold.
-    fn code_hash(&mut self, address: Address) -> Option<Eip7702CodeLoad<B256>>;
+    fn code_hash(&mut self, address: Address) -> Option<StateLoad<B256>>;
 
     /// Gets storage value of `address` at `index` and if the account is cold.
     fn sload(&mut self, address: Address, index: U256) -> Option<StateLoad<U256>>;

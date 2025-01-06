@@ -1,7 +1,5 @@
 use bytecode::Bytecode;
-use context_interface::journaled_state::{
-    AccountLoad, Eip7702CodeLoad, Journal, JournalCheckpoint, TransferError,
-};
+use context_interface::journaled_state::{AccountLoad, Journal, JournalCheckpoint, TransferError};
 use database_interface::Database;
 use interpreter::{SStoreResult, SelfDestructResult, StateLoad};
 use primitives::{
@@ -173,7 +171,10 @@ impl<DB: Database> Journal for JournaledState<DB> {
         self.load_code(address)
     }
 
-    fn load_account_delegated(&mut self, address: Address) -> Result<AccountLoad, DB::Error> {
+    fn load_account_delegated(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         self.load_account_delegated(address)
     }
 
@@ -747,22 +748,27 @@ impl<DB: Database> JournaledState<DB> {
     }
 
     #[inline]
-    pub fn load_account_delegated(&mut self, address: Address) -> Result<AccountLoad, DB::Error> {
+    pub fn load_account_delegated(
+        &mut self,
+        address: Address,
+    ) -> Result<StateLoad<AccountLoad>, DB::Error> {
         let spec = self.spec;
         let account = self.load_code(address)?;
         let is_empty = account.state_clear_aware_is_empty(spec);
 
-        let mut account_load = AccountLoad {
-            is_empty,
-            load: Eip7702CodeLoad::new_not_delegated((), account.is_cold),
-        };
+        let mut account_load = StateLoad::new(
+            AccountLoad {
+                is_delegate_account_cold: None,
+                is_empty,
+            },
+            account.is_cold,
+        );
+
         // load delegate code if account is EIP-7702
         if let Some(Bytecode::Eip7702(code)) = &account.info.code {
             let address = code.address();
             let delegate_account = self.load_account(address)?;
-            account_load
-                .load
-                .set_delegate_load(delegate_account.is_cold);
+            account_load.data.is_delegate_account_cold = Some(delegate_account.is_cold);
         }
 
         Ok(account_load)

@@ -1,6 +1,6 @@
 use crate::{
-    gas::{self, warm_cold_cost, warm_cold_cost_with_delegation, CALL_STIPEND},
-    instructions::utility::IntoAddress,
+    gas::{self, warm_cold_cost, CALL_STIPEND},
+    instructions::utility::{IntoAddress, IntoU256},
     interpreter::Interpreter,
     interpreter_types::{
         InputsTrait, InterpreterTypes, LoopControl, MemoryTrait, RuntimeFlag, StackTrait,
@@ -68,10 +68,9 @@ pub fn extcodesize<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
-    let (code, load) = code.into_components();
     let spec_id = interpreter.runtime_flag.spec_id();
     if spec_id.is_enabled_in(BERLIN) {
-        gas!(interpreter, warm_cold_cost_with_delegation(load));
+        gas!(interpreter, warm_cold_cost(code.is_cold));
     } else if spec_id.is_enabled_in(TANGERINE) {
         gas!(interpreter, 700);
     } else {
@@ -95,16 +94,15 @@ pub fn extcodehash<WIRE: InterpreterTypes, H: Host + ?Sized>(
             .set_instruction_result(InstructionResult::FatalExternalError);
         return;
     };
-    let (code_hash, load) = code_hash.into_components();
     let spec_id = interpreter.runtime_flag.spec_id();
     if spec_id.is_enabled_in(BERLIN) {
-        gas!(interpreter, warm_cold_cost_with_delegation(load))
+        gas!(interpreter, warm_cold_cost(code_hash.is_cold));
     } else if spec_id.is_enabled_in(ISTANBUL) {
         gas!(interpreter, 700);
     } else {
         gas!(interpreter, 400);
     }
-    *top = code_hash.into();
+    *top = code_hash.into_u256();
 }
 
 pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -121,10 +119,9 @@ pub fn extcodecopy<WIRE: InterpreterTypes, H: Host + ?Sized>(
     };
 
     let len = as_usize_or_fail!(interpreter, len_u256);
-    let (code, load) = code.into_components();
     gas_or_fail!(
         interpreter,
-        gas::extcodecopy_cost(interpreter.runtime_flag.spec_id(), len, load)
+        gas::extcodecopy_cost(interpreter.runtime_flag.spec_id(), len, code.is_cold)
     );
     if len == 0 {
         return;

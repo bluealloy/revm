@@ -1,6 +1,6 @@
 use super::constants::*;
 use crate::{num_words, tri, SStoreResult, SelfDestructResult, StateLoad};
-use context_interface::journaled_state::{AccountLoad, Eip7702CodeLoad};
+use context_interface::journaled_state::AccountLoad;
 use handler_interface::InitialAndFloorGas;
 use primitives::U256;
 use specification::{eip7702, hardfork::SpecId};
@@ -113,13 +113,9 @@ pub const fn copy_cost_verylow(len: usize) -> Option<u64> {
 
 /// `EXTCODECOPY` opcode cost calculation.
 #[inline]
-pub const fn extcodecopy_cost(
-    spec_id: SpecId,
-    len: usize,
-    load: Eip7702CodeLoad<()>,
-) -> Option<u64> {
+pub const fn extcodecopy_cost(spec_id: SpecId, len: usize, is_cold: bool) -> Option<u64> {
     let base_gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
-        warm_cold_cost_with_delegation(load)
+        warm_cold_cost(is_cold)
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
         700
     } else {
@@ -283,10 +279,15 @@ pub const fn selfdestruct_cost(spec_id: SpecId, res: StateLoad<SelfDestructResul
 /// [`bytecode::opcode::CALLCODE`] need to have this field hardcoded to false
 /// as they were present before SPURIOUS_DRAGON hardfork.
 #[inline]
-pub const fn call_cost(spec_id: SpecId, transfers_value: bool, account_load: AccountLoad) -> u64 {
+pub const fn call_cost(
+    spec_id: SpecId,
+    transfers_value: bool,
+    account_load: StateLoad<AccountLoad>,
+) -> u64 {
+    let is_empty = account_load.data.is_empty;
     // Account access.
     let mut gas = if spec_id.is_enabled_in(SpecId::BERLIN) {
-        warm_cold_cost_with_delegation(account_load.load)
+        warm_cold_cost_with_delegation(account_load)
     } else if spec_id.is_enabled_in(SpecId::TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         700
@@ -300,7 +301,7 @@ pub const fn call_cost(spec_id: SpecId, transfers_value: bool, account_load: Acc
     }
 
     // New account cost
-    if account_load.is_empty {
+    if is_empty {
         // EIP-161: State trie clearing (invariant-preserving alternative)
         if spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON) {
             // Account only if there is value transferred.
@@ -329,9 +330,9 @@ pub const fn warm_cold_cost(is_cold: bool) -> u64 {
 ///
 /// If delegation is Some, add additional cost for delegation account load.
 #[inline]
-pub const fn warm_cold_cost_with_delegation(load: Eip7702CodeLoad<()>) -> u64 {
-    let mut gas = warm_cold_cost(load.state_load.is_cold);
-    if let Some(is_cold) = load.is_delegate_account_cold {
+pub const fn warm_cold_cost_with_delegation(load: StateLoad<AccountLoad>) -> u64 {
+    let mut gas = warm_cold_cost(load.is_cold);
+    if let Some(is_cold) = load.data.is_delegate_account_cold {
         gas += warm_cold_cost(is_cold);
     }
     gas

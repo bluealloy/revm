@@ -3,7 +3,7 @@ use crate::{Block, BlockGetter, Cfg, CfgGetter, Transaction, TransactionGetter};
 use primitives::{hash_map::Entry, Address, Bytes, HashMap, Log, B256, KECCAK_EMPTY, U256};
 use std::vec::Vec;
 
-use super::{AccountLoad, Eip7702CodeLoad, StateLoad};
+use super::{AccountLoad, StateLoad};
 
 /// A dummy [Host] implementation.
 #[derive(Clone, Debug, Default)]
@@ -74,8 +74,8 @@ impl<BLOCK: Block, TX: Transaction, CFG: Cfg> CfgGetter for DummyHost<BLOCK, TX,
 
 impl<TX: Transaction, BLOCK: Block, CFG: Cfg> Host for DummyHost<BLOCK, TX, CFG> {
     #[inline]
-    fn load_account_delegated(&mut self, _address: Address) -> Option<AccountLoad> {
-        Some(AccountLoad::default())
+    fn load_account_delegated(&mut self, _address: Address) -> Option<StateLoad<AccountLoad>> {
+        Some(StateLoad::new(AccountLoad::default(), false))
     }
 
     #[inline]
@@ -89,13 +89,13 @@ impl<TX: Transaction, BLOCK: Block, CFG: Cfg> Host for DummyHost<BLOCK, TX, CFG>
     }
 
     #[inline]
-    fn code(&mut self, _address: Address) -> Option<Eip7702CodeLoad<Bytes>> {
+    fn code(&mut self, _address: Address) -> Option<StateLoad<Bytes>> {
         Some(Default::default())
     }
 
     #[inline]
-    fn code_hash(&mut self, _address: Address) -> Option<Eip7702CodeLoad<B256>> {
-        Some(Eip7702CodeLoad::new_not_delegated(KECCAK_EMPTY, false))
+    fn code_hash(&mut self, _address: Address) -> Option<StateLoad<B256>> {
+        Some(StateLoad::new(KECCAK_EMPTY, false))
     }
 
     #[inline]
