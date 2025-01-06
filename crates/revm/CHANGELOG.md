@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [19.1.0](https://github.com/bluealloy/revm/compare/revm-v19.0.0...revm-v19.1.0) - 2025-01-06
+
+### Added
+
+- handle isthmus operator fee ([#1960](https://github.com/bluealloy/revm/pull/1960))
+
+### Other
+
+- optimize tx l1 fetches ([#1967](https://github.com/bluealloy/revm/pull/1967))
+
 ## [19.0.0](https://github.com/bluealloy/revm/compare/revm-v18.0.0...revm-v19.0.0) - 2024-12-26
 
 ### Added
