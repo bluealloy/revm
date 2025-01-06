@@ -16,8 +16,7 @@ use crate::{
 };
 use core::{cmp::Ordering, ops::Mul};
 use revm_precompile::PrecompileSpecId;
-use std::string::ToString;
-use std::sync::Arc;
+use std::{boxed::Box, string::ToString, sync::Arc};
 
 use super::l1block::OPERATOR_FEE_RECIPIENT;
 
