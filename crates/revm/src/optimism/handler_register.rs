@@ -28,8 +28,6 @@ pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, 
         handler.validation.tx_against_state = Arc::new(validate_tx_against_state::<SPEC, EXT, DB>);
         // Load additional precompiles for the given chain spec.
         handler.pre_execution.load_precompiles = Arc::new(load_precompiles::<SPEC, EXT, DB>);
-        // load l1 data
-        handler.pre_execution.load_accounts = Arc::new(load_accounts::<SPEC, EXT, DB>);
         // An estimated batch cost is charged from the caller and added to L1 Fee Vault.
         handler.pre_execution.deduct_caller = Arc::new(deduct_caller::<SPEC, EXT, DB>);
         // Refund is calculated differently then mainnet.
@@ -70,12 +68,21 @@ pub fn validate_env<SPEC: Spec, DB: Database>(env: &Env) -> Result<(), EVMError<
 pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<(), EVMError<DB::Error>> {
-    let env @ Env { cfg, tx, .. } = context.evm.inner.env.as_ref();
-
     // No validation is needed for deposit transactions, as they are pre-verified on L1.
-    if tx.optimism.source_hash.is_some() {
+    if context.evm.inner.env.tx.optimism.source_hash.is_some() {
         return Ok(());
     }
+
+    // storage l1 block info for later use. l1_block_info is cleared after execution.
+    if context.evm.inner.l1_block_info.is_none() {
+        // the L1-cost fee is only computed for Optimism non-deposit transactions.
+        let l1_block_info =
+            crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.inner.db, SPEC::SPEC_ID)
+                .map_err(EVMError::Database)?;
+        context.evm.inner.l1_block_info = Some(l1_block_info);
+    }
+
+    let env @ Env { cfg, tx, .. } = context.evm.inner.env.as_ref();
 
     // load acc
     let tx_caller = tx.caller;
@@ -312,25 +319,6 @@ pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> ContextPrecompiles<D
     }
 }
 
-/// Load account (make them warm) and l1 data from database.
-#[inline]
-pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-) -> Result<(), EVMError<DB::Error>> {
-    // the L1-cost fee is only computed for Optimism non-deposit transactions.
-
-    if context.evm.inner.env.tx.optimism.source_hash.is_none() {
-        let l1_block_info =
-            crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.inner.db, SPEC::SPEC_ID)
-                .map_err(EVMError::Database)?;
-
-        // storage l1 block info for later use.
-        context.evm.inner.l1_block_info = Some(l1_block_info);
-    }
-
-    mainnet::load_accounts::<SPEC, EXT, DB>(context)
-}
-
 /// Deduct max balance from caller
 #[inline]
 pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
@@ -559,9 +547,7 @@ pub fn end<SPEC: Spec, EXT, DB: Database>(
 pub fn clear<EXT, DB: Database>(context: &mut Context<EXT, DB>) {
     // clear error and journaled state.
     mainnet::clear(context);
-    if let Some(l1_block) = &mut context.evm.inner.l1_block_info {
-        l1_block.clear_tx_l1_cost();
-    }
+    context.evm.inner.l1_block_info = None;
 }
 
 #[cfg(test)]
