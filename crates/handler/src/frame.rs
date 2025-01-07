@@ -106,9 +106,7 @@ where
         }
 
         // Make account warm and loaded
-        let _ = context
-            .journal()
-            .load_account(inputs.bytecode_address)?;
+        let _ = context.journal().load_account(inputs.bytecode_address)?;
 
         // Create subroutine checkpoint
         let checkpoint = context.journal().checkpoint();
