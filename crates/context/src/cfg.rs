@@ -2,6 +2,7 @@ pub use context_interface::Cfg;
 
 use interpreter::MAX_CODE_SIZE;
 use specification::hardfork::SpecId;
+use std::{vec, vec::Vec};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
