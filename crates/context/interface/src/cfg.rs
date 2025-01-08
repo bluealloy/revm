@@ -10,8 +10,11 @@ pub trait Cfg {
 
     fn chain_id(&self) -> u64;
 
-    // TODO : Make SpecId a associated type but for faster development we use impl Into.
+    // Specification id that is set.
     fn spec(&self) -> Self::Spec;
+
+    /// Returns the blob target and max count for the given spec id.
+    fn blob_max_count(&self, spec_id: SpecId) -> u8;
 
     fn max_code_size(&self) -> usize;
 
