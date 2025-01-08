@@ -374,19 +374,19 @@ impl<DB: Database> JournaledState<DB> {
         Self::touch_account(self.journal.last_mut().unwrap(), from, from_account);
         let from_balance = &mut from_account.info.balance;
 
-        let Some(from_balance_incr) = from_balance.checked_sub(balance) else {
+        let Some(from_balance_decr) = from_balance.checked_sub(balance) else {
             return Ok(Some(TransferError::OutOfFunds));
         };
-        *from_balance = from_balance_incr;
+        *from_balance = from_balance_decr;
 
         // add balance to
         let to_account = &mut self.state.get_mut(to).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
         let to_balance = &mut to_account.info.balance;
-        let Some(to_balance_decr) = to_balance.checked_add(balance) else {
+        let Some(to_balance_incr) = to_balance.checked_add(balance) else {
             return Ok(Some(TransferError::OverflowPayment));
         };
-        *to_balance = to_balance_decr;
+        *to_balance = to_balance_incr;
         // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
 
         self.journal
