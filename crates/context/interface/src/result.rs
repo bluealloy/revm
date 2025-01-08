@@ -307,7 +307,7 @@ pub enum InvalidTransaction {
     ///
     /// `to` must be present
     BlobCreateTransaction,
-    /// Transaction has more then [`specification::eip4844::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
+    /// Transaction has more then `max` blobs
     TooManyBlobs {
         max: usize,
         have: usize,
