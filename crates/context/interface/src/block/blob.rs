@@ -167,7 +167,7 @@ mod tests {
             let actual = calc_excess_blob_gas(
                 excess,
                 blobs * GAS_PER_BLOB,
-                eip4844::TARGET_BLOB_NUMBER_PER_BLOCK_CANCUN,
+                eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN,
             );
             assert_eq!(actual, expected, "test: {t:?}");
         }
