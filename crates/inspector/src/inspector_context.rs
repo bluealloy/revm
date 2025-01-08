@@ -1,8 +1,6 @@
 use revm::{
     context_interface::{
-        block::BlockSetter,
-        journaled_state::{AccountLoad, Eip7702CodeLoad},
-        transaction::TransactionSetter,
+        block::BlockSetter, journaled_state::AccountLoad, transaction::TransactionSetter,
         BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalGetter,
         PerformantContextAccess, TransactionGetter,
     },
@@ -56,7 +54,7 @@ where
         self.inner.block_hash(requested_number)
     }
 
-    fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad> {
+    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
         self.inner.load_account_delegated(address)
     }
 
@@ -64,11 +62,11 @@ where
         self.inner.balance(address)
     }
 
-    fn code(&mut self, address: Address) -> Option<Eip7702CodeLoad<Bytes>> {
+    fn code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
         self.inner.code(address)
     }
 
-    fn code_hash(&mut self, address: Address) -> Option<Eip7702CodeLoad<B256>> {
+    fn code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
         self.inner.code_hash(address)
     }
 

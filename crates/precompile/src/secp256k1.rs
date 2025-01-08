@@ -31,16 +31,18 @@ pub fn ec_recover_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     let recid = input[63] - 27;
     let sig = <&B512>::try_from(&input[64..128]).unwrap();
 
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "secp256k1")] {
-            let res = bitcoin_secp256k1::ecrecover(sig, recid, msg);
-        } else if #[cfg(feature = "libsecp256k1")] {
-            let res = parity_libsecp256k1::ecrecover(sig, recid, msg);
-        } else {
-            let res = k256::ecrecover(sig, recid, msg);
-        }
-    };
+    let res = ecrecover(sig, recid, msg);
 
     let out = res.map(|o| o.to_vec().into()).unwrap_or_default();
     Ok(PrecompileOutput::new(ECRECOVER_BASE, out))
+}
+
+cfg_if::cfg_if! {
+    if #[cfg(feature = "secp256k1")] {
+        pub use bitcoin_secp256k1::ecrecover;
+    } else if #[cfg(feature = "libsecp256k1")] {
+        pub use parity_libsecp256k1::ecrecover;
+    } else {
+        pub use k256::ecrecover;
+    }
 }

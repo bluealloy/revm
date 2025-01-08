@@ -3,7 +3,7 @@ use crate::{
     interpreter::Interpreter,
     interpreter_types::{InterpreterTypes, LoopControl, MemoryTrait, RuntimeFlag, StackTrait},
 };
-use context_interface::journaled_state::AccountLoad;
+use context_interface::{host::StateLoad, journaled_state::AccountLoad};
 use core::{cmp::min, ops::Range};
 use primitives::{Bytes, U256};
 use specification::hardfork::SpecId::*;
@@ -47,7 +47,7 @@ pub fn resize_memory(
 #[inline]
 pub fn calc_call_gas(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
-    account_load: AccountLoad,
+    account_load: StateLoad<AccountLoad>,
     has_transfer: bool,
     local_gas_limit: u64,
 ) -> Option<u64> {
