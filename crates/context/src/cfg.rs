@@ -2,6 +2,7 @@ pub use context_interface::Cfg;
 
 use interpreter::MAX_CODE_SIZE;
 use specification::hardfork::SpecId;
+use std::{vec, vec::Vec};
 
 /// EVM configuration
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -24,6 +25,10 @@ pub struct CfgEnv<SPEC: Into<SpecId> = SpecId> {
     pub limit_contract_code_size: Option<usize>,
     /// Skips the nonce validation against the account's nonce
     pub disable_nonce_check: bool,
+    /// Blob target count. EIP-7840 Add blob schedule to EL config files.
+    ///
+    /// Note : Items must be sorted by `SpecId`.
+    pub blob_target_and_max_count: Vec<(SpecId, u8, u8)>,
     /// A hard memory limit in bytes beyond which
     /// [OutOfGasError::Memory][context_interface::result::OutOfGasError::Memory] cannot be resized.
     ///
@@ -77,6 +82,12 @@ impl CfgEnv {
         self.chain_id = chain_id;
         self
     }
+
+    /// Sets the blob target and max count over hardforks.
+    pub fn set_blob_max_and_target_count(&mut self, mut vec: Vec<(SpecId, u8, u8)>) {
+        vec.sort_by_key(|(id, _, _)| *id);
+        self.blob_target_and_max_count = vec;
+    }
 }
 
 impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
@@ -88,6 +99,20 @@ impl<SPEC: Into<SpecId> + Copy> Cfg for CfgEnv<SPEC> {
 
     fn spec(&self) -> Self::Spec {
         self.spec
+    }
+
+    #[inline]
+    fn blob_max_count(&self, spec_id: SpecId) -> u8 {
+        self.blob_target_and_max_count
+            .iter()
+            .rev()
+            .find_map(|(id, _, max)| {
+                if spec_id as u8 >= *id as u8 {
+                    return Some(*max);
+                }
+                None
+            })
+            .unwrap_or(6)
     }
 
     fn max_code_size(&self) -> usize {
@@ -156,6 +181,7 @@ impl Default for CfgEnv {
             limit_contract_code_size: None,
             spec: SpecId::PRAGUE,
             disable_nonce_check: false,
+            blob_target_and_max_count: vec![(SpecId::CANCUN, 3, 6), (SpecId::PRAGUE, 6, 9)],
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]
@@ -169,5 +195,19 @@ impl Default for CfgEnv {
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: false,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn blob_max_and_target_count() {
+        let cfg = CfgEnv::default();
+        assert_eq!(cfg.blob_max_count(SpecId::BERLIN), (6));
+        assert_eq!(cfg.blob_max_count(SpecId::CANCUN), (6));
+        assert_eq!(cfg.blob_max_count(SpecId::PRAGUE), (9));
+        assert_eq!(cfg.blob_max_count(SpecId::OSAKA), (9));
     }
 }

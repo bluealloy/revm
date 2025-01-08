@@ -106,6 +106,7 @@ pub fn validate_eip4844_tx(
     blobs: &[B256],
     max_blob_fee: u128,
     block_blob_gas_price: u128,
+    max_blobs: u8,
 ) -> Result<(), InvalidTransaction> {
     // Ensure that the user was willing to at least pay the current blob gasprice
     if block_blob_gas_price > max_blob_fee {
@@ -126,10 +127,10 @@ pub fn validate_eip4844_tx(
 
     // Ensure the total blob gas spent is at most equal to the limit
     // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
-    if blobs.len() > eip4844::MAX_BLOB_NUMBER_PER_BLOCK as usize {
+    if blobs.len() > max_blobs as usize {
         return Err(InvalidTransaction::TooManyBlobs {
             have: blobs.len(),
-            max: eip4844::MAX_BLOB_NUMBER_PER_BLOCK as usize,
+            max: max_blobs as usize,
         });
     }
     Ok(())
@@ -220,6 +221,7 @@ where
                 tx.blob_versioned_hashes(),
                 tx.max_fee_per_blob_gas(),
                 context.block().blob_gasprice().unwrap_or_default(),
+                context.cfg().blob_max_count(spec_id),
             )?;
         }
         TransactionType::Eip7702 => {

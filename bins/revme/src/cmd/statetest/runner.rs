@@ -19,7 +19,7 @@ use revm::{
     database_interface::EmptyDB,
     handler::EthHandler,
     primitives::{keccak256, Bytes, TxKind, B256},
-    specification::hardfork::SpecId,
+    specification::{eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId},
     Context, DatabaseCommit, EvmCommit, MainEvm,
 };
 use serde_json::json;
@@ -291,18 +291,6 @@ pub fn execute_test_suite(
         block.difficulty = unit.env.current_difficulty;
         // After the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
         block.prevrandao = unit.env.current_random;
-        // EIP-4844
-        if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
-            block.set_blob_excess_gas_and_price(current_excess_blob_gas.to());
-        } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
-            unit.env.parent_blob_gas_used,
-            unit.env.parent_excess_blob_gas,
-        ) {
-            block.set_blob_excess_gas_and_price(calc_excess_blob_gas(
-                parent_blob_gas_used.to(),
-                parent_excess_blob_gas.to(),
-            ));
-        }
 
         // Tx env
         tx.caller = if let Some(address) = unit.transaction.sender {
@@ -343,6 +331,29 @@ pub fn execute_test_suite(
             }
 
             cfg.spec = spec_name.to_spec_id();
+
+            // EIP-4844
+            if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
+                block.set_blob_excess_gas_and_price(
+                    current_excess_blob_gas.to(),
+                    cfg.spec.is_enabled_in(SpecId::PRAGUE),
+                );
+            } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
+                unit.env.parent_blob_gas_used,
+                unit.env.parent_excess_blob_gas,
+            ) {
+                block.set_blob_excess_gas_and_price(
+                    calc_excess_blob_gas(
+                        parent_blob_gas_used.to(),
+                        parent_excess_blob_gas.to(),
+                        unit.env
+                            .parent_target_blobs_per_block
+                            .map(|i| i.to())
+                            .unwrap_or(TARGET_BLOB_GAS_PER_BLOCK_CANCUN),
+                    ),
+                    cfg.spec.is_enabled_in(SpecId::PRAGUE),
+                );
+            }
 
             if cfg.spec.is_enabled_in(SpecId::MERGE) && block.prevrandao.is_none() {
                 // If spec is merge and prevrandao is not set, set it to default
