@@ -3,6 +3,7 @@
 pub mod precompiles;
 
 use crate::{
+    calculate_tx_l1_cost,
     transaction::{
         abstraction::OpTxGetter,
         deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
@@ -10,6 +11,7 @@ use crate::{
     },
     L1BlockInfoGetter, OpSpec, OpSpecId, OptimismHaltReason, BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
 };
+use maili_protocol::L1BlockInfoTx;
 use precompiles::OpPrecompileProvider;
 use revm::{
     context_interface::{
@@ -112,8 +114,7 @@ where
         // The L1-cost fee is only computed for Optimism non-deposit transactions.
         let spec = context.cfg().spec();
         if context.tx().tx_type() != DEPOSIT_TRANSACTION_TYPE {
-            let l1_block_info: crate::L1BlockInfo =
-                super::L1BlockInfo::try_fetch(context.db(), spec)?;
+            let l1_block_info: L1BlockInfoTx = crate::l1block::try_fetch(context.db(), spec)?;
 
             // Storage L1 block info for later use.
             *context.l1_block_info_mut() = l1_block_info;
@@ -146,9 +147,9 @@ where
                 .enveloped_tx()
                 .expect("all not deposit tx have enveloped tx")
                 .clone();
-            tx_l1_cost = context
-                .l1_block_info()
-                .calculate_tx_l1_cost(&enveloped_tx, context.cfg().spec());
+
+            tx_l1_cost =
+                calculate_tx_l1_cost(context.l1_block_info(), &enveloped_tx, context.cfg().spec());
         }
 
         // We deduct caller max balance after minting and before deducing the
@@ -360,7 +361,7 @@ where
                 ));
             };
 
-            let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, context.cfg().spec());
+            let l1_cost = calculate_tx_l1_cost(l1_block_info, enveloped_tx, context.cfg().spec());
 
             // Send the L1 cost of the transaction to the L1 Fee Vault.
             let mut l1_fee_vault_account = context.journal().load_account(L1_FEE_RECIPIENT)?;

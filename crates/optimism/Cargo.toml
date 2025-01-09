@@ -27,6 +27,9 @@ revm.workspace = true
 precompile = { workspace = true, features = ["secp256r1"] }
 inspector.workspace = true
 
+# optimism
+maili-protocol = { version = "0.1.4", default-features = false }
+
 # static precompile sets.
 once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
 
@@ -46,7 +49,7 @@ alloy-sol-types = "0.8"
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable", "blst"]
-std = ["serde?/std", "revm/std", "precompile/std"]
+std = ["serde?/std", "revm/std", "precompile/std", "maili-protocol/std"]
 hashbrown = ["revm/hashbrown"]
 serde = ["dep:serde", "revm/serde"]
 portable = ["revm/portable"]
