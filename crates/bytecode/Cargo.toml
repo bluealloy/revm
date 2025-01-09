@@ -1,6 +1,6 @@
 [package]
 name = "revm-bytecode"
-description = "Revm Database interface"
+description = "EVM Bytecodes"
 version = "1.0.0"
 authors.workspace = true
 edition.workspace = true

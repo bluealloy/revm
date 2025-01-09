@@ -1,6 +1,6 @@
 [package]
 name = "revm-statetest-types"
-description = "State test types for revm"
+description = "Statetest types for revme"
 version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
