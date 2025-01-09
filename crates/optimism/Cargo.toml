@@ -27,6 +27,9 @@ revm.workspace = true
 precompile = { workspace = true, features = ["secp256r1"] }
 inspector.workspace = true
 
+# optimism
+maili-protocol = "0.1.2"
+
 # static precompile sets.
 once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
 
