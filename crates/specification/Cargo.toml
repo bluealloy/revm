@@ -22,7 +22,8 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-primitives = { path = "../primitives", package = "revm-primitives", version = "9.0.1", default-features = false }
+# revm
+primitives.workspace = true
 
 # misc
 enumn = { version = "0.1" }
