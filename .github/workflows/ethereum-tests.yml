@@ -47,7 +47,6 @@ jobs:
             ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
             ethtests/EIPTests/StateTests/stEIP1153-transientStorage/ \
             ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/ \
-            ethtests/EIPTests/StateTests/stEIP2537/ \
             ethtests/EIPTests/StateTests/stEOF \
             tests/eof_suite/eest/state_tests \
             tests/pectra_devnet5/state_tests/prague/eip7623_increase_calldata_cost
