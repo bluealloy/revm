@@ -233,7 +233,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Iterpreter will not be called in recursive calls but would return Action ( CALL/CREATE) that will be executed by the main loop.
 
 ### Added
-- tweeks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
+- tweaks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
 - add `BytecodeLocked::original_bytecode` ([#1037](https://github.com/bluealloy/revm/pull/1037))
 - *(op)* Ecotone hardfork ([#1009](https://github.com/bluealloy/revm/pull/1009))
 - EvmBuilder and External Contexts ([#888](https://github.com/bluealloy/revm/pull/888))
