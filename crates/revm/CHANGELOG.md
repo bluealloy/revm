@@ -811,7 +811,7 @@ Changes:
 # v1.1.0
 date: 14.1.2022
 
-There is bug introduced in last release with gas blcok optimization, it will crash revm if anywhere in contract is unknown OpCode. And now returning log after execution (ups) included them in eth/tests verification.
+There is bug introduced in last release with gas block optimization, it will crash revm if anywhere in contract is unknown OpCode. And now returning log after execution (ups) included them in eth/tests verification.
 
 Changes:
 * Bug fix for unknown OpCode
