@@ -1423,7 +1423,6 @@ dependencies = [
  "k256",
  "keccak-hash 0.11.0",
  "num",
- "rwasm",
  "sp1-curves",
  "sp1-primitives",
  "tiny-keccak",
