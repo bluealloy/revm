@@ -19,4 +19,4 @@ pub use l1block::{
 };
 pub use result::OptimismHaltReason;
 pub use spec::*;
-pub use transaction::{error::OpTransactionError, OpTransaction};
+pub use transaction::{error::OpTransactionError, estimate_tx_compressed_size, OpTransaction};
