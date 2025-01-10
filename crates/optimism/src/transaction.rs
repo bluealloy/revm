@@ -17,7 +17,6 @@ const L1_COST_INTERCEPT: u64 = 42_585_600;
 /// <https://github.com/ethereum-optimism/op-geth/blob/647c346e2bef36219cc7b47d76b1cb87e7ca29e4/core/types/rollup_cost.go#82>
 const MIN_TX_SIZE_SCALED: u64 = 100 * 1_000_000;
 
-
 /// Estimates the compressed size of a transaction.
 pub fn estimate_tx_compressed_size(input: &[u8]) -> u64 {
     let fastlz_size = flz_compress_len(input) as u64;
