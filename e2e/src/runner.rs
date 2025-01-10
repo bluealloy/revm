@@ -364,7 +364,6 @@ fn check_evm_execution<EXT1, EXT2>(
                 println!(" - storage:");
             }
             if let Some(s1) = v1.account.as_ref().map(|v| &v.storage) {
-                println!("Origin storage: {:?}", s1);
                 let mut sorted_keys = s1.keys().collect::<Vec<_>>();
                 sorted_keys.sort();
                 for slot in sorted_keys {
@@ -394,12 +393,11 @@ fn check_evm_execution<EXT1, EXT2>(
                         .account
                         .as_ref()
                         .map(|v| &v.storage);
-                    println!("Value: {:?}", value2);
                     let value2 = value2
                         .expect("missing FLUENT account (storage)")
                         .get(slot)
                         .unwrap_or_else(|| {
-                             panic!(
+                            panic!(
                                 "missing storage key {}",
                                 hex::encode(slot.to_be_bytes::<32>())
                             )
@@ -728,7 +726,6 @@ pub fn execute_test_suite(
 
                     let timer = Instant::now();
                     let res = evm.transact_commit();
-
 
                     let res2 = evm2.transact_commit();
                     *elapsed.lock().unwrap() += timer.elapsed();
