@@ -244,14 +244,14 @@ impl Env {
         // This EIP is introduced after london, but there was no collision in the past
         // so we can leave it enabled always
         //TODO: eip3607 doesn't work correctly. Switched to rwasm proxy
-        // if !self.cfg.is_eip3607_disabled() {
-        //     let bytecode = &account.info.code.as_ref().unwrap();
-        //     // allow EOAs whose code is a valid delegation designation,
-        //     // i.e. 0xef0100 || address, to continue to originate transactions.
-        //     if !bytecode.is_empty() && !bytecode.is_eip7702() {
-        //         return Err(InvalidTransaction::RejectCallerWithCode);
-        //     }
-        // }
+        if !self.cfg.is_eip3607_disabled() {
+            let bytecode = &account.info.code.as_ref().unwrap();
+            // allow EOAs whose code is a valid delegation designation,
+            // i.e. 0xef0100 || address, to continue to originate transactions.
+            if !bytecode.is_empty() && !bytecode.is_eip7702() {
+                return Err(InvalidTransaction::RejectCallerWithCode);
+            }
+        }
 
         // Check that the transaction's nonce is correct
         if let Some(tx) = self.tx.nonce {
