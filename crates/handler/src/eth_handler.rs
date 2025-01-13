@@ -65,9 +65,9 @@ pub trait EthHandler {
     ) -> Result<FrameResult, Self::Error> {
         let gas_limit = context.tx().gas_limit() - init_and_floor_gas.initial_gas;
         // Create first frame action
-        let first_frame = self.init_first_frame(context, gas_limit)?;
+        let first_frame = self.frame_init_first(context, gas_limit)?;
         let frame_result = match first_frame {
-            FrameOrResultGen::Frame(frame) => self.run_loop(context, frame)?,
+            FrameOrResultGen::Frame(frame) => self.run_exec_loop(context, frame)?,
             FrameOrResultGen::Result(result) => result,
         };
 
@@ -125,7 +125,7 @@ pub trait EthHandler {
     }
 
     /* EXECUTION */
-    fn init_first_frame(
+    fn frame_init_first(
         &mut self,
         context: &mut Self::Context,
         gas_limit: u64,
@@ -133,15 +133,52 @@ pub trait EthHandler {
         EthExecution::new().init_first_frame(context, gas_limit)
     }
 
-    fn init(
+    fn frame_init(
         &self,
         frame: &Self::Frame,
         context: &mut Self::Context,
-        frame_input: <Self as EthHandler>::Frame::FrameInit,
-    ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
+        frame_input: <<Self as EthHandler>::Frame as Frame>::FrameInit,
+    ) -> Result<
+        FrameOrResultGen<
+            <Self as EthHandler>::Frame,
+            <<Self as EthHandler>::Frame as Frame>::FrameResult,
+        >,
+        Self::Error,
+    > {
+        Frame::init(frame, context, frame_input)
     }
 
-    fn run_loop(
+    fn frame_call(
+        &mut self,
+        frame: &mut Self::Frame,
+        context: &mut Self::Context,
+    ) -> Result<
+        FrameOrResultGen<
+            <<Self as EthHandler>::Frame as Frame>::FrameInit,
+            <<Self as EthHandler>::Frame as Frame>::FrameResult,
+        >,
+        Self::Error,
+    > {
+        Frame::run(frame, context)
+    }
+
+    fn frame_return_result(
+        &mut self,
+        frame: &mut Self::Frame,
+        context: &mut Self::Context,
+        result: <<Self as EthHandler>::Frame as Frame>::FrameResult,
+    ) -> Result<(), Self::Error> {
+        Frame::return_result(frame, context, result)
+    }
+
+    fn frame_final_return(
+        context: &mut Self::Context,
+        result: &mut <<Self as EthHandler>::Frame as Frame>::FrameResult,
+    ) -> Result<(), Self::Error> {
+        Frame::final_return(context, result)
+    }
+
+    fn run_exec_loop(
         &self,
         context: &mut Self::Context,
         frame: Self::Frame,
