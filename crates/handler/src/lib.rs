@@ -7,6 +7,7 @@ extern crate alloc as std;
 
 // Mainnet related handlers.
 
+pub mod eth_handler;
 mod execution;
 mod frame;
 mod frame_data;
@@ -21,9 +22,7 @@ pub use execution::{EthExecution, EthExecutionContext, EthExecutionError};
 pub use frame::{return_create, return_eofcreate, EthFrame, EthFrameContext, EthFrameError};
 pub use frame_data::{FrameData, FrameResult};
 pub use post_execution::{EthPostExecution, EthPostExecutionContext, EthPostExecutionError};
-pub use pre_execution::{
-    apply_eip7702_auth_list, EthPreExecution, EthPreExecutionContext, EthPreExecutionError,
-};
+pub use pre_execution::{apply_eip7702_auth_list, EthPreExecution, EthPreExecutionContext};
 use precompile::PrecompileErrors;
 pub use precompile_provider::EthPrecompileProvider;
 use primitives::Log;

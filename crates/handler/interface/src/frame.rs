@@ -3,6 +3,7 @@ use crate::FrameOrResultGen;
 /// Call frame trait
 pub trait Frame: Sized {
     type Context;
+    type SharedContext;
     type FrameInit;
     type FrameResult;
     type Error;

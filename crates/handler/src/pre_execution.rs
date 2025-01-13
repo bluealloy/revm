@@ -35,7 +35,7 @@ impl<CTX, ERROR> EthPreExecution<CTX, ERROR> {
 impl<CTX, ERROR> PreExecutionHandler for EthPreExecution<CTX, ERROR>
 where
     CTX: EthPreExecutionContext,
-    ERROR: EthPreExecutionError<CTX>,
+    ERROR: From<InvalidTransaction> + From<JournalDBError<CTX>>,
 {
     type Context = CTX;
     type Error = ERROR;
@@ -223,15 +223,5 @@ impl<
             + CfgGetter
             + PerformantContextAccess<Error = <<CTX as DatabaseGetter>::Database as Database>::Error>,
     > EthPreExecutionContext for CTX
-{
-}
-
-pub trait EthPreExecutionError<CTX: JournalGetter>:
-    From<InvalidTransaction> + From<JournalDBError<CTX>>
-{
-}
-
-impl<CTX: JournalGetter, T: From<InvalidTransaction> + From<JournalDBError<CTX>>>
-    EthPreExecutionError<CTX> for T
 {
 }

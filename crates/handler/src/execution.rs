@@ -31,7 +31,7 @@ pub struct EthExecution<
 
 impl<CTX, ERROR, FRAME> ExecutionHandler for EthExecution<CTX, ERROR, FRAME>
 where
-    CTX: EthExecutionContext<ERROR>,
+    CTX: EthExecutionContext,
     ERROR: EthExecutionError<CTX>,
     FRAME:
         FrameTrait<Context = CTX, Error = ERROR, FrameInit = FrameInput, FrameResult = FrameResult>,
@@ -124,7 +124,7 @@ impl<CTX, ERROR, FRAME> EthExecution<CTX, ERROR, FRAME> {
     }
 }
 
-pub trait EthExecutionContext<ERROR>:
+pub trait EthExecutionContext:
     TransactionGetter
     + ErrorGetter<Error = JournalDBError<Self>>
     + BlockGetter
@@ -134,13 +134,12 @@ pub trait EthExecutionContext<ERROR>:
 }
 
 impl<
-        ERROR,
         T: TransactionGetter
             + ErrorGetter<Error = JournalDBError<T>>
             + BlockGetter
             + JournalGetter
             + CfgGetter,
-    > EthExecutionContext<ERROR> for T
+    > EthExecutionContext for T
 {
 }
 
