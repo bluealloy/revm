@@ -124,7 +124,7 @@ impl Gas {
     pub fn set_refund(&mut self, refund: i64) {
         self.refunded = refund;
     }
-    
+
     /// Set a spent value. This overrides the current spent value.
     #[inline]
     pub fn set_spent(&mut self, spent: u64) {
