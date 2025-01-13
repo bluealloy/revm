@@ -70,6 +70,12 @@ impl Gas {
         self.limit - self.remaining
     }
 
+    /// Returns the total amount of gas spent, minus the refunded gas.
+    #[inline]
+    pub const fn spent_sub_refunded(&self) -> u64 {
+        self.spent().saturating_sub(self.refunded as u64)
+    }
+
     /// Returns the amount of gas remaining.
     #[inline]
     pub const fn remaining(&self) -> u64 {
@@ -117,6 +123,12 @@ impl Gas {
     #[inline]
     pub fn set_refund(&mut self, refund: i64) {
         self.refunded = refund;
+    }
+
+    /// Set a spent value. This overrides the current spent value.
+    #[inline]
+    pub fn set_spent(&mut self, spent: u64) {
+        self.remaining = self.limit.saturating_sub(spent);
     }
 
     /// Records an explicit cost.

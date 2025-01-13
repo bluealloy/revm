@@ -50,16 +50,57 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600061018060006000600f6201129cf16000556000600061030060006000600f620191f4f16001556000600061048060006000600f6202114cf16002556000600061060060006000600f620290a4f16003556000600061078060006000600f62030ffcf16004556000600061090060006000600f62038f54f160055560006000610a8060006000600f62040eacf160065560006000610c0060006000600f62048e04f160075560006000610d8060006000600f62050d5cf160085560006000610f0060006000600f62058cb4f16009556000600061108060006000600f62060c0cf1600a556000600061120060006000600f62068b64f1600b556000600061138060006000600f62070abcf1600c556000600061150060006000600f62078a14f1600d556000600061168060006000600f6208096cf1600e556000600061180060006000600f620888c4f1600f556000600061198060006000600f6209081cf160105560006000611b0060006000600f62098774f160115560006000611c8060006000600f620a06ccf160125560006000611e0060006000600f620a8624f1601355",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x01",
+                                "0x02": "0x01",
+                                "0x03": "0x01",
+                                "0x04": "0x01",
+                                "0x05": "0x01",
+                                "0x06": "0x01",
+                                "0x07": "0x01",
+                                "0x08": "0x01",
+                                "0x09": "0x01",
+                                "0x0a": "0x01",
+                                "0x0b": "0x01",
+                                "0x0c": "0x01",
+                                "0x0d": "0x01",
+                                "0x0e": "0x01",
+                                "0x0f": "0x01",
+                                "0x10": "0x01",
+                                "0x11": "0x01",
+                                "0x12": "0x01",
+                                "0x13": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7e9ff7adb0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01713f18",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xfa87c3cb595e7a08c9555ed5a8e9b2e8a2ca9e22c92b5fbdf8d9e90c6facd8a9",
+            "hash": "0xd736d7420ac3144e94cb7dfd48962bef4e3cb4d1e59a696af9690e8c32cd8181",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the BLS12_PAIRING precompile, by expecting the call to succeed for all possible input\n    lengths (up to k == PAIRINGS_TO_TEST).\n\n    If any of the calls fails, the test will fail.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L350",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L350",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"
@@ -116,16 +157,57 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600061018060006000600f6201129df16000556000600061030060006000600f620191f5f16001556000600061048060006000600f6202114df16002556000600061060060006000600f620290a5f16003556000600061078060006000600f62030ffdf16004556000600061090060006000600f62038f55f160055560006000610a8060006000600f62040eadf160065560006000610c0060006000600f62048e05f160075560006000610d8060006000600f62050d5df160085560006000610f0060006000600f62058cb5f16009556000600061108060006000600f62060c0df1600a556000600061120060006000600f62068b65f1600b556000600061138060006000600f62070abdf1600c556000600061150060006000600f62078a15f1600d556000600061168060006000600f6208096df1600e556000600061180060006000600f620888c5f1600f556000600061198060006000600f6209081df160105560006000611b0060006000600f62098775f160115560006000611c8060006000600f620a06cdf160125560006000611e0060006000600f620a8625f1601355",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x01",
+                                "0x02": "0x01",
+                                "0x03": "0x01",
+                                "0x04": "0x01",
+                                "0x05": "0x01",
+                                "0x06": "0x01",
+                                "0x07": "0x01",
+                                "0x08": "0x01",
+                                "0x09": "0x01",
+                                "0x0a": "0x01",
+                                "0x0b": "0x01",
+                                "0x0c": "0x01",
+                                "0x0d": "0x01",
+                                "0x0e": "0x01",
+                                "0x0f": "0x01",
+                                "0x10": "0x01",
+                                "0x11": "0x01",
+                                "0x12": "0x01",
+                                "0x13": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x038d7e9ff7adb0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01713f18",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x1a7497d9a4ca8c4c223d9c025b1a8bf4d6c406e3463f0bd36444d1c696790da6",
+            "hash": "0xf5b2668dbf91cdebaa788f4ecfd5d58c789a4e01a488342440912ef780116e43",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the BLS12_PAIRING precompile, by expecting the call to succeed for all possible input\n    lengths (up to k == PAIRINGS_TO_TEST).\n\n    If any of the calls fails, the test will fail.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L350",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip2537_bls_12_381_precompiles/test_bls12_variable_length_input_contracts.py#L350",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2537.md",
             "reference-spec-version": "cd0f016ad0c4c68b8b1f5c502ef61ab9353b6e5e"

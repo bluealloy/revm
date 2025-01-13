@@ -50,16 +50,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e051600955",
+                            "storage": {
+                                "0x00": "0x0100",
+                                "0x01": "0xdc924469b334aed2a19fac7252e9961aea41f8d91996366029dbe0884229bf36",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7af8f0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b1bb8",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc904fd3ee0559e32cda848ffa290795c1249bfb1f2213828ee4cd025b4cf577e",
+            "hash": "0xf9b57fd3bb793c0bb25a280f11a16eaeb191b7fbcb1cfbee119ead3a515d8b6c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -116,16 +147,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e051600955",
+                            "storage": {
+                                "0x00": "0x0100",
+                                "0x01": "0xdc924469b334aed2a19fac7252e9961aea41f8d91996366029dbe0884229bf36",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7ae9f0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b2038",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc1a93bf42e9272473fbc04fb636e5622000763bf6a622688e50d79e82ad09131",
+            "hash": "0x609280ca7811548c716598fe8ba6368f242d2617fea14a48e1aafba286547b09",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -182,16 +244,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e051600955",
+                            "storage": {
+                                "0x00": "0x0100",
+                                "0x01": "0xdc924469b334aed2a19fac7252e9961aea41f8d91996366029dbe0884229bf36",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7af85a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b1be5",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xdfedb9d46625b3595b72a363e8fcfaeb7f4fe5ae5326e648c383e3dde5fd2577",
+            "hash": "0x83a22a88227bfbe5f832c6b6080fc6122651556203cfef0620fffee6bf994d11",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -248,16 +341,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e051600955",
+                            "storage": {
+                                "0x00": "0x0100",
+                                "0x01": "0xdc924469b334aed2a19fac7252e9961aea41f8d91996366029dbe0884229bf36",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7af85a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b1be5",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xbf6c6a911ddbed375dcf79147c62889f6ee2db865ccb5d0601e06eebfbfc75de",
+            "hash": "0x2dd51c8f7e30863e4570cd1cb9ecbf1194d46f4a367b8294bfaa9abb5a97a2ec",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -314,16 +438,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e051600955",
+                            "storage": {
+                                "0x00": "0x0100",
+                                "0x01": "0x5782d0aa5e5b0f81dfcc3a9f26a680304c1c96a98da3c05894f347db3444f36d",
+                                "0x02": "0x02030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7af7e2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b1c09",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x1cfe233c22b0272ed4f994ad1093e698f6bd6d5b48fbf7f34b75db1d3905cea8",
+            "hash": "0x1b42cd42074387643bf634326518f4d45292eaaa60a7833316ae1fb16af333d5",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -380,16 +535,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e051600955",
+                            "storage": {
+                                "0x00": "0x0100",
+                                "0x01": "0x1b16ad642f7c46c0001890e1316c549c51887e17c850d838b95b5896e3e61306",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e",
+                                "0x03": "0x1f2122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7af7e2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b1c09",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x260555174bca010fdb9e652f4e8bbd67600b5aca10b9c8535a3364075b68ac3c",
+            "hash": "0xfbc42f8635fdb3a274bcd384259b6b64a01a61df05fa2303ba58fd63afa40452",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -446,16 +632,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e051600955",
+                            "storage": {
+                                "0x00": "0x0100",
+                                "0x01": "0xdc924469b334aed2a19fac7252e9961aea41f8d91996366029dbe0884229bf36",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7af76a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b1c2d",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6ff2ec4fcec365dcdc49b8284ce117186944edee3cf668ddcc2ee2005ad7e85f",
+            "hash": "0x5ba8b5137153659ccf48af1d3b9b7fb63b1d6edf32e8002c2e369af6b42a4284",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -512,16 +729,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e051600955",
+                            "storage": {
+                                "0x00": "0x0100",
+                                "0x01": "0xdc924469b334aed2a19fac7252e9961aea41f8d91996366029dbe0884229bf36",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7af76a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b1c2d",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9f2cbebbbffa58aa5adcb3becee3a711b277c5016802288c12ae558a8fac4581",
+            "hash": "0xac47322bebe593eef9c5757f79c3e62d23eec0773949c21ec960906fa509f171",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -578,16 +826,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e051600955",
+                            "storage": {
+                                "0x00": "0x0100",
+                                "0x01": "0xdc924469b334aed2a19fac7252e9961aea41f8d91996366029dbe0884229bf36",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7af74c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b1c36",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xbfdb05b03d9d17c94e460bc42dbcdb27f3fbe31c88e260888db99866849b8e4a",
+            "hash": "0x2e87c2ec66a95f01c957d8ac46a5835e4994e233eba2d9e463e7856a8f9043a9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -644,16 +923,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e051600955",
+                            "storage": {
+                                "0x00": "0x0100",
+                                "0x01": "0x838c050c897831a9f3775ec9d6dcb8f5f1eb2f4131e4ea9ce5c25bd6c7c35732",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f",
+                                "0x03": "0x101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f",
+                                "0x04": "0x303132333435363738393a3b3c3d3e3f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7af7c4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b1c12",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xdaf0ecc546261f9c24459f50becdc745f123feec17a96e541eabcb199450256c",
+            "hash": "0xebb2f68157f04a0eebec98f2d51f6231a15ed426370f946da5f5fb0f504abeb2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -710,16 +1020,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e051600955",
+                            "storage": {
+                                "0x00": "0x0100",
+                                "0x01": "0xba7b763d894df89155d9b977e7fa190fc7a51ca601a5f7b3c1b163b88b87a6bd",
+                                "0x02": "0x101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f",
+                                "0x03": "0x303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7af7c4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b1c12",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf0122067a62101473d217a64006931a3a0c7248762dedfeb80010eb0d1310873",
+            "hash": "0x082f32eaccc025f4796da79b32f16bf5b9616f943e43638d61e9a81c70cc9e5a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -776,16 +1117,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e051600955",
+                            "storage": {
+                                "0x00": "0x0100",
+                                "0x01": "0x814e87307b98f9f9438609c4accf5a7b856a08faf64c6e78f2eeda60f602ce73",
+                                "0x02": "0x0102030405060708090a0b0c0d0e101112131415161718191a1b1c1d1e1f20",
+                                "0x03": "0x2122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40",
+                                "0x04": "0x4142434445464748494a4b4c4d4e4f4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7af74c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b1c36",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xfec970a9325e67d3e43305c242fd062b50d9f8698d3821f3c75a21ea91caf643",
+            "hash": "0x9101abcc6c36754e921c44ae29703e82d60f6210e364336d112ee1d6e27e0138",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -842,16 +1214,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e05160095561010051600a55",
+                            "storage": {
+                                "0x00": "0x0120",
+                                "0x01": "0x9ea7bc13e962095471ad8bf851f72fed963c2adcd2c90af8cf8607f1074f49e8",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff",
+                                "0x0a": "0x0100000000000000000000000000000000000000000000000000000000000000"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de77976e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0c1f5f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x43d03c29e346642e8fad7fec253804beca0a6a60063cc625824d78c9a0c89f3d",
+            "hash": "0xc33be6dfd404f17e9346cb96bf19beac85e617443f1d31c97a4cbfc12fc1b178",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -908,16 +1312,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e05160095561010051600a55",
+                            "storage": {
+                                "0x00": "0x0120",
+                                "0x01": "0x81cfad70ded121b3fa461dd26ac8781ef94fc6f5e3df44682413be1709f6a35d",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff",
+                                "0x0a": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de77976e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0c1f5f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xab7eecaedd24e675553362ced0bc8430045a391a74b6376cd00d10e5832c8d09",
+            "hash": "0x786f48d3234835dc568d6115f3202b45e7251cf6264c47fad28b04492c6d5230",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -974,16 +1410,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e05160095561010051600a55",
+                            "storage": {
+                                "0x00": "0x0120",
+                                "0x01": "0x20b2fa5155c1b10c5f665bce5e9b705c7511558dbb0ee399856d129c3fa0a02b",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff",
+                                "0x0a": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f00"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de77976e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0c1f5f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x69040437d8342d956da99852b786841b83caefe39493d7db18b978b6e4c0262a",
+            "hash": "0xf3ad80020009c8f4dc9bc4f03dc7e7e967b8a9b931517790655f120e947cd568",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -1040,16 +1508,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e05160095561012051600a55",
+                            "storage": {
+                                "0x00": "0x0140",
+                                "0x01": "0x08d64d47c5267ec2c35db31c2fe61e21bbe9218ca3ace530368a51a4d752d090",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff",
+                                "0x0a": "0x2100000000000000000000000000000000000000000000000000000000000000"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7796f6",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0c1f83",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf4d15149ff58ee9e52a3c2a9027e07163214102ecd4b748c3a48ccdab7cc2397",
+            "hash": "0x62308d82c545783683f890aade5beb168113c358474d0c7465ae79f343005fe5",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -1106,16 +1606,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e051600955",
+                            "storage": {
+                                "0x00": "0x0100",
+                                "0x01": "0xdc924469b334aed2a19fac7252e9961aea41f8d91996366029dbe0884229bf36",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7af788",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b1c24",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf6df7fc8e28765ddc96e1066ea5debf2d57103a1d634b9cb865ed2263a40c186",
+            "hash": "0x3c8b78d05c3b83d2757dfea3c1cbb8c3ff62ce890590417efbd02189cb33b203",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -1172,16 +1703,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e0516009556101e051600a55",
+                            "storage": {
+                                "0x00": "0x0200",
+                                "0x01": "0xf55ba327291604f0e5be6651752398b7be2331aad65f5763ce067df95cc13be1",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff",
+                                "0x0a": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de77949e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0c2037",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x98862c463136cfe2e405fc70d03f767227a060863292445398a5dd45faa156f9",
+            "hash": "0x3ad1787b2f1ed235d2f22dea045048725ad855a71a61d35cf1c6360dd50d4af1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -1238,16 +1801,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e0516009556102e051600a55",
+                            "storage": {
+                                "0x00": "0x0300",
+                                "0x01": "0x5c3cbd3c3a3bafda3c2f5f13c83f1a28c4ce43c60e5944ad5d67e0882f105ba8",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff",
+                                "0x0a": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7791c4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0c2112",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x65818d1c65fb9d8e92738c2bd8c714d006c30e3305971dbef60921aae164c415",
+            "hash": "0x15d24320e3035abb5691c06c97747d0b3ddb78290df3cc174cd56e4bbd99a0fe",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -1304,16 +1899,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e0516009556101e051600a55",
+                            "storage": {
+                                "0x00": "0x0200",
+                                "0x01": "0xd5c44f659751a819616c58c9efe38e80f2b84cf621036da99c019bbe4f1fb647"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de92e8b6",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03ed63",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb4a95e8237d5aca45af3b3a08a9c951afd1de05ba3ea12234232cde07bea1c33",
+            "hash": "0x6dbe17f4c9fd76f7f852bde9477bc4aa0470c97cd969b15df4adecc06f698f80",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"
@@ -1370,16 +1988,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f6000527f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f6020527f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6040527f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f6060527f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f6080527fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf60a0527fc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf60c0527fe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff60e0526040356020356000355e596000555960002060015560005160025560205160035560405160045560605160055560805160065560a05160075560c05160085560e05160095561010051600a55",
+                            "storage": {
+                                "0x00": "0x0120",
+                                "0x01": "0x2e1d27b831280b122f077bdf6677261da2aa60e20bbf1735dff2733ffd87b877",
+                                "0x02": "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+                                "0x03": "0x202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+                                "0x04": "0x404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+                                "0x05": "0x606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f",
+                                "0x06": "0x808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f",
+                                "0x07": "0xa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+                                "0x08": "0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+                                "0x09": "0xe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7aa0c6",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0b362b",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x28ce3d0d9ac4de2b6bcbef80e6c9459fd04e1dfb6f30357fdf839876e1691c64",
+            "hash": "0x5b9cdfc39597d70f60014d7a7d1e32474e42cf71a2c712a4f25bccc2b03e716a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds)",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L129",
+            "description": "Test function documentation:\n\n    Perform MCOPY operations using different offsets and lengths:\n      - Zero inputs\n      - Memory rewrites (copy from and to the same location)\n      - Memory overwrites (copy from and to different locations)\n      - Memory extensions (copy to a location that is out of bounds)\n      - Memory clear (copy from a location that is out of bounds).",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip5656_mcopy/test_mcopy.py#L132",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-5656.md",
             "reference-spec-version": "2ade0452efe8124378f35284676ddfd16dd56ecd"

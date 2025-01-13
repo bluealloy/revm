@@ -281,10 +281,10 @@ where
         let mut exec_result = exec.last_frame_result(context, frame_result)?;
 
         let post_exec = self.handler.post_execution();
-        // Check gas floor
-        post_exec.eip7623_check_gas_floor(context, &mut exec_result, init_and_floor_gas);
         // Calculate final refund and add EIP-7702 refund to gas.
         post_exec.refund(context, &mut exec_result, eip7702_gas_refund);
+        // Check gas floor
+        post_exec.eip7623_check_gas_floor(context, &mut exec_result, init_and_floor_gas);
         // Reimburse the caller
         post_exec.reimburse_caller(context, &mut exec_result)?;
         // Reward beneficiary

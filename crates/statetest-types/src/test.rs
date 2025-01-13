@@ -1,10 +1,7 @@
-use revm::{
-    primitives::{Address, Bytes, HashMap, B256},
-    state::AccountInfo,
-};
+use revm::primitives::{Address, Bytes, HashMap, B256};
 use serde::Deserialize;
 
-use crate::transaction::TxPartIndices;
+use crate::{transaction::TxPartIndices, AccountInfo};
 
 /// State test indexed state result deserialization.
 #[derive(Debug, PartialEq, Eq, Deserialize)]
@@ -22,6 +19,12 @@ pub struct Test {
 
     /// Logs root
     pub logs: B256,
+
+    /// Output state.
+    ///
+    /// Note: Not used.
+    #[serde(default)]
+    state: HashMap<Address, AccountInfo>,
 
     /// Tx bytes
     pub txbytes: Option<Bytes>,

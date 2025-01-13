@@ -58,16 +58,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9bc1c8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xad53eb5c59fc2d9c8b0a0bb154dfdc7c94d9376e5f2bd80c39d8fb087684da39",
+            "hash": "0x0af748f8d83baf205e0333a03a5e9fb917c18d0d38ec903a36637aae35c40ca9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -132,16 +146,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9bc182",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd579077147a5283b69d189749c56f39af0ee987808c736e7772a759c11387aba",
+            "hash": "0x017c4b08dc427a4fd5be0280359ccec6c5058739cfc0af1fefe1920da030b21a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -206,16 +234,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9bc1c8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb554e63ca7520dbea9c4c3f586b3e3baa385b7e47fcb0c3c79e67410200731c6",
+            "hash": "0xc78e1754702dd5ad6c7e046e9309bb7da6023c93add5e11c6c974c17a05a3a79",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -280,16 +322,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9bc182",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4c4bcefc83e21d4b13748d678c7d7289dd8ba8aae2e353aacf159744a1f2e5cd",
+            "hash": "0x0281783ec62a3b2ceb8c0e04c51e2b566bc62e9a14ca03c10f9c1e913c5e52f3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -355,16 +411,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0xef214e90e8f8b7f3070603a7a3553677bbed342450fef3890368567988e7d52d",
+            "hash": "0xaf881e7540149d5bbc62f1b6f044bac32e9ceba0cf47ff26b3d6bde0196ebc52",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -430,16 +500,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0xfe04d77705d6ac6329f0e366482ca3c71c8f5e1c3a221079cf3385b5c4f34daf",
+            "hash": "0x306b4d6e7a1f54273995f33640634ee2739009bb7f9b7e20488c5221e09a084b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -509,16 +593,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9b5468",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xfa61261964cc5fd325bfb1d6919681b76cc379881811defb9a9a93b0d8cd506c",
+            "hash": "0x93b1660ea4648061bcf9371e466c40c438abd9ea911fd60f68974ac64cefbebb",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -588,16 +686,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9b5422",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5b84502c4b9b9c9e11b49f1527eea362f8c01e32e1fe8a606325e35fe530620c",
+            "hash": "0x89caeac8bf04f9f266025161e85133416aae8f8f6a1a9045834c9b271ddd2d0e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -667,16 +779,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9b5468",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x485a0469d94df897f32b03d25c8f2d97542ddad9322c1d050b497472dc6ac07c",
+            "hash": "0xbc8baf459aaec16e00a7012b7737bcbcdef95f1e47490b2f882e562842392366",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -746,16 +872,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9b5422",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x367bb47c120e7bf030a8b7b2b2d44d1fc3114f2554df16ca9ac0e0d37298bb8e",
+            "hash": "0x1a51f502087ae367593911cb0820f53a1d5040f26f7845ea032dd3039a628c9a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -826,16 +966,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x8d0aaaba99918ab65d69d309a80832d7b24049c386b3e5aaa39c659eddf19f34",
+            "hash": "0xa74e6f2af2a0026ee7704e5f746c05864f289743b36911e9b0d712193e119125",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -906,16 +1060,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0xe76ed3fd0a7a295bd562cfaef45564327710c60a63080482345d0907835c71e1",
+            "hash": "0x9555014f887b8450a5af0b4cb371e69e33e5f3a709b7dd15def9332910526608",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -987,16 +1155,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9afde4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x997c6a40ad857653aa032650406ee68f5243e4e0924aee0afcc71ae47ef56158",
+            "hash": "0xb8109377fde56302f9f549b998dec8142aa37374625f4e2c7abbf00bf7564422",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -1068,16 +1250,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9afdba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4f34f46b3338a174a17a547567791874623e6fcb2e853a668ba5d06edec7a69e",
+            "hash": "0x3088345b398c8516105d59d9e1218c3415781395709818cdeb231e24b20832e8",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -1149,16 +1345,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9afde4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x84b45d5fd37e2983d6aad2015e10715a04d6b29072d53a8fd7aac3b61c5aab55",
+            "hash": "0xca8cf9fd85effa5342b59c8065040b21d2d47838a979afbbfbc7e79641d5d404",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -1230,16 +1440,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9afdba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x46d763e4d97eb9bdb67e02e5262d82bd98ebe911fc70b599695f5bcd0d698743",
+            "hash": "0xc9aad898a73a4caa9dd3097f4d3a5ec6cf9003e355ac0d853d604508794af959",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -1312,16 +1536,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x05f7006b6f7dd8da3d0ebf46c6f27678f52164ab027fe4b2172af7db2b347625",
+            "hash": "0x167d16b16ef75ca21403de3f24613be80f83b4eed2d0cd279917b8ec756616cd",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -1394,16 +1632,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0xf0648d4f004b0e40336c1c2cf1c541d6f0598bc0649c32c4f1e0095a4c2a0914",
+            "hash": "0x980433e74af6387d6b88ad4856cbedfefaed742d43ceea2eb3214c4d99a53a9e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -1484,16 +1736,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97f298",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe88887975981187252c3cb867ad4d8846cfbf6d7ae980aa7294de6f4d456ccb6",
+            "hash": "0x9fef359d50eb5974500686a067bf088f115ac2d74ddbe8cc8be5a10fe7baaa25",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -1574,16 +1840,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97f26e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x57e61b068f6a5af06d96bf421d433bf02a8927f2b5a49b0fd94a25bea3635760",
+            "hash": "0x442d996123fb585601f7d82969ed208f183e18d5eed545e4f5777c5dd69a6029",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -1664,16 +1944,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97f298",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2ca9ce1ed3f80fa5f4af15b80f2b9916e9d0379c36b4f6e078041f0a9d49ae3f",
+            "hash": "0x27bad26af3dd4c35ac072b22beef14c1b1c8b79f76123b065a8a23a6804113ff",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -1754,16 +2048,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de97f26e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x8a5296770a0f16ae63df054429ee6d1c0bd2536c3f2ba9a5a9d8e14751c8ec24",
+            "hash": "0x471f70c4d958bae9854ab86d50e6a395be73fe57d6f16e67c32f90c9cee45ab7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -1845,16 +2153,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x6328939cd34575338b4f0f27d88d69399b0dea21366465a76b3fd2cb87a68bc7",
+            "hash": "0xc47377d8ab94f9f40897a5ec4ac312c91d151d6e7dd72edeada1f8e2fe794fde",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -1936,16 +2258,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0xca4071bf009d4dfc27b93cc351cc5fdfaf9fa3c0dfa06b60e8d7e2d81261c72b",
+            "hash": "0x018577fa584f500787ce01baad9b6cf0616e72f620ddf8cf3846c8c0c672e976",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -2051,16 +2387,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de977c08",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x464b84c0be4a66620905b0639d208bed88ee8b9d3dbd8edf7ac7ac3742e32596",
+            "hash": "0x5d337e86e47d26130f34a997d07e4f55e09e47fc3314478fbbed6c46b2b4477b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -2166,16 +2516,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de977bc2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x1429ed7c7ad66c1a8bc333e7c175791bdd114e70b28dc4bfffbe96d7a43303d2",
+            "hash": "0x2090005917a5c72994205cadac5c92237593360bbcd6e2249d319c0d1ea0c108",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -2281,16 +2645,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de977c08",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xce580c7e77a99231c84836560df9b8e4a02f633f18cec3e3bfeec6b2d5a64ad1",
+            "hash": "0xc753c9cfb8ad0f93bc481d3b01b3afca2b420b66cfb8d81ee9decbe34c1f895f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -2396,16 +2774,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de977bc2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xbefe234c9355c269f70975f327b8d8e43d4494ec2fffc0cffc279204013f45f2",
+            "hash": "0x7c4563dc80ec5238f3440f17fbd6cb55e2981aba33f593379027111321fa7800",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -2512,16 +2904,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x2657fb2f866a0f48e436e1e913ca8079f9340e4a5470357d7cc17c51f396d9a4",
+            "hash": "0xb7f919e53191ed53527c93da81a36232f74dcf428692d13b7bc0b3e62fddd94e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -2628,16 +3034,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x44d57f673b43d31e87cea04abdbbf9d75f6d83f91f4f24ac3a49730f645adea7",
+            "hash": "0xd6422494cc1b83a3f824a3829dcc32c52b37ddb90791b3c3465ded314d84eb5e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -2763,16 +3183,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de941a38",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x3ed51d7ce2dfd67be455b9dda9f0c4479b852e887f1f24c147799ed70733c83a",
+            "hash": "0xa619ae3a5d86aa354ca97b793ff5f3920588ce95917be5d4d4ecb7663260c87f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -2898,16 +3332,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de941a0e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xcd8af759e836f805ac7bfe0881d91b7239a782556d0101559ad0ea591606097f",
+            "hash": "0x57508a8d3b51d77cf83bcd47572c8653f411fce3b331682af9d91e84d1873e18",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -3033,16 +3481,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de941a38",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc01421299715591eeffb38b0e78479ec4283bd1a1d890961173eebeaec1918ee",
+            "hash": "0x251aeb6e4cb14eff3137046475a3bcc788cb661bd676aa4b686ef5de0328e11c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -3168,16 +3630,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de941a0e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x1f0e5b5da67a8970391bd1059d8857b820596f890c76c499dd63dc60c9027468",
+            "hash": "0x44756d8bc8149a26085fad46dedf09f49596f0596d9125e4c94e5f3e7f9470db",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -3304,16 +3780,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x4a3743b6fe5fa2f26dc9f6ab42fad124f2a3cec4c7795532274f8a1354d38f43",
+            "hash": "0x159965e7bf1081543faf4f022cb66ced322830759f02f2c1006ad904fa0cd37e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -3440,16 +3930,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x3fb70abc6ef2d8b208f850b5759944d58d166fa63ad3d281afb407181079883c",
+            "hash": "0xeacf331e66b7fbf8ce0e097cf521b753e784df8a394d1462f92426c03c5bf08c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -3665,16 +4169,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de75a940",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x8fd4830f8318f91b088f30621ec1e797fb2b5939b2bd8d1733becddf12b075a7",
+            "hash": "0x8ce34968288b1c876875cc0cefb0fcaf963c723f1a9d3c1cabb6d5782a986d66",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -3890,16 +4408,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de75a916",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x1c45a51cadb84d13b003a4150b97ecbba0afcc13e985f1dabae21cff728206d8",
+            "hash": "0x4d4a26a1fe83addd2f6785ca27943db63dc02a13a0f7432cc6ea573ebdf02998",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -4115,16 +4647,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de75a940",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x17e68fb572fe17c7303863ee1673fb83082ae06b44bfc499cd000f0ae1c40533",
+            "hash": "0x3e529af73da5a7ee69fa3ce7683882b12332ec8aed68aac7bcd774397798f6c9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -4340,16 +4886,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de75a916",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x03b09d93da9d06ced563f323b63988448b6fe0cdf60abc87335804146efa2613",
+            "hash": "0x5ccfbb4e1695aad7f20a08e7c9363d68e8e5d4db10b55904fc0522ada8158526",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -4566,16 +5126,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0xfa8b424bb1739ca32e9b42b80c7751fcb0a420f48b149069adb69dc9c45fbc1e",
+            "hash": "0x46d7c63c7833b163b958d6a82296883e7b7cc7643012a86e15ee95bb522e7d6a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -4792,16 +5366,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x93aa33c2f640c8888d0961f1d0e55fe3cf440383f3ffbca1037eb06084f5066b",
+            "hash": "0x1ffb1c6446eceb010ccd157c3f788e7f5f1fe064c32c688dc7fdb8618f2445a1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -4871,16 +5459,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c1c8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc7db24b34b3b9bb415284ee18250bc08618468e1b9d5d9f9fa42cba9afccf36d",
+            "hash": "0x82f95597fd8a454e892b1d1bac7013348902123747ff8b975657b91bd551e637",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -4950,16 +5552,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c182",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x833482ba111a83a8e5a301f73de3697225dbc08b43f2d179700e1fc2bdf180d0",
+            "hash": "0x13ba9ebe9e542bd6e9e5777f814120e5fd11d5b001bfc50096a1816ce3f72734",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -5029,16 +5645,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c1c8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x30e8dd2ad9a6f9aad6006eb956cba47a29ffdaffa0f25b17e812e7b093c6e7c0",
+            "hash": "0xdbd28ae01089447a64b70f59c1f88116c9cf0c2f8f5f004fb682cafc3002f563",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -5108,16 +5738,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c182",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa5af8ffe1680380691e4db77635d286780a066a7a1facf3b2b385ce2cb1199e9",
+            "hash": "0x3da3a0c4d81b2ac1bd5b34ea532649de09603c20750fdf31fdd9df522958a389",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -5188,16 +5832,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0xb25a059000bc3724c3517893b24862dc965ad9418186453b4a57714321d0556f",
+            "hash": "0xfcd3499d058ed288ad7e9fcf87525b5a6e3a7c4c380d59f1faafaa0d4ab7c498",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -5268,16 +5926,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0xa55e83b5bd75296d42eb197269db062703eaf32f727d9f4ac54acb0c1fbc21d2",
+            "hash": "0xf945b94073e0a295cb35bd411500b4336eebef2be09bb07429deb4c84a3c892c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -5352,16 +6024,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de915468",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x3808cdb6a1a6e0d88083d168c13e5c56a6a7da3c12d4fa6416356faefb2a9bc0",
+            "hash": "0xcbf069ad8ed1ada3577c110c78287743cb9e461d09a866a14bac3fb0707ebe4e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -5436,16 +6122,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de915422",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb2fe08083e6cad3100de5f26261ff077b7954e6ce745a43413b102ca47957b67",
+            "hash": "0xf2795969ed59ab397b15b1b0ba3ce0144488657e1106388d135c977c6b003040",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -5520,16 +6220,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de915468",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x8c443f3521b203d4838ed6d3330653aa02b107b5c45d08536d8a36a9d839d36e",
+            "hash": "0x021a3a1ff87054a339aafea57fb90dbb5df5bf50d6b7e818f760df4443ce2ac9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -5604,16 +6318,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de915422",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x171a956bcb970895f25c50c9272123bf218e890d4c37ea586b36a572c3d59843",
+            "hash": "0x9090a4d76870ac558c89dccdb70447d16246d7477a53dc5d10fe6a040e9605d7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -5689,16 +6417,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0xd6e32a034c41689dbc96d37f204d00fa8e4fb4b54b07924be257f14bb8cf6c53",
+            "hash": "0x276d1898370921ba37fb55153bb813ac6499a4dae7056a530973280439bc8047",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -5774,16 +6516,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x8c66eaca86d9c7004319473e99c26d8447b8840e1752691b3cb45c392708d608",
+            "hash": "0x976fe3bc41134b465d1a345eed20e1546418bfdfe10f47196aa9e482d4d0ad4f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -5860,16 +6616,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de90fde4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5aa8152fac0853d9692cb11b9031151dd296bf475fb47d55e3a03949ad440e56",
+            "hash": "0x29aa4d8071b3660506fe412dd9a563b08b24c2791b8cf1a9ae5d53258e7bf834",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -5946,16 +6716,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de90fdba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe296904c16a100ad7b9b072d0338a0e30b49a67045f89cd0abda20c667da2166",
+            "hash": "0x695f5597c7d15e1e41b64cebe060b0ccf71b0bf0b7ee0a6e0804eaf42eccd77e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -6032,16 +6816,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de90fde4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2cff563dca744113aca6b1e7cd4e7c523d23c4f7b59bd4cfd19dcc69dc657227",
+            "hash": "0x0a5da3516738deb45fccd93de88db44ebc086f918065a467c6cfb294a80417e2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -6118,16 +6916,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de90fdba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x01195ae618d8ac073e83554b2f27b8ff5877e8ab69da8e8ffe4156ae60d42062",
+            "hash": "0x74259ce5410bc5b51bcc2957216895ddd66433b10918fa58204b8ed59bab6cf6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -6205,16 +7017,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x21800ca7c258f93ba2fba5e5251697da8e1c345f8513db44318ff81e30b75efe",
+            "hash": "0xba85a33a6a78cac887fb2eb583a06814ad024e10c5dc2a782b052fd8b2b22905",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -6292,16 +7118,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x50332add95efe7f2660baa5ce563541c7f3d53dfeb0d8f68cbe64f15cabb5a12",
+            "hash": "0x6aa2ca9137de26a06ffc7e8ba8fe073f1d42067cc2b5cdfca563a2b4da92701b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -6387,16 +7227,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8df298",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb2421f31ac46f42cefab9453977a1d9b2b74e707433536261e8571bf86182dd6",
+            "hash": "0x1d605aaecf417a3148514396bd3a9ba047875251880362f3c95a3ce9576302b7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -6482,16 +7336,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8df26e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb3b64633f99fb595292d429ca8814b3a1876a745f7076978c82aec811d27b6e7",
+            "hash": "0x6057e4257fd488fbd321d79214e913cf92dfc96f52091c38ac7411831e48e169",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -6577,16 +7445,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8df298",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x79bfa0bcef56b800926ae0c6c4c58df2d1244566b7435db5b26515d16bf1de8d",
+            "hash": "0x330b004911c5cefc3c00952aa363f594b83f2c9669644a4a7f1af87d0143d59e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -6672,16 +7554,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8df26e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x711d79cecf7e3059d8dc0bf7992f2799fda2abf011b4dc9a28f20bc2a2f0a82a",
+            "hash": "0x933ae8bb32f8a0b49f87a457b6a3d9746ba629ca8b51e05a9313917f2fc15f2c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -6768,16 +7664,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x2e6c2b72522ef84f170f0086882b9cee1bddd24846744b86a00f724dbeae801a",
+            "hash": "0x7d9ad057bbc6605e34aa29e98876a9adf0c33431ea6800b03cc3aec2cd689104",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -6864,16 +7774,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x7fe961dde798b37a3d280a12cb997c6c29aa8fcfa4813c5fd096eb4a281f04c0",
+            "hash": "0x3723302bbda8c846ca27085551039b792a47274f034b39f1153ce4f85acc2319",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -6984,16 +7908,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d7c08",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe85738682e94f81c1cc59f7dda640b46a3e3c2ca41330653bfc4d61376d3e2ce",
+            "hash": "0x190675c790f2773e5809ddf3a232a2bf04246788ef6a9b0fb39e353f6752be48",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -7104,16 +8042,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d7bc2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x046f6cefbafd1450590a0d2936949c39b74e3fe7cebe917cf6443e28ea7c45db",
+            "hash": "0xc51cfc980d9701f65991caecf48a75e9d8fe31b2e805cc81285d8bc1606b3065",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -7224,16 +8176,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d7c08",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x11eccfec8b4f10cd053b22dff7b92b307a27c60569fd03819fe56a68b9bc6f2d",
+            "hash": "0x2f106634f75f97ef1d64bcba44608d83f519a6c99ed757b0a02543e3e509de4d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -7344,16 +8310,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d7bc2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5036c4b686895241d80d5e4c42eebfd36da068f0d62ef2aade104767f09527ab",
+            "hash": "0x5a483aa6148bd40f6c2dd57b9638a3ff7db0c0361211f4df053ad7325c5a8e99",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -7465,16 +8445,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0xa43d47d40c9f812ccd373bad946b20c8cc7172905e9da98cf017507f3916da66",
+            "hash": "0xd3a426a81dd625f8b807c537e5f1ab31baae292832bea297ad136f485bf3e5b4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -7586,16 +8580,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0xc47df6ba2affd59136fb095c154ce48e2a976866b8446babc02f15941ed82fd2",
+            "hash": "0xe325c2f2eb0b5302947f7c6cb27fd384523d012d7a852adeae1c47cf14748acf",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -7726,16 +8734,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8a1a38",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x82297f07823e2e6128d6e4bb37ab084d13ac0ee611afc2052c6ba45b8d779ea5",
+            "hash": "0x47b7b93735402d6871b9de97e507759e8735dd929552fc9e2037c29b7916f761",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -7866,16 +8888,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8a1a0e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd094ed9a2f494bbe9834e7a1a5ed1b8139186543454757764f6d112194456bc6",
+            "hash": "0x2d7b6422d058e1738a944440ba722c1a6dda60d36aeabd60815b6f65321e6d62",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -8006,16 +9042,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8a1a38",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xfe0284be2e22c639e7b67f394ad7f298114d16e252b68ff730acb788c5d1b468",
+            "hash": "0x87aac2ceecb8b214372fc7d07e452663b7f373826ad4b4c0f85ccf42b17cc961",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -8146,16 +9196,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8a1a0e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2a22cbd40bb450234c5bbaad893c06836f0a1801d4ff37af8a0a30dfcd988801",
+            "hash": "0xafdefbe62d7e6bd1777dcfff4f4df1b98126cdda1f8b309fed45e826c964ebe2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -8287,16 +9351,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x98ef96d0a0b39636cc4e7ddd6d747c14fa2461f81360c6415175b321037f75f7",
+            "hash": "0x11d89525dfeb949c7e208720ae99f1f3d73f8758dcebc843d89567d35f53a219",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -8428,16 +9506,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0xd1e0a550af0868475d4c7aa655e5ba585c07c086299f46e242f3f2883b36b517",
+            "hash": "0x73aa6a2b16a7d2d7ab116daa586df0b6639e971b0c7fb8ebacaf9288fec60061",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -8658,16 +9750,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6ba940",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6e1c96c6647fe4c36f53b5df344678bfce270d2e9eb19ccdafed8618ffaeef7a",
+            "hash": "0xd4afd2353c5a5851a00a8ad33fba37912e8e1dca12e130bb8c729b5097e1f6fe",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -8888,16 +9994,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6ba916",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4377196c908159891278039d4e384e9662a1d4368d18f99a63f6d51b6fc37eb0",
+            "hash": "0x3291f55b3a6183f57c6463b91931c85c8eb12e67a6ba74d67e24805d4c21f27e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -9118,16 +10238,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6ba940",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7a90b4c6a911c161864007e2ac012fefb41f1532b57904daadc8292d7b6235bd",
+            "hash": "0x1351251731796076d318ffe8b3197940ecef0e25f066fcf9916e8e1c1f8723ca",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -9348,16 +10482,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6ba916",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa415bf194bd54ee19f6d73b6234863a0bd251a13e471606cfad85ab386c994a7",
+            "hash": "0x7155cd346fd76c15a8b58736fb0c5b9170d625fde538493f9dff170a9eabcb34",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -9579,16 +10727,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0x9a328d9bae34f6b871b709e44b0318b461723b41cb1bac7cca28cac0abf1e78f",
+            "hash": "0xbf6bcc59d2e29dc5dccdbe33032f3d27c2da14c5f40ceb43a133e7b1f2f9e9ec",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"
@@ -9810,16 +10972,30 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INTRINSIC_GAS_TOO_LOW"
                 }
             ]
         },
         "_info": {
-            "hash": "0xa4ee78474a1df836b50492f5637062af60f585b688561dd334225735a11d2aa8",
+            "hash": "0x8707cfc762c9338b98cfa32fa63c59f94aa440b471c42990ca17fabe8690767a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs, but no contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L150",
+            "description": "Test function documentation:\n\n    Test transaction validity for transactions with access lists, blobs,\n    but no contract creation.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7623_increase_calldata_cost/test_transaction_validity.py#L152",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7623.md",
             "reference-spec-version": "9104d079c04737b1fec5f7150715f024d8028558"

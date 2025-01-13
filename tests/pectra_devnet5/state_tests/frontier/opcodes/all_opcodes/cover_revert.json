@@ -44,16 +44,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de94848c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0371d6",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xaad88feaa668218edfeac27629ee9224e8fc8383eb3082bb2e259c21aa033fe1",
+            "hash": "0xdf4f02d6cb3197c548dd58ac2bbaf0eb3406ab45bda90e170042dcf8f41579d4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\nCover state revert from original tests for the coverage script",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_all_opcodes.py#L96",
+            "description": "Test function documentation:\nCover state revert from original tests for the coverage script.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_all_opcodes.py#L95",
             "fixture_format": "state_test"
         }
     }

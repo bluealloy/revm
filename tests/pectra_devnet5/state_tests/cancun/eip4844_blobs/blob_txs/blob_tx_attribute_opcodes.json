@@ -58,16 +58,32 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x30cd39",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x32600055",
+                            "storage": {
+                                "0x00": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x91e21f54b4a2035323de354a5f072aab8815e5f8473aa387804c9ee7a4d18dcc",
+            "hash": "0x7009d07129517f194c27c1e713d1ef3c3cd80c8e5fce0dd74b5f237ee64ad125",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test opcodes that read transaction attributes work properly for blob type transactions:\n\n    - ORIGIN\n    - CALLER",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L1113",
+            "description": "Test function documentation:\n\n    Test opcodes that read transaction attributes work properly for blob type transactions.\n\n    - ORIGIN\n    - CALLER",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L1086",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -132,16 +148,32 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x30cd39",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x33600055",
+                            "storage": {
+                                "0x00": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x017cdc5c06aad842be68afac7d79e3779e5f6683131dae74d288dfa2f97206a5",
+            "hash": "0xe4a7d18e5bd56939d4167b21e461f4a7539071e594b2629aae9c98e8c2b90c22",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test opcodes that read transaction attributes work properly for blob type transactions:\n\n    - ORIGIN\n    - CALLER",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L1113",
+            "description": "Test function documentation:\n\n    Test opcodes that read transaction attributes work properly for blob type transactions.\n\n    - ORIGIN\n    - CALLER",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L1086",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"

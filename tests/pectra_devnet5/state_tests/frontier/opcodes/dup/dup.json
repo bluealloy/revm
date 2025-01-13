@@ -50,16 +50,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f601080600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x10",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x78073115143a2f4f88bf6c68a6b9e1b362dd493c7492539e46f53d1ecfec1918",
+            "hash": "0x125b1aede2538af7b97a9b3513eb79415dff1918fccd0f47b92a71529694b90f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -114,16 +152,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f601081600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x0f",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7605c3876a28dc38bddeea021c128988d157269438ebac9da99445e13c08a23f",
+            "hash": "0xdce4de4403f4ca97515024519f35d6ab5dbb2a78e90a126b24b58393a85df7ff",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -178,16 +254,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f601082600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x0e",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x19e27373362d308a0ca758f565fa7f612fb6eae3f6836be9d247522bde8fbca7",
+            "hash": "0xe5352cab4b6b291ebbf8b87b366e16b82616426504eb2e4d778f71d2da58f6bb",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -242,16 +356,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f601083600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x0d",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x1950f4f7f629516958330ec303da78694621c85de6caddde58d84bafb0a524db",
+            "hash": "0xddd36215153627fa4c74636d11c7fcdcd97fd1949c8936c480d2f4f3ff87259b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -306,16 +458,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f601084600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x0c",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd6b9f2486921dcc7d3ffeee9e504055785c869f608d32edad76d00d72f94b4fb",
+            "hash": "0x94c0b19473396e0fbf18b642e40cbbf1b2c31880b83e9bf004d42176b8bfe795",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -370,16 +560,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f601085600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x0b",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x380a99afde7647fbeac5cd866d695b0e673d0625d9ec30d795f142ed28087258",
+            "hash": "0xdd69e0442fb3ec138e0f365eaf45fc3b5e2da63dd637c9a71b00b8d0a35d495d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -434,16 +662,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f601086600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x0a",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4ac3ec848d9684e3d4248e076c2fd2ffad30931997c4a19fca273a6a3df83f49",
+            "hash": "0x27614a45794abc8c6762f386dcc93bd2c92079c1c9b7a691b04604a1df643c41",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -498,16 +764,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f601087600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x09",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2f8c05a1ccbd3436d3659cce736c0064bc7cfda6e8f84a70e2704316caf96d23",
+            "hash": "0xae5f333ec94274255d4df6c4a1083c4a7b5e7a43b1a113fc0f4600faf9d05afe",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -562,16 +866,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f601088600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x08",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe440c6e8140cf1ecb8ba35a5d38cabc5f878ac1ac2a520cfbd22dd3bbb10e483",
+            "hash": "0x59b7862cb96a50d09ae0d2206628f820fd13443dbf5e5835650ca43dd434fadb",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -626,16 +968,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f601089600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x07",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xaef07f9be2758cb9864347c76a91bbd11ef0c30145b3844dbd2ece20f4bebed2",
+            "hash": "0xb461a6df09da948e544dd1ed91f61bf96d47d93f4f7fbf3ec6fd429218952f78",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -690,16 +1070,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f60108a600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x06",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x945ed5cd268518384c55135ab3d7f08c5e67a8254bae9c4adc99fd0947d0903a",
+            "hash": "0x5cf2f349bad10cfdf1c5fd3a9e436d911281685605e4c3fbd9c6d70e90996c12",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -754,16 +1172,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f60108b600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x05",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x066288216d172cc2ee5ba2ea8dda7afd825b1197a8619fe636f90da57a9b8e6e",
+            "hash": "0x53d62d9e5f6e984b8f95f25501f5c0e92e618075e3f318f5d0abd948c897c8ef",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -818,16 +1274,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f60108c600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x04",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb8f06e4ddbea2d7d57f2a40f3ca99fe14b908d972e6daa6fd787a72c509a4ac5",
+            "hash": "0xd2691e648f8e5e4ea82615ba38abbc3b10c689b00e02080a693ba4da95173f20",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -882,16 +1376,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f60108d600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x03",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x240256abb2eb044466db929660cf30bfdd31583e2609a6317589a92169ab354c",
+            "hash": "0x5ea37e04263de163cbf6c38fa56313117b6423e244bf705c92cd1e62c1532726",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -946,16 +1478,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f60108e600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x02",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x722c6e0b00d90262199594e9f33b4445f0370aa3c467ccad83c435f6e1d3ca48",
+            "hash": "0x2b6cecdc2a120635e9d2436b6bbdfacaecc1f80e3628f63edb05f91cffd404a7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     },
@@ -1010,16 +1580,54 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de6373ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600160026003600460056006600760086009600a600b600c600d600e600f60108f600055600155600255600355600455600555600655600755600855600955600a55600b55600c55600d55600e55600f55601055",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x10",
+                                "0x02": "0x0f",
+                                "0x03": "0x0e",
+                                "0x04": "0x0d",
+                                "0x05": "0x0c",
+                                "0x06": "0x0b",
+                                "0x07": "0x0a",
+                                "0x08": "0x09",
+                                "0x09": "0x08",
+                                "0x0a": "0x07",
+                                "0x0b": "0x06",
+                                "0x0c": "0x05",
+                                "0x0d": "0x04",
+                                "0x0e": "0x03",
+                                "0x0f": "0x02",
+                                "0x10": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x122a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9528ad68cbc50679ca6f3fa8aecd72887df5049d88f287bc262d38b43cf04474",
+            "hash": "0x0167ed22f70ad727d2807b4e8373523fd2c2181d516740b6b3ab4d97c34ffe47",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test the DUP1-DUP16 opcodes.\n\n    Note: Test case ported from [ethereum/tests](https://github.com/ethereum/tests)\n        Test ported from [ethereum/tests/GeneralStateTests/VMTests/vmTests/dup.json](https://github.com/ethereum/tests/blob/develop/GeneralStateTests/VMTests/vmTests/dup.json) by Ori Pomerantz.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/frontier/opcodes/test_dup.py#L15",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/frontier/opcodes/test_dup.py#L14",
             "fixture_format": "state_test"
         }
     }

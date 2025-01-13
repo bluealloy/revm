@@ -51,9 +51,13 @@ where
         exec_result: &mut Self::ExecResult,
         init_and_floor_gas: handler_interface::InitialAndFloorGas,
     ) {
-        let gas_result = exec_result.gas_mut();
-        if gas_result.spent() < init_and_floor_gas.floor_gas {
-            let _ = gas_result.record_cost(init_and_floor_gas.floor_gas - gas_result.spent());
+        let gas = exec_result.gas_mut();
+        // EIP-7623: Increase calldata cost
+        // spend at least a gas_floor amount of gas.
+        if gas.spent_sub_refunded() < init_and_floor_gas.floor_gas {
+            gas.set_spent(init_and_floor_gas.floor_gas);
+            // clear refund
+            gas.set_refund(0);
         }
     }
 
