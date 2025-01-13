@@ -1416,15 +1416,24 @@ dependencies = [
  "eth_trie",
  "fluentbase-codec",
  "fluentbase-poseidon",
+ "fluentbase-rwasm",
  "fluentbase-types",
  "halo2curves 0.6.1 (git+https://github.com/privacy-scaling-explorations/halo2curves?tag=v0.6.1)",
  "hashbrown 0.15.0",
  "k256",
  "keccak-hash 0.11.0",
  "num",
- "rwasm",
  "sp1-curves",
  "sp1-primitives",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "fluentbase-rwasm"
+version = "0.1.0"
+dependencies = [
+ "hashbrown 0.15.0",
+ "rwasm",
  "tiny-keccak",
 ]
 
@@ -3434,7 +3443,7 @@ dependencies = [
 [[package]]
 name = "rwasm"
 version = "0.30.0"
-source = "git+https://github.com/fluentlabs-xyz/rwasm?branch=devel#08cf42d0db9e765e15a016ed622c855bce4d02b7"
+source = "git+https://github.com/fluentlabs-xyz/rwasm?branch=devel#9dc814e3e1d9bef39b5d2015881635fa5e8a1e88"
 dependencies = [
  "byteorder",
  "downcast-rs",
