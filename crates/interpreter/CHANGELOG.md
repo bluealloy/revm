@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v15.0.0...revm-interpreter-v15.1.0) - 2025-01-13
+
+### Added
+
+- *(EIP-7623)* adjuct floor gas check order ([#1990](https://github.com/bluealloy/revm/pull/1990))
+
 ## [15.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v14.0.0...revm-interpreter-v15.0.0) - 2024-12-26
 
 ### Added
