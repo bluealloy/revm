@@ -56,16 +56,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a3660006000f05a906000559003600155",
+                            "storage": {
+                                "0x00": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x01": "0x89ea"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de51c124",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x177942",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa3e045ed96742158622e3b59975848c5bde3be82dabdba190c72039794316f81",
+            "hash": "0x4292300accea09f8966dc86a71099aa81bfeae53a5a7500e27df7e4bb8d906e8",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -128,16 +165,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a3660006000f05a906000559003600155",
+                            "storage": {
+                                "0x00": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x01": "0x89ea"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5dd70cf34",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x5af50a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7f1092072cb6ce169333f542db599e4980150ef82a4c0c7b7a81ddde710d5f46",
+            "hash": "0xed9a2c55c9edcddf91d751869521590f6ea1b09d3bd20614c9297515c58c54d6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -200,16 +274,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a3660006000f05a906000559003600155",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5db7df42c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xf09d26",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x069a318d7e84fc4e28b07846c894ad4be71fff29574247932d35a53165c180be",
+            "hash": "0xb0a9cd711d801864399ce7246cd1921771350491266ea6f658eb6a2742079090",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -272,16 +374,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a3660006000f05a906000559003600155",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5db23f954",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x010b9b9a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc6c748afa7453a1cd63b921f43109c818a1de85288dc7670eddd249b226c1a66",
+            "hash": "0x4507ebe83877891d95c5dbabcfcbbc6117c391f5e94cf35fbff2af1100885a4d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -344,16 +474,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a3660006000f05a906000559003600155",
+                            "storage": {
+                                "0x00": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x01": "0x7d0a"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d6378",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05955c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x352444cfabbbb0dd986dbe87cd31aaab554a64fb56231c0d2bc45ecae2a9dff9",
+            "hash": "0xdc51a55f91d78b8d957f0a1b41b53f5aa72958b8a0f7a73097a4d3c5050128b1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -416,16 +583,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a3660006000f05a906000559003600155",
+                            "storage": {
+                                "0x00": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x01": "0x7d0c"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d62c4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x059592",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf069e523d09640c6b6445fc83a7c74589ea0808413c0e6eb2b464e7f1919c32f",
+            "hash": "0xb9e88cd970e398ad3a4ee7ee9cef8afcc5f1efb84779e6c9440d435830cc126b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -488,16 +692,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a3660006000f05a906000559003600155",
+                            "storage": {
+                                "0x00": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x01": "0x7dec"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d50f4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x059aea",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb02415cae6b32285c2668d96e5b582eb78b7b2ecddc7569dc98b2e616b78d40c",
+            "hash": "0xf8307dec96d052fea1e712587986aa2a34fda6a5d5fd061b797a2d2bc4bbd151",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -560,16 +801,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a3660006000f05a906000559003600155",
+                            "storage": {
+                                "0x00": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x01": "0x7dee"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d5040",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x059b20",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x3ffc4813605eced3baf9bbde5a107d86ac080b19940287ea0b5277a56a5eff91",
+            "hash": "0x3fd8acb2256c9ce44b0c2282e31bc7addd95decf194fe402945a95f0ddbf2dc1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -632,16 +910,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a3660006000f05a906000559003600155",
+                            "storage": {
+                                "0x00": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x01": "0x89e8"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de51cda4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x177582",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x28d864703b95e9d95918a5e32db936f60f47c96b59df9261e3f9c16d82718940",
+            "hash": "0x21c02e0521cf4c6ab82ac8815973d6ab69d5a39fea9f195832e38a77eade76fd",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -704,16 +1019,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a3660006000f05a906000559003600155",
+                            "storage": {
+                                "0x00": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x01": "0x89ea"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de51cd40",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x1775a0",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xab330760785c42c227c1a9622ecf458b875e3b7180988b1feae858da4c60fb9c",
+            "hash": "0xb242581b5873ebb656c1e30c504cbc6bea0a12ac342aba66b132645ba934a985",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -776,16 +1128,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a63deadbeef3660006000f55a906000559003600155",
+                            "storage": {
+                                "0x00": "0x264941b1585356a6e523a42ab0198b8539391f16",
+                                "0x01": "0xaded"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de51c124",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x264941b1585356a6e523a42ab0198b8539391f16": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x177942",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x70899505a2cf67122e5597117d9d558e1377d83835edc1dff70cf7556eee457f",
+            "hash": "0x643e87721614f4af20049bc24179e3e7d8b2bc3db4be483f15598147f41ea238",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -848,16 +1237,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a63deadbeef3660006000f55a906000559003600155",
+                            "storage": {
+                                "0x00": "0xa0ff46b852d27c16a97a888e8d0acbc15050785b",
+                                "0x01": "0xaded"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5dd70cf34",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa0ff46b852d27c16a97a888e8d0acbc15050785b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x5af50a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc7aebbf75907ed658c4810c7777e98c0d9ce56fbb585f47853759ec616a19ff7",
+            "hash": "0x12f05bfee1215b4900fd4103a4c60f1af39e1b583bc7d3f44017a19fb92cbcaf",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -920,16 +1346,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a63deadbeef3660006000f55a906000559003600155",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5db7df42c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xf09d26",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd907c9cf04ffe2fbd1088f6881c31b8e4f130bf63d7a4d02ae6fe383171769ae",
+            "hash": "0xefa00e8feedfd2538c357f919a21e12d449ed5bac27839ed72e3da9bd8ccd88f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -992,16 +1446,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a63deadbeef3660006000f55a906000559003600155",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5db23f954",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x010b9b9a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2b93458d790ff9a958116befa24961af2feec183759841c936ce979a7d178129",
+            "hash": "0xf83112af1bbfcf6c2cfc4716a61c41ba8ae8a98f2712de89f88255ac6c59f734",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -1064,16 +1546,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a63deadbeef3660006000f55a906000559003600155",
+                            "storage": {
+                                "0x00": "0x3910840016625887feb111eaad8ba8282804c097",
+                                "0x01": "0x7d0d"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d635a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x3910840016625887feb111eaad8ba8282804c097": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x059565",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x29a2c6f30ce5996d9a87cfa168133eabaf72b188b6d5f60c19484b95c90f147c",
+            "hash": "0x3f7c97d1ceec48671745433bacf5ec87e37c8e2c4ffa34f7fc5d8d35f11d0328",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -1136,16 +1655,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a63deadbeef3660006000f55a906000559003600155",
+                            "storage": {
+                                "0x00": "0xa225a70a2f65b1b92120502eb6296bb3787d4548",
+                                "0x01": "0x7d15"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d626a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa225a70a2f65b1b92120502eb6296bb3787d4548": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0595ad",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe3bad2f3b740887a80db6cb74873e145ccf78b79d679a6878f1470d06c4f26b0",
+            "hash": "0xd7d5ddb3a75785b2154d7b4c19afd14717f239001381bcc408748e26bd46a516",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -1208,16 +1764,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a63deadbeef3660006000f55a906000559003600155",
+                            "storage": {
+                                "0x00": "0x091d3e2ef6231030d8749b0b47d551bc31a3e7ad",
+                                "0x01": "0x7df5"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d509a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x091d3e2ef6231030d8749b0b47d551bc31a3e7ad": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x059b05",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x23b77f898e6616e3f6f9710ed0c9b4542e5bda73e6ff7a172b68aec3414ecd1c",
+            "hash": "0x63708ea940b3bda597ce98472ccd32b28420cfbf8d7e6caff2b54166e9f6145a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -1280,16 +1873,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a63deadbeef3660006000f55a906000559003600155",
+                            "storage": {
+                                "0x00": "0x454dc2d9ba555a20ed4fec4b9ec7ac480632d0cd",
+                                "0x01": "0x7dfd"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d4faa",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x454dc2d9ba555a20ed4fec4b9ec7ac480632d0cd": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x059b4d",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6262cab13ab3cb2d7244bc232828e012a98fcd4aad2ee74d9f98609ae78c8847",
+            "hash": "0x3d33661a6506fe946085a6009b4dc405983f25b601512845d9472a62b4da862f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -1352,16 +1982,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a63deadbeef3660006000f55a906000559003600155",
+                            "storage": {
+                                "0x00": "0xc50f1a1c5eab137494c1efc33318410f2726ad9c",
+                                "0x01": "0xade5"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de51cda4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xc50f1a1c5eab137494c1efc33318410f2726ad9c": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x177582",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x868f9e9eca6dfbf59c7eb59d0997c18d37d9f9f94f2e32a6b32d5b75f35d66ac",
+            "hash": "0xf8d36523226d92324f4f8f3b2c058be66656100b5abcc5b4c44cc8d16d914f46",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -1424,16 +2091,53 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000375a63deadbeef3660006000f55a906000559003600155",
+                            "storage": {
+                                "0x00": "0xcb66752a8842acab93cce6cf40ec66a4065032e0",
+                                "0x01": "0xaded"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3660006000376001600060003660006000611000624c4b40f155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de51cd40",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xcb66752a8842acab93cce6cf40ec66a4065032e0": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x1775a0",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x72afe5c8e6df9f3fc7bc03cd861ed380a62162dec0aad93b7dd289f22c766aec",
+            "hash": "0x2d088c6cd35f467d2ff5f10a00f845999765bcec9b0a7a2c87a2d71e5dd01695",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test class documentation:\n\n    Test contract creation via the CREATE/CREATE2 opcodes that have an initcode\n    that is on/over the max allowed limit.\n    \n\nTest function documentation:\n\n        Test contract creation via the CREATE/CREATE2 opcodes that have an\n        initcode that is on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L506",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L485",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"

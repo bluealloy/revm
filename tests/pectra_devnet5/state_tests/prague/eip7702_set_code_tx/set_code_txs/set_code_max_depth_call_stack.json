@@ -65,16 +65,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c15603258015760005c60010160005d6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af160305801565b600160005d6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b5af160005c6000555b",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de59fea2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000001000",
+                            "storage": {
+                                "0x00": "0x0401"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd4c9f8f21bd9d74589677fda82fee1d2a222cf8d677afec96bd52ef85dee37f9",
+            "hash": "0xbc0b1834b7267a9b5d796f2794420c86da90ec6643daf3c0629701bd3e5c66d3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test re-entry to delegated account until the max call stack depth is reached.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L686",
+            "description": "Test function documentation:\nTest re-entry to delegated account until the max call stack depth is reached.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L672",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"

@@ -57,16 +57,43 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x36600060003760406000366000600a61c350fa6000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x1000",
+                                "0x02": "0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001",
+                                "0x03": "0x40",
+                                "0x04": "0x1000",
+                                "0x05": "0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de90516e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04b45f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4d37f3b9af9791b9491e4ac38fcfcfb6df0025dc0f17e5c842b8007bbc7dd6ed",
+            "hash": "0x5bf1b614561de7a7eb058c9eddb0c17eb558d7fb3a2c3d359733e102f7860b48",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration:\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L489",
+            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration.\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L465",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -130,16 +157,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x36600060003760406000366000600a61c350fa6000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c832",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0443f1",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x936ff1b9131517b21b9a240ba295ca3a1d950536364c79de596853c52d959ac9",
+            "hash": "0x412161042263187b8b5f5a5e049db12f856318c62f1e65fa435513c3c299051d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration:\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L489",
+            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration.\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L465",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -203,16 +255,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x36600060003760406000366000600a61c34ffa6000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c8b4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0443ca",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa6bce283e942bf6368868aa752ce73d9030f9eaf0ab7510b8c65ae57a2606efc",
+            "hash": "0x9bce1447174c4df4fbccedf1179359f9c9e862937d578b4488f8dfe86edab6e3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration:\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L489",
+            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration.\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L465",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -276,16 +353,43 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x36600060003760406000366000600a61c350f46000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x1000",
+                                "0x02": "0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001",
+                                "0x03": "0x40",
+                                "0x04": "0x1000",
+                                "0x05": "0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de90516e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04b45f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x04512cf8f2a610c9cb65c2bdc9ad64b885b5477c9c3235a47c1dd65c0e29be60",
+            "hash": "0x61820cca6b942ae77f914a87f6350d5028b1a617520d980b33d9016685388c7b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration:\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L489",
+            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration.\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L465",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -349,16 +453,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x36600060003760406000366000600a61c350f46000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c832",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0443f1",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa36e100b94f75fb90b2564024e3200d7fe3f9ab5bada5b35c0be54772c579f8f",
+            "hash": "0xf43e365aa9474cb6fcc90a77db8a1fb81f1df10116b1ebe4ee77504c6ec31ec5",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration:\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L489",
+            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration.\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L465",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -422,16 +551,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x36600060003760406000366000600a61c34ff46000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c8b4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0443ca",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0510e8a8b9b668878fe287ef1b7168f143c91d08cb23b65f2d225681a3a8e1cb",
+            "hash": "0x9f3e8834898eb7cd9beecd0b6414fa4de7b39dbb6b053a1f0ec552d919aa83db",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration:\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L489",
+            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration.\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L465",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -495,16 +649,43 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x1000",
+                                "0x02": "0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001",
+                                "0x03": "0x40",
+                                "0x04": "0x1000",
+                                "0x05": "0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de905150",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04b468",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x84f1d5c4ad06c7761e9d11f3dec30df883cc475125d5f7eedaa195693cdb7c5e",
+            "hash": "0x463b9c4e849e9c8ab5bb6a07d8e87389a65be2f1ddd9e17da8a657867718066c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration:\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L489",
+            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration.\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L465",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -568,16 +749,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c814",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0443fa",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd29030881f2aebf0c15d81ee58500101fbb037278272b1e8211041cdca0cb171",
+            "hash": "0x8d8a4537ddc36ba9471746cc9953b5e18836f3e7496480c8353ca3a148daa07e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration:\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L489",
+            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration.\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L465",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -641,16 +847,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c34ff16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c896",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0443d3",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0a7f08efc2a94aa5267d43a3c7d4ec4b5e5d9effb88d5a5cae0f945075ea64c0",
+            "hash": "0xd17b46b8a63638514f2b0756e54876e288fabf6363c2403f7764099413a4870e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration:\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L489",
+            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration.\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L465",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -714,16 +945,43 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f26000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x1000",
+                                "0x02": "0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001",
+                                "0x03": "0x40",
+                                "0x04": "0x1000",
+                                "0x05": "0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de905150",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04b468",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x45d0adbbb1a128671c0abd207f52ea10b4167580f528c4b1053d5d8a838c1964",
+            "hash": "0x8cdbfdfea378ca5e9a5d09781463c0f6ef852d58d24f06b94efdf708ef0d945e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration:\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L489",
+            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration.\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L465",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -787,16 +1045,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f26000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c814",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0443fa",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4a6670acbd7635ad6f948690edff091dc45d6130fd0c70c2453a283789c0891b",
+            "hash": "0xd2b9a9950a1948bb0cfe45d880c8ab2156a8bbfdc4387ecdaa3922a90b9d88d3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration:\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L489",
+            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration.\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L465",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -860,16 +1143,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c34ff26000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c896",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0443d3",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x03eb1ea1f8ae299f569941fab4edc69e0772193e3138a6e23c6bf85e70bd9b28",
+            "hash": "0xfd0c6330b5cddd089144115b8b9c3c193410d1b765f17b85eb94cb99c665cf99",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration:\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L489",
+            "description": "Test function documentation:\n\n    Test calling the Point Evaluation Precompile with different call types, gas\n    and parameter configuration.\n\n    - Using CALL, DELEGATECALL, CALLCODE and STATICCALL.\n    - Using correct and incorrect proofs\n    - Using barely insufficient gas",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L465",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"

@@ -50,16 +50,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9461b4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x01",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037c4a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xbdb2bcbe5f678fdcdd326e74172cab432960454e91b0610c18789be8738a220b",
+            "hash": "0xabe455ebd62397cc3ea00f19951110846d6394ffb48b211f6a16f0294828f896",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -116,16 +144,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9459bc",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0001",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037eae",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7bbd65a832f52cadef339cb8253e138ccb6c2ee95cc8809132a94a4bbce26100",
+            "hash": "0x2da95e2943a6b12a6e06062d0c4580a13c44b8a41ca34659071138ee3faf3add",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -182,16 +238,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de946074",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x01",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037caa",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd7c1e3a87120fd30cf8891fe6df6fe35b7441dc24d61cd6de1b080641bdc7cc2",
+            "hash": "0x4ab90fdce58557cce7747ffca3b00e099bc573229bbe21a81c80322969feaa50",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -248,16 +332,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de94609c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037c9e",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xbbf9cdeaed048d46784a3e63b55413a9c5e30afd879d74b090dbfb32bf676807",
+            "hash": "0x2e495ce7b9fdae059bcb9e7d653dbd7548a244f927e5c9445baf343dfa81da62",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -314,16 +426,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de945f84",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x01",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037cf2",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe7abec17d13b5763223282207c140f5bc4190d175b243ee4040a7e892aae627b",
+            "hash": "0xdb265f54528b87d3aba550027101484d9c53a2be2282f688380dd73959c0acf3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -380,16 +520,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de945f84",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x02",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037cf2",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xfd8040db8e749a27c0581cbddefd72368159e14a22687365e2d2cc2d626cb58a",
+            "hash": "0xf4205fec921c0d8220fd100b15e44ffc45fa41a76273b3e7954ed3789d692192",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -446,16 +614,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de945f84",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x04",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037cf2",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x8e07efc5e0573da14210242e694fe9c5eb2c24daf2476e0757bd1302a962a50f",
+            "hash": "0x6ecce9f0b92a1fafb6deff80e3b98f2188fb959ad7e1e8d5fa4e32ec3ad1cf7c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -512,16 +708,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de946b32",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037971",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5abbec361ac0453d9df9b0aa8ee14974353532ff07e88604c3b8525bc36296f3",
+            "hash": "0xf8816294d5e19633b6c2d50ea918b13d4200f94a3be790c3ab56848665007fc8",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -578,16 +802,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de94622c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037c26",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xeec67769ee30c15c6997594f50018184521a5e6bf23c879743c0b681d6401d3a",
+            "hash": "0x256215d6a51ce1bb00070db2d1c07b107ba74f40f44877c2bf07b67cd45cea54",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -644,16 +896,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9461b4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037c4a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe9c5e7bf0e1564d3ed5168ccbac4b1a1e596782dbbddfed4c77c162d53660623",
+            "hash": "0x3c6e4e084b12d76ca8717749ecc84b7984917fd31a653b6d70900073201e9a64",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -710,16 +990,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9459bc",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x037eae",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4e5f42f0900b06b9617205612405cf2fe31668399ae717a57f9f33f4302587c9",
+            "hash": "0x260cf4e95fb0c1aea8e4d4b9cd803d14edf764f574956bb1d39d96fc637f90d7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -776,16 +1084,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9318b8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03defc",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc0a02e32fe7ae574302ca2c62ae1137802ad3a88085978b4d40f933120e5737f",
+            "hash": "0xcf6417ba463d723dddf69c85ca6e1ac42eb34c70d89bb5d4ab78a5fef6c83733",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -842,16 +1178,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de931a0c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03de96",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4ac986e17cc75fb5a6f344651f92680bf5a817277de60bbf8eb390534cf2e33c",
+            "hash": "0x5b05f3000179fad0c3c3be9808a4476fcf67fb06c049475aaf2829657788f49d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -908,16 +1272,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de53b4c0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x16e360",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4a857d648965b5308a3719f0b6c9dcae7a5537b852ebd2ccc19e7f60ff98c1fb",
+            "hash": "0x21d2086d6c9da5d62a52a242301f2ae9175d6f3cde049e53d08681e9ad9895af",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -974,16 +1358,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9366ec",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3b01b01ac41f2d6e917c6d6a221ce793802469026d9ab7578fa2e79e4da6aaab",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03c786",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x83b7e74cc5d6fa7cb3355f072db5bcdb46baf8355a6ccde8b220a93266309771",
+            "hash": "0x72b61856d19e60796f34f057f447d932a76eceb3b0d63013e1a809f1cc120c5f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"
@@ -1040,16 +1452,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de936ca0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x36600060003760006000366000600060055af16000557f601038036010600039601038036000f3000000000000000000000000000000006000523d600060103e3d60100160006000f000",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x3b01b01ac41f2d6e917c6d6a221ce793802469026d9ab7578fa2e79e4da6aaab",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03c5d0",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9ec0cfb9131312a3cb5c9277a8893368863b30ffec2f3f7e5211a77491b0cc3a",
+            "hash": "0xca1b9390e1d2ab10b3735a76d9f4269acd6f8ab761ee09e4128bb23e1274698c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test the MODEXP precompile",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L90",
+            "description": "Test function documentation:\nTest the MODEXP precompile.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/byzantium/eip198_modexp_precompile/test_modexp.py#L87",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md",
             "reference-spec-version": "9e393a79d9937f579acbdcb234a67869259d5a96"

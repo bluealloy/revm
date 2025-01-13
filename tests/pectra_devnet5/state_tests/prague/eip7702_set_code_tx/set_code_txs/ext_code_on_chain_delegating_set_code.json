@@ -80,16 +80,50 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0xef01008a0a19589531694250d570040a0c4b74576919b8",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x73a94f5374fce5edbc8e2a8697c15331677e6ebf0b3b60015573a94f5374fce5edbc8e2a8697c15331677e6ebf0b3f60025573a94f5374fce5edbc8e2a8697c15331677e6ebf0b3b6000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b3c60005160035573a94f5374fce5edbc8e2a8697c15331677e6ebf0b31600455738a0a19589531694250d570040a0c4b74576919b83b600555738a0a19589531694250d570040a0c4b74576919b83f600655738a0a19589531694250d570040a0c4b74576919b83b60006000738a0a19589531694250d570040a0c4b74576919b83c600051600755738a0a19589531694250d570040a0c4b74576919b83160085500",
+                            "storage": {
+                                "0x01": "0x02",
+                                "0x02": "0xeadcdba66a79ab5dce91622d1d75c8cff5cff0b96944c3bf1072cd08ce018329",
+                                "0x03": "0xef01000000000000000000000000000000000000000000000000000000000000",
+                                "0x04": "0x01",
+                                "0x05": "0x02",
+                                "0x06": "0xeadcdba66a79ab5dce91622d1d75c8cff5cff0b96944c3bf1072cd08ce018329",
+                                "0x07": "0xef01000000000000000000000000000000000000000000000000000000000000"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de88e06f",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6801450efc78b635246e2689d17cb2a36f1aa698a63cd14d78968bc165e8a7ef",
+            "hash": "0xc4a6435ddab1bf3241f28be8f305c8f52e9f1804420646b9187a6ff5db2d42c4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test different ext*code operations on a set-code address that references another delegated\n    address.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1434",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1402",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"

@@ -52,16 +52,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5b60005c6001556001600255",
+                            "storage": {
+                                "0x02": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b5602e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01fcbf",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5f3bda498f29736003610e0931bbc1ec87f1fb292213fecbaa2c451fbcb80440",
+            "hash": "0x84c9704997d246938432528d5afa7ca81039bbdc74265db3a7ce27cb6d0318b8",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (01_tloadBeginningTxnFiller.yml)\n    load arbitrary value is 0 at beginning of transaction",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_basic_tload.py#L19",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (01_tloadBeginningTxnFiller.yml)\n    load arbitrary value is 0 at beginning of transaction",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_basic_tload.py#L19",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"

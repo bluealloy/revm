@@ -58,16 +58,32 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x02f655d9",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x3a600055",
+                            "storage": {
+                                "0x00": "0x07"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6158fee1e8c7802bb284ec7ea9f8b562f176afe927953e2f9283e9c9c1cb3363",
+            "hash": "0x65824dcfcee41715ad2c94fa9b1d32d76205016df7fd2ec7a72d437e4ac4a748",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test GASPRICE opcode to sanity check that the blob gas fee does not affect\n    its calculation:\n\n    - No priority fee\n    - Priority fee below data fee\n    - Priority fee above data fee",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L1290",
+            "description": "Test function documentation:\n\n    Test GASPRICE opcode to sanity check that the blob gas fee does not affect its calculation.\n\n    - No priority fee\n    - Priority fee below data fee\n    - Priority fee above data fee",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L1261",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -132,16 +148,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x02f50517",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x3a600055",
+                            "storage": {
+                                "0x00": "0x09"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0150c2",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf75e6af644791dc46d02b7efc3f88590e0b9d9f9ee2d7ae5a12912dd365120ba",
+            "hash": "0x04e9ff6c56ae78de68d67f3e5215f7175e44072fc3169998af483964ee089de2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test GASPRICE opcode to sanity check that the blob gas fee does not affect\n    its calculation:\n\n    - No priority fee\n    - Priority fee below data fee\n    - Priority fee above data fee",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L1290",
+            "description": "Test function documentation:\n\n    Test GASPRICE opcode to sanity check that the blob gas fee does not affect its calculation.\n\n    - No priority fee\n    - Priority fee below data fee\n    - Priority fee above data fee",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L1261",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -206,16 +244,32 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x02f855d9",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x3a600055",
+                            "storage": {
+                                "0x00": "0x07"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x49822c4378e1fdd646fde16d6e90e0bc4ec8c0cc28682613114e2327c8223c28",
+            "hash": "0xc3a52d91fca377e245f21390fc0bfb38cc5248be9cd7e7215fd773c6e0fdb076",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test GASPRICE opcode to sanity check that the blob gas fee does not affect\n    its calculation:\n\n    - No priority fee\n    - Priority fee below data fee\n    - Priority fee above data fee",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L1290",
+            "description": "Test function documentation:\n\n    Test GASPRICE opcode to sanity check that the blob gas fee does not affect its calculation.\n\n    - No priority fee\n    - Priority fee below data fee\n    - Priority fee above data fee",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L1261",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -280,16 +334,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x02f70517",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x01",
+                            "code": "0x3a600055",
+                            "storage": {
+                                "0x00": "0x09"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0150c2",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4820484335b4c8dbd139d8e04a9f544de13351f78e162e9dcf6f750a00f09fde",
+            "hash": "0xd9ec41e302f3c4ac874869c5dee99d288f9d19b528a6b0573e6785917e72a059",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test GASPRICE opcode to sanity check that the blob gas fee does not affect\n    its calculation:\n\n    - No priority fee\n    - Priority fee below data fee\n    - Priority fee above data fee",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L1290",
+            "description": "Test function documentation:\n\n    Test GASPRICE opcode to sanity check that the blob gas fee does not affect its calculation.\n\n    - No priority fee\n    - Priority fee below data fee\n    - Priority fee above data fee",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L1261",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
