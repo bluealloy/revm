@@ -48,6 +48,7 @@ pub struct Test {
     /// Output state.
     ///
     /// Note: Not used.
+    #[serde(default)]
     state: HashMap<Address, AccountInfo>,
 
     /// Tx bytes
