@@ -65,16 +65,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de960e68",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0dd8ee518401b02440c4c39effbbb7a1dcf72c99aa07895c07c1bc9b356a761f",
+            "hash": "0xa0230c9e74ffd6505dae3cb337fa44dbf263275d7843c0d5501c994e6dc6ad6d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -146,16 +169,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de960e68",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xafadb79a7d3f9aa7b23805c9f0e2531e7dd7cb08c20ffb2f0f8cc58dc577084c",
+            "hash": "0x29a33875d3b1d3a14af0c56e2a0c879969fd85ff104d9ffa7197ec2118d6c31f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -227,16 +273,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de960e68",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2b99d1987442a2cd2dc73a15047a6fe14122cde19ca5893bb156f2e9fed51cd7",
+            "hash": "0x100fb862a9a6283666a50414175d58810aba8bf8231d1d3ed5ce53dc89898739",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -308,16 +377,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de960e68",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9dc83cb31ca809870c1eaf71c45096417da45c424318f63fb7c1d70402d8104a",
+            "hash": "0xd4e10e8390be92dc7478eeac3c462d332b1369562e7137745095f0e038688d56",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -398,16 +490,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de94b89c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xcdadac76dea8764da2018e6fe3d059f1a2176665f6770011d408989077cbb9f3",
+            "hash": "0xc104086ba53cd2aa9abacc3ef560d763908dcbcc0f5b86ab23be8b046b654459",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -488,16 +603,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de94b89c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x65503e620800f8fa21973ed338fc5665120e8a4579a14494bab3c0ef44f939f4",
+            "hash": "0x080802978e23184d448f1818ab4e21ddb18bad968445f6dda99a59d3774604b9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -569,16 +707,33 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de961124",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2972d363f866cd37edb8fed6b802cb54a585b04fca1f4e94aef2f81bd62c537f",
+            "hash": "0x372c56cdb16d56ae79a09434637f9abcdd4c3caf78d23b42d1e012fde5c6d3f6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -650,16 +805,33 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de961124",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x64",
+                                "0x01": "0x0a28"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0ada3daec99941bf0e6cf2d4fd466f529dfe66e16095c07527a123924ae3f754",
+            "hash": "0x1ca072d1b2d73da56ae5c2ad9b5edd6bc2a2dea5da0de5091200e9a73b0ddf36",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -731,16 +903,33 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de95ccc8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0x0a28"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6f2a5ca7730a16d1afe464e4611822c709bc9491c6b583eba96381d77c6097e5",
+            "hash": "0x98e9d68e9a3a87b984c5f76fd9f971ca309b060e9e0cc24a72f8a488939e4330",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -812,16 +1001,33 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de95ccc8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0x0a28"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xfdc8e249312bc04833d2c67ef44bb0749bb8bcdbcc8c37850e59765eeec21e3b",
+            "hash": "0x1cd9e8d270d2f371a7a4cddbbe1998b99a0e8b1f800944f738bb8a82ed60bdcc",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -902,16 +1108,33 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de93658c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb9c8a5cfd145a4163576f0dc796e2f1fae4ca3ede2c87e931ca326a776420b78",
+            "hash": "0x1363d76509def3bed3948d6d9ef9dc9ea1fcf2425990ca627932e308c98e02a2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -992,16 +1215,33 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de93658c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x64",
+                                "0x01": "0x0a28"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x89ad39b6ecff19a556e91c8f299d3f1607f40697462cfdedcd0efd8d04f3ed8e",
+            "hash": "0x17085b9ab22a8c8253f8378f2fb4198fdc96b6985d4f3481fc7a860f8bdd47cf",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1082,16 +1322,34 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de910534",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036001555a600060006000600060007378cc42dd276339ef70b322674fd5dc7ea6ea93736000f15a905090036017900360025500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0x64",
+                                "0x02": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2857175c5cd2e51b778cd493745b6c2877a2ee3610b503cb605624f38f94facd",
+            "hash": "0xcd84f9b6d0630ad38ef4c8511faa5a888d2c449f2461aa445c410dd9b2924219",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1172,16 +1430,34 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de910534",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036001555a600060006000600060007378cc42dd276339ef70b322674fd5dc7ea6ea93736000f15a905090036017900360025500",
+                            "storage": {
+                                "0x00": "0x64",
+                                "0x01": "0x0a28",
+                                "0x02": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4ae8bed99e07b65ed6e3329d432ad9d8042ee85eb2c8572c9cb7c768b229b6ca",
+            "hash": "0xff077d33b3d35b455a7ab5fef52fb77389c53bf67f91d4c5e53bd1ac1c719fe0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1262,16 +1538,33 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de932130",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0x0a28"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9f1a38f50fb9662d8414306e5750b66721ec722036f32732cfb7bca1c13bcfbb",
+            "hash": "0x6cfb357ac1e1edeae491f3ca75e1277fbcebb84623b559a7e51032a0e3d84bc6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1352,16 +1645,33 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de932130",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0x0a28"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe49183d452e28ce8dc18c9f5e047e99006dcc4c094ebb115ff8d553b3accc14d",
+            "hash": "0x30bb734f72c4ffdb0c4bc4bf0e2a4675d54abcc065020924bd3f896eb8205203",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1442,16 +1752,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de90ffbc",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036001555a600060006000600060007378cc42dd276339ef70b322674fd5dc7ea6ea93736000f15a905090036017900360025500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8",
+                                "0x02": "0xc8"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x78cc42dd276339ef70b322674fd5dc7ea6ea9373": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0e3193a329937339b990b25bada8b036fdb52be6c86716dd3502dfcbf046a492",
+            "hash": "0x8038f6fcd8fcafed3408cf43ff06b7dcd26fa0e4d9906180bc3a493fd52d870f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1532,16 +1872,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de90ffbc",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036001555a600060006000600060007378cc42dd276339ef70b322674fd5dc7ea6ea93736000f15a905090036017900360025500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64",
+                                "0x02": "0xc8"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x78cc42dd276339ef70b322674fd5dc7ea6ea9373": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xef6309d601de7e36e1cd314d7ba7ab05fff542f4012a464e993367cce4452316",
+            "hash": "0x4b256487ab86c73dbf4f1caf46587816fdf104102d215a5f7e1309115b708a67",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1622,16 +1992,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9362d0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x3ca7b22acc1014d6507715f0f645dc5d5e764cbcc63bbbe82de802ba25fb3751",
+            "hash": "0xddda11b9449002b77d1f8b2c1cdce4d9b90ecbcff9a97776db1ce9ac4fb88dbc",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1712,16 +2105,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9362d0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x12274ac53b51daf8914b614329a9a2b6ca7bd5fc0feaa653c0cfc0bc71b7d9f6",
+            "hash": "0x936680216d8b1f8a3f7cf1e0d7b4c168b41aaab10fb65f73c16ef7b588c21020",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1820,16 +2236,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ba88c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036001555a600060006000600060007378cc42dd276339ef70b322674fd5dc7ea6ea93736000f15a905090036017900360025500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8",
+                                "0x02": "0xc8"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x78cc42dd276339ef70b322674fd5dc7ea6ea9373": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x1a8f1012c1c68c0232948cd4793dbc629b14dfa6aed5089528c5c225fd15884c",
+            "hash": "0xec72c1ca9f3bed1e5fb9520aaba09ea366b4fffbdd2d64b5834b99ccee3c007e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -1928,16 +2374,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ba88c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036001555a600060006000600060007378cc42dd276339ef70b322674fd5dc7ea6ea93736000f15a905090036017900360025500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64",
+                                "0x02": "0xc8"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x78cc42dd276339ef70b322674fd5dc7ea6ea9373": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9dae2a4502330f070390d450564a45f079c38306e4f61e05d674b91e19780b41",
+            "hash": "0xf289812a987cc701bb65d1bdc4bf4a37323c4b7109fdf0531bf37678cdc467da",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -2015,16 +2491,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x01",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de960e68",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x38036bfe9ddb981c1d1bf1167878e0741fe169528381341ad09951c5114867c3",
+            "hash": "0x7f75dc66663b890246a38a98ec433208972bea8a6e1e59e57aefd76ecec55d1c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -2102,16 +2607,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x01",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de960e68",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xed7fcca7bd3f12b25bcaa46bb8b01ec0d314620afaadcd0a64199fdefed70a3b",
+            "hash": "0x19b00e5b382f71ff4c7fa7a28c68703130138c918f8384f797430a8ac669620e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -2189,16 +2723,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de960e68",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a600060006000600060006110006000f15a90509003601790036000555a60006000600060006000738a0a19589531694250d570040a0c4b74576919b86000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000001000",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x27a8fb7101362bf45f3d396f14beef46ea2f9d21ba190872da98cd4c22594ce2",
+            "hash": "0x2c34a9f0de67e112a2e71dbd62bb3cb95a5aa8ef6247b84bf17e068dd4f2070d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -2276,16 +2839,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de960e68",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000738a0a19589531694250d570040a0c4b74576919b86000f15a90509003601790036000555a600060006000600060006110006000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64"
+                            }
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000001000",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7dae97cab08c2fb09d4c7900e90ca24e55b6906fbd642d14503e33c7a7569a4e",
+            "hash": "0x37e920ea48a4b4e1a84748ccde9f461703de3fb7dba5d14067d575afaba681c6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -2364,16 +2956,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9598d4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7a887fa582e2a21d787a75750affb95b647285802d706bcb1f9b374a1ddcf470",
+            "hash": "0xf590e8f02dffec21e8c20355432281e35ef8135a50273073e08e8505e5b46699",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -2452,16 +3067,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9598d4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xac7cad07dcc24d566ec8b4227a9845bbb3c0449feb670e723824a0b96c84a50d",
+            "hash": "0x32e85d31012e6af4699baeac72f278546b596ce8c5d1afa03f932dfba09ccae6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -2540,16 +3178,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de95dd30",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x64",
+                                "0x01": "0xc8"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb1051bd597188c226f47fdacf3e0b319c24d5627087b83499f2061296010baad",
+            "hash": "0xaaa400539b16e0d134e6cdf126d8907a5d334359b0b67ac3ed7be8c10457991b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -2628,16 +3289,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de95dd30",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0xc8",
+                                "0x01": "0x64"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9fca461375a75f296df98895a66b8db4d7869691dfcb32f63ec8421629d1df5d",
+            "hash": "0x4755b346f10ef8a4ea20af2d76f39c5afb4bd0ede47b1d0d9b1cff344f683e19",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -2722,16 +3406,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de95679c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x64",
+                                "0x01": "0xc8"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x816d39233d93ebbd60fcd9976f15f438202ae5da0f24bba37a3d7ff99b94934a",
+            "hash": "0x5ef4ec23c50c72ae9623d5bb1e06632117e15bc054b30748b36b805c16678474",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -2816,16 +3523,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de95679c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0xc8",
+                                "0x01": "0x64"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7fcedc16abb5a0832dd2e50ff8a2fb890c8c45f0ef3c27b681c3995229de41bf",
+            "hash": "0x197b86cb66f97cbb5ac1cf2e5a64a32dcc5abb09cdba54dad411e3ee1cdf6710",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -2903,16 +3633,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de976434",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe72b7aa53c72f860ea9bc641ddb24ed8637565878b1cad81895023c328e9711d",
+            "hash": "0xf7d0cdcdceb94c1bba05e6c08e02324722741274ddbc96382fe0f953738eabba",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -2990,16 +3743,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de976434",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x00643f162dccc52d0c17abe12bc4495e7df76cb4026637b8c95515f649d8332f",
+            "hash": "0x21750d261e02c1b0d5d6d6a96ac5a425a480ed77c59b61d86a3d1bc7afe0bcb0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -3077,16 +3853,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de976434",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd8bee25e518ab5a47372b6db52ffce71caf13dacd0c858b631cac06ff5252ef4",
+            "hash": "0xf9209da15ded234739b27c0695150d7ab790b79414d0ee9bad099e1759e31374",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -3164,16 +3963,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de976434",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5ecabc8d7ffb3f0c09c9efbef57a399b3ca9543e4eacd9882f98a50c5ba0e047",
+            "hash": "0xd6d837daf0c7a128f27cb71d20758e3b1d061dedec9d1470c3c0d15399eccd60",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -3260,16 +4082,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de95e8a5",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x02",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7c0fe3c4b5e0007aecda893dde48f9234f4924917a8a79f6df1e31c5d830995d",
+            "hash": "0x864faf55f6ac31fbf06097aeae8af810e45c0af6c7b8ac8e02580aa8c9afc078",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -3356,16 +4201,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de95e8a5",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x02",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x45045ed2be62981a587524d6bc8c36c6727ecf90372edd341a036357771ed1f4",
+            "hash": "0xb92fd1da529c44e498f0fae1e9af075150ff2def0b3e09e39f34cb2cf5fad41c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -3437,16 +4305,33 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x02",
+                            "balance": "0x3635c9adc5de976434",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000738a0a19589531694250d570040a0c4b74576919b86000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x59b0a67f48aa51a0e5098d6740bfd8bb36fcf5fb21fce19d5c207be0972cb0b0",
+            "hash": "0x82a9dd71cf2e8fb50b7bc712e8a6217baf84d5314262f8b1c7f6800fe3fd181b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -3518,16 +4403,33 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x02",
+                            "balance": "0x3635c9adc5de976434",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000738a0a19589531694250d570040a0c4b74576919b86000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6f6ee9dc780a93b72232a4faf583944c83ec6faf2fee176b948ceb658a82e22d",
+            "hash": "0x51ca49287c3170fe985f40d49160a3e8ca0a08c07a2f021c5b9ab6bc9b63d612",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -3608,16 +4510,33 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x03",
+                            "balance": "0x3635c9adc5de95e8a5",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000738a0a19589531694250d570040a0c4b74576919b86000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xbe6f586b3926f14e08c3bc12d2d4c3f0612eb323183ae6b329c9456c38b96c4a",
+            "hash": "0x59ef781e9209ca41ce8dce2517f5000409f46f2d1956cf8545dc5335cd6bf016",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -3698,16 +4617,33 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x03",
+                            "balance": "0x3635c9adc5de95e8a5",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000738a0a19589531694250d570040a0c4b74576919b86000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd32a7b9a229e681fe0c1bc692d1db33c623cd8749b509195986469e7799bb174",
+            "hash": "0x7d9a89d005186103284ed005e2e885e1156d692bbd59811942ab5515e7fbfea1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -3785,16 +4721,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de961124",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa6ecc27bcf76c2c8a8f5164768ab04d3e0c1f11441a8ad07ae769bf1259c7ea0",
+            "hash": "0x4b2018bc522d8a7f840bd56ab069b7869978352709f2d782ef3b54d683783acb",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -3872,16 +4831,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de961124",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x64",
+                                "0x01": "0x0a28"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd0c568af9e28518258a826d80a536eea4475d04e569b6d0c12b02d47758ae056",
+            "hash": "0x5aeb3d43313ab764f47012bb883bd83cfcab2a2b3333f487a12ebce78fa5d8d4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -3968,16 +4950,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de910278",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x78cc42dd276339ef70b322674fd5dc7ea6ea9373": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036001555a600060006000600060007378cc42dd276339ef70b322674fd5dc7ea6ea93736000f15a905090036017900360025500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8",
+                                "0x02": "0x64"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6940a0b87c88e3f54c57ae8bee456c1a83899a18548e6d229fdbd78792cce4c5",
+            "hash": "0x33e25a4729b8fd525b9bcf92f956d54e0453c02c9a03a48afb541a5487c4a170",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -4064,16 +5076,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de910278",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x78cc42dd276339ef70b322674fd5dc7ea6ea9373": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036001555a600060006000600060007378cc42dd276339ef70b322674fd5dc7ea6ea93736000f15a905090036017900360025500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64",
+                                "0x02": "0x64"
+                            }
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xccd4d00e4089919c0fb75957e10f3b7ad562b332ac728f8a37e890182e762acf",
+            "hash": "0x7a6a297bf821842a1e1b34a9456c646e50730041e066b3bb3889678cdf0929c8",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -4166,16 +5208,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de925844",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x78cc42dd276339ef70b322674fd5dc7ea6ea9373": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036001555a600060006000600060007378cc42dd276339ef70b322674fd5dc7ea6ea93736000f15a905090036017900360025500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8",
+                                "0x02": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2f6c11928c3f776b80b8153ffb64153a85343da56a00b7e7fa5fdfeffce23295",
+            "hash": "0xa0d28c1a7b6e166df97a528fce6410bbc86b31281393499ae9240cbb9b8d7a6d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -4268,16 +5340,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de925844",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x78cc42dd276339ef70b322674fd5dc7ea6ea9373": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036001555a600060006000600060007378cc42dd276339ef70b322674fd5dc7ea6ea93736000f15a905090036017900360025500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64",
+                                "0x02": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6ff022afdba8215be9d3668d49bd98107334e66ef2d6583a5652e5d4e6c3a565",
+            "hash": "0x9daa37ff9bc7dd0dd97ff16e0d3dd78a2830a1fa8e774c396e64498baeb81954",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -4364,16 +5466,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x02",
+                            "balance": "0x3635c9adc5de925844",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000738a0a19589531694250d570040a0c4b74576919b86000f15a90509003601790036001555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360025500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8",
+                                "0x02": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x8fa6ddd39389fe6940a7ea02383e95c66150a4d425c05a7f9f6846970e1a7714",
+            "hash": "0x42820bc697799091afc5dfba1a14037033a31060aa126317b677cc5bcf1d8a74",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -4460,16 +5586,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x02",
+                            "balance": "0x3635c9adc5de925844",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000738a0a19589531694250d570040a0c4b74576919b86000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036001555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360025500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64",
+                                "0x02": "0x64"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xae49c9ed673ddc19529401e8972be534fc58c89bff8a3910fd2d84e9f2822106",
+            "hash": "0x17e43c1042af85f24571e5701884f983f88fba5e697311d9b6f9d377d40abfa7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -4535,16 +5685,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de953a58",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0x0a8c"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033b4c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x36508a1c262f990bf3b7641d5a79d503ca78eb5d6bddef033ca369ea6eaf090f",
+            "hash": "0x9c8195793545ecd6fa1229e93ae064696c0c68a5b7b1c93d717d6b10a90b72df",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -4610,16 +5789,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de953a58",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6389e7f33ce3b1e94e4325ef02829cd12297ef71": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000736389e7f33ce3b1e94e4325ef02829cd12297ef716000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x1450",
+                                "0x01": "0x64"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033b4c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x3ea696e14f029096a3765f7aeb65319f2352834b94106d00e5438674ff7ab549",
+            "hash": "0x506a3d7f17a19610edc5c1ce8e81837ceaad17154d19b4283d772836067a8b66",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -4679,16 +5887,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x02",
+                            "balance": "0x3635c9adc5de959c00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a90509003601790036000555a60006000600060006000738a0a19589531694250d570040a0c4b74576919b86000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a28",
+                                "0x01": "0xc8"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x031e00",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x36183d82d807a5f3f6b73e85d91def96379797e40d1603f230e5d019ec759112",
+            "hash": "0x4564bf2974df43b346803f30ac07627a152b05e9486377ac17dcfd3619014ab7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"
@@ -4748,16 +5979,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x02",
+                            "balance": "0x3635c9adc5de959c00",
+                            "code": "0xef0100a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a60006000600060006000738a0a19589531694250d570040a0c4b74576919b86000f15a90509003601790036000555a6000600060006000600073a94f5374fce5edbc8e2a8697c15331677e6ebf0b6000f15a905090036017900360015500",
+                            "storage": {
+                                "0x00": "0x0a8c",
+                                "0x01": "0x64"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x031e00",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x14b4b7019f15306b9a4dc5a5796270c0b9190a70d71ebca92541791863b30f4b",
+            "hash": "0x8ae4b1fe60166b9847186be5f057f7dd397fd610bb1aeba3cf3f0bb66a49915d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test warming of the authority and authorized accounts for set-code transactions.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_gas.py#L782",
+            "description": "Test function documentation:\nTest warming of the authority and authorized accounts for set-code transactions.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_gas.py#L751",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"

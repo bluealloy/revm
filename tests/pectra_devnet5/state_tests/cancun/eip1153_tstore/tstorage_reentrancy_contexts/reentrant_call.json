@@ -50,16 +50,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160003514600e58015760005c60015560255801565b61010060005d600260005260006000602060006000305af160005560005c6002555b",
+                            "storage": {
+                                "0x01": "0x0100",
+                                "0x00": "0x01",
+                                "0x02": "0x0100"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9293a2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0406e9",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe4617ae594c85773d1f053e38d160e02df27c5a856071cb24dfdfdc59efec943",
+            "hash": "0x09d9810248cebbaaca86caef6705711eb478132a90270bf7034a9d4c7f77df98",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -116,16 +140,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160003514600e58015761010160ff5d602b5801565b61010060ff5d60ff5c600155600260005260006000602060006000305af160005560ff5c6002555b",
+                            "storage": {
+                                "0x01": "0x0100",
+                                "0x00": "0x01",
+                                "0x02": "0x0101"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de928f7e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x040827",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd7067b8e1efec1cb14bd23e643253128639a8b89d7e9ad02f5354a0bbe565554",
+            "hash": "0x8bab1f121a4e574ea1ceda0bca60f47ab7e9c5aea1673d9728c766c2b4381f10",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -182,16 +230,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160003514601458015761010160ff5d60ff5c600255602b5801565b61010060ff5d60ff5c600155600260005260006000602060006000305af160005560ff5c6003555b",
+                            "storage": {
+                                "0x01": "0x0100",
+                                "0x02": "0x0101",
+                                "0x00": "0x01",
+                                "0x03": "0x0101"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8f2c12",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x050c61",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd4377f2662f40d3b8fca96be5c775c5e67b4f38a6abb1878e8e693a541c1d1a8",
+            "hash": "0x108ec3557917b0c5ce6578ace5451d19a92958fcfc1f6a01971e6aaea9235c70",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -248,16 +321,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600260003514604b580157600360003514602f58015761010060ff5d60ff5c600255600260005260006000602060006000305af160005560fe5c60045560395801565b60fe5c60005260206000f360285801565b61010160fe5d60036000526020600060206000305afa60015560005160035560035801565b",
+                            "storage": {
+                                "0x02": "0x0100",
+                                "0x01": "0x01",
+                                "0x03": "0x0101",
+                                "0x00": "0x01",
+                                "0x04": "0x0101"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8bc2ac",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x061266",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf751d03cc8dc42b03741f9225059a097a3ec44b12c2f0b578d2c23a9a9439e54",
+            "hash": "0x773a9432afb342b0979f645675ae47b6862d769ae72116cc8b69360c34d2de3c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -314,16 +413,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160003514601358015761010160ff5d60006000fd602b5801565b61010060ff5d60ff5c600155600260005260006000602060006000305af160005560ff5c6002555b",
+                            "storage": {
+                                "0x01": "0x0100",
+                                "0x02": "0x0100"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de959944",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x031ed2",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x556188bfe87d45b1a8175930ec7abbe02da52f0eddc369d3c51087030eb5fcaf",
+            "hash": "0xc6c986cb9d64b9b81db4a40189cbda80f787ed2e69e0adf0860a6503266d648c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -380,16 +502,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160003514602558015761020160fe5d61020260fe5d61020160ff5d61020260ff5d60006000fd60315801565b61010060fe5d61010160ff5d600260005260006000602060006000305af160005560fe5c60015560ff5c6002555b",
+                            "storage": {
+                                "0x01": "0x0100",
+                                "0x02": "0x0101"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9588b4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0323ca",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x620cb5128760c960e02b8de6f8b56c06118399610b10fcd1bdd59caf32d170bb",
+            "hash": "0x24b50d5571fd488e76f53554e75efa7f9fcdfee01145aef606b8626761f886ba",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -446,16 +591,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600260003514604c580157600360003514603558015761010060ff5d60ff5c600255600260005260206020602060006000305af160005560205160015560ff5c600355602f5801565b61010160ff5d60235801565b600360005260006000602060006000305af160005260206000fd60035801565b",
+                            "storage": {
+                                "0x02": "0x0100",
+                                "0x01": "0x01",
+                                "0x03": "0x0100"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de922f52",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x042501",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0bc44c98517b5f2893374640794d3411371c26fafb9f71039144f3a782a19fb8",
+            "hash": "0x163a9958d1a45630f01502cbd169663893cdd34d4549fa55d468c3636e26fa39",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -512,16 +681,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160003514600f58015761010160ff5dfe602d5801565b61010060ff5d60ff5c6001556002600052600060006020600060003061fffff160005560ff5c6002555b",
+                            "storage": {
+                                "0x01": "0x0100",
+                                "0x02": "0x0100"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b9ed0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x061d28",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x08791334d3c363fb703beb540cc18bc6c58d92de18425046f914e924870205fd",
+            "hash": "0x82f3686b0ead6d707f25259f13937c9482a2f2156a6c2dd08333f67f6f2dbe21",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -578,16 +770,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160003514602158015761020160fe5d61020260fe5d61020160ff5d61020260ff5dfe60335801565b61010060fe5d61010160ff5d6002600052600060006020600060003061fffff160005560fe5c60015560ff5c6002555b",
+                            "storage": {
+                                "0x01": "0x0100",
+                                "0x02": "0x0101"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b9aac",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x061e66",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd3c50979cc597a880f5db736cb80b5c180ef28c1ed3d75b3d48180dfce427646",
+            "hash": "0x243dc2228aa8315fb0fdbcbf895fca17f9568a3a6c1028e3c872612eadc1a606",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -644,16 +859,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600260003514604e580157600360003514603758015761010060ff5d60ff5c6002556002600052602060206020600060003061fffff160005560205160015560ff5c600355602b5801565b61010160ff5d601f5801565b600360005260006000602060006000305af1600052fe60035801565b",
+                            "storage": {
+                                "0x02": "0x0100",
+                                "0x03": "0x0100"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b46a6",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x06379b",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x766f211c0e9435f4dcb9865d5c9833d51d096ec38381af70d5a200682dd35677",
+            "hash": "0x8932b1377018fbbb0063d5b12b24d34adc9259a6d9110219f76d51b455be2a4c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_reentrancy_contexts.py#L278",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"

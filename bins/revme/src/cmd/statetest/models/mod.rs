@@ -45,6 +45,11 @@ pub struct Test {
     /// Logs root
     pub logs: B256,
 
+    /// Output state.
+    ///
+    /// Note: Not used.
+    state: HashMap<Address, AccountInfo>,
+
     /// Tx bytes
     pub txbytes: Option<Bytes>,
 }

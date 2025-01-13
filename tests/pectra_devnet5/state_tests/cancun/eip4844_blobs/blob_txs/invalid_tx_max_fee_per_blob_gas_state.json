@@ -53,16 +53,24 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x043e39",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INSUFFICIENT_MAX_FEE_PER_BLOB_GAS"
                 }
             ]
         },
         "_info": {
-            "hash": "0xd3c5f02eb14ed7055aa0a860aab1509edb4580a87910f962bfd6c332844afc78",
+            "hash": "0xd8876d57dd1cdd887ad08d41fa5e30bbca10515395bf7a45bc85e9b87bf939cc",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Reject an invalid blob transaction due to:\n\n    - tx max_fee_per_blob_gas is barely not enough\n    - tx max_fee_per_blob_gas is zero",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L519",
+            "description": "Test function documentation:\n\n    Reject an invalid blob transaction.\n\n    - tx max_fee_per_blob_gas is barely not enough\n    - tx max_fee_per_blob_gas is zero",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L498",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -122,16 +130,24 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x023e39",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INSUFFICIENT_MAX_FEE_PER_BLOB_GAS"
                 }
             ]
         },
         "_info": {
-            "hash": "0x8802ef79f9fc2cc53c46092febcb8e8a5ea6bba1c53d0820e8920ec62974ba36",
+            "hash": "0x39344f378f83c8ed2f7b25161a6b5634886ef91230c9c25ead89537b7c8d31bf",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Reject an invalid blob transaction due to:\n\n    - tx max_fee_per_blob_gas is barely not enough\n    - tx max_fee_per_blob_gas is zero",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L519",
+            "description": "Test function documentation:\n\n    Reject an invalid blob transaction.\n\n    - tx max_fee_per_blob_gas is barely not enough\n    - tx max_fee_per_blob_gas is zero",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blob_txs.py#L498",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"

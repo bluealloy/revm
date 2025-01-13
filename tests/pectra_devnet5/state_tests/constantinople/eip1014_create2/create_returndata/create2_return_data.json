@@ -64,16 +64,55 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee0f4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x28fc9cfd1b4a5d44ff26ae38854dd391a74db288": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0522ea",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x355aafb44c68d6619f2b664117be20275d5acd530ba90d05a3e417124e612fb5",
+            "hash": "0x8596bbefb0511deb1c0686863b17faa2ee5eff84c7c4291193310b16bcfab073",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -144,16 +183,55 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee14e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x28fc9cfd1b4a5d44ff26ae38854dd391a74db288": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0522cf",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4831977b7c7af70bf6c4d1c7b4e28cc1fd51547655d4b5b4a07500cfc1a5b9cd",
+            "hash": "0x401e203308fd5b79b9f8aa798602dab2de410594bcdc54381fced0dd73e6c55e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -224,16 +302,52 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de911428",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x28fc9cfd1b4a5d44ff26ae38854dd391a74db288": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0479f4",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2547fe7dae101a31b66ce80c965fafcb41e1735405a5266dd84419cfeb663786",
+            "hash": "0x379243c1139c34b5fba012164f73e392fd6ced860e8909c1293fdbeaecff6164",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -304,16 +418,55 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee09a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xe4175dfea37902cc051b2aad2a8d72f71e433863": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x052305",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2d607f13598cc009b57d5133f2ec0caca583e06429f4d69e1749fb8d8af1d564",
+            "hash": "0x6d16a009d5be2f896bfe5325f53c0a01be2959ebbf36f9dcf90aa5f6ef39af65",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -384,16 +537,55 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee0f4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xe4175dfea37902cc051b2aad2a8d72f71e433863": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0522ea",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf50158d597588d7bb939ca34889c67b6c624548bd1a16d8debb4768151530b62",
+            "hash": "0x0ef4d2a4acaca4619d1de89f4ba13e2256dfe06c61d55506f69b185a36bd8738",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -464,16 +656,52 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9113ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xe4175dfea37902cc051b2aad2a8d72f71e433863": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa1ffd386e859895d4a9bb16ec5277618080a9c7e06699ab9fdeb7bad69673dc6",
+            "hash": "0x7921f8501dfcd365b2ecce2645d68e6759275c9960a350984b5c552ea02c83b5",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -544,16 +772,55 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee0f4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x28fc9cfd1b4a5d44ff26ae38854dd391a74db288": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0522ea",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x31d0ee0ce52c0438ce21ebf9496fd11eebc5bb5f809f571c553e788a0b97827b",
+            "hash": "0x9ce19d6cc4a269952b4a9237fc2c68963a5a1420fb2922dc6a85ec191aa183e0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -624,16 +891,55 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee14e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x28fc9cfd1b4a5d44ff26ae38854dd391a74db288": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0522cf",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xee7ade860785e37b3fb6891d15c1dc6c9bc5082910da73eed4e2dba1ae6c7255",
+            "hash": "0xa9e55ee56d992a518d768120507ed33956d636572a3be9d0454ee8f7ab2d3f6f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -704,16 +1010,52 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de911428",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x28fc9cfd1b4a5d44ff26ae38854dd391a74db288": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0479f4",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x96b962a410f47f6cae245438d1acf9c4aa0dfdc180c2a86d4724720abf54c92b",
+            "hash": "0x1df5f81031029bcd5a0536b32ceb3f50144577dfda61ba60f50cea30b28fc83e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -784,16 +1126,55 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee09a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xe4175dfea37902cc051b2aad2a8d72f71e433863": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x052305",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x13c21c43f278f80b8c731aa5acf482c5b1c1c70d1e4a02bd1765edcb22697618",
+            "hash": "0x99b8b3ebb3c1b644f285bf57a5b3f26e36447796e877c676f3502b8a0b9a180a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -864,16 +1245,55 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ee0f4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xe4175dfea37902cc051b2aad2a8d72f71e433863": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0522ea",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x3f091b65d90b560c19675ece32b3ad35b6df09a010d8459b0519b0d572cc0ed5",
+            "hash": "0xd49d0a6b239b1867df0d5a63d978588e11659be5a757b2a5e63fedf3257bbdeb",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -944,16 +1364,52 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9113ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xe4175dfea37902cc051b2aad2a8d72f71e433863": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x0000000000000000000000000000000000000000000000000000000000fffafb",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047a0f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9ebbe14d4381f300cf8599ac7c005531637a7d8f8191955668d90841f9aa255d",
+            "hash": "0x0dda78f2f24aef33a30cdfc25c6af5aa0a17b13a9643fcde5d020b06cf14a55f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -1024,16 +1480,51 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x01": "0x20",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c15c2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f979",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2b4bed971e1f3729dc8834caa2d91c89a6aa6806d0b5e7197e2d68ccb0280984",
+            "hash": "0x0aa6196a28e06cd6d25d224f79921d9043ea41548e8e43f675e1af6888ff9217",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -1104,16 +1595,51 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x01": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c161c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f95e",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xde6887399d70b4406f2a5939a3be7ce6bda1cf6336198660222752927a025d8e",
+            "hash": "0x4f5bfb334b1dd9d46de19e9cb852461154fa62b9e0774223a40a8f522fc40d57",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -1184,16 +1710,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x01": "0x20",
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8e48f6",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x055083",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x8217646d6edfe1e134f4e14bd879f49e8973432819c8af3d56d07a589cc7ecc0",
+            "hash": "0x0f7d8b7e8f1e625ceda05e5ade2acbfe9103ac51df88001fb397ee15c70f95e0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -1264,16 +1822,51 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x01": "0x20",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c1568",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f994",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0afdd0ac6714d618cf50571bb3078186abf16a541486ba756cb1cef803dba874",
+            "hash": "0x05e80f3ce445127ebb8d35813d1f630935d6d1dba9c24f3c8fc9d033d57e8317",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -1344,16 +1937,51 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x01": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c15c2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f979",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7756fb023ec7169166a501da76a692e1c8ef00966a6a5c09dab5b29723d5fc3b",
+            "hash": "0x6eb7271ba268f0c5ea06acd615d93bd2f1cf3dd4ecc99f86122e125672b794b4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -1424,16 +2052,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x01": "0x20",
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8e489c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05509e",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xfb4d6943bdd85c26809a2308c4927deab156d43b86737005216ff40a3ecfa939",
+            "hash": "0x828e96b8487c20e7ae4d5a6a1fc4ba7f807e230a2ff82114e5b11b4c98079649",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -1504,16 +2164,51 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x01": "0x20",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c15c2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f979",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa098490ab612c1d4acc20759e71cad59179f3550dfc3834f0cf6e7f6356b1ba1",
+            "hash": "0xc409f578d1b2deeddcbebd40758ce9c66ae4be007932eaae1a7c934d7b3eea9a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -1584,16 +2279,51 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x01": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c161c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f95e",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xcb2c915bbd57da272f140b0ce20246945ec7372c628af300eb6145d071469b8b",
+            "hash": "0x0e1ff9b08943bc1dcec71cdefaffa0afde5e76b4c531f27666490f4c522f1da9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -1664,16 +2394,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x01": "0x20",
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8e48f6",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x055083",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0dfdb8ff2a6db8eb4adabe3242ddaf64af8a646f3fc9c06a1550000f646b0ebd",
+            "hash": "0x5f4865b849f13bc6cacb48c4b1561bf6104b68f6aea685a4f35a362928c5e050",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -1744,16 +2506,51 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x23",
+                                "0x01": "0x20",
+                                "0x02": "0x64f14ab5c236c3612341167471224790f5afa98db5c4e06c347aa8bcc9251fce",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c1568",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f994",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x16750d3c4ee31bb897719780271966d93774c3c1d88bff5072df8a1e78626e77",
+            "hash": "0x83889322d3bc766c1c61d59942ffbdcb35e883e0f96a3d58bcf99a6cae82c42f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -1824,16 +2621,51 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x00": "0x20",
+                                "0x01": "0x20",
+                                "0x02": "0xe6008584563d5e7fe63858fd5017312912ffbe0847dd9dbcb0ef1d3681b4f1ea",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x05": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x08": "0x1122334455667788991011121314151617181920212223242526272829303132",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8c15c2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05f979",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xccc2ee722a833037b5db81bbfad6260a673edb6bbf9c15527fd9c35b3f2cb405",
+            "hash": "0x2c16cf479b3cf8fac885df7858938fb317e3697e09925ac360c5ebd27e32d2f0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
@@ -1904,16 +2736,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x02",
+                            "balance": "0x05f5e100",
+                            "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                            "storage": {
+                                "0x01": "0x20",
+                                "0x02": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "0x03": "0xea2b2bc38469de89331c029ceb52d62a0890376a24c695e42e06d4bdcffc160f",
+                                "0x07": "0xfffafb",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8e489c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x05509e",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7da7ea46c9879c5ffd42530a5513ebbc222a2b729b26fa1be291bbb7573a8dc1",
+            "hash": "0x14a0fb4cefdc60e5c7108d3baa355d5407789355309fe3a97f7b744fa11133e7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "description": "Test function documentation:\nValidate that create2 return data does not interfere with previously existing memory.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L25",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
             "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"

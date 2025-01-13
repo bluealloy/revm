@@ -62,16 +62,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x5b60005c600255601460005d60005c600355",
+                            "storage": {
+                                "0x03": "0x14"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x5b600a60005d600060006020600060006110005af160015560005c600055",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x00": "0x0a"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b5fe94",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01cd3a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x783c8902f4670d5c86129ccc5fedb6f3244467f4c73855937b6fca4281fb2c3f",
+            "hash": "0xd19b926e91017649c7823cbd8bf7ca50bfc50866bc39f51e65309dd0c0b44117",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (04_tloadAfterCallFiller.yml)\n    Loading a slot after a call to another contract is 0.\n\n    (12_tloadDelegateCallFiller.yml)\n    delegatecall reads transient storage in the context of the current address",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_calls.py#L16",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (04_tloadAfterCallFiller.yml)\n    Loading a slot after a call to another contract is 0.\n\n    (12_tloadDelegateCallFiller.yml)\n    delegatecall reads transient storage in the context of the current address",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_calls.py#L16",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -140,16 +171,50 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x5b60005c600255601460005d60005c600355",
+                            "storage": {
+                                "0x02": "0xff",
+                                "0x03": "0xff"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x5b600a60005d600060006020600060006110005af260015560005c600055",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x00": "0x14",
+                                "0x02": "0x0a",
+                                "0x03": "0x14"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b00b24",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x039642",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf0ee919b1378b0ddce1c30a0c5687ca353c36a9f8133b0b81c2908827c4be328",
+            "hash": "0x20087adc97554ee38cf6fbeb9606d87f54461f7294c8b85270ebc26c29fabbdd",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (04_tloadAfterCallFiller.yml)\n    Loading a slot after a call to another contract is 0.\n\n    (12_tloadDelegateCallFiller.yml)\n    delegatecall reads transient storage in the context of the current address",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_calls.py#L16",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (04_tloadAfterCallFiller.yml)\n    Loading a slot after a call to another contract is 0.\n\n    (12_tloadDelegateCallFiller.yml)\n    delegatecall reads transient storage in the context of the current address",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_calls.py#L16",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -218,16 +283,50 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x5b60005c600255601460005d60005c600355",
+                            "storage": {
+                                "0x02": "0xff",
+                                "0x03": "0xff"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x5b600a60005d60006000602060006110005af460015560005c600055",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x00": "0x14",
+                                "0x02": "0x0a",
+                                "0x03": "0x14"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b00b42",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x039639",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x95ebf3c398fd89f5705ac2bd6bd270cbb762ce074772c127490e75031951e0a3",
+            "hash": "0x46480fbec6f62237b349b9d4bcbf6fe3c4454d875cdb9343e709dfc15fea906e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (04_tloadAfterCallFiller.yml)\n    Loading a slot after a call to another contract is 0.\n\n    (12_tloadDelegateCallFiller.yml)\n    delegatecall reads transient storage in the context of the current address",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_calls.py#L16",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (04_tloadAfterCallFiller.yml)\n    Loading a slot after a call to another contract is 0.\n\n    (12_tloadDelegateCallFiller.yml)\n    delegatecall reads transient storage in the context of the current address",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_calls.py#L16",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"

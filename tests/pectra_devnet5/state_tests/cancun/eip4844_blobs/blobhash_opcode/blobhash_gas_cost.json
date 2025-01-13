@@ -63,16 +63,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x84c3e6fac190a6adcfaffcd30b7d792ec13c21f477232a8f84ff5dd3784a68fd",
+            "hash": "0xdb0ab53d516c435001da17de23b431b8081005fe09cb105297ca1f448508e4ea",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -142,16 +164,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6001495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x63bd88bb7c8a35c3121844be64f47263d27e9e004a13d3d96b1434dc04b4ce6b",
+            "hash": "0x451a34693c823854cf0df9050e8bb334916f7bd37facd1d8828685cc2c0f3e30",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -221,16 +265,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6002495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd46c3eff9c8d4db59f243c7214ed23709e76a4a7e54c5fdc034284a67e7428bd",
+            "hash": "0x529f6cd325f8785105f1e0c75db7e218a79cb6dcf052e35ca4649895dd374336",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -300,16 +366,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6003495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd3bf255b2ba862d4d5ac13c81907eb7a807929cb6b893fd54b48ec1e07b03dbc",
+            "hash": "0xd60b6c5265084109cfed4c14ea5cb47fb220189eea0981e834bbfa5752c47d0a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -379,16 +467,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6004495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x585cfab861a64af6ae9a8ef610162ad22c321b489e2524c5bcbeb6b9bf302fe9",
+            "hash": "0xa4824f8d45aa429fa73d081ce338fcc63b617212e73a02e3556c22127ce7b727",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -458,16 +568,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc8ffdef2f4b872bcae3f0a6bf6d2f3e2011d656cb978937f9a5ce1a553700c01",
+            "hash": "0x3d0008d4d89404884ed7f35aa019b992cfd8eac1dce58e7dd036f023acd3720d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -537,16 +669,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a7fa12c8b6a8b11410c7d98d790e1098f1ed6d93cb7a64711481aaab1848e13212f495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xbd0af173ef8d8065030d286a765a1ebd5331000a5cb31189c949878321c6e91e",
+            "hash": "0x7293e23a72d385d5f4d817bc79325a7c9e8f3c3f83128ab1265d37c7a9b76253",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -607,16 +761,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2c462fc6f2e195cf5de45591ee51d8465d747e6588fff1c2a88293b332f18d2a",
+            "hash": "0xdc110ed986a5553ebbf9b68a989ca63e733b6de790e8ac4b0a54178ec36d5ac5",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -677,16 +853,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6001495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2761a0cd674515122e9089435144509d41c0c554348d4aaa655beeab8087632a",
+            "hash": "0x6949e64079e349ad6a20adac3d3db18375e7a963bf3010145ecb1492f686b2bc",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -747,16 +945,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6002495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x16680d4fa15119692e4d02350cb860f37609072d3db8a62efb97af00798b5d71",
+            "hash": "0x0d9abb8c0d488a3ccba24b22addaeec9b494aad3a1d86fc6d63f3f86a4824ee7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -817,16 +1037,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6003495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xbfb021c58c408416d45f03757e05caf0b2ff72831fa9421800992504133759bd",
+            "hash": "0xcb8c9df45fc97763369d690113b2adbe9671ab7c38f6a82e79ef5bfb7f3a065d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -887,16 +1129,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6004495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x8b2822143c0c4090671919adcd50a867ed3d5cf2224a0e2d46855f01701f6c63",
+            "hash": "0xb662b5b64ed120d69a155cdbaf2c62a5deb721b94492aabeff3d293090000d23",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -957,16 +1221,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7a89fd249b5c27894a73b64a5c295228ab42b2db6226028cc351b6c608fa0255",
+            "hash": "0x111bcac37e86fa2c4fb9b4e9551ba354dc843be7337f4b0c05517a061b125a5c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1027,16 +1313,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a7fa12c8b6a8b11410c7d98d790e1098f1ed6d93cb7a64711481aaab1848e13212f495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0e05917e8081ca70b519da486caec1dd25d6e212bf4035cfce224d8cdc20f6a9",
+            "hash": "0xcd169586dadbfc8f94fa8565c00da7d5006742876cc356b96979340fad90f98b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1096,16 +1404,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x84f797d23ee9d3d29e5441a2ebb57555b174f61a0bc47d122016490cbd216189",
+            "hash": "0x14caf388cf71d3bdb689bee346877c8022746b2c1cdcf0eb4606a947279c5fb9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1165,16 +1495,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6001495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2b7690863fa86e80e6b1a238f15f5ba0e5599628a71f16cc2d10b8c2f70d4822",
+            "hash": "0x66642ed704b7cddd3768b770ded2974de220f459bc7089e3e2ab9f78cef07452",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1234,16 +1586,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6002495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x00d951d7d1c5c731255edeeb3217ae3adee7c51aedc7e786bfb60071f43f300a",
+            "hash": "0xdf50c12203f90739e6822c615fe6219f80124f4ff952e190b1c806cd613c6712",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1303,16 +1677,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6003495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2a6770156189149916e0972b314b759cc21efcf75613cf41196c4f590c69ee5a",
+            "hash": "0xfda619c5b41c02cabfbf241a0a5117a5a3bb937df8598da66341244fc3f94bc6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1372,16 +1768,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6004495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x51bb0bae9df8eec2951769ff0a3f46127474ba7bc33c958bf18464efb40eab5f",
+            "hash": "0x8ea3976e472c468b3885b28d7982706b1126e329c9eb97df672fb650142d8cb0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1441,16 +1859,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf36a1795cef6193fd06c3ac6806f3f7c633fff85cd0def9d2fd70f921227736f",
+            "hash": "0x717ebf13d57800329bdef4491576a18cfea602f45f88a2fb38ab44e6e85f53e6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1510,16 +1950,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a7fa12c8b6a8b11410c7d98d790e1098f1ed6d93cb7a64711481aaab1848e13212f495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xceb16eb07a8f5dc1a5f0fe2cb016b29ccf3ccf8c4b104d8e297ecd62ef41b923",
+            "hash": "0xdf408558a5b35c0d91ca6666a26b13d316f8fb20c6d0fb1192ee0ecdbaab417c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1576,16 +2038,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6000495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa24084831d92f769f048c2b26911c66b2fcc98f8c760770333af3878992b1e7f",
+            "hash": "0x4ef39487e8a27c6896bc91f452559bba38376cad2a5a2cda83aa7fcceca94776",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1642,16 +2126,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6001495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa51c8a350e6e84eb236e0db1a7508ae95352541481c75df98627b16cdd0f6c06",
+            "hash": "0x45fdaeeba4e3331e677e20b8762a6484b21161a4b102abfd721e4530fecc043c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1708,16 +2214,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6002495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf4e72c476f1340d2c0fc6f2c07cef6ae3fa2319cccda154182de6fae030002f6",
+            "hash": "0xb4735f90569d1511b2df42d95b0e475d9b7b4040f736f2b3c895e855e63f5f6f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1774,16 +2302,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6003495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xeb01405a86ff3ed27d73b933f2f802057b74ae9f651eb6222a3715fd795f46a1",
+            "hash": "0xbcfe4b6307d3fc3111db050dba420d05b525511782c96780296ee8e6452c1c64",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1840,16 +2390,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a6004495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x32bafe0e5e3ea3e0486ae9449e64ef1bb3fda561b88377391d87f5ad2846c139",
+            "hash": "0x10de8465e55f13ac8aadc6b05ced2ee2cba1cd5586718b5a699749860cf37aa9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1906,16 +2478,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x62169bc18054d4bf4b5a69b79c2ee2d6763556e1d830240b8f4caf45dd9d1dd3",
+            "hash": "0x9d0c4db757d341d1aa5db8ff7f735e02383bacc073c86205b2ca5292a136b3a5",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -1972,16 +2566,38 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5a7fa12c8b6a8b11410c7d98d790e1098f1ed6d93cb7a64711481aaab1848e13212f495a905090036005900360005500",
+                            "storage": {
+                                "0x00": "0x03"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de99661e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01faf7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa3e2c1fcd8de629c5927ac72c3ffff1d414d1314ae015a084fee77152933a42e",
+            "hash": "0x5f2142f9f811789500116c0d0a19b7cad31e515a3d4ac757bf495ce16f70c64d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests `BLOBHASH` opcode gas cost using a variety of indexes.\n\n    Asserts that the gas consumption of the `BLOBHASH` opcode is correct by ensuring\n    it matches `HASH_OPCODE_GAS = 3`. Includes both valid and invalid random\n    index sizes from the range `[0, 2**256-1]`, for tx types 2 and 3.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L59",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_blobhash_opcode.py#L60",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"

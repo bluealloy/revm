@@ -58,16 +58,63 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7218a2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x61003f600081600b8239f37f00000000000000000000000000000000000000000000000000000060016000f36000526005601b6000f050600160005401600055611000ff600060005500",
+                            "storage": {}
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x64e2ebd6405af8cb348aec519084d3fff42ebba6",
+                                "0x01": "0x3f",
+                                "0x02": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5",
+                                "0x03": "0x01",
+                                "0x05": "0x3f",
+                                "0x06": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5"
+                            }
+                        },
+                        "0x5aa0b8615fe7a3f289372f34fc9741481ad34b4b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0dc569",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc2a7a88db87aca03c1cfceede58c1b9ca73da6126c64cb9c64d3d93d1862e10d",
+            "hash": "0x609ebb069c0e8106e436838069c792a00be639be4f7510d80ea23bcc9e203f12",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Verify that a contract can self-destruct if it was created in the same transaction, even when\n    its nonce has been increased due to contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -132,16 +179,63 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de721ac8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x61003f600081600b8239f37f00000000000000000000000000000000000000000000000000000060016000f36000526005601b6000f050600160005401600055611000ff600060005500",
+                            "storage": {}
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x4cf16235b8dbc21d8b375afd698e799fed8884",
+                                "0x01": "0x3f",
+                                "0x02": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5",
+                                "0x03": "0x01",
+                                "0x05": "0x3f",
+                                "0x06": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5"
+                            }
+                        },
+                        "0x9dd386bd3712ad026f4d56fa880a1d66c2a27f41": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0dc4c4",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x33993a2266306f41884484147bd29a83744d722e28e637dc09c25455291f2a24",
+            "hash": "0xf7ba809783a029f7e0de525cc7a6e8185d0beaf7d4ac7a6332bc32b0bf708755",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Verify that a contract can self-destruct if it was created in the same transaction, even when\n    its nonce has been increased due to contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -212,16 +306,63 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7218a2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0186a0",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x61003f600081600b8239f37f00000000000000000000000000000000000000000000000000000060016000f36000526005601b6000f050600160005401600055611000ff600060005500",
+                            "storage": {}
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x64e2ebd6405af8cb348aec519084d3fff42ebba6",
+                                "0x01": "0x3f",
+                                "0x02": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5",
+                                "0x03": "0x01",
+                                "0x05": "0x3f",
+                                "0x06": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5"
+                            }
+                        },
+                        "0x5aa0b8615fe7a3f289372f34fc9741481ad34b4b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0dc569",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xeee1d33499f5a31144d156b37103738818d225ff897708c82eb5fd336fb329bf",
+            "hash": "0x063d87e1133e041d898f723d424fac99ffb450d3e1bb54f0e8ebfb1837dc31b3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Verify that a contract can self-destruct if it was created in the same transaction, even when\n    its nonce has been increased due to contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -292,16 +433,63 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de721ac8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0186a0",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x61003f600081600b8239f37f00000000000000000000000000000000000000000000000000000060016000f36000526005601b6000f050600160005401600055611000ff600060005500",
+                            "storage": {}
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x4cf16235b8dbc21d8b375afd698e799fed8884",
+                                "0x01": "0x3f",
+                                "0x02": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5",
+                                "0x03": "0x01",
+                                "0x05": "0x3f",
+                                "0x06": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5"
+                            }
+                        },
+                        "0x9dd386bd3712ad026f4d56fa880a1d66c2a27f41": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0dc4c4",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0c5f7db1d31e402a89ede155395e4a1220471f2c1ca16bd4b7fe9a11a7a05c3b",
+            "hash": "0x799583963f63c14d5996ce318f88da81c8b17d4f30d7a7c44647727e63f45280",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Verify that a contract can self-destruct if it was created in the same transaction, even when\n    its nonce has been increased due to contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -366,16 +554,91 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de478d6c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0a",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x61003f600081600b8239f37f00000000000000000000000000000000000000000000000000000060016000f36000526005601b6000f050600160005401600055611000ff600060005500",
+                            "storage": {}
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x64e2ebd6405af8cb348aec519084d3fff42ebba6",
+                                "0x01": "0x3f",
+                                "0x02": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5",
+                                "0x03": "0x01",
+                                "0x05": "0x01",
+                                "0x07": "0x01",
+                                "0x09": "0x01",
+                                "0x0b": "0x01",
+                                "0x0d": "0x3f",
+                                "0x0e": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5"
+                            }
+                        },
+                        "0x5aa0b8615fe7a3f289372f34fc9741481ad34b4b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x31d26c9318ec0d43021c10e787c96d59abbf8aa8": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x3db9543b0f6882c516a64bbb3818a151fdb20879": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0xe639dcbb2b1eb75c1f27b96d90cb7c29b502be00": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x5567638bc7073d6f0deb5133d23289739d90f0d6": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x1a88c3",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe44d9683e533e246d44e0320be4e088cd007d40f9853b36afcdc344dc291ccee",
+            "hash": "0xcf45572b407ea7ab60edc16a21464bc9853130aaa47d9b8ea5085b25c2e7dcf7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Verify that a contract can self-destruct if it was created in the same transaction, even when\n    its nonce has been increased due to contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -440,16 +703,91 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de4794a6",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0a",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x61003f600081600b8239f37f00000000000000000000000000000000000000000000000000000060016000f36000526005601b6000f050600160005401600055611000ff600060005500",
+                            "storage": {}
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x4cf16235b8dbc21d8b375afd698e799fed8884",
+                                "0x01": "0x3f",
+                                "0x02": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5",
+                                "0x03": "0x01",
+                                "0x05": "0x01",
+                                "0x07": "0x01",
+                                "0x09": "0x01",
+                                "0x0b": "0x01",
+                                "0x0d": "0x3f",
+                                "0x0e": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5"
+                            }
+                        },
+                        "0x9dd386bd3712ad026f4d56fa880a1d66c2a27f41": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x6533abd2f18de53602c9a63cc010ba62e183c68a": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0xe6ac5ec0a2ee6845eb09f55bc5f06dd7de3f35dd": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x1d386266bbb180b568846cae20fa1fefe667137c": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0xa1dc0abb44ce169cc3a07dca3abbd5e0647ba380": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x1a8698",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa5b28420dd6513769ab179230a57afbb7e9ba9f4dd519862684ec362310bfdd9",
+            "hash": "0x00ec32bab0813685c7b082c7fb8491f1661e9a4fe28409270a8db5e0b61a1c07",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Verify that a contract can self-destruct if it was created in the same transaction, even when\n    its nonce has been increased due to contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -520,16 +858,91 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de478d6c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0186aa",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x61003f600081600b8239f37f00000000000000000000000000000000000000000000000000000060016000f36000526005601b6000f050600160005401600055611000ff600060005500",
+                            "storage": {}
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x64e2ebd6405af8cb348aec519084d3fff42ebba6",
+                                "0x01": "0x3f",
+                                "0x02": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5",
+                                "0x03": "0x01",
+                                "0x05": "0x01",
+                                "0x07": "0x01",
+                                "0x09": "0x01",
+                                "0x0b": "0x01",
+                                "0x0d": "0x3f",
+                                "0x0e": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5"
+                            }
+                        },
+                        "0x5aa0b8615fe7a3f289372f34fc9741481ad34b4b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x31d26c9318ec0d43021c10e787c96d59abbf8aa8": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x3db9543b0f6882c516a64bbb3818a151fdb20879": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0xe639dcbb2b1eb75c1f27b96d90cb7c29b502be00": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x5567638bc7073d6f0deb5133d23289739d90f0d6": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x1a88c3",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5597f14b2cc57984f66b29ab37062f2fbb5309a79a14231500e29d9dac93386e",
+            "hash": "0xe3bc5360e9783443b2176f8407f1b005992ec5ef107be8c4b0b471b2802775f4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Verify that a contract can self-destruct if it was created in the same transaction, even when\n    its nonce has been increased due to contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -600,16 +1013,91 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de4794a6",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x0186aa",
+                            "code": "0x6000600055",
+                            "storage": {
+                                "0x00": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x61003f600081600b8239f37f00000000000000000000000000000000000000000000000000000060016000f36000526005601b6000f050600160005401600055611000ff600060005500",
+                            "storage": {}
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {
+                                "0x00": "0x4cf16235b8dbc21d8b375afd698e799fed8884",
+                                "0x01": "0x3f",
+                                "0x02": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5",
+                                "0x03": "0x01",
+                                "0x05": "0x01",
+                                "0x07": "0x01",
+                                "0x09": "0x01",
+                                "0x0b": "0x01",
+                                "0x0d": "0x3f",
+                                "0x0e": "0x7951234c5ae5e359a68c0be628e36937189a45e2815dd811308391dd40fe88d5"
+                            }
+                        },
+                        "0x9dd386bd3712ad026f4d56fa880a1d66c2a27f41": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x6533abd2f18de53602c9a63cc010ba62e183c68a": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0xe6ac5ec0a2ee6845eb09f55bc5f06dd7de3f35dd": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x1d386266bbb180b568846cae20fa1fefe667137c": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0xa1dc0abb44ce169cc3a07dca3abbd5e0647ba380": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x1a8698",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x60d4867acaf9d9a7151cf4ca514bb34c2c2c207459c8088c1112244b8de3f164",
+            "hash": "0xf03eb1249617776aa8dac48bf358e810bfabc245c0d34d1707c1ad588872fca8",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Verify that a contract can self-destruct if it was created in the same transaction, even when\n    its nonce has been increased due to contract creation.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_selfdestruct.py#L1181",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"

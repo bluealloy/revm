@@ -60,16 +60,30 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x04",
+                            "code": "0x5854505854",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x2cd931",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x398e2b06c420d105024fdaf2cb8d718dca2263da0a1c71b97119cc3bf156a611",
+            "hash": "0x813518336344739b9f7d43d8bead1ec6bb7f6bd22c3abdb95ba468734b8ddd82",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test type 1 transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/berlin/eip2930_access_list/test_acl.py#L15",
+            "description": "Test function documentation:\nTest type 1 transaction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/berlin/eip2930_access_list/test_acl.py#L19",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2930.md",
             "reference-spec-version": "c9db53a936c5c9cbe2db32ba0d1b86c4c6e73534"
