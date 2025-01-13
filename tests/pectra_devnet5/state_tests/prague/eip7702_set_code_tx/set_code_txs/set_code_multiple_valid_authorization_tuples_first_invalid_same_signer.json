@@ -200,16 +200,92 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160005500",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160015500",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001200": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160025500",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001300": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160035500",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001400": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160045500",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001500": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160055500",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001600": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160065500",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001700": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160075500",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001800": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160085500",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001900": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160095500",
+                            "storage": {}
+                        },
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de80b162",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0xef01000000000000000000000000000000000000001100",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x598e5ccba2531d1da690b422155f89f479be77cbb0d24f9cbd94e7512b01c0ce",
+            "hash": "0xfa4562724c8e6069a679fac148c930644391ba4ce62d1dc76cc720f19f7f1131",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Test setting the code of an account with multiple authorization tuples from the same signer\n    but the first tuple is invalid.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1955",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/prague/eip7702_set_code_tx/test_set_code_txs.py#L1922",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md",
             "reference-spec-version": "4334df83395693dc3f629bb43c18320d9e22e8c9"

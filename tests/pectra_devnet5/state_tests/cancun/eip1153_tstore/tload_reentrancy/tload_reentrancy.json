@@ -61,16 +61,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460495801576002600035146008580157604a5801565b602c60005d600160005260ff60205260206020602060006000305af160035560205160015560005c600255600160045560145801565b60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x01": "0x2c",
+                                "0x02": "0x2c",
+                                "0x03": "0x01",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b5a188",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01e924",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xffa0997b56f5eaca55f71333b433127b82cc370e9bcc6c0b154c045c2f3f805a",
+            "hash": "0x2ef4901496402fb83601f7fba04684166c109988dcd60d3f90698d2b7696219d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -138,16 +169,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460495801576002600035146008580157604a5801565b602c60005d600160005260ff60205260206020602060006000305af260035560205160015560005c600255600160045560145801565b60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x01": "0x2c",
+                                "0x02": "0x2c",
+                                "0x03": "0x01",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b5a188",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01e924",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x87b771fe164f1ef674ce7ad65b20a761e26cef5c3ace2e5ce786d71558dec191",
+            "hash": "0x782e6afb8ee186cf9f9e437857c007c6c0288035ee9f247be4724711520368cd",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -215,16 +277,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146047580157600260003514600858015760485801565b602c60005d600160005260ff6020526020602060206000305af460035560205160015560005c600255600160045560145801565b60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x01": "0x2c",
+                                "0x02": "0x2c",
+                                "0x03": "0x01",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b5a1a6",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01e91b",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x36b47b8f63ddf407d9b95d3b55af7f16a4684abe08c435f6d1feaaf4a452f158",
+            "hash": "0x42d6649ef29b4d17b7e8bc23de5881f711a180d31b88060ec355cdb131d8c10a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -292,16 +385,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146047580157600260003514600858015760485801565b602c60005d600160005260ff6020526020602060206000305afa60035560205160015560005c600255600160045560145801565b60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x01": "0x2c",
+                                "0x02": "0x2c",
+                                "0x03": "0x01",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b5a1a6",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01e91b",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa891a17a9522af38cef9aca44eea348a9d58ea11cca903d10c28f250442c474d",
+            "hash": "0xab9ca00b72a0dda9737a04b7ed9069c7eae20f8206f3eac9467bfb31837f15da",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -369,16 +493,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460495801576002600035146008580157604a5801565b602c60005d600160005260ff60205260206020602060006000305af160035560205160015560005c600255600160045560145801565b60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x01": "0x2c",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b65d08",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01b0e4",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7389225832fdf31684775496558523ce659da4c313574995612e4f48afd77f2a",
+            "hash": "0x1ebf88afd873b358feb7ce740e79f47e6c10bfd7064a7b5ce522a8da1e8a1dad",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -446,16 +600,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460495801576002600035146008580157604a5801565b602c60005d600160005260ff60205260206020602060006000305af260035560205160015560005c600255600160045560145801565b60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x01": "0x2c",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b65d08",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01b0e4",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb7aecb356f6580f89bec910a85a7900912e3d91d7ee774e0e6ea1f3fe177b862",
+            "hash": "0xa80d08b48569111612509079462be94df8c47019b8648d760473cfaff423fd85",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -523,16 +707,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146047580157600260003514600858015760485801565b602c60005d600160005260ff6020526020602060206000305af460035560205160015560005c600255600160045560145801565b60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x01": "0x2c",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b65d26",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01b0db",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0aca13fb4c3e2d50a22f52ce5a87e3e9cbb91a052ec71b9859b240543282fb36",
+            "hash": "0x3ba922363e2d0f271db21c10d39f1fc1236c0c5a0e7c92d3fd2c8b7cf67e4e93",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -600,16 +814,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146047580157600260003514600858015760485801565b602c60005d600160005260ff6020526020602060206000305afa60035560205160015560005c600255600160045560145801565b60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x01": "0x2c",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b65d26",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01b0db",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xabd99f5e0319df776b5ffd7d75c5b1cda2704be5029c31a7b148ecd090722b08",
+            "hash": "0xa7b0ed463595f91a3c5505680897eba18a3802d6d4984c6a253cd514b13d181a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -677,16 +921,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146049580157600260003514600858015760525801565b602c60005d600160005260ff60205260206020602060006000305af160035560205160015560005c6002556001600455601c5801565b60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x01": "0xff",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990cb0440",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe1e520",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x1dcfcc60393e80cd6347a7ca13bebda42bb0e326cdf4badff91150f2ca5dd443",
+            "hash": "0xf14d9bebe0f943cadc722d123570cba9131c08e96f0b5c24edea70df9253ea5a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -754,16 +1028,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146049580157600260003514600858015760525801565b602c60005d600160005260ff60205260206020602060006000305af260035560205160015560005c6002556001600455601c5801565b60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x01": "0xff",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990cb0440",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe1e520",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc8fefdcf40e85f0e0ea04f19de19244c86b4971f636630c748fba0741b11a315",
+            "hash": "0x91a27998244f70ced49a14aa571befc8974ebb5274be302a376f016c80aa68f0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -831,16 +1135,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146047580157600260003514600858015760505801565b602c60005d600160005260ff6020526020602060206000305af460035560205160015560005c6002556001600455601c5801565b60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x01": "0xff",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990cb0440",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe1e520",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4ed7c03185a71ed20f6b1ff772d79cd2f83ae8ca3197a13844b81fa2cec9653c",
+            "hash": "0x3be832fd120309e8b4fb80797e3dbe349fc7b294c955d2d4e163f38192a99cd6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -908,16 +1242,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146047580157600260003514600858015760505801565b602c60005d600160005260ff6020526020602060206000305afa60035560205160015560005c6002556001600455601c5801565b60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x01": "0xff",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990cb0440",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe1e520",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc91768899492daff922d719aaf9ca08458891580c97716710e9c0aa43d0fe10f",
+            "hash": "0x5536a8f7bfc2166990d83a04d4cbdb1a73d1b7da38eed665611c4774be8b5dfa",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -985,16 +1349,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600160003514604b5801576002600035146008580157604c5801565b602c60005d600160005260ff602052602060206020600060006110005af160035560205160015560005c600255600160045560145801565b60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x02": "0x2c",
+                                "0x03": "0x01",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b5fc8c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01cdd6",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe56f015e81a83d8cfd6e01bb8abb05ef85b561c41858cd7b37f0da13f39d9c4e",
+            "hash": "0x8921851c3c0a2cf63aae18d33ffe54e8212dffdb3d917b331dc4d8a6bd79c860",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1062,16 +1456,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600160003514604b5801576002600035146008580157604c5801565b602c60005d600160005260ff602052602060206020600060006110005af260035560205160015560005c600255600160045560145801565b60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x01": "0x2c",
+                                "0x02": "0x2c",
+                                "0x03": "0x01",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b5410c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x020616",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7f648d440b99138954cfa8aa95e3ae85bd040b5935e25b36fa4c1c07c3e2edeb",
+            "hash": "0xf829e5b90de8489964a56f0f69a77496019ff3d86bf553d990b8a4919e091021",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1139,16 +1564,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460495801576002600035146008580157604a5801565b602c60005d600160005260ff60205260206020602060006110005af460035560205160015560005c600255600160045560145801565b60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x01": "0x2c",
+                                "0x02": "0x2c",
+                                "0x03": "0x01",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b5412a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02060d",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xcf168738e554a60c18ba30a6ddf0a4f09800120928f12f21483da1325b514d51",
+            "hash": "0x678c98bb158d73cb46395bd5cec3fc974cdfb52e5a7cf148645c5643658ecd4e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1216,16 +1672,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460495801576002600035146008580157604a5801565b602c60005d600160005260ff60205260206020602060006110005afa60035560205160015560005c600255600160045560145801565b60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x02": "0x2c",
+                                "0x03": "0x01",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b5fcaa",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01cdcd",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x57d63bad932a351ab19808d20a3803539e51d8971f44d457003eaa9faa080036",
+            "hash": "0x887af21e33fc082d8b9556bb67c7ce72d0ad09014b8fa925f226bd0ac9e2bf83",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1293,16 +1779,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600160003514604b5801576002600035146008580157604c5801565b602c60005d600160005260ff602052602060206020600060006110005af160035560205160015560005c600255600160045560145801565b60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b69a70",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x019e78",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xcaeb6df1b2b9d934ad72686563319e58ca3bb058f181d90bc8c72a78193edb9f",
+            "hash": "0x48aa0cba40d8d8736e5290fb64444acfc6f33b2dbb52241b864ff88a999b9eb0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1370,16 +1885,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600160003514604b5801576002600035146008580157604c5801565b602c60005d600160005260ff602052602060206020600060006110005af260035560205160015560005c600255600160045560145801565b60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x01": "0x2c",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b5fc8c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01cdd6",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7737a4f5c39b7dd935bda946a5db039ab6071e8fbd2698978e2a72b3a4832df1",
+            "hash": "0xcce638d3da86fa9db2abaf450aa77dda5e783275a0f5790a2988eaffb46ae348",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1447,16 +1992,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460495801576002600035146008580157604a5801565b602c60005d600160005260ff60205260206020602060006110005af460035560205160015560005c600255600160045560145801565b60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x01": "0x2c",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b5fcaa",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x01cdcd",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5a7d1d5b37dc8f70a37715d8fa7dcb55f1292b3070cfcd806e6e358bfdfda49f",
+            "hash": "0xe257ec4db86ff2c81b36c8815b11275a9989f3ca4fed7b2bb183404ccbbf204f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1524,16 +2099,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460495801576002600035146008580157604a5801565b602c60005d600160005260ff60205260206020602060006110005afa60035560205160015560005c600255600160045560145801565b60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b69a84",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x019e72",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x66b01c88f1e7df73fdedb679f913caf9cae5e5d5ea4ca17b060c60cbfbdbe3b4",
+            "hash": "0x78362ea1667018fb6f257caf13804eb949e9a4c5b99f56ad8293f05e2a951b66",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1601,16 +2205,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600160003514604b580157600260003514600858015760545801565b602c60005d600160005260ff602052602060206020600060006110005af160035560205160015560005c6002556001600455601c5801565b60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x01": "0xff",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990cb02ba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe1e595",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa4af9ffb86bcf48f1890e1de4deddea39697c0528bc214432de6d668dea61eb7",
+            "hash": "0x503e7d9ebeebd09c392127636f8b10fa131fe5caac9182d5798515c37f94b1c6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1678,16 +2312,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600160003514604b580157600260003514600858015760545801565b602c60005d600160005260ff602052602060206020600060006110005af260035560205160015560005c6002556001600455601c5801565b60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x01": "0xff",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990cb02ba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe1e595",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xab7ab4a39d83b5f260e1ffcd8c572b42b7ce85eb7f35bc33e0bfa2cf2aaf7c0c",
+            "hash": "0x70dfbde7026be4e3c3935a0f0a967f226063307d6f05e49d4a00ca1deb8636cf",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1755,16 +2419,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146049580157600260003514600858015760525801565b602c60005d600160005260ff60205260206020602060006110005af460035560205160015560005c6002556001600455601c5801565b60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x01": "0xff",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990cb02ba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe1e595",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa78b6ff94a9687869bc741b48a2b7636872578d871ee7b3c91a1b49ea1a7a809",
+            "hash": "0x1695dcc231df0fe7df956e2c87925517ae2e56b0eec027f96dfc4617c75c54fa",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1832,16 +2526,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146049580157600260003514600858015760525801565b602c60005d600160005260ff60205260206020602060006110005afa60035560205160015560005c6002556001600455601c5801565b60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x01": "0xff",
+                                "0x02": "0x2c",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990cb02ba",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe1e595",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xcbb522a36f5d9dca031f29e164d74204a3074762b00e0dca84961a3a4f03896c",
+            "hash": "0x0c8abba2bf2ae94bf39968e22020e0386f20dba4e3f54b89c12f99508098f7d0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (05_tloadReentrancyFiller.yml)\n    Reentrant calls access the same transient storage",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tload_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"

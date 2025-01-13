@@ -50,16 +50,49 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x61010060005d61020060015d61030060025d366000600037600060006000600060003660006000f05af160045560005c60005560015c60015560025c600255",
+                            "storage": {
+                                "0x04": "0x01",
+                                "0x00": "0x0100",
+                                "0x01": "0x0200",
+                                "0x02": "0x0300"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de867d6a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x07a72d",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x8e2115a98da91553db68f2234fcc34cbb5f79bc21ec41350533a8322d580f40a",
+            "hash": "0xc3fed000b72494f4a37368e4edb52ab4c5d642d44869004117979c256a8cc453",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts:\n\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\n\n        Test transient storage in contract creation contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L179",
+            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts.\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\nTest transient storage in contract creation contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L187",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -116,16 +149,49 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x61010060005d61020060015d61030060025d3660006000376000600060006000600063deadbeef3660006000f55af160045560005c60005560015c60015560025c600255",
+                            "storage": {
+                                "0x04": "0x01",
+                                "0x00": "0x0100",
+                                "0x01": "0x0200",
+                                "0x02": "0x0300"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de867d10",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x54bd6a94f5b1f0540e538a0b47c561e3c39716bc": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x07a748",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7d0b8a6d20b22accda4cdea219b0ac0b21822d6b263391a2abc0a56daf5ab8c3",
+            "hash": "0xdf081fcb2ceef7897cba7006d0804b756310c0d0673a4412bcc2a287a84f06c6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts:\n\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\n\n        Test transient storage in contract creation contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L179",
+            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts.\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\nTest transient storage in contract creation contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L187",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -182,16 +248,49 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x61010060005d61020060015d61030060025d366000600037600060006000600060003660006000f05af160045560005c60005560015c60015560025c600255",
+                            "storage": {
+                                "0x04": "0x01",
+                                "0x00": "0x0100",
+                                "0x01": "0x0200",
+                                "0x02": "0x0300"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de85994a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c600155600160015d60015c600255",
+                            "storage": {
+                                "0x02": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x07eb9d",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6e8736ac38dc7db1d3ed5d34226fad2fa508cabb0d008273b85a35dea2debcb6",
+            "hash": "0xc1307436b4146351c2dd0d0b9f7dda843d68d65816bcf7372a844b1cb09add0d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts:\n\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\n\n        Test transient storage in contract creation contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L179",
+            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts.\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\nTest transient storage in contract creation contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L187",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -248,16 +347,49 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x61010060005d61020060015d61030060025d3660006000376000600060006000600063deadbeef3660006000f55af160045560005c60005560015c60015560025c600255",
+                            "storage": {
+                                "0x04": "0x01",
+                                "0x00": "0x0100",
+                                "0x01": "0x0200",
+                                "0x02": "0x0300"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8598b4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0xa877d924ab9856c2c2f55a2be0b624f7407b74cc": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c600155600160015d60015c600255",
+                            "storage": {
+                                "0x02": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x07ebca",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x344f17b4bfa70b15241db5d800b39321e5c9c73dede3ad4531c311ce2eb45a55",
+            "hash": "0x408e137c13d9aed44a39b0aa34642c0f3d26be3cdad63e94a96c009daa146aa3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts:\n\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\n\n        Test transient storage in contract creation contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L179",
+            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts.\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\nTest transient storage in contract creation contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L187",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -314,16 +446,50 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x61010060005d61020060015d61030060025d366000600037600060006000600060003660006000f05af160045560005c60005560015c60015560025c600255",
+                            "storage": {
+                                "0x04": "0x01",
+                                "0x00": "0x0100",
+                                "0x01": "0x0200",
+                                "0x02": "0x0300"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de825956",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005560015c600155600160025d60025c600255",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x02": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x08e533",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x73e1e7be51d8116023554c99441a4c3e2599be00c5027fe1237447417b33b72e",
+            "hash": "0x449522b474991e91714be0524995fb7b1d3bca5a11c3147b72cd367d6fc5b1a7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts:\n\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\n\n        Test transient storage in contract creation contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L179",
+            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts.\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\nTest transient storage in contract creation contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L187",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -380,16 +546,50 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x61010060005d61020060015d61030060025d3660006000376000600060006000600063deadbeef3660006000f55af160045560005c60005560015c60015560025c600255",
+                            "storage": {
+                                "0x04": "0x01",
+                                "0x00": "0x0100",
+                                "0x01": "0x0200",
+                                "0x02": "0x0300"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8258c0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x4c2d49af200ddce2d74781cd55646dfa4917f412": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60005560015c600155600160025d60025c600255",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x02": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x08e560",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xfbc47c8702e0c76d3c7f112dea0709ae10bc31467c8e1b6cf8a2500295c40698",
+            "hash": "0xe62822f1fc5f709b4ec1665c007dd13870b824532cbb09696a61574daef2431b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts:\n\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\n\n        Test transient storage in contract creation contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L179",
+            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts.\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\nTest transient storage in contract creation contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L187",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -446,16 +646,51 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x61010060005d61020060015d61030060025d366000600037600060006000600060003660006000f05af160045560005c60005560015c60015560025c600255",
+                            "storage": {
+                                "0x04": "0x01",
+                                "0x00": "0x0100",
+                                "0x01": "0x0200",
+                                "0x02": "0x0300"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7e94ce",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60025560015c600355600160025d60025c600455",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x03": "0x01",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0a068f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xbacfa38edd09b9e0fad31eb37a81d749bd8ee8defe805a4d2f0ef0df508d20b3",
+            "hash": "0xb03c0a627a1eb9c27bbcf2d75c10a38bca3a07a4cf1a545800286e3ea5130cdf",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts:\n\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\n\n        Test transient storage in contract creation contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L179",
+            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts.\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\nTest transient storage in contract creation contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L187",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -512,16 +747,51 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x61010060005d61020060015d61030060025d3660006000376000600060006000600063deadbeef3660006000f55af160045560005c60005560015c60015560025c600255",
+                            "storage": {
+                                "0x04": "0x01",
+                                "0x00": "0x0100",
+                                "0x01": "0x0200",
+                                "0x02": "0x0300"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de7e9438",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x8997fdcdaca4713f1314c1216daa5ba237989b32": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c60025560015c600355600160025d60025c600455",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x03": "0x01",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0a06bc",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xcf8d192d5be36785839c9dee64db83a9ab8777a89a32a5e89f1294397198efcf",
+            "hash": "0xa064d74bebdbb40cdae3b48510e0f87ab10b4805b5b1e428173ab3ed080dea7d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts:\n\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\n\n        Test transient storage in contract creation contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L179",
+            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts.\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\nTest transient storage in contract creation contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L187",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -578,16 +848,49 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x61010060005d61020060015d61030060025d366000600037600060006000600060003660006000f05af160045560005c60005560015c60015560025c600255",
+                            "storage": {
+                                "0x04": "0x01",
+                                "0x00": "0x0100",
+                                "0x01": "0x0200",
+                                "0x02": "0x0300"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de85f7e6",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c600055600160005d60005c600155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x07cf3b",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x8b92f40ac0fde312daab47f3f05af431f1314110cf580e7ba2af210cb17edf8c",
+            "hash": "0xef04c473eb4909b4f2afb2bafb0e576a40cee22a3d7d1ab8aca24eb66e857f84",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts:\n\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\n\n        Test transient storage in contract creation contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L179",
+            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts.\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\nTest transient storage in contract creation contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L187",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -644,16 +947,49 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x61010060005d61020060015d61030060025d3660006000376000600060006000600063deadbeef3660006000f55af160045560005c60005560015c60015560025c600255",
+                            "storage": {
+                                "0x04": "0x01",
+                                "0x00": "0x0100",
+                                "0x01": "0x0200",
+                                "0x02": "0x0300"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de85f78c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x21f217c0008fdc8b01d290034e6e5803cd6b0cae": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c600055600160005d60005c600155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x07cf56",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc687b1a673a1f541e333c7863e65670d284abb8fca367824a0ee4c84b754883a",
+            "hash": "0x8a957dea8bb21c29aa424b1b64371f802be3bb227420ad0926dae4fff5b3c9b9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts:\n\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\n\n        Test transient storage in contract creation contexts.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L179",
+            "description": "Test class documentation:\n\n    Test transient storage in contract creation contexts.\n    - TSTORE/TLOAD in initcode should not be able to access the creator's transient storage.\n    - TSTORE/TLOAD in initcode should be able to access the created contract's transient\n        storage.\n    - TSTORE/TLOAD in creator contract should be able to use its own transient storage.\n    \n\nTest function documentation:\nTest transient storage in contract creation contexts.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_create_contexts.py#L187",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"

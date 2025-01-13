@@ -56,16 +56,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d600060006000600060006000355af160005560005c60015560015c60025500",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c600055604560015d60015c60015500",
+                            "storage": {
+                                "0x01": "0x45"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de917d14",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x045a7a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xabc9ea4cbebc5999b16193a8971b9ec05ab0f802686d4fa1c15a73ef516b02cc",
+            "hash": "0x21f1a0bed08a65342177748b50488058674e0775f68453fb25ca8fc7354bdc2d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -128,16 +159,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d600060006000600060003561fffffa60005560005c60015500",
+                            "storage": {
+                                "0x01": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560005d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ea242",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0535b9",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x58971871d3c285d38c8aaa8c78135c54f62a86756eb474ab18bad6454f42dc64",
+            "hash": "0xabc6d582cb5566cb6cd7892e36304a1d374a32d0818a9f448dec23e3c1da1b13",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -200,16 +259,44 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d600060006000600060003561fffffa60005560005c60015500",
+                            "storage": {
+                                "0x01": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8ea242",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0535b9",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xaa4367327910a2635c4fe54f0175b73af77b7119de7e01f7fc8fb3862c81d537",
+            "hash": "0xdc40ecdf740783a45d6ced3225d85835b74a221063c291105e65618119b14bfe",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -272,16 +359,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d60006000600060006000355afa60005560005c60015500",
+                            "storage": {
+                                "0x00": "0x01",
+                                "0x01": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9594e4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x032022",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x94ae4e9020c21f3d403a861f4919ed4b401bd140b179394116f41f41e4032fb2",
+            "hash": "0x8b3d2e5dd59b77b9da382856c7dbfbb38f02466a522b098698f89885d02702ae",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -344,16 +460,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d600060006000600060006000355af260005560005c60015560015c60045500",
+                            "storage": {
+                                "0x02": "0x01a4",
+                                "0x03": "0x45",
+                                "0x00": "0x01",
+                                "0x01": "0x01a4",
+                                "0x04": "0x45"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c600255604560015d60015c60035500",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b6a64",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x062ce2",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa994e1388ac89813d7ffb7a5d1ec1a7f5733387104278b63dd91374d2a6e01a0",
+            "hash": "0x0e16076377ed6033d38cbc856f5b1401c81de222f79b41bc3dd23341895e411a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -416,16 +564,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d60006000600060006000355af460005560005c60015560015c60045500",
+                            "storage": {
+                                "0x02": "0x01a4",
+                                "0x03": "0x45",
+                                "0x00": "0x01",
+                                "0x01": "0x01a4",
+                                "0x04": "0x45"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60005c600255604560015d60015c60035500",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b6a82",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x062cd9",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x62118af7dbc419ed4cf11b3d88b6b3f8c291f97260c483af9bec49bc4b3eb4f2",
+            "hash": "0xe9e37e8c5bc29fea829fb4db38ec5369fda7f8ef0026c57eefe34d590488ae99",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -488,16 +668,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d600060006000600060006000355af160005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015d60006000fd",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de953634",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033c8a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x07a4f0b50e2483062c1d954f291345ab4f31443a8f151141885dad164ecf7f38",
+            "hash": "0x2b1cd898f328443c46be897e4a16fdcd1d23d526d63b8333de84fd6832f0b5c6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -560,16 +769,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d6000600060006000600060003560fff160005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015dfe",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de953094",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033e3a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x73d0f6ff166eb1b6fe15d8d20cb7ac6f20c9b77cacb5905e383eeb9997d62aaa",
+            "hash": "0x360d5a8084321c490c5806157f1d163c24533276670b5003c5efff5924c7772d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -632,16 +870,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d6000600060006000600060003561fffff160005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015d5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b3a94",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x063b3a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x20a40a3518ba2879b59ff64140f06b21529e5d5886e06cf5e49c15a51fd977dd",
+            "hash": "0x3c62ad8ce106bb196ca9fc789bc882903d9b67377967397bc818d5550d529582",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -704,16 +971,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d6000600060006000600060003561fffff160005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60015d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b3a94",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x063b3a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9aac31b4a5fd3f0b745c8a51133e8f0ba74508ab406428495e6032da4eb28da0",
+            "hash": "0xdea367a597a4bb0d9afd0696735cf916e2940322f8b578e6d79ca01c5eb4ea62",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -776,16 +1072,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d6000600060006000600060003561fffff160005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b3a94",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x063b3a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4bed3ac2ce434089da9a8b1c0c49847365bad506ca3c7b42e181918901c55861",
+            "hash": "0xa862d08617ef4e447b5f25f55ceb2ea636ff1738d93c367dbff1d667269e730b",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -848,16 +1173,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d6000600060006000600060003561fffff160005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5c600160005d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b3a94",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x063b3a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x16bd87dc4eea07adeee5ec76981e3e776283fef4c102fe14802bdabd447b6ac2",
+            "hash": "0xc3b85f009f620928ef4887822123f6fc448baa955f98b08e668c5b87faadcd32",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -920,16 +1274,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d600060006000600060006000356069f160005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de953670",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033c78",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x99712284ce778f6c695c51a40fd4e2866d1d5ac3ba2b7b3515cc19b08dffe644",
+            "hash": "0x22df8f8872112704b80ad02041c4f5041d76418a20648f68642b589da0c1c286",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -992,16 +1375,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d6000600060006000600060003560fff160005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015d5f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f5000",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de953094",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033e3a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x32ad1116f756af700a7d7ecdffcafa5a765fe60941a871548563bc0386f8639d",
+            "hash": "0xefeb51d5f2350bd684c67e8c17c0506e7b9ac39c53402c2bfd7ec3db1c24f287",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -1064,16 +1476,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d600060006000600060006000355af260005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015d60006000fd",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de953634",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033c8a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0fe27ce8e3e32f3b01420d9182937e3eb4938e1e8c2a26a7a90de04de4a9f7e1",
+            "hash": "0x7504a85fd01274f755dbda3894f8dabd2acaaf784c0101b1be3b1286686a0bc1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -1136,16 +1577,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d6000600060006000600060003560fff260005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015dfe",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de953094",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033e3a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7d9b814b28cc1516a57c391c6c4a0e5c706d4339a60f0cd5f7e2d3e50ba7addc",
+            "hash": "0x4f408caaa277849802d6d90d2514274c53532f4790171bac350b275a360fa43a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -1208,16 +1678,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d6000600060006000600060003561fffff260005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015d5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b3a94",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x063b3a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x76b68b2a643f804891f979bdfeb9d640497385ad109eeb670c89aa621d92dcd5",
+            "hash": "0x31277d1bae40a84522b01a3b92b1ccdff17ed574301695c08bde8ba9775cff12",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -1280,16 +1779,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d6000600060006000600060003561fffff260005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60015d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b3a94",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x063b3a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x1c7c15f2c849eab0c428358dea47ef2f5731fd02977cf0d1b67a28d06b8ee756",
+            "hash": "0x81028b16543e06d988b0d8e7df4a3ecdd56cbd1fd5b3aae83259a2358fe2f625",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -1352,16 +1880,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d6000600060006000600060003561fffff260005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b3a94",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x063b3a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4122946d29b12b5666f17cfbecdeae2d6199e4de71688d8e218a57cc9e38704b",
+            "hash": "0x051f4ac68d89e52f3f790b4edd5c1f526cbe4d774af9c7d234a97fec6cf4dbde",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -1424,16 +1981,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d6000600060006000600060003561fffff260005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5c600160005d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b3a94",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x063b3a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x038af6c21119227f0052e00b127fa0c53963fe9835beebdf8c490e35b9eaa005",
+            "hash": "0xc39343a5965bc946066048477a82a2a8ef017946a4aa392ae912302fb7e2efc0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -1496,16 +2082,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d600060006000600060006000356069f260005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de953670",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033c78",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x96f4390826e4f5c73d25c914b56369997272287fe3ed0e9c358f6eb7acf70e78",
+            "hash": "0x6f87ca98a059cc1c850a403b560c91242c808d321c2399dcea89812ba97c37de",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -1568,16 +2183,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d6000600060006000600060003560fff260005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015d5f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f5000",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de953094",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033e3a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x774193b8602f40c8c1139936f5c438ea2c8fc3740929d7eca5fcd5dc36e55f5a",
+            "hash": "0x9f41acb2ccda0944c9ce5dcf68b5deb583e0d5f06246cfcbe7a89bfa3af94145",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -1640,16 +2284,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d60006000600060006000355af460005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015d60006000fd",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de953652",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033c81",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x35d57794f0e6eea90727c7366a6e7939cdfaf5a381e8aecb27c9fafad7267732",
+            "hash": "0x1a580c5f24b752a7f55ebc63f863af1053605a582c959812ad7c6f18cd0be095",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -1712,16 +2385,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d600060006000600060003560fff460005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015dfe",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9530b2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033e31",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0d8a3ec7cf3bbe693066ed0aa453dc5ab09cd97e49ea6b5e9bc165bae4a0cf6a",
+            "hash": "0xbe6dd10cbb31ecff1c4441604ae896b73a981572b0646467f421f80d26259f41",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -1784,16 +2486,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d600060006000600060003561fffff460005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015d5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b3ab2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x063b31",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x329fed8011af6df937e0b1662e2c5adc02b1fa2ef6d811ce9c8b694ba12fa711",
+            "hash": "0xa6b7b5423e591e6000c870ed756d475edef01e5ea2c351a5e86081f4d4bb3093",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -1856,16 +2587,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d600060006000600060003561fffff460005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x60015d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b3ab2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x063b31",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x89981e791cb47ae039da04e7477fc8d1fa7cbe1b41ef9c582bc025e97ab4ebe8",
+            "hash": "0x543c148a46bc45cda485a73e25e5691872e77413ad469e2600b182486e677169",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -1928,16 +2688,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d600060006000600060003561fffff460005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b3ab2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x063b31",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x62d93f1e6f71275499dac4364f9fe5de40809ebe0ce88a58a160933e1028682c",
+            "hash": "0x67c3f62730e324b6785204277313ffdce4d88304418cefb99bfca80c5db3d42f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -2000,16 +2789,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d600060006000600060003561fffff460005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x5c600160005d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8b3ab2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x063b31",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x50ddd733866652bb83937551e6da37afba06f6e9d6eb66b03b34f78727ba9379",
+            "hash": "0x4397f51038ff3f5d94d783471becda81d7b3227a5d33667d907a3c010427b222",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -2072,16 +2890,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d60006000600060006000356069f460005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015d00",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de95368e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033c6f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc34bed0503d3cec8836fb9e6ae7017669d153618d981edc4166502f4287e9103",
+            "hash": "0x1cde74d3aa48735e90ff3e7b663d4f3ded8e8b61a11cb4ea305435566be5fe85",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -2144,16 +2991,45 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6101a460005d6101a460015d600060006000600060003560fff460005560005c60015560015c60025500",
+                            "storage": {
+                                "0x01": "0x01a4",
+                                "0x02": "0x01a4"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x604560015d5f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f505f5000",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de9530b2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x033e31",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x36007f8be1833d6694052ecf03f39bbc981c096306eb2ddd4f1af151b5931c59",
+            "hash": "0xede94ae534ade3a176b00054df352011ec513afb902a36871cdef23302692efb",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes:\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L322",
+            "description": "Test function documentation:\n\n    Test transient storage with a subcall using the following opcodes.\n\n    - `CALL`\n    - `CALLCODE`\n    - `DELEGATECALL`\n    - `STATICCALL`",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_execution_contexts.py#L329",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"

@@ -380,16 +380,19 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             .execution()
             .last_frame_return(ctx, &mut result)?;
 
-        // EIP-7623: Increase calldata cost
-        // spend at least a gas_floor amount of gas.
-        let gas_result = result.gas_mut();
-        if gas_result.spent() < gas.floor_gas {
-            let _ = gas_result.record_cost(gas.floor_gas - gas_result.spent());
-        }
-
         let post_exec = self.handler.post_execution();
+
         // calculate final refund and add EIP-7702 refund to gas.
         post_exec.refund(ctx, result.gas_mut(), eip7702_gas_refund);
+
+        // EIP-7623: Increase calldata cost
+        // spend at least a gas_floor amount of gas.
+        if result.gas().spent_sub_refunded() < gas.floor_gas {
+            result.gas_mut().set_spent(gas.floor_gas);
+            // clear refund
+            result.gas_mut().set_refund(0);
+        }
+
         // Reimburse the caller
         post_exec.reimburse_caller(ctx, result.gas())?;
         // Reward beneficiary

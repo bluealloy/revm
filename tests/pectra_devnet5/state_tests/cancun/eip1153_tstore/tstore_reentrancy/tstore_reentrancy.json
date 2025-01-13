@@ -64,16 +64,50 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146060580157600260003514600858015760755801565b605060005d60005c600055600160005260ff60205260206020602060006000305af160035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0x5a",
+                                "0x02": "0x5a",
+                                "0x03": "0x01",
+                                "0x04": "0x0c",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b33678",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02a2dc",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xefe790874bb02a95cad99884d104b07098aacb11cfc21155f5e020ac52551487",
+            "hash": "0x96a595c2439e589a9daa7561aa4e97f355cbf966b583066aa215c545435a20c0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -144,16 +178,50 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146060580157600260003514600858015760755801565b605060005d60005c600055600160005260ff60205260206020602060006000305af260035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0x5a",
+                                "0x02": "0x5a",
+                                "0x03": "0x01",
+                                "0x04": "0x0c",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b33678",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02a2dc",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4c60998becfc2b48fd14d84c3a6f24320601e3a2a62dbe84e29db8051e4fe7e3",
+            "hash": "0xb6fc6398a6dcd1e8cd1c6f3d75a7e8c8404fc18ba1faa26b24f24a39f07eb7a9",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -224,16 +292,50 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600160003514605e580157600260003514600858015760735801565b605060005d60005c600055600160005260ff6020526020602060206000305af460035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0x5a",
+                                "0x02": "0x5a",
+                                "0x03": "0x01",
+                                "0x04": "0x0c",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b33696",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02a2d3",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9e4654731fd2e5daedf35b2a539cf3cdf4c8eae2ad24101f6a1135c1a005b55b",
+            "hash": "0x4271b4efa42264912b8707615064f3fc6066afc9b575b2ac774c6069f2a7e28a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -304,16 +406,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600160003514605e580157600260003514600858015760735801565b605060005d60005c600055600160005260ff6020526020602060206000305afa60035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0xff",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990ca299e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe226b7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xed925fab05e0aa8387a077d7ec187535f06cde6ce8405156b27cad7d313d179e",
+            "hash": "0x7c76f8d7b48e90b432a2b78515905a5a77ea651234918811ec78d2c301c8f769",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -384,16 +518,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146060580157600260003514600858015760755801565b605060005d60005c600055600160005260ff60205260206020602060006000305af160035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0x5a",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b4ad78",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02325c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7a9c09c070a36229e7eee2b112b5b3147f79dc41bdb6f90fac72f18f76314636",
+            "hash": "0xc981be10ef349a8824d5c6fa7c2da0334f91802a613539e9867c7129de42a04f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -464,16 +630,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146060580157600260003514600858015760755801565b605060005d60005c600055600160005260ff60205260206020602060006000305af260035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0x5a",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b4ad78",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02325c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x9c9bd6398cb4c3e2ef422c58feb7c2edd635df297fa53e6ac8e50d1abd356ae9",
+            "hash": "0x5a1aeda63397cee5649091e668381ff52bc832aa4a9b2a82b45ad004c78874fb",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -544,16 +742,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600160003514605e580157600260003514600858015760735801565b605060005d60005c600055600160005260ff6020526020602060206000305af460035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0x5a",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b4ad96",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x023253",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa97d7978153b6d7da6292f170a0b8358dabac04d9e74c5e296e9272d1b39cb32",
+            "hash": "0x1a76df2802bd078ae87e456536d6d882ba7dd75e363e14e8a18eb1b3e4aba1dd",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -624,16 +854,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600160003514605e580157600260003514600858015760735801565b605060005d60005c600055600160005260ff6020526020602060206000305afa60035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0xff",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990ca299e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe226b7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x43b01d5e9053c7c34aa168d5a623ceaea5d508e07e21fe6cc3e20dd2097a8991",
+            "hash": "0xc7e60042c81261dc352adc8af4769b4bab3cfc7d9a8b581cef7e2e725c58d32a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -704,16 +966,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460605801576002600035146008580157607d5801565b605060005d60005c600055600160005260ff60205260206020602060006000305af160035560205160015560005c60025560015c600455603260005d60005c600555600160065560305801565b605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0xff",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990ca299e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe226b7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xf2872721a48a669b678246ceff6fb57da59642dcfab3f8269bbef9a91f368127",
+            "hash": "0x426c98bf69e3cb0901121a4cf66595c7ef54bc97fd96182c84f396364cc7591e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -784,16 +1078,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460605801576002600035146008580157607d5801565b605060005d60005c600055600160005260ff60205260206020602060006000305af260035560205160015560005c60025560015c600455603260005d60005c600555600160065560305801565b605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0xff",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990ca299e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe226b7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xeb8ca269ac1d334598389c09d2f907957ef0012599df4f1c0bfba1da29684c42",
+            "hash": "0x4c7e4000420aa6a589855955b2153415f58d16f5afffab05a5b1ea3951fdd034",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -864,16 +1190,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600160003514605e5801576002600035146008580157607b5801565b605060005d60005c600055600160005260ff6020526020602060206000305af460035560205160015560005c60025560015c600455603260005d60005c600555600160065560305801565b605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0xff",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990ca299e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe226b7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x05cf662e9243d70ada7aa157789e6802d4074f81025cb225ca27382904a8113e",
+            "hash": "0xd9fd37d1db8a00a07952cb91567ef5fa832e6070d7478c4a3e7cb134e234588a",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -944,16 +1302,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600160003514605e5801576002600035146008580157607b5801565b605060005d60005c600055600160005260ff6020526020602060206000305afa60035560205160015560005c60025560015c600455603260005d60005c600555600160065560305801565b605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0xff",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990ca299e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe226b7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x70355831e5b2e17c5fddbf10a197b50fba37e3ff86b35b5372b4826ae40d3b74",
+            "hash": "0x412dc9c0ade2692df8e8911b6b301fc1b0bf9ca08b709621d61bcc76b547bf00",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1024,16 +1414,49 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146062580157600260003514600858015760775801565b605060005d60005c600055600160005260ff602052602060206020600060006110005af160035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0x5a",
+                                "0x02": "0x50",
+                                "0x03": "0x01",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b3917c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02878e",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5fde4d6be2e39a0de33aba7b92f520b159f1739df6c67ccab53bbb9edfabd9eb",
+            "hash": "0x2d1017ea2c3d2b3a3d2a2cefe99bb7c55ad595b25a0d4731678929798190bef2",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1104,16 +1527,50 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146062580157600260003514600858015760775801565b605060005d60005c600055600160005260ff602052602060206020600060006110005af260035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0x5a",
+                                "0x02": "0x5a",
+                                "0x03": "0x01",
+                                "0x04": "0x0c",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b2d5fc",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02bfce",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x7d7c913d6fe04a7b3dd9bdabe70e232101a7691180cd3bff706c415c73a5c625",
+            "hash": "0x77ee85906561585c7973685f6708219a08e586647685e885b7612cd898cc6957",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1184,16 +1641,50 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146060580157600260003514600858015760755801565b605060005d60005c600055600160005260ff60205260206020602060006110005af460035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0x5a",
+                                "0x02": "0x5a",
+                                "0x03": "0x01",
+                                "0x04": "0x0c",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b2d61a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x02bfc5",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x95daf2829b8224f3cb5bec90f333e783da90284fad66e47714276109a7aa3317",
+            "hash": "0x4a5d35b81c9732399db6e8a1861fcffd34e12ba67f62ec95def028653eb57beb",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1264,16 +1755,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146060580157600260003514600858015760755801565b605060005d60005c600055600160005260ff60205260206020602060006110005afa60035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000f360035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0xff",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990ca2818",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe2272c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x3624a1f29621584c6217e044584b36630b93928637180126eba6802cce9e9ba4",
+            "hash": "0x03a51716af4a7a01e56891537e16690fcfbd5c4b611486f3010a4006a1e55456",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1344,16 +1867,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146062580157600260003514600858015760775801565b605060005d60005c600055600160005260ff602052602060206020600060006110005af160035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0x5a",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b44cfc",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x024f4e",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xfb789f6cd9083c62e319cb52b3ddef6c550e4c2b70adcd6868c5c54407ac5d80",
+            "hash": "0x560d7f8c653f07b248c15abbe535e3317ec9d5f2c0c817e6d206a80b86269ed3",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1424,16 +1979,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146062580157600260003514600858015760775801565b605060005d60005c600055600160005260ff602052602060206020600060006110005af260035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0x5a",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b44cfc",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x024f4e",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x764b4ccd04349f5da9623719ceda273c81adf3b0a25ccd7e8a480aa51ae58963",
+            "hash": "0xb276fd6e0102d1b57e52593e07cecbb82ee8396b8e897f228865f0499afd90bf",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1504,16 +2091,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146060580157600260003514600858015760755801565b605060005d60005c600055600160005260ff60205260206020602060006110005af460035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0x5a",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b44d1a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x024f45",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x6955df8c7a19407a04027974e11251c0ddd0040ae98bb57371d2389422b678f7",
+            "hash": "0x82153806de37d016e9abc9b560c8f5a0e6bf876074b8429b2942d23746661b5d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1584,16 +2203,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c60005260206000fd",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x6001600035146060580157600260003514600858015760755801565b605060005d60005c600055600160005260ff60205260206020602060006110005afa60035560205160015560005c60025560015c600455603260005d60005c600555600160065560285801565b605960005d605a60005d600b60015d600c60015d60005c60005260206000fd60035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0xff",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990ca2818",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe2272c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb987ab1cd7640be3b3113a9c34e84c4d369dc4d280805e8ceb7715b6aa39dfce",
+            "hash": "0x1f6da32546247f70ec952088dd83bf68ca1a018c3bbadebe79d5686a259e5772",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1664,16 +2315,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460625801576002600035146008580157607f5801565b605060005d60005c600055600160005260ff602052602060206020600060006110005af160035560205160015560005c60025560015c600455603260005d60005c600555600160065560305801565b605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0xff",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990ca280e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe2272f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x784a4d99e81457c029028f8fa1a03e49122eda680c46e1f31cfffb22f3228ae5",
+            "hash": "0x01c7a7ced56370685f637ce316db5ac72f8936eae418583f1d8c0acb8c05a03c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1744,16 +2427,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460625801576002600035146008580157607f5801565b605060005d60005c600055600160005260ff602052602060206020600060006110005af260035560205160015560005c60025560015c600455603260005d60005c600555600160065560305801565b605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0xff",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990ca280e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe2272f",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4cb0890dd23b8d30bb408baef3868634db785834fb8d3b36bd3436e0b330d656",
+            "hash": "0xd3f9714d04fb9596079401e99838b0ac05c116bf287125d7102a9ca38e6b89da",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1824,16 +2539,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460605801576002600035146008580157607d5801565b605060005d60005c600055600160005260ff60205260206020602060006110005af460035560205160015560005c60025560015c600455603260005d60005c600555600160065560305801565b605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0xff",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990ca2818",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe2272c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xb471431724db4d46d69c5360961d87bba58133bc8d852cd287e42e28bc4848ce",
+            "hash": "0x3eed34d8d4e8b8b51f0e152d467accbad3df9878736ffa6408cd61acb3a124c5",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -1904,16 +2651,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e800600020",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x60016000351460605801576002600035146008580157607d5801565b605060005d60005c600055600160005260ff60205260206020602060006110005afa60035560205160015560005c60025560015c600455603260005d60005c600555600160065560305801565b605960005d605a60005d600b60015d600c60015d60005c6000526000602064174876e80060002060035801565b",
+                            "storage": {
+                                "0x00": "0x50",
+                                "0x01": "0xff",
+                                "0x02": "0x50",
+                                "0x05": "0x32",
+                                "0x06": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee990ca2818",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0xe2272c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4c0e0a64753541cd6cf526022ec96f9c4c519e36aa5138c224543f63f19c3023",
+            "hash": "0xf93c4eec5bf03d2cfe2c535e9663e2ef69dea59f9b5963d9826223ebe6314642",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Ported .json vectors:\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
+            "description": "Test function documentation:\n\n    Ported .json vectors.\n\n    (06_tstoreInReentrancyCallFiller.yml)\n    Reentrant calls access the same transient storage\n\n    (07_tloadAfterReentrancyStoreFiller.yml)\n    Successfully returned calls do not revert transient storage writes\n\n    (08_revertUndoesTransientStoreFiller.yml)\n    Revert undoes the transient storage writes from a call.\n\n    (09_revertUndoesAllFiller.yml)\n    Revert undoes all the transient storage writes to the same key from the failed call.\n\n    (11_tstoreDelegateCallFiller.yml)\n    delegatecall manipulates transient storage in the context of the current address.\n\n    (13_tloadStaticCallFiller.yml)\n    Transient storage cannot be manipulated in a static context, tstore reverts\n\n    (20_oogUndoesTransientStoreInCallFiller.yml)\n    Out of gas undoes the transient storage writes from a call.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstore_reentrancy.py#L36",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"

@@ -71,16 +71,68 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000000600": {
+                            "nonce": "0x00",
+                            "balance": "0x05f5b59a",
+                            "code": "0x5b36600060003760206000366000600a610601620186a0f160005160025560006000600060006000610601620186a0f1600060006000600060647351bbeb887a2638ae37ce69027395957c396ee327620186a0f1366000600037602060003660006103e8610601620186a0f160005160035560006000600060006127107351bbeb887a2638ae37ce69027395957c396ee327620186a0f16001600455",
+                            "storage": {
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000000601": {
+                            "nonce": "0x03",
+                            "balance": "0x03e8",
+                            "code": "0x366000600037600136600047f560005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000000512": {
+                            "nonce": "0x00",
+                            "balance": "0x6124fee993bc0000",
+                            "code": "0x6001600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee9938733a2",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x51bbeb887a2638ae37ce69027395957c396ee327": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6103e8ff",
+                            "storage": {}
+                        },
+                        "0x9b8ae25ffafea3c9b24ce2c762517bb116c5b5fe": {
+                            "nonce": "0x01",
+                            "balance": "0x0a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x2775",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0fd6e9",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xbcb1957186a6b1982737481fa6fef0895c0aed738dd8d5915ca3b4b8430df2e2",
+            "hash": "0x8850dc87513343bfc170e638b69b965152dfc6fabcc1a8eec59b1c03578754b0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\nDynamic Create2->Suicide->Create2 collision scenario:\n\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then on a different call, in the same tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract   <=== Covered in this test\n            1) and create2 contract already in the state\n            2) and create2 contract is not in the state\n        b) on a different tx, attempt to recreate the contract\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then in a different tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract\n        b) on a different tx, attempt to recreate the contract\n    Verify that the test case described\n    in https://wiki.hyperledger.org/pages/viewpage.action?pageId=117440824 is covered",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py#L43",
+            "description": "Test function documentation:\n\n    Dynamic Create2->Suicide->Create2 collision scenario.\n\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then on a different call, in the same tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract   <=== Covered in this test\n            1) and create2 contract already in the state\n            2) and create2 contract is not in the state\n        b) on a different tx, attempt to recreate the contract\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then in a different tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract\n        b) on a different tx, attempt to recreate the contract\n    Verify that the test case described\n    in https://wiki.hyperledger.org/pages/viewpage.action?pageId=117440824 is covered",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py#L43",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -152,16 +204,65 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000000600": {
+                            "nonce": "0x00",
+                            "balance": "0x05f5b59a",
+                            "code": "0x5b36600060003760206000366000600a610601620186a0f160005160025560006000600060006000610601620186a0f1600060006000600060647351bbeb887a2638ae37ce69027395957c396ee327620186a0f1366000600037602060003660006103e8610601620186a0f160005160035560006000600060006127107351bbeb887a2638ae37ce69027395957c396ee327620186a0f16001600455",
+                            "storage": {
+                                "0x02": "0x51bbeb887a2638ae37ce69027395957c396ee327",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000000601": {
+                            "nonce": "0x03",
+                            "balance": "0x03e8",
+                            "code": "0x366000600037600136600047f560005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000000512": {
+                            "nonce": "0x00",
+                            "balance": "0x6124fee993bc0000",
+                            "code": "0x6001600155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee99389bfc8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x9b8ae25ffafea3c9b24ce2c762517bb116c5b5fe": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x277e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0f1344",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xaae06d5c917aadf7cd639abd36cef7c1d250a7c04a20293763969e95321d9a4c",
+            "hash": "0x95ad6522af04fa7a4dbd92b17a5c17a9db96d7f68d4d11d3926e8e5ca04d94a0",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\nDynamic Create2->Suicide->Create2 collision scenario:\n\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then on a different call, in the same tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract   <=== Covered in this test\n            1) and create2 contract already in the state\n            2) and create2 contract is not in the state\n        b) on a different tx, attempt to recreate the contract\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then in a different tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract\n        b) on a different tx, attempt to recreate the contract\n    Verify that the test case described\n    in https://wiki.hyperledger.org/pages/viewpage.action?pageId=117440824 is covered",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py#L43",
+            "description": "Test function documentation:\n\n    Dynamic Create2->Suicide->Create2 collision scenario.\n\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then on a different call, in the same tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract   <=== Covered in this test\n            1) and create2 contract already in the state\n            2) and create2 contract is not in the state\n        b) on a different tx, attempt to recreate the contract\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then in a different tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract\n        b) on a different tx, attempt to recreate the contract\n    Verify that the test case described\n    in https://wiki.hyperledger.org/pages/viewpage.action?pageId=117440824 is covered",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py#L43",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -239,16 +340,74 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000000600": {
+                            "nonce": "0x00",
+                            "balance": "0x05f5b59a",
+                            "code": "0x5b36600060003760206000366000600a610601620186a0f160005160025560006000600060006000610601620186a0f1600060006000600060647351bbeb887a2638ae37ce69027395957c396ee327620186a0f1366000600037602060003660006103e8610601620186a0f160005160035560006000600060006127106000620186a0f16001600455",
+                            "storage": {
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000000601": {
+                            "nonce": "0x03",
+                            "balance": "0x03e8",
+                            "code": "0x366000600037600136600047f560005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000000512": {
+                            "nonce": "0x00",
+                            "balance": "0x6124fee993bc0000",
+                            "code": "0x6001600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee99383c4d8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x51bbeb887a2638ae37ce69027395957c396ee327": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6103e8ff",
+                            "storage": {}
+                        },
+                        "0x9b8ae25ffafea3c9b24ce2c762517bb116c5b5fe": {
+                            "nonce": "0x01",
+                            "balance": "0x0a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x65",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000000000": {
+                            "nonce": "0x00",
+                            "balance": "0x2710",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x10de8c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe6105d519a9a6774871b804a559c11de4826adf3f9042df91b806cab3563e921",
+            "hash": "0x45ba08ae01c7b5008b58539323349cce94c75e0041360f72a0d3294cb34d4814",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\nDynamic Create2->Suicide->Create2 collision scenario:\n\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then on a different call, in the same tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract   <=== Covered in this test\n            1) and create2 contract already in the state\n            2) and create2 contract is not in the state\n        b) on a different tx, attempt to recreate the contract\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then in a different tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract\n        b) on a different tx, attempt to recreate the contract\n    Verify that the test case described\n    in https://wiki.hyperledger.org/pages/viewpage.action?pageId=117440824 is covered",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py#L43",
+            "description": "Test function documentation:\n\n    Dynamic Create2->Suicide->Create2 collision scenario.\n\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then on a different call, in the same tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract   <=== Covered in this test\n            1) and create2 contract already in the state\n            2) and create2 contract is not in the state\n        b) on a different tx, attempt to recreate the contract\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then in a different tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract\n        b) on a different tx, attempt to recreate the contract\n    Verify that the test case described\n    in https://wiki.hyperledger.org/pages/viewpage.action?pageId=117440824 is covered",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py#L43",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -320,16 +479,71 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000000600": {
+                            "nonce": "0x00",
+                            "balance": "0x05f5b59a",
+                            "code": "0x5b36600060003760206000366000600a610601620186a0f160005160025560006000600060006000610601620186a0f1600060006000600060647351bbeb887a2638ae37ce69027395957c396ee327620186a0f1366000600037602060003660006103e8610601620186a0f160005160035560006000600060006127106000620186a0f16001600455",
+                            "storage": {
+                                "0x02": "0x51bbeb887a2638ae37ce69027395957c396ee327",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000000601": {
+                            "nonce": "0x03",
+                            "balance": "0x03e8",
+                            "code": "0x366000600037600136600047f560005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000000512": {
+                            "nonce": "0x00",
+                            "balance": "0x6124fee993bc0000",
+                            "code": "0x6001600155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee9938650fe",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x9b8ae25ffafea3c9b24ce2c762517bb116c5b5fe": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x6e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000000000": {
+                            "nonce": "0x00",
+                            "balance": "0x2710",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x101ae7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x4f800972abec1657280648f7f749ff5b09a6c89eed6b6d96cbbe64057121d92d",
+            "hash": "0x1f6bbd5df08a418120d8f50952eeb30e793bc637b088fdb8160fff387180ab32",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\nDynamic Create2->Suicide->Create2 collision scenario:\n\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then on a different call, in the same tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract   <=== Covered in this test\n            1) and create2 contract already in the state\n            2) and create2 contract is not in the state\n        b) on a different tx, attempt to recreate the contract\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then in a different tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract\n        b) on a different tx, attempt to recreate the contract\n    Verify that the test case described\n    in https://wiki.hyperledger.org/pages/viewpage.action?pageId=117440824 is covered",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py#L43",
+            "description": "Test function documentation:\n\n    Dynamic Create2->Suicide->Create2 collision scenario.\n\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then on a different call, in the same tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract   <=== Covered in this test\n            1) and create2 contract already in the state\n            2) and create2 contract is not in the state\n        b) on a different tx, attempt to recreate the contract\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then in a different tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract\n        b) on a different tx, attempt to recreate the contract\n    Verify that the test case described\n    in https://wiki.hyperledger.org/pages/viewpage.action?pageId=117440824 is covered",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py#L43",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -407,16 +621,74 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000000600": {
+                            "nonce": "0x00",
+                            "balance": "0x05f5b59a",
+                            "code": "0x5b36600060003760206000366000600a610601620186a0f160005160025560006000600060006000610601620186a0f1600060006000600060646000620186a0f1366000600037602060003660006103e8610601620186a0f160005160035560006000600060006127107351bbeb887a2638ae37ce69027395957c396ee327620186a0f16001600455",
+                            "storage": {
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000000601": {
+                            "nonce": "0x03",
+                            "balance": "0x03e8",
+                            "code": "0x366000600037600136600047f560005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000000512": {
+                            "nonce": "0x00",
+                            "balance": "0x6124fee993bc0000",
+                            "code": "0x6001600155",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee99383c4d8",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x51bbeb887a2638ae37ce69027395957c396ee327": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6103e8ff",
+                            "storage": {}
+                        },
+                        "0x9b8ae25ffafea3c9b24ce2c762517bb116c5b5fe": {
+                            "nonce": "0x01",
+                            "balance": "0x0a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000000000": {
+                            "nonce": "0x00",
+                            "balance": "0x64",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x2711",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x10de8c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xcab487ce91aadc2447450a29d133146d71525e73d710de4acff2a111649a7fe6",
+            "hash": "0xf7c82edf3770332ae42281ddc7e3b7ca7391e3e1802eb685f22d8723da40d8e6",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\nDynamic Create2->Suicide->Create2 collision scenario:\n\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then on a different call, in the same tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract   <=== Covered in this test\n            1) and create2 contract already in the state\n            2) and create2 contract is not in the state\n        b) on a different tx, attempt to recreate the contract\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then in a different tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract\n        b) on a different tx, attempt to recreate the contract\n    Verify that the test case described\n    in https://wiki.hyperledger.org/pages/viewpage.action?pageId=117440824 is covered",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py#L43",
+            "description": "Test function documentation:\n\n    Dynamic Create2->Suicide->Create2 collision scenario.\n\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then on a different call, in the same tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract   <=== Covered in this test\n            1) and create2 contract already in the state\n            2) and create2 contract is not in the state\n        b) on a different tx, attempt to recreate the contract\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then in a different tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract\n        b) on a different tx, attempt to recreate the contract\n    Verify that the test case described\n    in https://wiki.hyperledger.org/pages/viewpage.action?pageId=117440824 is covered",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py#L43",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -488,16 +760,71 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000000600": {
+                            "nonce": "0x00",
+                            "balance": "0x05f5b59a",
+                            "code": "0x5b36600060003760206000366000600a610601620186a0f160005160025560006000600060006000610601620186a0f1600060006000600060646000620186a0f1366000600037602060003660006103e8610601620186a0f160005160035560006000600060006127107351bbeb887a2638ae37ce69027395957c396ee327620186a0f16001600455",
+                            "storage": {
+                                "0x02": "0x51bbeb887a2638ae37ce69027395957c396ee327",
+                                "0x04": "0x01"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000000601": {
+                            "nonce": "0x03",
+                            "balance": "0x03e8",
+                            "code": "0x366000600037600136600047f560005260206000f3",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000000512": {
+                            "nonce": "0x00",
+                            "balance": "0x6124fee993bc0000",
+                            "code": "0x6001600155",
+                            "storage": {
+                                "0x01": "0x01"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee9938650fe",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x9b8ae25ffafea3c9b24ce2c762517bb116c5b5fe": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x0000000000000000000000000000000000000000": {
+                            "nonce": "0x00",
+                            "balance": "0x64",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x271a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x101ae7",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x684ccb471b2e9df1594d80a8db5a368b63959ade4723688eb1fd2d89153dd819",
+            "hash": "0x6b8e12b8de2ac0d1dea74ad3cd4d2a174db21d4372024d32319598dc05ca5042",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\nDynamic Create2->Suicide->Create2 collision scenario:\n\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then on a different call, in the same tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract   <=== Covered in this test\n            1) and create2 contract already in the state\n            2) and create2 contract is not in the state\n        b) on a different tx, attempt to recreate the contract\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then in a different tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract\n        b) on a different tx, attempt to recreate the contract\n    Verify that the test case described\n    in https://wiki.hyperledger.org/pages/viewpage.action?pageId=117440824 is covered",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py#L43",
+            "description": "Test function documentation:\n\n    Dynamic Create2->Suicide->Create2 collision scenario.\n\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then on a different call, in the same tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract   <=== Covered in this test\n            1) and create2 contract already in the state\n            2) and create2 contract is not in the state\n        b) on a different tx, attempt to recreate the contract\n    Perform a CREATE2, make sure that the initcode sets at least a couple of storage keys,\n    then in a different tx, perform a self-destruct.\n    Then:\n        a) on the same tx, attempt to recreate the contract\n        b) on a different tx, attempt to recreate the contract\n    Verify that the test case described\n    in https://wiki.hyperledger.org/pages/viewpage.action?pageId=117440824 is covered",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_dynamic_create2_selfdestruct_collision.py#L43",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"

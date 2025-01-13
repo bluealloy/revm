@@ -66,16 +66,57 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x00",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600060006000600060007310000000000000000000000000000000000000015af1600155600060006000600060007310000000000000000000000000000000000000025af16002553d600060003e600051600355",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x03": "0x10"
+                            }
+                        },
+                        "0x1000000000000000000000000000000000000001": {
+                            "nonce": "0x00",
+                            "balance": "0x00",
+                            "code": "0x6103e8ff",
+                            "storage": {}
+                        },
+                        "0x1000000000000000000000000000000000000002": {
+                            "nonce": "0x00",
+                            "balance": "0x4563918244f40000",
+                            "code": "0x600060006000600060647310000000000000000000000000000000000000015af1600f0160005260206000fd",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993afa71a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x29a2241af62c0000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03b445",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x90833e81da8dda01b9f5d3429730bdc75edfbb839f45d1fd8f4444caa0ce41cf",
+            "hash": "0x578f110f69373dbc22aac03f338eeb06e94b4d71babe237fb410cbc72cc1bfa5",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "description": "Test function documentation:\n\n    Suicide reentrancy scenario.\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -148,16 +189,57 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x00",
+                            "balance": "0x00",
+                            "code": "0x600060006000600060007310000000000000000000000000000000000000015af2600155600060006000600060007310000000000000000000000000000000000000025af16002553d600060003e600051600355",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x03": "0x10"
+                            }
+                        },
+                        "0x1000000000000000000000000000000000000001": {
+                            "nonce": "0x00",
+                            "balance": "0x29a2241af62c0000",
+                            "code": "0x6103e8ff",
+                            "storage": {}
+                        },
+                        "0x1000000000000000000000000000000000000002": {
+                            "nonce": "0x00",
+                            "balance": "0x4563918244f40000",
+                            "code": "0x600060006000600060647310000000000000000000000000000000000000015af1600f0160005260206000fd",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993afa71a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03b445",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5969946e7fc3dc8ebf3fea1c6d42cf835bfe3f4cd6edf27b9bb8faed74141b32",
+            "hash": "0x77c58db1ce99e7bc4f00dc8aad13134e8ec2673d22c3ea41c537d2e9fac98753",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "description": "Test function documentation:\n\n    Suicide reentrancy scenario.\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -230,16 +312,57 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x00",
+                            "balance": "0x00",
+                            "code": "0x60006000600060007310000000000000000000000000000000000000015af4600155600060006000600060007310000000000000000000000000000000000000025af16002553d600060003e600051600355",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x03": "0x10"
+                            }
+                        },
+                        "0x1000000000000000000000000000000000000001": {
+                            "nonce": "0x00",
+                            "balance": "0x29a2241af62c0000",
+                            "code": "0x6103e8ff",
+                            "storage": {}
+                        },
+                        "0x1000000000000000000000000000000000000002": {
+                            "nonce": "0x00",
+                            "balance": "0x4563918244f40000",
+                            "code": "0x600060006000600060647310000000000000000000000000000000000000015af1600f0160005260206000fd",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993afa738",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03b43c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xfa59f3bf265bb99fd7bd83b19db9c52cf41bac1642cd1157fc93c17fb74bcc5a",
+            "hash": "0x58a53e0ac2e1bc8fa82e2a36fcaf6c55c8ea8eacf9a06159440f2d3f11ae9fab",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "description": "Test function documentation:\n\n    Suicide reentrancy scenario.\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -312,16 +435,57 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x00",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600060006000600060007310000000000000000000000000000000000000015af1600155600060006000600060007310000000000000000000000000000000000000025af16002553d600060003e600051600355",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x03": "0x10"
+                            }
+                        },
+                        "0x1000000000000000000000000000000000000001": {
+                            "nonce": "0x00",
+                            "balance": "0x00",
+                            "code": "0x6103e8ff",
+                            "storage": {}
+                        },
+                        "0x1000000000000000000000000000000000000002": {
+                            "nonce": "0x00",
+                            "balance": "0x4563918244f40000",
+                            "code": "0x600060006000600060647310000000000000000000000000000000000000015af2600f0160005260206000fd",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993afa71a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x29a2241af62c0000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03b445",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xfcea14a190f934eaeb20e79ae4ef6d117def7f5f693747bc690bb513087c43a4",
+            "hash": "0xa25a2079c6e99266a2c546b7c5aa93690718f7cc108c1472280af861ca5408c1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "description": "Test function documentation:\n\n    Suicide reentrancy scenario.\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -394,16 +558,57 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x00",
+                            "balance": "0x00",
+                            "code": "0x600060006000600060007310000000000000000000000000000000000000015af2600155600060006000600060007310000000000000000000000000000000000000025af16002553d600060003e600051600355",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x03": "0x10"
+                            }
+                        },
+                        "0x1000000000000000000000000000000000000001": {
+                            "nonce": "0x00",
+                            "balance": "0x29a2241af62c0000",
+                            "code": "0x6103e8ff",
+                            "storage": {}
+                        },
+                        "0x1000000000000000000000000000000000000002": {
+                            "nonce": "0x00",
+                            "balance": "0x4563918244f40000",
+                            "code": "0x600060006000600060647310000000000000000000000000000000000000015af2600f0160005260206000fd",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993afa71a",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03b445",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd9af79559b930115ca4e0ebf85ed307c3d3fb59834277eaec47d788d92c59e1f",
+            "hash": "0x6e29c8a380337376a2236c14ea91063b8c1b4ef38cd19bac740d7d5c39069a14",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "description": "Test function documentation:\n\n    Suicide reentrancy scenario.\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -476,16 +681,57 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x00",
+                            "balance": "0x00",
+                            "code": "0x60006000600060007310000000000000000000000000000000000000015af4600155600060006000600060007310000000000000000000000000000000000000025af16002553d600060003e600051600355",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x03": "0x10"
+                            }
+                        },
+                        "0x1000000000000000000000000000000000000001": {
+                            "nonce": "0x00",
+                            "balance": "0x29a2241af62c0000",
+                            "code": "0x6103e8ff",
+                            "storage": {}
+                        },
+                        "0x1000000000000000000000000000000000000002": {
+                            "nonce": "0x00",
+                            "balance": "0x4563918244f40000",
+                            "code": "0x600060006000600060647310000000000000000000000000000000000000015af2600f0160005260206000fd",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993afa738",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03b43c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa3b331a0bd3eea6b63187d0287b4827c82bb7719bc27998d62ddd00fcba439fe",
+            "hash": "0x378d67565e14dfb0cc2ff996996e2bb80f1389493c8ee6361d098f725ccb5756",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "description": "Test function documentation:\n\n    Suicide reentrancy scenario.\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -558,16 +804,57 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x00",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x600060006000600060007310000000000000000000000000000000000000015af1600155600060006000600060007310000000000000000000000000000000000000025af16002553d600060003e600051600355",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x03": "0x10"
+                            }
+                        },
+                        "0x1000000000000000000000000000000000000001": {
+                            "nonce": "0x00",
+                            "balance": "0x00",
+                            "code": "0x6103e8ff",
+                            "storage": {}
+                        },
+                        "0x1000000000000000000000000000000000000002": {
+                            "nonce": "0x00",
+                            "balance": "0x4563918244f40000",
+                            "code": "0x60006000600060647310000000000000000000000000000000000000015af4600f0160005260206000fd",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b0acf0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x29a2241af62c0000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0365b8",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x388eaa66590b90a16191ecb9958f1619fcea01fa3e9a1815e6eab0463e0ff530",
+            "hash": "0xb22499c4b4ab6baf007d7796656369a1a87e5689a64b5b73ae7702f707304107",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "description": "Test function documentation:\n\n    Suicide reentrancy scenario.\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -640,16 +927,57 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x00",
+                            "balance": "0x00",
+                            "code": "0x600060006000600060007310000000000000000000000000000000000000015af2600155600060006000600060007310000000000000000000000000000000000000025af16002553d600060003e600051600355",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x03": "0x10"
+                            }
+                        },
+                        "0x1000000000000000000000000000000000000001": {
+                            "nonce": "0x00",
+                            "balance": "0x29a2241af62c0000",
+                            "code": "0x6103e8ff",
+                            "storage": {}
+                        },
+                        "0x1000000000000000000000000000000000000002": {
+                            "nonce": "0x00",
+                            "balance": "0x4563918244f40000",
+                            "code": "0x60006000600060647310000000000000000000000000000000000000015af4600f0160005260206000fd",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b0acf0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0365b8",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xd8c0ad446661cb60dc8108a95103c72be5e3dffce45d1ef885f0e33049b20940",
+            "hash": "0xabd94525971b859b63167c2b27bcb4c89007c1b8018892f6473c078ee2b265d4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "description": "Test function documentation:\n\n    Suicide reentrancy scenario.\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"
@@ -722,16 +1050,57 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x8a0a19589531694250d570040a0c4b74576919b8": {
+                            "nonce": "0x00",
+                            "balance": "0x00",
+                            "code": "0x60006000600060007310000000000000000000000000000000000000015af4600155600060006000600060007310000000000000000000000000000000000000025af16002553d600060003e600051600355",
+                            "storage": {
+                                "0x01": "0x01",
+                                "0x03": "0x10"
+                            }
+                        },
+                        "0x1000000000000000000000000000000000000001": {
+                            "nonce": "0x00",
+                            "balance": "0x29a2241af62c0000",
+                            "code": "0x6103e8ff",
+                            "storage": {}
+                        },
+                        "0x1000000000000000000000000000000000000002": {
+                            "nonce": "0x00",
+                            "balance": "0x4563918244f40000",
+                            "code": "0x60006000600060647310000000000000000000000000000000000000015af4600f0160005260206000fd",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x6124fee993b0ad0e",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x00000000000000000000000000000000000003e8": {
+                            "nonce": "0x00",
+                            "balance": "0x0de0b6b3a7640000",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0365af",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5b8ab4ac3a5fa827aed04f9dd4ffc9c81ff5896c8ca8d0f6c2ed81fda88ff867",
+            "hash": "0xd227f23a58734a55e5c5b27253919c55f595f2a62c275ed254fe29d00ae0b0e5",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Suicide reentrancy scenario:\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
+            "description": "Test function documentation:\n\n    Suicide reentrancy scenario.\n\n    Call|Callcode|Delegatecall the contract S.\n    S self destructs.\n    Call the revert proxy contract R.\n    R Calls|Callcode|Delegatecall S.\n    S self destructs (for the second time).\n    R reverts (including the effects of the second selfdestruct).\n    It is expected the S is self destructed after the transaction.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip6780_selfdestruct/test_reentrancy_selfdestruct_revert.py#L35",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-6780.md",
             "reference-spec-version": "2f8299df31bb8173618901a03a8366a3183479b0"

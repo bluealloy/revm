@@ -57,16 +57,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c97c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x04438e",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x93573963575fcaca4f71df023e6348c391c40f08e590b5c93174dfba98e57a61",
+            "hash": "0xbb3276d0d3c8b756a4e331dadcd28985eb8e37ee4b1631225e7bd05e91e779b4",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test invalid precompile calls:\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L317",
+            "description": "Test function documentation:\n\n    Test invalid precompile calls.\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L301",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -130,16 +155,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de93407c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03d30e",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x512a6cc707d175b4b7d60c4ca7172c6f5134533c45f7abbcc40bb67a56855f28",
+            "hash": "0x76a04f2ede0e864fde6d740d88700323338b50e2dc618f4a88a9a226636a91d1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test invalid precompile calls:\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L317",
+            "description": "Test function documentation:\n\n    Test invalid precompile calls.\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L301",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -203,16 +251,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c8b4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0443ca",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xdfff399410777d0022119edcd4570584a3219ede67babd4bd23a3ba2affb38b5",
+            "hash": "0xa96adbd3d95e5ce184e089251e0744d38bfd7a8fbd0124d50c23dd2c32cbe7cc",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test invalid precompile calls:\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L317",
+            "description": "Test function documentation:\n\n    Test invalid precompile calls.\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L301",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -276,16 +349,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91d020",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x044190",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x990bae1bd8dbfa64a1def671144f3ba52caca88c3f4935d307800cd0cbc744c9",
+            "hash": "0xbc40d9923f10e3e99425f21f07a833c5a14b9be833fcd4c27bd87c0fd632bcf1",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test invalid precompile calls:\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L317",
+            "description": "Test function documentation:\n\n    Test invalid precompile calls.\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L301",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -349,16 +447,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c828",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0443f4",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xebe8743f74222f963c694c8cd265f30b731c413db7c7bf73a70056b98bed5ba1",
+            "hash": "0x594df9fdaef4e625bf9948304de4ccdfa2b4cd107149fda8c01ebd9ac6d9a0ee",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test invalid precompile calls:\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L317",
+            "description": "Test function documentation:\n\n    Test invalid precompile calls.\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L301",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -422,16 +545,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de912120",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x047610",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xe2419f28542c065ce866c435f284715c9b5d973c60d0fbaad45043cd2929f323",
+            "hash": "0xf3ef22df8a63d38dbf406bde0febebc3823ed343fc48790aec6306a21eb1e00e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test invalid precompile calls:\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L317",
+            "description": "Test function documentation:\n\n    Test invalid precompile calls.\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L301",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -495,16 +643,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de93a5bc",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03b4ae",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x186c0ef4f24ce275a22b4f1bc046e37f3eed4c74ccde2ebfde3a9ee69beb9b01",
+            "hash": "0x49a53f13085e768634ed3888ab85efe265941effda71878665a85153c8d53366",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test invalid precompile calls:\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L317",
+            "description": "Test function documentation:\n\n    Test invalid precompile calls.\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L301",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -568,16 +736,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de938cd0",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03bc28",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xa31f591bc28ac2cf85c0f54aa923978432dd12640d39402a311574919b961c1b",
+            "hash": "0xd0964e48aefbcdec2c40a975c39a3a0d5c26ba0423e5a3bdb8c49a7de9677f64",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test invalid precompile calls:\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L317",
+            "description": "Test function documentation:\n\n    Test invalid precompile calls.\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L301",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -641,16 +829,39 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x01b0761f87b081d5cf10757ccc89f12be355c70e2e29df288b65b30710dcbcd1",
+                                "0x04": "0x01b0761f87b081d5cf10757ccc89f12be355c70e2e29df288b65b30710dcbcd1"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de934f04",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x03ceb2",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0e2bfad5ce33d9bcef545dfcdd499f281b2358d7bd2b6c1e5004b0a78fef660b",
+            "hash": "0x6ba24e4626b0ec8246cb2097c52dd3bcec7a7f870b35764b1192f431fe14d091",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test invalid precompile calls:\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L317",
+            "description": "Test function documentation:\n\n    Test invalid precompile calls.\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L301",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -714,16 +925,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x0657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x0657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c904",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0443b2",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x51718176ea32b583a05eded26bc5fd06fb984333186e1d5bc03ddcdb1e5af30f",
+            "hash": "0x160ae0b5a0d3d9fe3a9c247d843e7a7d7e5d961b43bedb53202e4e384352e33d",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test invalid precompile calls:\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L317",
+            "description": "Test function documentation:\n\n    Test invalid precompile calls.\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L301",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -787,16 +1023,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0x020657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0x020657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c88c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0443d6",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x3138dc9c866bcb71673341da710e0439cce315ecb71a1226131c4124674fc969",
+            "hash": "0xd3c3c3b1d69e0ea0f94afcf6d95b92a78157900a1b754c485576fd8ba0a8aad7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test invalid precompile calls:\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L317",
+            "description": "Test function documentation:\n\n    Test invalid precompile calls.\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L301",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"
@@ -860,16 +1121,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x366000600037604060003660006000600a61c350f16000556000516001556020516002553d6003553d600060003e60005160045560205160055500",
+                            "storage": {
+                                "0x01": "0xff0657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x02": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e",
+                                "0x04": "0xff0657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014",
+                                "0x05": "0x623ce31cf9759a5c8daf3a357992f9f3dd7f9339d8998bc8e68373e54f00b75e"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de91c88c",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x0443d6",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0xc8fbf76ffa723d0780aa49f9b3ad38bf4aa41b7ff7606c79c3e13cac9fa24c04",
+            "hash": "0xa4fee03b87a21dd330b639599e81f4b14c0e574a5d0e30ee668fd56a736e515c",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test invalid precompile calls:\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L317",
+            "description": "Test function documentation:\n\n    Test invalid precompile calls.\n\n    - Out of bounds inputs `z` and `y`\n    - Correct proof, commitment, z and y, but incorrect lengths\n    - Null inputs\n    - Zero inputs\n    - Correct proof, commitment, z and y, but incorrect version versioned hash",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip4844_blobs/test_point_evaluation_precompile.py#L301",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md",
             "reference-spec-version": "f0eb6a364aaf5ccb43516fa2c269a54fb881ecfd"

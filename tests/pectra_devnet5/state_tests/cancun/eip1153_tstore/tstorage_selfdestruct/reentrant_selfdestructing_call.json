@@ -56,16 +56,47 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000356000556001600052602060006020600060006000545af16001556002600052602060006020600060006000545af1600255600051600355",
+                            "storage": {
+                                "0x00": "0x1100",
+                                "0x01": "0x01",
+                                "0x02": "0x01",
+                                "0x03": "0x0100"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6001600035146024580157600260003514600858015760235801565b60ff5c60005260206000f360125801565b61010060ff5d6000ff60035801565b",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8d9f28",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x058374",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x489e1612be32dd44a10c9a74b13ec647c19e3f754144414248f424196094c36c",
+            "hash": "0x106d4c6457d4d4d6bd2f4a87247cd2665913987c287c53a0a759024421d4ee96",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts after selfdestructing.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_selfdestruct.py#L210",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts after selfdestructing.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_selfdestruct.py#L219",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -122,16 +153,41 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000373660006000f06000556001600052602060006020600060006000545af16001556002600052602060006020600060006000545af1600255600051600355",
+                            "storage": {
+                                "0x00": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x01": "0x01",
+                                "0x02": "0x01",
+                                "0x03": "0x0100"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de872468",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x077514",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x0039fc139f23b7b276d5fa9107453af8e7a5484eb94273ed6e4125b672b859bb",
+            "hash": "0xe8ad0650e6369cfacc10573f9470723bd0bf06451fe0b046504a9b0b82fc1bbb",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts after selfdestructing.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_selfdestruct.py#L210",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts after selfdestructing.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_selfdestruct.py#L219",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -194,16 +250,46 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000356000556001600052602060006020600060006000545af1600155600051600255",
+                            "storage": {
+                                "0x00": "0x1100",
+                                "0x01": "0x01",
+                                "0x02": "0x0100"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160003514601c580157600260003514600858015760375801565b6000ff602e5801565b61010060ff5d6002600052602060006020600060006000545af160ff5c60005260206000f360035801565b",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de917a26",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x045b5b",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x69867a25ce3f709959f8c40a95bfa86c4573b302a9c721b07e6dcb8b290d46e1",
+            "hash": "0xefda1308a1263b79daa0006251aa053215571ea11667487b138daf4977df26ca",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts after selfdestructing.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_selfdestruct.py#L210",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts after selfdestructing.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_selfdestruct.py#L219",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -260,16 +346,40 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000373660006000f06000556001600052602060006020600060006000545af1600155600051600255",
+                            "storage": {
+                                "0x00": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x01": "0x01",
+                                "0x02": "0x0100"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de89f184",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x069df2",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x79c7f48516f0df32125e79a2be24f51d0bbf00d7d3469cc56f369f43e217d521",
+            "hash": "0xa459f96bfc1d2734c5d51c1df10b08288b499d078ea3ad0e31c939765b20144f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts after selfdestructing.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_selfdestruct.py#L210",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts after selfdestructing.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_selfdestruct.py#L219",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -332,16 +442,48 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x6000356000556001600052602060006020600060006000545af16001556002600052602060006020600060006000545af16002556003600052602060006020600060006000545af1600355600051600455",
+                            "storage": {
+                                "0x00": "0x1100",
+                                "0x01": "0x01",
+                                "0x02": "0x01",
+                                "0x03": "0x01",
+                                "0x04": "0x0100"
+                            }
+                        },
+                        "0x0000000000000000000000000000000000001100": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x600160003514603b5801576002600035146024580157600360003514600858015760295801565b60ff5c60005260206000f360185801565b61010060ff5d600c5801565b6000ff60035801565b",
+                            "storage": {}
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8a3298",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x068a6c",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x2f8af5de73877a3cd4210b63a654838902e49b227fb2fe263281541a54cfafd4",
+            "hash": "0x71378dc22aaa231b93571db67acff4cdc089f158c19606614bc5e471da39a09e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts after selfdestructing.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_selfdestruct.py#L210",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts after selfdestructing.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_selfdestruct.py#L219",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"
@@ -398,16 +540,42 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0x0000000000000000000000000000000000001000": {
+                            "nonce": "0x02",
+                            "balance": "0x00",
+                            "code": "0x3660006000373660006000f06000556001600052602060006020600060006000545af16001556002600052602060006020600060006000545af16002556003600052602060006020600060006000545af1600355600051600455",
+                            "storage": {
+                                "0x00": "0x5bafcc0c93ecd8022925d7fd89da1c6250850e19",
+                                "0x01": "0x01",
+                                "0x02": "0x01",
+                                "0x03": "0x01",
+                                "0x04": "0x0100"
+                            }
+                        },
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de8328a4",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x08a702",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x25fe2816564f2ea0a303e4fb34654bac79928cd68e2bd8f560d8f86dde0353b1",
+            "hash": "0x411f30d90b01ccdd7be8aba5382317831456f3c13e0e186fd4a806be7fd984cb",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
-            "description": "Test function documentation:\n\n    Test transient storage in different reentrancy contexts after selfdestructing.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/cancun/eip1153_tstore/test_tstorage_selfdestruct.py#L210",
+            "description": "Test function documentation:\nTest transient storage in different reentrancy contexts after selfdestructing.",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/cancun/eip1153_tstore/test_tstorage_selfdestruct.py#L219",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1153.md",
             "reference-spec-version": "6f0be621c76a05a7b3aaf0e9297afd425c26e9d0"

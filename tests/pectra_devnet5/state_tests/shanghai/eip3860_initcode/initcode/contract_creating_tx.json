@@ -44,16 +44,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5de51c124",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x177942",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x5ece21b38fec62c522233eb02926e9b039e85d291a73f78fe60482e90345110b",
+            "hash": "0x707343f8345207fef2aa9588fe601fc7a7180e45790abad9ae9147b9ef2ab2e7",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests creating a contract using a transaction with an initcode that is\n    on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L119",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L120",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -104,16 +124,36 @@
                         "data": 0,
                         "gas": 0,
                         "value": 0
+                    },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x01",
+                            "balance": "0x3635c9adc5dd70cf34",
+                            "code": "0x",
+                            "storage": {}
+                        },
+                        "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f": {
+                            "nonce": "0x01",
+                            "balance": "0x00",
+                            "code": "0x00",
+                            "storage": {}
+                        },
+                        "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba": {
+                            "nonce": "0x00",
+                            "balance": "0x5af50a",
+                            "code": "0x",
+                            "storage": {}
+                        }
                     }
                 }
             ]
         },
         "_info": {
-            "hash": "0x095da63c4181435c75aa3fd4ce1f27bee19de57705e4ff642bc43c9edc9e12ef",
+            "hash": "0xdc223a4a9bf4a13edb9fad721b32ba54643a292f78221a0e3cc9510adb4c6e65",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests creating a contract using a transaction with an initcode that is\n    on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L119",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L120",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -165,16 +205,24 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INITCODE_SIZE_EXCEEDED"
                 }
             ]
         },
         "_info": {
-            "hash": "0xddd920688cfeeea6d07c91b9d27140250059ff88c263d710a123c99d4a1d3113",
+            "hash": "0xcc77d6be7856da2ee52611ef52a49244b8114331c7233be220d1150e992afe9f",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests creating a contract using a transaction with an initcode that is\n    on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L119",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L120",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
@@ -226,16 +274,24 @@
                         "gas": 0,
                         "value": 0
                     },
+                    "state": {
+                        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                            "nonce": "0x00",
+                            "balance": "0x3635c9adc5dea00000",
+                            "code": "0x",
+                            "storage": {}
+                        }
+                    },
                     "expectException": "TransactionException.INITCODE_SIZE_EXCEEDED"
                 }
             ]
         },
         "_info": {
-            "hash": "0x14d705eafe53088d994247b7be61104ade8a80f7ee0f277b6615ee47dc788080",
+            "hash": "0x0e0d3dc10ba8ada690e13d8f057bcede496d0aec4b7edd1b27621a1132114e0e",
             "comment": "`execution-spec-tests` generated test",
             "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
             "description": "Test function documentation:\n\n    Tests creating a contract using a transaction with an initcode that is\n    on/over the max allowed limit.",
-            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/shanghai/eip3860_initcode/test_initcode.py#L119",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.2.0/tests/shanghai/eip3860_initcode/test_initcode.py#L120",
             "fixture_format": "state_test",
             "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-3860.md",
             "reference-spec-version": "5f8151e19ad1c99da4bafd514ce0e8ab89783c8f"
