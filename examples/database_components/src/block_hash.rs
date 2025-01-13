@@ -1,23 +1,23 @@
 //! BlockHash database component from [`revm::Database`]
 
 use auto_impl::auto_impl;
-use core::ops::Deref;
+use core::{error::Error as StdError, ops::Deref};
 use revm::primitives::B256;
 use std::sync::Arc;
 
 #[auto_impl(&mut, Box)]
 pub trait BlockHash {
-    type Error;
+    type Error: StdError;
 
-    /// Get block hash by block number
+    /// Gets block hash by block number.
     fn block_hash(&mut self, number: u64) -> Result<B256, Self::Error>;
 }
 
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait BlockHashRef {
-    type Error;
+    type Error: StdError;
 
-    /// Get block hash by block number
+    /// Gets block hash by block number.
     fn block_hash(&self, number: u64) -> Result<B256, Self::Error>;
 }
 

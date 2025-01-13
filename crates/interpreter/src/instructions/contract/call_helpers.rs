@@ -3,7 +3,7 @@ use crate::{
     interpreter::Interpreter,
     interpreter_types::{InterpreterTypes, LoopControl, MemoryTrait, RuntimeFlag, StackTrait},
 };
-use context_interface::journaled_state::AccountLoad;
+use context_interface::{host::StateLoad, journaled_state::AccountLoad};
 use core::{cmp::min, ops::Range};
 use primitives::{Bytes, U256};
 use specification::hardfork::SpecId::*;
@@ -47,7 +47,7 @@ pub fn resize_memory(
 #[inline]
 pub fn calc_call_gas(
     interpreter: &mut Interpreter<impl InterpreterTypes>,
-    account_load: AccountLoad,
+    account_load: StateLoad<AccountLoad>,
     has_transfer: bool,
     local_gas_limit: u64,
 ) -> Option<u64> {
@@ -60,7 +60,7 @@ pub fn calc_call_gas(
 
     // EIP-150: Gas cost changes for IO-heavy operations
     let gas_limit = if interpreter.runtime_flag.spec_id().is_enabled_in(TANGERINE) {
-        // take l64 part of gas_limit
+        // Take l64 part of gas_limit
         min(
             interpreter.control.gas().remaining_63_of_64_parts(),
             local_gas_limit,

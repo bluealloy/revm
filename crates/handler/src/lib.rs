@@ -38,12 +38,11 @@ pub use validation::{
 // Imports
 
 use context_interface::{
-    journaled_state::JournaledState,
+    journaled_state::Journal,
     result::{HaltReason, InvalidHeader, InvalidTransaction},
 };
 use context_interface::{
-    BlockGetter, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
-    TransactionGetter,
+    BlockGetter, CfgGetter, ErrorGetter, JournalDBError, JournalGetter, TransactionGetter,
 };
 use handler_interface::{
     ExecutionHandler, Handler, PostExecutionHandler, PreExecutionHandler, ValidationHandler,
@@ -102,14 +101,14 @@ impl<CTX, ERROR, VAL, PREEXEC, EXEC, POSTEXEC> Handler
 where
     CTX: TransactionGetter
         + BlockGetter
-        + JournalStateGetter
+        + JournalGetter
         + CfgGetter
-        + ErrorGetter<Error = ERROR>
-        + JournalStateGetter<Journal: JournaledState<FinalOutput = (EvmState, Vec<Log>)>>
+        + ErrorGetter<Error = JournalDBError<CTX>>
+        + JournalGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
         + Host,
     ERROR: From<InvalidTransaction>
         + From<InvalidHeader>
-        + From<JournalStateGetterDBError<CTX>>
+        + From<JournalDBError<CTX>>
         + From<PrecompileErrors>,
     VAL: ValidationHandler,
     PREEXEC: PreExecutionHandler,

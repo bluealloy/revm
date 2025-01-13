@@ -1,8 +1,8 @@
 use context_interface::{
-    journaled_state::JournaledState,
+    journaled_state::Journal,
     result::{ExecutionResult, HaltReasonTrait, ResultAndState},
-    Block, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalStateGetter, JournalStateGetterDBError,
-    Transaction, TransactionGetter,
+    Block, BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalDBError, JournalGetter, Transaction,
+    TransactionGetter,
 };
 use handler_interface::PostExecutionHandler;
 use interpreter::SuccessOrHalt;
@@ -36,7 +36,7 @@ impl<CTX, ERROR, HALTREASON> EthPostExecution<CTX, ERROR, HALTREASON> {
 
 impl<CTX, ERROR, HALTREASON> PostExecutionHandler for EthPostExecution<CTX, ERROR, HALTREASON>
 where
-    CTX: EthPostExecutionContext<ERROR>,
+    CTX: EthPostExecutionContext,
     ERROR: EthPostExecutionError<CTX>,
     HALTREASON: HaltReasonTrait,
 {
@@ -44,6 +44,18 @@ where
     type Error = ERROR;
     type ExecResult = FrameResult;
     type Output = ResultAndState<HALTREASON>;
+
+    fn eip7623_check_gas_floor(
+        &self,
+        _context: &mut Self::Context,
+        exec_result: &mut Self::ExecResult,
+        init_and_floor_gas: handler_interface::InitialAndFloorGas,
+    ) {
+        let gas_result = exec_result.gas_mut();
+        if gas_result.spent() < init_and_floor_gas.floor_gas {
+            let _ = gas_result.record_cost(init_and_floor_gas.floor_gas - gas_result.spent());
+        }
+    }
 
     fn refund(
         &self,
@@ -65,17 +77,21 @@ where
         context: &mut Self::Context,
         exec_result: &mut Self::ExecResult,
     ) -> Result<(), Self::Error> {
-        let basefee = *context.block().basefee();
-        let caller = context.tx().common_fields().caller();
+        let basefee = context.block().basefee() as u128;
+        let caller = context.tx().caller();
         let effective_gas_price = context.tx().effective_gas_price(basefee);
         let gas = exec_result.gas();
 
-        // return balance of not spend gas.
+        // Return balance of not spend gas.
         let caller_account = context.journal().load_account(caller)?;
 
-        let reimbursed = effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64);
-        caller_account.data.info.balance =
-            caller_account.data.info.balance.saturating_add(reimbursed);
+        let reimbursed =
+            effective_gas_price.saturating_mul((gas.remaining() + gas.refunded() as u64) as u128);
+        caller_account.data.info.balance = caller_account
+            .data
+            .info
+            .balance
+            .saturating_add(U256::from(reimbursed));
 
         Ok(())
     }
@@ -87,12 +103,12 @@ where
     ) -> Result<(), Self::Error> {
         let block = context.block();
         let tx = context.tx();
-        let beneficiary = *block.beneficiary();
-        let basefee = *block.basefee();
+        let beneficiary = block.beneficiary();
+        let basefee = block.basefee() as u128;
         let effective_gas_price = tx.effective_gas_price(basefee);
         let gas = exec_result.gas();
 
-        // transfer fee to coinbase/beneficiary.
+        // Transfer fee to coinbase/beneficiary.
         // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
         let coinbase_gas_price = if context.cfg().spec().into().is_enabled_in(SpecId::LONDON) {
             effective_gas_price.saturating_sub(basefee)
@@ -104,9 +120,13 @@ where
 
         coinbase_account.data.mark_touch();
         coinbase_account.data.info.balance =
-            coinbase_account.data.info.balance.saturating_add(
-                coinbase_gas_price * U256::from(gas.spent() - gas.refunded() as u64),
-            );
+            coinbase_account
+                .data
+                .info
+                .balance
+                .saturating_add(U256::from(
+                    coinbase_gas_price * (gas.spent() - gas.refunded() as u64) as u128,
+                ));
 
         Ok(())
     }
@@ -118,13 +138,13 @@ where
     ) -> Result<Self::Output, Self::Error> {
         context.take_error()?;
 
-        // used gas with refund calculated.
+        // Used gas with refund calculated.
         let gas_refunded = result.gas().refunded() as u64;
         let final_gas_used = result.gas().spent() - gas_refunded;
         let output = result.output();
         let instruction_result = result.into_interpreter_result();
 
-        // reset journal and return present state.
+        // Reset journal and return present state.
         let (state, logs) = context.journal().finalize()?;
 
         let result = match SuccessOrHalt::<HALTREASON>::from(instruction_result.result) {
@@ -156,8 +176,8 @@ where
     }
 
     fn clear(&self, context: &mut Self::Context) {
-        // clear error and journaled state.
-        // TODO check effects of removal of take_error
+        // Clear error and journaled state.
+        // TODO : Check effects of removal of take_error
         // let _ = context.evm.take_error();
         context.journal().clear();
     }
@@ -165,33 +185,26 @@ where
 
 /// Trait for post execution context.
 ///
-/// TODO Generalize FinalOutput.
-pub trait EthPostExecutionContext<ERROR>:
+// TODO : Generalize FinalOutput.
+pub trait EthPostExecutionContext:
     TransactionGetter
-    + ErrorGetter<Error = ERROR>
+    + ErrorGetter<Error = JournalDBError<Self>>
     + BlockGetter
-    + JournalStateGetter<Journal: JournaledState<FinalOutput = (EvmState, Vec<Log>)>>
+    + JournalGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
     + CfgGetter
 {
 }
 
 impl<
-        ERROR,
         CTX: TransactionGetter
-            + ErrorGetter<Error = ERROR>
+            + ErrorGetter<Error = JournalDBError<CTX>>
             + BlockGetter
-            + JournalStateGetter<Journal: JournaledState<FinalOutput = (EvmState, Vec<Log>)>>
+            + JournalGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
             + CfgGetter,
-    > EthPostExecutionContext<ERROR> for CTX
+    > EthPostExecutionContext for CTX
 {
 }
 
-pub trait EthPostExecutionError<CTX: JournalStateGetter>:
-    From<JournalStateGetterDBError<CTX>>
-{
-}
+pub trait EthPostExecutionError<CTX: JournalGetter>: From<JournalDBError<CTX>> {}
 
-impl<CTX: JournalStateGetter, ERROR: From<JournalStateGetterDBError<CTX>>>
-    EthPostExecutionError<CTX> for ERROR
-{
-}
+impl<CTX: JournalGetter, ERROR: From<JournalDBError<CTX>>> EthPostExecutionError<CTX> for ERROR {}

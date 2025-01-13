@@ -51,7 +51,7 @@ fn main() -> anyhow::Result<()> {
     let mut evm = MainEvm::new(
         Context::builder()
             .modify_tx_chained(|tx| {
-                tx.transact_to = TxKind::Create;
+                tx.kind = TxKind::Create;
                 tx.data = bytecode.clone();
             })
             .with_db(CacheDB::<EmptyDB>::default()),
@@ -70,7 +70,7 @@ fn main() -> anyhow::Result<()> {
 
     println!("Created contract at {address}");
     evm.context.modify_tx(|tx| {
-        tx.transact_to = TxKind::Call(address);
+        tx.kind = TxKind::Call(address);
         tx.data = Default::default();
         tx.nonce += 1;
     });

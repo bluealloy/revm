@@ -27,7 +27,6 @@ revm.workspace = true
 
 # mics
 auto_impl.workspace = true
-derive-where.workspace = true
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [

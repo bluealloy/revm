@@ -3,7 +3,8 @@ use once_cell::race::OnceBox;
 use precompile::{secp256r1, PrecompileErrors, Precompiles};
 use revm::{
     context::Cfg, context_interface::CfgGetter, handler::EthPrecompileProvider,
-    handler_interface::PrecompileProvider, specification::hardfork::SpecId,
+    handler_interface::PrecompileProvider, interpreter::InterpreterResult,
+    specification::hardfork::SpecId,
 };
 use std::boxed::Box;
 
@@ -60,12 +61,13 @@ where
 {
     type Context = CTX;
     type Error = ERROR;
+    type Output = InterpreterResult;
 
     #[inline]
     fn new(context: &mut Self::Context) -> Self {
         let spec = context.cfg().spec();
         match spec {
-            // no changes
+            // No changes
             spec @ (OpSpec::Eth(
                 SpecId::FRONTIER
                 | SpecId::FRONTIER_THAWING
@@ -87,7 +89,12 @@ where
                 | SpecId::CANCUN,
             )
             | OpSpec::Op(
-                OpSpecId::BEDROCK | OpSpecId::REGOLITH | OpSpecId::CANYON | OpSpecId::ECOTONE,
+                OpSpecId::BEDROCK
+                | OpSpecId::REGOLITH
+                | OpSpecId::CANYON
+                | OpSpecId::ECOTONE
+                | OpSpecId::HOLOCENE
+                | OpSpecId::ISTHMUS,
             )) => Self::new(Precompiles::new(spec.into_eth_spec().into())),
             OpSpec::Op(OpSpecId::FJORD) => Self::new(fjord()),
             OpSpec::Op(OpSpecId::GRANITE)
@@ -102,7 +109,7 @@ where
         address: &precompile::Address,
         bytes: &precompile::Bytes,
         gas_limit: u64,
-    ) -> Result<Option<revm::interpreter::InterpreterResult>, Self::Error> {
+    ) -> Result<Option<Self::Output>, Self::Error> {
         self.precompile_provider
             .run(context, address, bytes, gas_limit)
     }

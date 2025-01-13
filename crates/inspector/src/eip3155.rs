@@ -1,13 +1,12 @@
 use crate::{inspectors::GasInspector, Inspector};
-use derive_where::derive_where;
 use revm::{
     bytecode::opcode::OpCode,
     context::Cfg,
-    context_interface::{CfgGetter, JournalStateGetter, Transaction, TransactionGetter},
+    context_interface::{CfgGetter, Journal, JournalGetter, Transaction, TransactionGetter},
     interpreter::{
         interpreter_types::{Jumps, LoopControl, MemoryTrait, StackTrait},
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, Interpreter,
-        InterpreterResult, InterpreterTypes, Stack,
+        CallInputs, CallOutcome, CreateInputs, CreateOutcome, Interpreter, InterpreterResult,
+        InterpreterTypes, Stack,
     },
     primitives::{hex, HashMap, B256, U256},
 };
@@ -15,18 +14,11 @@ use serde::Serialize;
 use std::io::Write;
 
 /// [EIP-3155](https://eips.ethereum.org/EIPS/eip-3155) tracer [Inspector].
-#[derive_where(Debug; CTX, INTR)]
 pub struct TracerEip3155<CTX, INTR> {
-    #[derive_where(skip)]
     output: Box<dyn Write>,
     gas_inspector: GasInspector,
-
     /// Print summary of the execution.
     print_summary: bool,
-
-    /// depth
-    depth: usize,
-
     stack: Vec<U256>,
     pc: usize,
     opcode: u8,
@@ -145,7 +137,6 @@ where
             gas_inspector: GasInspector::new(),
             print_summary: true,
             include_memory: false,
-            depth: 0,
             stack: Default::default(),
             memory: Default::default(),
             pc: 0,
@@ -179,7 +170,7 @@ where
     fn print_summary(&mut self, result: &InterpreterResult, context: &mut CTX) {
         if self.print_summary {
             let spec = context.cfg().spec().into();
-            let gas_limit = context.tx().common_fields().gas_limit();
+            let gas_limit = context.tx().gas_limit();
             let value = Summary {
                 state_root: B256::ZERO.to_string(),
                 output: result.output.to_string(),
@@ -203,14 +194,11 @@ impl CloneStack for Stack {
     }
 }
 
-impl<CTX, INTR> Inspector for TracerEip3155<CTX, INTR>
+impl<CTX, INTR> Inspector<CTX, INTR> for TracerEip3155<CTX, INTR>
 where
-    CTX: CfgGetter + TransactionGetter + JournalStateGetter,
+    CTX: CfgGetter + TransactionGetter + JournalGetter,
     INTR: InterpreterTypes<Stack: StackTrait + CloneStack>,
 {
-    type Context = CTX;
-    type InterpreterTypes = INTR;
-
     fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {
         self.gas_inspector.initialize_interp(interp.control.gas());
     }
@@ -232,7 +220,7 @@ where
         self.refunded = interp.control.gas().refunded();
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter<INTR>, _: &mut CTX) {
+    fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         self.gas_inspector.step_end(interp.control.gas());
         if self.skip {
             self.skip = false;
@@ -245,7 +233,7 @@ where
             gas: hex_number(self.gas),
             gas_cost: hex_number(self.gas_inspector.last_gas_cost()),
             stack: self.stack.iter().map(hex_number_u256).collect(),
-            depth: self.depth as u64,
+            depth: context.journal().depth() as u64,
             return_data: "0x".to_string(),
             refund: hex_number(self.refunded as u64),
             mem_size: self.mem_size.to_string(),
@@ -263,50 +251,25 @@ where
         let _ = self.write_value(&value);
     }
 
-    fn call(&mut self, _: &mut Self::Context, _: &mut CallInputs) -> Option<CallOutcome> {
-        self.depth += 1;
-        None
-    }
-
-    fn create(&mut self, _: &mut Self::Context, _: &mut CreateInputs) -> Option<CreateOutcome> {
-        self.depth += 1;
-        None
-    }
-
-    fn eofcreate(
-        &mut self,
-        _: &mut Self::Context,
-        _: &mut EOFCreateInputs,
-    ) -> Option<CreateOutcome> {
-        self.depth += 1;
-        None
-    }
-
     fn call_end(&mut self, context: &mut CTX, _: &CallInputs, outcome: &mut CallOutcome) {
         self.gas_inspector.call_end(outcome);
-        self.depth -= 1;
 
-        if self.depth == 0 {
+        if context.journal().depth() == 0 {
             self.print_summary(&outcome.result, context);
-            // clear the state if we are at the top level
+            // Clear the state if we are at the top level
             self.clear();
         }
     }
 
     fn create_end(&mut self, context: &mut CTX, _: &CreateInputs, outcome: &mut CreateOutcome) {
         self.gas_inspector.create_end(outcome);
-        self.depth -= 1;
 
-        if self.depth == 0 {
+        if context.journal().depth() == 0 {
             self.print_summary(&outcome.result, context);
 
-            // clear the state if we are at the top level
+            // Clear the state if we are at the top level
             self.clear();
         }
-    }
-
-    fn eofcreate_end(&mut self, _: &mut Self::Context, _: &EOFCreateInputs, _: &mut CreateOutcome) {
-        self.depth -= 1;
     }
 }
 

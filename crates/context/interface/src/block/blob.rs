@@ -1,29 +1,49 @@
-use specification::eip4844::{
-    BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK,
-};
+use specification::eip4844::{self, MIN_BLOB_GASPRICE};
 
-/// Structure holding block blob excess gas and it calculates blob fee.
+/// Structure holding block blob excess gas and it calculates blob fee
 ///
 /// Incorporated as part of the Cancun upgrade via [EIP-4844].
 ///
 /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlobExcessGasAndPrice {
-    /// The excess blob gas of the block.
+    /// The excess blob gas of the block
     pub excess_blob_gas: u64,
-    /// The calculated blob gas price based on the `excess_blob_gas`, See [calc_blob_gasprice]
+    /// The calculated blob gas price based on the `excess_blob_gas`
+    ///
+    /// See [calc_blob_gasprice]
     pub blob_gasprice: u128,
 }
 
 impl BlobExcessGasAndPrice {
     /// Creates a new instance by calculating the blob gas price with [`calc_blob_gasprice`].
-    pub fn new(excess_blob_gas: u64) -> Self {
-        let blob_gasprice = calc_blob_gasprice(excess_blob_gas);
+    pub fn new(excess_blob_gas: u64, is_prague: bool) -> Self {
+        let blob_gasprice = calc_blob_gasprice(excess_blob_gas, is_prague);
         Self {
             excess_blob_gas,
             blob_gasprice,
         }
+    }
+
+    /// Calculate this block excess gas and price from the parent excess gas and gas used
+    /// and the target blob gas per block.
+    ///
+    /// This fields will be used to calculate `excess_blob_gas` with [`calc_excess_blob_gas`] func.
+    pub fn from_parent_and_target(
+        parent_excess_blob_gas: u64,
+        parent_blob_gas_used: u64,
+        parent_target_blob_gas_per_block: u64,
+        is_prague: bool,
+    ) -> Self {
+        Self::new(
+            calc_excess_blob_gas(
+                parent_excess_blob_gas,
+                parent_blob_gas_used,
+                parent_target_blob_gas_per_block,
+            ),
+            is_prague,
+        )
     }
 }
 
@@ -32,8 +52,12 @@ impl BlobExcessGasAndPrice {
 /// See also [the EIP-4844 helpers]<https://eips.ethereum.org/EIPS/eip-4844#helpers>
 /// (`calc_excess_blob_gas`).
 #[inline]
-pub fn calc_excess_blob_gas(parent_excess_blob_gas: u64, parent_blob_gas_used: u64) -> u64 {
-    (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(TARGET_BLOB_GAS_PER_BLOCK)
+pub fn calc_excess_blob_gas(
+    parent_excess_blob_gas: u64,
+    parent_blob_gas_used: u64,
+    parent_target_blob_gas_per_block: u64,
+) -> u64 {
+    (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(parent_target_blob_gas_per_block)
 }
 
 /// Calculates the blob gas price from the header's excess blob gas field.
@@ -41,11 +65,15 @@ pub fn calc_excess_blob_gas(parent_excess_blob_gas: u64, parent_blob_gas_used: u
 /// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers)
 /// (`get_blob_gasprice`).
 #[inline]
-pub fn calc_blob_gasprice(excess_blob_gas: u64) -> u128 {
+pub fn calc_blob_gasprice(excess_blob_gas: u64, is_prague: bool) -> u128 {
     fake_exponential(
         MIN_BLOB_GASPRICE,
         excess_blob_gas,
-        BLOB_GASPRICE_UPDATE_FRACTION,
+        if is_prague {
+            eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_PRAGUE
+        } else {
+            eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN
+        },
     )
 }
 
@@ -82,7 +110,10 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use specification::eip4844::GAS_PER_BLOB;
+    use specification::eip4844::{
+        BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, GAS_PER_BLOB,
+        TARGET_BLOB_GAS_PER_BLOCK_CANCUN as TARGET_BLOB_GAS_PER_BLOCK,
+    };
 
     // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L27
     #[test]
@@ -133,7 +164,11 @@ mod tests {
                 0,
             ),
         ] {
-            let actual = calc_excess_blob_gas(excess, blobs * GAS_PER_BLOB);
+            let actual = calc_excess_blob_gas(
+                excess,
+                blobs * GAS_PER_BLOB,
+                eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN,
+            );
             assert_eq!(actual, expected, "test: {t:?}");
         }
     }
@@ -146,18 +181,18 @@ mod tests {
             (2314057, 1),
             (2314058, 2),
             (10 * 1024 * 1024, 23),
-            // calc_blob_gasprice approximates `e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)` using Taylor expansion
+            // `calc_blob_gasprice` approximates `e ** (excess_blob_gas / BLOB_BASE_FEE_UPDATE_FRACTION)` using Taylor expansion
             //
             // to roughly find where boundaries will be hit:
-            // 2 ** bits = e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)
-            // excess_blob_gas = ln(2 ** bits) * BLOB_GASPRICE_UPDATE_FRACTION
+            // 2 ** bits = e ** (excess_blob_gas / BLOB_BASE_FEE_UPDATE_FRACTION)
+            // excess_blob_gas = ln(2 ** bits) * BLOB_BASE_FEE_UPDATE_FRACTION
             (148099578, 18446739238971471609), // output is just below the overflow
             (148099579, 18446744762204311910), // output is just after the overflow
             (161087488, 902580055246494526580),
         ];
 
         for &(excess, expected) in blob_fee_vectors {
-            let actual = calc_blob_gasprice(excess);
+            let actual = calc_blob_gasprice(excess, false);
             assert_eq!(actual, expected, "test: {excess}");
         }
     }
@@ -181,7 +216,7 @@ mod tests {
             (1, 5, 2, 11),   // approximate 12.18
             (2, 5, 2, 23),   // approximate 24.36
             (1, 50000000, 2225652, 5709098764),
-            (1, 380928, BLOB_GASPRICE_UPDATE_FRACTION, 1),
+            (1, 380928, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN, 1),
         ] {
             let actual = fake_exponential(factor, numerator, denominator);
             assert_eq!(actual, expected, "test: {t:?}");

@@ -1,6 +1,6 @@
 use crate::FrameOrResultGen;
 
-/// Call frame trait.
+/// Call frame trait
 pub trait Frame: Sized {
     type Context;
     type FrameInit;
@@ -11,6 +11,11 @@ pub trait Frame: Sized {
         context: &mut Self::Context,
         frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error>;
+
+    fn final_return(
+        context: &mut Self::Context,
+        result: &mut Self::FrameResult,
+    ) -> Result<(), Self::Error>;
 
     fn init(
         &self,

@@ -1,5 +1,6 @@
 /// Returns the length of the data after compression through FastLZ, based on
 /// <https://github.com/Vectorized/solady/blob/5315d937d79b335c668896d7533ac603adac5315/js/solady.js>
+///
 /// The u32s match op-geth's Go port:
 /// <https://github.com/ethereum-optimism/op-geth/blob/647c346e2bef36219cc7b47d76b1cb87e7ca29e4/core/types/rollup_cost.go#L411>
 pub(crate) fn flz_compress_len(input: &[u8]) -> u32 {
@@ -176,7 +177,7 @@ fn u24(input: &[u8], idx: u32) -> u32 {
 //                     panic!("Default is base tx");
 //                 };
 //                 tx.caller = address!("1000000000000000000000000000000000000000");
-//                 tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
+//                 tx.kind = TxKind::Call(address!("0000000000000000000000000000000000000000"));
 //                 tx.data = FastLz::fastLzCall::new((input,)).abi_encode().into();
 //                 tx.gas_limit = 300_000;
 //                 *enveloped_tx = Some(Bytes::default());

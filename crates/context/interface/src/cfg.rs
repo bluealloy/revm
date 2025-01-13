@@ -10,8 +10,13 @@ pub trait Cfg {
 
     fn chain_id(&self) -> u64;
 
-    // TODO Make SpecId a associated type but for faster development we use impl Into.
+    // Specification id that is set.
     fn spec(&self) -> Self::Spec;
+
+    /// Returns the blob target and max count for the given spec id.
+    ///
+    /// EIP-7840: Add blob schedule to execution client configuration files
+    fn blob_max_count(&self, spec_id: SpecId) -> u8;
 
     fn max_code_size(&self) -> usize;
 
@@ -28,13 +33,13 @@ pub trait Cfg {
     fn is_base_fee_check_disabled(&self) -> bool;
 }
 
-/// What bytecode analysis to perform.
+/// What bytecode analysis to perform
 #[derive(Clone, Default, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AnalysisKind {
-    /// Do not perform bytecode analysis.
+    /// Do not perform bytecode analysis
     Raw,
-    /// Perform bytecode analysis.
+    /// Perform bytecode analysis
     #[default]
     Analyse,
 }
@@ -42,15 +47,15 @@ pub enum AnalysisKind {
 /// Transaction destination
 pub type TransactTo = TxKind;
 
-/// Create scheme.
+/// Create scheme
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CreateScheme {
-    /// Legacy create scheme of `CREATE`.
+    /// Legacy create scheme of `CREATE`
     Create,
-    /// Create scheme of `CREATE2`.
+    /// Create scheme of `CREATE2`
     Create2 {
-        /// Salt.
+        /// Salt
         salt: U256,
     },
 }

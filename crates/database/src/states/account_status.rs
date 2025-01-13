@@ -14,7 +14,7 @@
 /// - `Destroyed`: the account has been destroyed.
 /// - `DestroyedChanged`: the account has been destroyed and then modified.
 /// - `DestroyedAgain`: the account has been destroyed again.
-#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AccountStatus {
     #[default]
@@ -72,11 +72,11 @@ impl AccountStatus {
     /// Returns the next account status on creation.
     pub fn on_created(&self) -> AccountStatus {
         match self {
-            // if account was destroyed previously just copy new info to it.
+            // If account was destroyed previously just copy new info to it.
             AccountStatus::DestroyedAgain
             | AccountStatus::Destroyed
             | AccountStatus::DestroyedChanged => AccountStatus::DestroyedChanged,
-            // if account is loaded from db.
+            // If account is loaded from db.
             AccountStatus::LoadedNotExisting
             // Loaded empty eip161 to creates is not possible as CREATE2 was added after EIP-161
             | AccountStatus::LoadedEmptyEIP161
@@ -156,10 +156,10 @@ impl AccountStatus {
             // The account was loaded as existing.
             AccountStatus::Loaded => {
                 if had_no_nonce_and_code {
-                    // account is fully in memory
+                    // Account is fully in memory
                     AccountStatus::InMemoryChange
                 } else {
-                    // can be contract and some of storage slots can be present inside db.
+                    // Can be contract and some of storage slots can be present inside db.
                     AccountStatus::Changed
                 }
             }
@@ -184,7 +184,7 @@ impl AccountStatus {
             // Non existing account can't be destroyed.
             AccountStatus::LoadedNotExisting => AccountStatus::LoadedNotExisting,
             // If account is created and selfdestructed in the same block, mark it as destroyed again.
-            // Note: there is no big difference between Destroyed and DestroyedAgain in this case,
+            // Note: There is no big difference between Destroyed and DestroyedAgain in this case,
             // but was added for clarity.
             AccountStatus::DestroyedChanged
             | AccountStatus::DestroyedAgain
@@ -198,15 +198,15 @@ impl AccountStatus {
     /// Transition to other state while preserving invariance of this state.
     ///
     /// It this account was Destroyed and other account is not:
-    /// we should mark extended account as destroyed too.
-    /// and as other account had some changes, extended account
-    /// should be marked as DestroyedChanged.
+    /// - We should mark extended account as destroyed too.
+    /// - And as other account had some changes, extended account
+    ///   should be marked as DestroyedChanged.
     ///
     /// If both account are not destroyed and if this account is in memory:
-    /// this means that extended account is in memory too.
+    /// - This means that extended account is in memory too.
     ///
     /// Otherwise, if both are destroyed or other is destroyed:
-    /// set other status to extended account.
+    /// -  Sets other status to extended account.
     pub fn transition(&mut self, other: Self) {
         *self = match (self.was_destroyed(), other.was_destroyed()) {
             (true, false) => Self::DestroyedChanged,
@@ -223,7 +223,7 @@ mod test {
 
     #[test]
     fn test_account_status() {
-        // account not modified
+        // Account not modified
         assert!(AccountStatus::Loaded.is_not_modified());
         assert!(AccountStatus::LoadedEmptyEIP161.is_not_modified());
         assert!(AccountStatus::LoadedNotExisting.is_not_modified());
@@ -233,7 +233,7 @@ mod test {
         assert!(!AccountStatus::DestroyedChanged.is_not_modified());
         assert!(!AccountStatus::DestroyedAgain.is_not_modified());
 
-        // we know full storage
+        // We know full storage
         assert!(!AccountStatus::LoadedEmptyEIP161.is_storage_known());
         assert!(AccountStatus::LoadedNotExisting.is_storage_known());
         assert!(AccountStatus::InMemoryChange.is_storage_known());
@@ -243,7 +243,7 @@ mod test {
         assert!(!AccountStatus::Loaded.is_storage_known());
         assert!(!AccountStatus::Changed.is_storage_known());
 
-        // account was destroyed
+        // Account was destroyed
         assert!(!AccountStatus::LoadedEmptyEIP161.was_destroyed());
         assert!(!AccountStatus::LoadedNotExisting.was_destroyed());
         assert!(!AccountStatus::InMemoryChange.was_destroyed());
@@ -253,7 +253,7 @@ mod test {
         assert!(!AccountStatus::Loaded.was_destroyed());
         assert!(!AccountStatus::Changed.was_destroyed());
 
-        // account modified but not destroyed
+        // Account modified but not destroyed
         assert!(AccountStatus::Changed.is_modified_and_not_destroyed());
         assert!(AccountStatus::InMemoryChange.is_modified_and_not_destroyed());
         assert!(!AccountStatus::Loaded.is_modified_and_not_destroyed());

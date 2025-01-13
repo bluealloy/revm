@@ -1,18 +1,49 @@
-/// Transaction types of all Ethereum transaction.
-
+/// Transaction types of all Ethereum transaction
+#[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactionType {
-    /// Legacy transaction type.
-    Legacy,
-    /// EIP-2930 Access List transaction type.
+    /// Legacy transaction type
+    Legacy = 0,
+    /// EIP-2930 Access List transaction type
     Eip2930,
-    /// EIP-1559 Fee market change transaction type.
+    /// EIP-1559 Fee market change transaction type
     Eip1559,
-    /// EIP-4844 Blob transaction type.
+    /// EIP-4844 Blob transaction type
     Eip4844,
-    /// EIP-7702 Set EOA account code transaction type.
+    /// EIP-7702 Set EOA account code transaction type
     Eip7702,
-    /// Custom type means that transaction trait was extend and have custom types.
+    /// Custom type means that transaction trait was extend and have custom types
     Custom,
+}
+
+impl PartialEq<u8> for TransactionType {
+    fn eq(&self, other: &u8) -> bool {
+        (*self as u8) == *other
+    }
+}
+
+impl PartialEq<TransactionType> for u8 {
+    fn eq(&self, other: &TransactionType) -> bool {
+        *self == (*other as u8)
+    }
+}
+
+impl From<TransactionType> for u8 {
+    fn from(tx_type: TransactionType) -> u8 {
+        tx_type as u8
+    }
+}
+
+impl From<u8> for TransactionType {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => Self::Legacy,
+            1 => Self::Eip2930,
+            2 => Self::Eip1559,
+            3 => Self::Eip4844,
+            4 => Self::Eip7702,
+            _ => Self::Custom,
+        }
+    }
 }

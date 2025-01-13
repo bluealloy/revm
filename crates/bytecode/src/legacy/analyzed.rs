@@ -4,14 +4,14 @@ use primitives::Bytes;
 use std::sync::Arc;
 
 // Legacy analyzed
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LegacyAnalyzedBytecode {
-    /// Bytecode with 32 zero bytes padding.
+    /// Bytecode with 32 zero bytes padding
     bytecode: Bytes,
-    /// Original bytes length.
+    /// Original bytes length
     original_len: usize,
-    /// Jump table.
+    /// Jump table
     jump_table: JumpTable,
 }
 
@@ -27,7 +27,7 @@ impl Default for LegacyAnalyzedBytecode {
 }
 
 impl LegacyAnalyzedBytecode {
-    /// Create new analyzed bytecode.
+    /// Creates new analyzed bytecode.
     pub fn new(bytecode: Bytes, original_len: usize, jump_table: JumpTable) -> Self {
         Self {
             bytecode,
@@ -43,22 +43,22 @@ impl LegacyAnalyzedBytecode {
         &self.bytecode
     }
 
-    /// Original bytes length.
+    /// Returns original bytes length.
     pub fn original_len(&self) -> usize {
         self.original_len
     }
 
-    /// Original bytes without padding.
+    /// Returns original bytes without padding.
     pub fn original_bytes(&self) -> Bytes {
         self.bytecode.slice(..self.original_len)
     }
 
-    /// Original bytes without padding.
+    /// Returns original bytes without padding.
     pub fn original_byte_slice(&self) -> &[u8] {
         &self.bytecode[..self.original_len]
     }
 
-    /// Jumptable of analyzed bytes.
+    /// Returns [JumpTable] of analyzed bytes.
     pub fn jump_table(&self) -> &JumpTable {
         &self.jump_table
     }

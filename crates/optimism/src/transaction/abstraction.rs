@@ -1,20 +1,15 @@
-use super::deposit::{DepositTransaction, TxDeposit};
-use crate::OpTransactionError;
+use super::deposit::{DepositTransaction, DepositTransactionParts};
 use revm::{
     context::TxEnv,
     context_interface::{
-        transaction::{CommonTxFields, Transaction, TransactionType},
-        TransactionGetter,
+        transaction::{AuthorizationItem, Transaction},
+        Journal, TransactionGetter,
     },
-    primitives::Bytes,
+    primitives::{Address, Bytes, TxKind, B256, U256},
     Context, Database,
 };
 
-pub trait OpTxTrait: Transaction {
-    type DepositTx: DepositTransaction;
-
-    fn deposit(&self) -> &Self::DepositTx;
-
+pub trait OpTxTrait: Transaction + DepositTransaction {
     fn enveloped_tx(&self) -> Option<&Bytes>;
 }
 
@@ -24,8 +19,8 @@ pub trait OpTxGetter: TransactionGetter {
     fn op_tx(&self) -> &Self::OpTransaction;
 }
 
-impl<BLOCK, TX: Transaction, DB: Database, CFG, CHAIN> OpTxGetter
-    for Context<BLOCK, OpTransaction<TX>, CFG, DB, CHAIN>
+impl<BLOCK, TX: Transaction, CFG, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> OpTxGetter
+    for Context<BLOCK, OpTransaction<TX>, CFG, DB, JOURNAL, CHAIN>
 {
     type OpTransaction = OpTransaction<TX>;
 
@@ -34,149 +29,150 @@ impl<BLOCK, TX: Transaction, DB: Database, CFG, CHAIN> OpTxGetter
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum OpTransactionType {
-    /// Base transaction type supported on Ethereum mainnet.
-    Base(TransactionType),
-    /// Optimism-specific deposit transaction type.
-    Deposit,
-}
-
-impl From<OpTransactionType> for TransactionType {
-    fn from(tx_type: OpTransactionType) -> Self {
-        match tx_type {
-            OpTransactionType::Base(tx_type) => tx_type,
-            OpTransactionType::Deposit => TransactionType::Custom,
-        }
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum OpTransaction<T: Transaction> {
-    Base {
-        tx: T,
-        /// An enveloped EIP-2718 typed transaction. This is used
-        /// to compute the L1 tx cost using the L1 block info, as
-        /// opposed to requiring downstream apps to compute the cost
-        /// externally.
-        enveloped_tx: Option<Bytes>,
-    },
-    Deposit(TxDeposit),
+pub struct OpTransaction<T: Transaction> {
+    tx: T,
+    /// An enveloped EIP-2718 typed transaction
+    ///
+    /// This is used to compute the L1 tx cost using the L1 block info, as
+    /// opposed to requiring downstream apps to compute the cost
+    /// externally.
+    enveloped_tx: Option<Bytes>,
+    deposit: DepositTransactionParts,
 }
 
 impl Default for OpTransaction<TxEnv> {
     fn default() -> Self {
-        Self::Base {
+        Self {
             tx: TxEnv::default(),
             enveloped_tx: None,
+            deposit: DepositTransactionParts::default(),
         }
     }
 }
 
 impl<T: Transaction> Transaction for OpTransaction<T> {
-    // TODO
-    type TransactionError = OpTransactionError;
-    type TransactionType = OpTransactionType;
-
-    type AccessList = T::AccessList;
-
-    type Legacy = T::Legacy;
-
-    type Eip2930 = T::Eip2930;
-
-    type Eip1559 = T::Eip1559;
-
-    type Eip4844 = T::Eip4844;
-
-    type Eip7702 = T::Eip7702;
-
-    fn tx_type(&self) -> Self::TransactionType {
-        match self {
-            Self::Base { tx, .. } => OpTransactionType::Base(tx.tx_type().into()),
-            Self::Deposit(_) => OpTransactionType::Deposit,
-        }
+    fn tx_type(&self) -> u8 {
+        self.tx.tx_type()
     }
 
-    fn common_fields(&self) -> &dyn CommonTxFields {
-        match self {
-            Self::Base { tx, .. } => tx.common_fields(),
-            Self::Deposit(deposit) => deposit,
-        }
+    fn caller(&self) -> Address {
+        self.tx.caller()
     }
 
-    fn kind(&self) -> revm::primitives::TxKind {
-        match self {
-            Self::Base { tx, .. } => tx.kind(),
-            Self::Deposit(deposit) => deposit.to,
-        }
+    fn gas_limit(&self) -> u64 {
+        self.tx.gas_limit()
     }
 
-    fn effective_gas_price(&self, base_fee: revm::primitives::U256) -> revm::primitives::U256 {
-        match self {
-            Self::Base { tx, .. } => tx.effective_gas_price(base_fee),
-            Self::Deposit(_) => base_fee,
-        }
+    fn value(&self) -> U256 {
+        self.tx.value()
     }
 
-    fn max_fee(&self) -> u128 {
-        match self {
-            Self::Base { tx, .. } => tx.max_fee(),
-            Self::Deposit(_) => 0,
-        }
+    fn input(&self) -> &Bytes {
+        self.tx.input()
     }
 
-    fn legacy(&self) -> &Self::Legacy {
-        let Self::Base { tx, .. } = self else {
-            panic!("Not a legacy transaction")
-        };
-        tx.legacy()
+    fn nonce(&self) -> u64 {
+        self.tx.nonce()
     }
 
-    fn eip2930(&self) -> &Self::Eip2930 {
-        let Self::Base { tx, .. } = self else {
-            panic!("Not eip2930 transaction")
-        };
-        tx.eip2930()
+    fn kind(&self) -> TxKind {
+        self.tx.kind()
     }
 
-    fn eip1559(&self) -> &Self::Eip1559 {
-        let Self::Base { tx, .. } = self else {
-            panic!("Not a eip1559 transaction")
-        };
-        tx.eip1559()
+    fn chain_id(&self) -> Option<u64> {
+        self.tx.chain_id()
     }
 
-    fn eip4844(&self) -> &Self::Eip4844 {
-        let Self::Base { tx, .. } = self else {
-            panic!("Not a eip4844 transaction")
-        };
-        tx.eip4844()
+    fn access_list(&self) -> Option<impl Iterator<Item = (&Address, &[B256])>> {
+        self.tx.access_list()
     }
 
-    fn eip7702(&self) -> &Self::Eip7702 {
-        let Self::Base { tx, .. } = self else {
-            panic!("Not a eip7702 transaction")
-        };
-        tx.eip7702()
+    fn max_priority_fee_per_gas(&self) -> Option<u128> {
+        self.tx.max_priority_fee_per_gas()
+    }
+
+    fn max_fee_per_gas(&self) -> u128 {
+        self.tx.max_fee_per_gas()
+    }
+
+    fn gas_price(&self) -> u128 {
+        self.tx.gas_price()
+    }
+
+    fn blob_versioned_hashes(&self) -> &[B256] {
+        self.tx.blob_versioned_hashes()
+    }
+
+    fn max_fee_per_blob_gas(&self) -> u128 {
+        self.tx.max_fee_per_blob_gas()
+    }
+
+    fn effective_gas_price(&self, base_fee: u128) -> u128 {
+        self.tx.effective_gas_price(base_fee)
+    }
+
+    fn authorization_list_len(&self) -> usize {
+        self.tx.authorization_list_len()
+    }
+
+    fn authorization_list(&self) -> impl Iterator<Item = AuthorizationItem> {
+        self.tx.authorization_list()
+    }
+}
+
+impl<T: Transaction> DepositTransaction for OpTransaction<T> {
+    fn source_hash(&self) -> B256 {
+        self.deposit.source_hash
+    }
+
+    fn mint(&self) -> Option<u128> {
+        self.deposit.mint
+    }
+
+    fn is_system_transaction(&self) -> bool {
+        self.deposit.is_system_transaction
     }
 }
 
 impl<T: Transaction> OpTxTrait for OpTransaction<T> {
-    type DepositTx = TxDeposit;
-
-    fn deposit(&self) -> &Self::DepositTx {
-        match self {
-            Self::Base { .. } => panic!("Not a deposit transaction"),
-            Self::Deposit(deposit) => deposit,
-        }
-    }
-
     fn enveloped_tx(&self) -> Option<&Bytes> {
-        match self {
-            Self::Base { enveloped_tx, .. } => enveloped_tx.as_ref(),
-            Self::Deposit(_) => None,
-        }
+        self.enveloped_tx.as_ref()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::transaction::deposit::DEPOSIT_TRANSACTION_TYPE;
+
+    use super::*;
+    use revm::primitives::{Address, B256};
+
+    #[test]
+    fn test_deposit_transaction_fields() {
+        let op_tx = OpTransaction {
+            tx: TxEnv {
+                tx_type: DEPOSIT_TRANSACTION_TYPE,
+                gas_limit: 10,
+                gas_price: 100,
+                gas_priority_fee: Some(5),
+                ..Default::default()
+            },
+            enveloped_tx: None,
+            deposit: DepositTransactionParts {
+                is_system_transaction: false,
+                mint: Some(0u128),
+                source_hash: B256::default(),
+            },
+        };
+        // Verify transaction type
+        assert_eq!(op_tx.tx_type(), DEPOSIT_TRANSACTION_TYPE);
+        // Verify common fields access
+        assert_eq!(op_tx.gas_limit(), 10);
+        assert_eq!(op_tx.kind(), revm::primitives::TxKind::Call(Address::ZERO));
+        // Verify gas related calculations
+        assert_eq!(op_tx.effective_gas_price(90), 95);
+        assert_eq!(op_tx.max_fee_per_gas(), 100);
     }
 }

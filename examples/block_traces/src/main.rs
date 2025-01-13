@@ -9,14 +9,17 @@ use alloy_provider::{
 };
 use database::{AlloyDB, CacheDB, StateBuilder};
 use indicatif::ProgressBar;
-use inspector::{inspectors::TracerEip3155, InspectorContext, InspectorEthFrame, InspectorMainEvm};
+use inspector::{
+    inspector_context::InspectorContext, inspectors::TracerEip3155, InspectorEthFrame,
+    InspectorMainEvm,
+};
 use revm::{
     database_interface::WrapDatabaseAsync,
     handler::{
         EthExecution, EthHandler, EthPostExecution, EthPreExecution, EthPrecompileProvider,
         EthValidation,
     },
-    primitives::{TxKind, U256},
+    primitives::TxKind,
     Context, EvmCommit,
 };
 use std::io::BufWriter;
@@ -51,7 +54,7 @@ async fn main() -> anyhow::Result<()> {
     // Set up the HTTP transport which is consumed by the RPC client.
     let rpc_url = "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27".parse()?;
 
-    // create ethers client and wrap it in Arc<M>
+    // Create ethers client and wrap it in Arc<M>
     let client = ProviderBuilder::new().on_http(rpc_url);
 
     // Params
@@ -85,17 +88,13 @@ async fn main() -> anyhow::Result<()> {
             Context::builder()
                 .with_db(&mut state)
                 .modify_block_chained(|b| {
-                    b.number = U256::from(block.header.number);
+                    b.number = block.header.number;
                     b.beneficiary = block.header.beneficiary;
-                    b.timestamp = U256::from(block.header.timestamp);
+                    b.timestamp = block.header.timestamp;
 
                     b.difficulty = block.header.difficulty;
-                    b.gas_limit = U256::from(block.header.gas_limit);
-                    b.basefee = block
-                        .header
-                        .base_fee_per_gas
-                        .map(U256::from)
-                        .unwrap_or_default();
+                    b.gas_limit = block.header.gas_limit;
+                    b.basefee = block.header.base_fee_per_gas.unwrap_or_default();
                 })
                 .modify_cfg_chained(|c| {
                     c.chain_id = chain_id;
@@ -128,19 +127,20 @@ async fn main() -> anyhow::Result<()> {
         evm.context.inner.modify_tx(|etx| {
             etx.caller = tx.from;
             etx.gas_limit = tx.gas_limit();
-            etx.gas_price = U256::from(tx.gas_price().unwrap_or(tx.inner.max_fee_per_gas()));
+            etx.gas_price = tx.gas_price().unwrap_or(tx.inner.max_fee_per_gas());
             etx.value = tx.value();
             etx.data = tx.input().to_owned();
-            etx.gas_priority_fee = tx.max_priority_fee_per_gas().map(U256::from);
+            etx.gas_priority_fee = tx.max_priority_fee_per_gas();
             etx.chain_id = Some(chain_id);
             etx.nonce = tx.nonce();
-            if let Some(access_list) = tx.access_list() {
-                etx.access_list = access_list.to_owned();
-            } else {
-                etx.access_list = Default::default();
-            }
+            // TODO rakita
+            // if let Some(access_list) = tx.access_list() {
+            //     etx.access_list = access_list.to_owned();
+            // } else {
+            //     etx.access_list = Default::default();
+            // }
 
-            etx.transact_to = match tx.to() {
+            etx.kind = match tx.to() {
                 Some(to_address) => TxKind::Call(to_address),
                 None => TxKind::Create,
             };

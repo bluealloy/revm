@@ -1,6 +1,6 @@
 [package]
 name = "revm-optimism"
-description = "Optimism extension of Revm"
+description = "Optimism variant of Revm"
 version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
@@ -40,7 +40,6 @@ serde = { version = "1.0", default-features = false, features = [
 [dev-dependencies]
 database.workspace = true
 anyhow = "1.0.89"
-criterion = "0.5"
 indicatif = "0.17"
 rstest = "0.23.0"
 alloy-sol-types = "0.8"

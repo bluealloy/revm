@@ -57,7 +57,7 @@ pub(super) fn check_canonical_fp2(
 
 /// Extracts a G2 point in Affine format from a 256 byte slice representation.
 ///
-/// NOTE: This function will perform a G2 subgroup check if `subgroup_check` is set to `true`.
+/// **Note**: This function will perform a G2 subgroup check if `subgroup_check` is set to `true`.
 pub(super) fn extract_g2_input(
     input: &[u8],
     subgroup_check: bool,
@@ -104,7 +104,7 @@ pub(super) fn extract_g2_input(
         // We use blst_p2_affine_on_curve instead of blst_p2_affine_in_g2 because the latter performs
         // the subgroup check.
         //
-        // SAFETY: out is a blst value.
+        // SAFETY: Out is a blst value.
         if unsafe { !blst_p2_affine_on_curve(&out) } {
             return Err(PrecompileError::Other(
                 "Element not on G2 curve".to_string(),

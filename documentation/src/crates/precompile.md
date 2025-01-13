@@ -3,7 +3,7 @@
 The `precompile` crate contains the implementation of the Ethereum precompile opcodes in the EVM.
 Precompiles are a shortcut to execute a function implemented by the EVM itself, rather than an actual contract.
 Precompiled contracts are essentially predefined smart contracts on Ethereum, residing at hardcoded addresses and used for computationally heavy operations that are cheaper when implemented this way.
-There are 6 precompiles implemented in REVM, and they are: `blake2`, `bn128` curve, `identity`, `secp256k1`, `modexp`, and `sha256` and `ripemd160` hash functions.
+There are 7 precompiles implemented in REVM, and they are: `blake2`, `bn128` curve, `identity`, `secp256k1`, `modexp`, and `sha256` and `ripemd160` hash functions.
 
 ### Modules:
 

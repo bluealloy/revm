@@ -1,8 +1,7 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
-
 use revm::interpreter::{CallOutcome, CreateOutcome, Gas};
 
-/// Helper [Inspector] that keeps track of gas.
+/// Helper that keeps track of gas.
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
 pub struct GasInspector {
@@ -31,9 +30,7 @@ impl GasInspector {
             last_gas_cost: 0,
         }
     }
-}
 
-impl GasInspector {
     #[inline]
     pub fn initialize_interp(&mut self, gas: &Gas) {
         self.gas_remaining = gas.limit();
@@ -182,18 +179,18 @@ impl GasInspector {
 //                 *tx = <TestEvmWiring as PrimitiveEvmWiring>::Transaction::default();
 
 //                 tx.caller = address!("1000000000000000000000000000000000000000");
-//                 tx.transact_to = TxKind::Call(address!("0000000000000000000000000000000000000000"));
+//                 tx.kind = TxKind::Call(address!("0000000000000000000000000000000000000000"));
 //                 tx.gas_limit = 21100;
 //             })
 //             .append_handler_register(inspector_handle_register)
 //             .build();
 
-//         // run evm.
+//         // Run evm.
 //         evm.transact().unwrap();
 
 //         let inspector = evm.into_context().external;
 
-//         // starting from 100gas
+//         // Starting from 100gas
 //         let steps = vec![
 //             // push1 -3
 //             (0, 97),

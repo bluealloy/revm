@@ -4,18 +4,17 @@ pub mod precompiles;
 
 use crate::{
     transaction::{
-        abstraction::OpTxGetter, deposit::DepositTransaction, OpTransactionType, OpTxTrait,
+        abstraction::OpTxGetter,
+        deposit::{DepositTransaction, DEPOSIT_TRANSACTION_TYPE},
+        OpTransactionError, OpTxTrait,
     },
-    L1BlockInfoGetter, OpSpec, OpSpecId, OpTransactionError, OptimismHaltReason,
-    BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
+    L1BlockInfoGetter, OpSpec, OpSpecId, OptimismHaltReason, BASE_FEE_RECIPIENT, L1_FEE_RECIPIENT,
 };
-use core::ops::Mul;
 use precompiles::OpPrecompileProvider;
 use revm::{
     context_interface::{
         result::{ExecutionResult, FromStringError, InvalidTransaction, ResultAndState},
-        transaction::CommonTxFields,
-        Block, Cfg, CfgGetter, DatabaseGetter, JournaledState, Transaction, TransactionGetter,
+        Block, Cfg, CfgGetter, DatabaseGetter, Journal, Transaction, TransactionGetter,
     },
     handler::{
         EthExecution, EthExecutionContext, EthExecutionError, EthFrame, EthFrameContext,
@@ -24,8 +23,8 @@ use revm::{
         EthValidation, EthValidationContext, EthValidationError, FrameResult,
     },
     handler_interface::{
-        util::FrameOrFrameResult, ExecutionHandler, Frame, PostExecutionHandler,
-        PreExecutionHandler, ValidationHandler,
+        util::FrameOrFrameResult, ExecutionHandler, Frame, InitialAndFloorGas,
+        PostExecutionHandler, PreExecutionHandler, ValidationHandler,
     },
     interpreter::{
         interpreter::{EthInstructionProvider, EthInterpreter},
@@ -56,7 +55,7 @@ where
     // Have Cfg with OpSpec
     <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
     // Have transaction with OpTransactionType
-    <CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
+    //<CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
     // Add additional error type.
     ERROR: EthValidationError<CTX> + From<OpTransactionError>,
 {
@@ -67,10 +66,9 @@ where
     fn validate_env(&self, context: &Self::Context) -> Result<(), Self::Error> {
         // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
         let tx_type = context.tx().tx_type();
-        if tx_type == OpTransactionType::Deposit {
-            let tx = context.op_tx().deposit();
+        if tx_type == DEPOSIT_TRANSACTION_TYPE {
+            let tx = context.op_tx();
             // Do not allow for a system transaction to be processed if Regolith is enabled.
-            // TODO check if this is correct.
             if tx.is_system_transaction() && context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH)
             {
                 return Err(OpTransactionError::DepositSystemTxPostRegolith.into());
@@ -82,14 +80,17 @@ where
 
     /// Validate transactions against state.
     fn validate_tx_against_state(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        if context.tx().tx_type() == OpTransactionType::Deposit {
+        if context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE {
             return Ok(());
         }
         self.eth.validate_tx_against_state(context)
     }
 
     /// Validate initial gas.
-    fn validate_initial_tx_gas(&self, context: &Self::Context) -> Result<u64, Self::Error> {
+    fn validate_initial_tx_gas(
+        &self,
+        context: &Self::Context,
+    ) -> Result<InitialAndFloorGas, Self::Error> {
         self.eth.validate_initial_tx_gas(context)
     }
 }
@@ -102,20 +103,19 @@ impl<CTX, ERROR> PreExecutionHandler for OpPreExecution<CTX, ERROR>
 where
     CTX: EthPreExecutionContext + DatabaseGetter + OpTxGetter + L1BlockInfoGetter,
     <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-    <CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
     ERROR: EthPreExecutionError<CTX> + From<<<CTX as DatabaseGetter>::Database as Database>::Error>,
 {
     type Context = CTX;
     type Error = ERROR;
 
     fn load_accounts(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        // the L1-cost fee is only computed for Optimism non-deposit transactions.
+        // The L1-cost fee is only computed for Optimism non-deposit transactions.
         let spec = context.cfg().spec();
-        if context.tx().tx_type() != OpTransactionType::Deposit {
+        if context.tx().tx_type() != DEPOSIT_TRANSACTION_TYPE {
             let l1_block_info: crate::L1BlockInfo =
                 super::L1BlockInfo::try_fetch(context.db(), spec)?;
 
-            // storage l1 block info for later use.
+            // Storage L1 block info for later use.
             *context.l1_block_info_mut() = l1_block_info;
         }
 
@@ -127,15 +127,15 @@ where
     }
 
     fn deduct_caller(&self, context: &mut Self::Context) -> Result<(), Self::Error> {
-        let caller = context.tx().common_fields().caller();
-        let is_deposit = context.tx().tx_type() == OpTransactionType::Deposit;
+        let caller = context.tx().caller();
+        let is_deposit = context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
 
         // If the transaction is a deposit with a `mint` value, add the mint value
         // in wei to the caller's balance. This should be persisted to the database
         // prior to the rest of execution.
         let mut tx_l1_cost = U256::ZERO;
         if is_deposit {
-            let tx = context.op_tx().deposit();
+            let tx = context.op_tx();
             if let Some(mint) = tx.mint() {
                 let mut caller_account = context.journal().load_account(caller)?;
                 caller_account.info.balance += U256::from(mint);
@@ -152,7 +152,7 @@ where
         }
 
         // We deduct caller max balance after minting and before deducing the
-        // l1 cost, max values is already checked in pre_validate but l1 cost wasn't.
+        // L1 cost, max values is already checked in pre_validate but L1 cost wasn't.
         self.eth.deduct_caller(context)?;
 
         // If the transaction is not a deposit transaction, subtract the L1 data fee from the
@@ -189,10 +189,10 @@ pub struct OpExecution<
 
 impl<CTX, ERROR, FRAME> ExecutionHandler for OpExecution<CTX, ERROR, FRAME>
 where
-    CTX: EthExecutionContext<ERROR> + EthFrameContext<ERROR> + OpTxGetter,
+    CTX: EthExecutionContext<ERROR> + EthFrameContext + OpTxGetter,
     ERROR: EthExecutionError<CTX> + EthFrameError<CTX>,
     <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-    <CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
+    //<CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
     FRAME: Frame<Context = CTX, Error = ERROR, FrameInit = FrameInput, FrameResult = FrameResult>,
 {
     type Context = CTX;
@@ -214,8 +214,8 @@ where
         mut frame_result: <Self::Frame as Frame>::FrameResult,
     ) -> Result<Self::ExecResult, Self::Error> {
         let tx = context.tx();
-        let is_deposit = tx.tx_type() == OpTransactionType::Deposit;
-        let tx_gas_limit = tx.common_fields().gas_limit();
+        let is_deposit = tx.tx_type() == DEPOSIT_TRANSACTION_TYPE;
+        let tx_gas_limit = tx.gas_limit();
         let is_regolith = context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH);
 
         let instruction_result = frame_result.interpreter_result().result;
@@ -246,7 +246,7 @@ where
                 gas.erase_cost(remaining);
                 gas.record_refund(refunded);
             } else if is_deposit {
-                let tx = context.op_tx().deposit();
+                let tx = context.op_tx();
                 if tx.is_system_transaction() {
                     // System transactions were a special type of deposit transaction in
                     // the Bedrock hardfork that did not incur any gas costs.
@@ -284,19 +284,29 @@ pub trait IsTxError {
 
 impl<CTX, ERROR> PostExecutionHandler for OpPostExecution<CTX, ERROR>
 where
-    CTX: EthPostExecutionContext<ERROR> + OpTxGetter + L1BlockInfoGetter + DatabaseGetter,
+    CTX: EthPostExecutionContext + OpTxGetter + L1BlockInfoGetter + DatabaseGetter,
     ERROR: EthPostExecutionError<CTX>
         + EthFrameError<CTX>
         + From<OpTransactionError>
         + FromStringError
         + IsTxError,
     <CTX as CfgGetter>::Cfg: Cfg<Spec = OpSpec>,
-    <CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
+    //<CTX as TransactionGetter>::Transaction: Transaction<TransactionType = OpTransactionType>,
 {
     type Context = CTX;
     type Error = ERROR;
     type ExecResult = FrameResult;
     type Output = ResultAndState<OptimismHaltReason>;
+
+    fn eip7623_check_gas_floor(
+        &self,
+        context: &mut Self::Context,
+        exec_result: &mut Self::ExecResult,
+        init_and_floor_gas: InitialAndFloorGas,
+    ) {
+        self.eth
+            .eip7623_check_gas_floor(context, exec_result, init_and_floor_gas);
+    }
 
     fn refund(
         &self,
@@ -306,7 +316,7 @@ where
     ) {
         exec_result.gas_mut().record_refund(eip7702_refund);
 
-        let is_deposit = context.tx().tx_type() == OpTransactionType::Deposit;
+        let is_deposit = context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
         let is_regolith = context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH);
 
         // Prior to Regolith, deposit transactions did not receive gas refunds.
@@ -333,12 +343,12 @@ where
     ) -> Result<(), Self::Error> {
         self.eth.reward_beneficiary(context, exec_result)?;
 
-        let is_deposit = context.tx().tx_type() == OpTransactionType::Deposit;
+        let is_deposit = context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
 
-        // transfer fee to coinbase/beneficiary.
+        // Transfer fee to coinbase/beneficiary.
         if !is_deposit {
             self.eth.reward_beneficiary(context, exec_result)?;
-            let basefee = *context.block().basefee();
+            let basefee = context.block().basefee() as u128;
 
             // If the transaction is not a deposit transaction, fees are paid out
             // to both the Base Fee Vault as well as the L1 Fee Vault.
@@ -360,8 +370,8 @@ where
             // Send the base fee of the transaction to the Base Fee Vault.
             let mut base_fee_vault_account = context.journal().load_account(BASE_FEE_RECIPIENT)?;
             base_fee_vault_account.mark_touch();
-            base_fee_vault_account.info.balance += basefee.mul(U256::from(
-                exec_result.gas().spent() - exec_result.gas().refunded() as u64,
+            base_fee_vault_account.info.balance += U256::from(basefee.saturating_mul(
+                (exec_result.gas().spent() - exec_result.gas().refunded() as u64) as u128,
             ));
         }
         Ok(())
@@ -377,7 +387,7 @@ where
             // Post-regolith, if the transaction is a deposit transaction and it halts,
             // we bubble up to the global return handler. The mint value will be persisted
             // and the caller nonce will be incremented there.
-            let is_deposit = context.tx().tx_type() == OpTransactionType::Deposit;
+            let is_deposit = context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
             if is_deposit && context.cfg().spec().is_enabled_in(OpSpecId::REGOLITH) {
                 return Err(ERROR::from(OpTransactionError::HaltedDepositPostRegolith));
             }
@@ -396,11 +406,11 @@ where
     ) -> Result<Self::Output, Self::Error> {
         //end_output
 
-        let is_deposit = context.tx().tx_type() == OpTransactionType::Deposit;
+        let is_deposit = context.tx().tx_type() == DEPOSIT_TRANSACTION_TYPE;
         end_output.or_else(|err| {
             if err.is_tx_error() && is_deposit {
                 let spec = context.cfg().spec();
-                let tx = context.op_tx().deposit();
+                let tx = context.op_tx();
                 let caller = tx.caller();
                 let mint = tx.mint();
                 let is_system_tx = tx.is_system_transaction();

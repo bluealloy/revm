@@ -12,12 +12,12 @@ use primitives::{Bytes, B256};
 pub const PRECOMPILE: PrecompileWithAddress =
     PrecompileWithAddress(u64_to_address(ADDRESS), pairing);
 /// BLS12_PAIRING precompile address.
-pub const ADDRESS: u64 = 0x11;
+pub const ADDRESS: u64 = 0x0f;
 
 /// Multiplier gas fee for BLS12-381 pairing operation.
-const PAIRING_MULTIPLIER_BASE: u64 = 43000;
+const PAIRING_MULTIPLIER_BASE: u64 = 32600;
 /// Offset gas fee for BLS12-381 pairing operation.
-const PAIRING_OFFSET_BASE: u64 = 65000;
+const PAIRING_OFFSET_BASE: u64 = 37700;
 /// Input length of pairing operation.
 const INPUT_LENGTH: usize = 384;
 
@@ -74,7 +74,7 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
             // multiplication.
             let mut cur_ml = blst_fp12::default();
             let mut res = blst_fp12::default();
-            // SAFETY: res, acc, cur_ml, p1_aff and p2_aff are blst values.
+            // SAFETY: `res`, `acc`, `cur_ml`, `p1_aff` and `p2_aff` are blst values.
             unsafe {
                 blst_miller_loop(&mut cur_ml, p2_aff, p1_aff);
                 blst_fp12_mul(&mut res, &acc, &cur_ml);
@@ -83,21 +83,21 @@ pub(super) fn pairing(input: &Bytes, gas_limit: u64) -> PrecompileResult {
         } else {
             // On the first slice (i==0) there is no previous results and no need
             // to accumulate.
-            // SAFETY: acc, p1_aff and p2_aff are blst values.
+            // SAFETY: `acc`, `p1_aff` and `p2_aff` are blst values.
             unsafe {
                 blst_miller_loop(&mut acc, p2_aff, p1_aff);
             }
         }
     }
 
-    // SAFETY: ret and acc are blst values.
+    // SAFETY: `ret` and `acc` are blst values.
     let mut ret = blst_fp12::default();
     unsafe {
         blst_final_exp(&mut ret, &acc);
     }
 
     let mut result: u8 = 0;
-    // SAFETY: ret is a blst value.
+    // SAFETY: `ret` is a blst value.
     unsafe {
         if blst_fp12_is_one(&ret) {
             result = 1;

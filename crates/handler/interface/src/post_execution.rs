@@ -1,10 +1,20 @@
+use crate::InitialAndFloorGas;
+
 pub trait PostExecutionHandler {
     type Context;
     type Error;
     type ExecResult;
     type Output;
 
-    /// Calculate final refund
+    /// Calculate final refund.
+    fn eip7623_check_gas_floor(
+        &self,
+        context: &mut Self::Context,
+        exec_result: &mut Self::ExecResult,
+        init_and_floor_gas: InitialAndFloorGas,
+    );
+
+    /// Calculate final refund.
     fn refund(
         &self,
         context: &mut Self::Context,
@@ -26,7 +36,7 @@ pub trait PostExecutionHandler {
         exec_result: &mut Self::ExecResult,
     ) -> Result<(), Self::Error>;
 
-    /// Main return handle, takes state from journal and transforms internal result to [`PostExecutionHandler::Output`].
+    /// Main return handle, takes state from journal and transforms internal result to [`Output`][PostExecutionHandler::Output].
     fn output(
         &self,
         context: &mut Self::Context,
@@ -36,7 +46,8 @@ pub trait PostExecutionHandler {
     /// Called when execution ends.
     ///
     /// End handle in comparison to output handle will be called every time after execution.
-    /// While [`PostExecutionHandler::output`] will be omitted in case of the error.
+    ///
+    /// While [`output`][PostExecutionHandler::output] will be omitted in case of the error.
     fn end(
         &self,
         _context: &mut Self::Context,
@@ -45,7 +56,8 @@ pub trait PostExecutionHandler {
         end_output
     }
 
-    /// Clean handler. This handle is called every time regardless
-    /// of the result of the transaction.
+    /// Clean handler.
+    ///
+    /// This handle is called every time regardless of the result of the transaction.
     fn clear(&self, context: &mut Self::Context);
 }

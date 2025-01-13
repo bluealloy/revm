@@ -1,32 +1,39 @@
-use crate::{
-    block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState as JournaledStateImpl, tx::TxEnv,
+pub mod performant_access;
+
+use crate::{block::BlockEnv, cfg::CfgEnv, journaled_state::JournaledState, tx::TxEnv};
+use bytecode::{
+    eip7702::{EIP7702_MAGIC_BYTES, EIP7702_MAGIC_HASH},
+    EOF_MAGIC_BYTES, EOF_MAGIC_HASH,
 };
-use bytecode::{Bytecode, EOF_MAGIC_BYTES, EOF_MAGIC_HASH};
 use context_interface::{
-    block::BlockSetter,
-    journaled_state::{AccountLoad, Eip7702CodeLoad},
-    result::EVMError,
-    transaction::TransactionSetter,
-    Block, BlockGetter, Cfg, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
-    Transaction, TransactionGetter,
+    block::BlockSetter, journaled_state::AccountLoad, transaction::TransactionSetter, Block,
+    BlockGetter, Cfg, CfgGetter, DatabaseGetter, ErrorGetter, Journal, JournalGetter, Transaction,
+    TransactionGetter,
 };
 use database_interface::{Database, EmptyDB};
 use derive_where::derive_where;
-use interpreter::{as_u64_saturated, Host, SStoreResult, SelfDestructResult, StateLoad};
+use interpreter::{Host, SStoreResult, SelfDestructResult, StateLoad};
 use primitives::{Address, Bytes, Log, B256, BLOCK_HASH_HISTORY, U256};
 use specification::hardfork::SpecId;
 
 /// EVM context contains data that EVM needs for execution.
-#[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, <DB as Database>::Error)]
-pub struct Context<BLOCK = BlockEnv, TX = TxEnv, CFG = CfgEnv, DB: Database = EmptyDB, CHAIN = ()> {
-    /// Transaction information.
-    pub tx: TX,
+#[derive_where(Clone, Debug; BLOCK, CFG, CHAIN, TX, DB, JOURNAL, <DB as Database>::Error)]
+pub struct Context<
+    BLOCK = BlockEnv,
+    TX = TxEnv,
+    CFG = CfgEnv,
+    DB: Database = EmptyDB,
+    JOURNAL: Journal<Database = DB> = JournaledState<DB>,
+    CHAIN = (),
+> {
     /// Block information.
     pub block: BLOCK,
+    /// Transaction information.
+    pub tx: TX,
     /// Configurations.
     pub cfg: CFG,
     /// EVM State with journaling support and database.
-    pub journaled_state: JournaledStateImpl<DB>,
+    pub journaled_state: JOURNAL,
     /// Inner context.
     pub chain: CHAIN,
     /// Error that happened during execution.
@@ -45,10 +52,17 @@ impl Context {
     }
 }
 
-impl<BLOCK: Block + Default, TX: Transaction + Default, DB: Database, CHAIN: Default>
-    Context<BLOCK, TX, CfgEnv, DB, CHAIN>
+impl<
+        BLOCK: Block + Default,
+        TX: Transaction + Default,
+        DB: Database,
+        JOURNAL: Journal<Database = DB>,
+        CHAIN: Default,
+    > Context<BLOCK, TX, CfgEnv, DB, JOURNAL, CHAIN>
 {
     pub fn new(db: DB, spec: SpecId) -> Self {
+        let mut journaled_state = JOURNAL::new(db);
+        journaled_state.set_spec_id(spec);
         Self {
             tx: TX::default(),
             block: BLOCK::default(),
@@ -56,81 +70,56 @@ impl<BLOCK: Block + Default, TX: Transaction + Default, DB: Database, CHAIN: Def
                 spec,
                 ..Default::default()
             },
-            journaled_state: JournaledStateImpl::new(SpecId::LATEST, db),
+            journaled_state,
             chain: Default::default(),
             error: Ok(()),
         }
     }
 }
-impl<BLOCK, TX, CFG, DB, CHAIN> Context<BLOCK, TX, CFG, DB, CHAIN>
+
+impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
 where
     BLOCK: Block,
     TX: Transaction,
     CFG: Cfg,
     DB: Database,
+    JOURNAL: Journal<Database = DB>,
 {
-    /// Return account code bytes and if address is cold loaded.
-    ///
-    /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
-    ///
-    /// TODO move this in Journaled state
-    #[inline]
-    pub fn code(
-        &mut self,
-        address: Address,
-    ) -> Result<Eip7702CodeLoad<Bytes>, <DB as Database>::Error> {
-        let a = self.journaled_state.load_code(address)?;
-        // SAFETY: safe to unwrap as load_code will insert code if it is empty.
-        let code = a.info.code.as_ref().unwrap();
-        if code.is_eof() {
-            return Ok(Eip7702CodeLoad::new_not_delegated(
-                EOF_MAGIC_BYTES.clone(),
-                a.is_cold,
-            ));
-        }
-
-        if let Bytecode::Eip7702(code) = code {
-            let address = code.address();
-            let is_cold = a.is_cold;
-
-            let delegated_account = self.journaled_state.load_code(address)?;
-
-            // SAFETY: safe to unwrap as load_code will insert code if it is empty.
-            let delegated_code = delegated_account.info.code.as_ref().unwrap();
-
-            let bytes = if delegated_code.is_eof() {
-                EOF_MAGIC_BYTES.clone()
-            } else {
-                delegated_code.original_bytes()
-            };
-
-            return Ok(Eip7702CodeLoad::new(
-                StateLoad::new(bytes, is_cold),
-                delegated_account.is_cold,
-            ));
-        }
-
-        Ok(Eip7702CodeLoad::new_not_delegated(
-            code.original_bytes(),
-            a.is_cold,
-        ))
-    }
-
-    /// Create a new context with a new database type.
-    pub fn with_db<ODB: Database>(self, db: ODB) -> Context<BLOCK, TX, CFG, ODB, CHAIN> {
-        let spec = self.cfg.spec().into();
+    pub fn with_new_journal<OJOURNAL: Journal<Database = DB>>(
+        self,
+        mut journal: OJOURNAL,
+    ) -> Context<BLOCK, TX, CFG, DB, OJOURNAL, CHAIN> {
+        journal.set_spec_id(self.cfg.spec().into());
         Context {
             tx: self.tx,
             block: self.block,
             cfg: self.cfg,
-            journaled_state: JournaledStateImpl::new(spec, db),
+            journaled_state: journal,
             chain: self.chain,
             error: Ok(()),
         }
     }
 
-    /// Create a new context with a new block type.
-    pub fn with_block<OB: Block>(self, block: OB) -> Context<OB, TX, CFG, DB, CHAIN> {
+    /// Creates a new context with a new database type.
+    pub fn with_db<ODB: Database>(
+        self,
+        db: ODB,
+    ) -> Context<BLOCK, TX, CFG, ODB, JournaledState<ODB>, CHAIN> {
+        let spec = self.cfg.spec().into();
+        let mut journaled_state = JournaledState::new(spec, db);
+        journaled_state.set_spec_id(spec);
+        Context {
+            tx: self.tx,
+            block: self.block,
+            cfg: self.cfg,
+            journaled_state,
+            chain: self.chain,
+            error: Ok(()),
+        }
+    }
+
+    /// Creates a new context with a new block type.
+    pub fn with_block<OB: Block>(self, block: OB) -> Context<OB, TX, CFG, DB, JOURNAL, CHAIN> {
         Context {
             tx: self.tx,
             block,
@@ -141,8 +130,11 @@ where
         }
     }
 
-    /// Create a new context with a new transaction type.
-    pub fn with_tx<OTX: Transaction>(self, tx: OTX) -> Context<BLOCK, OTX, CFG, DB, CHAIN> {
+    /// Creates a new context with a new transaction type.
+    pub fn with_tx<OTX: Transaction>(
+        self,
+        tx: OTX,
+    ) -> Context<BLOCK, OTX, CFG, DB, JOURNAL, CHAIN> {
         Context {
             tx,
             block: self.block,
@@ -153,8 +145,8 @@ where
         }
     }
 
-    /// Create a new context with a new chain type.
-    pub fn with_chain<OC>(self, chain: OC) -> Context<BLOCK, TX, CFG, DB, OC> {
+    /// Creates a new context with a new chain type.
+    pub fn with_chain<OC>(self, chain: OC) -> Context<BLOCK, TX, CFG, DB, JOURNAL, OC> {
         Context {
             tx: self.tx,
             block: self.block,
@@ -165,8 +157,11 @@ where
         }
     }
 
-    /// Create a new context with a new chain type.
-    pub fn with_cfg<OCFG: Cfg>(mut self, cfg: OCFG) -> Context<BLOCK, TX, OCFG, DB, CHAIN> {
+    /// Creates a new context with a new chain type.
+    pub fn with_cfg<OCFG: Cfg>(
+        mut self,
+        cfg: OCFG,
+    ) -> Context<BLOCK, TX, OCFG, DB, JOURNAL, CHAIN> {
         self.journaled_state.set_spec_id(cfg.spec().into());
         Context {
             tx: self.tx,
@@ -178,7 +173,7 @@ where
         }
     }
 
-    /// Modify the context configuration.
+    /// Modifies the context configuration.
     #[must_use]
     pub fn modify_cfg_chained<F>(mut self, f: F) -> Self
     where
@@ -189,7 +184,7 @@ where
         self
     }
 
-    /// Modify the context block.
+    /// Modifies the context block.
     #[must_use]
     pub fn modify_block_chained<F>(mut self, f: F) -> Self
     where
@@ -199,7 +194,7 @@ where
         self
     }
 
-    /// Modify the context transaction.
+    /// Modifies the context transaction.
     #[must_use]
     pub fn modify_tx_chained<F>(mut self, f: F) -> Self
     where
@@ -209,7 +204,7 @@ where
         self
     }
 
-    /// Modify the context chain.
+    /// Modifies the context chain.
     #[must_use]
     pub fn modify_chain_chained<F>(mut self, f: F) -> Self
     where
@@ -219,7 +214,7 @@ where
         self
     }
 
-    /// Modify the context database.
+    /// Modifies the context database.
     #[must_use]
     pub fn modify_db_chained<F>(mut self, f: F) -> Self
     where
@@ -229,17 +224,17 @@ where
         self
     }
 
-    /// Modify the context journal.
+    /// Modifies the context journal.
     #[must_use]
     pub fn modify_journal_chained<F>(mut self, f: F) -> Self
     where
-        F: FnOnce(&mut JournaledStateImpl<DB>),
+        F: FnOnce(&mut JOURNAL),
     {
         self.modify_journal(f);
         self
     }
 
-    /// Modify the context block.
+    /// Modifies the context block.
     pub fn modify_block<F>(&mut self, f: F)
     where
         F: FnOnce(&mut BLOCK),
@@ -273,86 +268,78 @@ where
     where
         F: FnOnce(&mut DB),
     {
-        f(&mut self.journaled_state.database);
+        f(self.journaled_state.db());
     }
 
     pub fn modify_journal<F>(&mut self, f: F)
     where
-        F: FnOnce(&mut JournaledStateImpl<DB>),
+        F: FnOnce(&mut JOURNAL),
     {
         f(&mut self.journaled_state);
     }
 
-    /// Get code hash of address.
+    /// Returns account code bytes and if address is cold loaded.
+    ///
+    /// In case of EOF account it will return `EOF_MAGIC` (0xEF00) as code.
+    ///
+    // TODO : Move this in Journaled state
+    #[inline]
+    pub fn code(&mut self, address: Address) -> Result<StateLoad<Bytes>, <DB as Database>::Error> {
+        let a = self.journaled_state.load_account_code(address)?;
+        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
+        let code = a.info.code.as_ref().unwrap();
+
+        let code = if code.is_eof() {
+            EOF_MAGIC_BYTES.clone()
+        } else if code.is_eip7702() {
+            EIP7702_MAGIC_BYTES.clone()
+        } else {
+            code.original_bytes()
+        };
+
+        Ok(StateLoad::new(code, a.is_cold))
+    }
+
+    /// Gets code hash of address.
     ///
     /// In case of EOF account it will return `EOF_MAGIC_HASH`
     /// (the hash of `0xEF00`).
     ///
-    /// TODO move this in Journaled state
+    // TODO : Move this in Journaled state
     #[inline]
     pub fn code_hash(
         &mut self,
         address: Address,
-    ) -> Result<Eip7702CodeLoad<B256>, <DB as Database>::Error> {
-        let acc = self.journaled_state.load_code(address)?;
+    ) -> Result<StateLoad<B256>, <DB as Database>::Error> {
+        let acc = self.journaled_state.load_account_code(address)?;
         if acc.is_empty() {
-            return Ok(Eip7702CodeLoad::new_not_delegated(B256::ZERO, acc.is_cold));
+            return Ok(StateLoad::new(B256::ZERO, acc.is_cold));
         }
-        // SAFETY: safe to unwrap as load_code will insert code if it is empty.
+        // SAFETY: Safe to unwrap as load_code will insert code if it is empty.
         let code = acc.info.code.as_ref().unwrap();
-
-        // If bytecode is EIP-7702 then we need to load the delegated account.
-        if let Bytecode::Eip7702(code) = code {
-            let address = code.address();
-            let is_cold = acc.is_cold;
-
-            let delegated_account = self.journaled_state.load_code(address)?;
-
-            let hash = if delegated_account.is_empty() {
-                B256::ZERO
-            } else if delegated_account.info.code.as_ref().unwrap().is_eof() {
-                EOF_MAGIC_HASH
-            } else {
-                delegated_account.info.code_hash
-            };
-
-            return Ok(Eip7702CodeLoad::new(
-                StateLoad::new(hash, is_cold),
-                delegated_account.is_cold,
-            ));
-        }
 
         let hash = if code.is_eof() {
             EOF_MAGIC_HASH
+        } else if code.is_eip7702() {
+            EIP7702_MAGIC_HASH
         } else {
             acc.info.code_hash
         };
 
-        Ok(Eip7702CodeLoad::new_not_delegated(hash, acc.is_cold))
+        Ok(StateLoad::new(hash, acc.is_cold))
     }
 }
 
-impl<BLOCK: Block, TX: Transaction, CFG: Cfg, DB: Database, CHAIN> Host
-    for Context<BLOCK, TX, CFG, DB, CHAIN>
+impl<BLOCK, TX, CFG, DB, JOURNAL, CHAIN> Host for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+where
+    BLOCK: Block,
+    TX: Transaction,
+    CFG: Cfg,
+    DB: Database,
+    JOURNAL: Journal<Database = DB>,
 {
-    type BLOCK = BLOCK;
-    type TX = TX;
-    type CFG = CFG;
-
-    fn tx(&self) -> &Self::TX {
-        &self.tx
-    }
-
-    fn block(&self) -> &Self::BLOCK {
-        &self.block
-    }
-
-    fn cfg(&self) -> &Self::CFG {
-        &self.cfg
-    }
-
     fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
-        let block_number = as_u64_saturated!(*self.block().number());
+        let block_number = self.block().number();
 
         let Some(diff) = block_number.checked_sub(requested_number) else {
             return Some(B256::ZERO);
@@ -366,7 +353,7 @@ impl<BLOCK: Block, TX: Transaction, CFG: Cfg, DB: Database, CHAIN> Host
         if diff <= BLOCK_HASH_HISTORY {
             return self
                 .journaled_state
-                .database
+                .db()
                 .block_hash(requested_number)
                 .map_err(|e| self.error = Err(e))
                 .ok();
@@ -375,7 +362,7 @@ impl<BLOCK: Block, TX: Transaction, CFG: Cfg, DB: Database, CHAIN> Host
         Some(B256::ZERO)
     }
 
-    fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad> {
+    fn load_account_delegated(&mut self, address: Address) -> Option<StateLoad<AccountLoad>> {
         self.journaled_state
             .load_account_delegated(address)
             .map_err(|e| self.error = Err(e))
@@ -390,11 +377,11 @@ impl<BLOCK: Block, TX: Transaction, CFG: Cfg, DB: Database, CHAIN> Host
             .ok()
     }
 
-    fn code(&mut self, address: Address) -> Option<Eip7702CodeLoad<Bytes>> {
+    fn code(&mut self, address: Address) -> Option<StateLoad<Bytes>> {
         self.code(address).map_err(|e| self.error = Err(e)).ok()
     }
 
-    fn code_hash(&mut self, address: Address) -> Option<Eip7702CodeLoad<B256>> {
+    fn code_hash(&mut self, address: Address) -> Option<StateLoad<B256>> {
         self.code_hash(address)
             .map_err(|e| self.error = Err(e))
             .ok()
@@ -443,7 +430,9 @@ impl<BLOCK: Block, TX: Transaction, CFG: Cfg, DB: Database, CHAIN> Host
     }
 }
 
-impl<BLOCK, TX, DB: Database, CFG: Cfg, CHAIN> CfgGetter for Context<BLOCK, TX, CFG, DB, CHAIN> {
+impl<BLOCK, TX, CFG: Cfg, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> CfgGetter
+    for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+{
     type Cfg = CFG;
 
     fn cfg(&self) -> &Self::Cfg {
@@ -451,36 +440,52 @@ impl<BLOCK, TX, DB: Database, CFG: Cfg, CHAIN> CfgGetter for Context<BLOCK, TX, 
     }
 }
 
-impl<BLOCK, TX, SPEC, DB: Database, CHAIN> JournalStateGetter
-    for Context<BLOCK, TX, SPEC, DB, CHAIN>
+impl<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN> JournalGetter
+    for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
+where
+    DB: Database,
+    JOURNAL: Journal<Database = DB>,
 {
-    type Journal = JournaledStateImpl<DB>;
+    type Journal = JOURNAL;
 
     fn journal(&mut self) -> &mut Self::Journal {
         &mut self.journaled_state
     }
+
+    fn journal_ref(&self) -> &Self::Journal {
+        &self.journaled_state
+    }
 }
 
-impl<BLOCK, TX, SPEC, DB: Database, CHAIN> DatabaseGetter for Context<BLOCK, TX, SPEC, DB, CHAIN> {
+impl<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN> DatabaseGetter
+    for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
+where
+    DB: Database,
+    JOURNAL: Journal<Database = DB>,
+{
     type Database = DB;
 
     fn db(&mut self) -> &mut Self::Database {
-        &mut self.journaled_state.database
+        self.journaled_state.db()
+    }
+
+    fn db_ref(&self) -> &Self::Database {
+        self.journaled_state.db_ref()
     }
 }
 
-impl<BLOCK, TX: Transaction, SPEC, DB: Database, CHAIN> ErrorGetter
-    for Context<BLOCK, TX, SPEC, DB, CHAIN>
+impl<BLOCK, TX: Transaction, SPEC, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> ErrorGetter
+    for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
 {
-    type Error = EVMError<DB::Error, TX::TransactionError>;
+    type Error = DB::Error;
 
     fn take_error(&mut self) -> Result<(), Self::Error> {
-        core::mem::replace(&mut self.error, Ok(())).map_err(EVMError::Database)
+        core::mem::replace(&mut self.error, Ok(()))
     }
 }
 
-impl<BLOCK, TX: Transaction, SPEC, DB: Database, CHAIN> TransactionGetter
-    for Context<BLOCK, TX, SPEC, DB, CHAIN>
+impl<BLOCK, TX: Transaction, SPEC, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN>
+    TransactionGetter for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
 {
     type Transaction = TX;
 
@@ -489,16 +494,16 @@ impl<BLOCK, TX: Transaction, SPEC, DB: Database, CHAIN> TransactionGetter
     }
 }
 
-impl<BLOCK, TX: Transaction, SPEC, DB: Database, CHAIN> TransactionSetter
-    for Context<BLOCK, TX, SPEC, DB, CHAIN>
+impl<BLOCK, TX: Transaction, SPEC, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN>
+    TransactionSetter for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
 {
     fn set_tx(&mut self, tx: <Self as TransactionGetter>::Transaction) {
         self.tx = tx;
     }
 }
 
-impl<BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockGetter
-    for Context<BLOCK, TX, SPEC, DB, CHAIN>
+impl<BLOCK: Block, TX, SPEC, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> BlockGetter
+    for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
 {
     type Block = BLOCK;
 
@@ -507,8 +512,8 @@ impl<BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockGetter
     }
 }
 
-impl<BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockSetter
-    for Context<BLOCK, TX, SPEC, DB, CHAIN>
+impl<BLOCK: Block, TX, SPEC, DB: Database, JOURNAL: Journal<Database = DB>, CHAIN> BlockSetter
+    for Context<BLOCK, TX, SPEC, DB, JOURNAL, CHAIN>
 {
     fn set_block(&mut self, block: <Self as BlockGetter>::Block) {
         self.block = block;

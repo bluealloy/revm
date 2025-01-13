@@ -32,7 +32,7 @@ pub fn timestamp<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, *host.block().timestamp());
+    push!(interpreter, U256::from(host.block().timestamp()));
 }
 
 pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -40,7 +40,7 @@ pub fn block_number<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, *host.block().number());
+    push!(interpreter, U256::from(host.block().number()));
 }
 
 pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -52,10 +52,10 @@ pub fn difficulty<WIRE: InterpreterTypes, H: Host + ?Sized>(
         // Unwrap is safe as this fields is checked in validation handler.
         push!(
             interpreter,
-            (*host.block().prevrandao().unwrap()).into_u256()
+            (host.block().prevrandao().unwrap()).into_u256()
         );
     } else {
-        push!(interpreter, *host.block().difficulty());
+        push!(interpreter, host.block().difficulty());
     }
 }
 
@@ -64,7 +64,7 @@ pub fn gaslimit<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, *host.block().gas_limit());
+    push!(interpreter, U256::from(host.block().gas_limit()));
 }
 
 /// EIP-3198: BASEFEE opcode
@@ -74,7 +74,7 @@ pub fn basefee<WIRE: InterpreterTypes, H: Host + ?Sized>(
 ) {
     check!(interpreter, LONDON);
     gas!(interpreter, gas::BASE);
-    push!(interpreter, *host.block().basefee());
+    push!(interpreter, U256::from(host.block().basefee()));
 }
 
 /// EIP-7516: BLOBBASEFEE opcode

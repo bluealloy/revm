@@ -5,7 +5,7 @@ use core::ops::Deref;
 use primitives::Bytes;
 use std::{sync::Arc, vec::Vec};
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct LegacyRawBytecode(pub Bytes);
 
@@ -55,16 +55,16 @@ pub fn analyze_legacy(bytetecode: &[u8]) -> JumpTable {
     while iterator < end {
         let opcode = unsafe { *iterator };
         if opcode::JUMPDEST == opcode {
-            // SAFETY: jumps are max length of the code
+            // SAFETY: Jumps are max length of the code
             unsafe { jumps.set_unchecked(iterator.offset_from(start) as usize, true) }
             iterator = unsafe { iterator.offset(1) };
         } else {
             let push_offset = opcode.wrapping_sub(opcode::PUSH1);
             if push_offset < 32 {
-                // SAFETY: iterator access range is checked in the while loop
+                // SAFETY: Iterator access range is checked in the while loop
                 iterator = unsafe { iterator.offset((push_offset + 2) as isize) };
             } else {
-                // SAFETY: iterator access range is checked in the while loop
+                // SAFETY: Iterator access range is checked in the while loop
                 iterator = unsafe { iterator.offset(1) };
             }
         }

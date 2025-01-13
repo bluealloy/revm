@@ -1,0 +1,1922 @@
+{
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_RETURN-create_type_CREATE-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x1a54d0aadbb9b80691bc431ecfd441e55eba81069b43704b719e5061b96054a6",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x355aafb44c68d6619f2b664117be20275d5acd530ba90d05a3e417124e612fb5",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_RETURN-create_type_CREATE-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x7904960098b13c08145c03567c98e057c4b5116e5cdd757111728166e6b85eec",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x4831977b7c7af70bf6c4d1c7b4e28cc1fd51547655d4b5b4a07500cfc1a5b9cd",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_RETURN-create_type_CREATE-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xc071ed3cb99c87282aac1e6c5438153a64499de5a5ac5a6d8be69fbeb94e7e81",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x2547fe7dae101a31b66ce80c965fafcb41e1735405a5266dd84419cfeb663786",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_RETURN-create_type_CREATE2-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xd929ba68cbcab563d0338d028bd34a31a861ced3d6bce70ffd34fb270264039f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x2d607f13598cc009b57d5133f2ec0caca583e06429f4d69e1749fb8d8af1d564",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_RETURN-create_type_CREATE2-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x42985d5e358c2bfa6e606f1495155d66b343a3e1a377b3edaf24d68ad3ae020e",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xf50158d597588d7bb939ca34889c67b6c624548bd1a16d8debb4768151530b62",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_RETURN-create_type_CREATE2-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x397f5d17194b9e712f0e75bf788441210ec3a97dc8200815255e59125784df75",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xa1ffd386e859895d4a9bb16ec5277618080a9c7e06699ab9fdeb7bad69673dc6",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_REVERT-create_type_CREATE-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x35426b082d0874bccc127139c7ff689131db13c71c150655bb589eaf03ba8c4d",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x31d0ee0ce52c0438ce21ebf9496fd11eebc5bb5f809f571c553e788a0b97827b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_REVERT-create_type_CREATE-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xf8bad7f5bad4a75eacef4a66e6223e012db948c03d1ddecaef62e0f45ba74dd3",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xee7ade860785e37b3fb6891d15c1dc6c9bc5082910da73eed4e2dba1ae6c7255",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_REVERT-create_type_CREATE-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x02f8894b50e6086419d94459cbc433c971c059c802f2f9f13bcd80bc3ad0594c",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x96b962a410f47f6cae245438d1acf9c4aa0dfdc180c2a86d4724720abf54c92b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_REVERT-create_type_CREATE2-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xe7abd14645dc3d664a8ae42383c673fe976ca5f5a78146a618d1f0317fc2a300",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x13c21c43f278f80b8c731aa5acf482c5b1c1c70d1e4a02bd1765edcb22697618",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_REVERT-create_type_CREATE2-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x5cd7928ed5841d66546067c995deae72d948f5b5855514a21073c279a52416fc",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x3f091b65d90b560c19675ece32b3ad35b6df09a010d8459b0519b0d572cc0ed5",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_RETURN-return_type_REVERT-create_type_CREATE2-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000f3"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x1902c6e5d863a121826edbb440e30c088625dbddeddca1a53c84d0725ab35be1",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000f31ba0b18b2c00887d99865fccef71c1d5c645c04aa66649dad96ec3be2e8a614715c8a058301ce11202ce58d0ca161acc7aa9c23279aec53566de5470116d5dcb7713a3",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x9ebbe14d4381f300cf8599ac7c005531637a7d8f8191955668d90841f9aa255d",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_RETURN-create_type_CREATE-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xef6c5265f258eb7b2e88130d9c3bd496ba0f6b181cc567499f15f813eb73b16b",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x2b4bed971e1f3729dc8834caa2d91c89a6aa6806d0b5e7197e2d68ccb0280984",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_RETURN-create_type_CREATE-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x63cca0edf65a844582a68df1ec8459425335c69884b6dc7bca80e467a1dc8280",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xde6887399d70b4406f2a5939a3be7ce6bda1cf6336198660222752927a025d8e",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_RETURN-create_type_CREATE-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xab1af80c85f18a5302726aa2eacd03fd5f36dee9af3c2f79842df43a77336e97",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x8217646d6edfe1e134f4e14bd879f49e8973432819c8af3d56d07a589cc7ecc0",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_RETURN-create_type_CREATE2-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x28bc620c6d972d4aa59fc4eb388093d10d0b0abd1e482885aa3c63b2869ddcc5",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x0afdd0ac6714d618cf50571bb3078186abf16a541486ba756cb1cef803dba874",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_RETURN-create_type_CREATE2-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xecc0487d0176b8b56955268ce33c8e1694850b2bee31e4cf7d361000b6d1177f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x7756fb023ec7169166a501da76a692e1c8ef00966a6a5c09dab5b29723d5fc3b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_RETURN-create_type_CREATE2-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000f3",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xa361d02d1e94fd7ac99f830a86ec4c5324b57d1f88874d3950a81137793c0782",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xfb4d6943bdd85c26809a2308c4927deab156d43b86737005216ff40a3ecfa939",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_REVERT-create_type_CREATE-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e61020051600555610220516006556023600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xa354552e0b7b86e0a7c752c1c38750d97f488b6d89a8070a66e2605ecd5ea8ec",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xa098490ab612c1d4acc20759e71cad59179f3550dfc3834f0cf6e7f6356b1ba1",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_REVERT-create_type_CREATE-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e61020051600555610220516006556020600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xf3122d0771445bc41ac1c033e1efb27281d15488c9459a4443bdf4dd85c2db70",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xcb2c915bbd57da272f140b0ce20246945ec7372c628af300eb6145d071469b8b",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_REVERT-create_type_CREATE-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e61020051600555610220516006556000600020600255366101006000f03d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x1579f556acb4c8199dfed97b99425694be4c5de9baeab7932f716af651b5cbfd",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x0dfdb8ff2a6db8eb4adabe3242ddaf64af8a646f3fc9c06a1550000f646b0ebd",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_REVERT-create_type_CREATE2-call_return_size_35]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260236000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260236000600060006000611000640900000000f13d600055602360006102003e610200516005556102205160065560236000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0xaf386e46f26fa9b82500ce5df39b3c99a807fbc281cdb2d9f091731521a325af",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x16750d3c4ee31bb897719780271966d93774c3c1d88bff5072df8a1e78626e77",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_REVERT-create_type_CREATE2-call_return_size_32]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260206000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260206000600060006000611000640900000000f13d600055602060006102003e610200516005556102205160065560206000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x93c7d402cca9706106bb37a36586b08ff066ab24646e79425392af45ff0ee76f",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0xccc2ee722a833037b5db81bbfad6260a673edb6bbf9c15527fd9c35b3f2cb405",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    },
+    "tests/constantinople/eip1014_create2/test_create_returndata.py::test_create2_return_data[fork_Prague-state_test-return_type_in_create_REVERT-return_type_REVERT-create_type_CREATE2-call_return_size_0]": {
+        "env": {
+            "currentCoinbase": "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentGasLimit": "0x016345785d8a0000",
+            "currentNumber": "0x01",
+            "currentTimestamp": "0x03e8",
+            "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "currentDifficulty": "0x00",
+            "currentBaseFee": "0x07",
+            "currentExcessBlobGas": "0x00"
+        },
+        "pre": {
+            "0x0000000000000000000000000000000000001000": {
+                "nonce": "0x01",
+                "balance": "0x00",
+                "code": "0x7f112233445566778899101112131415161718192021222324252627282930313260005263ffffffff60205260006000fd",
+                "storage": {}
+            },
+            "0x0000000000000000000000000000000000001100": {
+                "nonce": "0x01",
+                "balance": "0x05f5e100",
+                "code": "0x5b6000356101005260006000600060006000611000640900000000f13d600055600060006102003e610200516005556102205160065560006000206002556001366101006000f53d6001553d60006103003e610300516007553d61030020600355600051600855600160045500",
+                "storage": {
+                    "0x00": "0xff",
+                    "0x01": "0xff",
+                    "0x02": "0xff",
+                    "0x03": "0xff",
+                    "0x05": "0xff",
+                    "0x06": "0xff",
+                    "0x08": "0xff"
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+                "nonce": "0x00",
+                "balance": "0x3635c9adc5dea00000",
+                "code": "0x",
+                "storage": {}
+            }
+        },
+        "transaction": {
+            "nonce": "0x00",
+            "gasPrice": "0x0a",
+            "gasLimit": [
+                "0x0a00000000"
+            ],
+            "to": "0x0000000000000000000000000000000000001100",
+            "value": [
+                "0x00"
+            ],
+            "data": [
+                "0x62fffafb60005260206000fd"
+            ],
+            "sender": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+        },
+        "post": {
+            "Prague": [
+                {
+                    "hash": "0x2b5a839f4b24576e7d7480b554b6b8e428174bac60949da98ee7062ddf9dcf15",
+                    "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+                    "txbytes": "0xf86e800a850a00000000940000000000000000000000000000000000001100808c62fffafb60005260206000fd1ba0d5764a5013fba69a1cac6e0187fb05a3725c54e11374ecd3fcaa384556fabaf1a06224e0480acb187df1529b15e1477ff283bcd675715cc850b5892fafc4ce7a5a",
+                    "indexes": {
+                        "data": 0,
+                        "gas": 0,
+                        "value": 0
+                    }
+                }
+            ]
+        },
+        "_info": {
+            "hash": "0x7da7ea46c9879c5ffd42530a5513ebbc222a2b729b26fa1be291bbb7573a8dc1",
+            "comment": "`execution-spec-tests` generated test",
+            "filling-transition-tool": "ethereum-spec-evm-resolver 0.0.1",
+            "description": "Test function documentation:\n\n    Validate that create2 return data does not interfere with previously existing memory",
+            "url": "https://github.com/ethereum/execution-spec-tests/blob/pectra-devnet-5@v1.0.0/tests/constantinople/eip1014_create2/test_create_returndata.py#L19",
+            "fixture_format": "state_test",
+            "reference-spec": "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1014.md",
+            "reference-spec-version": "0a3c1015a07958523bb3ef48c2f230c9ba9605d9"
+        }
+    }
+}

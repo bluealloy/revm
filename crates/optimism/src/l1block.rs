@@ -1,6 +1,7 @@
-use crate::{fast_lz::flz_compress_len, OpSpecId};
+use crate::{transaction::estimate_tx_compressed_size, OpSpecId};
 use core::ops::Mul;
 use revm::{
+    context_interface::Journal,
     database_interface::Database,
     primitives::{address, Address, U256},
     specification::hardfork::SpecId,
@@ -41,16 +42,6 @@ pub const BASE_FEE_RECIPIENT: Address = address!("420000000000000000000000000000
 
 /// The address of the L1Block contract.
 pub const L1_BLOCK_CONTRACT: Address = address!("4200000000000000000000000000000000000015");
-
-/// <https://github.com/ethereum-optimism/op-geth/blob/647c346e2bef36219cc7b47d76b1cb87e7ca29e4/core/types/rollup_cost.go#L79>
-const L1_COST_FASTLZ_COEF: u64 = 836_500;
-
-/// <https://github.com/ethereum-optimism/op-geth/blob/647c346e2bef36219cc7b47d76b1cb87e7ca29e4/core/types/rollup_cost.go#L78>
-/// Inverted to be used with `saturating_sub`.
-const L1_COST_INTERCEPT: u64 = 42_585_600;
-
-/// <https://github.com/ethereum-optimism/op-geth/blob/647c346e2bef36219cc7b47d76b1cb87e7ca29e4/core/types/rollup_cost.go#82>
-const MIN_TX_SIZE_SCALED: u64 = 100 * 1_000_000;
 
 /// L1 block info
 ///
@@ -114,8 +105,8 @@ impl L1BlockInfo {
                     .as_ref(),
             );
 
-            // Check if the L1 fee scalars are empty. If so, we use the Bedrock cost function. The L1 fee overhead is
-            // only necessary if `empty_scalars` is true, as it was deprecated in Ecotone.
+            // Check if the L1 fee scalars are empty. If so, we use the Bedrock cost function.
+            // The L1 fee overhead is only necessary if `empty_scalars` is true, as it was deprecated in Ecotone.
             let empty_scalars = l1_blob_base_fee.is_zero()
                 && l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
                     == EMPTY_SCALARS;
@@ -170,14 +161,7 @@ impl L1BlockInfo {
     // This value is computed based on the following formula:
     // max(minTransactionSize, intercept + fastlzCoef*fastlzSize)
     fn tx_estimated_size_fjord(&self, input: &[u8]) -> U256 {
-        let fastlz_size = flz_compress_len(input) as u64;
-
-        U256::from(
-            fastlz_size
-                .saturating_mul(L1_COST_FASTLZ_COEF)
-                .saturating_sub(L1_COST_INTERCEPT)
-                .max(MIN_TX_SIZE_SCALED),
-        )
+        U256::from(estimate_tx_compressed_size(input))
     }
 
     /// Calculate the gas cost of a transaction based on L1 block data posted on L2, depending on the [OpSpec] passed.
@@ -265,8 +249,8 @@ pub trait L1BlockInfoGetter {
     fn l1_block_info_mut(&mut self) -> &mut L1BlockInfo;
 }
 
-impl<BLOCK, TX, SPEC, DB: Database> L1BlockInfoGetter
-    for Context<BLOCK, TX, SPEC, DB, L1BlockInfo>
+impl<BLOCK, TX, SPEC, DB: Database, JOURNAL: Journal<Database = DB>> L1BlockInfoGetter
+    for Context<BLOCK, TX, SPEC, DB, JOURNAL, L1BlockInfo>
 {
     fn l1_block_info(&self) -> &L1BlockInfo {
         &self.chain
@@ -502,14 +486,14 @@ mod tests {
             l1_base_fee_scalar: U256::from(5227),
             l1_blob_base_fee_scalar: Some(U256::from(1014213)),
             l1_blob_base_fee: Some(U256::from(1)),
-            ..Default::default() // l1 fee overhead (l1 gas used) deprecated since Fjord
+            ..Default::default() // L1 fee overhead (l1 gas used) deprecated since Fjord
         };
 
-        // second tx in OP mainnet Fjord block 124665056
+        // Second tx in OP mainnet Fjord block 124665056
         // <https://optimistic.etherscan.io/tx/0x1059e8004daff32caa1f1b1ef97fe3a07a8cf40508f5b835b66d9420d87c4a4a>
         const TX: &[u8] = &hex!("02f904940a8303fba78401d6d2798401db2b6d830493e0943e6f4f7866654c18f536170780344aa8772950b680b904246a761202000000000000000000000000087000a300de7200382b55d40045000000e5d60e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003a0000000000000000000000000000000000000000000000000000000000000022482ad56cb0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000120000000000000000000000000dc6ff44d5d932cbd77b52e5612ba0529dc6226f1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000044095ea7b300000000000000000000000021c4928109acb0659a88ae5329b5374a3024694c0000000000000000000000000000000000000000000000049b9ca9a6943400000000000000000000000000000000000000000000000000000000000000000000000000000000000021c4928109acb0659a88ae5329b5374a3024694c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000024b6b55f250000000000000000000000000000000000000000000000049b9ca9a694340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000415ec214a3950bea839a7e6fbb0ba1540ac2076acd50820e2d5ef83d0902cdffb24a47aff7de5190290769c4f0a9c6fabf63012986a0d590b1b571547a8c7050ea1b00000000000000000000000000000000000000000000000000000000000000c080a06db770e6e25a617fe9652f0958bd9bd6e49281a53036906386ed39ec48eadf63a07f47cf51a4a40b4494cf26efc686709a9b03939e20ee27e59682f5faa536667e");
 
-        // l1 gas used for tx and l1 fee for tx, from OP mainnet block scanner
+        // L1 gas used for tx and L1 fee for tx, from OP mainnet block scanner
         // https://optimistic.etherscan.io/tx/0x1059e8004daff32caa1f1b1ef97fe3a07a8cf40508f5b835b66d9420d87c4a4a
         let expected_data_gas = U256::from(4471);
         let expected_l1_fee = U256::from_be_bytes(hex!(

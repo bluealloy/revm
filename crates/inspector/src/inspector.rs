@@ -1,16 +1,13 @@
+use crate::{
+    inspector_context::InspectorContext,
+    inspector_instruction::InspectorInstructionProvider,
+    journal::{JournalExt, JournalExtGetter},
+};
 use auto_impl::auto_impl;
-use core::mem::MaybeUninit;
-use derive_where::derive_where;
 use revm::{
-    bytecode::opcode::OpCode,
-    context::{block::BlockEnv, cfg::CfgEnv, tx::TxEnv, Cfg},
     context_interface::{
-        block::BlockSetter,
-        journaled_state::{AccountLoad, Eip7702CodeLoad},
-        result::EVMError,
-        transaction::TransactionSetter,
-        Block, BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalStateGetter,
-        JournalStateGetterDBError, Transaction, TransactionGetter,
+        BlockGetter, CfgGetter, ErrorGetter, Journal, JournalDBError, JournalGetter,
+        TransactionGetter,
     },
     database_interface::{Database, EmptyDB},
     handler::{
@@ -19,37 +16,26 @@ use revm::{
     },
     handler_interface::{Frame, FrameOrResultGen, PrecompileProvider},
     interpreter::{
-        instructions::host::{log, selfdestruct},
-        interpreter::{EthInterpreter, InstructionProvider},
+        interpreter::EthInterpreter,
         interpreter_types::{Jumps, LoopControl},
-        table::{self, CustomInstruction},
+        table::CustomInstruction,
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
-        Instruction, InstructionResult, Interpreter, InterpreterTypes, SStoreResult,
-        SelfDestructResult, StateLoad,
+        Instruction, InstructionResult, Interpreter, InterpreterResult, InterpreterTypes,
     },
     precompile::PrecompileErrors,
-    primitives::{Address, Bytes, Log, B256, U256},
-    specification::hardfork::SpecId,
-    Context, Error, Evm, JournalEntry, JournaledState,
+    primitives::{Address, Log, U256},
+    Context, Error, Evm,
 };
-use std::{rc::Rc, vec::Vec};
 
 /// EVM [Interpreter] callbacks.
 #[auto_impl(&mut, Box)]
-pub trait Inspector {
-    type Context;
-    type InterpreterTypes: InterpreterTypes;
-
+pub trait Inspector<CTX, INTR: InterpreterTypes> {
     /// Called before the interpreter is initialized.
     ///
     /// If `interp.instruction_result` is set to anything other than [revm::interpreter::InstructionResult::Continue] then the execution of the interpreter
     /// is skipped.
     #[inline]
-    fn initialize_interp(
-        &mut self,
-        interp: &mut Interpreter<Self::InterpreterTypes>,
-        context: &mut Self::Context,
-    ) {
+    fn initialize_interp(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         let _ = interp;
         let _ = context;
     }
@@ -63,11 +49,7 @@ pub trait Inspector {
     ///
     /// To get the current opcode, use `interp.current_opcode()`.
     #[inline]
-    fn step(
-        &mut self,
-        interp: &mut Interpreter<Self::InterpreterTypes>,
-        context: &mut Self::Context,
-    ) {
+    fn step(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         let _ = interp;
         let _ = context;
     }
@@ -77,23 +59,14 @@ pub trait Inspector {
     /// Setting `interp.instruction_result` to anything other than [revm::interpreter::InstructionResult::Continue] alters the execution
     /// of the interpreter.
     #[inline]
-    fn step_end(
-        &mut self,
-        interp: &mut Interpreter<Self::InterpreterTypes>,
-        context: &mut Self::Context,
-    ) {
+    fn step_end(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX) {
         let _ = interp;
         let _ = context;
     }
 
     /// Called when a log is emitted.
     #[inline]
-    fn log(
-        &mut self,
-        interp: &mut Interpreter<Self::InterpreterTypes>,
-        context: &mut Self::Context,
-        log: &Log,
-    ) {
+    fn log(&mut self, interp: &mut Interpreter<INTR>, context: &mut CTX, log: &Log) {
         let _ = interp;
         let _ = context;
         let _ = log;
@@ -103,11 +76,7 @@ pub trait Inspector {
     ///
     /// InstructionResulting anything other than [revm::interpreter::InstructionResult::Continue] overrides the result of the call.
     #[inline]
-    fn call(
-        &mut self,
-        context: &mut Self::Context,
-        inputs: &mut CallInputs,
-    ) -> Option<CallOutcome> {
+    fn call(&mut self, context: &mut CTX, inputs: &mut CallInputs) -> Option<CallOutcome> {
         let _ = context;
         let _ = inputs;
         None
@@ -119,12 +88,7 @@ pub trait Inspector {
     ///
     /// This allows the inspector to modify the given `result` before returning it.
     #[inline]
-    fn call_end(
-        &mut self,
-        context: &mut Self::Context,
-        inputs: &CallInputs,
-        outcome: &mut CallOutcome,
-    ) {
+    fn call_end(&mut self, context: &mut CTX, inputs: &CallInputs, outcome: &mut CallOutcome) {
         let _ = context;
         let _ = inputs;
         let _ = outcome;
@@ -136,11 +100,7 @@ pub trait Inspector {
     ///
     /// If this returns `None` then the creation proceeds as normal.
     #[inline]
-    fn create(
-        &mut self,
-        context: &mut Self::Context,
-        inputs: &mut CreateInputs,
-    ) -> Option<CreateOutcome> {
+    fn create(&mut self, context: &mut CTX, inputs: &mut CreateInputs) -> Option<CreateOutcome> {
         let _ = context;
         let _ = inputs;
         None
@@ -153,7 +113,7 @@ pub trait Inspector {
     #[inline]
     fn create_end(
         &mut self,
-        context: &mut Self::Context,
+        context: &mut CTX,
         inputs: &CreateInputs,
         outcome: &mut CreateOutcome,
     ) {
@@ -167,7 +127,7 @@ pub trait Inspector {
     /// This can happen from create TX or from EOFCREATE opcode.
     fn eofcreate(
         &mut self,
-        context: &mut Self::Context,
+        context: &mut CTX,
         inputs: &mut EOFCreateInputs,
     ) -> Option<CreateOutcome> {
         let _ = context;
@@ -178,7 +138,7 @@ pub trait Inspector {
     /// Called when eof creating has ended.
     fn eofcreate_end(
         &mut self,
-        context: &mut Self::Context,
+        context: &mut CTX,
         inputs: &EOFCreateInputs,
         outcome: &mut CreateOutcome,
     ) {
@@ -197,10 +157,9 @@ pub trait Inspector {
 }
 
 /// Provides access to an `Inspector` instance.
-pub trait GetInspector {
-    type Inspector: Inspector;
+pub trait GetInspector<CTX, INTR: InterpreterTypes> {
     /// Returns the associated `Inspector`.
-    fn get_inspector(&mut self) -> &mut Self::Inspector;
+    fn get_inspector(&mut self) -> &mut impl Inspector<CTX, INTR>;
 }
 
 pub trait InspectorCtx {
@@ -215,288 +174,20 @@ pub trait InspectorCtx {
     fn inspector_log(&mut self, interp: &mut Interpreter<Self::IT>, log: &Log);
 }
 
-impl<INSP: Inspector> GetInspector for INSP {
-    type Inspector = INSP;
+impl<CTX, INTR: InterpreterTypes, INSP: Inspector<CTX, INTR>> GetInspector<CTX, INTR> for INSP {
     #[inline]
-    fn get_inspector(&mut self) -> &mut Self::Inspector {
+    fn get_inspector(&mut self) -> &mut impl Inspector<CTX, INTR> {
         self
     }
 }
 
-/// EVM context contains data that EVM needs for execution.
-#[derive_where(Clone, Debug; INSP, BLOCK, SPEC, CHAIN, TX, DB, <DB as Database>::Error)]
-pub struct InspectorContext<
-    INSP,
-    BLOCK = BlockEnv,
-    TX = TxEnv,
-    SPEC = SpecId,
-    DB: Database = EmptyDB,
-    CHAIN = (),
-> {
-    pub inner: Context<BLOCK, TX, SPEC, DB, CHAIN>,
-    pub inspector: INSP,
-    pub frame_input_stack: Vec<FrameInput>,
-}
-
-impl<INSP, BLOCK: Block, TX: Transaction, CFG: Cfg, DB: Database, CHAIN>
-    InspectorContext<INSP, BLOCK, TX, CFG, DB, CHAIN>
+impl<BLOCK, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB> + JournalExt, CHAIN>
+    JournalExtGetter for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
 {
-    pub fn new(inner: Context<BLOCK, TX, CFG, DB, CHAIN>, inspector: INSP) -> Self {
-        Self {
-            inner,
-            inspector,
-            frame_input_stack: Vec::new(),
-        }
-    }
-}
-
-impl<INSP: GetInspector, BLOCK: Block, TX: Transaction, CFG: Cfg, DB: Database, CHAIN> Host
-    for InspectorContext<INSP, BLOCK, TX, CFG, DB, CHAIN>
-{
-    type BLOCK = BLOCK;
-    type TX = TX;
-    type CFG = CFG;
-
-    fn tx(&self) -> &Self::TX {
-        &self.inner.tx
-    }
-
-    fn block(&self) -> &Self::BLOCK {
-        &self.inner.block
-    }
-
-    fn cfg(&self) -> &Self::CFG {
-        &self.inner.cfg
-    }
-
-    fn block_hash(&mut self, requested_number: u64) -> Option<B256> {
-        self.inner.block_hash(requested_number)
-    }
-
-    fn load_account_delegated(&mut self, address: Address) -> Option<AccountLoad> {
-        self.inner.load_account_delegated(address)
-    }
-
-    fn balance(&mut self, address: Address) -> Option<StateLoad<U256>> {
-        self.inner.balance(address)
-    }
-
-    fn code(&mut self, address: Address) -> Option<Eip7702CodeLoad<Bytes>> {
-        // TODO remove duplicated function name.
-        <Context<_, _, _, _, _> as Host>::code(&mut self.inner, address)
-    }
-
-    fn code_hash(&mut self, address: Address) -> Option<Eip7702CodeLoad<B256>> {
-        <Context<_, _, _, _, _> as Host>::code_hash(&mut self.inner, address)
-    }
-
-    fn sload(&mut self, address: Address, index: U256) -> Option<StateLoad<U256>> {
-        self.inner.sload(address, index)
-    }
-
-    fn sstore(
-        &mut self,
-        address: Address,
-        index: U256,
-        value: U256,
-    ) -> Option<StateLoad<SStoreResult>> {
-        self.inner.sstore(address, index, value)
-    }
-
-    fn tload(&mut self, address: Address, index: U256) -> U256 {
-        self.inner.tload(address, index)
-    }
-
-    fn tstore(&mut self, address: Address, index: U256, value: U256) {
-        self.inner.tstore(address, index, value)
-    }
-
-    fn log(&mut self, log: Log) {
-        self.inner.log(log);
-    }
-
-    fn selfdestruct(
-        &mut self,
-        address: Address,
-        target: Address,
-    ) -> Option<StateLoad<SelfDestructResult>> {
-        self.inner.selfdestruct(address, target)
-    }
-}
-
-impl<INSP, BLOCK, TX, SPEC, DB: Database, CHAIN> InspectorCtx
-    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
-where
-    INSP: GetInspector<
-        Inspector: Inspector<
-            Context = Context<BLOCK, TX, SPEC, DB, CHAIN>,
-            InterpreterTypes = EthInterpreter,
-        >,
-    >,
-{
-    type IT = EthInterpreter<()>;
-
-    fn step(&mut self, interp: &mut Interpreter<Self::IT>) {
-        self.inspector.get_inspector().step(interp, &mut self.inner);
-    }
-
-    fn step_end(&mut self, interp: &mut Interpreter<Self::IT>) {
-        self.inspector
-            .get_inspector()
-            .step_end(interp, &mut self.inner);
-    }
-
-    fn initialize_interp(&mut self, interp: &mut Interpreter<Self::IT>) {
-        self.inspector
-            .get_inspector()
-            .initialize_interp(interp, &mut self.inner);
-    }
-    fn inspector_log(&mut self, interp: &mut Interpreter<Self::IT>, log: &Log) {
-        self.inspector
-            .get_inspector()
-            .log(interp, &mut self.inner, log);
-    }
-
-    fn frame_start(&mut self, frame_input: &mut FrameInput) -> Option<FrameResult> {
-        let insp = self.inspector.get_inspector();
-        let context = &mut self.inner;
-        match frame_input {
-            FrameInput::Call(i) => {
-                if let Some(output) = insp.call(context, i) {
-                    return Some(FrameResult::Call(output));
-                }
-            }
-            FrameInput::Create(i) => {
-                if let Some(output) = insp.create(context, i) {
-                    return Some(FrameResult::Create(output));
-                }
-            }
-            FrameInput::EOFCreate(i) => {
-                if let Some(output) = insp.eofcreate(context, i) {
-                    return Some(FrameResult::EOFCreate(output));
-                }
-            }
-        }
-        self.frame_input_stack.push(frame_input.clone());
-        None
-    }
-
-    fn frame_end(&mut self, frame_output: &mut FrameResult) {
-        let insp = self.inspector.get_inspector();
-        let context = &mut self.inner;
-        let frame_input = self.frame_input_stack.pop().expect("Frame pushed");
-        match frame_output {
-            FrameResult::Call(outcome) => {
-                let FrameInput::Call(i) = frame_input else {
-                    panic!("FrameInput::Call expected");
-                };
-                insp.call_end(context, &i, outcome);
-            }
-            FrameResult::Create(outcome) => {
-                let FrameInput::Create(i) = frame_input else {
-                    panic!("FrameInput::Create expected");
-                };
-                insp.create_end(context, &i, outcome);
-            }
-            FrameResult::EOFCreate(outcome) => {
-                let FrameInput::EOFCreate(i) = frame_input else {
-                    panic!("FrameInput::EofCreate expected");
-                };
-                insp.eofcreate_end(context, &i, outcome);
-            }
-        }
-    }
-
-    fn inspector_selfdestruct(&mut self, contract: Address, target: Address, value: U256) {
-        self.inspector
-            .get_inspector()
-            .selfdestruct(contract, target, value)
-    }
-}
-
-impl<INSP, BLOCK, TX, DB: Database, CFG: Cfg, CHAIN> CfgGetter
-    for InspectorContext<INSP, BLOCK, TX, CFG, DB, CHAIN>
-{
-    type Cfg = CFG;
-
-    fn cfg(&self) -> &Self::Cfg {
-        &self.inner.cfg
-    }
-}
-
-impl<INSP, BLOCK, TX, SPEC, DB: Database, CHAIN> JournalStateGetter
-    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
-{
-    type Journal = JournaledState<DB>;
-
-    fn journal(&mut self) -> &mut Self::Journal {
-        &mut self.inner.journaled_state
-    }
-}
-
-impl<INSP, BLOCK, TX, SPEC, DB: Database, CHAIN> DatabaseGetter
-    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
-{
-    type Database = DB;
-
-    fn db(&mut self) -> &mut Self::Database {
-        &mut self.inner.journaled_state.database
-    }
-}
-
-impl<INSP, BLOCK, TX: Transaction, SPEC, DB: Database, CHAIN> ErrorGetter
-    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
-{
-    type Error = EVMError<DB::Error, TX::TransactionError>;
-
-    fn take_error(&mut self) -> Result<(), Self::Error> {
-        core::mem::replace(&mut self.inner.error, Ok(())).map_err(EVMError::Database)
-    }
-}
-
-impl<INSP, BLOCK, TX: Transaction, SPEC, DB: Database, CHAIN> TransactionGetter
-    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
-{
-    type Transaction = TX;
-
-    fn tx(&self) -> &Self::Transaction {
-        &self.inner.tx
-    }
-}
-
-impl<INSP, BLOCK, TX: Transaction, SPEC, DB: Database, CHAIN> TransactionSetter
-    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
-{
-    fn set_tx(&mut self, tx: <Self as TransactionGetter>::Transaction) {
-        self.inner.tx = tx;
-    }
-}
-
-impl<INSP, BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockGetter
-    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
-{
-    type Block = BLOCK;
-
-    fn block(&self) -> &Self::Block {
-        &self.inner.block
-    }
-}
-
-impl<INSP, BLOCK: Block, TX, SPEC, DB: Database, CHAIN> BlockSetter
-    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
-{
-    fn set_block(&mut self, block: <Self as BlockGetter>::Block) {
-        self.inner.block = block;
-    }
-}
-
-impl<INSP, BLOCK: Block, TX, SPEC, DB: Database, CHAIN> JournalExtGetter
-    for InspectorContext<INSP, BLOCK, TX, SPEC, DB, CHAIN>
-{
-    type JournalExt = JournaledState<DB>;
+    type JournalExt = JOURNAL;
 
     fn journal_ext(&self) -> &Self::JournalExt {
-        &self.inner.journaled_state
+        &self.journaled_state
     }
 }
 
@@ -513,7 +204,7 @@ where
     type Host = HOST;
 
     fn exec(&self, interpreter: &mut Interpreter<Self::Wire>, host: &mut Self::Host) {
-        // SAFETY: as the PC was already incremented we need to subtract 1 to preserve the
+        // SAFETY: As the PC was already incremented we need to subtract 1 to preserve the
         // old Inspector behavior.
         interpreter.bytecode.relative_jump(-1);
 
@@ -538,153 +229,11 @@ where
     }
 }
 
-pub struct InspectorInstructionProvider<WIRE: InterpreterTypes, HOST> {
-    instruction_table: Rc<[InspectorInstruction<WIRE, HOST>; 256]>,
-}
-
-impl<WIRE, HOST> Clone for InspectorInstructionProvider<WIRE, HOST>
-where
-    WIRE: InterpreterTypes,
-{
-    fn clone(&self) -> Self {
-        Self {
-            instruction_table: self.instruction_table.clone(),
-        }
-    }
-}
-
-pub trait JournalExt {
-    fn logs(&self) -> &[Log];
-
-    fn last_journal(&self) -> &[JournalEntry];
-}
-
-impl<DB: Database> JournalExt for JournaledState<DB> {
-    fn logs(&self) -> &[Log] {
-        &self.logs
-    }
-
-    fn last_journal(&self) -> &[JournalEntry] {
-        self.journal.last().expect("Journal is never empty")
-    }
-}
-
-#[auto_impl(&, &mut, Box, Arc)]
-pub trait JournalExtGetter {
-    type JournalExt: JournalExt;
-
-    fn journal_ext(&self) -> &Self::JournalExt;
-}
-
-impl<WIRE, HOST> InstructionProvider for InspectorInstructionProvider<WIRE, HOST>
-where
-    WIRE: InterpreterTypes,
-    HOST: Host + JournalExtGetter + JournalStateGetter + InspectorCtx<IT = WIRE>,
-{
-    type WIRE = WIRE;
-    type Host = HOST;
-
-    fn new(_context: &mut Self::Host) -> Self {
-        let main_table = table::make_instruction_table::<WIRE, HOST>();
-        let mut table: [MaybeUninit<InspectorInstruction<WIRE, HOST>>; 256] =
-            unsafe { MaybeUninit::uninit().assume_init() };
-
-        for (i, element) in table.iter_mut().enumerate() {
-            let function = InspectorInstruction {
-                instruction: main_table[i],
-            };
-            *element = MaybeUninit::new(function);
-        }
-
-        let mut table = unsafe {
-            core::mem::transmute::<
-                [MaybeUninit<InspectorInstruction<WIRE, HOST>>; 256],
-                [InspectorInstruction<WIRE, HOST>; 256],
-            >(table)
-        };
-
-        // inspector log wrapper
-
-        fn inspector_log<CTX: Host + JournalExtGetter + InspectorCtx>(
-            interpreter: &mut Interpreter<<CTX as InspectorCtx>::IT>,
-            context: &mut CTX,
-            prev: Instruction<<CTX as InspectorCtx>::IT, CTX>,
-        ) {
-            prev(interpreter, context);
-
-            if interpreter.control.instruction_result() == InstructionResult::Continue {
-                let last_log = context.journal_ext().logs().last().unwrap().clone();
-                context.inspector_log(interpreter, &last_log);
-            }
-        }
-
-        /* LOG and Selfdestruct instructions */
-        table[OpCode::LOG0.as_usize()] = InspectorInstruction {
-            instruction: |interp, context| {
-                inspector_log(interp, context, log::<0, HOST>);
-            },
-        };
-        table[OpCode::LOG1.as_usize()] = InspectorInstruction {
-            instruction: |interp, context| {
-                inspector_log(interp, context, log::<1, HOST>);
-            },
-        };
-        table[OpCode::LOG2.as_usize()] = InspectorInstruction {
-            instruction: |interp, context| {
-                inspector_log(interp, context, log::<2, HOST>);
-            },
-        };
-        table[OpCode::LOG3.as_usize()] = InspectorInstruction {
-            instruction: |interp, context| {
-                inspector_log(interp, context, log::<3, HOST>);
-            },
-        };
-        table[OpCode::LOG4.as_usize()] = InspectorInstruction {
-            instruction: |interp, context| {
-                inspector_log(interp, context, log::<4, HOST>);
-            },
-        };
-
-        table[OpCode::SELFDESTRUCT.as_usize()] = InspectorInstruction {
-            instruction: |interp, context| {
-                selfdestruct::<Self::WIRE, HOST>(interp, context);
-                if interp.control.instruction_result() == InstructionResult::SelfDestruct {
-                    match context.journal_ext().last_journal().last() {
-                        Some(JournalEntry::AccountDestroyed {
-                            address,
-                            target,
-                            had_balance,
-                            ..
-                        }) => {
-                            context.inspector_selfdestruct(*address, *target, *had_balance);
-                        }
-                        Some(JournalEntry::BalanceTransfer {
-                            from, to, balance, ..
-                        }) => {
-                            context.inspector_selfdestruct(*from, *to, *balance);
-                        }
-                        _ => {}
-                    }
-                }
-            },
-        };
-
-        Self {
-            instruction_table: Rc::new(table),
-        }
-    }
-
-    fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256] {
-        self.instruction_table.as_ref()
-    }
-}
-
 pub struct InspectorEthFrame<CTX, ERROR, PRECOMPILE>
 where
     CTX: Host,
 {
-    /// TODO for now hardcode the InstructionProvider. But in future this should be configurable
-    /// as generic parameter.
+    // TODO : For now, hardcode the InstructionProvider. But in future this should be configurable as generic parameter.
     pub eth_frame: EthFrame<
         CTX,
         ERROR,
@@ -697,15 +246,15 @@ where
 impl<CTX, ERROR, PRECOMPILE> Frame for InspectorEthFrame<CTX, ERROR, PRECOMPILE>
 where
     CTX: TransactionGetter
-        + ErrorGetter<Error = ERROR>
+        + ErrorGetter<Error = JournalDBError<CTX>>
         + BlockGetter
-        + JournalStateGetter
+        + JournalGetter
         + CfgGetter
         + JournalExtGetter
         + Host
         + InspectorCtx<IT = EthInterpreter>,
-    ERROR: From<JournalStateGetterDBError<CTX>> + From<PrecompileErrors>,
-    PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR>,
+    ERROR: From<JournalDBError<CTX>> + From<PrecompileErrors>,
+    PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR, Output = InterpreterResult>,
 {
     type Context = CTX;
     type Error = ERROR;
@@ -713,7 +262,7 @@ where
     type FrameResult = FrameResult;
 
     fn init_first(
-        context: &mut Self::Context,
+        context: &mut CTX,
         mut frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
         if let Some(output) = context.frame_start(&mut frame_input) {
@@ -731,13 +280,20 @@ where
             }
             _ => (),
         }
-
         ret
+    }
+
+    fn final_return(
+        context: &mut Self::Context,
+        result: &mut Self::FrameResult,
+    ) -> Result<(), Self::Error> {
+        context.frame_end(result);
+        Ok(())
     }
 
     fn init(
         &self,
-        context: &mut Self::Context,
+        context: &mut CTX,
         mut frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
         if let Some(output) = context.frame_start(&mut frame_input) {
@@ -751,22 +307,19 @@ where
         if let Ok(FrameOrResultGen::Frame(frame)) = &mut ret {
             context.initialize_interp(&mut frame.eth_frame.interpreter);
         }
-
-        // TODO handle last frame_end. MAKE a separate function for `last_return_result`.
-
         ret
     }
 
     fn run(
         &mut self,
-        context: &mut Self::Context,
+        context: &mut CTX,
     ) -> Result<FrameOrResultGen<Self::FrameInit, Self::FrameResult>, Self::Error> {
         self.eth_frame.run(context)
     }
 
     fn return_result(
         &mut self,
-        context: &mut Self::Context,
+        context: &mut CTX,
         mut result: Self::FrameResult,
     ) -> Result<(), Self::Error> {
         context.frame_end(&mut result);
@@ -774,18 +327,17 @@ where
     }
 }
 
-pub type InspCtxType<INSP, DB, BLOCK = BlockEnv, TX = TxEnv, CFG = CfgEnv> =
-    InspectorContext<INSP, BLOCK, TX, CFG, DB, ()>;
+pub type InspCtxType<INSP, DB, CTX> = InspectorContext<INSP, DB, CTX>;
 
-pub type InspectorMainEvm<DB, INSP, BLOCK = BlockEnv, TX = TxEnv, CFG = CfgEnv> = Evm<
+pub type InspectorMainEvm<INSP, CTX, DB = EmptyDB> = Evm<
     Error<DB>,
-    InspCtxType<INSP, DB, BLOCK, TX, CFG>,
+    InspCtxType<INSP, DB, CTX>,
     EthHandler<
-        InspCtxType<INSP, DB, BLOCK, TX, CFG>,
+        InspCtxType<INSP, DB, CTX>,
         Error<DB>,
-        EthValidation<InspCtxType<INSP, DB, BLOCK, TX, CFG>, Error<DB>>,
-        EthPreExecution<InspCtxType<INSP, DB, BLOCK, TX, CFG>, Error<DB>>,
-        InspectorEthExecution<InspCtxType<INSP, DB, BLOCK, TX, CFG>, Error<DB>>,
+        EthValidation<InspCtxType<INSP, DB, CTX>, Error<DB>>,
+        EthPreExecution<InspCtxType<INSP, DB, CTX>, Error<DB>>,
+        InspectorEthExecution<InspCtxType<INSP, DB, CTX>, Error<DB>>,
     >,
 >;
 

@@ -13,8 +13,6 @@ use crate::{
     interpreter_types::*, table::CustomInstruction, Gas, Host, Instruction, InstructionResult,
     InterpreterAction,
 };
-use bytecode::Bytecode;
-
 use core::cell::RefCell;
 pub use ext_bytecode::ExtBytecode;
 pub use input::InputsImpl;
@@ -46,7 +44,7 @@ impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
     /// Create new interpreter
     pub fn new(
         memory: Rc<RefCell<MG>>,
-        bytecode: Bytecode,
+        bytecode: ExtBytecode,
         inputs: InputsImpl,
         is_static: bool,
         is_eof_init: bool,
@@ -59,8 +57,9 @@ impl<EXT: Default, MG: MemoryGetter> Interpreter<EthInterpreter<EXT, MG>> {
             is_eof: bytecode.is_eof(),
             is_eof_init,
         };
+
         Self {
-            bytecode: ExtBytecode::new(bytecode),
+            bytecode,
             stack: Stack::new(),
             return_data: ReturnDataImpl::default(),
             memory,
@@ -127,7 +126,7 @@ where
         }
     }
 
-    // TODO make impl a associate type. With this associate type we can implement
+    // TODO : Make impl a associate type. With this associate type we can implement.
     // InspectorInstructionProvider over generic type.
     fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256] {
         self.instruction_table.as_ref()
@@ -166,7 +165,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         // it will do noop and just stop execution of this contract
         self.bytecode.relative_jump(1);
 
-        // execute instruction.
+        // Execute instruction.
         instruction_table[opcode as usize].exec(self, host)
     }
 
@@ -182,7 +181,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         self.control
             .set_next_action(InterpreterAction::None, InstructionResult::Continue);
 
-        // main loop
+        // Main loop
         while self.control.instruction_result().is_continue() {
             self.step(instruction_table, host);
         }
@@ -196,7 +195,7 @@ impl<IW: InterpreterTypes> Interpreter<IW> {
         InterpreterAction::Return {
             result: InterpreterResult {
                 result: self.control.instruction_result(),
-                // return empty bytecode
+                // Return empty bytecode
                 output: Bytes::new(),
                 gas: *self.control.gas(),
             },
@@ -289,8 +288,6 @@ mod tests {
     use super::*;
     use bytecode::Bytecode;
     use primitives::{Address, Bytes, U256};
-    use specification::hardfork::SpecId;
-    use std::{cell::RefCell, rc::Rc};
 
     #[test]
     #[cfg(feature = "serde")]
@@ -298,7 +295,7 @@ mod tests {
         let bytecode = Bytecode::new_raw(Bytes::from(&[0x60, 0x00, 0x60, 0x00, 0x01][..]));
         let interpreter = Interpreter::<EthInterpreter>::new(
             Rc::new(RefCell::new(SharedMemory::new())),
-            bytecode,
+            ExtBytecode::new(bytecode),
             InputsImpl {
                 target_address: Address::ZERO,
                 caller_address: Address::ZERO,

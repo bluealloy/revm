@@ -1,7 +1,7 @@
 [package]
 name = "revm-primitives"
-description = "Revm primitives structure"
-version = "9.0.1"
+description = "Revm primitives types"
+version = "15.1.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -22,7 +22,7 @@ rust_2018_idioms = "deny"
 all = "warn"
 
 [dependencies]
-alloy-primitives = { version = "0.8.5", default-features = false, features = [
+alloy-primitives = { version = "0.8", default-features = false, features = [
     "rlp",
     "map",
 ] }

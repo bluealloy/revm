@@ -4,7 +4,7 @@ use crate::{
     interpreter_types::{InterpreterTypes, LoopControl, RuntimeFlag, StackTrait},
     Host,
 };
-use context_interface::{transaction::Eip4844Tx, Block, Transaction, TransactionType};
+use context_interface::{Block, Transaction, TransactionType};
 use primitives::U256;
 
 pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -12,8 +12,11 @@ pub fn gasprice<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    let basefee = *host.block().basefee();
-    push!(interpreter, host.tx().effective_gas_price(basefee));
+    let basefee = host.block().basefee();
+    push!(
+        interpreter,
+        U256::from(host.tx().effective_gas_price(basefee as u128))
+    );
 }
 
 pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(
@@ -21,10 +24,7 @@ pub fn origin<WIRE: InterpreterTypes, H: Host + ?Sized>(
     host: &mut H,
 ) {
     gas!(interpreter, gas::BASE);
-    push!(
-        interpreter,
-        host.tx().common_fields().caller().into_word().into()
-    );
+    push!(interpreter, host.tx().caller().into_word().into());
 }
 
 // EIP-4844: Shard Blob Transactions
@@ -37,9 +37,8 @@ pub fn blob_hash<WIRE: InterpreterTypes, H: Host + ?Sized>(
     popn_top!([], index, interpreter);
     let i = as_usize_saturated!(index);
     let tx = &host.tx();
-    *index = if tx.tx_type().into() == TransactionType::Eip4844 {
-        tx.eip4844()
-            .blob_versioned_hashes()
+    *index = if tx.tx_type() == TransactionType::Eip4844 {
+        tx.blob_versioned_hashes()
             .get(i)
             .cloned()
             .map(|b| U256::from_be_bytes(*b))

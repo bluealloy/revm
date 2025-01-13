@@ -19,15 +19,19 @@ pub enum OpSpecId {
     ECOTONE,
     FJORD,
     GRANITE,
+    HOLOCENE,
+    ISTHMUS,
 }
 
 impl OpSpecId {
-    /// Converts the `OpSpec` into a `SpecId`.
+    /// Converts the [`OpSpec`] into a [`SpecId`].
     pub const fn into_eth_spec(self) -> SpecId {
         match self {
             Self::BEDROCK | Self::REGOLITH => SpecId::MERGE,
             Self::CANYON => SpecId::SHANGHAI,
-            Self::ECOTONE | Self::FJORD | Self::GRANITE => SpecId::CANCUN,
+            Self::ECOTONE | Self::FJORD | Self::GRANITE | Self::HOLOCENE | Self::ISTHMUS => {
+                SpecId::CANCUN
+            }
         }
     }
 
@@ -73,11 +77,13 @@ impl From<OpSpecId> for &'static str {
             OpSpecId::ECOTONE => name::ECOTONE,
             OpSpecId::FJORD => name::FJORD,
             OpSpecId::GRANITE => name::GRANITE,
+            OpSpecId::HOLOCENE => name::HOLOCENE,
+            OpSpecId::ISTHMUS => name::ISTHMUS,
         }
     }
 }
 
-/// String identifiers for Optimism hardforks.
+/// String identifiers for Optimism hardforks
 pub mod name {
     pub const BEDROCK: &str = "Bedrock";
     pub const REGOLITH: &str = "Regolith";
@@ -85,6 +91,8 @@ pub mod name {
     pub const ECOTONE: &str = "Ecotone";
     pub const FJORD: &str = "Fjord";
     pub const GRANITE: &str = "Granite";
+    pub const HOLOCENE: &str = "Holocene";
+    pub const ISTHMUS: &str = "Isthmus";
 }
 
 impl OpSpec {
@@ -99,7 +107,7 @@ impl OpSpec {
         }
     }
 
-    /// Converts the `OpSpec` into a `SpecId`.
+    /// Converts the [`OpSpec`] into a [`SpecId`].
     pub const fn into_eth_spec(self) -> SpecId {
         match self {
             OpSpec::Eth(spec) => spec,

@@ -1,8 +1,8 @@
-use interpreter::InterpreterResult;
 use primitives::{Address, Bytes};
 
 pub trait PrecompileProvider: Clone {
     type Context;
+    type Output;
     type Error;
 
     /// Create a new precompile.
@@ -15,7 +15,7 @@ pub trait PrecompileProvider: Clone {
         address: &Address,
         bytes: &Bytes,
         gas_limit: u64,
-    ) -> Result<Option<InterpreterResult>, Self::Error>;
+    ) -> Result<Option<Self::Output>, Self::Error>;
 
     /// Get the warm addresses.
     fn warm_addresses(&self) -> impl Iterator<Item = Address>;

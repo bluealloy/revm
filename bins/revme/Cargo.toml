@@ -1,7 +1,7 @@
 [package]
 name = "revme"
 description = "Rust Ethereum Virtual Machine Executable"
-version = "0.10.1"
+version = "2.3.0"
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
@@ -36,3 +36,10 @@ thiserror = "1.0"
 triehash = "0.8"
 walkdir = "2.5"
 k256 = { version = "0.13.3", features = ["ecdsa"] }
+
+[dev-dependencies]
+criterion.workspace = true
+
+[[bench]]
+name = "evm"
+harness = false
