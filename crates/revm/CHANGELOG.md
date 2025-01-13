@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [19.3.0](https://github.com/bluealloy/revm/compare/revm-v19.2.0...revm-v19.3.0) - 2025-01-13
+
+### Added
+
+- *(EIP-7623)* adjuct floor gas check order ([#1990](https://github.com/bluealloy/revm/pull/1990))
+
 ## [19.2.0](https://github.com/bluealloy/revm/compare/revm-v19.1.0...revm-v19.2.0) - 2025-01-06
 
 ### Fixed
