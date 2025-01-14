@@ -74,8 +74,10 @@ where
         context: &Self::Context,
     ) -> Result<InitialAndFloorGas, Self::Error> {
         let spec = context.cfg().spec().into();
-        validate_initial_tx_gas::<&Self::Context, InvalidTransaction>(context, spec)
-            .map_err(Into::into)
+        let initial_and_floor_gas =
+            validate_initial_tx_gas(context.tx(), spec).map_err(InvalidTransaction::from)?;
+
+        Ok(initial_and_floor_gas)
     }
 }
 
@@ -333,16 +335,13 @@ where
 }
 
 /// Validate initial transaction gas.
-pub fn validate_initial_tx_gas<CTX, Error>(
-    context: CTX,
+pub fn validate_initial_tx_gas<TransactionT>(
+    tx: TransactionT,
     spec_id: SpecId,
-) -> Result<InitialAndFloorGas, Error>
+) -> Result<InitialAndFloorGas, InvalidTransaction>
 where
-    CTX: TransactionGetter + CfgGetter,
-    Error: From<InvalidTransaction>,
+    TransactionT: Transaction,
 {
-    let spec = context.cfg().spec().into();
-    let tx = context.tx();
     let (accounts, storages) = tx.access_list_nums().unwrap_or_default();
 
     let gas = gas::calculate_initial_tx_gas(
@@ -356,13 +355,13 @@ where
 
     // Additional check to see if limit is big enough to cover initial gas.
     if gas.initial_gas > tx.gas_limit() {
-        return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
+        return Err(InvalidTransaction::CallGasCostMoreThanGasLimit);
     }
 
     // EIP-7623: Increase calldata cost
     // floor gas should be less than gas limit.
-    if spec.is_enabled_in(SpecId::PRAGUE) && gas.floor_gas > tx.gas_limit() {
-        return Err(InvalidTransaction::GasFloorMoreThanGasLimit.into());
+    if spec_id.is_enabled_in(SpecId::PRAGUE) && gas.floor_gas > tx.gas_limit() {
+        return Err(InvalidTransaction::GasFloorMoreThanGasLimit);
     };
 
     Ok(gas)
