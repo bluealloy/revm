@@ -434,7 +434,7 @@ pub fn execute_test_suite(
                                 .with_tx(&tx)
                                 .with_cfg(&cfg)
                                 .with_db(&mut state),
-                            TracerEip3155::new(Box::new(stderr())),
+                            TracerEip3155::new(Box::new(stderr())).without_summary(),
                         ),
                         inspector_handler(),
                     );
@@ -510,7 +510,7 @@ pub fn execute_test_suite(
                             .with_block(&block)
                             .with_tx(&tx)
                             .with_cfg(&cfg),
-                        TracerEip3155::new(Box::new(stderr())),
+                        TracerEip3155::new(Box::new(stderr())).without_summary(),
                     ),
                     inspector_handler(),
                 );
