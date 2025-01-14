@@ -482,10 +482,10 @@ pub fn execute_test_suite(
                     (e, res)
                 };
 
-                // Print only once or
-                // if we are already in trace mode, just return error
+                // Print only once or if we are already in trace mode, just return error
+                // If trace is true that print_json_outcome will be also true.
                 static FAILED: AtomicBool = AtomicBool::new(false);
-                if trace || FAILED.swap(true, Ordering::SeqCst) {
+                if print_json_outcome || FAILED.swap(true, Ordering::SeqCst) {
                     return Err(TestError {
                         name: name.clone(),
                         path: path.clone(),
