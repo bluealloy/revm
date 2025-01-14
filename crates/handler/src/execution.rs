@@ -1,3 +1,5 @@
+use crate::frame::FrameContext;
+
 use super::{frame_data::FrameResult, EthFrame, EthPrecompileProvider};
 use bytecode::EOF_MAGIC_BYTES;
 use context_interface::{
@@ -18,13 +20,7 @@ use std::boxed::Box;
 pub struct EthExecution<
     CTX,
     ERROR,
-    FRAME = EthFrame<
-        CTX,
-        ERROR,
-        EthInterpreter<()>,
-        EthPrecompileProvider<CTX, ERROR>,
-        EthInstructionProvider<EthInterpreter<()>, CTX>,
-    >,
+    FRAME = EthFrame<CTX, ERROR, EthInterpreter<()>, FrameContext<CTX, EthInterpreter<()>, ERROR>>,
 > {
     _phantom: core::marker::PhantomData<(CTX, FRAME, ERROR)>,
 }
@@ -44,6 +40,7 @@ where
     fn init_first_frame(
         &mut self,
         context: &mut Self::Context,
+        frame_context: &mut <Self::Frame as FrameTrait>::FrameContext,
         gas_limit: u64,
     ) -> Result<FrameOrFrameResult<Self::Frame>, Self::Error> {
         // Make new frame action.
@@ -84,12 +81,13 @@ where
                 }
             }
         };
-        FRAME::init_first(context, init_frame)
+        FRAME::init_first(context, frame_context, init_frame)
     }
 
     fn last_frame_result(
         &self,
         context: &mut Self::Context,
+        _frame_context: &mut <Self::Frame as FrameTrait>::FrameContext,
         mut frame_result: <Self::Frame as FrameTrait>::FrameResult,
     ) -> Result<Self::ExecResult, Self::Error> {
         let instruction_result = frame_result.interpreter_result().result;

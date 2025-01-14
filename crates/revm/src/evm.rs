@@ -13,12 +13,15 @@ use context_interface::{
     Transaction, TransactionGetter,
 };
 use database_interface::{Database, DatabaseCommit};
-use handler::{EthHandler, FrameResult};
+use handler::{EthHandler, EthPrecompileProvider, FrameContext, FrameResult};
 use handler_interface::{
     ExecutionHandler, Frame, FrameOrResultGen, Handler, InitialAndFloorGas, PostExecutionHandler,
-    PreExecutionHandler, ValidationHandler,
+    PreExecutionHandler, PrecompileProvider, ValidationHandler,
 };
-use interpreter::Host;
+use interpreter::{
+    interpreter::{EthInstructionProvider, EthInterpreter, InstructionProvider},
+    Host,
+};
 use precompile::PrecompileErrors;
 use primitives::Log;
 use state::EvmState;
@@ -67,7 +70,10 @@ where
         Context = CTX,
         Error = ERROR,
         ExecResult = FrameResult,
-        Frame: Frame<FrameResult = FrameResult>,
+        Frame: Frame<
+            FrameResult = FrameResult,
+            FrameContext = FrameContext<CTX, EthInterpreter, ERROR>,
+        >,
     >,
     POSTEXEC: PostExecutionHandler<
         Context = CTX,
@@ -115,7 +121,10 @@ where
         Context = CTX,
         Error = ERROR,
         ExecResult = FrameResult,
-        Frame: Frame<FrameResult = FrameResult>,
+        Frame: Frame<
+            FrameResult = FrameResult,
+            FrameContext = FrameContext<CTX, EthInterpreter, ERROR>,
+        >,
     >,
     POSTEXEC: PostExecutionHandler<Context = CTX, Error = ERROR, ExecResult = FrameResult>,
 {
@@ -174,7 +183,10 @@ where
         Context = CTX,
         Error = ERROR,
         ExecResult = FrameResult,
-        Frame: Frame<FrameResult = FrameResult>,
+        Frame: Frame<
+            FrameResult = FrameResult,
+            FrameContext = FrameContext<CTX, EthInterpreter, ERROR>,
+        >,
     >,
     POSTEXEC: PostExecutionHandler<Context = CTX, Error = ERROR, ExecResult = FrameResult>,
 {
@@ -271,14 +283,19 @@ where
         //let instructions = self.handler.take_instruction_table();
         let exec = self.handler.execution();
 
+        let mut frame_context = FrameContext {
+            precompiles: EthPrecompileProvider::new(context),
+            instructions: EthInstructionProvider::new(context),
+        };
+
         // Create first frame action
-        let first_frame = exec.init_first_frame(context, gas_limit)?;
+        let first_frame = exec.init_first_frame(context, &mut frame_context, gas_limit)?;
         let frame_result = match first_frame {
-            FrameOrResultGen::Frame(frame) => exec.run(context, frame)?,
+            FrameOrResultGen::Frame(frame) => exec.run(context, &mut frame_context, frame)?,
             FrameOrResultGen::Result(result) => result,
         };
 
-        let mut exec_result = exec.last_frame_result(context, frame_result)?;
+        let mut exec_result = exec.last_frame_result(context, &mut frame_context, frame_result)?;
 
         let post_exec = self.handler.post_execution();
         // Check gas floor

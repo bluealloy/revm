@@ -23,3 +23,9 @@ pub trait PrecompileProvider: Clone {
     /// Check if the address is a precompile.
     fn contains(&self, address: &Address) -> bool;
 }
+
+pub trait PrecompileProviderGetter {
+    type PrecompileProvider: PrecompileProvider;
+
+    fn precompiles(&mut self) -> &mut Self::PrecompileProvider;
+}

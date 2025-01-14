@@ -19,6 +19,6 @@ pub use frame::Frame;
 pub use handler::Handler;
 pub use post_execution::PostExecutionHandler;
 pub use pre_execution::PreExecutionHandler;
-pub use precompile_provider::PrecompileProvider;
+pub use precompile_provider::{PrecompileProvider, PrecompileProviderGetter};
 pub use util::FrameOrResultGen;
 pub use validation::{InitialAndFloorGas, ValidationHandler};

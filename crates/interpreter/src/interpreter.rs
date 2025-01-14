@@ -97,6 +97,12 @@ pub trait InstructionProvider: Clone {
     fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256];
 }
 
+pub trait InstructionProviderGetter {
+    type InstructionProvider: InstructionProvider;
+
+    fn instructions(&mut self) -> &mut Self::InstructionProvider;
+}
+
 pub struct EthInstructionProvider<WIRE: InterpreterTypes, HOST> {
     instruction_table: Rc<[Instruction<WIRE, HOST>; 256]>,
 }

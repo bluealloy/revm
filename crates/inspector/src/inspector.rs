@@ -14,9 +14,9 @@ use revm::{
         EthExecution, EthFrame, EthHandler, EthPostExecution, EthPreExecution,
         EthPrecompileProvider, EthValidation, FrameResult,
     },
-    handler_interface::{Frame, FrameOrResultGen, PrecompileProvider},
+    handler_interface::{Frame, FrameOrResultGen, PrecompileProvider, PrecompileProviderGetter},
     interpreter::{
-        interpreter::EthInterpreter,
+        interpreter::{EthInterpreter, InstructionProviderGetter},
         interpreter_types::{Jumps, LoopControl},
         table::CustomInstruction,
         CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
@@ -229,21 +229,15 @@ where
     }
 }
 
-pub struct InspectorEthFrame<CTX, ERROR, PRECOMPILE>
+pub struct InspectorEthFrame<CTX, ERROR, FRAME_CTX>
 where
     CTX: Host,
 {
     // TODO : For now, hardcode the InstructionProvider. But in future this should be configurable as generic parameter.
-    pub eth_frame: EthFrame<
-        CTX,
-        ERROR,
-        EthInterpreter<()>,
-        PRECOMPILE,
-        InspectorInstructionProvider<EthInterpreter<()>, CTX>,
-    >,
+    pub eth_frame: EthFrame<CTX, ERROR, EthInterpreter<()>, FRAME_CTX>,
 }
 
-impl<CTX, ERROR, PRECOMPILE> Frame for InspectorEthFrame<CTX, ERROR, PRECOMPILE>
+impl<CTX, ERROR, FRAME_CTX> Frame for InspectorEthFrame<CTX, ERROR, FRAME_CTX>
 where
     CTX: TransactionGetter
         + ErrorGetter<Error = JournalDBError<CTX>>
@@ -254,21 +248,31 @@ where
         + Host
         + InspectorCtx<IT = EthInterpreter>,
     ERROR: From<JournalDBError<CTX>> + From<PrecompileErrors>,
-    PRECOMPILE: PrecompileProvider<Context = CTX, Error = ERROR, Output = InterpreterResult>,
+    FRAME_CTX: PrecompileProviderGetter<
+            PrecompileProvider: PrecompileProvider<
+                Context = CTX,
+                Error = ERROR,
+                Output = InterpreterResult,
+            >,
+        > + InstructionProviderGetter<
+            InstructionProvider = InspectorInstructionProvider<EthInterpreter, CTX>,
+        >,
 {
     type Context = CTX;
     type Error = ERROR;
     type FrameInit = FrameInput;
     type FrameResult = FrameResult;
+    type FrameContext = FRAME_CTX;
 
     fn init_first(
         context: &mut CTX,
+        frame_context: &mut Self::FrameContext,
         mut frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
         if let Some(output) = context.frame_start(&mut frame_input) {
             return Ok(FrameOrResultGen::Result(output));
         }
-        let mut ret = EthFrame::init_first(context, frame_input)
+        let mut ret = EthFrame::init_first(context, frame_context, frame_input)
             .map(|frame| frame.map_frame(|eth_frame| Self { eth_frame }));
 
         match &mut ret {
@@ -285,6 +289,7 @@ where
 
     fn final_return(
         context: &mut Self::Context,
+        frame_context: &mut Self::FrameContext,
         result: &mut Self::FrameResult,
     ) -> Result<(), Self::Error> {
         context.frame_end(result);
@@ -294,6 +299,7 @@ where
     fn init(
         &self,
         context: &mut CTX,
+        frame_context: &mut Self::FrameContext,
         mut frame_input: Self::FrameInit,
     ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
         if let Some(output) = context.frame_start(&mut frame_input) {
@@ -301,7 +307,7 @@ where
         }
         let mut ret = self
             .eth_frame
-            .init(context, frame_input)
+            .init(context, frame_context, frame_input)
             .map(|frame| frame.map_frame(|eth_frame| Self { eth_frame }));
 
         if let Ok(FrameOrResultGen::Frame(frame)) = &mut ret {
@@ -313,17 +319,19 @@ where
     fn run(
         &mut self,
         context: &mut CTX,
+        frame_context: &mut Self::FrameContext,
     ) -> Result<FrameOrResultGen<Self::FrameInit, Self::FrameResult>, Self::Error> {
-        self.eth_frame.run(context)
+        self.eth_frame.run(context, frame_context)
     }
 
     fn return_result(
         &mut self,
         context: &mut CTX,
+        frame_context: &mut Self::FrameContext,
         mut result: Self::FrameResult,
     ) -> Result<(), Self::Error> {
         context.frame_end(&mut result);
-        self.eth_frame.return_result(context, result)
+        self.eth_frame.return_result(context, frame_context, result)
     }
 }
 
@@ -342,12 +350,11 @@ pub type InspectorMainEvm<INSP, CTX, DB = EmptyDB> = Evm<
 >;
 
 /// Function to create Inspector Handler.
-pub fn inspector_handler<CTX: Host, ERROR, PRECOMPILE>() -> InspectorHandler<CTX, ERROR, PRECOMPILE>
-{
+pub fn inspector_handler<CTX: Host, ERROR>() -> InspectorHandler<CTX, ERROR> {
     EthHandler::new(
         EthValidation::new(),
         EthPreExecution::new(),
-        EthExecution::<_, _, InspectorEthFrame<_, _, PRECOMPILE>>::new(),
+        EthExecution::<_, _, InspectorEthFrame<_, _, _>>::new(),
         EthPostExecution::new(),
     )
 }
