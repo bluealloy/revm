@@ -32,7 +32,6 @@ state.workspace = true
 specification.workspace = true
 bytecode.workspace = true
 handler-interface.workspace = true
-auto_impl.workspace = true
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [

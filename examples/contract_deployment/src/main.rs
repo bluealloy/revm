@@ -8,9 +8,8 @@ use revm::{
     context::Context,
     context_interface::result::{ExecutionResult, Output},
     database_interface::EmptyDB,
-    handler::EthHandler,
     primitives::{hex, Bytes, TxKind, U256},
-    EvmCommit, MainEvm,
+    transact_main, transact_main_commit,
 };
 
 /// Load number parameter and set to storage with slot 0
@@ -48,18 +47,15 @@ const RUNTIME_BYTECODE: &[u8] = &[opcode::PUSH0, opcode::SLOAD];
 fn main() -> anyhow::Result<()> {
     let param = 0x42;
     let bytecode: Bytes = [INIT_CODE, RET, RUNTIME_BYTECODE, &[param]].concat().into();
-    let mut evm = MainEvm::new(
-        Context::builder()
-            .modify_tx_chained(|tx| {
-                tx.kind = TxKind::Create;
-                tx.data = bytecode.clone();
-            })
-            .with_db(CacheDB::<EmptyDB>::default()),
-        EthHandler::default(),
-    );
+    let mut ctx = Context::builder()
+        .modify_tx_chained(|tx| {
+            tx.kind = TxKind::Create;
+            tx.data = bytecode.clone();
+        })
+        .with_db(CacheDB::<EmptyDB>::default());
 
     println!("bytecode: {}", hex::encode(bytecode));
-    let ref_tx = evm.exec_commit()?;
+    let ref_tx = transact_main_commit(&mut ctx)?;
     let ExecutionResult::Success {
         output: Output::Create(_, Some(address)),
         ..
@@ -69,13 +65,13 @@ fn main() -> anyhow::Result<()> {
     };
 
     println!("Created contract at {address}");
-    evm.context.modify_tx(|tx| {
+    ctx.modify_tx(|tx| {
         tx.kind = TxKind::Call(address);
         tx.data = Default::default();
         tx.nonce += 1;
     });
 
-    let result = evm.transact()?;
+    let result = transact_main(&mut ctx)?;
     let Some(storage0) = result
         .state
         .get(&address)

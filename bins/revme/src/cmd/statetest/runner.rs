@@ -16,10 +16,9 @@ use revm::{
         Cfg,
     },
     database_interface::EmptyDB,
-    handler::EthHandler,
     primitives::{keccak256, Bytes, TxKind, B256},
     specification::{eip4844::TARGET_BLOB_GAS_PER_BLOCK_CANCUN, hardfork::SpecId},
-    Context, EvmCommit, MainEvm,
+    transact_main_commit, Context,
 };
 use serde_json::json;
 use statetest_types::{SpecName, Test, TestSuite};
@@ -415,14 +414,11 @@ pub fn execute_test_suite(
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let mut evm = MainEvm::new(
-                    Context::builder()
-                        .with_block(&block)
-                        .with_tx(&tx)
-                        .with_cfg(&cfg)
-                        .with_db(&mut state),
-                    EthHandler::default(),
-                );
+                let mut ctx = Context::builder()
+                    .with_block(&block)
+                    .with_tx(&tx)
+                    .with_cfg(&cfg)
+                    .with_db(&mut state);
 
                 // Do the deed
                 let (e, exec_result) = if trace {
@@ -457,11 +453,11 @@ pub fn execute_test_suite(
                     (e, res)
                 } else {
                     let timer = Instant::now();
-                    let res = evm.exec_commit();
+                    let res = transact_main_commit(&mut ctx);
                     *elapsed.lock().unwrap() += timer.elapsed();
 
                     let spec = cfg.spec();
-                    let db = evm.context.journaled_state.database;
+                    let db = ctx.journaled_state.database;
                     // Dump state and traces if test failed
                     let output = check_evm_execution(
                         &test,

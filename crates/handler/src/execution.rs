@@ -1,5 +1,3 @@
-use crate::frame::FrameContext;
-
 use super::{frame_data::FrameResult, EthFrame, EthPrecompileProvider};
 use bytecode::EOF_MAGIC_BYTES;
 use context_interface::{

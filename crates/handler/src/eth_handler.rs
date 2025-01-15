@@ -3,7 +3,6 @@ use crate::{
     EthPostExecutionContext, EthPreExecution, EthPreExecutionContext, EthPrecompileProvider,
     EthValidation, EthValidationContext, FrameContext, FrameResult,
 };
-use auto_impl::auto_impl;
 use context::Context;
 use context_interface::{
     result::{HaltReason, InvalidHeader, InvalidTransaction, ResultAndState},
@@ -12,16 +11,13 @@ use context_interface::{
 };
 use handler_interface::{
     util::FrameOrFrameResult, ExecutionHandler, Frame, FrameOrResultGen, InitialAndFloorGas,
-    PostExecutionHandler, PreExecutionHandler, PrecompileProvider, PrecompileProviderGetter,
-    ValidationHandler,
+    PostExecutionHandler, PreExecutionHandler, PrecompileProvider, ValidationHandler,
 };
 use interpreter::{
-    interpreter::{
-        EthInstructionProvider, EthInterpreter, InstructionProvider, InstructionProviderGetter,
-    },
+    interpreter::{EthInstructionProvider, EthInterpreter, InstructionProvider},
     FrameInput, Host,
 };
-use precompile::{PrecompileErrors, PrecompileOutput};
+use precompile::PrecompileErrors;
 use primitives::Log;
 use specification::hardfork::SpecId;
 use state::EvmState;
@@ -145,7 +141,11 @@ where
     type Precompiles = PRECOMPILES;
     type Instructions = INSTRUCTIONS;
 
-    fn frame_context(&self, context: &mut Self::Context) -> <Self::Frame as Frame>::FrameContext {
+    fn frame_context(
+        &mut self,
+        context: &mut Self::Context,
+    ) -> <Self::Frame as Frame>::FrameContext {
+        self.precompiles.set_spec(context.cfg().spec().into());
         self.crete_frame_context()
     }
 }
@@ -163,8 +163,6 @@ pub trait EthHandler {
         + From<<Self::Frame as Frame>::Error>;
     type Precompiles: PrecompileProvider<Context = Self::Context, Error = Self::Error>;
     type Instructions: InstructionProvider<WIRE = EthInterpreter, Host = Self::Context>;
-    //type Precompiles: PrecompileProvider<Context = Self::Context, Error = Self::Error>;
-    //type Instructions: InstructionProvider<WIRE = EthInterpreter, Host = Self::Context>;
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     type Frame: Frame<
@@ -186,7 +184,10 @@ pub trait EthHandler {
         self.post_execution(context, exec_result, post_execution_gas)
     }
 
-    fn frame_context(&self, context: &mut Self::Context) -> <Self::Frame as Frame>::FrameContext;
+    fn frame_context(
+        &mut self,
+        context: &mut Self::Context,
+    ) -> <Self::Frame as Frame>::FrameContext;
 
     /// Call all validation functions
     fn validate(&self, context: &mut Self::Context) -> Result<InitialAndFloorGas, Self::Error> {

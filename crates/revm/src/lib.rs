@@ -28,5 +28,5 @@ mod exec;
 pub use context::journaled_state::{JournalEntry, JournaledState};
 pub use context::Context;
 pub use database_interface::{Database, DatabaseCommit, DatabaseRef};
-pub use evm::{Error, EthContext, Evm, MainEvm};
+pub use evm::{transact_main, transact_main_commit};
 pub use exec::{EvmCommit, EvmExec};

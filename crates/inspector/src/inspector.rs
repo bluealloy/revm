@@ -1,5 +1,4 @@
 use crate::{
-    inspector_context::InspectorContext,
     inspector_instruction::InspectorInstructionProvider,
     journal::{JournalExt, JournalExtGetter},
 };
@@ -229,7 +228,10 @@ where
     // TODO use a generic trait for inspector instruction.
     type Instructions = InspectorInstructionProvider<EthInterpreter, CTX>;
 
-    fn frame_context(&self, context: &mut Self::Context) -> <Self::Frame as Frame>::FrameContext {
+    fn frame_context(
+        &mut self,
+        context: &mut Self::Context,
+    ) -> <Self::Frame as Frame>::FrameContext {
         FrameContext::new(
             self.handler.frame_context(context).precompiles,
             InspectorInstructionProvider::new(),

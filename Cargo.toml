@@ -31,7 +31,7 @@ members = [
     "examples/database_components",
     "examples/uniswap_get_reserves",
     "examples/uniswap_v2_usdc_swap",
-    "examples/erc20_gas",
+    #"examples/erc20_gas",
     #"examples/custom_opcodes",
 ]
 resolver = "2"

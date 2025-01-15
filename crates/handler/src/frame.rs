@@ -1,5 +1,3 @@
-use crate::EthPrecompileProvider;
-
 use super::frame_data::*;
 use bytecode::{Eof, EOF_MAGIC_BYTES};
 use context_interface::{
@@ -7,16 +5,11 @@ use context_interface::{
     BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalDBError, JournalGetter, Transaction,
     TransactionGetter,
 };
-use core::{cell::RefCell, cmp::min, marker::PhantomData};
-use handler_interface::{
-    frame, Frame, FrameOrResultGen, PrecompileProvider, PrecompileProviderGetter,
-};
+use core::{cell::RefCell, cmp::min};
+use handler_interface::{Frame, FrameOrResultGen, PrecompileProvider, PrecompileProviderGetter};
 use interpreter::{
     gas,
-    interpreter::{
-        EthInstructionProvider, EthInterpreter, ExtBytecode, InstructionProvider,
-        InstructionProviderGetter,
-    },
+    interpreter::{EthInterpreter, ExtBytecode, InstructionProvider, InstructionProviderGetter},
     interpreter_types::{LoopControl, ReturnData, RuntimeFlag},
     return_ok, return_revert, CallInputs, CallOutcome, CallValue, CreateInputs, CreateOutcome,
     CreateScheme, EOFCreateInputs, EOFCreateKind, FrameInput, Gas, Host, InputsImpl,
