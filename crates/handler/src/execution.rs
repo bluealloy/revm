@@ -16,11 +16,56 @@ use primitives::TxKind;
 use specification::hardfork::SpecId;
 use std::boxed::Box;
 
+pub fn first_init_frame(tx: &impl Transaction, spec: SpecId, gas_limit: u64) -> FrameInput {
+    // Make new frame action.
+    let input = tx.input().clone();
+
+    match tx.kind() {
+        TxKind::Call(target_address) => FrameInput::Call(Box::new(CallInputs {
+            input,
+            gas_limit,
+            target_address,
+            bytecode_address: target_address,
+            caller: tx.caller(),
+            value: CallValue::Transfer(tx.value()),
+            scheme: CallScheme::Call,
+            is_static: false,
+            is_eof: false,
+            return_memory_offset: 0..0,
+        })),
+        TxKind::Create => {
+            // If first byte of data is magic 0xEF00, then it is EOFCreate.
+            if spec.is_enabled_in(SpecId::OSAKA) && input.starts_with(&EOF_MAGIC_BYTES) {
+                FrameInput::EOFCreate(Box::new(EOFCreateInputs::new(
+                    tx.caller(),
+                    tx.value(),
+                    gas_limit,
+                    EOFCreateKind::Tx { initdata: input },
+                )))
+            } else {
+                FrameInput::Create(Box::new(CreateInputs {
+                    caller: tx.caller(),
+                    scheme: CreateScheme::Create,
+                    value: tx.value(),
+                    init_code: input,
+                    gas_limit,
+                }))
+            }
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct EthExecution<
     CTX,
     ERROR,
-    FRAME = EthFrame<CTX, ERROR, EthInterpreter<()>, FrameContext<CTX, EthInterpreter<()>, ERROR>>,
+    FRAME = EthFrame<
+        CTX,
+        ERROR,
+        EthInterpreter<()>,
+        EthPrecompileProvider<CTX, ERROR>,
+        EthInstructionProvider<EthInterpreter, CTX>,
+    >,
 > {
     _phantom: core::marker::PhantomData<(CTX, FRAME, ERROR)>,
 }
@@ -43,44 +88,7 @@ where
         frame_context: &mut <Self::Frame as FrameTrait>::FrameContext,
         gas_limit: u64,
     ) -> Result<FrameOrFrameResult<Self::Frame>, Self::Error> {
-        // Make new frame action.
-        let spec = context.cfg().spec().into();
-        let tx = context.tx();
-        let input = tx.input().clone();
-
-        let init_frame: FrameInput = match tx.kind() {
-            TxKind::Call(target_address) => FrameInput::Call(Box::new(CallInputs {
-                input,
-                gas_limit,
-                target_address,
-                bytecode_address: target_address,
-                caller: tx.caller(),
-                value: CallValue::Transfer(tx.value()),
-                scheme: CallScheme::Call,
-                is_static: false,
-                is_eof: false,
-                return_memory_offset: 0..0,
-            })),
-            TxKind::Create => {
-                // If first byte of data is magic 0xEF00, then it is EOFCreate.
-                if spec.is_enabled_in(SpecId::OSAKA) && input.starts_with(&EOF_MAGIC_BYTES) {
-                    FrameInput::EOFCreate(Box::new(EOFCreateInputs::new(
-                        tx.caller(),
-                        tx.value(),
-                        gas_limit,
-                        EOFCreateKind::Tx { initdata: input },
-                    )))
-                } else {
-                    FrameInput::Create(Box::new(CreateInputs {
-                        caller: tx.caller(),
-                        scheme: CreateScheme::Create,
-                        value: tx.value(),
-                        init_code: input,
-                        gas_limit,
-                    }))
-                }
-            }
-        };
+        let init_frame = first_init_frame(context.tx(), context.cfg().spec().into(), gas_limit);
         FRAME::init_first(context, frame_context, init_frame)
     }
 

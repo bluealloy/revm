@@ -1,5 +1,5 @@
 use crate::{exec::EvmCommit, EvmExec};
-use context::{block::BlockEnv, tx::TxEnv, CfgEnv, Context, JournaledState};
+use context::{block::BlockEnv, tx::TxEnv, Cfg, CfgEnv, Context, JournaledState};
 use context_interface::{
     block::BlockSetter,
     context::PerformantContextAccess,
@@ -12,6 +12,7 @@ use context_interface::{
     BlockGetter, CfgGetter, DatabaseGetter, ErrorGetter, JournalDBError, JournalGetter,
     Transaction, TransactionGetter,
 };
+use core::marker::PhantomData;
 use database_interface::{Database, DatabaseCommit};
 use handler::{EthHandler, EthPrecompileProvider, FrameContext, FrameResult};
 use handler_interface::{
@@ -72,7 +73,10 @@ where
         ExecResult = FrameResult,
         Frame: Frame<
             FrameResult = FrameResult,
-            FrameContext = FrameContext<CTX, EthInterpreter, ERROR>,
+            FrameContext = FrameContext<
+                EthPrecompileProvider<CTX, ERROR>,
+                EthInstructionProvider<EthInterpreter, CTX>,
+            >,
         >,
     >,
     POSTEXEC: PostExecutionHandler<
@@ -123,7 +127,10 @@ where
         ExecResult = FrameResult,
         Frame: Frame<
             FrameResult = FrameResult,
-            FrameContext = FrameContext<CTX, EthInterpreter, ERROR>,
+            FrameContext = FrameContext<
+                EthPrecompileProvider<CTX, ERROR>,
+                EthInstructionProvider<EthInterpreter, CTX>,
+            >,
         >,
     >,
     POSTEXEC: PostExecutionHandler<Context = CTX, Error = ERROR, ExecResult = FrameResult>,
@@ -185,7 +192,10 @@ where
         ExecResult = FrameResult,
         Frame: Frame<
             FrameResult = FrameResult,
-            FrameContext = FrameContext<CTX, EthInterpreter, ERROR>,
+            FrameContext = FrameContext<
+                EthPrecompileProvider<CTX, ERROR>,
+                EthInstructionProvider<EthInterpreter, CTX>,
+            >,
         >,
     >,
     POSTEXEC: PostExecutionHandler<Context = CTX, Error = ERROR, ExecResult = FrameResult>,
@@ -284,8 +294,8 @@ where
         let exec = self.handler.execution();
 
         let mut frame_context = FrameContext {
-            precompiles: EthPrecompileProvider::new(context),
-            instructions: EthInstructionProvider::new(context),
+            precompiles: EthPrecompileProvider::new(context.cfg().spec().into()),
+            instructions: EthInstructionProvider::new(),
         };
 
         // Create first frame action

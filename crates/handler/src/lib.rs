@@ -17,8 +17,8 @@ mod precompile_provider;
 mod validation;
 
 // Public exports
-
-pub use execution::{EthExecution, EthExecutionContext, EthExecutionError};
+//pub use eth_handler::{EthContext, EthError, EthHandler, EthHandlerImpl};
+pub use execution::{first_init_frame, EthExecution, EthExecutionContext, EthExecutionError};
 pub use frame::{
     return_create, return_eofcreate, EthFrame, EthFrameContext, EthFrameError, FrameContext,
 };
@@ -66,7 +66,7 @@ pub struct EthHandler<
     _phantom: core::marker::PhantomData<fn() -> (CTX, ERROR)>,
 }
 
-impl<CTX, ERROR> Default for EthHandler<CTX, ERROR> {
+impl<CTX: Host, ERROR: From<PrecompileErrors>> Default for EthHandler<CTX, ERROR> {
     fn default() -> Self {
         Self {
             validation: EthValidation::new(),

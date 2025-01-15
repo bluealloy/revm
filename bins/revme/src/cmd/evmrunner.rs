@@ -1,14 +1,11 @@
 use clap::Parser;
 use database::BenchmarkDB;
-use inspector::{
-    inspector_context::InspectorContext, inspector_handler, inspectors::TracerEip3155,
-    InspectorMainEvm,
-};
+use inspector::{inspect_main, inspector_context::InspectorContext, inspectors::TracerEip3155};
 use revm::{
     bytecode::{Bytecode, BytecodeDecodeError},
     handler::EthHandler,
     primitives::{address, hex, Address, TxKind},
-    Context, Database, EvmExec, MainEvm,
+    Context, Database, MainEvm,
 };
 use std::io::Error as IoError;
 use std::path::PathBuf;
@@ -108,12 +105,11 @@ impl Cmd {
         }
 
         let out = if self.trace {
-            let mut evm = InspectorMainEvm::new(
-                InspectorContext::new(evm.context, TracerEip3155::new(Box::new(std::io::stdout()))),
-                inspector_handler(),
-            );
-
-            evm.exec().map_err(|_| Errors::EVMError)?
+            inspect_main(&mut InspectorContext::new(
+                &mut evm.context,
+                TracerEip3155::new(Box::new(std::io::stdout())),
+            ))
+            .map_err(|_| Errors::EVMError)?
         } else {
             let out = evm.transact().map_err(|_| Errors::EVMError)?;
             println!("Result: {:#?}", out.result);

@@ -7,7 +7,7 @@ use context_interface::{
     BlockGetter, Cfg, CfgGetter, ErrorGetter, JournalDBError, JournalGetter, Transaction,
     TransactionGetter,
 };
-use core::{cell::RefCell, cmp::min};
+use core::{cell::RefCell, cmp::min, marker::PhantomData};
 use handler_interface::{
     frame, Frame, FrameOrResultGen, PrecompileProvider, PrecompileProviderGetter,
 };
@@ -33,8 +33,8 @@ use state::Bytecode;
 use std::borrow::ToOwned;
 use std::{rc::Rc, sync::Arc};
 
-pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, FRAME_CTX> {
-    _phantom: core::marker::PhantomData<fn() -> (FRAME_CTX, CTX, ERROR)>,
+pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, PRECOMPILES, INSTRUCTIONS> {
+    _phantom: core::marker::PhantomData<fn() -> (PRECOMPILES, INSTRUCTIONS, CTX, ERROR)>,
     data: FrameData,
     // TODO : Include this
     depth: usize,
@@ -46,7 +46,7 @@ pub struct EthFrame<CTX, ERROR, IW: InterpreterTypes, FRAME_CTX> {
     pub memory: Rc<RefCell<SharedMemory>>,
 }
 
-impl<CTX, IW, ERROR, FRAME_CTX> EthFrame<CTX, ERROR, IW, FRAME_CTX>
+impl<CTX, IW, ERROR, PRECOMPILES, INSTRUCTIONS> EthFrame<CTX, ERROR, IW, PRECOMPILES, INSTRUCTIONS>
 where
     CTX: JournalGetter,
     IW: InterpreterTypes,
@@ -69,23 +69,19 @@ where
     }
 }
 
-impl<CTX, ERROR, FRAME_CTX> EthFrame<CTX, ERROR, EthInterpreter<()>, FRAME_CTX>
+impl<CTX, ERROR, PRECOMPILES, INSTRUCTIONS>
+    EthFrame<CTX, ERROR, EthInterpreter<()>, PRECOMPILES, INSTRUCTIONS>
 where
     CTX: EthFrameContext,
     ERROR: EthFrameError<CTX>,
-    FRAME_CTX: PrecompileProviderGetter<
-        PrecompileProvider: PrecompileProvider<
-            Context = CTX,
-            Error = ERROR,
-            Output = InterpreterResult,
-        >,
-    >,
+    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR, Output = InterpreterResult>,
+    INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
 {
     /// Make call frame
     #[inline]
     pub fn make_call_frame(
         context: &mut CTX,
-        frame_context: &mut FRAME_CTX,
+        frame_context: &mut FrameContext<PRECOMPILES, INSTRUCTIONS>,
         depth: usize,
         memory: Rc<RefCell<SharedMemory>>,
         inputs: &CallInputs,
@@ -422,7 +418,7 @@ where
         frame_init: FrameInput,
         memory: Rc<RefCell<SharedMemory>>,
         context: &mut CTX,
-        frame_context: &mut FRAME_CTX,
+        frame_context: &mut FrameContext<PRECOMPILES, INSTRUCTIONS>,
     ) -> Result<FrameOrResultGen<Self, FrameResult>, ERROR> {
         match frame_init {
             FrameInput::Call(inputs) => {
@@ -436,49 +432,54 @@ where
     }
 }
 
-pub struct FrameContext<CTX, INTR: InterpreterTypes, ERROR> {
-    pub precompiles: EthPrecompileProvider<CTX, ERROR>,
-    pub instructions: EthInstructionProvider<INTR, CTX>,
+pub struct FrameContext<PRECOMPILE: PrecompileProvider, INSTRUCTION: InstructionProvider> {
+    pub precompiles: PRECOMPILE,
+    pub instructions: INSTRUCTION,
 }
 
-impl<CTX: CfgGetter, INTR: InterpreterTypes, ERROR: From<PrecompileErrors>> PrecompileProviderGetter
-    for FrameContext<CTX, INTR, ERROR>
+impl<PRECOMPILE: PrecompileProvider, INSTRUCTION: InstructionProvider>
+    FrameContext<PRECOMPILE, INSTRUCTION>
 {
-    type PrecompileProvider = EthPrecompileProvider<CTX, ERROR>;
+    pub fn new(precompiles: PRECOMPILE, instructions: INSTRUCTION) -> Self {
+        Self {
+            precompiles,
+            instructions,
+        }
+    }
+}
+
+impl<PRECOMPILES: PrecompileProvider, INSTRUCTIONS: InstructionProvider> PrecompileProviderGetter
+    for FrameContext<PRECOMPILES, INSTRUCTIONS>
+{
+    type PrecompileProvider = PRECOMPILES;
 
     fn precompiles(&mut self) -> &mut Self::PrecompileProvider {
         &mut self.precompiles
     }
 }
 
-impl<CTX: Host, INTR: InterpreterTypes, ERROR: From<PrecompileErrors>> InstructionProviderGetter
-    for FrameContext<CTX, INTR, ERROR>
+impl<PRECOMPILES: PrecompileProvider, INSTRUCTIONS: InstructionProvider> InstructionProviderGetter
+    for FrameContext<PRECOMPILES, INSTRUCTIONS>
 {
-    type InstructionProvider = EthInstructionProvider<INTR, CTX>;
+    type InstructionProvider = INSTRUCTIONS;
 
     fn instructions(&mut self) -> &mut Self::InstructionProvider {
         &mut self.instructions
     }
 }
 
-impl<CTX, ERROR, FRAME_CTX> Frame for EthFrame<CTX, ERROR, EthInterpreter<()>, FRAME_CTX>
+impl<CTX, ERROR, PRECOMPILES, INSTRUCTIONS> Frame
+    for EthFrame<CTX, ERROR, EthInterpreter<()>, PRECOMPILES, INSTRUCTIONS>
 where
     CTX: EthFrameContext,
     ERROR: EthFrameError<CTX>,
-    FRAME_CTX: PrecompileProviderGetter<
-            PrecompileProvider: PrecompileProvider<
-                Context = CTX,
-                Error = ERROR,
-                Output = InterpreterResult,
-            >,
-        > + InstructionProviderGetter<
-            InstructionProvider: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
-        >,
+    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR, Output = InterpreterResult>,
+    INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter<()>, Host = CTX>,
 {
     type Context = CTX;
     type Error = ERROR;
     type FrameInit = FrameInput;
-    type FrameContext = FRAME_CTX;
+    type FrameContext = FrameContext<PRECOMPILES, INSTRUCTIONS>;
     type FrameResult = FrameResult;
 
     fn init_first(

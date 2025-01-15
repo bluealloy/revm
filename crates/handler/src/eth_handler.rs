@@ -1,6 +1,14 @@
+use crate::{
+    first_init_frame, EthExecution, EthExecutionContext, EthFrameContext, EthPostExecution,
+    EthPostExecutionContext, EthPreExecution, EthPreExecutionContext, EthPrecompileProvider,
+    EthValidation, EthValidationContext, FrameContext, FrameResult,
+};
+use auto_impl::auto_impl;
+use context::Context;
 use context_interface::{
     result::{HaltReason, InvalidHeader, InvalidTransaction, ResultAndState},
-    JournalDBError, Transaction, TransactionGetter,
+    Block, BlockGetter, Cfg, CfgGetter, Database, DatabaseGetter, ErrorGetter, Journal,
+    JournalDBError, JournalGetter, PerformantContextAccess, Transaction, TransactionGetter,
 };
 use handler_interface::{
     util::FrameOrFrameResult, ExecutionHandler, Frame, FrameOrResultGen, InitialAndFloorGas,
@@ -8,16 +16,139 @@ use handler_interface::{
     ValidationHandler,
 };
 use interpreter::{
-    interpreter::{InstructionProvider, InstructionProviderGetter},
-    FrameInput,
+    interpreter::{
+        EthInstructionProvider, EthInterpreter, InstructionProvider, InstructionProviderGetter,
+    },
+    FrameInput, Host,
 };
-use precompile::PrecompileErrors;
+use precompile::{PrecompileErrors, PrecompileOutput};
+use primitives::Log;
+use specification::hardfork::SpecId;
+use state::EvmState;
+use std::{vec, vec::Vec};
 
-use crate::{
-    EthExecution, EthExecutionContext, EthFrame, EthFrameContext, EthPostExecution,
-    EthPostExecutionContext, EthPreExecution, EthPreExecutionContext, EthValidation,
-    EthValidationContext, FrameResult,
-};
+pub struct EthHandlerImpl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS> {
+    pub precompiles: PRECOMPILES,
+    pub instructions: INSTRUCTIONS,
+    pub _phantom: core::marker::PhantomData<(CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS)>,
+}
+
+impl<CTX: Host, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
+    EthHandlerImpl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
+where
+    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR>,
+    INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter, Host = CTX>,
+{
+    pub fn crete_frame_context(&self) -> FrameContext<PRECOMPILES, INSTRUCTIONS> {
+        FrameContext {
+            precompiles: self.precompiles.clone(),
+            instructions: self.instructions.clone(),
+        }
+    }
+}
+
+impl<CTX: Host, ERROR, FRAME> Default
+    for EthHandlerImpl<
+        CTX,
+        ERROR,
+        FRAME,
+        EthPrecompileProvider<CTX, ERROR>,
+        EthInstructionProvider<EthInterpreter, CTX>,
+    >
+{
+    fn default() -> Self {
+        Self {
+            precompiles: EthPrecompileProvider::new(SpecId::LATEST),
+            instructions: EthInstructionProvider::new(),
+            _phantom: core::marker::PhantomData,
+        }
+    }
+}
+
+pub trait EthContext:
+    TransactionGetter
+    + BlockGetter
+    + DatabaseGetter
+    + CfgGetter
+    + PerformantContextAccess<Error = <<Self as DatabaseGetter>::Database as Database>::Error>
+    + ErrorGetter<Error = JournalDBError<Self>>
+    + JournalGetter<Journal: Journal<FinalOutput = (EvmState, Vec<Log>)>>
+    + Host
+{
+}
+
+impl<
+        BLOCK: Block,
+        TX: Transaction,
+        CFG: Cfg,
+        DB: Database,
+        JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+        CHAIN,
+    > EthContext for Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+{
+}
+
+impl<
+        BLOCK: Block,
+        TX: Transaction,
+        CFG: Cfg,
+        DB: Database,
+        JOURNAL: Journal<Database = DB, FinalOutput = (EvmState, Vec<Log>)>,
+        CHAIN,
+    > EthContext for &mut Context<BLOCK, TX, CFG, DB, JOURNAL, CHAIN>
+{
+}
+
+pub trait EthError<CTX: JournalGetter, FRAME: Frame>:
+    From<InvalidTransaction>
+    + From<InvalidHeader>
+    + From<JournalDBError<CTX>>
+    + From<InvalidTransaction>
+    + From<<FRAME as Frame>::Error>
+    + From<PrecompileErrors>
+{
+}
+
+impl<
+        CTX: JournalGetter,
+        FRAME: Frame,
+        T: From<InvalidTransaction>
+            + From<InvalidHeader>
+            + From<JournalDBError<CTX>>
+            + From<InvalidTransaction>
+            + From<<FRAME as Frame>::Error>
+            + From<PrecompileErrors>,
+    > EthError<CTX, FRAME> for T
+{
+}
+
+impl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS> EthHandler
+    for EthHandlerImpl<CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS>
+where
+    CTX: EthContext,
+    ERROR: EthError<CTX, FRAME>,
+    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR>,
+    INSTRUCTIONS: InstructionProvider<WIRE = EthInterpreter, Host = CTX>,
+    // TODO `FrameResult` should be a generic trait.
+    // TODO `FrameInit` should be a generic.
+    FRAME: Frame<
+        Context = CTX,
+        Error = ERROR,
+        FrameResult = FrameResult,
+        FrameInit = FrameInput,
+        FrameContext = FrameContext<PRECOMPILES, INSTRUCTIONS>,
+    >,
+{
+    type Context = CTX;
+    type Error = ERROR;
+    type Frame = FRAME;
+    type Precompiles = PRECOMPILES;
+    type Instructions = INSTRUCTIONS;
+
+    fn frame_context(&self, context: &mut Self::Context) -> <Self::Frame as Frame>::FrameContext {
+        self.crete_frame_context()
+    }
+}
 
 pub trait EthHandler {
     type Context: EthValidationContext
@@ -30,6 +161,10 @@ pub trait EthHandler {
         + From<JournalDBError<Self::Context>>
         + From<InvalidTransaction>
         + From<<Self::Frame as Frame>::Error>;
+    type Precompiles: PrecompileProvider<Context = Self::Context, Error = Self::Error>;
+    type Instructions: InstructionProvider<WIRE = EthInterpreter, Host = Self::Context>;
+    //type Precompiles: PrecompileProvider<Context = Self::Context, Error = Self::Error>;
+    //type Instructions: InstructionProvider<WIRE = EthInterpreter, Host = Self::Context>;
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     type Frame: Frame<
@@ -37,14 +172,10 @@ pub trait EthHandler {
         Error = Self::Error,
         FrameResult = FrameResult,
         FrameInit = FrameInput,
-        FrameContext: InstructionProviderGetter<
-            InstructionProvider: InstructionProvider<Host = Self::Context>,
-        > + PrecompileProviderGetter<
-            PrecompileProvider: PrecompileProvider<Context = Self::Context>,
-        >,
+        FrameContext = FrameContext<Self::Precompiles, Self::Instructions>,
     >;
 
-    fn execute(
+    fn run(
         &mut self,
         context: &mut Self::Context,
     ) -> Result<ResultAndState<HaltReason>, Self::Error> {
@@ -54,6 +185,8 @@ pub trait EthHandler {
         let post_execution_gas = (init_and_floor_gas, eip7702_refund);
         self.post_execution(context, exec_result, post_execution_gas)
     }
+
+    fn frame_context(&self, context: &mut Self::Context) -> <Self::Frame as Frame>::FrameContext;
 
     /// Call all validation functions
     fn validate(&self, context: &mut Self::Context) -> Result<InitialAndFloorGas, Self::Error> {
@@ -78,9 +211,9 @@ pub trait EthHandler {
         let gas_limit = context.tx().gas_limit() - init_and_floor_gas.initial_gas;
 
         // Make a context!
-        let frame_context = todo!();
+        let mut frame_context = self.frame_context(context);
         // Create first frame action
-        let first_frame = self.frame_init_first(context, &mut frame_context, gas_limit)?;
+        let first_frame = self.create_first_frame(context, &mut frame_context, gas_limit)?;
         let frame_result = match first_frame {
             FrameOrResultGen::Frame(frame) => {
                 self.run_exec_loop(context, &mut frame_context, frame)?
@@ -142,13 +275,29 @@ pub trait EthHandler {
     }
 
     /* EXECUTION */
-    fn frame_init_first(
+    fn create_first_frame(
         &mut self,
         context: &mut Self::Context,
         frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
         gas_limit: u64,
     ) -> Result<FrameOrFrameResult<Self::Frame>, Self::Error> {
-        EthExecution::new().init_first_frame(context, frame_context, gas_limit)
+        let init_frame = first_init_frame(context.tx(), context.cfg().spec().into(), gas_limit);
+        self.frame_init_first(context, frame_context, init_frame)
+    }
+
+    fn frame_init_first(
+        &mut self,
+        context: &mut Self::Context,
+        frame_context: &mut <<Self as EthHandler>::Frame as Frame>::FrameContext,
+        frame_input: <<Self as EthHandler>::Frame as Frame>::FrameInit,
+    ) -> Result<
+        FrameOrResultGen<
+            <Self as EthHandler>::Frame,
+            <<Self as EthHandler>::Frame as Frame>::FrameResult,
+        >,
+        Self::Error,
+    > {
+        Self::Frame::init_first(context, frame_context, frame_input)
     }
 
     fn frame_init(

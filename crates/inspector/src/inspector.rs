@@ -6,25 +6,22 @@ use crate::{
 use auto_impl::auto_impl;
 use revm::{
     context_interface::{
-        BlockGetter, CfgGetter, ErrorGetter, Journal, JournalDBError, JournalGetter,
-        TransactionGetter,
+        result::{EVMError, ExecutionResult, HaltReason, InvalidTransaction, ResultAndState},
+        DatabaseGetter, Journal,
     },
-    database_interface::{Database, EmptyDB},
+    database_interface::Database,
     handler::{
-        EthExecution, EthFrame, EthHandler, EthPostExecution, EthPreExecution,
-        EthPrecompileProvider, EthValidation, FrameResult,
+        eth_handler::{EthContext, EthError, EthHandler as EthHandlerNew, EthHandlerImpl},
+        EthFrame, EthPrecompileProvider, FrameContext, FrameResult,
     },
-    handler_interface::{Frame, FrameOrResultGen, PrecompileProvider, PrecompileProviderGetter},
+    handler_interface::{Frame, FrameOrResultGen, PrecompileProvider},
     interpreter::{
-        interpreter::{EthInterpreter, InstructionProviderGetter},
-        interpreter_types::{Jumps, LoopControl},
-        table::CustomInstruction,
-        CallInputs, CallOutcome, CreateInputs, CreateOutcome, EOFCreateInputs, FrameInput, Host,
-        Instruction, InstructionResult, Interpreter, InterpreterResult, InterpreterTypes,
+        interpreter::EthInterpreter, CallInputs, CallOutcome, CreateInputs, CreateOutcome,
+        EOFCreateInputs, FrameInput, Interpreter, InterpreterTypes,
     },
-    precompile::PrecompileErrors,
     primitives::{Address, Log, U256},
-    Context, Error, Evm,
+    specification::hardfork::SpecId,
+    Context, DatabaseCommit,
 };
 
 /// EVM [Interpreter] callbacks.
@@ -162,6 +159,7 @@ pub trait GetInspector<CTX, INTR: InterpreterTypes> {
     fn get_inspector(&mut self) -> &mut impl Inspector<CTX, INTR>;
 }
 
+#[auto_impl(&mut, Box)]
 pub trait InspectorCtx {
     type IT: InterpreterTypes;
 
@@ -191,183 +189,182 @@ impl<BLOCK, TX, CFG, DB: Database, JOURNAL: Journal<Database = DB> + JournalExt,
     }
 }
 
-#[derive(Clone)]
-pub struct InspectorInstruction<IT: InterpreterTypes, HOST> {
-    pub instruction: fn(&mut Interpreter<IT>, &mut HOST),
+pub struct InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INSTRUCTIONS> {
+    pub handler: HANDLER,
+    _phantom: core::marker::PhantomData<(CTX, ERROR, FRAME, PRECOMPILES, INSTRUCTIONS)>,
 }
 
-impl<IT: InterpreterTypes, HOST> CustomInstruction for InspectorInstruction<IT, HOST>
-where
-    HOST: InspectorCtx<IT = IT>,
+impl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INSTRUCTIONS>
+    InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INSTRUCTIONS>
 {
-    type Wire = IT;
-    type Host = HOST;
-
-    fn exec(&self, interpreter: &mut Interpreter<Self::Wire>, host: &mut Self::Host) {
-        // SAFETY: As the PC was already incremented we need to subtract 1 to preserve the
-        // old Inspector behavior.
-        interpreter.bytecode.relative_jump(-1);
-
-        // Call step.
-        host.step(interpreter);
-        if interpreter.control.instruction_result() != InstructionResult::Continue {
-            return;
+    pub fn new(handler: HANDLER) -> Self {
+        Self {
+            handler,
+            _phantom: core::marker::PhantomData,
         }
-
-        // Reset PC to previous value.
-        interpreter.bytecode.relative_jump(1);
-
-        // Execute instruction.
-        (self.instruction)(interpreter, host);
-
-        // Call step_end.
-        host.step_end(interpreter);
-    }
-
-    fn from_base(instruction: Instruction<Self::Wire, Self::Host>) -> Self {
-        Self { instruction }
     }
 }
 
-pub struct InspectorEthFrame<CTX, ERROR, FRAME_CTX>
+impl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INSTRUCTIONS> EthHandlerNew
+    for InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INSTRUCTIONS>
 where
-    CTX: Host,
-{
-    // TODO : For now, hardcode the InstructionProvider. But in future this should be configurable as generic parameter.
-    pub eth_frame: EthFrame<CTX, ERROR, EthInterpreter<()>, FRAME_CTX>,
-}
-
-impl<CTX, ERROR, FRAME_CTX> Frame for InspectorEthFrame<CTX, ERROR, FRAME_CTX>
-where
-    CTX: TransactionGetter
-        + ErrorGetter<Error = JournalDBError<CTX>>
-        + BlockGetter
-        + JournalGetter
-        + CfgGetter
-        + JournalExtGetter
-        + Host
-        + InspectorCtx<IT = EthInterpreter>,
-    ERROR: From<JournalDBError<CTX>> + From<PrecompileErrors>,
-    FRAME_CTX: PrecompileProviderGetter<
-            PrecompileProvider: PrecompileProvider<
-                Context = CTX,
-                Error = ERROR,
-                Output = InterpreterResult,
-            >,
-        > + InstructionProviderGetter<
-            InstructionProvider = InspectorInstructionProvider<EthInterpreter, CTX>,
-        >,
+    CTX: EthContext + InspectorCtx<IT = EthInterpreter> + JournalExtGetter,
+    ERROR: EthError<CTX, FRAME>,
+    // TODO `FrameResult` should be a generic trait.
+    // TODO `FrameInit` should be a generic.
+    FRAME: Frame<
+        Context = CTX,
+        Error = ERROR,
+        FrameResult = FrameResult,
+        FrameInit = FrameInput,
+        FrameContext = FrameContext<PRECOMPILES, InspectorInstructionProvider<EthInterpreter, CTX>>,
+    >,
+    PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR>,
+    HANDLER: EthHandlerNew<Context = CTX, Error = ERROR, Frame = FRAME, Precompiles = PRECOMPILES>,
 {
     type Context = CTX;
     type Error = ERROR;
-    type FrameInit = FrameInput;
-    type FrameResult = FrameResult;
-    type FrameContext = FRAME_CTX;
+    type Frame = FRAME;
+    type Precompiles = PRECOMPILES;
+    // TODO use a generic trait for inspector instruction.
+    type Instructions = InspectorInstructionProvider<EthInterpreter, CTX>;
 
-    fn init_first(
-        context: &mut CTX,
-        frame_context: &mut Self::FrameContext,
-        mut frame_input: Self::FrameInit,
-    ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
+    fn frame_context(&self, context: &mut Self::Context) -> <Self::Frame as Frame>::FrameContext {
+        FrameContext::new(
+            self.handler.frame_context(context).precompiles,
+            InspectorInstructionProvider::new(),
+        )
+    }
+
+    fn frame_init_first(
+        &mut self,
+        context: &mut Self::Context,
+        frame_context: &mut <<Self as EthHandlerNew>::Frame as Frame>::FrameContext,
+        mut frame_input: <<Self as EthHandlerNew>::Frame as Frame>::FrameInit,
+    ) -> Result<
+        FrameOrResultGen<
+            <Self as EthHandlerNew>::Frame,
+            <<Self as EthHandlerNew>::Frame as Frame>::FrameResult,
+        >,
+        Self::Error,
+    > {
         if let Some(output) = context.frame_start(&mut frame_input) {
             return Ok(FrameOrResultGen::Result(output));
         }
-        let mut ret = EthFrame::init_first(context, frame_context, frame_input)
-            .map(|frame| frame.map_frame(|eth_frame| Self { eth_frame }));
+        let mut ret = self
+            .handler
+            .frame_init_first(context, frame_context, frame_input);
 
         match &mut ret {
             Ok(FrameOrResultGen::Result(res)) => {
                 context.frame_end(res);
             }
             Ok(FrameOrResultGen::Frame(frame)) => {
-                context.initialize_interp(&mut frame.eth_frame.interpreter);
+                // TODO(rakita)
+                //context.initialize_interp(&mut frame.interpreter);
+                todo!()
             }
             _ => (),
         }
         ret
     }
 
-    fn final_return(
-        context: &mut Self::Context,
-        frame_context: &mut Self::FrameContext,
-        result: &mut Self::FrameResult,
-    ) -> Result<(), Self::Error> {
-        context.frame_end(result);
-        Ok(())
-    }
-
-    fn init(
+    fn frame_init(
         &self,
-        context: &mut CTX,
-        frame_context: &mut Self::FrameContext,
-        mut frame_input: Self::FrameInit,
-    ) -> Result<FrameOrResultGen<Self, Self::FrameResult>, Self::Error> {
+        frame: &Self::Frame,
+        context: &mut Self::Context,
+        frame_context: &mut <<Self as EthHandlerNew>::Frame as Frame>::FrameContext,
+        mut frame_input: <<Self as EthHandlerNew>::Frame as Frame>::FrameInit,
+    ) -> Result<
+        FrameOrResultGen<
+            <Self as EthHandlerNew>::Frame,
+            <<Self as EthHandlerNew>::Frame as Frame>::FrameResult,
+        >,
+        Self::Error,
+    > {
         if let Some(output) = context.frame_start(&mut frame_input) {
             return Ok(FrameOrResultGen::Result(output));
         }
         let mut ret = self
-            .eth_frame
-            .init(context, frame_context, frame_input)
-            .map(|frame| frame.map_frame(|eth_frame| Self { eth_frame }));
-
-        if let Ok(FrameOrResultGen::Frame(frame)) = &mut ret {
-            context.initialize_interp(&mut frame.eth_frame.interpreter);
+            .handler
+            .frame_init(frame, context, frame_context, frame_input);
+        match &mut ret {
+            Ok(FrameOrResultGen::Result(res)) => {
+                context.frame_end(res);
+            }
+            Ok(FrameOrResultGen::Frame(frame)) => {
+                // TODO(rakita)
+                // context.initialize_interp(&mut frame.interpreter);
+                todo!()
+            }
+            _ => (),
         }
         ret
     }
 
-    fn run(
+    fn frame_return_result(
         &mut self,
-        context: &mut CTX,
-        frame_context: &mut Self::FrameContext,
-    ) -> Result<FrameOrResultGen<Self::FrameInit, Self::FrameResult>, Self::Error> {
-        self.eth_frame.run(context, frame_context)
-    }
-
-    fn return_result(
-        &mut self,
-        context: &mut CTX,
-        frame_context: &mut Self::FrameContext,
-        mut result: Self::FrameResult,
+        frame: &mut Self::Frame,
+        context: &mut Self::Context,
+        frame_context: &mut <<Self as EthHandlerNew>::Frame as Frame>::FrameContext,
+        mut result: <<Self as EthHandlerNew>::Frame as Frame>::FrameResult,
     ) -> Result<(), Self::Error> {
         context.frame_end(&mut result);
-        self.eth_frame.return_result(context, frame_context, result)
+        self.handler
+            .frame_return_result(frame, context, frame_context, result)
+    }
+
+    fn frame_final_return(
+        context: &mut Self::Context,
+        _frame_context: &mut <<Self as EthHandlerNew>::Frame as Frame>::FrameContext,
+        result: &mut <<Self as EthHandlerNew>::Frame as Frame>::FrameResult,
+    ) -> Result<(), Self::Error> {
+        context.frame_end(result);
+        Ok(())
     }
 }
 
-pub type InspCtxType<INSP, DB, CTX> = InspectorContext<INSP, DB, CTX>;
-
-pub type InspectorMainEvm<INSP, CTX, DB = EmptyDB> = Evm<
-    Error<DB>,
-    InspCtxType<INSP, DB, CTX>,
-    EthHandler<
-        InspCtxType<INSP, DB, CTX>,
-        Error<DB>,
-        EthValidation<InspCtxType<INSP, DB, CTX>, Error<DB>>,
-        EthPreExecution<InspCtxType<INSP, DB, CTX>, Error<DB>>,
-        InspectorEthExecution<InspCtxType<INSP, DB, CTX>, Error<DB>>,
-    >,
->;
-
-/// Function to create Inspector Handler.
-pub fn inspector_handler<CTX: Host, ERROR>() -> InspectorHandler<CTX, ERROR> {
-    EthHandler::new(
-        EthValidation::new(),
-        EthPreExecution::new(),
-        EthExecution::<_, _, InspectorEthFrame<_, _, _>>::new(),
-        EthPostExecution::new(),
-    )
+pub fn inspect_main<
+    DB: Database,
+    CTX: EthContext
+        + JournalExtGetter
+        + DatabaseGetter<Database = DB>
+        + InspectorCtx<IT = EthInterpreter>,
+>(
+    ctx: &mut CTX,
+) -> Result<ResultAndState<HaltReason>, EVMError<<DB as Database>::Error, InvalidTransaction>> {
+    InspectorHandlerImpl::<
+        _, //CTX,
+        _, //EVMError<<DB as Database>::Error, InvalidTransaction>,
+        EthFrame<
+            _, // CTX,
+            _, //EVMError<<DB as Database>::Error, InvalidTransaction>,
+            _, //EthInterpreter,
+            _, //EthPrecompileProvider<CTX, EVMError<<DB as Database>::Error, InvalidTransaction>>,
+            _, //InspectorInstructionProvider<EthInterpreter, CTX>,
+        >,
+        _, //EthHandlerImpl<CTX, EVMError<<DB as Database>::Error, InvalidTransaction>, _, _, _>,
+        _, //EthPrecompileProvider<CTX, EVMError<<DB as Database>::Error, InvalidTransaction>>,
+        InspectorInstructionProvider<EthInterpreter, CTX>,
+    >::new(EthHandlerImpl {
+        precompiles: EthPrecompileProvider::new(SpecId::LATEST),
+        instructions: InspectorInstructionProvider::new(),
+        _phantom: core::marker::PhantomData,
+    })
+    .run(ctx)
 }
 
-/// Composed type for Inspector Execution handler.
-pub type InspectorEthExecution<CTX, ERROR, PRECOMPILE = EthPrecompileProvider<CTX, ERROR>> =
-    EthExecution<CTX, ERROR, InspectorEthFrame<CTX, ERROR, PRECOMPILE>>;
-
-/// Composed type for Inspector Handler.
-pub type InspectorHandler<CTX, ERROR, PRECOMPILE> = EthHandler<
-    CTX,
-    ERROR,
-    EthValidation<CTX, ERROR>,
-    EthPreExecution<CTX, ERROR>,
-    InspectorEthExecution<CTX, ERROR, PRECOMPILE>,
->;
+pub fn inspect_main_commit<
+    DB: Database + DatabaseCommit,
+    CTX: EthContext
+        + JournalExtGetter
+        + DatabaseGetter<Database = DB>
+        + InspectorCtx<IT = EthInterpreter>,
+>(
+    ctx: &mut CTX,
+) -> Result<ExecutionResult<HaltReason>, EVMError<<DB as Database>::Error, InvalidTransaction>> {
+    inspect_main(ctx).map(|res| {
+        ctx.db().commit(res.state);
+        res.result
+    })
+}

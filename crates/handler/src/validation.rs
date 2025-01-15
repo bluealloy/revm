@@ -369,6 +369,7 @@ where
 }
 
 /// Helper trait that summarizes ValidationHandler requirements from Context.
+///
 pub trait EthValidationContext:
     TransactionGetter + BlockGetter + JournalGetter + CfgGetter
 {

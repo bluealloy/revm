@@ -9,19 +9,8 @@ use alloy_provider::{
 };
 use database::{AlloyDB, CacheDB, StateBuilder};
 use indicatif::ProgressBar;
-use inspector::{
-    inspector_context::InspectorContext, inspectors::TracerEip3155, InspectorEthFrame,
-    InspectorMainEvm,
-};
-use revm::{
-    database_interface::WrapDatabaseAsync,
-    handler::{
-        EthExecution, EthHandler, EthPostExecution, EthPreExecution, EthPrecompileProvider,
-        EthValidation,
-    },
-    primitives::TxKind,
-    Context, EvmCommit,
-};
+use inspector::{inspect_main, inspector_context::InspectorContext, inspectors::TracerEip3155};
+use revm::{database_interface::WrapDatabaseAsync, primitives::TxKind, Context};
 use std::io::BufWriter;
 use std::io::Write;
 use std::sync::Arc;
@@ -48,6 +37,8 @@ impl Write for FlushWriter {
         self.writer.lock().unwrap().flush()
     }
 }
+
+pub fn inspect_ctx_insp() {}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -83,31 +74,22 @@ async fn main() -> anyhow::Result<()> {
     let state_db = WrapDatabaseAsync::new(AlloyDB::new(client, prev_id)).unwrap();
     let cache_db: CacheDB<_> = CacheDB::new(state_db);
     let mut state = StateBuilder::new_with_database(cache_db).build();
-    let mut evm = InspectorMainEvm::new(
-        InspectorContext::new(
-            Context::builder()
-                .with_db(&mut state)
-                .modify_block_chained(|b| {
-                    b.number = block.header.number;
-                    b.beneficiary = block.header.beneficiary;
-                    b.timestamp = block.header.timestamp;
+    let mut ctx = Context::builder()
+        .with_db(&mut state)
+        .modify_block_chained(|b| {
+            b.number = block.header.number;
+            b.beneficiary = block.header.beneficiary;
+            b.timestamp = block.header.timestamp;
 
-                    b.difficulty = block.header.difficulty;
-                    b.gas_limit = block.header.gas_limit;
-                    b.basefee = block.header.base_fee_per_gas.unwrap_or_default();
-                })
-                .modify_cfg_chained(|c| {
-                    c.chain_id = chain_id;
-                }),
-            TracerEip3155::new(Box::new(stdout())),
-        ),
-        EthHandler::new(
-            EthValidation::new(),
-            EthPreExecution::new(),
-            EthExecution::<_, _, InspectorEthFrame<_, _, EthPrecompileProvider<_, _>>>::new(),
-            EthPostExecution::new(),
-        ),
-    );
+            b.difficulty = block.header.difficulty;
+            b.gas_limit = block.header.gas_limit;
+            b.basefee = block.header.base_fee_per_gas.unwrap_or_default();
+        })
+        .modify_cfg_chained(|c| {
+            c.chain_id = chain_id;
+        });
+    let mut inspector = TracerEip3155::new(Box::new(stdout()));
+    let mut ctx = InspectorContext::new(&mut ctx, &mut inspector);
 
     let txs = block.transactions.len();
     println!("Found {txs} transactions.");
@@ -124,7 +106,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     for tx in transactions {
-        evm.context.inner.modify_tx(|etx| {
+        ctx.inner.modify_tx(|etx| {
             etx.caller = tx.from;
             etx.gas_limit = tx.gas_limit();
             etx.gas_price = tx.gas_price().unwrap_or(tx.inner.max_fee_per_gas());
@@ -160,9 +142,9 @@ async fn main() -> anyhow::Result<()> {
         let writer = FlushWriter::new(Arc::clone(&inner));
 
         // Inspect and commit the transaction to the EVM
-        evm.context.inspector.set_writer(Box::new(writer));
+        ctx.inspector.set_writer(Box::new(writer));
 
-        let res = evm.exec_commit();
+        let res = inspect_main(&mut ctx);
 
         if let Err(error) = res {
             println!("Got error: {:?}", error);

@@ -19,7 +19,7 @@ members = [
     "crates/handler",
 
     # variants
-    "crates/optimism",
+    # "crates/optimism",
     "crates/inspector",
 
     # utility

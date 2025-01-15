@@ -92,8 +92,6 @@ pub trait InstructionProvider: Clone {
     type WIRE: InterpreterTypes;
     type Host;
 
-    fn new(context: &mut Self::Host) -> Self;
-
     fn table(&mut self) -> &[impl CustomInstruction<Wire = Self::WIRE, Host = Self::Host>; 256];
 }
 
@@ -118,6 +116,18 @@ where
     }
 }
 
+impl<WIRE, HOST> EthInstructionProvider<WIRE, HOST>
+where
+    WIRE: InterpreterTypes,
+    HOST: Host,
+{
+    pub fn new() -> Self {
+        Self {
+            instruction_table: Rc::new(crate::table::make_instruction_table::<WIRE, HOST>()),
+        }
+    }
+}
+
 impl<WIRE, HOST> InstructionProvider for EthInstructionProvider<WIRE, HOST>
 where
     WIRE: InterpreterTypes,
@@ -125,12 +135,6 @@ where
 {
     type WIRE = WIRE;
     type Host = HOST;
-
-    fn new(_context: &mut Self::Host) -> Self {
-        Self {
-            instruction_table: Rc::new(crate::table::make_instruction_table::<WIRE, HOST>()),
-        }
-    }
 
     // TODO : Make impl a associate type. With this associate type we can implement.
     // InspectorInstructionProvider over generic type.

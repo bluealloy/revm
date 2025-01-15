@@ -1,12 +1,15 @@
+use auto_impl::auto_impl;
 use primitives::{Address, Bytes};
+use specification::hardfork::SpecId;
+use std::boxed::Box;
 
+#[auto_impl(&mut, Box)]
 pub trait PrecompileProvider: Clone {
     type Context;
     type Output;
     type Error;
 
-    /// Create a new precompile.
-    fn new(context: &mut Self::Context) -> Self;
+    fn set_spec(&mut self, spec: SpecId);
 
     /// Run the precompile.
     fn run(
@@ -18,7 +21,7 @@ pub trait PrecompileProvider: Clone {
     ) -> Result<Option<Self::Output>, Self::Error>;
 
     /// Get the warm addresses.
-    fn warm_addresses(&self) -> impl Iterator<Item = Address>;
+    fn warm_addresses(&self) -> Box<impl Iterator<Item = Address> + '_>;
 
     /// Check if the address is a precompile.
     fn contains(&self, address: &Address) -> bool;
