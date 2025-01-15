@@ -51,7 +51,7 @@ They are called in the following order:
     Retrieves the precompiles for the given spec ID. More info: [precompile](../precompile.md). 
 
 * `apply_eip7702_auth_list`
-    Applies the EIP-7702 authorization list to the accounts. Return gas refund of already created accounts.
+    Applies the [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) authorization list to the accounts. Return gas refund of already created accounts.
 
 * `deduct_caller`:
     Deducts values from the caller to calculate the maximum amount of gas that can be spent on the transaction.
@@ -100,7 +100,7 @@ Look at the Interpreter documentation for more information.
 Is a list of functions that are called after the execution. They are called in the following order:
 
 * `refund`
-    Add EIP-7702 refund for already created accounts and calculates final gas refund that can
+    Add [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) refund for already created accounts and calculates final gas refund that can
     be a maximum of 1/5 (1/2 before London hardfork) of spent gas.
 
 * `reimburse_caller`:
