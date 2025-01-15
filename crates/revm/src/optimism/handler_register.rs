@@ -310,7 +310,9 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
 /// Load precompiles for Optimism chain.
 #[inline]
 pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> ContextPrecompiles<DB> {
-    if SPEC::enabled(SpecId::GRANITE) {
+    if SPEC::enabled(SpecId::ISTHMUS) {
+        ContextPrecompiles::from_static_precompiles(optimism::precompile::isthmus())
+    } else if SPEC::enabled(SpecId::GRANITE) {
         ContextPrecompiles::from_static_precompiles(optimism::precompile::granite())
     } else if SPEC::enabled(SpecId::FJORD) {
         ContextPrecompiles::from_static_precompiles(optimism::precompile::fjord())
