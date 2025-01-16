@@ -204,20 +204,37 @@ impl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INSTRUCTIONS>
     }
 }
 
-impl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INSTRUCTIONS> EthHandlerNew
+pub trait FrameInterpreterGetter {
+    type IT: InterpreterTypes;
+
+    fn interpreter(&mut self) -> &mut Interpreter<Self::IT>;
+}
+
+impl<CTX, ERROR, IW: InterpreterTypes, PRECOMPILES, INSTRUCTIONS> FrameInterpreterGetter
+    for EthFrame<CTX, ERROR, IW, PRECOMPILES, INSTRUCTIONS>
+{
+    type IT = IW;
+
+    fn interpreter(&mut self) -> &mut Interpreter<Self::IT> {
+        &mut self.interpreter
+    }
+}
+
+impl<CTX, ERROR, FRAME, HANDLER, INTR, PRECOMPILES, INSTRUCTIONS> EthHandlerNew
     for InspectorHandlerImpl<CTX, ERROR, FRAME, HANDLER, PRECOMPILES, INSTRUCTIONS>
 where
-    CTX: EthContext + InspectorCtx<IT = EthInterpreter> + JournalExtGetter,
+    CTX: EthContext + InspectorCtx<IT = INTR> + JournalExtGetter,
+    INTR: InterpreterTypes,
     ERROR: EthError<CTX, FRAME>,
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     FRAME: Frame<
-        Context = CTX,
-        Error = ERROR,
-        FrameResult = FrameResult,
-        FrameInit = FrameInput,
-        FrameContext = FrameContext<PRECOMPILES, InspectorInstructionProvider<EthInterpreter, CTX>>,
-    >,
+            Context = CTX,
+            Error = ERROR,
+            FrameResult = FrameResult,
+            FrameInit = FrameInput,
+            FrameContext = FrameContext<PRECOMPILES, InspectorInstructionProvider<INTR, CTX>>,
+        > + FrameInterpreterGetter<IT = INTR>,
     PRECOMPILES: PrecompileProvider<Context = CTX, Error = ERROR>,
     HANDLER: EthHandlerNew<Context = CTX, Error = ERROR, Frame = FRAME, Precompiles = PRECOMPILES>,
 {
@@ -225,8 +242,7 @@ where
     type Error = ERROR;
     type Frame = FRAME;
     type Precompiles = PRECOMPILES;
-    // TODO use a generic trait for inspector instruction.
-    type Instructions = InspectorInstructionProvider<EthInterpreter, CTX>;
+    type Instructions = InspectorInstructionProvider<INTR, CTX>;
 
     fn frame_context(
         &mut self,
@@ -262,9 +278,7 @@ where
                 context.frame_end(res);
             }
             Ok(FrameOrResultGen::Frame(frame)) => {
-                // TODO(rakita)
-                //context.initialize_interp(&mut frame.interpreter);
-                todo!()
+                context.initialize_interp(frame.interpreter());
             }
             _ => (),
         }
@@ -295,9 +309,7 @@ where
                 context.frame_end(res);
             }
             Ok(FrameOrResultGen::Frame(frame)) => {
-                // TODO(rakita)
-                // context.initialize_interp(&mut frame.interpreter);
-                todo!()
+                context.initialize_interp(frame.interpreter());
             }
             _ => (),
         }

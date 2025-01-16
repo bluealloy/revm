@@ -162,7 +162,7 @@ pub trait EthHandler {
         + From<InvalidTransaction>
         + From<<Self::Frame as Frame>::Error>;
     type Precompiles: PrecompileProvider<Context = Self::Context, Error = Self::Error>;
-    type Instructions: InstructionProvider<WIRE = EthInterpreter, Host = Self::Context>;
+    type Instructions: InstructionProvider<Host = Self::Context>;
     // TODO `FrameResult` should be a generic trait.
     // TODO `FrameInit` should be a generic.
     type Frame: Frame<
